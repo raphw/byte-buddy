@@ -133,7 +133,7 @@ public class ByteBuddyTutorialExamplesTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testTutorialGettingStartedClassReloading() throws Exception {
         ByteBuddyAgent.install();
         FooReloading foo = new FooReloading();

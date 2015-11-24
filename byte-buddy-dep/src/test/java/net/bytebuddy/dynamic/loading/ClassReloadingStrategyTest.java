@@ -14,7 +14,8 @@ import java.lang.instrument.Instrumentation;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ClassReloadingStrategyTest {
 
@@ -24,14 +25,14 @@ public class ClassReloadingStrategyTest {
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testStrategyCreation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testFromAgentClassReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
@@ -49,7 +50,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testClassRedefinitionRenamingWithStackMapFrames() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
@@ -64,13 +65,12 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinitionReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
-        Instrumentation instrumentation = spy(ByteBuddyAgent.getInstrumentation());
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
-        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation,
+        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
                 ClassReloadingStrategy.Engine.REDEFINITION);
         new ByteBuddy()
                 .redefine(Foo.class)
@@ -84,7 +84,7 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(retransformsClasses = true, redefinesClasses = true)
     public void testRetransformationReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
@@ -112,6 +112,11 @@ public class ClassReloadingStrategyTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNonCompatible() throws Exception {
         new ClassReloadingStrategy(mock(Instrumentation.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testResetNotSupported() throws Exception {
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.RETRANSFORMATION).reset();
     }
 
     @Test

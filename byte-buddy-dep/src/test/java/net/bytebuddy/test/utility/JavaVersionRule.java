@@ -44,7 +44,7 @@ public class JavaVersionRule implements MethodRule {
 
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignored test case that requires a Java version of at least " + requiredVersion);
+            Logger.getAnonymousLogger().warning("Ignoring test case: Requires a Java version of at least " + requiredVersion);
         }
     }
 }

@@ -121,7 +121,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testRedefinition() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is whz an external class is used.
@@ -142,7 +142,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testRetransformation() throws Exception {
         // A redefinition reflects on loaded types which are eagerly validated types (Java 7- for redefinition).
         // This causes type equality for outer/inner classes to fail which is whz an external class is used.

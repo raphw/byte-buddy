@@ -32,14 +32,14 @@ public class ClassFileLocatorAgentBasedTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses= true)
     public void testStrategyCreation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testExtraction() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.fromInstalledAgent(getClass().getClassLoader());
@@ -49,7 +49,7 @@ public class ClassFileLocatorAgentBasedTest {
     }
 
     @Test
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testExtractionOfInflatedMethodAccessor() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Method bar = Foo.class.getDeclaredMethod("bar");

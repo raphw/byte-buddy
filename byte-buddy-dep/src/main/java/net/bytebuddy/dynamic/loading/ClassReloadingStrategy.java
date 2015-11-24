@@ -77,7 +77,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         } else if (instrumentation.isRetransformClassesSupported()) {
             engine = Engine.RETRANSFORMATION;
         } else {
-            throw new IllegalArgumentException("Instrumentation does not support class redefinition: " + instrumentation);
+            throw new IllegalArgumentException("Instrumentation does not support manipulation of loaded classes: " + instrumentation);
         }
         bootstrapInjection = BootstrapInjection.Disabled.INSTANCE;
     }
@@ -171,6 +171,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * @return This class reloading strategy.
      */
     public ClassReloadingStrategy reset(Class<?>... type) {
+        if (!instrumentation.isRedefineClassesSupported()) {
+            throw new IllegalStateException("Classes can only be reset when redefinition is supported");
+        }
         Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>(type.length);
         for (Class<?> aType : type) {
             classDefinitions.put(aType, new ClassDefinition(aType, ClassFileLocator.ForClassLoader.read(aType).resolve()));
