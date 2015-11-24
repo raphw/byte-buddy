@@ -4,6 +4,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.net.URL;
+import java.net.URLClassLoader;
 import java.security.AccessControlContext;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
@@ -20,11 +21,23 @@ public class ByteArrayClassLoaderObjectPropertiesTest {
             public AccessControlContext create() {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
+        }).create(new ObjectPropertyAssertion.Creator<ClassLoader>() {
+            @Override
+            public ClassLoader create() {
+                // J9 has explicit class loader validation checks what makes mock-based test fail.
+                return new URLClassLoader(new URL[0], null);
+            }
         }).applyBasic();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.ChildFirst.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override
             public AccessControlContext create() {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+            }
+        }).create(new ObjectPropertyAssertion.Creator<ClassLoader>() {
+            @Override
+            public ClassLoader create() {
+                // J9 has explicit class loader validation checks what makes mock-based test fail.
+                return new URLClassLoader(new URL[0], null);
             }
         }).applyBasic();
         ObjectPropertyAssertion.of(ByteArrayClassLoader.PersistenceHandler.class).apply();
