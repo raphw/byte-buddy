@@ -367,7 +367,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate, Class<?> type, MethodGraph.Compiler methodGraphCompiler) {
-        return to(delegate, type, String.format("%s$%d", ImplementationDelegate.ForStaticField.PREFIX, delegate.hashCode()), methodGraphCompiler);
+        return to(delegate, type, String.format("%s$%d", ImplementationDelegate.ForStaticField.PREFIX,  Math.abs(delegate.hashCode() % Integer.MAX_VALUE)), methodGraphCompiler);
     }
 
     /**
