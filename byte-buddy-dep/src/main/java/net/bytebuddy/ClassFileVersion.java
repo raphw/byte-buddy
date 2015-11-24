@@ -84,10 +84,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return A representation of the version number.
      */
     public static ClassFileVersion ofMinorMajor(int versionNumber) {
-        if (versionNumber <= BASE_VERSION) {
+        ClassFileVersion classFileVersion = new ClassFileVersion(versionNumber);
+        if (classFileVersion.getMajorVersion() <= BASE_VERSION) {
             throw new IllegalArgumentException("Class version " + versionNumber + " is not valid");
         }
-        return new ClassFileVersion(versionNumber);
+        return classFileVersion;
     }
 
     /**
