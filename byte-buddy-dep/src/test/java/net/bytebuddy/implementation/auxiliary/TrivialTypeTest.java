@@ -18,8 +18,6 @@ public class TrivialTypeTest {
 
     private static final String FOO = "foo";
 
-    private static final int BAR = 42;
-
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
@@ -31,7 +29,7 @@ public class TrivialTypeTest {
 
     @Test
     public void testCreation() throws Exception {
-        when(classFileVersion.getVersion()).thenReturn(BAR);
+        when(classFileVersion.getVersion()).thenReturn(ClassFileVersion.JAVA_V5.getJavaVersion());
         DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
         assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));

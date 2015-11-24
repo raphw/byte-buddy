@@ -72,7 +72,7 @@ public class FixedValueTest extends AbstractImplementationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleConstantPool() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaInstance.MethodHandle.of(Qux.class.getDeclaredMethod("bar")))).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
@@ -80,7 +80,7 @@ public class FixedValueTest extends AbstractImplementationTest {
     }
 
     @Test
-    @JavaVersionRule.Enforce(value = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleConstantPoolValue() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(makeMethodHandle())).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));

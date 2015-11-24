@@ -1557,7 +1557,7 @@ public interface TypeWriter<T> {
 
             @Override
             public void visit(int version, int modifiers, String name, String signature, String superName, String[] interfaces) {
-                ClassFileVersion classFileVersion = ClassFileVersion.of(version);
+                ClassFileVersion classFileVersion = ClassFileVersion.ofMinorMajor(version);
                 List<Constraint> constraints = new LinkedList<Constraint>();
                 constraints.add(new Constraint.ForClassFileVersion(classFileVersion));
                 if (name.endsWith('/' + PackageDescription.PACKAGE_CLASS_NAME)) {
@@ -2708,7 +2708,7 @@ public interface TypeWriter<T> {
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
                     attributeAppender.apply(this, instrumentedType, targetType);
-                    if (!ClassFileVersion.of(classFileVersionNumber).isAtLeastJava8() && instrumentedType.isInterface()) {
+                    if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeastJava8() && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
                 }

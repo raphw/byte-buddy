@@ -126,7 +126,7 @@ public class JavaInstanceMethodHandleTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    @JavaVersionRule.Enforce(value = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleOfLoadedMethodHandle() throws Exception {
         Method publicLookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup");
         Object lookup = publicLookup.invoke(null);
@@ -141,13 +141,13 @@ public class JavaInstanceMethodHandleTest {
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce(value = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleLoadedIllegal() throws Exception {
         JavaInstance.MethodHandle.of(new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)
-    @JavaVersionRule.Enforce(value = 7, hotSpot = true)
+    @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleLoadedLookupIllegal() throws Exception {
         Method publicLookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup");
         Object lookup = publicLookup.invoke(null);

@@ -14,21 +14,30 @@ import java.util.logging.Logger;
 
 public class JavaVersionRule implements MethodRule {
 
-    private final ClassFileVersion supportedVersion;
+    private final ClassFileVersion currentVersion;
+
+    private final boolean hotSpot;
 
     public JavaVersionRule() {
-        supportedVersion = ClassFileVersion.forCurrentJavaVersion();
+        currentVersion = ClassFileVersion.forCurrentJavaVersion();
+        hotSpot = System.getProperty("java.vm.name", "").toLowerCase(Locale.US).contains("hotspot");
     }
 
     @Override
     public Statement apply(Statement base, FrameworkMethod method, Object target) {
         Enforce enforce = method.getAnnotation(Enforce.class);
-        if (enforce != null && enforce.hotSpot() && !System.getProperty("java.vm.name", "").toLowerCase(Locale.US).contains("hotspot")) {
-            return new NoOpHotSpotStatement();
+        if (enforce != null) {
+            if (ClassFileVersion.ofJavaVersion(enforce.value()).compareTo(currentVersion) <= 0) {
+                return new NoOpStatement(enforce.value());
+            } else if (!hotSpot) {
+                for (int javaVersion : enforce.hotSpot()) {
+                    if (currentVersion.getJavaVersion() == javaVersion) {
+                        return new NoOpHotSpotStatement(javaVersion);
+                    }
+                }
+            }
         }
-        return enforce == null || ClassFileVersion.forKnownJavaVersion(enforce.value()).compareTo(supportedVersion) <= 0
-                ? base
-                : new NoOpStatement(enforce.value());
+        return base;
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -37,7 +46,7 @@ public class JavaVersionRule implements MethodRule {
 
         int value();
 
-        boolean hotSpot() default false;
+        int[] hotSpot() default {};
     }
 
     private static class NoOpStatement extends Statement {
@@ -56,9 +65,15 @@ public class JavaVersionRule implements MethodRule {
 
     private static class NoOpHotSpotStatement extends Statement {
 
+        private final int restrictedVersion;
+
+        public NoOpHotSpotStatement(int restrictedVersion) {
+            this.restrictedVersion = restrictedVersion;
+        }
+
         @Override
         public void evaluate() throws Throwable {
-            Logger.getAnonymousLogger().warning("Ignoring test case: Only works on HotSpot");
+            Logger.getAnonymousLogger().warning("Ignoring test case: Only works on HotSpot for Java version " + restrictedVersion);
         }
     }
 }
