@@ -1046,7 +1046,7 @@ public interface AgentBuilder {
 
                 @Override
                 public String toString() {
-                    return "AgentBuilder.InitializationStrategy.SelfInjection.Nexus.Accessor." + name();
+                    return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor." + name();
                 }
 
                 /**
