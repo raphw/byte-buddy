@@ -2,10 +2,7 @@ package net.bytebuddy.asm;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
+import org.objectweb.asm.*;
 
 /**
  * <p>
@@ -16,7 +13,8 @@ import org.objectweb.asm.Type;
  * <b>Warning</b>: This can lead to subtle bugs as classes that are not available yield a {@link ClassNotFoundException} instead of a
  * {@link NoClassDefFoundError}. The former, checked exception could therefore be thrown even if the method that unsuccessfully loads a class does
  * not declared the checked exception. Furthermore, {@link Class} constants are not cached as fields within the class as the Java compiler implemented
- * class constants before Java 5.
+ * class constants before Java 5. As a benefit for this limitation, the registered wrapper does not require any additional work by a {@link ClassWriter}
+ * or {@link ClassReader}, i.e. does not set any flags.
  * </p>
  */
 public enum TypeConstantAdjustment implements ClassVisitorWrapper {
