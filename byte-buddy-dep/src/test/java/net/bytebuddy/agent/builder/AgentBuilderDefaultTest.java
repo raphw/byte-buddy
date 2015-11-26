@@ -135,7 +135,7 @@ public class AgentBuilderDefaultTest {
         verify(dispatcher).apply(builder);
         verify(dispatcher).register(REDEFINED.getName(),
                 REDEFINED.getClassLoader(),
-                new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer));
+                new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -164,7 +164,7 @@ public class AgentBuilderDefaultTest {
         verify(dispatcher).apply(builder);
         verify(dispatcher).register(REDEFINED.getName(),
                 REDEFINED.getClassLoader(),
-                new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer));
+                new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -490,7 +490,7 @@ public class AgentBuilderDefaultTest {
         verify(dispatcher).apply(builder);
         verify(dispatcher).register(REDEFINED.getName(),
                 REDEFINED.getClassLoader(),
-                new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer));
+                new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer));
         verifyNoMoreInteractions(dispatcher);
     }
 

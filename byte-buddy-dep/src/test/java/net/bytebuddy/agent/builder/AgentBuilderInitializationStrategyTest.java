@@ -16,8 +16,11 @@ import java.util.Iterator;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
+import static org.mockito.Mockito.*;
 
 public class AgentBuilderInitializationStrategyTest {
+
+    private static final String FOO = "foo";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -28,10 +31,46 @@ public class AgentBuilderInitializationStrategyTest {
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
 
+    @Mock
+    private ClassLoader classLoader;
+
+    @Mock
+    private AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer lazyInitializer;
+
     @Test
-    @SuppressWarnings("unchecked")
     public void testNoOp() throws Exception {
+        assertThat(AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE.dispatcher(),
+                is((AgentBuilder.InitializationStrategy.Dispatcher) AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE));
+    }
+
+    @Test
+    public void testNoOpApplication() throws Exception {
         assertThat(AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE.apply(builder), is((DynamicType.Builder) builder));
+    }
+
+    @Test
+    public void testNoOpRegistration() throws Exception {
+        AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE.register(FOO, classLoader, lazyInitializer);
+        verifyZeroInteractions(classLoader);
+        verifyZeroInteractions(lazyInitializer);
+    }
+    @Test
+    public void testPremature() throws Exception {
+        assertThat(AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.dispatcher(),
+                is((AgentBuilder.InitializationStrategy.Dispatcher) AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE));
+    }
+
+    @Test
+    public void testPrematureApplication() throws Exception {
+        assertThat(AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.apply(builder), is((DynamicType.Builder) builder));
+    }
+
+    @Test
+    public void testPrematureRegistration() throws Exception {
+        AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.register(FOO, classLoader, lazyInitializer);
+        verifyZeroInteractions(classLoader);
+        verify(lazyInitializer).loadAuxiliaryTypes();
+        verifyNoMoreInteractions(lazyInitializer);
     }
 
     @Test
@@ -50,8 +89,8 @@ public class AgentBuilderInitializationStrategyTest {
     }
 
     @Test
-    public void testSimpleInitiailzerReturnsInstance() throws Exception {
-        assertThat(new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer).make(), is(loadedTypeInitializer));
+    public void testSimpleInitializerReturnsInstance() throws Exception {
+        assertThat(new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer).resolve(), is(loadedTypeInitializer));
     }
 
     @Test
@@ -68,6 +107,7 @@ public class AgentBuilderInitializationStrategyTest {
         }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.InitializationAppender.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Premature.class).apply();
     }
 }

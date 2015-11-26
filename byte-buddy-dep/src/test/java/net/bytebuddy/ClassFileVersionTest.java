@@ -14,12 +14,12 @@ public class ClassFileVersionTest {
     public void testCurrentJavaVersionWasManuallyEvaluated() throws Exception {
         // This test is supposed to fail if ByteBuddy was not yet manually considered for
         // a new major release targeting Java.
-        assertTrue(ClassFileVersion.forCurrentJavaVersion().getVersion() <= Opcodes.V1_8);
+        assertTrue(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion() <= Opcodes.V1_8);
     }
 
     @Test
     public void testExplicitConstructionOfUnknownVersion() throws Exception {
-        assertThat(ClassFileVersion.ofMinorMajor(Opcodes.V1_8 + 1).getVersion(), is(Opcodes.V1_8 + 1));
+        assertThat(ClassFileVersion.ofMinorMajor(Opcodes.V1_8 + 1).getMinorMajorVersion(), is(Opcodes.V1_8 + 1));
     }
 
     @Test(expected = IllegalArgumentException.class)

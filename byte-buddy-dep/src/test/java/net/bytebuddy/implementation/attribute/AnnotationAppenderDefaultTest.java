@@ -107,7 +107,7 @@ public class AnnotationAppenderDefaultTest {
     private Class<?> makeTypeWithAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
-        classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getVersion(),
+        classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),
                 null,

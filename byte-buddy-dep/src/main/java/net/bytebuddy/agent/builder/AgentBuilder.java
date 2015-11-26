@@ -761,31 +761,37 @@ public interface AgentBuilder {
              * Registers a loaded type initializer for a type name and class loader pair. The loaded type initializer is created lazily
              * and only on demand.
              *
-             * @param name                   The name of the type for which the loaded type initializer is to be
-             *                               registered.
-             * @param classLoader            The class loader of the instrumented type. Might be {@code null} if
-             *                               this class loader represents the bootstrap class loader.
-             * @param initializerConstructor A constructor for a {@link LoadedTypeInitializer} that fully initializes
-             *                               the created type and its potential auxiliary types.
+             * @param name            The name of the type for which the loaded type initializer is to be
+             *                        registered.
+             * @param classLoader     The class loader of the instrumented type. Might be {@code null} if
+             *                        this class loader represents the bootstrap class loader.
+             * @param lazyInitializer A constructor for a {@link LoadedTypeInitializer} that fully initializes
+             *                        the created type and its potential auxiliary types.
              */
-            void register(String name, ClassLoader classLoader, InitializerConstructor initializerConstructor);
+            void register(String name, ClassLoader classLoader, LazyInitializer lazyInitializer);
 
             /**
              * A constructor for creating a {@link LoadedTypeInitializer} if required.
              */
-            interface InitializerConstructor {
+            interface LazyInitializer {
 
                 /**
                  * Creates the {@link LoadedTypeInitializer}.
                  *
                  * @return A loaded type initializer for the built type.
                  */
-                LoadedTypeInitializer make();
+                LoadedTypeInitializer resolve();
+
+                /**
+                 * Loads the auxiliary types that this entry represents. This might cause the instrumentation to fail if
+                 * the auxiliary types reference the currently instrumented type.
+                 */
+                void loadAuxiliaryTypes();
 
                 /**
                  * A simple implementation of a lazy constructor for a {@link LoadedTypeInitializer} that simply returns a given instance.
                  */
-                class Simple implements InitializerConstructor {
+                class Simple implements LazyInitializer {
 
                     /**
                      * The represented instance.
@@ -802,8 +808,13 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public LoadedTypeInitializer make() {
+                    public LoadedTypeInitializer resolve() {
                         return loadedTypeInitializer;
+                    }
+
+                    @Override
+                    public void loadAuxiliaryTypes() {
+                        /* do nothing */
                     }
 
                     @Override
@@ -819,7 +830,7 @@ public interface AgentBuilder {
 
                     @Override
                     public String toString() {
-                        return "AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple{" +
+                        return "AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple{" +
                                 "loadedTypeInitializer=" + loadedTypeInitializer +
                                 '}';
                     }
@@ -848,7 +859,7 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void register(String name, ClassLoader classLoader, InitializerConstructor initializerConstructor) {
+            public void register(String name, ClassLoader classLoader, LazyInitializer lazyInitializer) {
                 /* do nothing */
             }
 
@@ -918,8 +929,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void register(String name, ClassLoader classLoader, InitializerConstructor initializerConstructor) {
-                    LoadedTypeInitializer loadedTypeInitializer = initializerConstructor.make();
+                public void register(String name, ClassLoader classLoader, LazyInitializer lazyInitializer) {
+                    LoadedTypeInitializer loadedTypeInitializer = lazyInitializer.resolve();
                     if (loadedTypeInitializer.isAlive()) {
                         NexusAccessor.INSTANCE.register(name, classLoader, identification, loadedTypeInitializer);
                     }
@@ -1112,6 +1123,39 @@ public interface AgentBuilder {
                                 '}';
                     }
                 }
+            }
+        }
+
+        /**
+         * An initialization strategy that loads all auxiliary types before loading the instrumented type. This can
+         * cause the instrumented type to be loaded prematurely (and to fail the instrumentation) if any auxiliary type
+         * is a subtype of the instrumented type or causes the instrumented type to be loaded in any other manner.
+         */
+        enum Premature implements InitializationStrategy, Dispatcher {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Dispatcher dispatcher() {
+                return this;
+            }
+
+            @Override
+            public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
+                return builder;
+            }
+
+            @Override
+            public void register(String name, ClassLoader classLoader, LazyInitializer lazyInitializer) {
+                lazyInitializer.loadAuxiliaryTypes();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.InitializationStrategy.Premature." + name();
             }
         }
     }
@@ -2420,10 +2464,10 @@ public interface AgentBuilder {
                     }
 
                     /**
-                     * An {@link InitializationStrategy.Dispatcher.InitializerConstructor} that initializes the instrumented type and
+                     * An {@link InitializationStrategy.Dispatcher.LazyInitializer} that initializes the instrumented type and
                      * loads and initializes all auxiliary types after the instrumented type was loaded.
                      */
-                    protected static class AuxiliaryTypeInitializer implements InitializationStrategy.Dispatcher.InitializerConstructor {
+                    protected static class AuxiliaryTypeInitializer implements InitializationStrategy.Dispatcher.LazyInitializer {
 
                         /**
                          * The used bootstrap injection strategy.
@@ -2497,11 +2541,11 @@ public interface AgentBuilder {
                          * @param accessControlContext       The access control context to be used.
                          * @return An appropriate initializer constructor.
                          */
-                        protected static InitializationStrategy.Dispatcher.InitializerConstructor of(BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                                                                                     DynamicType dynamicType,
-                                                                                                     ClassLoader classLoader,
-                                                                                                     ProtectionDomain protectionDomain,
-                                                                                                     AccessControlContext accessControlContext) {
+                        protected static InitializationStrategy.Dispatcher.LazyInitializer of(BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                                                                              DynamicType dynamicType,
+                                                                                              ClassLoader classLoader,
+                                                                                              ProtectionDomain protectionDomain,
+                                                                                              AccessControlContext accessControlContext) {
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             return loadedTypeInitializers.size() > 1 // There exist auxiliary classes.
                                     ? new AuxiliaryTypeInitializer(bootstrapInjectionStrategy,
@@ -2511,17 +2555,28 @@ public interface AgentBuilder {
                                     accessControlContext,
                                     dynamicType.getRawAuxiliaryTypes(),
                                     dynamicType.getLoadedTypeInitializers())
-                                    : new InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializers.get(dynamicType.getTypeDescription()));
+                                    : new InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializers.get(dynamicType.getTypeDescription()));
                         }
 
                         @Override
-                        public LoadedTypeInitializer make() {
+                        public LoadedTypeInitializer resolve() {
                             return new InjectingInitializer(instrumentedType,
                                     rawAuxiliaryTypes,
                                     loadedTypeInitializers,
                                     classLoader == null
                                             ? bootstrapInjectionStrategy.make(protectionDomain)
                                             : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext));
+                        }
+
+                        @Override
+                        public void loadAuxiliaryTypes() {
+                            if (!rawAuxiliaryTypes.isEmpty()) {
+                                for (Map.Entry<TypeDescription, Class<?>> auxiliary : (classLoader == null
+                                        ? bootstrapInjectionStrategy.make(protectionDomain)
+                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext)).inject(rawAuxiliaryTypes).entrySet()) {
+                                    loadedTypeInitializers.get(auxiliary.getKey()).onLoad(auxiliary.getValue());
+                                }
+                            }
                         }
 
                         @Override

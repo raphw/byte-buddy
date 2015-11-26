@@ -3167,7 +3167,7 @@ public interface TypeWriter<T> {
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
                 ClassWriter classWriter = new ClassWriter(classVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
                 ClassVisitor classVisitor = classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter));
-                classVisitor.visit(classFileVersion.getVersion(),
+                classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),

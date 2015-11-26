@@ -29,7 +29,7 @@ public class TrivialTypeTest {
 
     @Test
     public void testCreation() throws Exception {
-        when(classFileVersion.getVersion()).thenReturn(ClassFileVersion.JAVA_V5.getVersion());
+        when(classFileVersion.getMinorMajorVersion()).thenReturn(ClassFileVersion.JAVA_V5.getMinorMajorVersion());
         DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
         assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));

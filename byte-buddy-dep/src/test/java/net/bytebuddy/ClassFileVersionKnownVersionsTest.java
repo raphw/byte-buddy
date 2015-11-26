@@ -63,7 +63,7 @@ public class ClassFileVersionKnownVersionsTest {
 
     @Test
     public void testVersion() throws Exception {
-        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).getVersion(), is(minorMajorVersion));
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).getMinorMajorVersion(), is(minorMajorVersion));
     }
 
     @Test

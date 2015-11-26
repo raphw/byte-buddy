@@ -146,7 +146,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      *
      * @return The minor-major release number of this class file version.
      */
-    public int getVersion() {
+    public int getMinorMajorVersion() {
         return versionNumber;
     }
 

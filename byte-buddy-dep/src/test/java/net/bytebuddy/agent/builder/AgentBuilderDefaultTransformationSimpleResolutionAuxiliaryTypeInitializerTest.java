@@ -70,7 +70,7 @@ public class AgentBuilderDefaultTransformationSimpleResolutionAuxiliaryTypeIniti
                 dynamicType,
                 classLoader,
                 protectionDomain,
-                accessControlContext), is((AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor)
+                accessControlContext), is((AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer)
                 new AgentBuilder.Default.Transformation.Simple.Resolution.AuxiliaryTypeInitializer(bootstrapInjectionStrategy,
                         instrumentedType,
                         classLoader,
@@ -90,8 +90,8 @@ public class AgentBuilderDefaultTransformationSimpleResolutionAuxiliaryTypeIniti
                 classLoader,
                 protectionDomain,
                 accessControlContext),
-                is((AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor)
-                        new AgentBuilder.InitializationStrategy.Dispatcher.InitializerConstructor.Simple(loadedTypeInitializer)));
+                is((AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer)
+                        new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer)));
     }
 
     @Test

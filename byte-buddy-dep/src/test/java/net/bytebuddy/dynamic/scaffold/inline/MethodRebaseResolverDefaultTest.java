@@ -59,7 +59,7 @@ public class MethodRebaseResolverDefaultTest {
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(BAR);
         when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(QUX);
-        when(classFileVersion.getVersion()).thenReturn(Opcodes.V1_6);
+        when(classFileVersion.getMinorMajorVersion()).thenReturn(Opcodes.V1_6);
     }
 
     @Test
