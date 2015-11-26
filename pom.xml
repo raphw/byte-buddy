@@ -171,6 +171,7 @@
                     <useReleaseProfile>false</useReleaseProfile>
                     <releaseProfiles>extras,gpg</releaseProfiles>
                     <autoVersionSubmodules>true</autoVersionSubmodules>
+                    <tagNameFormat>byte-buddy-@{project.version}</tagNameFormat>
                 </configuration>
             </plugin>
             <!-- Enable mutation testing. -->
