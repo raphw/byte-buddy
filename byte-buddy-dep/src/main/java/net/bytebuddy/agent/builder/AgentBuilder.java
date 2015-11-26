@@ -569,12 +569,12 @@ public interface AgentBuilder {
 
             @Override
             public ClassFileLocator classFileLocator(ClassLoader classLoader) {
-                return ClassFileLocator.ForClassLoader.of(classLoader);
+                return ClassFileLocator.NoOp.INSTANCE;
             }
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.ClassLoading(classLoader);
+                return new TypePool.LazyFacade(TypePool.ClassLoading.of(classFileLocator, classLoader));
             }
 
             @Override
