@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationList;
@@ -2335,6 +2336,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
                 public void visitLdcInsn(Object constant) {
                     if (constant instanceof Type) {
                         Type type = (Type) constant;

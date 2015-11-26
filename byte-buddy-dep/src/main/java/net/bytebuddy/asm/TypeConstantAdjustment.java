@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
@@ -116,6 +117,7 @@ public enum TypeConstantAdjustment implements ClassVisitorWrapper {
             }
 
             @Override
+            @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Fall through to default case is intentional")
             public void visitLdcInsn(Object constant) {
                 if (constant instanceof Type) {
                     Type type = (Type) constant;
