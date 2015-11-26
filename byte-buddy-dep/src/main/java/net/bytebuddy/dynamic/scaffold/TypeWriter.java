@@ -1683,6 +1683,21 @@ public interface TypeWriter<T> {
                 void assertType(int modifier, boolean definesInterfaces, boolean isGeneric);
 
                 /**
+                 * Asserts the capability to store a type constant in the class's constant pool.
+                 */
+                void assertTypeInConstantPool();
+
+                /**
+                 * Asserts the capability to store a method type constant in the class's constant pool.
+                 */
+                void assertMethodTypeInConstantPool();
+
+                /**
+                 * Asserts the capability to store a method handle in the class's constant pool.
+                 */
+                void assertHandleInConstantPool();
+
+                /**
                  * Represents the constraint of a class type.
                  */
                 enum ForClass implements Constraint {
@@ -1750,6 +1765,21 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertMethodTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertHandleInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForClass." + name();
                     }
@@ -1794,6 +1824,21 @@ public interface TypeWriter<T> {
                     @Override
                     public void assertDefaultValue(String name) {
                         /* do nothing, implicit by forbidding methods */
+                    }
+
+                    @Override
+                    public void assertTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertMethodTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertHandleInConstantPool() {
+                        /* do nothing */
                     }
 
                     @Override
@@ -1887,6 +1932,21 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertMethodTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertHandleInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForInterface." + name();
                     }
@@ -1970,6 +2030,21 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertMethodTypeInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void assertHandleInConstantPool() {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeWriter.Default.ValidatingClassVisitor.Constraint.ForAnnotation." + name();
                     }
@@ -2042,6 +2117,27 @@ public interface TypeWriter<T> {
                     @Override
                     public void assertDefaultValue(String name) {
                         /* do nothing, implicitly checked by type assertion */
+                    }
+
+                    @Override
+                    public void assertTypeInConstantPool() {
+                        if (!classFileVersion.isAtLeastJava5()) {
+                            throw new IllegalStateException("Cannot write type to constant pool for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertMethodTypeInConstantPool() {
+                        if (!classFileVersion.isAtLeastJava7()) {
+                            throw new IllegalStateException("Cannot write method type to constant pool for class file version " + classFileVersion);
+                        }
+                    }
+
+                    @Override
+                    public void assertHandleInConstantPool() {
+                        if (!classFileVersion.isAtLeastJava7()) {
+                            throw new IllegalStateException("Cannot write method handle to constant pool for class file version " + classFileVersion);
+                        }
                     }
 
                     @Override
@@ -2137,6 +2233,27 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public void assertTypeInConstantPool() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertTypeInConstantPool();
+                        }
+                    }
+
+                    @Override
+                    public void assertMethodTypeInConstantPool() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertMethodTypeInConstantPool();
+                        }
+                    }
+
+                    @Override
+                    public void assertHandleInConstantPool() {
+                        for (Constraint constraint : constraints) {
+                            constraint.assertHandleInConstantPool();
+                        }
+                    }
+
+                    @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && constraints.equals(((Compound) other).constraints);
@@ -2215,6 +2332,25 @@ public interface TypeWriter<T> {
                 public AnnotationVisitor visitAnnotationDefault() {
                     constraint.assertDefaultValue(name);
                     return super.visitAnnotationDefault();
+                }
+
+                @Override
+                public void visitLdcInsn(Object constant) {
+                    if (constant instanceof Type) {
+                        Type type = (Type) constant;
+                        switch (type.getSort()) {
+                            case Type.OBJECT:
+                            case Type.ARRAY:
+                                constraint.assertTypeInConstantPool();
+                                break;
+                            case Type.METHOD:
+                                constraint.assertMethodTypeInConstantPool();
+                                break;
+                        }
+                    } else if (constant instanceof Handle) {
+                        constraint.assertHandleInConstantPool();
+                    }
+                    super.visitLdcInsn(constant);
                 }
 
                 @Override

@@ -187,6 +187,15 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
+     * Checks if this class file version supports interface invokedynamic-related features. (Java 7+)
+     *
+     * @return {@code true} if this class file version supports invokedynamic-related features.
+     */
+    public boolean isAtLeastJava7() {
+        return compareTo(ClassFileVersion.JAVA_V7) > -1;
+    }
+
+    /**
      * Checks if this class file version supports generic types and annotation types. (Java 5+)
      *
      * @return {@code true} if this class file version supports generic types and annotation types.

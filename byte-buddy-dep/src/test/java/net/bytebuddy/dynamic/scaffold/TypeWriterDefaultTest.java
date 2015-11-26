@@ -3,15 +3,18 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.JavaInstance;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -317,6 +320,33 @@ public class TypeWriterDefaultTest {
                 .rebase(Class.forName(LEGACY_INTERFACE))
                 .invokable(isTypeInitializer())
                 .intercept(StubMethod.INSTANCE)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeInLegacyConstantPool() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .subclass(Object.class)
+                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList())
+                .intercept(FixedValue.value(Object.class))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodTypeInLegacyConstantPool() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .subclass(Object.class)
+                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList())
+                .intercept(FixedValue.value(JavaInstance.MethodType.of(Object.class, Object.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodHandleInLegacyConstantPool() throws Exception {
+        new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .subclass(Object.class)
+                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList())
+                .intercept(FixedValue.value(JavaInstance.MethodHandle.of(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString")))))
                 .make();
     }
 

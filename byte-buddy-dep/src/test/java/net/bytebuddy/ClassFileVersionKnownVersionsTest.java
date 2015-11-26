@@ -26,6 +26,8 @@ public class ClassFileVersionKnownVersionsTest {
 
     private final boolean atLeastJava5;
 
+    private final boolean atLeastJava7;
+
     private final boolean atLeastJava8;
 
     public ClassFileVersionKnownVersionsTest(int javaVersion,
@@ -33,26 +35,28 @@ public class ClassFileVersionKnownVersionsTest {
                                              int majorVersion,
                                              int minorVersion,
                                              boolean atLeastJava5,
+                                             boolean atLeastJava7,
                                              boolean atLeastJava8) {
         this.javaVersion = javaVersion;
         this.minorMajorVersion = minorMajorVersion;
         this.majorVersion = majorVersion;
         this.minorVersion = minorVersion;
         this.atLeastJava5 = atLeastJava5;
+        this.atLeastJava7 = atLeastJava7;
         this.atLeastJava8 = atLeastJava8;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
-                {1, Opcodes.V1_1, 45, 3, false, false},
-                {2, Opcodes.V1_2, 46, 0, false, false},
-                {3, Opcodes.V1_3, 47, 0, false, false},
-                {4, Opcodes.V1_4, 48, 0, false, false},
-                {5, Opcodes.V1_5, 49, 0, true, false},
-                {6, Opcodes.V1_6, 50, 0, true, false},
-                {7, Opcodes.V1_7, 51, 0, true, false},
-                {8, Opcodes.V1_8, 52, 0, true, true},
+                {1, Opcodes.V1_1, 45, 3, false, false, false},
+                {2, Opcodes.V1_2, 46, 0, false, false, false},
+                {3, Opcodes.V1_3, 47, 0, false, false, false},
+                {4, Opcodes.V1_4, 48, 0, false, false, false},
+                {5, Opcodes.V1_5, 49, 0, true, false, false},
+                {6, Opcodes.V1_6, 50, 0, true, false, false},
+                {7, Opcodes.V1_7, 51, 0, true, true, false},
+                {8, Opcodes.V1_8, 52, 0, true, true, true},
 //                {9, Opcodes.V1_8, 52, 0, true, true}
         });
     }
@@ -75,6 +79,11 @@ public class ClassFileVersionKnownVersionsTest {
     @Test
     public void testAtLeastJava5() throws Exception {
         assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeastJava5(), is(atLeastJava5));
+    }
+
+    @Test
+    public void testAtLeastJava7() throws Exception {
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeastJava7(), is(atLeastJava7));
     }
 
     @Test
