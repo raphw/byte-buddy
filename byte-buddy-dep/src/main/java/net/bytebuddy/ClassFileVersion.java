@@ -178,30 +178,13 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     }
 
     /**
-     * Checks if this class file version supports interface default methods and type annotations. (Java 8+)
+     * Checks if this class file version is at least of the provided version.
      *
-     * @return {@code true} if this class file version supports interface default methods and type annotations.
+     * @param classFileVersion The version to check against.
+     * @return {@code true} if this version is at least of the given version.
      */
-    public boolean isAtLeastJava8() {
-        return compareTo(ClassFileVersion.JAVA_V8) > -1;
-    }
-
-    /**
-     * Checks if this class file version supports interface invokedynamic-related features. (Java 7+)
-     *
-     * @return {@code true} if this class file version supports invokedynamic-related features.
-     */
-    public boolean isAtLeastJava7() {
-        return compareTo(ClassFileVersion.JAVA_V7) > -1;
-    }
-
-    /**
-     * Checks if this class file version supports generic types and annotation types. (Java 5+)
-     *
-     * @return {@code true} if this class file version supports generic types and annotation types.
-     */
-    public boolean isAtLeastJava5() {
-        return compareTo(ClassFileVersion.JAVA_V5) > -1;
+    public boolean isAtLeast(ClassFileVersion classFileVersion) {
+        return compareTo(classFileVersion) > -1;
     }
 
     @Override

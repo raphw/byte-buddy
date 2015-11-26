@@ -1563,14 +1563,14 @@ public interface TypeWriter<T> {
                 if (name.endsWith('/' + PackageDescription.PACKAGE_CLASS_NAME)) {
                     constraints.add(Constraint.ForPackageType.INSTANCE);
                 } else if ((modifiers & Opcodes.ACC_ANNOTATION) != 0) {
-                    if (!classFileVersion.isAtLeastJava5()) {
+                    if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                         throw new IllegalStateException("Cannot define an annotation type for class file version " + classFileVersion);
                     }
-                    constraints.add(classFileVersion.isAtLeastJava8()
+                    constraints.add(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8)
                             ? Constraint.ForAnnotation.JAVA_8
                             : Constraint.ForAnnotation.CLASSIC);
                 } else if ((modifiers & Opcodes.ACC_INTERFACE) != 0) {
-                    constraints.add(classFileVersion.isAtLeastJava8()
+                    constraints.add(classFileVersion.isAtLeast(ClassFileVersion.JAVA_V8)
                             ? Constraint.ForInterface.JAVA_8
                             : Constraint.ForInterface.CLASSIC);
                 } else if ((modifiers & Opcodes.ACC_ABSTRACT) != 0) {
@@ -2071,16 +2071,16 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertType(int modifiers, boolean definesInterfaces, boolean isGeneric) {
-                        if ((modifiers & Opcodes.ACC_ANNOTATION) != 0 && !classFileVersion.isAtLeastJava5()) {
+                        if ((modifiers & Opcodes.ACC_ANNOTATION) != 0 && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define annotation type for class file version " + classFileVersion);
-                        } else if (isGeneric && !classFileVersion.isAtLeastJava5()) {
+                        } else if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define a generic type for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
-                        if (isGeneric && !classFileVersion.isAtLeastJava5()) {
+                        if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define generic method '" + name + "' for class file version " + classFileVersion);
                         }
                     }
@@ -2093,7 +2093,7 @@ public interface TypeWriter<T> {
                                              boolean isDefaultValueIncompatible,
                                              boolean isNonStaticNonVirtual,
                                              boolean isGeneric) {
-                        if (isGeneric && !classFileVersion.isAtLeastJava5()) {
+                        if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot define generic method '" + name + "' for class file version " + classFileVersion);
                         } else if ((isStatic || isNonStaticNonVirtual) && isAbstract) {
                             throw new IllegalStateException("Cannot define static or non-virtual method '" + name + "' to be abstract");
@@ -2102,14 +2102,14 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertAnnotation() {
-                        if (!classFileVersion.isAtLeastJava5()) {
+                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write annotations for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertTypeAnnotation() {
-                        if (!classFileVersion.isAtLeastJava8()) {
+                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write type annotations for class file version " + classFileVersion);
                         }
                     }
@@ -2121,21 +2121,21 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void assertTypeInConstantPool() {
-                        if (!classFileVersion.isAtLeastJava5()) {
+                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
                             throw new IllegalStateException("Cannot write type to constant pool for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertMethodTypeInConstantPool() {
-                        if (!classFileVersion.isAtLeastJava7()) {
+                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write method type to constant pool for class file version " + classFileVersion);
                         }
                     }
 
                     @Override
                     public void assertHandleInConstantPool() {
-                        if (!classFileVersion.isAtLeastJava7()) {
+                        if (!classFileVersion.isAtLeast(ClassFileVersion.JAVA_V7)) {
                             throw new IllegalStateException("Cannot write method handle to constant pool for class file version " + classFileVersion);
                         }
                     }
@@ -2844,7 +2844,7 @@ public interface TypeWriter<T> {
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
                     attributeAppender.apply(this, instrumentedType, targetType);
-                    if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeastJava8() && instrumentedType.isInterface()) {
+                    if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
                 }

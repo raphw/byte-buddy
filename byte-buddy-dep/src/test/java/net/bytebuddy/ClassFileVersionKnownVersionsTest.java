@@ -78,17 +78,17 @@ public class ClassFileVersionKnownVersionsTest {
 
     @Test
     public void testAtLeastJava5() throws Exception {
-        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeastJava5(), is(atLeastJava5));
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeast(ClassFileVersion.JAVA_V5), is(atLeastJava5));
     }
 
     @Test
     public void testAtLeastJava7() throws Exception {
-        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeastJava7(), is(atLeastJava7));
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeast(ClassFileVersion.JAVA_V7), is(atLeastJava7));
     }
 
     @Test
     public void testAtLeastJava8() throws Exception {
-        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeastJava8(), is(atLeastJava8));
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isAtLeast(ClassFileVersion.JAVA_V8), is(atLeastJava8));
     }
 
     @Test
