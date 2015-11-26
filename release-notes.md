@@ -1,6 +1,17 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. November 2015: version 0.7.2
+
+- Added `TypePool` that falls back to class loading if a class cannot be located.
+- Added binary locator for agent builder that uses the above class pool and only parses the class file of the instrumented type.
+- Added methods for reading inner classes of a `TypeDescription`.
+- Fixed random naming based on random numbers to avoid signed numbers.
+- Moved `Nexus` and `Installer` types to a package-level to avoid illegal outer and inner class references which could be resolved eagerly.
+- Added validation for illegal constant pool entries.
+- Added a `Premature` initialization strategy for optimistically loading auxiliary types.
+- Added a `ClassVisitorWrapper` for translating Java class files prior to Java 5 to use explicit class loading rather than class pool constants.
+
 ### 16. November 2015: version 0.7.1
 
 - Fixed injection order for types to avoid premature loading by dependant auxiliary types.
