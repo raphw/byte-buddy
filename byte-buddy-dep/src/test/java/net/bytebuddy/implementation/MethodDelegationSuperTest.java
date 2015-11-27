@@ -1,12 +1,21 @@
 package net.bytebuddy.implementation;
 
+import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.modifier.TypeManifestation;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bind.annotation.Super;
+import net.bytebuddy.test.utility.ClassFileExtraction;
 import org.junit.Test;
 
 import java.io.Serializable;
+import java.security.AccessController;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -67,6 +76,25 @@ public class MethodDelegationSuperTest extends AbstractImplementationTest {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(ExplicitTypeTest.class));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.qux(), is((Object) (FOO + QUX)));
+    }
+
+    @Test
+    public void testFinalType() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(SimpleInterceptor.class),
+                null,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        Class<?> type = new ByteBuddy()
+                .rebase(FinalType.class)
+                .modifiers(TypeManifestation.PLAIN, Visibility.PUBLIC)
+                .method(named(FOO)).intercept(ExceptionMethod.throwing(RuntimeException.class))
+                .method(named(BAR)).intercept(MethodDelegation.to(SimpleInterceptor.class))
+                .make()
+                .load(classLoader, ClassLoadingStrategy.Default.INJECTION)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR).invoke(type.newInstance()), is((Object) FOO));
     }
 
     public interface Qux {
@@ -150,12 +178,31 @@ public class MethodDelegationSuperTest extends AbstractImplementationTest {
             return Foo.class.getDeclaredMethod(QUX).invoke(proxy) + QUX;
         }
     }
+
     public static class ExplicitTypeTest {
 
         public static String baz(@Super(proxyType = Qux.class) Object proxy) throws Exception {
             assertThat(proxy, instanceOf(Qux.class));
             assertThat(proxy, not(instanceOf(Foo.class)));
             return Qux.class.getDeclaredMethod(QUX).invoke(proxy) + QUX;
+        }
+    }
+
+    public static final class FinalType {
+
+        public Object foo() {
+            return FOO;
+        }
+
+        public Object bar() {
+            return null;
+        }
+    }
+
+    public static class SimpleInterceptor {
+
+        public static Object intercept(@Super FinalType finalType) {
+            return finalType.foo();
         }
     }
 }

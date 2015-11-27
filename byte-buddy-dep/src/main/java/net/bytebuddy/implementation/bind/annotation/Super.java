@@ -292,7 +292,10 @@ public @interface Super {
 
                 @Override
                 public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
-                    return parameterType.asErasure();
+                    TypeDescription erasure = parameterType.asErasure();
+                    return erasure.equals(instrumentedType)
+                            ? instrumentedType
+                            : erasure;
                 }
 
                 @Override
