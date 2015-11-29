@@ -91,7 +91,7 @@ public class TypeConstantAdjustmentTest {
         verify(this.classVisitor).visit(ClassFileVersion.JAVA_V4.getMinorMajorVersion(), FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         verify(this.classVisitor).visitMethod(FOOBAR, FOO, BAR, QUX, new String[]{BAZ});
         verifyNoMoreInteractions(this.classVisitor);
-        verify(this.methodVisitor).visitLdcInsn(Type.getType(Object[].class).getClassName());
+        verify(this.methodVisitor).visitLdcInsn(Type.getType(Object[].class).getInternalName().replace('/', '.'));
         verify(this.methodVisitor).visitMethodInsn(Opcodes.INVOKESTATIC,
                 Type.getType(Class.class).getInternalName(),
                 "forName",

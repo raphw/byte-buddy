@@ -122,7 +122,7 @@ public enum TypeConstantAdjustment implements ClassVisitorWrapper {
                     switch (type.getSort()) {
                         case Type.OBJECT:
                         case Type.ARRAY:
-                            super.visitLdcInsn(type.getClassName());
+                            super.visitLdcInsn(type.getInternalName().replace('/', '.'));
                             super.visitMethodInsn(Opcodes.INVOKESTATIC, JAVA_LANG_CLASS, FOR_NAME, DESCRIPTOR, false);
                             return;
                     }

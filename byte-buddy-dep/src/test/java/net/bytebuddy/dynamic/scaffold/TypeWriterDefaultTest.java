@@ -349,6 +349,32 @@ public class TypeWriterDefaultTest {
         assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) Object.class));
     }
 
+    @Test
+    public void testArrayTypeInLegacyConstantPoolRemapped() throws Exception {
+        Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .withClassVisitor(TypeConstantAdjustment.INSTANCE)
+                .subclass(Object.class)
+                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(FixedValue.value(Object[].class))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) Object[].class));
+    }
+
+    @Test
+    public void testPrimitiveTypeInLegacyConstantPoolRemapped() throws Exception {
+        Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .withClassVisitor(TypeConstantAdjustment.INSTANCE)
+                .subclass(Object.class)
+                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .intercept(FixedValue.value(int.class))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) int.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testMethodTypeInLegacyConstantPool() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
