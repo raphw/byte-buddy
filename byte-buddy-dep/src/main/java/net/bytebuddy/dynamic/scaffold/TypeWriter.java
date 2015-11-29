@@ -2852,6 +2852,14 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
+                    if (internalName.equals(instrumentedType.getInternalName())) {
+                        modifiers = instrumentedType.getModifiers();
+                    }
+                    super.visitInnerClass(internalName, outerName, innerName, modifiers);
+                }
+
+                @Override
                 public FieldVisitor visitField(int modifiers,
                                                String internalName,
                                                String descriptor,

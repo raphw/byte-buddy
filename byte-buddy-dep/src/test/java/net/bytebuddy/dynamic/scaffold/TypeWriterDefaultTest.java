@@ -24,6 +24,7 @@ import org.junit.rules.MethodRule;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Modifier;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
@@ -367,6 +368,17 @@ public class TypeWriterDefaultTest {
     }
 
     @Test
+    public void testInnerClassChangeModifierTest() throws Exception {
+        assertThat(new ByteBuddy()
+                .redefine(Bar.class)
+                .modifiers(Visibility.PUBLIC)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .getModifiers(), is(Modifier.PUBLIC));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
@@ -391,6 +403,10 @@ public class TypeWriterDefaultTest {
 
     @Retention(RetentionPolicy.RUNTIME)
     public @interface Foo {
+        /* empty */
+    }
+
+    class Bar {
         /* empty */
     }
 }
