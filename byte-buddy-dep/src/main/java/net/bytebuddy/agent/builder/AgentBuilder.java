@@ -1,5 +1,6 @@
 package net.bytebuddy.agent.builder;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -998,6 +999,7 @@ public interface AgentBuilder {
                 /**
                  * Creates the singleton accessor.
                  */
+                @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Explicit delegation of the exception")
                 NexusAccessor() {
                     Dispatcher dispatcher;
                     try {
