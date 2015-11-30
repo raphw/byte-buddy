@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 30. November 2015: version 0.7.3
+
+- Added visibility substitution for `@Super` when the instrumented type is instrumented to see changed state on a redefinition.
+- Added patch for modifier information of inner classes on a redefinition.
+- Added fallback for `Nexus` injection to attempt lookup of already loaded class if ressource cannot be located.
+
 ### 26. November 2015: version 0.7.2
 
 - Added `TypePool` that falls back to class loading if a class cannot be located.
