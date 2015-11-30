@@ -966,14 +966,9 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 /**
-                 * Indicates that a static method is invoked by reflection.
+                 * The dispatcher for registering type initializers in the {@link Nexus}.
                  */
-                private static final Object STATIC_METHOD = null;
-
-                /**
-                 * The method for registering a type initializer in the system class loader's {@link net.bytebuddy.agent.builder.Nexus}.
-                 */
-                private final Method registration;
+                private final Dispatcher dispatcher;
 
                 /**
                  * The {@link ClassLoader#getSystemClassLoader()} method.
@@ -1004,27 +999,33 @@ public interface AgentBuilder {
                  * Creates the singleton accessor.
                  */
                 NexusAccessor() {
+                    Dispatcher dispatcher;
                     try {
                         TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                        registration = new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
+                        dispatcher = new Dispatcher.Available(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
                                 .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
                                 .get(nexusType)
-                                .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class);
-                        getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                                .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
-                        loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
-                                .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
-                        getDeclaredMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
-                                .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
-                        invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
-                                .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
-                        valueOf = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
-                                .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
-                    } catch (RuntimeException exception) {
-                        throw exception;
+                                .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
                     } catch (Exception exception) {
-                        throw new IllegalStateException("Cannot create type initialization accessor", exception);
+                        try {
+                            dispatcher = new Dispatcher.Available(ClassLoader.getSystemClassLoader()
+                                    .loadClass(Nexus.class.getName())
+                                    .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
+                        } catch (Exception ignored) {
+                            dispatcher = new Dispatcher.Unavailable(exception);
+                        }
                     }
+                    this.dispatcher = dispatcher;
+                    getSystemClassLoader = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
+                            .filter(named("getSystemClassLoader").and(takesArguments(0))).getOnly();
+                    loadClass = new TypeDescription.ForLoadedType(ClassLoader.class).getDeclaredMethods()
+                            .filter(named("loadClass").and(takesArguments(String.class))).getOnly();
+                    getDeclaredMethod = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
+                            .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class))).getOnly();
+                    invokeMethod = new TypeDescription.ForLoadedType(Method.class).getDeclaredMethods()
+                            .filter(named("invoke").and(takesArguments(Object.class, Object[].class))).getOnly();
+                    valueOf = new TypeDescription.ForLoadedType(Integer.class).getDeclaredMethods()
+                            .filter(named("valueOf").and(takesArguments(int.class))).getOnly();
                 }
 
                 /**
@@ -1035,14 +1036,8 @@ public interface AgentBuilder {
                  * @param identification  An identification for the initializer to run.
                  * @param typeInitializer The loaded type initializer to be registered.
                  */
-                public void register(String name, ClassLoader classLoader, int identification, Object typeInitializer) {
-                    try {
-                        registration.invoke(STATIC_METHOD, name, classLoader, identification, typeInitializer);
-                    } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot register type initializer for " + name, exception);
-                    } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Cannot register type initializer for " + name, exception.getCause());
-                    }
+                public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer) {
+                    dispatcher.register(name, classLoader, identification, typeInitializer);
                 }
 
                 /**
@@ -1058,6 +1053,119 @@ public interface AgentBuilder {
                 @Override
                 public String toString() {
                     return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor." + name();
+                }
+
+                /**
+                 * A dispatcher for registering type initializers in the {@link Nexus}.
+                 */
+                protected interface Dispatcher {
+
+                    /**
+                     * Registers a type initializer with the class loader's nexus.
+                     *
+                     * @param name            The name of a type for which a loaded type initializer is registered.
+                     * @param classLoader     The class loader for which a loaded type initializer is registered.
+                     * @param identification  An identification for the initializer to run.
+                     * @param typeInitializer The loaded type initializer to be registered.
+                     */
+                    void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer);
+
+                    /**
+                     * An enabled dispatcher for registering a type initializer in a {@link Nexus}.
+                     */
+                    class Available implements Dispatcher {
+
+                        /**
+                         * Indicates that a static method is invoked by reflection.
+                         */
+                        private static final Object STATIC_METHOD = null;
+
+                        /**
+                         * The method for registering a type initializer in the system class loader's {@link Nexus}.
+                         */
+                        private final Method registration;
+
+                        /**
+                         * Creates a new dispatcher.
+                         *
+                         * @param registration The method for registering a type initializer in the system class loader's {@link Nexus}.
+                         */
+                        protected Available(Method registration) {
+                            this.registration = registration;
+                        }
+
+                        @Override
+                        public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer) {
+                            try {
+                                registration.invoke(STATIC_METHOD, name, classLoader, identification, typeInitializer);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot register type initializer for " + name, exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Cannot register type initializer for " + name, exception.getCause());
+                            }
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && registration.equals(((Available) other).registration);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return registration.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Available{" +
+                                    "registration=" + registration +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A disabled dispatcher where a {@link Nexus} is not available.
+                     */
+                    class Unavailable implements Dispatcher {
+
+                        /**
+                         * The exception that was raised during the dispatcher initialization.
+                         */
+                        private final Exception exception;
+
+                        /**
+                         * Creates a new disabled dispatcher.
+                         *
+                         * @param exception The exception that was raised during the dispatcher initialization.
+                         */
+                        protected Unavailable(Exception exception) {
+                            this.exception = exception;
+                        }
+
+                        @Override
+                        public void register(String name, ClassLoader classLoader, int identification, LoadedTypeInitializer typeInitializer) {
+                            throw new IllegalStateException("Could not locate registration method", exception);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && exception.equals(((Unavailable) other).exception);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return exception.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable{" +
+                                    "exception=" + exception +
+                                    '}';
+                        }
+                    }
                 }
 
                 /**

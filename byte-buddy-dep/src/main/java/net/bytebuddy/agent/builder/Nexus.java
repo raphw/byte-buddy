@@ -84,6 +84,17 @@ public class Nexus {
     }
 
     /**
+     * <p>
+     * Registers a new loaded type initializer.
+     * </p>
+     * <p>
+     * Important: This method must never be called directly but only by using a
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor} which enforces to access this class for the
+     * system class loader where a Java agent always registers its instances. This avoids a duplication of the class if this nexus is loaded by different
+     * class loaders. For this reason, the last parameter must not use a Byte Buddy specific type as those types can be loaded by different class loaders,
+     * too. Any access of the instance is done using Java reflection instead.
+     * </p>
+     *
      * @param name            The name of the type for the loaded type initializer.
      * @param classLoader     The class loader of the type for the loaded type initializer.
      * @param identification  An identification for the initializer to run.
