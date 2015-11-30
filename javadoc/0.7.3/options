@@ -1,0 +1,26 @@
+-classpath
+'C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-agent/target/classes;C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-dep/target/classes;C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy/target/classes;C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-benchmark/target/classes;C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-android/target/classes;C:/Users/rafael.winterhalter/.m2/repository/net/jcip/jcip-annotations/1.0/jcip-annotations-1.0.jar;C:/Users/rafael.winterhalter/.m2/repository/com/google/code/findbugs/jsr305/3.0.1/jsr305-3.0.1.jar;C:/Users/rafael.winterhalter/.m2/repository/com/google/code/findbugs/annotations/3.0.1/annotations-3.0.1.jar'
+-encoding
+'UTF-8'
+-protected
+-sourcepath
+'C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-agent/src/main/java;C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-dep/src/main/java;C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-benchmark/src/main/java;C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/byte-buddy-android/src/main/java'
+-author
+-bottom
+'Copyright &#169; 2014&#x2013;2015. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/target/site/apidocs'
+-docencoding
+'UTF-8'
+-doctitle
+'Byte Buddy (full API), version 0.7.3'
+-link
+'http://asm.ow2.org/asm50/javadoc/user'
+-linkoffline
+'http://docs.oracle.com/javase/6/docs/api' 'C:/Users/rafael.winterhalter/workspace/byte-buddy/target/checkout/target/javadoc-bundle-options'
+-use
+-version
+-windowtitle
+'Byte Buddy (parent) 0.7.3 API'
