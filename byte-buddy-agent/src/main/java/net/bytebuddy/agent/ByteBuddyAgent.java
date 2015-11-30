@@ -187,11 +187,11 @@ public class ByteBuddyAgent {
             try {
                 doInstall(accessor);
             } catch (Exception exception) {
-                throw new IllegalStateException("Current JVM does not support attachment with " + attachmentProvider);
+                throw new IllegalStateException("Error during attachment using: " + attachmentProvider, exception);
             }
             return getInstrumentation();
         } else {
-            throw new IllegalStateException("Attachment provider cannot connect on the current JVM: " + attachmentProvider);
+            throw new IllegalStateException("This JVM does not support attachment using: " + attachmentProvider);
         }
     }
 
@@ -232,7 +232,7 @@ public class ByteBuddyAgent {
     private static void saveAgentJar(File agentFile) throws Exception {
         InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
         if (inputStream == null) {
-            throw new IllegalStateException("Cannot locate class file for Byte Buddy agent");
+            throw new IllegalStateException("Cannot locate class file for Byte Buddy installer");
         }
         try {
             Manifest manifest = new Manifest();
@@ -243,7 +243,7 @@ public class ByteBuddyAgent {
             manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
             JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentFile), manifest);
             try {
-                jarOutputStream.putNextEntry(new JarEntry('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
+                jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
                 byte[] buffer = new byte[BUFFER_SIZE];
                 int index;
                 while ((index = inputStream.read(buffer)) != END_OF_FILE) {

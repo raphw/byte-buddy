@@ -435,19 +435,19 @@ public interface ClassFileLocator {
     class AgentBased implements ClassFileLocator {
 
         /**
-         * The name of the Byte Buddy agent class.
+         * The name of the Byte Buddy {@code net.bytebuddy.agent.Installer} class.
          */
-        private static final String BYTE_BUDDY_AGENT_TYPE = "net.bytebuddy.agent.ByteBuddyAgent";
+        private static final String INSTALLER_TYPE = "net.bytebuddy.agent.Installer";
 
         /**
-         * The name of the {@code ByteBuddyAgent} class's method for obtaining an instrumentation.
+         * The name of the {@code net.bytebuddy.agent.Installer} field containing an installed {@link Instrumentation}.
          */
-        private static final String GET_INSTRUMENTATION_METHOD = "getInstrumentation";
+        private static final String INSTRUMENTATION_FIELD = "instrumentation";
 
         /**
-         * Base for access to a reflective member to make the code more readable.
+         * Indicator for accessing a field using reflection to make the code more readable.
          */
-        private static final Object STATIC_METHOD = null;
+        private static final Object STATIC_FIELD = null;
 
         /**
          * The instrumentation instance to use for looking up the binary format of a type.
@@ -493,9 +493,9 @@ public interface ClassFileLocator {
         public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader) {
             try {
                 return new AgentBased((Instrumentation) ClassLoader.getSystemClassLoader()
-                        .loadClass(BYTE_BUDDY_AGENT_TYPE)
-                        .getDeclaredMethod(GET_INSTRUMENTATION_METHOD)
-                        .invoke(STATIC_METHOD), classLoader);
+                        .loadClass(INSTALLER_TYPE)
+                        .getDeclaredField(INSTRUMENTATION_FIELD)
+                        .get(STATIC_FIELD), classLoader);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
