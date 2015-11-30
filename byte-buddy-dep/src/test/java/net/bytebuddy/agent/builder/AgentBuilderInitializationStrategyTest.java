@@ -172,6 +172,12 @@ public class AgentBuilderInitializationStrategyTest {
         }
     }
 
+    @Test(expected = Exception.class)
+    public void testUnavailableDispatcherThrowsException() throws Exception {
+        new AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable(new Exception())
+                .register(FOO, classLoader, BAR, loadedTypeInitializer);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.NoOp.class).apply();
