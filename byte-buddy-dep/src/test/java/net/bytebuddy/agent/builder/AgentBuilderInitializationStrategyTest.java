@@ -139,6 +139,40 @@ public class AgentBuilderInitializationStrategyTest {
     }
 
     @Test
+    public void testNexusAccessorClassLoaderNoResource() throws Exception {
+        ClassLoader classLoader = new ByteArrayClassLoader.ChildFirst(getClass().getClassLoader(),
+                ClassFileExtraction.of(Nexus.class,
+                        AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.class,
+                        AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.class,
+                        AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Available.class,
+                        AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable.class),
+                null,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.LATENT,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        Field duplicateInitializers = classLoader.loadClass(Nexus.class.getName()).getDeclaredField("TYPE_INITIALIZERS");
+        duplicateInitializers.setAccessible(true);
+        assertThat(((Map<?, ?>) duplicateInitializers.get(null)).size(), is(0));
+        Field actualInitializers = Nexus.class.getDeclaredField("TYPE_INITIALIZERS");
+        actualInitializers.setAccessible(true);
+        assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(0));
+        Class<?> accessor = classLoader.loadClass(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.class.getName());
+        ClassLoader qux = mock(ClassLoader.class);
+        assertThat(accessor
+                .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, LoadedTypeInitializer.class)
+                .invoke(accessor.getEnumConstants()[0], FOO, qux, BAR, loadedTypeInitializer), nullValue(Object.class));
+        try {
+            assertThat(((Map<?, ?>) duplicateInitializers.get(null)).size(), is(0));
+            assertThat(((Map<?, ?>) actualInitializers.get(null)).size(), is(1));
+        } finally {
+            Constructor<Nexus> constructor = Nexus.class.getDeclaredConstructor(String.class, ClassLoader.class, int.class);
+            constructor.setAccessible(true);
+            Object value = ((Map<?, ?>) actualInitializers.get(null)).remove(constructor.newInstance(FOO, qux, BAR));
+            assertThat(value, is((Object) loadedTypeInitializer));
+        }
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.class).apply();
