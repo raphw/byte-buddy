@@ -2002,10 +2002,14 @@ public interface AgentBuilder {
         @Override
         public ClassFileTransformer installOnByteBuddyAgent() {
             try {
-                return installOn((Instrumentation) ClassLoader.getSystemClassLoader()
+                Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
                         .getDeclaredField(INSTRUMENTATION_FIELD)
-                        .get(STATIC_FIELD));
+                        .get(STATIC_FIELD);
+                if (instrumentation == null) {
+                    throw new IllegalStateException("The Byte Buddy agent is not installed");
+                }
+                return installOn(instrumentation);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {

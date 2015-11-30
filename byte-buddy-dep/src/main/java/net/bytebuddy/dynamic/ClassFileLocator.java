@@ -492,10 +492,14 @@ public interface ClassFileLocator {
          */
         public static ClassFileLocator fromInstalledAgent(ClassLoader classLoader) {
             try {
-                return new AgentBased((Instrumentation) ClassLoader.getSystemClassLoader()
+                Instrumentation instrumentation = (Instrumentation) ClassLoader.getSystemClassLoader()
                         .loadClass(INSTALLER_TYPE)
                         .getDeclaredField(INSTRUMENTATION_FIELD)
-                        .get(STATIC_FIELD), classLoader);
+                        .get(STATIC_FIELD);
+                if (instrumentation == null) {
+                    throw new IllegalStateException("The Byte Buddy agent is not installed");
+                }
+                return new AgentBased(instrumentation, classLoader);
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception exception) {
