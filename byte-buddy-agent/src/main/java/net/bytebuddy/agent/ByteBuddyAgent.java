@@ -128,6 +128,11 @@ public class ByteBuddyAgent {
     private static final String INSTRUMENTATION_FIELD_NAME = "instrumentation";
 
     /**
+     * An indicator variable to express that no instrumentation is available.
+     */
+    private static final Instrumentation UNAVAILABLE = null;
+
+    /**
      * The agent provides only {@code static} utility methods and should not be instantiated.
      */
     private ByteBuddyAgent() {
@@ -181,10 +186,10 @@ public class ByteBuddyAgent {
         if (accessor.isAvailable()) {
             try {
                 doInstall(accessor);
-                return doGetInstrumentation();
             } catch (Exception exception) {
                 throw new IllegalStateException("Current JVM does not support attachment with " + attachmentProvider);
             }
+            return getInstrumentation();
         } else {
             throw new IllegalStateException("Attachment provider cannot connect on the current JVM: " + attachmentProvider);
         }
@@ -287,10 +292,8 @@ public class ByteBuddyAgent {
                     .loadClass(Installer.class.getName())
                     .getDeclaredField(INSTRUMENTATION_FIELD_NAME)
                     .get(STATIC_MEMBER);
-        } catch (RuntimeException exception) {
-            throw exception;
-        } catch (Exception exception) {
-            throw new IllegalStateException("The Byte Buddy agent is not properly initialized", exception);
+        } catch (Exception ignored) {
+            return UNAVAILABLE;
         }
     }
 
