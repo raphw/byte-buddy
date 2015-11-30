@@ -286,6 +286,7 @@ public class ByteBuddyAgent {
      *
      * @return The Byte Buddy agent's {@link java.lang.instrument.Instrumentation} instance.
      */
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Legal state where reflection communicates errors by exception")
     private static Instrumentation doGetInstrumentation() {
         try {
             return (Instrumentation) ClassLoader.getSystemClassLoader()
