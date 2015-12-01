@@ -97,6 +97,13 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
         Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testFinalProxyType() throws Exception {
+        doReturn(void.class).when(annotation).proxyType();
+        when(targetType.isFinal()).thenReturn(true);
+        Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Super.Binder.class).apply();

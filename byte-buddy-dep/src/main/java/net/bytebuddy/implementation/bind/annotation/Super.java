@@ -231,7 +231,9 @@ public @interface Super {
             TypeDescription proxyType = TypeLocator.ForType
                     .of(annotation.getValue(PROXY_TYPE, TypeDescription.class))
                     .resolve(implementationTarget.getTypeDescription(), target.getType());
-            if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(proxyType)) {
+            if (proxyType.isFinal()) {
+                throw new IllegalStateException("Cannot extend final type as @Super proxy: " + proxyType);
+            } else if (source.isStatic() || !implementationTarget.getTypeDescription().isAssignableTo(proxyType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation
