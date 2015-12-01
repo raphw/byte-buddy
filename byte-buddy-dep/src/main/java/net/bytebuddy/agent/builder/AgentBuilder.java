@@ -557,9 +557,17 @@ public interface AgentBuilder {
         }
 
         /**
-         * A binary locator that loads referenced classes. It is important to never query this binary locator for
-         * the currently instrumented type as this will yield a class loading circularity which aborts any instrumentation
-         * with an error.
+         * <p>
+         * A binary locator that loads referenced classes instead of describing unloaded versions.
+         * </p>
+         * <p>
+         * <b>Important</b>: It is important to never query this binary locator for the currently instrumented type as this will yield a class
+         * loading circularity which aborts any instrumentation with an error.
+         * </p>
+         * <p>
+         * <b>Warning</b>: Warning, this binary locator <i>cannot be used for applying a redefinition</i> as it works on loaded classes only and
+         * is agnostic of any way to locate a class file.
+         * </p>
          */
         enum ClassLoading implements BinaryLocator {
 
