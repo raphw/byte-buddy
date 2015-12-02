@@ -6,6 +6,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
 
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
@@ -24,14 +25,14 @@ public class TypePoolDefaultPrecomputedTest {
     public void testLoadableBootstrapLoaderClassPrecomputed() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
+        assertThat(resolution.resolve(), sameInstance(TypeDescription.OBJECT));
     }
 
     @Test
     public void testLoadableBootstrapLoaderClassNonPrecomputed() throws Exception {
-        TypePool.Resolution resolution = typePool.describe(Object.class.getName());
+        TypePool.Resolution resolution = typePool.describe(String.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
+        assertThat(resolution.resolve(), is(TypeDescription.STRING));
     }
 
     @Test
