@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 2. December 2015: version 0.7.4
+
+- Added `TypePool` that returns precomputed `TypeDescription`s for given types.
+- Fixed agent and nexus attachment and the corresponding value access.
+
 ### 30. November 2015: version 0.7.3
 
 - Added visibility substitution for `@Super` when the instrumented type is instrumented to see changed state on a redefinition.
