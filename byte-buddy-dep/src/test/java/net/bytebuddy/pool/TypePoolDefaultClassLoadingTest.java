@@ -14,19 +14,19 @@ import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
 @RunWith(Parameterized.class)
-public class TypePoolClassLoadingTest {
+public class TypePoolDefaultClassLoadingTest {
 
     private final TypePool typePool;
 
-    public TypePoolClassLoadingTest(TypePool typePool) {
+    public TypePoolDefaultClassLoadingTest(TypePool typePool) {
         this.typePool = typePool;
     }
 
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][] {
-                {TypePool.ClassLoading.of((ClassLoader) null)},
-                {TypePool.ClassLoading.of(ClassFileLocator.ForClassLoader.of(null), null)},
+                {TypePool.Default.ClassLoading.of((ClassLoader) null)},
+                {TypePool.Default.ClassLoading.of(ClassFileLocator.ForClassLoader.of(null), null)},
         });
     }
 
@@ -34,7 +34,7 @@ public class TypePoolClassLoadingTest {
     public void testLoadableBootstrapLoaderClass() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
     }
 
     @Test
@@ -55,15 +55,15 @@ public class TypePoolClassLoadingTest {
     public void testClearRetainsFunctionality() throws Exception {
         TypePool.Resolution resolution = typePool.describe(Object.class.getName());
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.resolve(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
         typePool.clear();
         TypePool.Resolution otherResolution = typePool.describe(Object.class.getName());
         assertThat(otherResolution.isResolved(), is(true));
-        assertThat(otherResolution.resolve(), is((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(resolution.resolve(), is(TypeDescription.OBJECT));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypePool.ClassLoading.class).apply();
+        ObjectPropertyAssertion.of(TypePool.Default.ClassLoading.class).apply();
     }
 }

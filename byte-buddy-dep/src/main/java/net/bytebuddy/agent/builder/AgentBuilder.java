@@ -547,7 +547,7 @@ public interface AgentBuilder {
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(new TypePool.Default(new TypePool.CacheProvider.Simple(), classFileLocator, readerMode));
+                return new TypePool.LazyFacade(new TypePool.Default.Precomputed(new TypePool.CacheProvider.Simple(), classFileLocator, readerMode));
             }
 
             @Override
@@ -583,7 +583,7 @@ public interface AgentBuilder {
 
             @Override
             public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-                return new TypePool.LazyFacade(TypePool.ClassLoading.of(classFileLocator, classLoader));
+                return new TypePool.LazyFacade(TypePool.Default.ClassLoading.of(classFileLocator, classLoader));
             }
 
             @Override

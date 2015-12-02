@@ -937,12 +937,12 @@ public interface TypePool {
         /**
          * The locator to query for finding binary data of a type.
          */
-        private final ClassFileLocator classFileLocator;
+        protected final ClassFileLocator classFileLocator;
 
         /**
          * The reader mode to apply by this default type pool.
          */
-        private final ReaderMode readerMode;
+        protected final ReaderMode readerMode;
 
         /**
          * Creates a new default type pool.
@@ -3096,86 +3096,156 @@ public interface TypePool {
                 return "TypePool.Default.ReaderMode." + name();
             }
         }
-    }
-
-    /**
-     * A class file locator that loads classes and describes the loaded classes as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType}
-     * if a type cannot be located as its class file.
-     */
-    class ClassLoading extends Default {
 
         /**
-         * The class loader to query.
+         * A class file locator that loads classes and describes the loaded classes as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType}
+         * if a type cannot be located as its class file.
          */
-        private final ClassLoader classLoader;
+        public static class ClassLoading extends Default {
 
-        /**
-         * Creates a class loading type pool.
-         *
-         * @param cacheProvider    The cache provider to be used.
-         * @param classFileLocator The class file locator to be used.
-         * @param classLoader      The class loader to query.
-         */
-        public ClassLoading(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ClassLoader classLoader) {
-            super(cacheProvider, classFileLocator, ReaderMode.FAST);
-            this.classLoader = classLoader;
-        }
+            /**
+             * The class loader to query.
+             */
+            private final ClassLoader classLoader;
 
-        /**
-         * Returns a class loading type pool that does not attempt to parse a class file but immediatly falls back to loading one.
-         *
-         * @param classLoader The class loader to query.
-         * @return An appropriate type pool.
-         */
-        public static TypePool of(ClassLoader classLoader) {
-            return of(ClassFileLocator.NoOp.INSTANCE, classLoader);
-        }
-
-        /**
-         * Returns a class loading type pool that uses a simple cache.
-         *
-         * @param classFileLocator The class file locator to be used.
-         * @param classLoader      The class loader to query.
-         * @return An appropriate type pool.
-         */
-        public static TypePool of(ClassFileLocator classFileLocator, ClassLoader classLoader) {
-            return new ClassLoading(new CacheProvider.Simple(), classFileLocator, classLoader);
-        }
-
-        @Override
-        public Resolution doDescribe(String name) {
-            Resolution resolution = super.doDescribe(name);
-            if (resolution.isResolved()) {
-                return resolution;
+            /**
+             * Creates a class loading type pool.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param classLoader      The class loader to query.
+             */
+            public ClassLoading(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ClassLoader classLoader) {
+                super(cacheProvider, classFileLocator, ReaderMode.FAST);
+                this.classLoader = classLoader;
             }
-            try {
-                return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
-            } catch (ClassNotFoundException ignored) {
-                return new Resolution.Illegal(name);
+
+            /**
+             * Returns a class loading type pool that does not attempt to parse a class file but immediatly falls back to loading one.
+             *
+             * @param classLoader The class loader to query.
+             * @return An appropriate type pool.
+             */
+            public static TypePool of(ClassLoader classLoader) {
+                return of(ClassFileLocator.NoOp.INSTANCE, classLoader);
+            }
+
+            /**
+             * Returns a class loading type pool that uses a simple cache.
+             *
+             * @param classFileLocator The class file locator to be used.
+             * @param classLoader      The class loader to query.
+             * @return An appropriate type pool.
+             */
+            public static TypePool of(ClassFileLocator classFileLocator, ClassLoader classLoader) {
+                return new ClassLoading(new CacheProvider.Simple(), classFileLocator, classLoader);
+            }
+
+            @Override
+            public Resolution doDescribe(String name) {
+                Resolution resolution = super.doDescribe(name);
+                if (resolution.isResolved()) {
+                    return resolution;
+                }
+                try {
+                    return new Resolution.Simple(new TypeDescription.ForLoadedType(Class.forName(name, false, classLoader)));
+                } catch (ClassNotFoundException ignored) {
+                    return new Resolution.Illegal(name);
+                }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                if (!super.equals(other)) return false;
+                ClassLoading that = (ClassLoading) other;
+                return !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = super.hashCode();
+                result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.Default.ClassLoading{" +
+                        "classFileLocator=" + classFileLocator +
+                        ", cacheProvider=" + cacheProvider +
+                        ", readerMode=" + readerMode +
+                        ", classLoader=" + classLoader +
+                        '}';
             }
         }
 
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            if (!super.equals(other)) return false;
-            ClassLoading that = (ClassLoading) other;
-            return !(classLoader != null ? !classLoader.equals(that.classLoader) : that.classLoader != null);
-        }
+        /**
+         * A class file locator that maintains a map of precomputed classes which are returned as a resolution in case that a type name is known.
+         */
+        public static class Precomputed extends Default {
 
-        @Override
-        public int hashCode() {
-            int result = super.hashCode();
-            result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
-            return result;
-        }
+            /**
+             * The precomputed type descriptions.
+             */
+            private final Map<String, TypeDescription> precomputed;
 
-        @Override
-        public String toString() {
-            return "TypePool.ClassLoading{" +
-                    "classLoader=" + classLoader +
-                    '}';
+            /**
+             * Creates a new precomputed type pool.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param readerMode       The reader mode to apply by this default type pool.
+             */
+            public Precomputed(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
+                this(cacheProvider, classFileLocator, readerMode, Collections.singletonMap(Object.class.getName(), TypeDescription.OBJECT));
+            }
+
+            /**
+             * Creates a new precomputed type pool.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param readerMode       The reader mode to apply by this default type pool.
+             * @param precomputed      The precomputed type descriptions.
+             */
+            public Precomputed(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, Map<String, TypeDescription> precomputed) {
+                super(cacheProvider, classFileLocator, readerMode);
+                this.precomputed = precomputed;
+            }
+
+            @Override
+            protected Resolution doDescribe(String name) {
+                TypeDescription typeDescription = precomputed.get(name);
+                return typeDescription == null
+                        ? super.doDescribe(name)
+                        : new Resolution.Simple(typeDescription);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && super.equals(other)
+                        && precomputed.equals(((Precomputed) other).precomputed);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = super.hashCode();
+                result = 31 * result + precomputed.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "TypePool.Default.Precomputed{" +
+                        "classFileLocator=" + classFileLocator +
+                        ", cacheProvider=" + cacheProvider +
+                        ", readerMode=" + readerMode +
+                        ", precomputed=" + precomputed +
+                        '}';
+            }
         }
     }
 
