@@ -16,7 +16,7 @@ public class TypePoolDefaultPrecomputedTest {
 
     @Before
     public void setUp() throws Exception {
-        typePool = new TypePool.Default.Precomputed(new TypePool.CacheProvider.Simple(),
+        typePool = TypePool.Default.Precomputed.withObjectType(new TypePool.CacheProvider.Simple(),
                 ClassFileLocator.ForClassLoader.ofClassPath(),
                 TypePool.Default.ReaderMode.FAST);
     }

@@ -3197,22 +3197,23 @@ public interface TypePool {
              * @param cacheProvider    The cache provider to be used.
              * @param classFileLocator The class file locator to be used.
              * @param readerMode       The reader mode to apply by this default type pool.
-             */
-            public Precomputed(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
-                this(cacheProvider, classFileLocator, readerMode, Collections.singletonMap(Object.class.getName(), TypeDescription.OBJECT));
-            }
-
-            /**
-             * Creates a new precomputed type pool.
-             *
-             * @param cacheProvider    The cache provider to be used.
-             * @param classFileLocator The class file locator to be used.
-             * @param readerMode       The reader mode to apply by this default type pool.
              * @param precomputed      The precomputed type descriptions.
              */
             public Precomputed(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, Map<String, TypeDescription> precomputed) {
                 super(cacheProvider, classFileLocator, readerMode);
                 this.precomputed = precomputed;
+            }
+
+            /**
+             * Creates a new precomputed type pool with the {@link Object} type being precomuted.
+             *
+             * @param cacheProvider    The cache provider to be used.
+             * @param classFileLocator The class file locator to be used.
+             * @param readerMode       The reader mode to apply by this default type pool.
+             * @return A type pool with the {@link Object} type being precomputed.
+             */
+            public static TypePool withObjectType(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
+                return new Precomputed(cacheProvider, classFileLocator, readerMode, Collections.singletonMap(Object.class.getName(), TypeDescription.OBJECT));
             }
 
             @Override
