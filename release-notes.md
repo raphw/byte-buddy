@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 7. December 2015: version 0.7.5
+
+- Fixed generic type resolution optimization for proxies for `@Super`.
+
 ### 2. December 2015: version 0.7.4
 
 - Added `TypePool` that returns precomputed `TypeDescription`s for given types.
