@@ -2,12 +2,14 @@ package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -23,6 +25,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -32,7 +35,6 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * A method call proxy represents a class that is compiled against a particular method which can then be called whenever
@@ -76,8 +78,7 @@ public class MethodCallProxy implements AuxiliaryType {
      * @param specialMethodInvocation The special method invocation which should be invoked by this method call proxy.
      * @param serializableProxy       Determines if the generated proxy should be serializableProxy.
      */
-    public MethodCallProxy(Implementation.SpecialMethodInvocation specialMethodInvocation,
-                           boolean serializableProxy) {
+    public MethodCallProxy(Implementation.SpecialMethodInvocation specialMethodInvocation, boolean serializableProxy) {
         this(specialMethodInvocation, serializableProxy, Assigner.DEFAULT);
     }
 
@@ -90,9 +91,7 @@ public class MethodCallProxy implements AuxiliaryType {
      *                                {@link java.util.concurrent.Callable#call()} or {@link Runnable#run()}} methods'
      *                                return values.
      */
-    public MethodCallProxy(Implementation.SpecialMethodInvocation specialMethodInvocation,
-                           boolean serializableProxy,
-                           Assigner assigner) {
+    public MethodCallProxy(Implementation.SpecialMethodInvocation specialMethodInvocation, boolean serializableProxy, Assigner assigner) {
         this.specialMethodInvocation = specialMethodInvocation;
         this.serializableProxy = serializableProxy;
         this.assigner = assigner;
@@ -195,9 +194,25 @@ public class MethodCallProxy implements AuxiliaryType {
          */
         PrecomputedMethodGraph() {
             LinkedHashMap<MethodDescription.Token, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.Token, MethodGraph.Node>();
-            MethodDescription callMethod = new TypeDescription.ForLoadedType(Callable.class).getDeclaredMethods().filter(named("call")).getOnly();
+            MethodDescription callMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Callable.class),
+                    "call",
+                    Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                    Collections.<GenericTypeDescription>emptyList(),
+                    TypeDescription.OBJECT,
+                    Collections.<ParameterDescription.Token>emptyList(),
+                    Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)),
+                    Collections.<AnnotationDescription>emptyList(),
+                    MethodDescription.NO_DEFAULT_VALUE);
             nodes.put(callMethod.asToken(), new MethodGraph.Node.Simple(callMethod));
-            MethodDescription runMethod = new TypeDescription.ForLoadedType(Runnable.class).getDeclaredMethods().filter(named("run")).getOnly();
+            MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
+                    "run",
+                    Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
+                    Collections.<GenericTypeDescription>emptyList(),
+                    TypeDescription.VOID,
+                    Collections.<ParameterDescription.Token>emptyList(),
+                    Collections.<GenericTypeDescription>emptyList(),
+                    Collections.<AnnotationDescription>emptyList(),
+                    MethodDescription.NO_DEFAULT_VALUE);
             nodes.put(runMethod.asToken(), new MethodGraph.Node.Simple(runMethod));
             MethodGraph methodGraph = new MethodGraph.Simple(nodes);
             this.methodGraph = new MethodGraph.Linked.Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());

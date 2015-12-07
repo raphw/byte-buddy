@@ -5,10 +5,12 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.hamcrest.core.Is.is;
 
 public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
 
@@ -66,6 +68,15 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
     }
 
     @Test
+    public void testNonGenericParameter() throws Exception {
+        Class<?> auxiliaryType = proxyOnlyDeclaredMethodOf(GenericType.class);
+        assertThat(auxiliaryType.getTypeParameters().length, is(0));
+        assertThat(auxiliaryType.getDeclaredMethod("call").getGenericReturnType(), is((Type) Object.class));
+        assertThat(auxiliaryType.getDeclaredFields()[1].getGenericType(), is((Type) Object.class));
+        assertThat(auxiliaryType.getDeclaredFields()[2].getGenericType(), is((Type) Number.class));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodCallProxy.class).apply();
         ObjectPropertyAssertion.of(MethodCallProxy.AssignableSignatureCall.class).apply();
@@ -97,6 +108,14 @@ public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
 
         public void foo(long l, String s, int i, boolean b) {
             register(FOO, this, l, s, i, b);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class GenericType<T, S extends Number> {
+
+        T foo(T t, S s) {
+            return t;
         }
     }
 }
