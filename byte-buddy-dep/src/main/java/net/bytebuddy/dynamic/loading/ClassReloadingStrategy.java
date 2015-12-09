@@ -8,6 +8,7 @@ import java.lang.instrument.*;
 import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -137,15 +138,19 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
     @Override
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
+        Map<String, Class<?>> loadedTypes = new HashMap<String, Class<?>>();
+        for (Class<?> type : instrumentation.getInitiatedClasses(classLoader)) {
+            loadedTypes.put(type.getName(), type);
+        }
+        Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>();
         Map<TypeDescription, Class<?>> loadedClasses = new HashMap<TypeDescription, Class<?>>();
-        Map<TypeDescription, byte[]> unloadedClasses = new HashMap<TypeDescription, byte[]>();
-        Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>(types.size());
+        Map<TypeDescription, byte[]> unloadedClasses = new LinkedHashMap<TypeDescription, byte[]>();
         for (Map.Entry<TypeDescription, byte[]> entry : types.entrySet()) {
-            try {
-                Class<?> type = classLoader.loadClass(entry.getKey().getName());
+            Class<?> type = loadedTypes.get(entry.getKey().getName());
+            if (type != null) {
                 classDefinitions.put(type, new ClassDefinition(type, entry.getValue()));
                 loadedClasses.put(entry.getKey(), type);
-            } catch (ClassNotFoundException ignored) {
+            } else {
                 unloadedClasses.put(entry.getKey(), entry.getValue());
             }
         }
