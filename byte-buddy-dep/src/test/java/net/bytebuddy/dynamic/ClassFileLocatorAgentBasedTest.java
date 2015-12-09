@@ -71,8 +71,7 @@ public class ClassFileLocatorAgentBasedTest {
     @Test
     public void testExplicitLookup() throws Exception {
         ClassFileLocator.AgentBased.ClassLoadingDelegate fallback = mock(ClassFileLocator.AgentBased.ClassLoadingDelegate.class);
-        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = new ClassFileLocator.AgentBased
-                .ClassLoadingDelegate.Explicit(fallback, Collections.<Class<?>>singletonList(Object.class));
+        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.of(Object.class);
         assertEquals(Object.class, classLoadingDelegate.locate(Object.class.getName()));
         doReturn(String.class).when(fallback).locate(String.class.getName());
         assertEquals(String.class, classLoadingDelegate.locate(String.class.getName()));

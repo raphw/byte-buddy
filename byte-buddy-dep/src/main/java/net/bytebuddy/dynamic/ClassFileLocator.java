@@ -507,6 +507,17 @@ public interface ClassFileLocator {
             }
         }
 
+        /**
+         * Returns a class file locator that is capable of locating a class file for the given type using the given instrumentation instance.
+         *
+         * @param instrumentation The instrumentation instance to query for a retransformation.
+         * @param type            The locatable type which class loader is used as a fallback.
+         * @return A class file locator for locating the class file of the given type.
+         */
+        public static ClassFileLocator of(Instrumentation instrumentation, Class<?> type) {
+            return new AgentBased(instrumentation, ClassLoadingDelegate.Explicit.of(type));
+        }
+
         @Override
         public Resolution locate(String typeName) {
             try {
@@ -899,7 +910,7 @@ public interface ClassFileLocator {
                  * @param classLoader The class loader to be used for looking up classes.
                  * @param types       A collection of classes that cannot be looked up explicitly.
                  */
-                public Explicit(ClassLoader classLoader, Collection<Class<?>> types) {
+                public Explicit(ClassLoader classLoader, Collection<? extends Class<?>> types) {
                     this(new Default(classLoader), types);
                 }
 
@@ -911,12 +922,22 @@ public interface ClassFileLocator {
                  *                         registered explicitly.
                  * @param types            A collection of classes that cannot be looked up explicitly.
                  */
-                public Explicit(ClassLoadingDelegate fallbackDelegate, Collection<Class<?>> types) {
+                public Explicit(ClassLoadingDelegate fallbackDelegate, Collection<? extends Class<?>> types) {
                     this.fallbackDelegate = fallbackDelegate;
                     this.types = new HashMap<String, Class<?>>();
                     for (Class<?> type : types) {
                         this.types.put(type.getName(), type);
                     }
+                }
+
+                /**
+                 * Creates an explicit class loading delegate for the given type.
+                 *
+                 * @param type The type that is explicitly locatable.
+                 * @return A suitable class loading delegate.
+                 */
+                public static ClassLoadingDelegate of(Class<?> type) {
+                    return new Explicit(type.getClassLoader(), Collections.singleton(type));
                 }
 
                 @Override
