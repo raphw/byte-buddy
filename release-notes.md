@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 7. December 2015: version 0.7.5
+
+- Fixed generic type resolution optimization for proxies for `@Super`.
+
 ### 2. December 2015: version 0.7.4
 
 - Added `TypePool` that returns precomputed `TypeDescription`s for given types.
@@ -128,11 +132,11 @@ Corrected incorrect deployment of version 0.6.7 which does not use a dependency 
 
 ### 28. May 2015: version 0.6.6
 
-Fixed error in resolution of the `TargetType` pseudo-variable when used as component type of an array.
+- Fixed error in resolution of the `TargetType` pseudo-variable when used as component type of an array.
 
 ### 7. May 2015: version 0.6.5
 
-Extended public API with convenience methods.
+- Extended public API with convenience methods.
 
 ### 6. May 2015: version 0.6.4
 
@@ -244,12 +248,10 @@ constructor interception where a hard-coded super method call is required by the
   
 ### 20. June 2014: version 0.2.1
 
-Added proper support for defining class initializers. Added support for field caching from method instrumentations,
+- Added proper support for defining class initializers. Added support for field caching from method instrumentations,
 mainly for allowing the reuse of `Method` instances for the `@Origin` annotation and the `InvocationHandlerAdapter`.
   
 ### 16. June 2014: version 0.2
-
-Added several bug fixes for existing features. Beyond that the following features were added or changed:
 
  - Changed the semantics of the `@SuperCall` to be only bindable, if a super method can be invoked. Before, an
    exception was thrown if only a non-existent or abstract super method was found.
@@ -261,4 +263,4 @@ Added several bug fixes for existing features. Beyond that the following feature
  
 ### 02. May 2014: version 0.1
 
-First general release.
+- First general release.
