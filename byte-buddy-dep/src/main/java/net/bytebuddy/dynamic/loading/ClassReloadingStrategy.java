@@ -97,6 +97,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * classes will be transformed using a class redefinition.
      *
      * @param instrumentation The instrumentation to be used by this reloading strategy.
+     * @return A suitable class reloading strategy.
      */
     public static ClassReloadingStrategy of(Instrumentation instrumentation) {
         Engine engine;
