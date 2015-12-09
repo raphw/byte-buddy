@@ -161,6 +161,7 @@ public class ClassReloadingStrategyTest {
             @Override
             public void apply(Instrumentation mock) {
                 when(mock.isRedefineClassesSupported()).thenReturn(true);
+                when(mock.isRetransformClassesSupported()).thenReturn(true);
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
