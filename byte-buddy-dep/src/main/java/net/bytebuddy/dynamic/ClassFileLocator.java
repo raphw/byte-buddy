@@ -926,7 +926,11 @@ public interface ClassFileLocator {
                     this.fallbackDelegate = fallbackDelegate;
                     this.types = new HashMap<String, Class<?>>();
                     for (Class<?> type : types) {
-                        this.types.put(type.getName(), type);
+                        String typeName = type.getName();
+                        int anonymousLoaderIndex = typeName.indexOf('/');
+                        this.types.put(anonymousLoaderIndex == -1
+                                ? typeName
+                                : typeName.substring(0, anonymousLoaderIndex), type);
                     }
                 }
 
@@ -1021,8 +1025,14 @@ public interface ClassFileLocator {
                                     Class<?> redefinedType,
                                     ProtectionDomain protectionDomain,
                                     byte[] classFile) throws IllegalClassFormatException {
-                if (isChild(classLoader) && typeName.equals(redefinedType.getName())) {
-                    this.binaryRepresentation = classFile;
+                if (redefinedType != null) {
+                    String typeName = redefinedType.getName();
+                    int anonymousLoaderIndex = typeName.indexOf('/');
+                    if (isChild(classLoader) && this.typeName.equals(anonymousLoaderIndex == -1
+                            ? typeName
+                            : typeName.substring(0, anonymousLoaderIndex))) {
+                        this.binaryRepresentation = classFile;
+                    }
                 }
                 return DO_NOT_TRANSFORM;
             }

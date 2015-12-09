@@ -978,7 +978,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public String getName() {
-            return type.getName();
+            String name = type.getName();
+            int anonymousLoaderIndex = name.indexOf('/');
+            return anonymousLoaderIndex == -1
+                    ? name
+                    : name.substring(0, anonymousLoaderIndex);
         }
 
         @Override

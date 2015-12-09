@@ -217,7 +217,11 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public ClassReloadingStrategy preregistered(Class<?>... type) {
         Map<String, Class<?>> preregisteredTypes = new HashMap<String, Class<?>>(this.preregisteredTypes);
         for (Class<?> aType : type) {
-            preregisteredTypes.put(aType.getName(), aType);
+            String typeName = aType.getName();
+            int anonymousLoaderIndex = typeName.indexOf('/');
+            preregisteredTypes.put(anonymousLoaderIndex == -1
+                    ? typeName
+                    : typeName.substring(0, anonymousLoaderIndex), aType);
         }
         return new ClassReloadingStrategy(instrumentation, engine, bootstrapInjection, preregisteredTypes);
     }
