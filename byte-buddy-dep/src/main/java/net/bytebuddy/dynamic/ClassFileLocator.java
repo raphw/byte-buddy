@@ -1025,14 +1025,8 @@ public interface ClassFileLocator {
                                     Class<?> redefinedType,
                                     ProtectionDomain protectionDomain,
                                     byte[] classFile) throws IllegalClassFormatException {
-                if (redefinedType != null) {
-                    String typeName = redefinedType.getName();
-                    int anonymousLoaderIndex = typeName.indexOf('/');
-                    if (isChild(classLoader) && this.typeName.equals(anonymousLoaderIndex == -1
-                            ? typeName
-                            : typeName.substring(0, anonymousLoaderIndex))) {
-                        this.binaryRepresentation = classFile;
-                    }
+                if (isChild(classLoader) && typeName.equals(internalName.replace('/', '.'))) {
+                    this.binaryRepresentation = classFile;
                 }
                 return DO_NOT_TRANSFORM;
             }
