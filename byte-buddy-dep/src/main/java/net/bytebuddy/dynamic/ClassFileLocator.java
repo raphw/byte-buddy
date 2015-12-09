@@ -619,7 +619,7 @@ public interface ClassFileLocator {
                 public static ClassLoadingDelegate of(ClassLoader classLoader, AccessControlContext accessControlContext) {
                     return ForDelegatingClassLoader.isDelegating(classLoader)
                             ? new ForDelegatingClassLoader(classLoader, accessControlContext)
-                            : new Default(classLoader);
+                            : new Default(classLoader == null ? ClassLoader.getSystemClassLoader() : classLoader);
                 }
 
                 @Override
@@ -911,7 +911,7 @@ public interface ClassFileLocator {
                  * @param types       A collection of classes that cannot be looked up explicitly.
                  */
                 public Explicit(ClassLoader classLoader, Collection<? extends Class<?>> types) {
-                    this(new Default(classLoader), types);
+                    this(Default.of(classLoader), types);
                 }
 
                 /**

@@ -22,7 +22,8 @@ import java.util.Iterator;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class ClassFileLocatorAgentBasedTest {
 
@@ -69,18 +70,19 @@ public class ClassFileLocatorAgentBasedTest {
     }
 
     @Test
-    public void testExplicitLookup() throws Exception {
-        ClassFileLocator.AgentBased.ClassLoadingDelegate fallback = mock(ClassFileLocator.AgentBased.ClassLoadingDelegate.class);
+    public void testExplicitLookupBootstrapClassLoader() throws Exception {
         ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.of(Object.class);
+        assertThat(classLoadingDelegate.getClassLoader(), is(ClassLoader.getSystemClassLoader()));
         assertEquals(Object.class, classLoadingDelegate.locate(Object.class.getName()));
-        doReturn(String.class).when(fallback).locate(String.class.getName());
         assertEquals(String.class, classLoadingDelegate.locate(String.class.getName()));
-        verify(fallback).locate(String.class.getName());
-        ClassLoader classLoader = mock(ClassLoader.class);
-        when(fallback.getClassLoader()).thenReturn(classLoader);
-        assertThat(classLoadingDelegate.getClassLoader(), is(classLoader));
-        verify(fallback).getClassLoader();
-        verifyNoMoreInteractions(fallback);
+    }
+
+    @Test
+    public void testExplicitLookup() throws Exception {
+        ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.of(Foo.class);
+        assertThat(classLoadingDelegate.getClassLoader(), is(Foo.class.getClassLoader()));
+        assertEquals(Foo.class, classLoadingDelegate.locate(Foo.class.getName()));
+        assertEquals(Object.class, classLoadingDelegate.locate(Object.class.getName()));
     }
 
     @Test
