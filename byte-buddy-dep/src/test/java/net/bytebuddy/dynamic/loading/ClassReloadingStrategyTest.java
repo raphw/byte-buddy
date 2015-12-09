@@ -2,20 +2,24 @@ package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
+import org.mockito.ArgumentCaptor;
 
+import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
+import java.util.Collections;
 
+import static junit.framework.TestCase.assertEquals;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 public class ClassReloadingStrategyTest {
 
@@ -103,20 +107,52 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
-    public void testRetransformationFunctional() throws Exception {
+    public void testPreregisteredType() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        ClassLoader classLoader = mock(ClassLoader.class);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        when(instrumentation.getInitiatedClasses(classLoader)).thenReturn(new Class<?>[0]);
+        ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.of(instrumentation).preregistered(Object.class);
+        ArgumentCaptor<ClassDefinition> classDefinition = ArgumentCaptor.forClass(ClassDefinition.class);
+        classReloadingStrategy.load(classLoader, Collections.singletonMap(TypeDescription.OBJECT, new byte[]{1, 2, 3}));
+        verify(instrumentation).redefineClasses(classDefinition.capture());
+        assertEquals(Object.class, classDefinition.getValue().getDefinitionClass());
+        assertThat(classDefinition.getValue().getDefinitionClassFile(), is(new byte[]{1, 2, 3}));
+    }
+
+    @Test
+    public void testRetransformationDiscovery() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        assertThat(new ClassReloadingStrategy(instrumentation), notNullValue(ClassReloadingStrategy.class));
+        assertThat(ClassReloadingStrategy.of(instrumentation), notNullValue(ClassReloadingStrategy.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonCompatible() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class));
+        ClassReloadingStrategy.of(mock(Instrumentation.class));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNoRedefinition() throws Exception {
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.REDEFINITION);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNoRetransformation() throws Exception {
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.RETRANSFORMATION);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testResetNotSupported() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.RETRANSFORMATION).reset();
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
+        new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Engine.RETRANSFORMATION).reset();
+    }
+
+    @Test
+    public void testEngineSelfReport() throws Exception {
+        assertThat(ClassReloadingStrategy.Engine.REDEFINITION.isRedefinition(), is(true));
+        assertThat(ClassReloadingStrategy.Engine.RETRANSFORMATION.isRedefinition(), is(false));
     }
 
     @Test
