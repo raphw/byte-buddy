@@ -196,9 +196,9 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     String getSimpleName();
 
     /**
-     * Returns the canonical internalName of this type.
+     * Returns the canonical name of this type if it exists.
      *
-     * @return The canonical internalName of this type.
+     * @return The canonical name of this type. Might be {@code null}.
      */
     String getCanonicalName();
 
@@ -806,16 +806,26 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
             @Override
             public String getCanonicalName() {
-                return getName().replace('$', '.');
+                return isAnonymousClass() || isLocalClass()
+                        ? NO_NAME
+                        : getName().replace('$', '.');
             }
 
             @Override
             public String getSimpleName() {
-                int simpleNameIndex = getInternalName().lastIndexOf('$');
+                String internalName = getInternalName();
+                int simpleNameIndex = internalName.lastIndexOf('$');
                 simpleNameIndex = simpleNameIndex == -1
-                        ? getInternalName().lastIndexOf('/')
+                        ? internalName.lastIndexOf('/')
                         : simpleNameIndex;
-                return simpleNameIndex == -1 ? getInternalName() : getInternalName().substring(simpleNameIndex + 1);
+                if (simpleNameIndex == -1) {
+                    return internalName;
+                } else {
+                    while (simpleNameIndex < internalName.length() && !Character.isLetter(internalName.charAt(simpleNameIndex))) {
+                        simpleNameIndex += 1;
+                    }
+                    return internalName.substring(simpleNameIndex);
+                }
             }
 
             @Override
@@ -935,7 +945,19 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public String getSimpleName() {
-            return type.getSimpleName();
+            String simpleName = type.getSimpleName();
+            int anonymousLoaderIndex = simpleName.indexOf('/');
+            if (anonymousLoaderIndex == -1) {
+                return simpleName;
+            } else {
+                StringBuilder normalized = new StringBuilder(simpleName.substring(0, anonymousLoaderIndex));
+                Class<?> type = this.type;
+                while (type.isArray()) {
+                    normalized.append("[]");
+                    type = type.getComponentType();
+                }
+                return normalized.toString();
+            }
         }
 
         @Override
@@ -987,12 +1009,31 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public String getCanonicalName() {
-            return type.getCanonicalName();
+            String canonicalName = type.getCanonicalName();
+            if (canonicalName == null) {
+                return NO_NAME;
+            }
+            int anonymousLoaderIndex = canonicalName.indexOf('/');
+            if (anonymousLoaderIndex == -1) {
+                return canonicalName;
+            } else {
+                StringBuilder normalized = new StringBuilder(canonicalName.substring(0, anonymousLoaderIndex));
+                Class<?> type = this.type;
+                while (type.isArray()) {
+                    normalized.append("[]");
+                    type = type.getComponentType();
+                }
+                return normalized.toString();
+            }
         }
 
         @Override
         public String getDescriptor() {
-            return Type.getDescriptor(type);
+            String name = type.getName();
+            int anonymousLoaderIndex = name.indexOf('/');
+            return anonymousLoaderIndex == -1
+                    ? Type.getDescriptor(type)
+                    : "L" + name.substring(0, anonymousLoaderIndex).replace('.', '/') + ";";
         }
 
         @Override
@@ -1110,7 +1151,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public String getCanonicalName() {
-            StringBuilder stringBuilder = new StringBuilder(componentType.getCanonicalName());
+            String canonicalName = componentType.getCanonicalName();
+            if (canonicalName == null) {
+                return NO_NAME;
+            }
+            StringBuilder stringBuilder = new StringBuilder(canonicalName);
             for (int i = 0; i < arity; i++) {
                 stringBuilder.append("[]");
             }

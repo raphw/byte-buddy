@@ -37,26 +37,32 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     private static final String FOO = "foo", BAR = "bar";
 
-    @SuppressWarnings("unchecked")
-    private static final List<Class<?>> TYPES = Arrays.asList(Object.class,
-            SampleClass.class,
-            void.class,
-            byte.class,
-            short.class,
-            char.class,
-            int.class,
-            long.class,
-            float.class,
-            double.class,
-            Object[].class);
+    private final List<Class<?>> standardTypes;
 
     private final Class<?> constructorType;
 
+    @SuppressWarnings("unchecked")
     protected AbstractTypeDescriptionTest() {
-        class ConstructorType {
-
+        class MemberType {
+            /* empty */
         }
-        constructorType = ConstructorType.class;
+        constructorType = MemberType.class;
+        standardTypes = Arrays.asList(Object.class,
+                SampleClass.class,
+                void.class,
+                byte.class,
+                short.class,
+                char.class,
+                int.class,
+                long.class,
+                float.class,
+                double.class,
+                Object[].class,
+                MemberType.class,
+                MemberType[].class,
+                new Object() {
+                    /* empty */
+                }.getClass());
     }
 
     protected abstract TypeDescription describe(Class<?> type);
@@ -113,14 +119,14 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testName() throws Exception {
-        for (Class<?> type : TYPES) {
+        for (Class<?> type : standardTypes) {
             assertThat(describe(type).getName(), is(type.getName()));
         }
     }
 
     @Test
     public void testSourceName() throws Exception {
-        for (Class<?> type : TYPES) {
+        for (Class<?> type : standardTypes) {
             if (type.isArray()) {
                 assertThat(describe(type).getSourceCodeName(), is(type.getComponentType().getName() + "[]"));
             } else {
@@ -131,22 +137,43 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testInternalName() throws Exception {
-        for (Class<?> type : TYPES) {
+        for (Class<?> type : standardTypes) {
             assertThat(describe(type).getInternalName(), is(Type.getInternalName(type)));
         }
     }
 
     @Test
     public void testCanonicalName() throws Exception {
-        for (Class<?> type : TYPES) {
+        for (Class<?> type : standardTypes) {
             assertThat(describe(type).getCanonicalName(), is(type.getCanonicalName()));
         }
     }
 
     @Test
     public void testSimpleName() throws Exception {
-        for (Class<?> type : TYPES) {
+        for (Class<?> type : standardTypes) {
             assertThat(describe(type).getSimpleName(), is(type.getSimpleName()));
+        }
+    }
+
+    @Test
+    public void testIsMemberClass() throws Exception {
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).isMemberClass(), is(type.isMemberClass()));
+        }
+    }
+
+    @Test
+    public void testIsAnonymousClass() throws Exception {
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).isAnonymousClass(), is(type.isAnonymousClass()));
+        }
+    }
+
+    @Test
+    public void testIsLocalClass() throws Exception {
+        for (Class<?> type : standardTypes) {
+            assertThat(describe(type).isLocalClass(), is(type.isLocalClass()));
         }
     }
 
@@ -178,7 +205,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testDescriptor() throws Exception {
-        for (Class<?> type : TYPES) {
+        for (Class<?> type : standardTypes) {
             assertThat(describe(type).getDescriptor(), is(Type.getDescriptor(type)));
         }
     }
@@ -296,7 +323,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testToString() throws Exception {
-        for (Class<?> type : TYPES) {
+        for (Class<?> type : standardTypes) {
             assertThat(describe(type).toString(), is(type.toString()));
         }
     }

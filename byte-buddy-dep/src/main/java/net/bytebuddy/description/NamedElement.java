@@ -6,6 +6,11 @@ package net.bytebuddy.description;
 public interface NamedElement {
 
     /**
+     * Indicates that an element is not named.
+     */
+    String NO_NAME = null;
+
+    /**
      * Represents an element without a name in the source code.
      */
     String EMPTY_NAME = "";
