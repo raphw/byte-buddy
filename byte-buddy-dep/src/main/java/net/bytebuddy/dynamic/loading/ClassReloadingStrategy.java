@@ -147,7 +147,10 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public Map<TypeDescription, Class<?>> load(ClassLoader classLoader, Map<TypeDescription, byte[]> types) {
         Map<String, Class<?>> availableTypes = new HashMap<String, Class<?>>(preregisteredTypes);
         for (Class<?> type : instrumentation.getInitiatedClasses(classLoader)) {
-            availableTypes.put(type.getName(), type);
+            int anonymousLoaderIndex = type.getName().indexOf('/');
+            availableTypes.put(anonymousLoaderIndex == -1
+                    ? type.getName()
+                    : type.getName().substring(0, anonymousLoaderIndex), type);
         }
         Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>();
         Map<TypeDescription, Class<?>> loadedClasses = new HashMap<TypeDescription, Class<?>>();

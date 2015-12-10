@@ -713,6 +713,19 @@ public interface ClassFileLocator {
                     return classLoader != null && classLoader.getClass().getName().equals(DELEGATING_CLASS_LOADER_NAME);
                 }
 
+                /**
+                 * Normalizes a type name if it is loaded by an anonymous class loader.
+                 *
+                 * @param typeName The name as returned by {@link Class#getName()}.
+                 * @return The non-anonymous name of the given class.
+                 */
+                private static String nonAnonymous(String typeName) {
+                    int anonymousLoaderIndex = typeName.indexOf('/');
+                    return anonymousLoaderIndex == -1
+                            ? typeName
+                            : typeName.substring(0, anonymousLoaderIndex);
+                }
+
                 @Override
                 @SuppressWarnings("unchecked")
                 public Class<?> locate(String name) throws ClassNotFoundException {
@@ -726,7 +739,7 @@ public interface ClassFileLocator {
                         return super.locate(name);
                     }
                     Class<?> type = classes.get(ONLY);
-                    return type.getName().equals(name)
+                    return nonAnonymous(type.getName()).equals(name)
                             ? type
                             : super.locate(name);
                 }

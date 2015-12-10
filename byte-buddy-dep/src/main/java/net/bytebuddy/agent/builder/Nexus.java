@@ -52,7 +52,7 @@ public class Nexus {
      * @param identification An identification for the initializer to run.
      */
     private Nexus(Class<?> type, int identification) {
-        this(type.getName(), type.getClassLoader(), identification);
+        this(nonAnonymous(type.getName()), type.getClassLoader(), identification);
     }
 
     /**
@@ -66,6 +66,19 @@ public class Nexus {
         this.name = name;
         this.classLoader = classLoader;
         this.identification = identification;
+    }
+
+    /**
+     * Normalizes a type name if it is loaded by an anonymous class loader.
+     *
+     * @param typeName The name as returned by {@link Class#getName()}.
+     * @return The non-anonymous name of the given class.
+     */
+    private static String nonAnonymous(String typeName) {
+        int anonymousLoaderIndex = typeName.indexOf('/');
+        return anonymousLoaderIndex == -1
+                ? typeName
+                : typeName.substring(0, anonymousLoaderIndex);
     }
 
     /**

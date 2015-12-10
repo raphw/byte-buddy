@@ -1460,6 +1460,7 @@ public interface AgentBuilder {
                                   Default.BootstrapInjectionStrategy bootstrapInjectionStrategy) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
+                        TypeDescription typeDescription = new TypeDescription.ForLoadedType(entry.getType());
                         try {
                             classDefinitions.add(entry.resolve(initializationStrategy,
                                     binaryLocator.classFileLocator(entry.getType().getClassLoader()),
@@ -1470,9 +1471,9 @@ public interface AgentBuilder {
                                     accessControlContext,
                                     listener));
                         } catch (Throwable throwable) {
-                            listener.onError(entry.getType().getName(), throwable);
+                            listener.onError(typeDescription.getName(), throwable);
                         } finally {
-                            listener.onComplete(entry.getType().getName());
+                            listener.onComplete(typeDescription.getName());
                         }
                     }
                     if (!classDefinitions.isEmpty()) {
@@ -1964,13 +1965,14 @@ public interface AgentBuilder {
             if (redefinitionStrategy.isEnabled()) {
                 RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
+                    TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
                     try {
                         if (!instrumentation.isModifiableClass(type) || !collector.consider(type)) {
                             try {
                                 try {
-                                    listener.onIgnored(new TypeDescription.ForLoadedType(type));
+                                    listener.onIgnored(typeDescription);
                                 } finally {
-                                    listener.onComplete(type.getName());
+                                    listener.onComplete(typeDescription.getName());
                                 }
                             } catch (Throwable ignored) {
                                 // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -1979,9 +1981,9 @@ public interface AgentBuilder {
                     } catch (Throwable throwable) {
                         try {
                             try {
-                                listener.onError(type.getName(), throwable);
+                                listener.onError(typeDescription.getName(), throwable);
                             } finally {
-                                listener.onComplete(type.getName());
+                                listener.onComplete(typeDescription.getName());
                             }
                         } catch (Throwable ignored) {
                             // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
