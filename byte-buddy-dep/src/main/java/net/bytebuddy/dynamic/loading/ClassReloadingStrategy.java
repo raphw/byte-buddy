@@ -419,6 +419,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] classfileBuffer) throws IllegalClassFormatException {
+                if (internalTypeName == null) {
+                    return NO_REDEFINITION;
+                }
                 ClassDefinition redefinedClass = redefinedClasses.remove(classBeingRedefined);
                 return redefinedClass == null
                         ? NO_REDEFINITION

@@ -2984,6 +2984,9 @@ public interface AgentBuilder {
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
                                     byte[] binaryRepresentation) {
+                if (internalTypeName == null) {
+                    return NO_TRANSFORMATION;
+                }
                 String binaryTypeName = internalTypeName.replace('/', '.');
                 try {
                     ClassFileLocator classFileLocator = ClassFileLocator.Simple.of(binaryTypeName,
