@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -9,10 +10,8 @@ import org.junit.runners.Parameterized;
 import java.util.Arrays;
 import java.util.Collection;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 
 @RunWith(Parameterized.class)
@@ -90,7 +89,7 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(StringTarget.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(StringTarget.class)));
         assertThat(instance, instanceOf(helperClass));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));
         assertThat(loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(fixedValue));
@@ -104,7 +103,7 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(2));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(fixedValue == null ? 0 : 1));
         T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(StringTarget.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(StringTarget.class)));
         assertThat(instance, instanceOf(helperClass));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO).invoke(instance), is(fixedValue));
         assertThat(loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(fixedValue));

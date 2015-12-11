@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -23,7 +24,6 @@ import java.util.*;
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNotEquals;
 
 @RunWith(Parameterized.class)
 public class ByteArrayClassLoaderChildFirstTest {
@@ -75,7 +75,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         Class<?> type = classLoader.loadClass(Foo.class.getName());
         assertThat(type.getClassLoader(), is(classLoader));
         assertEquals(classLoader.loadClass(Foo.class.getName()), type);
-        assertNotEquals(Foo.class, type);
+        assertThat(type, not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(type.getPackage(), notNullValue(Package.class));
         assertThat(type.getPackage(), is(Foo.class.getPackage()));
     }

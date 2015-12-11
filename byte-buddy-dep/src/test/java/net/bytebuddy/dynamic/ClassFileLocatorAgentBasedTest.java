@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -21,7 +22,6 @@ import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -73,16 +73,16 @@ public class ClassFileLocatorAgentBasedTest {
     public void testExplicitLookupBootstrapClassLoader() throws Exception {
         ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.of(Object.class);
         assertThat(classLoadingDelegate.getClassLoader(), is(ClassLoader.getSystemClassLoader()));
-        assertEquals(Object.class, classLoadingDelegate.locate(Object.class.getName()));
-        assertEquals(String.class, classLoadingDelegate.locate(String.class.getName()));
+        assertThat(classLoadingDelegate.locate(Object.class.getName()), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(classLoadingDelegate.locate(String.class.getName()), CoreMatchers.<Class<?>>is(String.class));
     }
 
     @Test
     public void testExplicitLookup() throws Exception {
         ClassFileLocator.AgentBased.ClassLoadingDelegate classLoadingDelegate = ClassFileLocator.AgentBased.ClassLoadingDelegate.Explicit.of(Foo.class);
         assertThat(classLoadingDelegate.getClassLoader(), is(Foo.class.getClassLoader()));
-        assertEquals(Foo.class, classLoadingDelegate.locate(Foo.class.getName()));
-        assertEquals(Object.class, classLoadingDelegate.locate(Object.class.getName()));
+        assertThat(classLoadingDelegate.locate(Foo.class.getName()), CoreMatchers.<Class<?>>is(Foo.class));
+        assertThat(classLoadingDelegate.locate(Object.class.getName()), CoreMatchers.<Class<?>>is(Object.class));
     }
 
     @Test

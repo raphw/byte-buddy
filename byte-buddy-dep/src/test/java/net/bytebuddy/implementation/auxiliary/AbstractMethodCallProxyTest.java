@@ -7,6 +7,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
@@ -18,7 +19,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class AbstractMethodCallProxyTest {
@@ -56,10 +56,10 @@ public class AbstractMethodCallProxyTest {
         assertThat(auxiliaryType.getDeclaredFields().length, is(proxyMethod.getParameters().size() + (proxyMethod.isStatic() ? 0 : 1)));
         int fieldIndex = 0;
         if (!proxyMethod.isStatic()) {
-            assertEquals(proxyTarget, auxiliaryType.getDeclaredFields()[fieldIndex++].getType());
+            assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(proxyTarget));
         }
         for (Class<?> parameterType : proxyTarget.getDeclaredMethods()[0].getParameterTypes()) {
-            assertEquals(parameterType, auxiliaryType.getDeclaredFields()[fieldIndex++].getType());
+            assertThat(auxiliaryType.getDeclaredFields()[fieldIndex++].getType(), CoreMatchers.<Class<?>>is(parameterType));
         }
         return auxiliaryType;
     }

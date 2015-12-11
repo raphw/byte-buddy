@@ -3,6 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -15,7 +16,6 @@ import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNotEquals;
 
 @RunWith(Parameterized.class)
 public class FieldAccessorTest<T extends CallTraceable,
@@ -197,7 +197,7 @@ public class FieldAccessorTest<T extends CallTraceable,
         if (definesField) {
             initializeField(instance);
         }
-        assertNotEquals(target, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(target)));
         assertThat(instance, instanceOf(target));
         Method getter = loaded.getLoaded()
                 .getDeclaredMethod(GET + Character.toUpperCase(FOO.charAt(0)) + FOO.substring(1));
@@ -215,7 +215,7 @@ public class FieldAccessorTest<T extends CallTraceable,
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(definesField ? 1 : 0));
         Z instance = loaded.getLoaded().newInstance();
-        assertNotEquals(target, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(target)));
         assertThat(instance, instanceOf(target));
         Method setter = loaded.getLoaded()
                 .getDeclaredMethod(SET + Character.toUpperCase(FOO.charAt(0)) + FOO.substring(1), propertyType);

@@ -1,17 +1,15 @@
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.benchmark.specimen.ExampleInterface;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.lang.reflect.Proxy;
 import java.util.Arrays;
 
-import static org.hamcrest.CoreMatchers.hasItem;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class ClassByImplementationBenchmarkTest {
 
@@ -73,10 +71,9 @@ public class ClassByImplementationBenchmarkTest {
     @Test
     public void testByteBuddyClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkByteBuddy();
-        assertNotEquals(Object.class, instance.getClass());
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
-        assertEquals(Object.class, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByImplementationBenchmark.benchmarkByteBuddy());
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(classByImplementationBenchmark.benchmarkByteBuddy().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 
@@ -84,8 +81,8 @@ public class ClassByImplementationBenchmarkTest {
     public void testCglibClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkCglib();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
-        assertEquals(Object.class, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByImplementationBenchmark.benchmarkCglib());
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(classByImplementationBenchmark.benchmarkCglib().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 
@@ -93,8 +90,8 @@ public class ClassByImplementationBenchmarkTest {
     public void testJavassistClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkJavassist();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
-        assertEquals(Object.class, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByImplementationBenchmark.benchmarkJavassist());
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(classByImplementationBenchmark.benchmarkJavassist().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 
@@ -102,8 +99,8 @@ public class ClassByImplementationBenchmarkTest {
     public void testJdkProxyClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkJdkProxy();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
-        assertEquals(Proxy.class, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByImplementationBenchmark.benchmarkJdkProxy());
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(Proxy.class));
+        assertThat(classByImplementationBenchmark.benchmarkByteBuddy().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 }

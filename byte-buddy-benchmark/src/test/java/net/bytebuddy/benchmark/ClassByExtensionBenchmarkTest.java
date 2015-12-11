@@ -1,13 +1,13 @@
 package net.bytebuddy.benchmark;
 
 import net.bytebuddy.benchmark.specimen.ExampleClass;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class ClassByExtensionBenchmarkTest {
 
@@ -69,36 +69,36 @@ public class ClassByExtensionBenchmarkTest {
     @Test
     public void testByteBuddyWithAnnotationsClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAnnotations();
-        assertNotEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass());
-        assertEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByExtensionBenchmark.benchmarkByteBuddyWithAnnotations());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertThat(classByExtensionBenchmark.benchmarkByteBuddyWithAnnotations().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 
     @Test
     public void testByteBuddySpecializedClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddySpecialized();
-        assertNotEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass());
-        assertEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByExtensionBenchmark.benchmarkByteBuddySpecialized());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertThat(classByExtensionBenchmark.benchmarkByteBuddySpecialized().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 
     @Test
     public void testCglibClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkCglib();
-        assertNotEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass());
-        assertEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByExtensionBenchmark.benchmarkCglib());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertThat(classByExtensionBenchmark.benchmarkCglib().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 
     @Test
     public void testJavassistClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkJavassist();
-        assertNotEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass());
-        assertEquals(ClassByExtensionBenchmark.BASE_CLASS, instance.getClass().getSuperclass());
-        assertNotEquals(instance.getClass(), classByExtensionBenchmark.benchmarkJavassist());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertThat(classByExtensionBenchmark.benchmarkJavassist().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
         assertReturnValues(instance);
     }
 }

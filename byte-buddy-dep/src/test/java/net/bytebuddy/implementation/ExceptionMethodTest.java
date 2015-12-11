@@ -5,11 +5,12 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.*;
+import static org.junit.Assert.fail;
 import static org.mockito.Mockito.when;
 
 public class ExceptionMethodTest extends AbstractImplementationTest {
@@ -23,13 +24,13 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         Foo instance = loaded.getLoaded().newInstance();
-        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
         try {
             instance.foo();
             fail();
         } catch (RuntimeException exception) {
-            assertEquals(RuntimeException.class, exception.getClass());
+            assertThat(exception.getClass(), CoreMatchers.<Class<?>>is(RuntimeException.class));
             assertThat(exception.getMessage(), nullValue());
         }
         instance.assertZeroCalls();
@@ -42,13 +43,13 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         Foo instance = loaded.getLoaded().newInstance();
-        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
         try {
             instance.foo();
             fail();
         } catch (RuntimeException exception) {
-            assertEquals(RuntimeException.class, exception.getClass());
+            assertThat(exception.getClass(), CoreMatchers.<Class<?>>is(RuntimeException.class));
             assertThat(exception.getMessage(), is(BAR));
         }
         instance.assertZeroCalls();
@@ -61,13 +62,13 @@ public class ExceptionMethodTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         Foo instance = loaded.getLoaded().newInstance();
-        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
         try {
             instance.foo();
             fail();
         } catch (Exception exception) {
-            assertEquals(Exception.class, exception.getClass());
+            assertThat(exception.getClass(), CoreMatchers.<Class<?>>is(Exception.class));
             assertThat(exception.getMessage(), nullValue());
         }
         instance.assertZeroCalls();

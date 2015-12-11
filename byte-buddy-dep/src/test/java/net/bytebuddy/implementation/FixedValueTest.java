@@ -6,16 +6,14 @@ import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 public class FixedValueTest extends AbstractImplementationTest {
 
@@ -45,14 +43,14 @@ public class FixedValueTest extends AbstractImplementationTest {
     public void testTypeDescriptionConstantPool() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(new TypeDescription.ForLoadedType(Object.class))).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
-        assertEquals(Object.class, qux.newInstance().bar());
+        assertThat(qux.newInstance().bar(), is((Object) Object.class));
     }
 
     @Test
     public void testClassConstantPool() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(Object.class)).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
-        assertEquals(Object.class, qux.newInstance().bar());
+        assertThat(qux.newInstance().bar(), is((Object) Object.class));
     }
 
     @Test
@@ -102,7 +100,7 @@ public class FixedValueTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Foo instance = loaded.getLoaded().newInstance();
-        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
         assertThat((Bar) loaded.getLoaded().getDeclaredMethod(BAR).invoke(instance), is(bar));
         instance.assertZeroCalls();

@@ -15,6 +15,7 @@ import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -31,8 +32,6 @@ import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -78,7 +77,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         SimpleMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SimpleMethod.class)));
         assertThat(instance, instanceOf(SimpleMethod.class));
     }
 
@@ -93,7 +92,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         SimpleMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SimpleMethod.class)));
         assertThat(instance, instanceOf(SimpleMethod.class));
     }
 
@@ -108,7 +107,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         InstanceMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(InstanceMethod.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
         assertThat(instance, instanceOf(InstanceMethod.class));
     }
 
@@ -123,7 +122,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         Object instance = loaded.getLoaded().newInstance();
-        assertNotEquals(Object.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Object.class)));
         assertThat(instance, instanceOf(Object.class));
     }
 
@@ -137,8 +136,8 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         SelfReference instance = loaded.getLoaded().newInstance();
         SelfReference created = instance.foo();
-        assertEquals(SelfReference.class, created.getClass());
-        assertNotEquals(SelfReference.class, instance.getClass());
+        assertThat(created.getClass(), CoreMatchers.<Class<?>>is(SelfReference.class));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SelfReference.class)));
         assertThat(instance, instanceOf(SelfReference.class));
         assertThat(created, not(instance));
     }
@@ -155,7 +154,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         SuperMethodInvocation instance = loaded.getLoaded().newInstance();
-        assertNotEquals(SuperMethodInvocation.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SuperMethodInvocation.class)));
         assertThat(instance, instanceOf(SuperMethodInvocation.class));
         assertThat(instance.foo(), is(FOO));
     }
@@ -170,7 +169,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         MethodCallWithExplicitArgument instance = loaded.getLoaded().newInstance();
-        assertNotEquals(MethodCallWithExplicitArgument.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
         assertThat(instance, instanceOf(MethodCallWithExplicitArgument.class));
         assertThat(instance.foo(BAR), is(FOO));
     }
@@ -191,7 +190,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         MethodCallWithExplicitArgument instance = loaded.getLoaded().newInstance();
-        assertNotEquals(MethodCallWithExplicitArgument.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
         assertThat(instance, instanceOf(MethodCallWithExplicitArgument.class));
         assertThat(instance.foo(BAR), is(FOO));
     }
@@ -212,7 +211,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         MethodCallWithExplicitArgument instance = loaded.getLoaded().newInstance();
-        assertNotEquals(MethodCallWithExplicitArgument.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
         assertThat(instance, instanceOf(MethodCallWithExplicitArgument.class));
         assertThat(instance.foo(BAR), is(BAR));
     }
@@ -230,7 +229,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         Field field = instance.getClass().getDeclaredField(FOO);
         field.setAccessible(true);
         field.set(instance, FOO);
-        assertNotEquals(MethodCallWithExplicitArgument.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithExplicitArgument.class)));
         assertThat(instance, instanceOf(MethodCallWithExplicitArgument.class));
         assertThat(instance.foo(BAR), is(FOO));
     }
@@ -256,7 +255,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         MethodCallWithField instance = loaded.getLoaded().newInstance();
         instance.foo = FOO;
-        assertNotEquals(MethodCallWithField.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithField.class)));
         assertThat(instance, instanceOf(MethodCallWithField.class));
         assertThat(instance.foo(BAR), is(FOO));
     }
@@ -282,7 +281,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         InvisibleMethodCallWithField instance = loaded.getLoaded().newInstance();
         ((InvisibleBase) instance).foo = FOO;
-        assertNotEquals(InvisibleMethodCallWithField.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InvisibleMethodCallWithField.class)));
         assertThat(instance, instanceOf(InvisibleMethodCallWithField.class));
         assertThat(instance.foo(BAR), is(FOO));
     }
@@ -297,7 +296,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         MethodCallWithThis instance = loaded.getLoaded().newInstance();
-        assertNotEquals(MethodCallWithThis.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithThis.class)));
         assertThat(instance, instanceOf(MethodCallWithThis.class));
         assertThat(instance.foo(null), is(instance));
     }
@@ -312,9 +311,9 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         MethodCallWithOwnType instance = loaded.getLoaded().newInstance();
-        assertNotEquals(MethodCallWithThis.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallWithThis.class)));
         assertThat(instance, instanceOf(MethodCallWithOwnType.class));
-        assertEquals(loaded.getLoaded(), instance.foo(null));
+        assertThat(instance.foo(null), CoreMatchers.<Class<?>>is(loaded.getLoaded()));
     }
 
     @Test
@@ -327,7 +326,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         MethodCallAppending instance = loaded.getLoaded().newInstance();
-        assertNotEquals(MethodCallAppending.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallAppending.class)));
         assertThat(instance, instanceOf(MethodCallAppending.class));
         assertThat(instance.foo(), is((Object) FOO));
         instance.assertOnlyCall(FOO);
@@ -344,7 +343,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         MethodCallAppending instance = loaded.getLoaded().newInstance();
-        assertNotEquals(MethodCallAppending.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(MethodCallAppending.class)));
         assertThat(instance, instanceOf(MethodCallAppending.class));
         assertThat(instance.foo(), is((Object) FOO));
         instance.assertZeroCalls();
@@ -361,7 +360,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredConstructors().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         ExplicitTarget instance = loaded.getLoaded().newInstance();
-        assertNotEquals(ExplicitTarget.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ExplicitTarget.class)));
         assertThat(instance, instanceOf(ExplicitTarget.class));
         assertThat(instance.foo(), is(target.toString()));
     }
@@ -380,7 +379,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         Field field = loaded.getLoaded().getDeclaredField(FOO);
         field.setAccessible(true);
         field.set(instance, target);
-        assertNotEquals(ExplicitTarget.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ExplicitTarget.class)));
         assertThat(instance, instanceOf(ExplicitTarget.class));
         assertThat(instance.foo(), is(target.toString()));
     }
@@ -397,7 +396,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         SimpleMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is("" + Object.class + String.class));
-        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SimpleMethod.class)));
         assertThat(instance, instanceOf(SimpleMethod.class));
     }
 
@@ -414,7 +413,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         SimpleMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is("" + makeMethodHandle() + makeMethodType(void.class)));
-        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SimpleMethod.class)));
         assertThat(instance, instanceOf(SimpleMethod.class));
     }
 
@@ -431,7 +430,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         SimpleMethod instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is("" + makeMethodHandle() + makeMethodType(void.class)));
-        assertNotEquals(SimpleMethod.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(SimpleMethod.class)));
         assertThat(instance, instanceOf(SimpleMethod.class));
     }
 

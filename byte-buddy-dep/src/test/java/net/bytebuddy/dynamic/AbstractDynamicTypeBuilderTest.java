@@ -54,8 +54,6 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -107,8 +105,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method method = type.getDeclaredMethod(FOO);
-        assertEquals(Object.class, method.getReturnType());
-        assertArrayEquals(new Class<?>[]{Exception.class}, method.getExceptionTypes());
+        assertThat(method.getReturnType(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(method.getExceptionTypes(), is(new Class<?>[]{Exception.class}));
         assertThat(method.getModifiers(), is(Modifier.PUBLIC));
         assertThat(method.invoke(type.newInstance()), is((Object) FOO));
     }
@@ -124,8 +122,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Method method = type.getDeclaredMethod(FOO);
-        assertEquals(Object.class, method.getReturnType());
-        assertArrayEquals(new Class<?>[]{Exception.class}, method.getExceptionTypes());
+        assertThat(method.getReturnType(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(method.getExceptionTypes(), is(new Class<?>[]{Exception.class}));
         assertThat(method.getModifiers(), is(Modifier.PUBLIC | Modifier.ABSTRACT));
     }
 
@@ -139,7 +137,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Constructor<?> constructor = type.getDeclaredConstructor(Void.class);
-        assertArrayEquals(new Class<?>[]{Exception.class}, constructor.getExceptionTypes());
+        assertThat(constructor.getExceptionTypes(), is(new Class<?>[]{Exception.class}));
         assertThat(constructor.getModifiers(), is(Modifier.PUBLIC));
         assertThat(constructor.newInstance((Object) null), notNullValue(Object.class));
     }
@@ -152,7 +150,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Field field = type.getDeclaredField(FOO);
-        assertEquals(Void.class, field.getType());
+        assertThat(field.getType(), CoreMatchers.<Class<?>>is(Void.class));
         assertThat(field.getModifiers(), is(Modifier.PUBLIC));
     }
 
@@ -276,7 +274,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getLoaded();
         assertThat(type.getDeclaredFields().length, is(1));
         assertThat(type.getDeclaredField(FOO).getName(), is(FOO));
-        assertEquals(Object.class, type.getDeclaredField(FOO).getType());
+        assertThat(type.getDeclaredField(FOO).getType(), CoreMatchers.<Class<?>>is(Object.class));
         assertThat(type.getDeclaredField(FOO).getModifiers(), is(MODIFIERS));
         assertThat(type.getDeclaredField(FOO).getAnnotations().length, is(1));
         Annotation annotation = type.getDeclaredField(FOO).getAnnotations()[0];
@@ -301,9 +299,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getLoaded();
         assertThat(type.getDeclaredMethods().length, is(2));
         assertThat(type.getDeclaredMethod(FOO, Object.class).getName(), is(FOO));
-        assertEquals(Object.class, type.getDeclaredMethod(FOO, Object.class).getReturnType());
+        assertThat(type.getDeclaredMethod(FOO, Object.class).getReturnType(), CoreMatchers.<Class<?>>is(Object.class));
         assertThat(type.getDeclaredMethod(FOO, Object.class).getParameterTypes().length, is(1));
-        assertEquals(Object.class, type.getDeclaredMethod(FOO, Object.class).getParameterTypes()[0]);
+        assertThat(type.getDeclaredMethod(FOO, Object.class).getParameterTypes()[0], CoreMatchers.<Class<?>>is(Object.class));
         assertThat(type.getDeclaredMethod(FOO, Object.class).getModifiers(), is(MODIFIERS));
         assertThat(type.getDeclaredMethod(FOO, Object.class).getAnnotations().length, is(1));
         Annotation methodAnnotation = type.getDeclaredMethod(FOO, Object.class).getAnnotations()[0];

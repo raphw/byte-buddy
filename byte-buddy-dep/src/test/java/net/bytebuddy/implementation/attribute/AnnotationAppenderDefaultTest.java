@@ -9,6 +9,7 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -28,7 +29,6 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
@@ -101,7 +101,7 @@ public class AnnotationAppenderDefaultTest {
         assertThat(bar.getAnnotation(Baz.class).array(), is(array));
         assertThat(bar.getAnnotation(Baz.class).annotation(), is((Foo) new Foo.Instance()));
         assertThat(bar.getAnnotation(Baz.class).enumeration(), is(Baz.Enum.VALUE));
-        assertEquals(Void.class, bar.getAnnotation(Baz.class).type());
+        assertThat(bar.getAnnotation(Baz.class).type(), CoreMatchers.<Class<?>>is(Void.class));
     }
 
     private Class<?> makeTypeWithAnnotation(Annotation annotation) throws Exception {
@@ -142,7 +142,7 @@ public class AnnotationAppenderDefaultTest {
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(BAR);
         assertThat(bar.getName(), is(BAR));
-        assertEquals(Object.class, bar.getSuperclass());
+        assertThat(bar.getSuperclass(), CoreMatchers.<Class<?>>is(Object.class));
         return bar;
     }
 

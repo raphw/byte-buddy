@@ -6,7 +6,6 @@ import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertTrue;
 
 public class ClassFileVersionTest {
 
@@ -14,7 +13,7 @@ public class ClassFileVersionTest {
     public void testCurrentJavaVersionWasManuallyEvaluated() throws Exception {
         // This test is supposed to fail if ByteBuddy was not yet manually considered for
         // a new major release targeting Java.
-        assertTrue(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion() <= Opcodes.V1_8);
+        assertThat(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion() <= Opcodes.V1_8, is(true));
     }
 
     @Test

@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.utility.PropertyDispatcher;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
@@ -19,7 +20,6 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -256,8 +256,8 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test
     public void testLoadedAnnotationType() throws Exception {
-        assertEquals(Sample.class, describe(first).prepare(Sample.class).load().annotationType());
-        assertEquals(Sample.class, describe(second).prepare(Sample.class).load().annotationType());
+        assertThat(describe(first).prepare(Sample.class).load().annotationType(), CoreMatchers.<Class<?>>is(Sample.class));
+        assertThat(describe(second).prepare(Sample.class).load().annotationType(), CoreMatchers.<Class<?>>is(Sample.class));
     }
 
     @Test(expected = IllegalArgumentException.class)

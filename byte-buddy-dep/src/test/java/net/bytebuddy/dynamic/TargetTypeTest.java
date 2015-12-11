@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.utility.ByteBuddyCommons;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.lang.reflect.Constructor;
@@ -9,7 +10,6 @@ import java.lang.reflect.Modifier;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.fail;
 
 public class TargetTypeTest {
@@ -24,7 +24,7 @@ public class TargetTypeTest {
             constructor.newInstance();
             fail();
         } catch (InvocationTargetException exception) {
-            assertEquals(UnsupportedOperationException.class, exception.getCause().getClass());
+            assertThat(exception.getCause().getClass(), CoreMatchers.<Class<?>>is(UnsupportedOperationException.class));
         }
     }
 

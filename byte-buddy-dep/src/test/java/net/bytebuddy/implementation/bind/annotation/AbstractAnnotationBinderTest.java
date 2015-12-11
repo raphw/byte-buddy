@@ -12,6 +12,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.test.utility.MockitoRule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -24,7 +25,7 @@ import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.Iterator;
 
-import static org.junit.Assert.assertEquals;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
@@ -73,7 +74,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
 
     @Test
     public void testHandledType() throws Exception {
-        assertEquals(annotationType, getSimpleBinder().getHandledType());
+        assertThat(getSimpleBinder().getHandledType(), CoreMatchers.<Class<?>>is(annotationType));
     }
 
     @Before

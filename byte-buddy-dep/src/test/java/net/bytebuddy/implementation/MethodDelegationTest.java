@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
+import org.hamcrest.CoreMatchers;
 import org.hamcrest.Matcher;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,8 +16,6 @@ import java.util.Collection;
 import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
 
 @RunWith(Parameterized.class)
 public class MethodDelegationTest<T extends CallTraceable> extends AbstractImplementationTest {
@@ -99,7 +98,7 @@ public class MethodDelegationTest<T extends CallTraceable> extends AbstractImple
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
         T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(sourceType, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(sourceType)));
         assertThat(instance, instanceOf(sourceType));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
         instance.assertZeroCalls();
@@ -113,7 +112,7 @@ public class MethodDelegationTest<T extends CallTraceable> extends AbstractImple
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         T instance = loaded.getLoaded().newInstance();
-        assertNotEquals(sourceType, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(sourceType)));
         assertThat(instance, instanceOf(sourceType));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
         instance.assertZeroCalls();
@@ -129,10 +128,10 @@ public class MethodDelegationTest<T extends CallTraceable> extends AbstractImple
         T instance = loaded.getLoaded().newInstance();
         Field field = loaded.getLoaded().getDeclaredField(FIELD_NAME);
         assertThat(field.getModifiers(), is(Modifier.PUBLIC));
-        assertEquals(targetType, field.getType());
+        assertThat(field.getType(), CoreMatchers.<Class<?>>is(targetType));
         field.setAccessible(true);
         field.set(instance, targetType.newInstance());
-        assertNotEquals(sourceType, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(sourceType)));
         assertThat(instance, instanceOf(sourceType));
         assertThat(loaded.getLoaded().getDeclaredMethod(FOO, parameterTypes).invoke(instance, arguments), (Matcher) matcher);
         instance.assertZeroCalls();

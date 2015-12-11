@@ -1,7 +1,10 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.test.utility.MockitoRule;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
@@ -61,7 +64,7 @@ public class InstallerTest {
     @Test
     public void testAgentInstallerIsPublic() throws Exception {
         Class<?> type = Installer.class;
-        Assert.assertThat(Modifier.isPublic(type.getModifiers()), is(true));
+        assertThat(Modifier.isPublic(type.getModifiers()), is(true));
         assertThat(type.getDeclaringClass(), nullValue(Class.class));
         assertThat(type.getDeclaredClasses().length, is(0));
     }

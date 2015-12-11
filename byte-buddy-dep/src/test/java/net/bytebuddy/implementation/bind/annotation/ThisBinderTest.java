@@ -12,7 +12,6 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
@@ -22,11 +21,6 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
 
     public ThisBinderTest() {
         super(This.class);
-    }
-
-    @Test
-    public void testAnnotationType() throws Exception {
-        assertEquals(This.class, This.Binder.INSTANCE.getHandledType());
     }
 
     @Override

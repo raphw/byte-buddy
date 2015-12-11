@@ -3,14 +3,13 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +25,7 @@ public class ForwardingTest extends AbstractImplementationTest {
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(1));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
     }
 
@@ -41,7 +40,7 @@ public class ForwardingTest extends AbstractImplementationTest {
         field.setAccessible(true);
         field.set(instance, new Bar());
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
     }
 
@@ -56,7 +55,7 @@ public class ForwardingTest extends AbstractImplementationTest {
         field.setAccessible(true);
         field.set(null, new Bar());
         assertThat(instance.foo(), is(BAR));
-        assertNotEquals(Foo.class, instance.getClass());
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Foo.class)));
         assertThat(instance, instanceOf(Foo.class));
     }
 

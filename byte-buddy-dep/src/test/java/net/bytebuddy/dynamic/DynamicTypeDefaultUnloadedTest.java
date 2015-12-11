@@ -5,6 +5,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -18,7 +19,6 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
@@ -79,9 +79,9 @@ public class DynamicTypeDefaultUnloadedTest {
     @Test
     public void testTypeLoading() throws Exception {
         DynamicType.Loaded<?> loaded = unloaded.load(classLoader, classLoadingStrategy);
-        assertEquals(MAIN_TYPE, loaded.getLoaded());
+        assertThat(loaded.getLoaded(), CoreMatchers.<Class<?>>is(MAIN_TYPE));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(1));
-        assertEquals(AUXILIARY_TYPE, loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription));
+        assertThat(loaded.getLoadedAuxiliaryTypes().get(auxiliaryTypeDescription), CoreMatchers.<Class<?>>is(AUXILIARY_TYPE));
         verify(mainLoadedTypeInitializer).onLoad(MAIN_TYPE);
         verify(auxiliaryLoadedTypeInitializer).onLoad(AUXILIARY_TYPE);
     }

@@ -27,6 +27,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -51,7 +52,6 @@ import static net.bytebuddy.matcher.ElementMatchers.not;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.mock;
 
 public class ByteBuddyTutorialExamplesTest {
@@ -284,7 +284,7 @@ public class ByteBuddyTutorialExamplesTest {
                 .getLoaded()
                 .getDeclaredConstructor(int.class)
                 .newInstance(42);
-        assertNotEquals(Object.class, object.getClass());
+        assertThat(object.getClass(), CoreMatchers.not(CoreMatchers.<Class<?>>is(Object.class)));
     }
 
     @Test

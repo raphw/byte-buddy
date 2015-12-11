@@ -11,6 +11,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,7 +28,6 @@ import java.util.UUID;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 public class AndroidClassLoadingStrategyTest {
@@ -75,8 +75,8 @@ public class AndroidClassLoadingStrategyTest {
         ClassLoader parentClassLoader = mock(ClassLoader.class);
         Map<TypeDescription, Class<?>> loaded = classLoadingStrategy.load(parentClassLoader, unloaded);
         assertThat(loaded.size(), is(2));
-        assertEquals(Object.class, loaded.get(first));
-        assertEquals(Void.class, loaded.get(second));
+        assertThat(loaded.get(first), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(loaded.get(second), CoreMatchers.<Class<?>>is(Void.class));
         verify(dexProcessor).create();
         verify(dexProcessor).makeClassLoader(any(File.class), eq(folder), eq(parentClassLoader));
         verifyNoMoreInteractions(dexProcessor);
@@ -101,7 +101,7 @@ public class AndroidClassLoadingStrategyTest {
         ClassLoadingStrategy classLoadingStrategy = new AndroidClassLoadingStrategy(folder, new StubbedClassLoaderDexCompilation(classLoader));
         Map<TypeDescription, Class<?>> map = classLoadingStrategy.load(getClass().getClassLoader(), dynamicType.getAllTypes());
         assertThat(map.size(), is(1));
-        assertEquals(Void.class, map.get(dynamicType.getTypeDescription()));
+        assertThat(map.get(dynamicType.getTypeDescription()), CoreMatchers.<Class<?>>is(Void.class));
     }
 
     @Test

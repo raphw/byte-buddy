@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.test.utility.IntegrationRule;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -17,8 +18,7 @@ import java.util.NoSuchElementException;
 import static net.bytebuddy.matcher.ElementMatchers.isBootstrapClassLoader;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class MultipleParentClassLoaderTest {
@@ -77,9 +77,9 @@ public class MultipleParentClassLoaderTest {
     @Test
     public void testMultipleParentClassLoading() throws Exception {
         ClassLoader classLoader = new MultipleParentClassLoader.Builder().append(first, second, null).build();
-        assertEquals(Foo.class, classLoader.loadClass(FOO));
-        assertEquals(BarFirst.class, classLoader.loadClass(BAR));
-        assertEquals(Qux.class, classLoader.loadClass(QUX));
+        assertThat(classLoader.loadClass(FOO), CoreMatchers.<Class<?>>is(Foo.class));
+        assertThat(classLoader.loadClass(BAR), CoreMatchers.<Class<?>>is(BarFirst.class));
+        assertThat(classLoader.loadClass(QUX), CoreMatchers.<Class<?>>is(Qux.class));
         verify(first).loadClass(FOO);
         verify(first).loadClass(BAR);
         verify(first).loadClass(QUX);

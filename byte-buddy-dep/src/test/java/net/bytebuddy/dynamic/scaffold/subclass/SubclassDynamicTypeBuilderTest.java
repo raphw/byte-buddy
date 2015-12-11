@@ -20,6 +20,7 @@ import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -40,7 +41,6 @@ import static net.bytebuddy.matcher.ElementMatchers.isDeclaredBy;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertNotEquals;
 
 public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTest {
 
@@ -79,7 +79,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredConstructor(), notNullValue(Constructor.class));
         assertThat(Object.class.isAssignableFrom(type), is(true));
-        assertNotEquals(Object.class, type);
+        assertThat(type, not(CoreMatchers.<Class<?>>is(Object.class)));
         assertThat(type.newInstance(), notNullValue(Object.class));
         assertThat(type.isInterface(), is(false));
         assertThat(type.isAnnotation(), is(false));
@@ -95,7 +95,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.getDeclaredMethods().length, is(0));
         assertThat(type.getDeclaredConstructors().length, is(0));
         assertThat(Object.class.isAssignableFrom(type), is(true));
-        assertNotEquals(Object.class, type);
+        assertThat(type, not(CoreMatchers.<Class<?>>is(Object.class)));
         assertThat(type.isInterface(), is(false));
         assertThat(type.isAnnotation(), is(false));
     }
@@ -111,7 +111,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredConstructor(), notNullValue(Constructor.class));
         assertThat(DefaultConstructor.class.isAssignableFrom(type), is(true));
-        assertNotEquals(DefaultConstructor.class, type);
+        assertThat(type, not(CoreMatchers.<Class<?>>is(DefaultConstructor.class)));
         assertThat(type.newInstance(), notNullValue(DefaultConstructor.class));
         assertThat(type.isInterface(), is(false));
         assertThat(type.isAnnotation(), is(false));
@@ -135,7 +135,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.getDeclaredMethod(FOO, Void.class), notNullValue(Method.class));
         assertThat(type.getDeclaredConstructors().length, is(0));
         assertThat(SimpleInterface.class.isAssignableFrom(type), is(true));
-        assertNotEquals(SimpleInterface.class, type);
+        assertThat(type, not(CoreMatchers.<Class<?>>is(SimpleInterface.class)));
         assertThat(type.isInterface(), is(true));
         assertThat(type.isAnnotation(), is(false));
     }
@@ -159,7 +159,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.getDeclaredMethod(QUX).getDefaultValue(), is((Object) SimpleEnum.FIRST));
         assertThat(type.getDeclaredConstructors().length, is(0));
         assertThat(Annotation.class.isAssignableFrom(type), is(true));
-        assertNotEquals(Annotation.class, type);
+        assertThat(type, not(CoreMatchers.<Class<?>>is(Annotation.class)));
         assertThat(type.isInterface(), is(true));
         assertThat(type.isAnnotation(), is(true));
     }
@@ -176,7 +176,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredFields().length, is(3));
         assertThat(Enum.class.isAssignableFrom(type), is(true));
-        assertNotEquals(Enum.class, type);
+        assertThat(type, not(CoreMatchers.<Class<?>>is(Enum.class)));
         assertThat(type.isInterface(), is(false));
         assertThat(type.isAnnotation(), is(false));
         assertThat(type.isEnum(), is(true));

@@ -14,7 +14,6 @@ import java.lang.reflect.Method;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.assertEquals;
 
 public class MethodDelegationOriginTest extends AbstractImplementationTest {
 
@@ -36,7 +35,7 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(OriginClass.class));
         Foo instance = loaded.getLoaded().newInstance();
         assertThat(instance.foo(), instanceOf(Class.class));
-        assertEquals(Foo.class, instance.foo());
+        assertThat(instance.foo(), is((Object) Foo.class));
     }
 
     @Test
