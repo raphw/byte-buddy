@@ -49,6 +49,7 @@ public enum JavaType {
      *
      * @param typeName   The binary name of this type.
      * @param modifiers  The modifiers of this type when creating a stub.
+     * @param superType  The super class of this type when creating a stub.
      * @param interfaces The interfaces of this type when creating a stub.
      */
     JavaType(String typeName, int modifiers, Class<?> superType, Class<?>... interfaces) {
