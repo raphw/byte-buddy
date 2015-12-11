@@ -66,9 +66,11 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * a default method, using this annotation excludes the method with this parameter annotation from being bound to this
  * source method.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Origin}: A parameter of
- * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method}
- * or a {@link java.lang.Class} instance. A {@code Method}-typed parameter is assigned a reference to the original method that
- * is overriden. A {@code Class}-typed parameter is assigned the type of the caller.</li>
+ * {@code Qux#baz} that is annotated with {@code Origin} is assigned a reference to either a {@link java.lang.reflect.Method},
+ * a {@link java.lang.reflect.Constructor}, a {@code java.lang.reflect.Executable} or a {@link java.lang.Class} instance.
+ * A {@code Method}-typed, {@code Constructor} or {@code Executable} parameter is assigned a reference to the original
+ * method that is instrumented. A {@code Class}-typed parameter is assigned the type of the caller. Furthermore, {@code MethodType}
+ * and {@code MethodHandle} parameters are also supported.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.StubValue}: Assigns the (boxed) default value of the
  * intercepted method's return type to the parameter. If the return type is {@code void}, {@code null} is assigned.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Empty}: Assigns the parameter type's
