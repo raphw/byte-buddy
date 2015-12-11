@@ -12,7 +12,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Mockito;
 
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
@@ -31,6 +30,7 @@ public class ClassReloadingStrategyTest {
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
+    @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
