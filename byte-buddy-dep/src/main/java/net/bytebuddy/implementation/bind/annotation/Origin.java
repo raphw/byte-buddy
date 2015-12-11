@@ -18,9 +18,9 @@ import java.lang.reflect.Method;
  * The origin annotation provides some meta information about the source method that is bound to this method where
  * the binding is dependant of the parameter's type:
  * <ol>
- * <li>If the annotated parameter is of type {@link java.lang.reflect.Method}, {@link java.lang.reflect.Method} or
+ * <li>If the annotated parameter is of type {@link java.lang.reflect.Method}, {@link java.lang.reflect.Constructor} or
  * {@code java.lang.reflect.Executable}, the parameter is assigned a reference to the method or constructor it
- * intercepts. If the reference is not assignable to the sort of the intercepted source, the target is not considered
+ * instruments. If the reference is not assignable to the sort of the intercepted source, the target is not considered
  * for binding.</li>
  * <li>If the annotated parameter is of type {@link java.lang.Class}, the parameter is assigned a reference of the
  * type of the instrumented type.</li>

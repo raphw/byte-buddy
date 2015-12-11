@@ -70,7 +70,9 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * a {@link java.lang.reflect.Constructor}, a {@code java.lang.reflect.Executable} or a {@link java.lang.Class} instance.
  * A {@code Method}-typed, {@code Constructor} or {@code Executable} parameter is assigned a reference to the original
  * method that is instrumented. A {@code Class}-typed parameter is assigned the type of the caller. Furthermore, {@code MethodType}
- * and {@code MethodHandle} parameters are also supported.</li>
+ * and {@code MethodHandle} parameters are also supported. When using the annotation on a {@link java.lang.String} type,
+ * the intercepted method's {@code toString} value is injected. The same holds for a parameter of type {@code int} that receives
+ * the modifiers of the instrumented method.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.StubValue}: Assigns the (boxed) default value of the
  * intercepted method's return type to the parameter. If the return type is {@code void}, {@code null} is assigned.</li>
  * <li>{@link net.bytebuddy.implementation.bind.annotation.Empty}: Assigns the parameter type's
