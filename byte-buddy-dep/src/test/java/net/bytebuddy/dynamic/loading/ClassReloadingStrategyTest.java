@@ -164,7 +164,7 @@ public class ClassReloadingStrategyTest {
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(retransformsClasses = true, redefinesClasses = true)
     public void testAnonymousType() throws Exception {
-        ((Runnable) Class.forName("net.bytebuddy.test.precompiled.AnonymousClassLoaderTest").newInstance()).run();
+        ((Runnable) Class.forName("net.bytebuddy.test.precompiled.AnonymousClassLoader").newInstance()).run();
     }
 
     @Test

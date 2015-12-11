@@ -13,7 +13,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class AnonymousClassLoaderTest implements Runnable {
+public class AnonymousClassLoader implements Runnable {
 
     private static final String FOO = "foo", BAR = "bar";
 
