@@ -3,13 +3,16 @@ package net.bytebuddy.dynamic.loading;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.mockito.ArgumentCaptor;
+import org.mockito.Mockito;
 
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
@@ -27,6 +30,8 @@ public class ClassReloadingStrategyTest {
 
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
+
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
@@ -142,7 +147,7 @@ public class ClassReloadingStrategyTest {
         new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.RETRANSFORMATION);
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test//(expected = IllegalStateException.class)
     public void testResetNotSupported() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -153,6 +158,33 @@ public class ClassReloadingStrategyTest {
     public void testEngineSelfReport() throws Exception {
         assertThat(ClassReloadingStrategy.Engine.REDEFINITION.isRedefinition(), is(true));
         assertThat(ClassReloadingStrategy.Engine.RETRANSFORMATION.isRedefinition(), is(false));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce(retransformsClasses = true, redefinesClasses = true)
+    public void testAnonymousType() throws Exception {
+        ((Runnable) Class.forName("net.bytebuddy.test.precompiled.AnonymousClassLoaderTest").newInstance()).run();
+    }
+
+    @Test
+    public void testResetEmptyNoEffectImplicitLocator() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ClassReloadingStrategy.of(instrumentation).reset();
+        verify(instrumentation, times(2)).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+    }
+
+    @Test
+    public void testResetEmptyNoEffect() throws Exception {
+        Instrumentation instrumentation = mock(Instrumentation.class);
+        ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ClassReloadingStrategy.of(instrumentation).reset(classFileLocator);
+        verify(instrumentation, times(2)).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verifyZeroInteractions(classFileLocator);
     }
 
     @Test

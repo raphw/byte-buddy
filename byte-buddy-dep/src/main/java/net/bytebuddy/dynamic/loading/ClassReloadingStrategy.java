@@ -4,6 +4,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.instrument.*;
 import java.security.ProtectionDomain;
 import java.util.*;
@@ -179,25 +180,45 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     }
 
     /**
-     * Resets all classes to their original definition.
+     * Resets all classes to their original definition while using the first type's class loader as a class file locator.
      *
      * @param type The types to reset.
      * @return This class reloading strategy.
+     * @throws IOException If a class file locator causes an IO exception.
      */
-    public ClassReloadingStrategy reset(Class<?>... type) {
-        if (!instrumentation.isRedefineClassesSupported()) {
-            throw new IllegalStateException("Classes can only be reset when redefinition is supported");
-        }
-        Map<Class<?>, ClassDefinition> classDefinitions = new ConcurrentHashMap<Class<?>, ClassDefinition>(type.length);
-        for (Class<?> aType : type) {
-            classDefinitions.put(aType, new ClassDefinition(aType, ClassFileLocator.ForClassLoader.read(aType).resolve()));
-        }
-        try {
-            engine.apply(instrumentation, classDefinitions);
-        } catch (ClassNotFoundException exception) {
-            throw new IllegalArgumentException("Cannot locate types " + Arrays.toString(type), exception);
-        } catch (UnmodifiableClassException exception) {
-            throw new IllegalStateException("Cannot reset types " + Arrays.toString(type), exception);
+    public ClassReloadingStrategy reset(Class<?>... type) throws IOException {
+        return type.length == 0
+                ? this
+                : reset(ClassFileLocator.ForClassLoader.of(type[0].getClassLoader()), type);
+    }
+
+    /**
+     * Resets all classes to their original definition.
+     *
+     * @param classFileLocator The class file locator to use.
+     * @param type             The types to reset.
+     * @return This class reloading strategy.
+     * @throws IOException If a class file locator causes an IO exception.
+     */
+    public ClassReloadingStrategy reset(ClassFileLocator classFileLocator, Class<?>... type) throws IOException {
+        if (type.length > 0) {
+            if (!instrumentation.isRedefineClassesSupported()) {
+                throw new IllegalStateException("Classes can only be reset when redefinition is supported");
+            }
+            Map<Class<?>, ClassDefinition> classDefinitions = new HashMap<Class<?>, ClassDefinition>(type.length);
+            for (Class<?> aType : type) {
+                int anonymousLoaderIndex = aType.getName().indexOf('/');
+                classDefinitions.put(aType, new ClassDefinition(aType, classFileLocator.locate(anonymousLoaderIndex == -1
+                        ? aType.getName()
+                        : aType.getName().substring(0, anonymousLoaderIndex)).resolve()));
+            }
+            try {
+                engine.apply(instrumentation, classDefinitions);
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalArgumentException("Cannot locate types " + Arrays.toString(type), exception);
+            } catch (UnmodifiableClassException exception) {
+                throw new IllegalStateException("Cannot reset types " + Arrays.toString(type), exception);
+            }
         }
         return this;
     }
