@@ -11,6 +11,7 @@ import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.utility.JavaType;
 
 import java.lang.annotation.*;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 /**
@@ -79,9 +80,19 @@ public @interface Origin {
             if (parameterType.represents(Class.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(implementationTarget.getOriginType()));
             } else if (parameterType.represents(Method.class)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation.loadSilent().cache()
-                        ? MethodConstant.forMethod(source.asDefined()).cached()
-                        : MethodConstant.forMethod(source.asDefined()));
+                return source.isMethod()
+                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(
+                        annotation.loadSilent().cache()
+                                ? MethodConstant.forMethod(source.asDefined()).cached()
+                                : MethodConstant.forMethod(source.asDefined()))
+                        : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+            } else if (parameterType.represents(Constructor.class)) {
+                return source.isConstructor()
+                        ? new MethodDelegationBinder.ParameterBinding.Anonymous(
+                        annotation.loadSilent().cache()
+                                ? MethodConstant.forMethod(source.asDefined()).cached()
+                                : MethodConstant.forMethod(source.asDefined()))
+                        : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.toString()));
             } else if (parameterType.represents(int.class)) {
@@ -93,7 +104,7 @@ public @interface Origin {
             } else {
                 throw new IllegalStateException("The " + target + " method's " + target.getIndex() +
                         " parameter is annotated with a Origin annotation with an argument not representing a Class," +
-                        " Method, String, int, MethodType or MethodHandle type");
+                        " Method, Constructor, String, int, MethodType or MethodHandle type");
             }
         }
 

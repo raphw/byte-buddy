@@ -7,8 +7,10 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.IsInstanceOf.instanceOf;
@@ -51,6 +53,41 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
         assertThat(method, instanceOf(Method.class));
         assertThat(method, is((Object) Foo.class.getDeclaredMethod(FOO)));
         assertThat(method, sameInstance(instance.foo()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testOriginConstructorWithoutCache() throws Exception {
+        OriginConstructor originConstructor = new OriginConstructor();
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
+                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
+                getClass().getClassLoader(),
+                isConstructor());
+        loaded.getLoaded().newInstance();
+        assertThat(originConstructor.constructor, instanceOf(Constructor.class));
+        assertThat(originConstructor.constructor, is((Constructor) loaded.getLoaded().getDeclaredConstructor()));
+        Constructor<?> previous = originConstructor.constructor;
+        loaded.getLoaded().newInstance();
+        assertThat(originConstructor.constructor, instanceOf(Constructor.class));
+        assertThat(originConstructor.constructor, is((Constructor) loaded.getLoaded().getDeclaredConstructor()));
+        assertThat(originConstructor.constructor, not(sameInstance((Constructor) previous)));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testOriginConstructorWithCache() throws Exception {
+        OriginConstructorWithCache originConstructor = new OriginConstructorWithCache();
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
+                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
+                getClass().getClassLoader(),
+                isConstructor());
+        loaded.getLoaded().newInstance();
+        assertThat(originConstructor.constructor, instanceOf(Constructor.class));
+        assertThat(originConstructor.constructor, is((Constructor) loaded.getLoaded().getDeclaredConstructor()));
+        Constructor<?> previous = originConstructor.constructor;
+        loaded.getLoaded().newInstance();
+        assertThat(originConstructor.constructor, instanceOf(Constructor.class));
+        assertThat(originConstructor.constructor, sameInstance((Constructor) previous));
     }
 
     @Test
@@ -109,6 +146,23 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
 
         public static Object foo(@Origin(cache = true) Method method) {
             return method;
+        }
+    }
+
+    public static class OriginConstructor {
+        private Constructor<?> constructor;
+
+        public void foo(@Origin(cache = false) Constructor<?> constructor) {
+            this.constructor = constructor;
+        }
+    }
+
+    public static class OriginConstructorWithCache {
+
+        private Constructor<?> constructor;
+
+        public void foo(@Origin(cache = true) Constructor<?> constructor) {
+            this.constructor = constructor;
         }
     }
 

@@ -10,6 +10,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -119,7 +120,9 @@ public abstract class MethodConstant implements StackManipulation {
      * @return A cached version of this method constant.
      */
     public StackManipulation cached() {
-        return new Cached(this);
+        return methodDescription.isConstructor()
+                ? new CachedConstructor(this)
+                : new CachedMethod(this);
     }
 
     @Override
@@ -281,9 +284,9 @@ public abstract class MethodConstant implements StackManipulation {
     }
 
     /**
-     * Represents a cached {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
+     * Represents a cached method for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
      */
-    protected static class Cached implements StackManipulation {
+    protected static class CachedMethod implements StackManipulation {
 
         /**
          * A description of the {@link java.lang.reflect.Method} type.
@@ -300,7 +303,7 @@ public abstract class MethodConstant implements StackManipulation {
          *
          * @param methodConstant The method constant to store in the field cache.
          */
-        protected Cached(StackManipulation methodConstant) {
+        protected CachedMethod(StackManipulation methodConstant) {
             this.methodConstant = methodConstant;
         }
 
@@ -311,14 +314,15 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            return FieldAccess.forField(implementationContext.cache(methodConstant, METHOD_TYPE)).getter()
+            return FieldAccess.forField(implementationContext.cache(methodConstant, METHOD_TYPE))
+                    .getter()
                     .apply(methodVisitor, implementationContext);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && methodConstant.equals(((Cached) other).methodConstant);
+                    && methodConstant.equals(((CachedMethod) other).methodConstant);
         }
 
         @Override
@@ -328,7 +332,60 @@ public abstract class MethodConstant implements StackManipulation {
 
         @Override
         public String toString() {
-            return "MethodConstant.Cached{methodConstant=" + methodConstant + '}';
+            return "MethodConstant.CachedMethod{methodConstant=" + methodConstant + '}';
+        }
+    }
+
+    /**
+     * Represents a cached constructor for a {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
+     */
+    protected static class CachedConstructor implements StackManipulation {
+
+        /**
+         * A description of the {@link java.lang.reflect.Constructor} type.
+         */
+        private static final TypeDescription CONSTRUCTOR_TYPE = new TypeDescription.ForLoadedType(Constructor.class);
+
+        /**
+         * The stack manipulation that is represented by this caching wrapper.
+         */
+        private final StackManipulation constructorConstant;
+
+        /**
+         * Creates a new cached {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant}.
+         *
+         * @param constructorConstant The method constant to store in the field cache.
+         */
+        protected CachedConstructor(StackManipulation constructorConstant) {
+            this.constructorConstant = constructorConstant;
+        }
+
+        @Override
+        public boolean isValid() {
+            return constructorConstant.isValid();
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+            return FieldAccess.forField(implementationContext.cache(constructorConstant, CONSTRUCTOR_TYPE))
+                    .getter()
+                    .apply(methodVisitor, implementationContext);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && constructorConstant.equals(((CachedConstructor) other).constructorConstant);
+        }
+
+        @Override
+        public int hashCode() {
+            return 31 * constructorConstant.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodConstant.CachedConstructor{constructorConstant=" + constructorConstant + '}';
         }
     }
 }

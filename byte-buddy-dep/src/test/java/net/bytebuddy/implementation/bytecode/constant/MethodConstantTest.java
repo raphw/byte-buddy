@@ -20,6 +20,7 @@ import org.mockito.asm.Opcodes;
 import org.mockito.asm.Type;
 import org.objectweb.asm.MethodVisitor;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Collections;
 
@@ -129,7 +130,7 @@ public class MethodConstantTest {
         assertThat(size.getMaximalSize(), is(1));
         verify(methodVisitor).visitFieldInsn(Opcodes.GETSTATIC, BAZ, FOO, QUX);
         verifyNoMoreInteractions(methodVisitor);
-        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), new TypeDescription.ForLoadedType(Method.class));
+        verify(implementationContext).cache(MethodConstant.forMethod(methodDescription), new TypeDescription.ForLoadedType(Constructor.class));
         verifyNoMoreInteractions(implementationContext);
     }
 
@@ -146,7 +147,8 @@ public class MethodConstantTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodConstant.ForMethod.class).apply();
         ObjectPropertyAssertion.of(MethodConstant.ForConstructor.class).apply();
-        ObjectPropertyAssertion.of(MethodConstant.Cached.class).apply();
+        ObjectPropertyAssertion.of(MethodConstant.CachedMethod.class).apply();
+        ObjectPropertyAssertion.of(MethodConstant.CachedConstructor.class).apply();
         ObjectPropertyAssertion.of(MethodConstant.CanCacheIllegal.class).apply();
     }
 }

@@ -12,6 +12,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.mockito.Mock;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,9 +64,38 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testMethodBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(Method.class)).thenReturn(true);
+        when(source.isMethod()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
+    }
+
+    @Test
+    public void testMethodBindingForNonMethod() throws Exception {
+        when(targetType.getInternalName()).thenReturn(FOO);
+        when(targetType.represents(Method.class)).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test
+    public void testConstructorBinding() throws Exception {
+        when(targetType.getInternalName()).thenReturn(FOO);
+        when(targetType.represents(Constructor.class)).thenReturn(true);
+        when(source.isConstructor()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(true));
+    }
+
+    @Test
+    public void testConstructorBindingForNonConstructor() throws Exception {
+        when(targetType.getInternalName()).thenReturn(FOO);
+        when(targetType.represents(Constructor.class)).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        assertThat(parameterBinding.isValid(), is(false));
     }
 
     @Test
