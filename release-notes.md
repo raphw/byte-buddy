@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 11. December 2015: version 0.7.6
+
+- Fixed resolution of `@Origin` for constructors and added possibility to use the `Executable` type.
+- Fixed name resolution of types loaded by anonymous class loading.
+- Allowed alternative lookup for redefinitions to support types loaded by anonymous class loading.
+
 ### 7. December 2015: version 0.7.5
 
 - Fixed generic type resolution optimization for proxies for `@Super`.
