@@ -114,8 +114,7 @@ public abstract class MethodConstant implements StackManipulation {
     protected abstract String getDescriptor();
 
     /**
-     * Returns a cached version of this method constant as specified by
-     * {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant.Cached}.
+     * Returns a cached version of this method constant as specified by {@link CachedMethod} and {@link CachedConstructor}.
      *
      * @return A cached version of this method constant.
      */
