@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 
@@ -414,6 +415,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             }
 
             @Override
+            @SuppressFBWarnings(value = "EI_EXPOSE_REP", justification = "Return value is always null")
             public byte[] transform(ClassLoader classLoader,
                                     String internalTypeName,
                                     Class<?> classBeingRedefined,
