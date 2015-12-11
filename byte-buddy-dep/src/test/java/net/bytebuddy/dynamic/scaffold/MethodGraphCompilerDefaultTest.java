@@ -17,10 +17,10 @@ import org.objectweb.asm.Opcodes;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsCollectionContaining.hasItem;
 import static org.mockito.Mockito.mock;
 
 public class MethodGraphCompilerDefaultTest {

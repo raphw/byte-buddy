@@ -28,8 +28,8 @@ import java.util.Collections;
 import java.util.Iterator;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.mock;
 
 public class ClassInjectorUsingReflectionTest {

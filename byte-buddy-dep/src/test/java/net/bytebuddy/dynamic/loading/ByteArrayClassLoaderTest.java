@@ -23,7 +23,6 @@ import java.util.Enumeration;
 import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertNotEquals;
 import static org.mockito.Mockito.when;
 

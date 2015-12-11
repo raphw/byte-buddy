@@ -17,9 +17,9 @@ import org.mockito.Answers;
 import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.*;
 
 public class MethodBindingBuilderTest {

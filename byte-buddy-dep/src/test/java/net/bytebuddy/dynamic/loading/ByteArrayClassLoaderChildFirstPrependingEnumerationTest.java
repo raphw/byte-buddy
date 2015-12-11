@@ -10,7 +10,7 @@ import org.junit.rules.MethodRule;
 import java.net.URL;
 import java.util.*;
 
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertThat;
 
 public class ByteArrayClassLoaderChildFirstPrependingEnumerationTest {

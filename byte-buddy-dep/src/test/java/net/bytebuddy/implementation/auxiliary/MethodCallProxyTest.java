@@ -8,9 +8,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Type;
 import java.util.concurrent.Callable;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 public class MethodCallProxyTest extends AbstractMethodCallProxyTest {
 

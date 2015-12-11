@@ -11,8 +11,8 @@ import org.mockito.Mock;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class EmptyDefaultsProviderTest {

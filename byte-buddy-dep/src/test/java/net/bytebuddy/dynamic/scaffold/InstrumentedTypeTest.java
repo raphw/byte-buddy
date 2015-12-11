@@ -24,7 +24,6 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsNot.not;
 import static org.mockito.Mockito.*;
 
 public class InstrumentedTypeTest {

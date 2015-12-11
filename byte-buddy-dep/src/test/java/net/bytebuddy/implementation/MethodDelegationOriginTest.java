@@ -14,7 +14,6 @@ import java.lang.reflect.Method;
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.IsInstanceOf.instanceOf;
 import static org.junit.Assert.assertEquals;
 
 public class MethodDelegationOriginTest extends AbstractImplementationTest {

@@ -11,7 +11,6 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.hamcrest.core.Is;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -403,7 +402,7 @@ public class TypeWriterMethodPoolRecordTest {
                 bridgeTarget,
                 Collections.singleton(typeToken),
                 methodAttributeAppender);
-        assertThat(record.getSort(), Is.is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
+        assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
     }
 
     @Test
