@@ -8,6 +8,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
@@ -23,6 +24,10 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     private static final String ORIGIN_METHOD_HANDLE = "net.bytebuddy.test.precompiled.OriginMethodHandle";
 
     private static final String ORIGIN_METHOD_TYPE = "net.bytebuddy.test.precompiled.OriginMethodType";
+
+    private static final String ORIGIN_EXECUTABLE = "net.bytebuddy.test.precompiled.OriginExecutable";
+
+    private static final String ORIGIN_EXECUTABLE_CACHED = "net.bytebuddy.test.precompiled.OriginExecutableWithCache";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -91,6 +96,69 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    public void testOriginExecutableOnMethodWithoutCache() throws Exception {
+        Object origin = Class.forName(ORIGIN_EXECUTABLE).newInstance();
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(origin));
+        Foo instance = loaded.getLoaded().newInstance();
+        Object method = instance.foo();
+        assertThat(method, instanceOf(Method.class));
+        assertThat(method, is((Object) Foo.class.getDeclaredMethod(FOO)));
+        assertThat(method, not(sameInstance(instance.foo())));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testOriginExecutableOnMethodWithCache() throws Exception {
+        Object origin = Class.forName(ORIGIN_EXECUTABLE_CACHED).newInstance();
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(origin));
+        Foo instance = loaded.getLoaded().newInstance();
+        Object method = instance.foo();
+        assertThat(method, instanceOf(Method.class));
+        assertThat(method, is((Object) Foo.class.getDeclaredMethod(FOO)));
+        assertThat(method, sameInstance(instance.foo()));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testOriginExecutableConstructorWithoutCache() throws Exception {
+        Object originConstructor = Class.forName(ORIGIN_EXECUTABLE).newInstance();
+        Field constructor = Class.forName(ORIGIN_EXECUTABLE).getDeclaredField("executable");
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
+                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
+                getClass().getClassLoader(),
+                isConstructor());
+        loaded.getLoaded().newInstance();
+        assertThat(constructor.get(originConstructor), instanceOf(Constructor.class));
+        assertThat(constructor.get(originConstructor), is((Object) loaded.getLoaded().getDeclaredConstructor()));
+        Object previous = constructor.get(originConstructor);
+        loaded.getLoaded().newInstance();
+        assertThat(constructor.get(originConstructor), instanceOf(Constructor.class));
+        assertThat(constructor.get(originConstructor), is((Object) loaded.getLoaded().getDeclaredConstructor()));
+        assertThat(constructor.get(originConstructor), not(sameInstance(previous)));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testOriginExecutableConstructorWithCache() throws Exception {
+        Object originConstructor = Class.forName(ORIGIN_EXECUTABLE_CACHED).newInstance();
+        Field constructor = Class.forName(ORIGIN_EXECUTABLE_CACHED).getDeclaredField("executable");
+        DynamicType.Loaded<Foo> loaded = implement(Foo.class,
+                SuperMethodCall.INSTANCE.andThen(MethodDelegation.to(originConstructor)),
+                getClass().getClassLoader(),
+                isConstructor());
+        loaded.getLoaded().newInstance();
+        assertThat(constructor.get(originConstructor), instanceOf(Constructor.class));
+        assertThat(constructor.get(originConstructor), is((Object) loaded.getLoaded().getDeclaredConstructor()));
+        Object previous = constructor.get(originConstructor);
+        loaded.getLoaded().newInstance();
+        assertThat(constructor.get(originConstructor), instanceOf(Constructor.class));
+        assertThat(constructor.get(originConstructor), sameInstance(previous));
+    }
+
+    @Test
     public void testOriginString() throws Exception {
         DynamicType.Loaded<Foo> loaded = implement(Foo.class, MethodDelegation.to(OriginString.class));
         Foo instance = loaded.getLoaded().newInstance();
@@ -150,6 +218,7 @@ public class MethodDelegationOriginTest extends AbstractImplementationTest {
     }
 
     public static class OriginConstructor {
+
         private Constructor<?> constructor;
 
         public void foo(@Origin(cache = false) Constructor<?> constructor) {

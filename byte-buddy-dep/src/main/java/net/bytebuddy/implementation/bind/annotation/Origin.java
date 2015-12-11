@@ -18,8 +18,10 @@ import java.lang.reflect.Method;
  * The origin annotation provides some meta information about the source method that is bound to this method where
  * the binding is dependant of the parameter's type:
  * <ol>
- * <li>If the annotated parameter is of type {@link java.lang.reflect.Method}, the parameter is assigned a reference
- * to the method it intercepts.</li>
+ * <li>If the annotated parameter is of type {@link java.lang.reflect.Method}, {@link java.lang.reflect.Method} or
+ * {@code java.lang.reflect.Executable}, the parameter is assigned a reference to the method or constructor it
+ * intercepts. If the reference is not assignable to the sort of the intercepted source, the target is not considered
+ * for binding.</li>
  * <li>If the annotated parameter is of type {@link java.lang.Class}, the parameter is assigned a reference of the
  * type of the instrumented type.</li>
  * <li>If the annotated parameter is of type {@link java.lang.String}, the parameter is assigned a string with
@@ -93,6 +95,10 @@ public @interface Origin {
                                 ? MethodConstant.forMethod(source.asDefined()).cached()
                                 : MethodConstant.forMethod(source.asDefined()))
                         : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+            } else if (JavaType.EXECUTABLE.getTypeStub().equals(parameterType)) {
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(annotation.loadSilent().cache()
+                        ? MethodConstant.forMethod(source.asDefined()).cached()
+                        : MethodConstant.forMethod(source.asDefined()));
             } else if (parameterType.represents(String.class)) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TextConstant(source.toString()));
             } else if (parameterType.represents(int.class)) {

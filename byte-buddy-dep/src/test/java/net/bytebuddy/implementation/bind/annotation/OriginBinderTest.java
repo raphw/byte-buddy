@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -102,6 +103,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testStringBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(String.class)).thenReturn(true);
+        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -111,6 +113,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testModifierBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(int.class)).thenReturn(true);
+        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -143,6 +146,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
         when(targetType.getName()).thenReturn(FOO);
+        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         Origin.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
