@@ -867,10 +867,9 @@ public interface AgentBuilder {
                 LoadedTypeInitializer resolve();
 
                 /**
-                 * Loads the auxiliary types that this entry represents. This might cause the instrumentation to fail if
-                 * the auxiliary types reference the currently instrumented type.
+                 * Loads the auxiliary types that this entry represents and that do not depend on the instrumented type.
                  */
-                void loadAuxiliaryTypes();
+                void loadIndependentAuxiliaryTypes();
 
                 /**
                  * A simple implementation of a lazy constructor for a {@link LoadedTypeInitializer} that simply returns a given instance.
@@ -897,7 +896,7 @@ public interface AgentBuilder {
                     }
 
                     @Override
-                    public void loadAuxiliaryTypes() {
+                    public void loadIndependentAuxiliaryTypes() {
                         /* do nothing */
                     }
 
@@ -1320,11 +1319,11 @@ public interface AgentBuilder {
         }
 
         /**
-         * An initialization strategy that loads all auxiliary types before loading the instrumented type. This can
-         * cause the instrumented type to be loaded prematurely (and to fail the instrumentation) if any auxiliary type
-         * is a subtype of the instrumented type or causes the instrumented type to be loaded in any other manner.
+         * An initialization strategy that loads auxiliary types before loading the instrumented type. This strategy skips all types
+         * that are a subtype of the instrumented type which would cause a premature loading of the instrumented type and abort
+         * the instrumentation process.
          */
-        enum Premature implements InitializationStrategy, Dispatcher {
+        enum Minimal implements InitializationStrategy, Dispatcher {
 
             /**
              * The singleton instance.
@@ -1343,12 +1342,12 @@ public interface AgentBuilder {
 
             @Override
             public void register(String name, ClassLoader classLoader, LazyInitializer lazyInitializer) {
-                lazyInitializer.loadAuxiliaryTypes();
+                lazyInitializer.loadIndependentAuxiliaryTypes();
             }
 
             @Override
             public String toString() {
-                return "AgentBuilder.InitializationStrategy.Premature." + name();
+                return "AgentBuilder.InitializationStrategy.Minimal." + name();
             }
         }
     }
@@ -2763,11 +2762,11 @@ public interface AgentBuilder {
                                     ? bootstrapInjectionStrategy.make(protectionDomain)
                                     : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext);
                             Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(rawAuxiliaryTypes);
-                            Map<TypeDescription, byte[]> dependantTypes = new LinkedHashMap<TypeDescription, byte[]>(rawAuxiliaryTypes);
+                            Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(rawAuxiliaryTypes);
                             for (TypeDescription auxiliaryType : rawAuxiliaryTypes.keySet()) {
                                 (auxiliaryType.isAssignableTo(instrumentedType)
-                                        ? dependantTypes
-                                        : independentTypes).remove(auxiliaryType);
+                                        ? independentTypes
+                                        : dependentTypes).remove(auxiliaryType);
                             }
                             if (!independentTypes.isEmpty()) {
                                 for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
@@ -2776,15 +2775,23 @@ public interface AgentBuilder {
                             }
                             Map<TypeDescription, LoadedTypeInitializer> lazyInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(loadedTypeInitializers);
                             loadedTypeInitializers.keySet().removeAll(independentTypes.keySet());
-                            return new InjectingInitializer(instrumentedType, dependantTypes, lazyInitializers, classInjector);
+                            return loadedTypeInitializers.size() > 1 // there exist auxiliary types that need lazy loading
+                                    ? new InjectingInitializer(instrumentedType, dependentTypes, lazyInitializers, classInjector)
+                                    : lazyInitializers.get(instrumentedType);
                         }
 
                         @Override
-                        public void loadAuxiliaryTypes() {
-                            if (!rawAuxiliaryTypes.isEmpty()) {
+                        public void loadIndependentAuxiliaryTypes() {
+                            Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(rawAuxiliaryTypes);
+                            for (TypeDescription auxiliaryType : rawAuxiliaryTypes.keySet()) {
+                                if (auxiliaryType.isAssignableTo(instrumentedType)) {
+                                    independentTypes.remove(auxiliaryType);
+                                }
+                            }
+                            if (!independentTypes.isEmpty()) {
                                 for (Map.Entry<TypeDescription, Class<?>> auxiliary : (classLoader == null
                                         ? bootstrapInjectionStrategy.make(protectionDomain)
-                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext)).inject(rawAuxiliaryTypes).entrySet()) {
+                                        : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext)).inject(independentTypes).entrySet()) {
                                     loadedTypeInitializers.get(auxiliary.getKey()).onLoad(auxiliary.getValue());
                                 }
                             }

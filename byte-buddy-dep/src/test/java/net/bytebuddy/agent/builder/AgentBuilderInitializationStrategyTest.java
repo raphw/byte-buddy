@@ -67,20 +67,20 @@ public class AgentBuilderInitializationStrategyTest {
 
     @Test
     public void testPremature() throws Exception {
-        assertThat(AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.dispatcher(),
-                is((AgentBuilder.InitializationStrategy.Dispatcher) AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE));
+        assertThat(AgentBuilder.InitializationStrategy.Minimal.INSTANCE.dispatcher(),
+                is((AgentBuilder.InitializationStrategy.Dispatcher) AgentBuilder.InitializationStrategy.Minimal.INSTANCE));
     }
 
     @Test
     public void testPrematureApplication() throws Exception {
-        assertThat(AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.apply(builder), is((DynamicType.Builder) builder));
+        assertThat(AgentBuilder.InitializationStrategy.Minimal.INSTANCE.apply(builder), is((DynamicType.Builder) builder));
     }
 
     @Test
     public void testPrematureRegistration() throws Exception {
-        AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.register(FOO, classLoader, lazyInitializer);
+        AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(FOO, classLoader, lazyInitializer);
         verifyZeroInteractions(classLoader);
-        verify(lazyInitializer).loadAuxiliaryTypes();
+        verify(lazyInitializer).loadIndependentAuxiliaryTypes();
         verifyNoMoreInteractions(lazyInitializer);
     }
 
@@ -202,6 +202,6 @@ public class AgentBuilderInitializationStrategyTest {
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.InitializationAppender.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Premature.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Minimal.class).apply();
     }
 }
