@@ -12,6 +12,8 @@ import org.mockito.Mock;
 
 import java.io.PrintStream;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class AgentBuilderListenerTest {
@@ -123,6 +125,11 @@ public class AgentBuilderListenerTest {
         listener.onIgnored(typeDescription);
         verify(printStream).println("[Byte Buddy] IGNORE " + FOO);
         verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testStreamWritingStandardOutput() throws Exception {
+        assertThat(AgentBuilder.Listener.StreamWriting.toSystemOut(), is((AgentBuilder.Listener) new AgentBuilder.Listener.StreamWriting(System.out)));
     }
 
     @Test
