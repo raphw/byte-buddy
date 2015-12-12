@@ -24,6 +24,7 @@ import net.bytebuddy.pool.TypePool;
 import org.objectweb.asm.MethodVisitor;
 
 import java.io.File;
+import java.io.PrintStream;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -661,6 +662,80 @@ public interface AgentBuilder {
             @Override
             public String toString() {
                 return "AgentBuilder.Listener.NoOp." + name();
+            }
+        }
+
+        /**
+         * A listener that writes events to a {@link PrintStream}. This listener prints a line per event, including the event type and
+         * the name of the type in question.
+         */
+        class StreamWriting implements Listener {
+
+            /**
+             * The prefix that is appended to all written messages.
+             */
+            protected static final String PREFIX = "[Byte Buddy]";
+
+            /**
+             * The print stream written to.
+             */
+            private final PrintStream printStream;
+
+            /**
+             * Creates a new stream writing listener.
+             *
+             * @param printStream The print stream written to.
+             */
+            public StreamWriting(PrintStream printStream) {
+                this.printStream = printStream;
+            }
+
+            /**
+             * Creates a new stream writing listener that writes to {@link System#out}.
+             *
+             * @return A listener writing events to the standard output stream.
+             */
+            public static Listener toSystemOut() {
+                return new StreamWriting(System.out);
+            }
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+                printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName());
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription) {
+                printStream.println(PREFIX + " IGNORE " + typeDescription.getName());
+            }
+
+            @Override
+            public void onError(String typeName, Throwable throwable) {
+                printStream.println(PREFIX + " ERROR " + typeName);
+                throwable.printStackTrace(printStream);
+            }
+
+            @Override
+            public void onComplete(String typeName) {
+                printStream.println(PREFIX + " COMPLETE " + typeName);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && printStream.equals(((StreamWriting) other).printStream);
+            }
+
+            @Override
+            public int hashCode() {
+                return printStream.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Listener.StreamWriting{" +
+                        "printStream=" + printStream +
+                        '}';
             }
         }
 
