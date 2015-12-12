@@ -2759,12 +2759,24 @@ public interface AgentBuilder {
 
                         @Override
                         public LoadedTypeInitializer resolve() {
-                            return new InjectingInitializer(instrumentedType,
-                                    rawAuxiliaryTypes,
-                                    loadedTypeInitializers,
-                                    classLoader == null
-                                            ? bootstrapInjectionStrategy.make(protectionDomain)
-                                            : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext));
+                            ClassInjector classInjector = classLoader == null
+                                    ? bootstrapInjectionStrategy.make(protectionDomain)
+                                    : new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext);
+                            Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(rawAuxiliaryTypes);
+                            Map<TypeDescription, byte[]> dependantTypes = new LinkedHashMap<TypeDescription, byte[]>(rawAuxiliaryTypes);
+                            for (TypeDescription auxiliaryType : rawAuxiliaryTypes.keySet()) {
+                                (auxiliaryType.isAssignableTo(instrumentedType)
+                                        ? dependantTypes
+                                        : independentTypes).remove(auxiliaryType);
+                            }
+                            if (!independentTypes.isEmpty()) {
+                                for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                                    loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
+                                }
+                            }
+                            Map<TypeDescription, LoadedTypeInitializer> lazyInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>(loadedTypeInitializers);
+                            loadedTypeInitializers.keySet().removeAll(independentTypes.keySet());
+                            return new InjectingInitializer(instrumentedType, dependantTypes, lazyInitializers, classInjector);
                         }
 
                         @Override
