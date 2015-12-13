@@ -59,7 +59,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
                 .redefine(Bar.class)
                 .make();
-        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
         Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
@@ -73,7 +73,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 .redefine(Bar.class)
                 .constructor(any()).intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make();
-        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
         Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
@@ -87,7 +87,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
                 .redefine(Qux.class)
                 .method(named(BAR)).intercept(StubMethod.INSTANCE)
                 .make();
-        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
         Class<?> type = dynamicType.load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(2));

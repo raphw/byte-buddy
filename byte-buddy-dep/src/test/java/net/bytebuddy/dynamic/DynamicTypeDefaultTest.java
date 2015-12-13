@@ -108,7 +108,7 @@ public class DynamicTypeDefaultTest {
         when(auxiliaryType.getTypeDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(BINARY_SECOND);
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
-        when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
+        when(auxiliaryType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
         when(auxiliaryType.getAllTypes()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, BINARY_SECOND));
     }
 
@@ -124,8 +124,8 @@ public class DynamicTypeDefaultTest {
 
     @Test
     public void testRawAuxiliaryTypes() throws Exception {
-        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(1));
-        assertThat(dynamicType.getRawAuxiliaryTypes().get(auxiliaryTypeDescription), is(BINARY_SECOND));
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(1));
+        assertThat(dynamicType.getAuxiliaryTypes().get(auxiliaryTypeDescription), is(BINARY_SECOND));
     }
 
     @Test
