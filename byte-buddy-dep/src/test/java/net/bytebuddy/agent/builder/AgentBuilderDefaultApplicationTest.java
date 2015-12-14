@@ -8,14 +8,13 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.MethodDelegation;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bind.annotation.Super;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -231,6 +230,23 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
+    @Test
+    @AgentAttachmentRule.Enforce
+    public void testSignatureTypesAreAvailableAfterLoad() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .withBinaryLocator(binaryLocator)
+                .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new ConstructorTransformer())
+                .installOnByteBuddyAgent();
+        try {
+            Class<?> type = classLoader.loadClass(Foo.class.getName());
+            assertThat(type.getDeclaredConstructors().length, is(2));
+            assertThat(type.newInstance(), notNullValue(Object.class));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+        }
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     public @interface ShouldRebase {
         /* empty */
@@ -339,6 +355,14 @@ public class AgentBuilderDefaultApplicationTest {
 
         public String foo() {
             return FOO;
+        }
+    }
+
+    public static class ConstructorTransformer implements AgentBuilder.Transformer {
+
+        @Override
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+            return builder.constructor(ElementMatchers.any()).intercept(SuperMethodCall.INSTANCE);
         }
     }
 }
