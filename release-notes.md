@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. December 2015: version 0.7.7
+
+- Fixed type resolution for anoymously loaded classes by the `ClassReloadingStrategy`.
+- Added additional `InitiailizationStrategy`s for self-injection where the new default strategy loads types that are independent of the instrumented type before completing the instrumentation. This way, the resolution does not fail for types that are accessed via reflection before initializing the types if a constructor is rebased.
+
 ### 11. December 2015: version 0.7.6
 
 - Fixed resolution of `@Origin` for constructors and added possibility to use the `Executable` type.
