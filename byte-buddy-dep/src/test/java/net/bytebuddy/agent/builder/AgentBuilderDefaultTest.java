@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
+import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
@@ -15,6 +16,7 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.io.File;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -25,9 +27,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.nullValue;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 public class AgentBuilderDefaultTest {
@@ -49,7 +51,7 @@ public class AgentBuilderDefaultTest {
     private DynamicType.Builder<?> builder;
 
     @Mock
-    private DynamicType.Unloaded<?> unloaded;
+    private DynamicType.Unloaded<?> dynamicType;
 
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
@@ -89,16 +91,16 @@ public class AgentBuilderDefaultTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(builder.make()).thenReturn((DynamicType.Unloaded) unloaded);
-        when(unloaded.getTypeDescription()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(builder.make()).thenReturn((DynamicType.Unloaded) dynamicType);
+        when(dynamicType.getTypeDescription()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(typeStrategy.builder(any(TypeDescription.class),
                 eq(byteBuddy),
                 any(ClassFileLocator.class),
                 any(MethodRebaseResolver.MethodNameTransformer.class))).thenReturn((DynamicType.Builder) builder);
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
         loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
-        when(unloaded.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(transformer.transform(builder, new TypeDescription.ForLoadedType(REDEFINED))).thenReturn((DynamicType.Builder) builder);
         when(binaryLocator.classFileLocator(REDEFINED.getClassLoader())).thenReturn(classFileLocator);
         when(binaryLocator.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
@@ -111,7 +113,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSuccessfulWithoutExistingClass() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
@@ -125,7 +127,7 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), unloaded);
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
         verify(listener).onComplete(REDEFINED.getName());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -133,15 +135,19 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(),
+        verify(dispatcher).register(dynamicType,
                 REDEFINED.getClassLoader(),
-                new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer));
+                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
+                        REDEFINED.getClassLoader(),
+                        REDEFINED.getProtectionDomain(),
+                        accessControlContext));
         verifyNoMoreInteractions(dispatcher);
     }
 
     @Test
     public void testSuccessfulWithExistingClass() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -154,7 +160,7 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), unloaded);
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
         verify(listener).onComplete(REDEFINED.getName());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -162,15 +168,19 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(),
+        verify(dispatcher).register(dynamicType,
                 REDEFINED.getClassLoader(),
-                new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer));
+                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
+                        REDEFINED.getClassLoader(),
+                        REDEFINED.getProtectionDomain(),
+                        accessControlContext));
         verifyNoMoreInteractions(dispatcher);
     }
 
     @Test
     public void testSkipRetransformationWithNonRedefinable() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain())).thenReturn(true);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(false);
@@ -199,7 +209,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSkipRetransformationWithNonMatched() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
@@ -230,7 +240,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSkipRetransformationWithNonMatchedListenerException() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
@@ -262,7 +272,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSkipRetransformationWithNonMatchedListenerCompleteException() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
@@ -335,7 +345,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSkipRedefinitionWithNonRedefinable() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
@@ -365,7 +375,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSkipRedefinitionWithNonMatched() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
@@ -396,7 +406,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSkipRedefinitionWithNonMatchedListenerException() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
@@ -428,7 +438,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testSkipRedefinitionWithNonMatchedListenerFinishedException() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
@@ -474,7 +484,7 @@ public class AgentBuilderDefaultTest {
                 .withAccessControlContext(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), unloaded);
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
         verify(listener).onComplete(REDEFINED.getName());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -488,9 +498,13 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(),
+        verify(dispatcher).register(dynamicType,
                 REDEFINED.getClassLoader(),
-                new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer));
+                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
+                        REDEFINED.getClassLoader(),
+                        REDEFINED.getProtectionDomain(),
+                        accessControlContext));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -510,7 +524,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testTransformationWithError() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         RuntimeException exception = mock(RuntimeException.class);
         when(resolution.resolve()).thenThrow(exception);
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
@@ -536,7 +550,7 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testIgnored() throws Exception {
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(false);
@@ -566,13 +580,13 @@ public class AgentBuilderDefaultTest {
 
     @Test
     public void testAuxiliaryTypeInitialization() throws Exception {
-        when(unloaded.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>singletonMap(new TypeDescription.ForLoadedType(AUXILIARY), QUX));
+        when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>singletonMap(new TypeDescription.ForLoadedType(AUXILIARY), QUX));
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
         loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
         LoadedTypeInitializer auxiliaryInitializer = mock(LoadedTypeInitializer.class);
         loadedTypeInitializers.put(new TypeDescription.ForLoadedType(AUXILIARY), auxiliaryInitializer);
-        when(unloaded.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
-        when(unloaded.getBytes()).thenReturn(BAZ);
+        when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
+        when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), null, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
@@ -586,7 +600,7 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), unloaded);
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
         verify(listener).onComplete(REDEFINED.getName());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
@@ -594,15 +608,13 @@ public class AgentBuilderDefaultTest {
         verify(initializationStrategy).dispatcher();
         verifyNoMoreInteractions(initializationStrategy);
         verify(dispatcher).apply(builder);
-        verify(dispatcher).register(REDEFINED.getName(),
+        verify(dispatcher).register(dynamicType,
                 REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.AuxiliaryTypeInitializer(AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
-                        new TypeDescription.ForLoadedType(REDEFINED),
+                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
                         REDEFINED.getClassLoader(),
                         REDEFINED.getProtectionDomain(),
-                        accessControlContext,
-                        Collections.singletonMap((TypeDescription) new TypeDescription.ForLoadedType(AUXILIARY), QUX),
-                        loadedTypeInitializers));
+                        accessControlContext));
         verifyNoMoreInteractions(dispatcher);
     }
 
@@ -705,6 +717,43 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
+    public void testBootstrapClassLoaderCapableInjectorFactoryReflection() throws Exception {
+        AgentBuilder.Default.BootstrapInjectionStrategy bootstrapInjectionStrategy = mock(AgentBuilder.Default.BootstrapInjectionStrategy.class);
+        ClassLoader classLoader = mock(ClassLoader.class);
+        ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
+        assertThat(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
+                classLoader,
+                protectionDomain,
+                accessControlContext).resolve(), is((ClassInjector) new ClassInjector.UsingReflection(classLoader, protectionDomain, accessControlContext)));
+        verifyZeroInteractions(bootstrapInjectionStrategy);
+    }
+
+    @Test
+    public void testBootstrapClassLoaderCapableInjectorFactoryInstrumentation() throws Exception {
+        AgentBuilder.Default.BootstrapInjectionStrategy bootstrapInjectionStrategy = mock(AgentBuilder.Default.BootstrapInjectionStrategy.class);
+        ProtectionDomain protectionDomain = mock(ProtectionDomain.class);
+        ClassInjector classInjector = mock(ClassInjector.class);
+        when(bootstrapInjectionStrategy.make(protectionDomain)).thenReturn(classInjector);
+        assertThat(new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
+                null,
+                protectionDomain,
+                accessControlContext).resolve(), is(classInjector));
+        verify(bootstrapInjectionStrategy).make(protectionDomain);
+        verifyNoMoreInteractions(bootstrapInjectionStrategy);
+    }
+
+    @Test
+    public void testEnabledBootstrapInjection() throws Exception {
+        assertThat(new AgentBuilder.Default.BootstrapInjectionStrategy.Enabled(mock(File.class), mock(Instrumentation.class)).make(mock(ProtectionDomain.class)),
+                instanceOf(ClassInjector.UsingInstrumentation.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testDisableddBootstrapInjection() throws Exception {
+        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE.make(mock(ProtectionDomain.class));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override
@@ -726,6 +775,13 @@ public class AgentBuilderDefaultTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory.class)
+                .create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
+                    @Override
+                    public AccessControlContext create() {
+                        return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
+                    }
+                }).apply();
     }
 
     public static class Foo {

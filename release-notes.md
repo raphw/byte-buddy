@@ -35,7 +35,7 @@ Byte Buddy release notes
 
 ### 16. November 2015: version 0.7.1
 
-- Fixed injection order for types to avoid premature loading by dependant auxiliary types.
+- Fixed injection order for types to avoid premature loading by dependent auxiliary types.
 - Added additional `ClassFileLocator`s and refactored class file lookup to always use these locators.
 
 ### 11. November 2015: version 0.7

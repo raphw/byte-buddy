@@ -33,7 +33,7 @@ public class TrivialTypeTest {
         DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
         assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
-        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(0));
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
         assertThat(dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription()).isAlive(), is(false));
     }
 

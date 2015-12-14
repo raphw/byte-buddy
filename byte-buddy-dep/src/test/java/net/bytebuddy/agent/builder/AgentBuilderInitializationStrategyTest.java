@@ -39,13 +39,16 @@ public class AgentBuilderInitializationStrategyTest {
     private DynamicType.Builder<?> builder;
 
     @Mock
+    private DynamicType dynamicType;
+
+    @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
 
     @Mock
     private ClassLoader classLoader;
 
     @Mock
-    private AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer lazyInitializer;
+    private AgentBuilder.InitializationStrategy.Dispatcher.InjectorFactory injectorFactory;
 
     @Test
     public void testNoOp() throws Exception {
@@ -60,28 +63,26 @@ public class AgentBuilderInitializationStrategyTest {
 
     @Test
     public void testNoOpRegistration() throws Exception {
-        AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE.register(FOO, classLoader, lazyInitializer);
+        AgentBuilder.Default.InitializationStrategy.NoOp.INSTANCE.register(dynamicType, classLoader, injectorFactory);
+        verifyZeroInteractions(dynamicType);
         verifyZeroInteractions(classLoader);
-        verifyZeroInteractions(lazyInitializer);
+        verifyZeroInteractions(injectorFactory);
     }
 
     @Test
     public void testPremature() throws Exception {
-        assertThat(AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.dispatcher(),
-                is((AgentBuilder.InitializationStrategy.Dispatcher) AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE));
+        assertThat(AgentBuilder.InitializationStrategy.Minimal.INSTANCE.dispatcher(),
+                is((AgentBuilder.InitializationStrategy.Dispatcher) AgentBuilder.InitializationStrategy.Minimal.INSTANCE));
     }
 
     @Test
     public void testPrematureApplication() throws Exception {
-        assertThat(AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.apply(builder), is((DynamicType.Builder) builder));
+        assertThat(AgentBuilder.InitializationStrategy.Minimal.INSTANCE.apply(builder), is((DynamicType.Builder) builder));
     }
 
     @Test
     public void testPrematureRegistration() throws Exception {
-        AgentBuilder.Default.InitializationStrategy.Premature.INSTANCE.register(FOO, classLoader, lazyInitializer);
-        verifyZeroInteractions(classLoader);
-        verify(lazyInitializer).loadAuxiliaryTypes();
-        verifyNoMoreInteractions(lazyInitializer);
+        AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(dynamicType, classLoader, injectorFactory); // TODO
     }
 
     @Test
@@ -97,11 +98,6 @@ public class AgentBuilderInitializationStrategyTest {
     @Test
     public void testNexusHasNoDeclaredTypes() throws Exception {
         assertThat(Nexus.class.getDeclaredClasses().length, is(0));
-    }
-
-    @Test
-    public void testSimpleInitializerReturnsInstance() throws Exception {
-        assertThat(new AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple(loadedTypeInitializer).resolve(), is(loadedTypeInitializer));
     }
 
     @Test
@@ -172,7 +168,7 @@ public class AgentBuilderInitializationStrategyTest {
         }
     }
 
-    @Test(expected = Exception.class)
+    @Test(expected = IllegalStateException.class)
     public void testUnavailableDispatcherThrowsException() throws Exception {
         new AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable(new Exception())
                 .register(FOO, classLoader, BAR, loadedTypeInitializer);
@@ -182,7 +178,6 @@ public class AgentBuilderInitializationStrategyTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.class).apply();
         final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
         ObjectPropertyAssertion.of(Nexus.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
@@ -201,7 +196,6 @@ public class AgentBuilderInitializationStrategyTest {
                 }).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.InitializationAppender.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Dispatcher.LazyInitializer.Simple.class).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Premature.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Minimal.class).apply();
     }
 }

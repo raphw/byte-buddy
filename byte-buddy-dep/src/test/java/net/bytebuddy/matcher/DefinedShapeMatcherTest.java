@@ -11,7 +11,7 @@ import static org.mockito.Mockito.*;
 public class DefinedShapeMatcherTest extends AbstractElementMatcherTest<DefinedShapeMatcher<?, ?>> {
 
     @Mock
-    private ByteCodeElement.TypeDependant<?, ?> dependant, resolvedDependant, otherResolvedDependant;
+    private ByteCodeElement.TypeDependant<?, ?> dependent, resolvedDependant, otherResolvedDependant;
 
     @Mock
     private ElementMatcher<ByteCodeElement.TypeDependant<?, ?>> matcher;
@@ -25,10 +25,10 @@ public class DefinedShapeMatcherTest extends AbstractElementMatcherTest<DefinedS
     @SuppressWarnings("unchecked")
     public void testMatch() throws Exception {
         when(matcher.matches(resolvedDependant)).thenReturn(true);
-        when(dependant.asDefined()).thenReturn((ByteCodeElement.TypeDependant) resolvedDependant);
-        assertThat(new DefinedShapeMatcher(matcher).matches(dependant), is(true));
-        verify(dependant).asDefined();
-        verifyNoMoreInteractions(dependant);
+        when(dependent.asDefined()).thenReturn((ByteCodeElement.TypeDependant) resolvedDependant);
+        assertThat(new DefinedShapeMatcher(matcher).matches(dependent), is(true));
+        verify(dependent).asDefined();
+        verifyNoMoreInteractions(dependent);
         verify(matcher).matches(resolvedDependant);
         verifyNoMoreInteractions(matcher);
     }
@@ -37,10 +37,10 @@ public class DefinedShapeMatcherTest extends AbstractElementMatcherTest<DefinedS
     @SuppressWarnings("unchecked")
     public void testNoMatch() throws Exception {
         when(matcher.matches(resolvedDependant)).thenReturn(true);
-        when(dependant.asDefined()).thenReturn((ByteCodeElement.TypeDependant) otherResolvedDependant);
-        assertThat(new DefinedShapeMatcher(matcher).matches(dependant), is(false));
-        verify(dependant).asDefined();
-        verifyNoMoreInteractions(dependant);
+        when(dependent.asDefined()).thenReturn((ByteCodeElement.TypeDependant) otherResolvedDependant);
+        assertThat(new DefinedShapeMatcher(matcher).matches(dependent), is(false));
+        verify(dependent).asDefined();
+        verifyNoMoreInteractions(dependent);
         verify(matcher).matches(otherResolvedDependant);
         verifyNoMoreInteractions(matcher);
     }

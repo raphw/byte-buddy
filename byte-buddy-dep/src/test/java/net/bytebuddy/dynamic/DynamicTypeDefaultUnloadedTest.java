@@ -65,7 +65,7 @@ public class DynamicTypeDefaultUnloadedTest {
         when(auxiliaryType.getTypeDescription()).thenReturn(auxiliaryTypeDescription);
         when(auxiliaryType.getBytes()).thenReturn(auxiliaryTypeByte);
         when(auxiliaryType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryLoadedTypeInitializer));
-        when(auxiliaryType.getRawAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
+        when(auxiliaryType.getAuxiliaryTypes()).thenReturn(Collections.<TypeDescription, byte[]>emptyMap());
     }
 
     @Test
@@ -73,7 +73,7 @@ public class DynamicTypeDefaultUnloadedTest {
         DynamicType.Loaded<?> loaded = unloaded.load(classLoader, classLoadingStrategy);
         assertThat(loaded.getTypeDescription(), is(typeDescription));
         assertThat(loaded.getBytes(), is(binaryRepresentation));
-        assertThat(loaded.getRawAuxiliaryTypes(), is(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeByte)));
+        assertThat(loaded.getAuxiliaryTypes(), is(Collections.singletonMap(auxiliaryTypeDescription, auxiliaryTypeByte)));
     }
 
     @Test
@@ -92,9 +92,9 @@ public class DynamicTypeDefaultUnloadedTest {
         TypeDescription additionalTypeDescription = mock(TypeDescription.class);
         when(additionalType.getTypeDescription()).thenReturn(additionalTypeDescription);
         DynamicType.Unloaded<?> dynamicType = unloaded.include(additionalType);
-        assertThat(dynamicType.getRawAuxiliaryTypes().size(), is(2));
-        assertThat(dynamicType.getRawAuxiliaryTypes().containsKey(additionalTypeDescription), is(true));
-        assertThat(dynamicType.getRawAuxiliaryTypes().containsKey(auxiliaryTypeDescription), is(true));
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(2));
+        assertThat(dynamicType.getAuxiliaryTypes().containsKey(additionalTypeDescription), is(true));
+        assertThat(dynamicType.getAuxiliaryTypes().containsKey(auxiliaryTypeDescription), is(true));
     }
 
     @Test

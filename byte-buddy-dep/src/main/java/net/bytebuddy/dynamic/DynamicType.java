@@ -84,7 +84,7 @@ public interface DynamicType {
      *
      * @return A map of all auxiliary types by their descriptions to their binary representation.
      */
-    Map<TypeDescription, byte[]> getRawAuxiliaryTypes();
+    Map<TypeDescription, byte[]> getAuxiliaryTypes();
 
     /**
      * Returns all types that are implied by this dynamic type.
@@ -3106,11 +3106,11 @@ public interface DynamicType {
         }
 
         @Override
-        public Map<TypeDescription, byte[]> getRawAuxiliaryTypes() {
+        public Map<TypeDescription, byte[]> getAuxiliaryTypes() {
             Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
             for (DynamicType auxiliaryType : this.auxiliaryTypes) {
                 auxiliaryTypes.put(auxiliaryType.getTypeDescription(), auxiliaryType.getBytes());
-                auxiliaryTypes.putAll(auxiliaryType.getRawAuxiliaryTypes());
+                auxiliaryTypes.putAll(auxiliaryType.getAuxiliaryTypes());
             }
             return auxiliaryTypes;
         }
@@ -3146,7 +3146,7 @@ public interface DynamicType {
                 }
                 JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
                 try {
-                    Map<TypeDescription, byte[]> rawAuxiliaryTypes = getRawAuxiliaryTypes();
+                    Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
                     Map<String, byte[]> files = new HashMap<String, byte[]>(rawAuxiliaryTypes.size() + 1);
                     for (Map.Entry<TypeDescription, byte[]> entry : rawAuxiliaryTypes.entrySet()) {
                         files.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
@@ -3223,7 +3223,7 @@ public interface DynamicType {
             }
             JarOutputStream outputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file)), manifest);
             try {
-                for (Map.Entry<TypeDescription, byte[]> entry : getRawAuxiliaryTypes().entrySet()) {
+                for (Map.Entry<TypeDescription, byte[]> entry : getAuxiliaryTypes().entrySet()) {
                     outputStream.putNextEntry(new JarEntry(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION));
                     outputStream.write(entry.getValue());
                     outputStream.closeEntry();

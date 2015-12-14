@@ -4,11 +4,16 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.io.PrintStream;
+
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class AgentBuilderListenerTest {
@@ -32,6 +37,11 @@ public class AgentBuilderListenerTest {
 
     @Mock
     private Throwable throwable;
+
+    @Before
+    public void setUp() throws Exception {
+        when(typeDescription.getName()).thenReturn(FOO);
+    }
 
     @Test
     public void testNoOp() throws Exception {
@@ -80,8 +90,52 @@ public class AgentBuilderListenerTest {
     }
 
     @Test
+    public void testStreamWritingOnTransformation() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
+        listener.onTransformation(typeDescription, dynamicType);
+        verify(printStream).println("[Byte Buddy] TRANSFORM " + FOO);
+        verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testStreamWritingOnError() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
+        listener.onError(FOO, throwable);
+        verify(printStream).println("[Byte Buddy] ERROR " + FOO);
+        verifyNoMoreInteractions(printStream);
+        verify(throwable).printStackTrace(printStream);
+        verifyNoMoreInteractions(throwable);
+    }
+
+    @Test
+    public void testStreamWritingOnComplete() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
+        listener.onComplete(FOO);
+        verify(printStream).println("[Byte Buddy] COMPLETE " + FOO);
+        verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testStreamWritingOnIgnore() throws Exception {
+        PrintStream printStream = mock(PrintStream.class);
+        AgentBuilder.Listener listener = new AgentBuilder.Listener.StreamWriting(printStream);
+        listener.onIgnored(typeDescription);
+        verify(printStream).println("[Byte Buddy] IGNORE " + FOO);
+        verifyNoMoreInteractions(printStream);
+    }
+
+    @Test
+    public void testStreamWritingStandardOutput() throws Exception {
+        assertThat(AgentBuilder.Listener.StreamWriting.toSystemOut(), is((AgentBuilder.Listener) new AgentBuilder.Listener.StreamWriting(System.out)));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Listener.NoOp.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Listener.StreamWriting.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.Compound.class).apply();
     }
 }
