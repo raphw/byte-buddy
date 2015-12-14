@@ -188,6 +188,15 @@ public class ClassReloadingStrategyTest {
     }
 
     @Test
+    public void testTransformerHandlesNullValue() throws Exception {
+        assertThat(new ClassReloadingStrategy.Engine.ClassRedefinitionTransformer(Collections.<Class<?>, ClassDefinition>emptyMap()).transform(null,
+                null,
+                null,
+                null,
+                new byte[0]), nullValue(byte[].class));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassReloadingStrategy.class).refine(new ObjectPropertyAssertion.Refinement<Instrumentation>() {
             @Override

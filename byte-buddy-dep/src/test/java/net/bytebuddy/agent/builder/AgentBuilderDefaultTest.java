@@ -754,6 +754,24 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
+    public void testExecutingTransformerHandlesNullValue() throws Exception {
+        assertThat(new AgentBuilder.Default.ExecutingTransformer(byteBuddy,
+                binaryLocator,
+                typeStrategy,
+                listener,
+                mock(AgentBuilder.Default.NativeMethodStrategy.class),
+                accessControlContext,
+                initializationStrategy,
+                mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
+                mock(AgentBuilder.Default.Transformation.class))
+                .transform(null,
+                        null,
+                        null,
+                        null,
+                        new byte[0]), nullValue(byte[].class));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override

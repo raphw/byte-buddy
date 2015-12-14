@@ -27,13 +27,15 @@ import static org.mockito.Mockito.when;
 
 public class ClassFileLocatorAgentBasedTest {
 
+    private static final String FOO = "foo";
+
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
 
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
-    @AgentAttachmentRule.Enforce(redefinesClasses= true)
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testStrategyCreation() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(ClassReloadingStrategy.fromInstalledAgent(), notNullValue());
@@ -83,6 +85,15 @@ public class ClassFileLocatorAgentBasedTest {
         assertThat(classLoadingDelegate.getClassLoader(), is(Foo.class.getClassLoader()));
         assertThat(classLoadingDelegate.locate(Foo.class.getName()), CoreMatchers.<Class<?>>is(Foo.class));
         assertThat(classLoadingDelegate.locate(Object.class.getName()), CoreMatchers.<Class<?>>is(Object.class));
+    }
+
+    @Test
+    public void testExtractingTransformerHandlesNullValue() throws Exception {
+        assertThat(new ClassFileLocator.AgentBased.ExtractionClassFileTransformer(mock(ClassLoader.class), FOO).transform(null,
+                null,
+                null,
+                null,
+                new byte[0]), nullValue(byte[].class));
     }
 
     @Test
