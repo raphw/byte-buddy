@@ -5,12 +5,12 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.utility.AccessAction;
 import net.bytebuddy.utility.PropertyDispatcher;
 
 import java.lang.annotation.*;
 import java.lang.reflect.*;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -1627,7 +1627,7 @@ public interface AnnotationDescription {
                 if (method == null || (!accessible && !method.isAccessible())) {
                     method = annotation.annotationType().getDeclaredMethod(methodDescription.getName());
                     if (!accessible) {
-                        AccessController.doPrivileged(new MethodAccessibilityAction(method));
+                        AccessController.doPrivileged(AccessAction.of(method));
                     }
                 }
                 return describe(method.invoke(annotation), methodDescription.getReturnType().asErasure());
@@ -1650,58 +1650,6 @@ public interface AnnotationDescription {
         @Override
         public TypeDescription getAnnotationType() {
             return new TypeDescription.ForLoadedType(annotation.annotationType());
-        }
-
-
-        /**
-         * Sets a method accessible.
-         */
-        protected static class MethodAccessibilityAction implements PrivilegedAction<Void> {
-
-            /**
-             * Indicates that this action returns nothing.
-             */
-            private static final Void NOTHING = null;
-
-            /**
-             * The method to make accessible.
-             */
-            private final Method method;
-
-            /**
-             * Creates a new method accessibility action.
-             *
-             * @param method The method to make accessible.
-             */
-            protected MethodAccessibilityAction(Method method) {
-                this.method = method;
-            }
-
-            @Override
-            public Void run() {
-                method.setAccessible(true);
-                return NOTHING;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                MethodAccessibilityAction that = (MethodAccessibilityAction) other;
-                return method.equals(that.method);
-            }
-
-            @Override
-            public int hashCode() {
-                return method.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "AnnotationDescription.ForLoadedAnnotation.MethodAccessibilityAction{" +
-                        "method=" + method +
-                        '}';
-            }
         }
     }
 

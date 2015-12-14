@@ -6,6 +6,8 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.*;
 import java.security.AccessControlContext;
 import java.security.AccessController;
@@ -504,6 +506,24 @@ public class ByteArrayClassLoader extends ClassLoader {
         private static final String CLASS_FILE_SUFFIX = ".class";
 
         /**
+         * The synchronization engine for the executing JVM.
+         */
+        private static final SynchronizationEngine SYNCHRONIZATION_ENGINE;
+
+        /*
+         * Sets up the suitable synchronization engine (Java 8+ or earlier).
+         */
+        static {
+            SynchronizationEngine synchronizationEngine;
+            try {
+                synchronizationEngine = SynchronizationEngine.ForModernVm.resolve();
+            } catch (Exception ignored) {
+                synchronizationEngine = SynchronizationEngine.ForLegacyVm.INSTANCE;
+            }
+            SYNCHRONIZATION_ENGINE = synchronizationEngine;
+        }
+
+        /**
          * Creates a new child-first byte array class loader.
          *
          * @param parent                    The {@link java.lang.ClassLoader} that is the parent of this class loader.
@@ -523,22 +543,24 @@ public class ByteArrayClassLoader extends ClassLoader {
         }
 
         @Override
-        protected synchronized Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            Class<?> type = findLoadedClass(name);
-            if (type != null) {
-                return type;
-            }
-            try {
-                type = findClass(name);
-                if (resolve) {
-                    resolveClass(type);
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            synchronized (SYNCHRONIZATION_ENGINE.classLoadingLock(name, this)) {
+                Class<?> type = findLoadedClass(name);
+                if (type != null) {
+                    return type;
                 }
-                return type;
-            } catch (ClassNotFoundException exception) {
-                // If an unknown class is loaded, this implementation causes the findClass method of this instance
-                // to be triggered twice. This is however of minor importance because this would result in a
-                // ClassNotFoundException what does not alter the outcome.
-                return super.loadClass(name, resolve);
+                try {
+                    type = findClass(name);
+                    if (resolve) {
+                        resolveClass(type);
+                    }
+                    return type;
+                } catch (ClassNotFoundException exception) {
+                    // If an unknown class is loaded, this implementation causes the findClass method of this instance
+                    // to be triggered twice. This is however of minor importance because this would result in a
+                    // ClassNotFoundException what does not alter the outcome.
+                    return super.loadClass(name, resolve);
+                }
             }
         }
 
@@ -592,6 +614,105 @@ public class ByteArrayClassLoader extends ClassLoader {
                     ", persistenceHandler=" + persistenceHandler +
                     ", packageDefinitionStrategy=" + packageDefinitionStrategy +
                     '}';
+        }
+
+        /**
+         * An engine for receiving a <i>class loading lock</i> when loading a class.
+         */
+        protected interface SynchronizationEngine {
+
+            /**
+             * Receives the class loading lock.
+             *
+             * @param name        The name of the class being loaded.
+             * @param classLoader The class loader loading the class.
+             * @return The corresponding class loading lock.
+             */
+            Object classLoadingLock(String name, ClassLoader classLoader);
+
+            /**
+             * A synchronization engine for a VM that is not aware of parallel-capable class loaders.
+             */
+            enum ForLegacyVm implements SynchronizationEngine {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Object classLoadingLock(String name, ClassLoader classLoader) {
+                    return classLoader;
+                }
+
+                @Override
+                public String toString() {
+                    return "ByteArrayClassLoader.ChildFirst.SynchronizationEngine.ForLegacyVm." + name();
+                }
+            }
+
+            /**
+             * A synchronization engine for a VM that is aware of parallel-capable class loaders.
+             */
+            class ForModernVm implements SynchronizationEngine, PrivilegedAction<SynchronizationEngine> {
+
+                /**
+                 * The {@code ClassLoader#getClassLoadingLock(String)} method.
+                 */
+                private final Method method;
+
+                /**
+                 * Creates a new synchronization engine.
+                 *
+                 * @param method The {@code ClassLoader#getClassLoadingLock(String)} method.
+                 */
+                protected ForModernVm(Method method) {
+                    this.method = method;
+                }
+
+                /**
+                 * Resolves a synchronization engine for a modern VM if this is possible.
+                 *
+                 * @return A modern synchronization engine.
+                 * @throws NoSuchMethodException If the executing VM is not a modern VM.
+                 */
+                protected static SynchronizationEngine resolve() throws NoSuchMethodException {
+                    return AccessController.doPrivileged(new ForModernVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class)));
+                }
+
+                @Override
+                public Object classLoadingLock(String name, ClassLoader classLoader) {
+                    try {
+                        return method.invoke(classLoader, name);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access class loading lock for " + name + " on " + classLoader, exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error when getting " + name + " on " + classLoader, exception);
+                    }
+                }
+
+                @Override
+                public SynchronizationEngine run() {
+                    method.setAccessible(true);
+                    return this;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && method.equals(((ForModernVm) other).method);
+                }
+
+                @Override
+                public int hashCode() {
+                    return method.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "ByteArrayClassLoader.ChildFirst.SynchronizationEngine.ForModernVm{method=" + method + '}';
+                }
+            }
         }
 
         /**

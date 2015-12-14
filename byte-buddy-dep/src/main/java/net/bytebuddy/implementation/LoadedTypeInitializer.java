@@ -1,12 +1,12 @@
 package net.bytebuddy.implementation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.utility.AccessAction;
 
 import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
-import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.List;
 
@@ -100,7 +100,7 @@ public interface LoadedTypeInitializer {
             try {
                 Field field = type.getDeclaredField(fieldName);
                 if (!Modifier.isPublic(field.getModifiers()) || !Modifier.isPublic(field.getDeclaringClass().getModifiers())) {
-                    AccessController.doPrivileged(new FieldAccessibilityAction(field));
+                    AccessController.doPrivileged(AccessAction.of(field));
                 }
                 field.set(STATIC_FIELD, value);
             } catch (IllegalAccessException exception) {
@@ -137,57 +137,6 @@ public interface LoadedTypeInitializer {
                     "fieldName='" + fieldName + '\'' +
                     ", value=" + value +
                     '}';
-        }
-
-        /**
-         * Sets a field accessible.
-         */
-        protected static class FieldAccessibilityAction implements PrivilegedAction<Void> {
-
-            /**
-             * Indicates that this action returns nothing.
-             */
-            private static final Void NOTHING = null;
-
-            /**
-             * The field to make accessible.
-             */
-            private final Field field;
-
-            /**
-             * Creates a new field accessibility action.
-             *
-             * @param field The field to make accessible.
-             */
-            protected FieldAccessibilityAction(Field field) {
-                this.field = field;
-            }
-
-            @Override
-            public Void run() {
-                field.setAccessible(true);
-                return NOTHING;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                FieldAccessibilityAction that = (FieldAccessibilityAction) other;
-                return field.equals(that.field);
-            }
-
-            @Override
-            public int hashCode() {
-                return field.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "LoadedTypeInitializer.ForStaticField.FieldAccessibilityAction{" +
-                        "field=" + field +
-                        '}';
-            }
         }
     }
 
