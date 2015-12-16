@@ -8,6 +8,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -224,7 +225,7 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public MethodGraph.Linked compile(TypeDescription typeDescription, TypeDescription viewPoint) {
+        public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
             return methodGraph;
         }
 
