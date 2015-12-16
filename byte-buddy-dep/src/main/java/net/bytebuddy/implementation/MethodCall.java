@@ -27,6 +27,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -37,6 +38,28 @@ import static net.bytebuddy.utility.ByteBuddyCommons.*;
  * providing explicit arguments to this method.
  */
 public class MethodCall implements Implementation.Composable {
+
+    /**
+     * A reference to {@link Callable#call()}.
+     */
+    private static final MethodDescription CALL;
+
+    /**
+     * A reference to {@link Runnable#run()}.
+     */
+    private static final MethodDescription RUN;
+
+    /*
+     * Looks up references to known methods.
+     */
+    static {
+        try {
+            CALL = new MethodDescription.ForLoadedMethod(Callable.class.getDeclaredMethod("call"));
+            RUN = new MethodDescription.ForLoadedMethod(Runnable.class.getDeclaredMethod("run"));
+        } catch (NoSuchMethodException exception) {
+            throw new RuntimeException("Cannot find standard method", exception);
+        }
+    }
 
     /**
      * The method locator to use.
@@ -144,6 +167,27 @@ public class MethodCall implements Implementation.Composable {
      */
     public static WithoutSpecifiedTarget invoke(MethodLocator methodLocator) {
         return new WithoutSpecifiedTarget(nonNull(methodLocator));
+    }
+
+    /**
+     * Implements a method by invoking the provided {@link Callable}. The return value of the provided object is casted to the implemented method's
+     * return type, if necessary.
+     *
+     * @param callable The callable to invoke when a method is intercepted.
+     * @return A composable method implementation that invokes the given callable.
+     */
+    public static Composable call(Callable<?> callable) {
+        return invoke(CALL).on(callable).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
+    }
+
+    /**
+     * Implements a method by invoking the provided {@link Runnable}.
+     *
+     * @param runnable The runnable to invoke when a method is intercepted.
+     * @return A composable method implementation that invokes the given runnable.
+     */
+    public static Composable call(Runnable runnable) {
+        return invoke(RUN).on(runnable).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
     }
 
     /**

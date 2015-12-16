@@ -26,6 +26,7 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
@@ -448,6 +449,22 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(method.invoke(instance), is((Object) FOO));
     }
 
+    @Test
+    public void testCallable() throws Exception {
+        Traceable traceable = new Traceable();
+        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.call((Callable<?>) traceable)).getLoaded();
+        assertThat(loaded.newInstance().foo(), is(FOO));
+        traceable.assertOnlyCall(FOO);
+    }
+
+    @Test
+    public void testRunnable() throws Exception {
+        Traceable traceable = new Traceable();
+        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.call((Runnable) traceable)).getLoaded();
+        assertThat(loaded.newInstance().foo(), nullValue(String.class));
+        traceable.assertOnlyCall(FOO);
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testDefaultMethodNotCompatible() throws Exception {
         implement(Object.class, MethodCall.invoke(String.class.getDeclaredMethod("toString")).onDefault());
@@ -712,6 +729,27 @@ public class MethodCallTest extends AbstractImplementationTest {
 
         public void bar() {
             /* empty */
+        }
+    }
+
+    public static class SimpleStringMethod {
+
+        public String foo() {
+            return null;
+        }
+    }
+
+    public static class Traceable extends CallTraceable implements Runnable, Callable<String> {
+
+        @Override
+        public String call() throws Exception {
+            register(FOO);
+            return FOO;
+        }
+
+        @Override
+        public void run() {
+            register(FOO);
         }
     }
 }
