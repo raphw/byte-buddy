@@ -127,12 +127,11 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     private List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
         TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList().asErasures();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
-        TypeDescription objectType = TypeDescription.OBJECT;
         int currentIndex = 1;
         for (TypeDescription parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
                     MethodVariableAccess.forType(parameterType).loadOffset(currentIndex),
-                    assigner.assign(parameterType, objectType, Assigner.Typing.STATIC)));
+                    assigner.assign(parameterType, TypeDescription.OBJECT, Assigner.Typing.STATIC)));
             currentIndex += parameterType.getStackSize().getSize();
         }
         return instruction;
@@ -173,7 +172,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 preparingManipulation,
                 FieldAccess.forField(instrumentedType.getDeclaredFields()
                         .filter((named(fieldName))).getOnly()).getter(),
-                MethodVariableAccess.forType(TypeDescription.OBJECT).loadOffset(0),
+                MethodVariableAccess.REFERENCE.loadOffset(0),
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod.asDefined()).cached()
                         : MethodConstant.forMethod(instrumentedMethod.asDefined()),

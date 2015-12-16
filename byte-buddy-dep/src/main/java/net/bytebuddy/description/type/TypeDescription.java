@@ -54,11 +54,6 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     TypeDescription VOID = new ForLoadedType(void.class);
 
     /**
-     * A representation of the {@link java.lang.Enum} type.
-     */
-    TypeDescription ENUM = new ForLoadedType(Enum.class);
-
-    /**
      * The modifiers of any array type.
      */
     int ARRAY_MODIFIERS = Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL | Opcodes.ACC_ABSTRACT;
@@ -517,7 +512,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
                 GenericTypeDescription superType = getSuperType();
                 // The object type itself is non generic and implicitly returns a non-generic signature
                 if (superType == null) {
-                    superType = TypeDescription.OBJECT;
+                    superType = GenericTypeDescription.OBJECT;
                 }
                 superType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
                 generic = generic || !superType.getSort().isNonGeneric();
@@ -1122,7 +1117,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         protected GenericTypeDescription getDeclaredSuperType() {
-            return TypeDescription.OBJECT;
+            return GenericTypeDescription.OBJECT;
         }
 
         @Override
@@ -1392,7 +1387,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         protected GenericTypeDescription getDeclaredSuperType() {
-            return TypeDescription.OBJECT;
+            return GenericTypeDescription.OBJECT;
         }
 
         @Override

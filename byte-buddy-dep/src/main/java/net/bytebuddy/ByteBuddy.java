@@ -9,6 +9,7 @@ import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -267,10 +268,10 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
-        TypeDescription actualSuperType = isExtendable(superType);
+        GenericTypeDescription actualSuperType = isExtendable(superType);
         List<TypeDescription> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).isInterface()) {
-            actualSuperType = TypeDescription.OBJECT;
+            actualSuperType = GenericTypeDescription.OBJECT;
             interfaceTypes = joinUniqueRaw(interfaceTypes, Collections.singleton(superType));
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
@@ -368,7 +369,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                TypeDescription.OBJECT,
+                GenericTypeDescription.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -394,7 +395,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                TypeDescription.OBJECT,
+                GenericTypeDescription.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -443,7 +444,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                TypeDescription.OBJECT,
+                GenericTypeDescription.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -468,8 +469,9 @@ public class ByteBuddy {
         if (unique(nonNull(values)).isEmpty()) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
+        GenericTypeDescription enumType = new GenericTypeDescription.ForNonGenericType.OfLoadedType(Enum.class);
         return new SubclassDynamicTypeBuilder<Enum<?>>(classFileVersion,
-                nonNull(namingStrategy.subclass(TypeDescription.ENUM)),
+                nonNull(namingStrategy.subclass(enumType.asErasure())),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 interfaceTypes,
@@ -482,17 +484,17 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                TypeDescription.ENUM,
+                enumType,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Arrays.<Class<?>>asList(String.class, int.class), Visibility.PRIVATE)
-                .intercept(MethodCall.invoke(TypeDescription.ENUM.getDeclaredMethods()
+                .intercept(MethodCall.invoke(enumType.getDeclaredMethods()
                         .filter(isConstructor().and(takesArguments(String.class, int.class))).getOnly())
                         .withArgument(0, 1))
                 .defineMethod(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME,
                         TargetType.class,
                         Collections.<Class<?>>singletonList(String.class),
                         Visibility.PUBLIC, Ownership.STATIC)
-                .intercept(MethodCall.invoke(TypeDescription.ENUM.getDeclaredMethods()
+                .intercept(MethodCall.invoke(enumType.getDeclaredMethods()
                         .filter(named(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME).and(takesArguments(Class.class, String.class))).getOnly())
                         .withOwnType().withArgument(0)
                         .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC))
@@ -2129,7 +2131,7 @@ public class ByteBuddy {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
-                MethodDescription cloneMethod = TypeDescription.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
+                MethodDescription cloneMethod = GenericTypeDescription.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
                         MethodInvocation.invoke(cloneMethod).virtual(valuesField.getType().asErasure()),

@@ -23,6 +23,16 @@ import java.util.*;
 public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDefinition> {
 
     /**
+     * A representation of the {@link java.lang.Object} type.
+     */
+    GenericTypeDescription OBJECT = new ForNonGenericType.OfLoadedType(Object.class);
+
+    /**
+     * A representation of the {@code void} non-type.
+     */
+    GenericTypeDescription VOID = new ForNonGenericType.OfLoadedType(void.class);
+
+    /**
      * Returns the sort of the generic type this instance represents.
      *
      * @return The sort of the generic type.
@@ -1245,7 +1255,7 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
 
         @Override
         public GenericTypeDescription getSuperType() {
-            return TypeDescription.OBJECT;
+            return GenericTypeDescription.OBJECT;
         }
 
         @Override
@@ -1573,7 +1583,7 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
                 stringBuilder.append(" super ");
             } else {
                 bounds = getUpperBounds();
-                if (bounds.getOnly().equals(TypeDescription.OBJECT)) {
+                if (bounds.getOnly().equals(GenericTypeDescription.OBJECT)) {
                     return SYMBOL;
                 }
                 stringBuilder.append(" extends ");
@@ -1643,7 +1653,7 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
              * @return A description of an unbounded wildcard.
              */
             public static GenericTypeDescription unbounded() {
-                return new Latent(Collections.singletonList(TypeDescription.OBJECT), Collections.<GenericTypeDescription>emptyList());
+                return new Latent(Collections.singletonList(GenericTypeDescription.OBJECT), Collections.<GenericTypeDescription>emptyList());
             }
 
             /**
@@ -1663,7 +1673,7 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
              * @return A wildcard with the given lower bound.
              */
             public static GenericTypeDescription boundedBelow(GenericTypeDescription lowerBound) {
-                return new Latent(Collections.singletonList(TypeDescription.OBJECT), Collections.singletonList(lowerBound));
+                return new Latent(Collections.singletonList(GenericTypeDescription.OBJECT), Collections.singletonList(lowerBound));
             }
 
             @Override

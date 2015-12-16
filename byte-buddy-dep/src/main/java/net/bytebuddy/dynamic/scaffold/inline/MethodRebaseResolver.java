@@ -511,7 +511,7 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public GenericTypeDescription getReturnType() {
-                    return TypeDescription.VOID;
+                    return GenericTypeDescription.VOID;
                 }
 
                 @Override

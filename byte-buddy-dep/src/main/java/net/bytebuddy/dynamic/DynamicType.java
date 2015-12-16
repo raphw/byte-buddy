@@ -1780,7 +1780,7 @@ public interface DynamicType {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                         modifiers,
                         Collections.<GenericTypeDescription>emptyList(),
-                        TypeDescription.VOID,
+                        GenericTypeDescription.VOID,
                         new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
                         Collections.<TypeDescription>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),

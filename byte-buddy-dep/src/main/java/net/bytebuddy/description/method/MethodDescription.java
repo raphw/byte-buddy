@@ -700,7 +700,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public GenericTypeDescription getReturnType() {
-            return TypeDescription.VOID;
+            return GenericTypeDescription.VOID;
         }
 
         @Override
@@ -1059,7 +1059,7 @@ public interface MethodDescription extends TypeVariableSource,
 
             @Override
             public GenericTypeDescription getReturnType() {
-                return TypeDescription.VOID;
+                return GenericTypeDescription.VOID;
             }
 
             @Override

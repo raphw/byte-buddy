@@ -2642,7 +2642,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public GenericTypeDescription getReturnType() {
-                    return TypeDescription.VOID;
+                    return GenericTypeDescription.VOID;
                 }
 
                 @Override
