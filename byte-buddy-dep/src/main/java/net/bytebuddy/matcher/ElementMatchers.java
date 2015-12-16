@@ -317,7 +317,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> anyOf(Type... value) {
-        return anyOf(new GenericTypeList.ForLoadedType(nonNull(value)));
+        return anyOf(new GenericTypeList.ForLoadedTypes(nonNull(value)));
     }
 
     /**
@@ -405,7 +405,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> noneOf(Type... value) {
-        return noneOf(new GenericTypeList.ForLoadedType(nonNull(value)));
+        return noneOf(new GenericTypeList.ForLoadedTypes(nonNull(value)));
     }
 
     /**
@@ -1056,7 +1056,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(Type... type) {
-        return takesGenericArguments(new GenericTypeList.ForLoadedType(nonNull(type)));
+        return takesGenericArguments(new GenericTypeList.ForLoadedTypes(nonNull(type)));
     }
 
     /**

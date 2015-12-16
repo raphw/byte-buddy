@@ -66,7 +66,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     /**
      * A list of interfaces that are implicitly implemented by any array type.
      */
-    GenericTypeList ARRAY_INTERFACES = new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class);
+    GenericTypeList ARRAY_INTERFACES = new GenericTypeList.ForLoadedTypes(Cloneable.class, Serializable.class);
 
     /**
      * Represents any undefined property of a type description that is instead represented as {@code null} in order
@@ -1048,7 +1048,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
 
         @Override
         public GenericTypeList getTypeVariables() {
-            return new GenericTypeList.ForLoadedType(type.getTypeParameters());
+            return new GenericTypeList.ForLoadedTypes(type.getTypeParameters());
         }
 
         @Override

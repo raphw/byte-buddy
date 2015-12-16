@@ -156,7 +156,7 @@ public class TypeProxyCreationTest {
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
-        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedType(Serializable.class)));
+        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedTypes(Serializable.class)));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(true));

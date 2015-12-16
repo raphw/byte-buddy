@@ -312,13 +312,13 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     public void testInterfaces() throws Exception {
         assertThat(describe(Object.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(describe(SampleInterface.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
-        assertThat(describe(SampleAnnotation.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedType(Annotation.class)));
+        assertThat(describe(SampleAnnotation.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedTypes(Annotation.class)));
         assertThat(describe(SampleInterfaceImplementation.class).getInterfaces(),
-                is((GenericTypeList) new GenericTypeList.ForLoadedType(SampleInterface.class)));
+                is((GenericTypeList) new GenericTypeList.ForLoadedTypes(SampleInterface.class)));
         assertThat(describe(SampleIndirectInterfaceImplementation.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(describe(SampleTransitiveInterfaceImplementation.class).getInterfaces(),
-                is((GenericTypeList) new GenericTypeList.ForLoadedType(SampleTransitiveInterface.class)));
-        assertThat(describe(Object[].class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class)));
+                is((GenericTypeList) new GenericTypeList.ForLoadedTypes(SampleTransitiveInterface.class)));
+        assertThat(describe(Object[].class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedTypes(Cloneable.class, Serializable.class)));
     }
 
     @Test

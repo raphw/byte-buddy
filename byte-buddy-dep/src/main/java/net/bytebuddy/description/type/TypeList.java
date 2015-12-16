@@ -129,7 +129,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
         @Override
         public GenericTypeList asGenericTypes() {
-            return new GenericTypeList.ForLoadedType(types);
+            return new GenericTypeList.ForLoadedTypes(types);
         }
     }
 

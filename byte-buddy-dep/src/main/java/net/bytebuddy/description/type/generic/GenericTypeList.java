@@ -3,6 +3,7 @@ package net.bytebuddy.description.type.generic;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.FilterableList;
@@ -109,10 +110,33 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         }
     }
 
+    class ForTypeDefinitions extends AbstractBase {
+
+        private final List<? extends TypeDefinition> typeDefinitions;
+
+        public ForTypeDefinitions(TypeDefinition... typeDefinition) {
+            this(Arrays.asList(typeDefinition));
+        }
+
+        public ForTypeDefinitions(List<? extends TypeDefinition> typeDefinitions) {
+            this.typeDefinitions = typeDefinitions;
+        }
+
+        @Override
+        public GenericTypeDescription get(int index) {
+            return typeDefinitions.get(index).asGenericType();
+        }
+
+        @Override
+        public int size() {
+            return typeDefinitions.size();
+        }
+    }
+
     /**
      * A list of loaded generic types.
      */
-    class ForLoadedType extends AbstractBase {
+    class ForLoadedTypes extends AbstractBase {
 
         /**
          * The loaded types this list represents.
@@ -124,7 +148,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          *
          * @param type The loaded types this list represents.
          */
-        public ForLoadedType(Type... type) {
+        public ForLoadedTypes(Type... type) {
             this(Arrays.asList(type));
         }
 
@@ -133,7 +157,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          *
          * @param types The loaded types this list represents.
          */
-        public ForLoadedType(List<? extends Type> types) {
+        public ForLoadedTypes(List<? extends Type> types) {
             this.types = types;
         }
 

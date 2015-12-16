@@ -87,7 +87,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallImplicitInvalid() throws Exception {
         when(source.asToken()).thenReturn(morphToken);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedTypes(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
@@ -104,7 +104,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallImplicitValid() throws Exception {
         when(source.asToken()).thenReturn(morphToken);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedTypes(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
@@ -122,7 +122,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallExplicitInvalid() throws Exception {
         when(source.asToken()).thenReturn(morphToken);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedTypes(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);
@@ -138,7 +138,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Test
     public void testDefaultMethodCallExplicitValid() throws Exception {
         when(source.asToken()).thenReturn(morphToken);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedType(Foo.class));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.ForLoadedTypes(Foo.class));
         when(target.getType()).thenReturn(morphType);
         when(morphMethod.getDeclaringType()).thenReturn(morphType);
         when(annotation.defaultMethod()).thenReturn(true);

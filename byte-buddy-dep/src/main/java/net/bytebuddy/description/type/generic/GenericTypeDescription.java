@@ -1602,12 +1602,12 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
 
             @Override
             public GenericTypeList getLowerBounds() {
-                return new GenericTypeList.ForLoadedType(wildcardType.getLowerBounds());
+                return new GenericTypeList.ForLoadedTypes(wildcardType.getLowerBounds());
             }
 
             @Override
             public GenericTypeList getUpperBounds() {
-                return new GenericTypeList.ForLoadedType(wildcardType.getUpperBounds());
+                return new GenericTypeList.ForLoadedTypes(wildcardType.getUpperBounds());
             }
         }
 
@@ -1849,7 +1849,7 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
 
             @Override
             public GenericTypeList getParameters() {
-                return new GenericTypeList.ForLoadedType(parameterizedType.getActualTypeArguments());
+                return new GenericTypeList.ForLoadedTypes(parameterizedType.getActualTypeArguments());
             }
 
             @Override
@@ -2098,7 +2098,7 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
 
             @Override
             public GenericTypeList getUpperBounds() {
-                return new GenericTypeList.ForLoadedType(typeVariable.getBounds());
+                return new GenericTypeList.ForLoadedTypes(typeVariable.getBounds());
             }
 
             @Override
