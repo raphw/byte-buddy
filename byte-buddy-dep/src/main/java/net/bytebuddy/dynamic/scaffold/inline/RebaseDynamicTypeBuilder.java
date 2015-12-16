@@ -32,6 +32,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
  */
 public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
+    private final TypeDescription originalType;
+
     /**
      * A locator for finding a class file to a given type.
      */
@@ -49,7 +51,6 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
      * @param implementationContextFactory          The implementation context factory to use.
-     * @param levelType                             The type that is to be rebased.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
@@ -62,6 +63,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
      *                                              if no specific appender was specified for a given method.
+     * @param originalType                          The type that is to be rebased.
      * @param classFileLocator                      A locator for finding a class file to a given type.
      * @param methodNameTransformer                 A name transformer that transforms names of any rebased method.
      */
@@ -69,7 +71,6 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     NamingStrategy namingStrategy,
                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                     Implementation.Context.Factory implementationContextFactory,
-                                    TypeDescription levelType,
                                     List<TypeDescription> interfaceTypes,
                                     int modifiers,
                                     TypeAttributeAppender attributeAppender,
@@ -80,6 +81,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     MethodGraph.Compiler methodGraphCompiler,
                                     FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                     MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                    TypeDescription originalType,
                                     ClassFileLocator classFileLocator,
                                     MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         this(classFileVersion,
@@ -87,8 +89,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 InstrumentedType.TypeInitializer.None.INSTANCE,
-                levelType,
-                joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
+                joinUniqueRaw(interfaceTypes, originalType.getInterfaces()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -98,8 +99,9 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                levelType.getDeclaredFields().asTokenList(is(levelType)),
-                levelType.getDeclaredMethods().asTokenList(is(levelType)),
+                originalType.getDeclaredFields().asTokenList(is(originalType)),
+                originalType.getDeclaredMethods().asTokenList(is(originalType)),
+                originalType,
                 classFileLocator,
                 methodNameTransformer);
     }
@@ -112,7 +114,6 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
      * @param implementationContextFactory          The implementation context factory to use.
      * @param typeInitializer                       The type initializer to use.
-     * @param levelType                             The type that is to be rebased.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
@@ -129,6 +130,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
      *                                              dynamic type.
      * @param methodTokens                          A list of method representations that were added explicitly to this
      *                                              dynamic type.
+     * @param originalType                          The type that is to be rebased.
      * @param classFileLocator                      A locator for finding a class file to a given type.
      * @param methodNameTransformer                 A name transformer that transforms names of any rebased method.
      */
@@ -137,7 +139,6 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                        Implementation.Context.Factory implementationContextFactory,
                                        InstrumentedType.TypeInitializer typeInitializer,
-                                       TypeDescription levelType,
                                        List<GenericTypeDescription> interfaceTypes,
                                        int modifiers,
                                        TypeAttributeAppender attributeAppender,
@@ -150,6 +151,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                        List<FieldDescription.Token> fieldTokens,
                                        List<MethodDescription.Token> methodTokens,
+                                       TypeDescription originalType,
                                        ClassFileLocator classFileLocator,
                                        MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         super(classFileVersion,
@@ -157,7 +159,6 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeInitializer,
-                levelType,
                 interfaceTypes,
                 modifiers,
                 attributeAppender,
@@ -170,6 +171,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
                 methodTokens);
+        this.originalType = originalType;
         this.classFileLocator = classFileLocator;
         this.methodNameTransformer = methodNameTransformer;
     }
@@ -180,7 +182,6 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  InstrumentedType.TypeInitializer typeInitializer,
-                                                 TypeDescription levelType,
                                                  List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
@@ -198,7 +199,6 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeInitializer,
-                levelType,
                 interfaceTypes,
                 modifiers,
                 attributeAppender,
@@ -211,6 +211,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
                 methodTokens,
+                originalType,
                 classFileLocator,
                 methodNameTransformer);
     }
@@ -218,28 +219,28 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
-                        .UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
+                        .UnnamedType.Default(originalType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
-                        targetType.getSuperType(),
+                        originalType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(originalType))),
+                        originalType.getSuperType(),
                         interfaceTypes,
                         fieldTokens,
                         methodTokens,
-                        targetType.getDeclaredAnnotations(),
+                        originalType.getDeclaredAnnotations(),
                         typeInitializer,
                         LoadedTypeInitializer.NoOp.INSTANCE,
-                        targetType.getDeclaringType(),
-                        targetType.getEnclosingMethod(),
-                        targetType.getEnclosingType(),
-                        targetType.getDeclaredTypes(),
-                        targetType.isMemberClass(),
-                        targetType.isAnonymousClass(),
-                        targetType.isLocalClass()),
+                        originalType.getDeclaringType(),
+                        originalType.getEnclosingMethod(),
+                        originalType.getEnclosingType(),
+                        originalType.getDeclaredTypes(),
+                        originalType.isMemberClass(),
+                        originalType.isAnonymousClass(),
+                        originalType.isLocalClass()),
                 methodGraphCompiler,
-                InliningImplementationMatcher.of(ignoredMethods, targetType));
+                InliningImplementationMatcher.of(ignoredMethods, originalType));
         MethodList<MethodDescription.InDefinedShape> rebaseableMethods = preparedMethodRegistry.getInstrumentedMethods()
                 .asDefined()
-                .filter(methodRepresentedBy(anyOf(targetType.getDeclaredMethods().asTokenList())));
+                .filter(methodRepresentedBy(anyOf(originalType.getDeclaredMethods().asTokenList())));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(preparedMethodRegistry.getInstrumentedType(),
                 rebaseableMethods,
                 classFileVersion,
@@ -254,7 +255,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 attributeAppender,
                 classFileVersion,
                 classFileLocator,
-                targetType,
+                originalType,
                 methodRebaseResolver).make();
     }
 
@@ -262,6 +263,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
+                && originalType.equals(((RebaseDynamicTypeBuilder<?>) other).originalType)
                 && classFileLocator.equals(((RebaseDynamicTypeBuilder<?>) other).classFileLocator)
                 && methodNameTransformer.equals(((RebaseDynamicTypeBuilder<?>) other).methodNameTransformer);
     }
@@ -269,6 +271,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
     @Override
     public int hashCode() {
         int result = super.hashCode();
+        result = 31 * result + originalType.hashCode();
         result = 31 * result + classFileLocator.hashCode();
         result = 31 * result + methodNameTransformer.hashCode();
         return result;
@@ -282,7 +285,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", implementationContextFactory=" + implementationContextFactory +
                 ", typeInitializer=" + typeInitializer +
-                ", targetType=" + targetType +
+                ", originalType=" + originalType +
                 ", interfaceTypes=" + interfaceTypes +
                 ", modifiers=" + modifiers +
                 ", attributeAppender=" + attributeAppender +

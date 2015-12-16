@@ -1399,7 +1399,7 @@ public interface TypeWriter<T> {
          * @param classFileVersion             The minimum class file version of the created type.
          * @param classFileLocator             The class file locator to use.
          * @param methodRebaseResolver         The method rebase resolver to use.
-         * @param targetType                   The target type that is to be rebased.
+         * @param originalType                 The original type that is to be rebased.
          * @param <U>                          The best known loaded type for the dynamically created type.
          * @return An appropriate type writer.
          */
@@ -1411,7 +1411,7 @@ public interface TypeWriter<T> {
                                                     TypeAttributeAppender attributeAppender,
                                                     ClassFileVersion classFileVersion,
                                                     ClassFileLocator classFileLocator,
-                                                    TypeDescription targetType,
+                                                    TypeDescription originalType,
                                                     MethodRebaseResolver methodRebaseResolver) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
                     methodRegistry.getLoadedTypeInitializer(),
@@ -1426,7 +1426,7 @@ public interface TypeWriter<T> {
                     methodRegistry,
                     methodRegistry.getInstrumentedMethods(),
                     classFileLocator,
-                    targetType,
+                    originalType,
                     methodRebaseResolver);
         }
 
@@ -1441,7 +1441,7 @@ public interface TypeWriter<T> {
          * @param attributeAppender            The attribute appender to use.
          * @param classFileVersion             The minimum class file version of the created type.
          * @param classFileLocator             The class file locator to use.
-         * @param targetType                   The target type that is to be rebased.
+         * @param originalType                 The original type that is to be rebased.
          * @param <U>                          The best known loaded type for the dynamically created type.
          * @return An appropriate type writer.
          */
@@ -1453,7 +1453,7 @@ public interface TypeWriter<T> {
                                                         TypeAttributeAppender attributeAppender,
                                                         ClassFileVersion classFileVersion,
                                                         ClassFileLocator classFileLocator,
-                                                        TypeDescription targetType) {
+                                                        TypeDescription originalType) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
@@ -1467,7 +1467,7 @@ public interface TypeWriter<T> {
                     methodRegistry,
                     methodRegistry.getInstrumentedMethods(),
                     classFileLocator,
-                    targetType,
+                    originalType,
                     MethodRebaseResolver.Disabled.INSTANCE);
         }
 
@@ -2461,7 +2461,7 @@ public interface TypeWriter<T> {
             /**
              * The target type that is to be redefined via inlining.
              */
-            private final TypeDescription targetType;
+            private final TypeDescription originalType;
 
             /**
              * The method rebase resolver to use.
@@ -2484,7 +2484,7 @@ public interface TypeWriter<T> {
              * @param methodPool                   The method pool to be used for instrumenting methods.
              * @param instrumentedMethods          A list of all instrumented methods.
              * @param classFileLocator             The class file locator to use.
-             * @param targetType                   The target type that is to be redefined via inlining.
+             * @param originalType                 The original type that is to be redefined via inlining.
              * @param methodRebaseResolver         The method rebase resolver to use.
              */
             protected ForInlining(TypeDescription instrumentedType,
@@ -2500,7 +2500,7 @@ public interface TypeWriter<T> {
                                   MethodPool methodPool,
                                   MethodList instrumentedMethods,
                                   ClassFileLocator classFileLocator,
-                                  TypeDescription targetType,
+                                  TypeDescription originalType,
                                   MethodRebaseResolver methodRebaseResolver) {
                 super(instrumentedType,
                         loadedTypeInitializer,
@@ -2515,16 +2515,16 @@ public interface TypeWriter<T> {
                         methodPool,
                         instrumentedMethods);
                 this.classFileLocator = classFileLocator;
-                this.targetType = targetType;
+                this.originalType = originalType;
                 this.methodRebaseResolver = methodRebaseResolver;
             }
 
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
                 try {
-                    ClassFileLocator.Resolution resolution = classFileLocator.locate(targetType.getName());
+                    ClassFileLocator.Resolution resolution = classFileLocator.locate(originalType.getName());
                     if (!resolution.isResolved()) {
-                        throw new IllegalArgumentException("Cannot locate the class file for " + targetType + " using " + classFileLocator);
+                        throw new IllegalArgumentException("Cannot locate the class file for " + originalType + " using " + classFileLocator);
                     }
                     return doCreate(implementationContext, resolution.resolve());
                 } catch (IOException exception) {
@@ -2554,7 +2554,7 @@ public interface TypeWriter<T> {
              * @return A class visitor which is capable of applying the changes.
              */
             private ClassVisitor writeTo(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
-                return FramePreservingRemapper.of(targetType.getInternalName(),
+                return FramePreservingRemapper.of(originalType.getInternalName(),
                         instrumentedType.getInternalName(),
                         new RedefinitionClassVisitor(classVisitor, implementationContext));
             }
@@ -2566,7 +2566,7 @@ public interface TypeWriter<T> {
                 if (!super.equals(other)) return false;
                 ForInlining<?> that = (ForInlining<?>) other;
                 return classFileLocator.equals(that.classFileLocator)
-                        && targetType.equals(that.targetType)
+                        && originalType.equals(that.originalType)
                         && methodRebaseResolver.equals(that.methodRebaseResolver);
             }
 
@@ -2574,7 +2574,7 @@ public interface TypeWriter<T> {
             public int hashCode() {
                 int result = super.hashCode();
                 result = 31 * result + classFileLocator.hashCode();
-                result = 31 * result + targetType.hashCode();
+                result = 31 * result + originalType.hashCode();
                 result = 31 * result + methodRebaseResolver.hashCode();
                 return result;
             }
@@ -2594,7 +2594,7 @@ public interface TypeWriter<T> {
                         ", methodPool=" + methodPool +
                         ", instrumentedMethods=" + instrumentedMethods +
                         ", classFileLocator=" + classFileLocator +
-                        ", targetType=" + targetType +
+                        ", originalType=" + originalType +
                         ", methodRebaseResolver=" + methodRebaseResolver +
                         '}';
             }
@@ -2845,7 +2845,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    attributeAppender.apply(this, instrumentedType, targetType);
+                    attributeAppender.apply(this, instrumentedType, originalType);
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }

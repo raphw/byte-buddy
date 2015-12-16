@@ -31,6 +31,8 @@ import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
  */
 public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
+    private final TypeDescription originalType;
+
     /**
      * A locator for finding a class file to a given type.
      */
@@ -43,7 +45,6 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param namingStrategy                        The naming strategy for naming the dynamic type.
      * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
      * @param implementationContextFactory          The implementation context factory to use.
-     * @param levelType                             The type that is to be redefined.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
@@ -56,13 +57,13 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      *                                              no specific appender was specified for a given field.
      * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
      *                                              if no specific appender was specified for a given method.
+     * @param originalType                          The type that is to be redefined.
      * @param classFileLocator                      A locator for finding a class file to a given type.
      */
     public RedefinitionDynamicTypeBuilder(ClassFileVersion classFileVersion,
                                           NamingStrategy namingStrategy,
                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                           Implementation.Context.Factory implementationContextFactory,
-                                          TypeDescription levelType,
                                           List<TypeDescription> interfaceTypes,
                                           int modifiers,
                                           TypeAttributeAppender attributeAppender,
@@ -73,14 +74,14 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           MethodGraph.Compiler methodGraphCompiler,
                                           FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                           MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                          TypeDescription originalType,
                                           ClassFileLocator classFileLocator) {
         this(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 InstrumentedType.TypeInitializer.None.INSTANCE,
-                levelType,
-                joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
+                joinUniqueRaw(interfaceTypes, originalType.getInterfaces()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -90,8 +91,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                levelType.getDeclaredFields().asTokenList(is(levelType)),
-                levelType.getDeclaredMethods().asTokenList(is(levelType)),
+                originalType.getDeclaredFields().asTokenList(is(originalType)),
+                originalType.getDeclaredMethods().asTokenList(is(originalType)),
+                originalType,
                 classFileLocator);
     }
 
@@ -103,7 +105,6 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
      * @param implementationContextFactory          The implementation context factory to use.
      * @param typeInitializer                       The type initializer to use.
-     * @param levelType                             The type that is to be redefined.
      * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
@@ -120,6 +121,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      *                                              dynamic type.
      * @param methodTokens                          A list of method representations that were added explicitly to this
      *                                              dynamic type.
+     * @param originalType                          The type that is to be redefined.
      * @param classFileLocator                      A locator for finding a class file.
      */
     protected RedefinitionDynamicTypeBuilder(ClassFileVersion classFileVersion,
@@ -127,7 +129,6 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              Implementation.Context.Factory implementationContextFactory,
                                              InstrumentedType.TypeInitializer typeInitializer,
-                                             TypeDescription levelType,
                                              List<GenericTypeDescription> interfaceTypes,
                                              int modifiers,
                                              TypeAttributeAppender attributeAppender,
@@ -140,13 +141,13 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                              List<FieldDescription.Token> fieldTokens,
                                              List<MethodDescription.Token> methodTokens,
+                                             TypeDescription originalType,
                                              ClassFileLocator classFileLocator) {
         super(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeInitializer,
-                levelType,
                 interfaceTypes,
                 modifiers,
                 attributeAppender,
@@ -159,6 +160,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
                 methodTokens);
+        this.originalType = originalType;
         this.classFileLocator = classFileLocator;
     }
 
@@ -168,7 +170,6 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  InstrumentedType.TypeInitializer typeInitializer,
-                                                 TypeDescription levelType,
                                                  List<GenericTypeDescription> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
@@ -186,7 +187,6 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 typeInitializer,
-                levelType,
                 interfaceTypes,
                 modifiers,
                 attributeAppender,
@@ -199,31 +199,32 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 defaultMethodAttributeAppenderFactory,
                 fieldTokens,
                 methodTokens,
+                originalType,
                 classFileLocator);
     }
 
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy
-                        .name(new NamingStrategy.UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
+                        .name(new NamingStrategy.UnnamedType.Default(originalType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
-                        targetType.getSuperType(),
+                        originalType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(originalType))),
+                        originalType.getSuperType(),
                         interfaceTypes,
                         fieldTokens,
                         methodTokens,
-                        targetType.getDeclaredAnnotations(),
+                        originalType.getDeclaredAnnotations(),
                         typeInitializer,
                         LoadedTypeInitializer.NoOp.INSTANCE,
-                        targetType.getDeclaringType(),
-                        targetType.getEnclosingMethod(),
-                        targetType.getEnclosingType(),
-                        targetType.getDeclaredTypes(),
-                        targetType.isMemberClass(),
-                        targetType.isAnonymousClass(),
-                        targetType.isLocalClass()),
+                        originalType.getDeclaringType(),
+                        originalType.getEnclosingMethod(),
+                        originalType.getEnclosingType(),
+                        originalType.getDeclaredTypes(),
+                        originalType.isMemberClass(),
+                        originalType.isAnonymousClass(),
+                        originalType.isLocalClass()),
                 methodGraphCompiler,
-                InliningImplementationMatcher.of(ignoredMethods, targetType))
+                InliningImplementationMatcher.of(ignoredMethods, originalType))
                 .compile(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE));
         return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
@@ -233,19 +234,20 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 attributeAppender,
                 classFileVersion,
                 classFileLocator,
-                targetType).make();
+                originalType).make();
     }
 
     @Override
     public boolean equals(Object other) {
         return this == other || !(other == null || getClass() != other.getClass())
                 && super.equals(other)
+                && originalType.equals(((RedefinitionDynamicTypeBuilder<?>) other).originalType)
                 && classFileLocator.equals(((RedefinitionDynamicTypeBuilder<?>) other).classFileLocator);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + classFileLocator.hashCode();
+        return 31 * (31 * super.hashCode() + originalType.hashCode()) + classFileLocator.hashCode();
     }
 
     @Override
@@ -256,7 +258,6 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", implementationContextFactory=" + implementationContextFactory +
                 ", typeInitializer=" + typeInitializer +
-                ", targetType=" + targetType +
                 ", interfaceTypes=" + interfaceTypes +
                 ", modifiers=" + modifiers +
                 ", attributeAppender=" + attributeAppender +
@@ -269,6 +270,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
                 ", fieldTokens=" + fieldTokens +
                 ", methodTokens=" + methodTokens +
+                ", originalType=" + originalType +
                 ", classFileLocator=" + classFileLocator +
                 '}';
     }

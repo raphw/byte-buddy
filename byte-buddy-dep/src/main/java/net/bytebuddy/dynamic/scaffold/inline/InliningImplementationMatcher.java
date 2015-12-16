@@ -41,12 +41,12 @@ public class InliningImplementationMatcher implements LatentMethodMatcher {
      * target type are always matched.
      *
      * @param ignoredMethods A method matcher that matches any ignored method.
-     * @param targetType     The target type of the instrumentation before adding any user methods.
+     * @param originalType   The original type of the instrumentation before adding any user methods.
      * @return A latent method matcher that identifies any method to instrument for a rebasement or redefinition.
      */
-    protected static LatentMethodMatcher of(ElementMatcher<? super MethodDescription> ignoredMethods, TypeDescription targetType) {
+    protected static LatentMethodMatcher of(ElementMatcher<? super MethodDescription> ignoredMethods, TypeDescription originalType) {
         ElementMatcher.Junction<MethodDescription> predefinedMethodSignatures = none();
-        for (MethodDescription methodDescription : targetType.getDeclaredMethods()) {
+        for (MethodDescription methodDescription : originalType.getDeclaredMethods()) {
             ElementMatcher.Junction<MethodDescription> signature = methodDescription.isConstructor()
                     ? isConstructor()
                     : ElementMatchers.<MethodDescription>named(methodDescription.getName());

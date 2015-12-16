@@ -277,7 +277,6 @@ public class ByteBuddy {
                 nonNull(namingStrategy.subclass(superType)),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                actualSuperType,
                 interfaceTypes,
                 modifiers.resolve(superType.getModifiers() & ~TypeManifestation.ANNOTATION.getMask()),
                 typeAttributeAppender,
@@ -288,6 +287,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
+                actualSuperType,
                 nonNull(constructorStrategy));
     }
 
@@ -358,7 +358,6 @@ public class ByteBuddy {
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                TypeDescription.OBJECT,
                 join(interfaceTypes, toList(nonNull(typeDescriptions))),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.INTERFACE.getMask(),
                 typeAttributeAppender,
@@ -369,6 +368,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
+                TypeDescription.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -384,7 +384,6 @@ public class ByteBuddy {
                 new NamingStrategy.Fixed(isValidIdentifier(name) + "." + PackageDescription.PACKAGE_CLASS_NAME),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                TypeDescription.OBJECT,
                 new TypeList.Empty(),
                 PackageDescription.PACKAGE_MODIFIERS,
                 typeAttributeAppender,
@@ -395,6 +394,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
+                TypeDescription.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -433,7 +433,6 @@ public class ByteBuddy {
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                TypeDescription.OBJECT,
                 Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(Annotation.class)),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.ANNOTATION.getMask(),
                 typeAttributeAppender,
@@ -444,6 +443,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
+                TypeDescription.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -472,7 +472,6 @@ public class ByteBuddy {
                 nonNull(namingStrategy.subclass(TypeDescription.ENUM)),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                TypeDescription.ENUM,
                 interfaceTypes,
                 Visibility.PUBLIC.getMask() | TypeManifestation.FINAL.getMask() | EnumerationState.ENUMERATION.getMask(),
                 typeAttributeAppender,
@@ -483,6 +482,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
+                TypeDescription.ENUM,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Arrays.<Class<?>>asList(String.class, int.class), Visibility.PRIVATE)
                 .intercept(MethodCall.invoke(TypeDescription.ENUM.getDeclaredMethods()
@@ -563,7 +563,6 @@ public class ByteBuddy {
                 nonNull(namingStrategy.redefine(levelType)),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                nonNull(levelType),
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),
                 typeAttributeAppender,
@@ -574,6 +573,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
+                nonNull(levelType),
                 nonNull(classFileLocator));
     }
 
@@ -691,7 +691,6 @@ public class ByteBuddy {
                 nonNull(namingStrategy.rebase(isDefineable(levelType))),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                levelType,
                 interfaceTypes,
                 modifiers.resolve(levelType.getModifiers()),
                 TypeAttributeAppender.NoOp.INSTANCE,
@@ -702,6 +701,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
+                levelType,
                 nonNull(classFileLocator),
                 nonNull(methodNameTransformer));
     }

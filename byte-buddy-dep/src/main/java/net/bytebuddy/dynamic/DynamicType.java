@@ -1218,11 +1218,6 @@ public interface DynamicType {
             protected final InstrumentedType.TypeInitializer typeInitializer;
 
             /**
-             * The target type description that is specified for this builder.
-             */
-            protected final TypeDescription targetType;
-
-            /**
              * The interface types to implement as specified for this builder.
              */
             protected final List<GenericTypeDescription> interfaceTypes;
@@ -1292,7 +1287,6 @@ public interface DynamicType {
              * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
              * @param implementationContextFactory          The currently defined implementation context factory.
              * @param typeInitializer                       The type initializer to use.
-             * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
              * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
@@ -1315,7 +1309,6 @@ public interface DynamicType {
                                    AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                    Implementation.Context.Factory implementationContextFactory,
                                    InstrumentedType.TypeInitializer typeInitializer,
-                                   TypeDescription targetType,
                                    List<GenericTypeDescription> interfaceTypes,
                                    int modifiers,
                                    TypeAttributeAppender attributeAppender,
@@ -1333,7 +1326,6 @@ public interface DynamicType {
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                 this.implementationContextFactory = implementationContextFactory;
                 this.typeInitializer = typeInitializer;
-                this.targetType = targetType;
                 this.interfaceTypes = interfaceTypes;
                 this.modifiers = modifiers;
                 this.attributeAppender = attributeAppender;
@@ -1397,7 +1389,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1419,7 +1410,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1441,7 +1431,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1463,7 +1452,6 @@ public interface DynamicType {
                         nonNull(auxiliaryTypeNamingStrategy),
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1485,7 +1473,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         nonNull(implementationContextFactory),
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1507,7 +1494,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer.expandWith(nonNull(byteCodeAppender)),
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1529,7 +1515,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
                         attributeAppender,
@@ -1551,7 +1536,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1573,7 +1557,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1595,7 +1578,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         new TypeAttributeAppender.Compound(this.attributeAppender, nonNull(attributeAppender)),
@@ -1638,7 +1620,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1660,7 +1641,6 @@ public interface DynamicType {
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
-                        targetType,
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1842,7 +1822,6 @@ public interface DynamicType {
              * @param auxiliaryTypeNamingStrategy           The naming strategy for naming the auxiliary type of the dynamic type.
              * @param implementationContextFactory          The currently defined implementation context factory.
              * @param typeInitializer                       The type initializer to use.
-             * @param targetType                            A description of the type that the dynamic type should represent.
              * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
              * @param modifiers                             The modifiers to be represented by the dynamic type.
              * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
@@ -1866,7 +1845,6 @@ public interface DynamicType {
                                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                       Implementation.Context.Factory implementationContextFactory,
                                                       InstrumentedType.TypeInitializer typeInitializer,
-                                                      TypeDescription targetType,
                                                       List<GenericTypeDescription> interfaceTypes,
                                                       int modifiers,
                                                       TypeAttributeAppender attributeAppender,
@@ -1896,7 +1874,6 @@ public interface DynamicType {
                         && fieldTokens.equals(that.fieldTokens)
                         && ignoredMethods.equals(that.ignoredMethods)
                         && interfaceTypes.equals(that.interfaceTypes)
-                        && targetType.equals(that.targetType)
                         && methodGraphCompiler.equals(that.methodGraphCompiler)
                         && methodRegistry.equals(that.methodRegistry)
                         && methodTokens.equals(that.methodTokens)
@@ -1912,7 +1889,6 @@ public interface DynamicType {
                 result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
                 result = 31 * result + implementationContextFactory.hashCode();
                 result = 31 * result + typeInitializer.hashCode();
-                result = 31 * result + targetType.hashCode();
                 result = 31 * result + interfaceTypes.hashCode();
                 result = 31 * result + modifiers;
                 result = 31 * result + attributeAppender.hashCode();
@@ -2246,7 +2222,6 @@ public interface DynamicType {
                             auxiliaryTypeNamingStrategy,
                             implementationContextFactory,
                             typeInitializer,
-                            targetType,
                             interfaceTypes,
                             modifiers,
                             attributeAppender,
@@ -2696,7 +2671,6 @@ public interface DynamicType {
                             auxiliaryTypeNamingStrategy,
                             implementationContextFactory,
                             typeInitializer,
-                            targetType,
                             interfaceTypes,
                             modifiers,
                             attributeAppender,
@@ -2876,7 +2850,6 @@ public interface DynamicType {
                             auxiliaryTypeNamingStrategy,
                             implementationContextFactory,
                             typeInitializer,
-                            targetType,
                             joinUniqueRaw(interfaceTypes, additionalInterfaceTypes),
                             modifiers,
                             attributeAppender,

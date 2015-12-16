@@ -49,7 +49,6 @@ public abstract class AbstractImplementationTest {
                 new NamingStrategy.SuffixingRandom(SUFFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(SUFFIX),
                 Implementation.Context.Default.Factory.INSTANCE,
-                new TypeDescription.ForLoadedType(target),
                 new TypeList.ForLoadedType(Arrays.asList(interfaces)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
@@ -60,6 +59,7 @@ public abstract class AbstractImplementationTest {
                 MethodGraph.Compiler.DEFAULT,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
+                new TypeDescription.ForLoadedType(target),
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .invokable(targetMethods).intercept(implementation)
                 .make()
