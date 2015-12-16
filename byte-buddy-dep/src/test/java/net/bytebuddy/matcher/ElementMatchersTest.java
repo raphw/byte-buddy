@@ -45,6 +45,16 @@ public class ElementMatchersTest {
     public MethodRule javaVersionRule = new JavaVersionRule();
 
     @Test
+    @SuppressWarnings({"unchecked", "row"})
+    public void testFailSafe() throws Exception {
+        ElementMatcher<Object> exceptional = mock(ElementMatcher.class), nonExceptional = mock(ElementMatcher.class);
+        when(exceptional.matches(any())).thenThrow(RuntimeException.class);
+        when(nonExceptional.matches(any())).thenReturn(true);
+        assertThat(ElementMatchers.failSafe(exceptional).matches(new Object()), is(false));
+        assertThat(ElementMatchers.failSafe(nonExceptional).matches(new Object()), is(true));
+    }
+
+    @Test
     public void testIs() throws Exception {
         Object value = new Object();
         assertThat(ElementMatchers.is(value).matches(value), is(true));

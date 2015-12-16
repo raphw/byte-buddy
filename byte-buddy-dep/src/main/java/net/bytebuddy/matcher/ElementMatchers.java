@@ -47,6 +47,17 @@ public final class ElementMatchers {
     }
 
     /**
+     * Wraps another matcher to assure that an element is not matched in case that the matching causes an {@link Exception}.
+     *
+     * @param elementMatcher The element matcher that potentially throws an exception.
+     * @param <T>            The type of the matched object.
+     * @return A matcher that returns {@code false} in case that the given matcher throws an exception.
+     */
+    public static <T> ElementMatcher.Junction<T> failSafe(ElementMatcher<? super T> elementMatcher) {
+        return new FailSafeMatcher<T>(elementMatcher, false);
+    }
+
+    /**
      * Matches the given value which can also be {@code null} by the {@link java.lang.Object#equals(Object)} method or
      * by a null-check.
      *
@@ -790,7 +801,7 @@ public final class ElementMatchers {
      * @return A matcher for a {@code abstract} modifier reviewable.
      */
     public static <T extends ModifierReviewable> ElementMatcher.Junction<T> isAbstract() {
-      return new ModifierMatcher<T>(ModifierMatcher.Mode.ABSTRACT);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.ABSTRACT);
     }
 
     /**
@@ -1245,7 +1256,7 @@ public final class ElementMatchers {
      * @return A matcher for an interface.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isInterface() {
-      return new ModifierMatcher<T>(ModifierMatcher.Mode.INTERFACE);
+        return new ModifierMatcher<T>(ModifierMatcher.Mode.INTERFACE);
     }
 
     /**
