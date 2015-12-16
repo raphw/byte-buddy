@@ -452,7 +452,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     public void testCallable() throws Exception {
         Traceable traceable = new Traceable();
-        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.call((Callable<?>) traceable)).getLoaded();
+        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.call(traceable)).getLoaded();
         assertThat(loaded.newInstance().foo(), is(FOO));
         traceable.assertOnlyCall(FOO);
     }
@@ -460,7 +460,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     @Test
     public void testRunnable() throws Exception {
         Traceable traceable = new Traceable();
-        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.call((Runnable) traceable)).getLoaded();
+        Class<? extends SimpleStringMethod> loaded = implement(SimpleStringMethod.class, MethodCall.run(traceable)).getLoaded();
         assertThat(loaded.newInstance().foo(), nullValue(String.class));
         traceable.assertOnlyCall(FOO);
     }

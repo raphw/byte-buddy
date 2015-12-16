@@ -181,12 +181,12 @@ public class MethodCall implements Implementation.Composable {
     }
 
     /**
-     * Implements a method by invoking the provided {@link Runnable}.
+     * Implements a method by invoking the provided {@link Runnable}. If the instrumented method returns a value, {@code null} is returned.
      *
      * @param runnable The runnable to invoke when a method is intercepted.
      * @return A composable method implementation that invokes the given runnable.
      */
-    public static Composable call(Runnable runnable) {
+    public static Composable run(Runnable runnable) {
         return invoke(RUN).on(runnable).withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC);
     }
 
