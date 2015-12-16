@@ -3,6 +3,7 @@ package net.bytebuddy.description.type.generic;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import org.hamcrest.CoreMatchers;
@@ -53,9 +54,9 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @Test
     public void testParameterizedTypeIterator() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(SimpleParameterizedType.class.getDeclaredField(FOO));
-        Iterator<GenericTypeDescription> iterator = genericTypeDescription.iterator();
+        Iterator<TypeDefinition> iterator = genericTypeDescription.iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is(genericTypeDescription));
+        assertThat(iterator.next(), is((TypeDefinition) genericTypeDescription));
         assertThat(iterator.hasNext(), is(false));
     }
 
@@ -445,11 +446,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @Test
     public void testGenericArrayTypeIterator() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(GenericArrayType.class.getDeclaredField(FOO));
-        Iterator<GenericTypeDescription> iterator = genericTypeDescription.iterator();
+        Iterator<TypeDefinition> iterator = genericTypeDescription.iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is(genericTypeDescription));
+        assertThat(iterator.next(), is((TypeDefinition) genericTypeDescription));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
         assertThat(iterator.hasNext(), is(false));
     }
 
@@ -503,11 +504,11 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @Test
     public void testGenericArrayOfGenericComponentTypeIterator() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO));
-        Iterator<GenericTypeDescription> iterator = genericTypeDescription.iterator();
+        Iterator<TypeDefinition> iterator = genericTypeDescription.iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is(genericTypeDescription));
+        assertThat(iterator.next(), is((TypeDefinition) genericTypeDescription));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
         assertThat(iterator.hasNext(), is(false));
     }
 

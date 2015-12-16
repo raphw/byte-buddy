@@ -290,6 +290,11 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
     abstract class AbstractBase extends ModifierReviewable.AbstractBase implements TypeDescription {
 
         @Override
+        public GenericTypeDescription asGenericType() {
+            return this;
+        }
+
+        @Override
         public GenericTypeDescription getSuperType() {
             GenericTypeDescription superType = getDeclaredSuperType();
             return superType == null
@@ -668,7 +673,7 @@ public interface TypeDescription extends GenericTypeDescription, TypeVariableSou
         }
 
         @Override
-        public Iterator<GenericTypeDescription> iterator() {
+        public Iterator<TypeDefinition> iterator() {
             return new SuperTypeIterator(this);
         }
 

@@ -8,6 +8,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -956,7 +957,7 @@ public @interface FieldProxy {
 
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
-                        for (GenericTypeDescription currentType : instrumentedType) {
+                        for (TypeDefinition currentType : instrumentedType) {
                             FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
                             if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                                 return new Resolution.Resolved(fieldList.getOnly());

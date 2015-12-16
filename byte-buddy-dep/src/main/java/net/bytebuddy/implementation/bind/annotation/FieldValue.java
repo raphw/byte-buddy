@@ -6,6 +6,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
@@ -261,7 +262,7 @@ public @interface FieldValue {
 
                 @Override
                 protected Resolution resolve(String fieldName, boolean staticMethod) {
-                    for (GenericTypeDescription currentType : instrumentedType) {
+                    for (TypeDefinition currentType : instrumentedType) {
                         FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName));
                         if (!fieldList.isEmpty() && fieldList.getOnly().isVisibleTo(instrumentedType) && (!staticMethod || fieldList.getOnly().isStatic())) {
                             return new Resolution.Resolved(fieldList.getOnly());

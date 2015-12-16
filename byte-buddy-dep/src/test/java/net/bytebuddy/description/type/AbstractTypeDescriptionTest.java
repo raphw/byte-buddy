@@ -484,19 +484,19 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testHierarchyIteration() throws Exception {
-        Iterator<GenericTypeDescription> iterator = describe(Traversal.class).iterator();
+        Iterator<TypeDefinition> iterator = describe(Traversal.class).iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Traversal.class)));
+        assertThat(iterator.next(), is((TypeDefinition) new TypeDescription.ForLoadedType(Traversal.class)));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
         assertThat(iterator.hasNext(), is(false));
     }
 
     @Test(expected = NoSuchElementException.class)
     public void testHierarchyEnds() throws Exception {
-        Iterator<GenericTypeDescription> iterator = describe(Object.class).iterator();
+        Iterator<TypeDefinition> iterator = describe(Object.class).iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
         assertThat(iterator.hasNext(), is(false));
         iterator.next();
     }
