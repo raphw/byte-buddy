@@ -15,28 +15,28 @@ public class FixedValueObjectPropertiesTest {
     public void testConstantPoolValue() throws Exception {
         assertThat(FixedValue.value(FOO).hashCode(), is(FixedValue.value(FOO).hashCode()));
         assertThat(FixedValue.value(FOO), is(FixedValue.value(FOO)));
-        assertThat(FixedValue.value(FOO).hashCode(), not(is(FixedValue.value(BAR).hashCode())));
-        assertThat(FixedValue.value(FOO), not(is(FixedValue.value(BAR))));
-        assertThat(FixedValue.value(FOO).hashCode(), not(is(FixedValue.reference(FOO).hashCode())));
-        assertThat(FixedValue.value(FOO), not(is(FixedValue.reference(FOO))));
+        assertThat(FixedValue.value(FOO).hashCode(), not(FixedValue.value(BAR).hashCode()));
+        assertThat(FixedValue.value(FOO), not(FixedValue.value(BAR)));
+        assertThat(FixedValue.value(FOO).hashCode(), not(FixedValue.reference(FOO).hashCode()));
+        assertThat(FixedValue.value(FOO), not(FixedValue.reference(FOO)));
     }
 
     @Test
     public void testReferenceValue() throws Exception {
         assertThat(FixedValue.reference(FOO).hashCode(), is(FixedValue.reference(FOO).hashCode()));
         assertThat(FixedValue.reference(FOO), is(FixedValue.reference(FOO)));
-        assertThat(FixedValue.reference(FOO).hashCode(), not(is(FixedValue.value(FOO).hashCode())));
-        assertThat(FixedValue.reference(FOO), not(is(FixedValue.value(FOO))));
-        assertThat(FixedValue.reference(FOO).hashCode(), not(is(FixedValue.reference(BAR).hashCode())));
-        assertThat(FixedValue.reference(FOO), not(is(FixedValue.reference(BAR))));
+        assertThat(FixedValue.reference(FOO).hashCode(), not(FixedValue.value(FOO).hashCode()));
+        assertThat(FixedValue.reference(FOO), not(FixedValue.value(FOO)));
+        assertThat(FixedValue.reference(FOO).hashCode(), not(FixedValue.reference(BAR).hashCode()));
+        assertThat(FixedValue.reference(FOO), not(FixedValue.reference(BAR)));
     }
 
     @Test
     public void testReferenceValueWithExplicitFieldName() throws Exception {
         assertThat(FixedValue.reference(FOO, QUX).hashCode(), is(FixedValue.reference(FOO, QUX).hashCode()));
         assertThat(FixedValue.reference(FOO, QUX), is(FixedValue.reference(FOO, QUX)));
-        assertThat(FixedValue.reference(FOO, QUX).hashCode(), not(is(FixedValue.reference(BAR, QUX).hashCode())));
-        assertThat(FixedValue.reference(FOO, QUX), not(is(FixedValue.reference(BAR, QUX))));
+        assertThat(FixedValue.reference(FOO, QUX).hashCode(), not(FixedValue.reference(BAR, QUX).hashCode()));
+        assertThat(FixedValue.reference(FOO, QUX), not(FixedValue.reference(BAR, QUX)));
     }
 
     @Test

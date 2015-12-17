@@ -272,7 +272,7 @@ public class InstrumentedTypeTest {
         when(other.getInternalName()).thenReturn(instrumentedType.getInternalName());
         when(other.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(other.asErasure()).thenReturn(other);
-        assertThat(instrumentedType, equalTo(other));
+        assertThat(instrumentedType, is(other));
         verify(other, atLeast(1)).getInternalName();
     }
 
@@ -310,8 +310,8 @@ public class InstrumentedTypeTest {
     @Test
     public void testSuperType() {
         assertThat(makePlainInstrumentedType().getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
-        assertThat(makePlainInstrumentedType().getSuperType(), not(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Integer.class))));
-        assertThat(makePlainInstrumentedType().getSuperType(), not(is((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class))));
+        assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Integer.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class)));
     }
 
     @Test

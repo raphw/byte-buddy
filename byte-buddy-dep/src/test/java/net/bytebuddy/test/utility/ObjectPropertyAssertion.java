@@ -152,8 +152,8 @@ public class ObjectPropertyAssertion<T> {
             @SuppressWarnings("unchecked")
             T instance = (T) constructor.newInstance(actualArguments);
             assertThat(instance, is(instance));
-            assertThat(instance, not(is((Object) null)));
-            assertThat(instance, not(is(new Object())));
+            assertThat(instance, not(equalTo(null)));
+            assertThat(instance, not(new Object()));
             Object similarInstance = constructor.newInstance(actualArguments);
             assertThat(instance.hashCode(), is(similarInstance.hashCode()));
             assertThat(instance, is(similarInstance));
@@ -176,8 +176,8 @@ public class ObjectPropertyAssertion<T> {
                     argumentIndex++;
                 }
                 Object unlikeInstance = constructor.newInstance(compareArguments);
-                assertThat(instance.hashCode(), not(is(unlikeInstance)));
-                assertThat(instance, not(is(unlikeInstance)));
+                assertThat(instance.hashCode(), not(unlikeInstance));
+                assertThat(instance, not(unlikeInstance));
                 testIndex++;
             }
         }
@@ -214,9 +214,9 @@ public class ObjectPropertyAssertion<T> {
             T instance = (T) constructor.newInstance(actualArguments);
             checkString(instance);
             assertThat(instance, is(instance));
-            assertThat(instance, not(is((Object) null)));
-            assertThat(instance, not(is(new Object())));
-            assertThat(instance, not(is(constructor.newInstance(otherArguments))));
+            assertThat(instance, not(equalTo(null)));
+            assertThat(instance, not(new Object()));
+            assertThat(instance, not(constructor.newInstance(otherArguments)));
         }
     }
 

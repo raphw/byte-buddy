@@ -17,9 +17,9 @@ import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.List;
 
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.*;
 
 public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
@@ -95,11 +95,11 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         assertThat(parameterBinding.isValid(), is(true));
         Object expectedToken = new ArgumentTypeResolver.ParameterIndexToken(sourceIndex);
         if (bindingMechanic == Argument.BindingMechanic.UNIQUE) {
-            assertThat(parameterBinding.getIdentificationToken(), equalTo(expectedToken));
-            assertThat(parameterBinding.getIdentificationToken().hashCode(), equalTo(expectedToken.hashCode()));
+            assertThat(parameterBinding.getIdentificationToken(), is(expectedToken));
+            assertThat(parameterBinding.getIdentificationToken().hashCode(), is(expectedToken.hashCode()));
         } else {
-            assertThat(parameterBinding.getIdentificationToken(), not(equalTo(expectedToken)));
-            assertThat(parameterBinding.getIdentificationToken().hashCode(), not(equalTo(expectedToken.hashCode())));
+            assertThat(parameterBinding.getIdentificationToken(), not(expectedToken));
+            assertThat(parameterBinding.getIdentificationToken().hashCode(), not(expectedToken.hashCode()));
         }
         verify(annotation, atLeast(1)).value();
         verify(source, atLeast(1)).getParameters();
