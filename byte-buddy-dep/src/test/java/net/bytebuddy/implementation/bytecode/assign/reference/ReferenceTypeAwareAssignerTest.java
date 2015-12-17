@@ -15,7 +15,7 @@ import org.mockito.asm.Opcodes;
 import org.objectweb.asm.MethodVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.junit.Assert.assertThat;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
 public class ReferenceTypeAwareAssignerTest {
