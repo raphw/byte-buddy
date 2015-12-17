@@ -40,7 +40,7 @@ public class TypePoolResolutionTest {
         TypePool.Resolution resolution = mock(TypePool.Resolution.class);
         when(resolution.isResolved()).thenReturn(true);
         when(resolution.resolve()).thenReturn(mock(TypeDescription.class));
-        assertThat(TypePool.Default.ArrayTypeResolution.of(resolution, 1), not(is(resolution)));
+        assertThat(TypePool.Default.ArrayTypeResolution.of(resolution, 1), not(resolution));
         TypeDescription typeDescription = TypePool.Default.ArrayTypeResolution.of(resolution, 1).resolve();
         assertThat(typeDescription.isArray(), is(true));
     }

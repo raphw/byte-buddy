@@ -1,12 +1,12 @@
 package net.bytebuddy.agent;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static junit.framework.TestCase.assertEquals;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -18,7 +18,7 @@ public class ByteBuddyAgentAttachmentProviderTest {
     public void testSimpleAccessor() throws Exception {
         ByteBuddyAgent.AttachmentProvider.Accessor accessor = new ByteBuddyAgent.AttachmentProvider.Accessor.Simple(Void.class, FOO);
         assertThat(accessor.isAvailable(), is(true));
-        assertEquals(Void.class, accessor.getVirtualMachineType());
+        assertThat(accessor.getVirtualMachineType(), CoreMatchers.<Class<?>>is(Void.class));
         assertThat(accessor.getProcessId(), is(FOO));
     }
 

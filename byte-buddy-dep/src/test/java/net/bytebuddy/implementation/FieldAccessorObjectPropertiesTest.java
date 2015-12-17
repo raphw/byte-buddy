@@ -30,28 +30,28 @@ public class FieldAccessorObjectPropertiesTest {
         assertThat(FieldAccessor.ofBeanProperty(), is(FieldAccessor.ofBeanProperty()));
         assertThat(FieldAccessor.ofBeanProperty().in(first).hashCode(), is(FieldAccessor.ofBeanProperty().in(first).hashCode()));
         assertThat(FieldAccessor.ofBeanProperty().in(first), is(FieldAccessor.ofBeanProperty().in(first)));
-        assertThat(FieldAccessor.ofBeanProperty().in(first).hashCode(), not(is(FieldAccessor.ofBeanProperty().hashCode())));
-        assertThat((FieldAccessor) FieldAccessor.ofBeanProperty().in(first), not(is((FieldAccessor) FieldAccessor.ofBeanProperty())));
-        assertThat(FieldAccessor.ofBeanProperty().in(first).hashCode(), not(is(FieldAccessor.ofBeanProperty().in(second).hashCode())));
-        assertThat(FieldAccessor.ofBeanProperty().in(first), not(is(FieldAccessor.ofBeanProperty().in(second))));
+        assertThat(FieldAccessor.ofBeanProperty().in(first).hashCode(), not(FieldAccessor.ofBeanProperty().hashCode()));
+        assertThat((FieldAccessor) FieldAccessor.ofBeanProperty().in(first), not((FieldAccessor) FieldAccessor.ofBeanProperty()));
+        assertThat(FieldAccessor.ofBeanProperty().in(first).hashCode(), not(FieldAccessor.ofBeanProperty().in(second).hashCode()));
+        assertThat(FieldAccessor.ofBeanProperty().in(first), not(FieldAccessor.ofBeanProperty().in(second)));
     }
 
     @Test
     public void testExplicitFieldAccessor() throws Exception {
         assertThat(FieldAccessor.ofField(FOO).hashCode(), is(FieldAccessor.ofField(FOO).hashCode()));
         assertThat(FieldAccessor.ofField(FOO), is(FieldAccessor.ofField(FOO)));
-        assertThat(FieldAccessor.ofField(FOO).hashCode(), not(is(FieldAccessor.ofField(BAR).hashCode())));
-        assertThat(FieldAccessor.ofField(FOO), not(is(FieldAccessor.ofField(BAR))));
+        assertThat(FieldAccessor.ofField(FOO).hashCode(), not(FieldAccessor.ofField(BAR).hashCode()));
+        assertThat(FieldAccessor.ofField(FOO), not(FieldAccessor.ofField(BAR)));
         assertThat(FieldAccessor.ofField(FOO).in(first).hashCode(), is(FieldAccessor.ofField(FOO).in(first).hashCode()));
         assertThat(FieldAccessor.ofField(FOO).in(first), is(FieldAccessor.ofField(FOO).in(first)));
-        assertThat(FieldAccessor.ofField(FOO).in(first).hashCode(), not(is(FieldAccessor.ofField(FOO).hashCode())));
-        assertThat((FieldAccessor) FieldAccessor.ofField(FOO).in(first), not(is((FieldAccessor) FieldAccessor.ofField(FOO))));
-        assertThat(FieldAccessor.ofField(FOO).in(first).hashCode(), not(is(FieldAccessor.ofField(FOO).in(second).hashCode())));
-        assertThat(FieldAccessor.ofField(FOO).in(first), not(is(FieldAccessor.ofField(FOO).in(second))));
+        assertThat(FieldAccessor.ofField(FOO).in(first).hashCode(), not(FieldAccessor.ofField(FOO).hashCode()));
+        assertThat((FieldAccessor) FieldAccessor.ofField(FOO).in(first), not((FieldAccessor) FieldAccessor.ofField(FOO)));
+        assertThat(FieldAccessor.ofField(FOO).in(first).hashCode(), not(FieldAccessor.ofField(FOO).in(second).hashCode()));
+        assertThat(FieldAccessor.ofField(FOO).in(first), not(FieldAccessor.ofField(FOO).in(second)));
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).hashCode(), is(FieldAccessor.ofField(FOO).defineAs(TYPE).hashCode()));
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE), is(FieldAccessor.ofField(FOO).defineAs(TYPE)));
-        assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).hashCode(), not(is(FieldAccessor.ofField(FOO).defineAs(OTHER_TYPE).hashCode())));
-        assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE), not(is(FieldAccessor.ofField(FOO).defineAs(OTHER_TYPE))));
+        assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).hashCode(), not(FieldAccessor.ofField(FOO).defineAs(OTHER_TYPE).hashCode()));
+        assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE), not(FieldAccessor.ofField(FOO).defineAs(OTHER_TYPE)));
     }
 
     @Test

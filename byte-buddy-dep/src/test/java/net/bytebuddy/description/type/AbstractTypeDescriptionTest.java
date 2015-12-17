@@ -90,11 +90,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testPrecondition() throws Exception {
-        assertThat(describe(SampleClass.class), not(equalTo(describe(SampleInterface.class))));
-        assertThat(describe(SampleClass.class), not(equalTo(describe(SampleAnnotation.class))));
-        assertThat(describe(SampleClass.class), equalTo(describe(SampleClass.class)));
-        assertThat(describe(SampleInterface.class), equalTo(describe(SampleInterface.class)));
-        assertThat(describe(SampleAnnotation.class), equalTo(describe(SampleAnnotation.class)));
+        assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
+        assertThat(describe(SampleClass.class), not(describe(SampleAnnotation.class)));
+        assertThat(describe(SampleClass.class), is(describe(SampleClass.class)));
+        assertThat(describe(SampleInterface.class), is(describe(SampleInterface.class)));
+        assertThat(describe(SampleAnnotation.class), is(describe(SampleAnnotation.class)));
         assertThat(describe(SampleClass.class), is((TypeDescription) new TypeDescription.ForLoadedType(SampleClass.class)));
         assertThat(describe(SampleInterface.class), is((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class)));
         assertThat(describe(SampleAnnotation.class), is((TypeDescription) new TypeDescription.ForLoadedType(SampleAnnotation.class)));
@@ -233,31 +233,31 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(SampleInterface.class).hashCode(), is(Type.getInternalName(SampleInterface.class).hashCode()));
         assertThat(describe(SampleAnnotation.class).hashCode(), is(Type.getInternalName(SampleAnnotation.class).hashCode()));
         assertThat(describe(SampleClass.class).hashCode(), is(describe(SampleClass.class).hashCode()));
-        assertThat(describe(SampleClass.class).hashCode(), not(is(describe(SampleInterface.class).hashCode())));
-        assertThat(describe(SampleClass.class).hashCode(), not(is(describe(SampleAnnotation.class).hashCode())));
+        assertThat(describe(SampleClass.class).hashCode(), not(describe(SampleInterface.class).hashCode()));
+        assertThat(describe(SampleClass.class).hashCode(), not(describe(SampleAnnotation.class).hashCode()));
         assertThat(describe(Object[].class).hashCode(), is(describe(Object[].class).hashCode()));
-        assertThat(describe(Object[].class).hashCode(), not(is(describe(Object.class).hashCode())));
+        assertThat(describe(Object[].class).hashCode(), not(describe(Object.class).hashCode()));
         assertThat(describe(void.class).hashCode(), is(Type.getInternalName(void.class).hashCode()));
     }
 
     @Test
     public void testEquals() throws Exception {
         TypeDescription identical = describe(SampleClass.class);
-        assertThat(identical, equalTo(identical));
+        assertThat(identical, is(identical));
         TypeDescription equalFirst = mock(TypeDescription.class);
         when(equalFirst.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
         when(equalFirst.asErasure()).thenReturn(equalFirst);
         when(equalFirst.getInternalName()).thenReturn(Type.getInternalName(SampleClass.class));
-        assertThat(describe(SampleClass.class), equalTo(equalFirst));
-        assertThat(describe(SampleClass.class), not(equalTo(describe(SampleInterface.class))));
-        assertThat(describe(SampleClass.class), not(equalTo((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class))));
+        assertThat(describe(SampleClass.class), is(equalFirst));
+        assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
+        assertThat(describe(SampleClass.class), not((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class)));
         GenericTypeDescription nonRawType = mock(GenericTypeDescription.class);
         when(nonRawType.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
-        assertThat(describe(SampleClass.class), not(equalTo(nonRawType)));
-        assertThat(describe(SampleClass.class), not(equalTo(new Object())));
+        assertThat(describe(SampleClass.class), not(nonRawType));
+        assertThat(describe(SampleClass.class), not(new Object()));
         assertThat(describe(SampleClass.class), not(equalTo(null)));
-        assertThat(describe(Object[].class), equalTo((TypeDescription) new TypeDescription.ForLoadedType(Object[].class)));
-        assertThat(describe(Object[].class), not(equalTo((TypeDescription) new TypeDescription.ForLoadedType(Object.class))));
+        assertThat(describe(Object[].class), is((TypeDescription) new TypeDescription.ForLoadedType(Object[].class)));
+        assertThat(describe(Object[].class), not((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
     }
 
     @Test

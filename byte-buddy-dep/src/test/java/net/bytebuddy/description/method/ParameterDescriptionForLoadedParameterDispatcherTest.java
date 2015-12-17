@@ -7,7 +7,6 @@ import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 
-import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 
 public class ParameterDescriptionForLoadedParameterDispatcherTest {

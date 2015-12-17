@@ -65,17 +65,17 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testPrecondition() throws Exception {
-        assertThat(describe(firstMethod), not(equalTo(describe(secondMethod))));
-        assertThat(describe(firstMethod), not(equalTo(describe(thirdMethod))));
-        assertThat(describe(firstMethod), equalTo(describe(firstMethod)));
-        assertThat(describe(secondMethod), equalTo(describe(secondMethod)));
-        assertThat(describe(thirdMethod), equalTo(describe(thirdMethod)));
+        assertThat(describe(firstMethod), not(describe(secondMethod)));
+        assertThat(describe(firstMethod), not(describe(thirdMethod)));
+        assertThat(describe(firstMethod), is(describe(firstMethod)));
+        assertThat(describe(secondMethod), is(describe(secondMethod)));
+        assertThat(describe(thirdMethod), is(describe(thirdMethod)));
         assertThat(describe(firstMethod), is((MethodDescription) new MethodDescription.ForLoadedMethod(firstMethod)));
         assertThat(describe(secondMethod), is((MethodDescription) new MethodDescription.ForLoadedMethod(secondMethod)));
         assertThat(describe(thirdMethod), is((MethodDescription) new MethodDescription.ForLoadedMethod(thirdMethod)));
-        assertThat(describe(firstConstructor), not(equalTo(describe(secondConstructor))));
-        assertThat(describe(firstConstructor), equalTo(describe(firstConstructor)));
-        assertThat(describe(secondConstructor), equalTo(describe(secondConstructor)));
+        assertThat(describe(firstConstructor), not(describe(secondConstructor)));
+        assertThat(describe(firstConstructor), is(describe(firstConstructor)));
+        assertThat(describe(secondConstructor), is(describe(secondConstructor)));
         assertThat(describe(firstConstructor), is((MethodDescription) new MethodDescription.ForLoadedConstructor(firstConstructor)));
         assertThat(describe(secondConstructor), is((MethodDescription) new MethodDescription.ForLoadedConstructor(secondConstructor)));
     }
@@ -144,32 +144,32 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstMethod).hashCode(), is(hashCode(firstMethod)));
         assertThat(describe(secondMethod).hashCode(), is(hashCode(secondMethod)));
         assertThat(describe(thirdMethod).hashCode(), is(hashCode(thirdMethod)));
-        assertThat(describe(firstMethod).hashCode(), not(is(hashCode(secondMethod))));
-        assertThat(describe(firstMethod).hashCode(), not(is(hashCode(thirdMethod))));
-        assertThat(describe(firstMethod).hashCode(), not(is(hashCode(firstConstructor))));
-        assertThat(describe(firstMethod).hashCode(), not(is(hashCode(secondConstructor))));
+        assertThat(describe(firstMethod).hashCode(), not(hashCode(secondMethod)));
+        assertThat(describe(firstMethod).hashCode(), not(hashCode(thirdMethod)));
+        assertThat(describe(firstMethod).hashCode(), not(hashCode(firstConstructor)));
+        assertThat(describe(firstMethod).hashCode(), not(hashCode(secondConstructor)));
         assertThat(describe(firstConstructor).hashCode(), is(hashCode(firstConstructor)));
         assertThat(describe(secondConstructor).hashCode(), is(hashCode(secondConstructor)));
-        assertThat(describe(firstConstructor).hashCode(), not(is(hashCode(firstMethod))));
-        assertThat(describe(firstConstructor).hashCode(), not(is(hashCode(secondMethod))));
-        assertThat(describe(firstConstructor).hashCode(), not(is(hashCode(thirdMethod))));
-        assertThat(describe(firstConstructor).hashCode(), not(is(hashCode(secondConstructor))));
+        assertThat(describe(firstConstructor).hashCode(), not(hashCode(firstMethod)));
+        assertThat(describe(firstConstructor).hashCode(), not(hashCode(secondMethod)));
+        assertThat(describe(firstConstructor).hashCode(), not(hashCode(thirdMethod)));
+        assertThat(describe(firstConstructor).hashCode(), not(hashCode(secondConstructor)));
     }
 
     @Test
     public void testEqualsMethod() throws Exception {
         MethodDescription identical = describe(firstMethod);
-        assertThat(identical, equalTo(identical));
-        assertThat(describe(firstMethod), equalTo(describe(firstMethod)));
-        assertThat(describe(firstMethod), not(equalTo(describe(secondMethod))));
-        assertThat(describe(firstMethod), not(equalTo(describe(thirdMethod))));
-        assertThat(describe(firstMethod), not(equalTo(describe(firstConstructor))));
-        assertThat(describe(firstMethod), not(equalTo(describe(secondConstructor))));
-        assertThat(describe(firstMethod), equalTo((MethodDescription) new MethodDescription.ForLoadedMethod(firstMethod)));
-        assertThat(describe(firstMethod), not(equalTo((MethodDescription) new MethodDescription.ForLoadedMethod(secondMethod))));
-        assertThat(describe(firstMethod), not(equalTo((MethodDescription) new MethodDescription.ForLoadedMethod(thirdMethod))));
-        assertThat(describe(firstMethod), not(equalTo((MethodDescription) new MethodDescription.ForLoadedConstructor(firstConstructor))));
-        assertThat(describe(firstMethod), not(equalTo((MethodDescription) new MethodDescription.ForLoadedConstructor(secondConstructor))));
+        assertThat(identical, is(identical));
+        assertThat(describe(firstMethod), is(describe(firstMethod)));
+        assertThat(describe(firstMethod), not(describe(secondMethod)));
+        assertThat(describe(firstMethod), not(describe(thirdMethod)));
+        assertThat(describe(firstMethod), not(describe(firstConstructor)));
+        assertThat(describe(firstMethod), not(describe(secondConstructor)));
+        assertThat(describe(firstMethod), is((MethodDescription) new MethodDescription.ForLoadedMethod(firstMethod)));
+        assertThat(describe(firstMethod), not((MethodDescription) new MethodDescription.ForLoadedMethod(secondMethod)));
+        assertThat(describe(firstMethod), not((MethodDescription) new MethodDescription.ForLoadedMethod(thirdMethod)));
+        assertThat(describe(firstMethod), not((MethodDescription) new MethodDescription.ForLoadedConstructor(firstConstructor)));
+        assertThat(describe(firstMethod), not((MethodDescription) new MethodDescription.ForLoadedConstructor(secondConstructor)));
         MethodDescription.InDefinedShape equalMethod = mock(MethodDescription.InDefinedShape.class);
         when(equalMethod.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethod.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getDeclaringClass()));
@@ -212,53 +212,53 @@ public abstract class AbstractMethodDescriptionTest {
     @Test
     public void testEqualsConstructor() throws Exception {
         MethodDescription identical = describe(firstConstructor);
-        assertThat(identical, equalTo(identical));
-        assertThat(describe(firstConstructor), equalTo(describe(firstConstructor)));
-        assertThat(describe(firstConstructor), not(equalTo(describe(secondConstructor))));
-        assertThat(describe(firstConstructor), not(equalTo(describe(firstMethod))));
-        assertThat(describe(firstConstructor), not(equalTo(describe(secondMethod))));
-        assertThat(describe(firstConstructor), not(equalTo(describe(thirdMethod))));
-        assertThat(describe(firstConstructor), equalTo((MethodDescription) new MethodDescription.ForLoadedConstructor(firstConstructor)));
-        assertThat(describe(firstConstructor), not(equalTo((MethodDescription) new MethodDescription.ForLoadedConstructor(secondConstructor))));
-        assertThat(describe(firstConstructor), not(equalTo((MethodDescription) new MethodDescription.ForLoadedMethod(firstMethod))));
-        assertThat(describe(firstConstructor), not(equalTo((MethodDescription) new MethodDescription.ForLoadedMethod(secondMethod))));
-        assertThat(describe(firstConstructor), not(equalTo((MethodDescription) new MethodDescription.ForLoadedMethod(thirdMethod))));
+        assertThat(identical, is(identical));
+        assertThat(describe(firstConstructor), is(describe(firstConstructor)));
+        assertThat(describe(firstConstructor), not(describe(secondConstructor)));
+        assertThat(describe(firstConstructor), not(describe(firstMethod)));
+        assertThat(describe(firstConstructor), not(describe(secondMethod)));
+        assertThat(describe(firstConstructor), not(describe(thirdMethod)));
+        assertThat(describe(firstConstructor), is((MethodDescription) new MethodDescription.ForLoadedConstructor(firstConstructor)));
+        assertThat(describe(firstConstructor), not((MethodDescription) new MethodDescription.ForLoadedConstructor(secondConstructor)));
+        assertThat(describe(firstConstructor), not((MethodDescription) new MethodDescription.ForLoadedMethod(firstMethod)));
+        assertThat(describe(firstConstructor), not((MethodDescription) new MethodDescription.ForLoadedMethod(secondMethod)));
+        assertThat(describe(firstConstructor), not((MethodDescription) new MethodDescription.ForLoadedMethod(thirdMethod)));
         MethodDescription.InDefinedShape equalMethod = mock(MethodDescription.InDefinedShape.class);
         when(equalMethod.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethod.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstConstructor.getDeclaringClass()));
         when(equalMethod.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(equalMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethod,
                 new TypeList.ForLoadedType(firstConstructor.getParameterTypes())));
-        assertThat(describe(firstConstructor), equalTo(equalMethod));
+        assertThat(describe(firstConstructor), is(equalMethod));
         MethodDescription.InDefinedShape equalMethodButName = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButName.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButName.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstConstructor.getDeclaringClass()));
         when(equalMethodButName.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(equalMethodButName.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButName,
                 new TypeList.ForLoadedType(firstConstructor.getParameterTypes())));
-        assertThat(describe(firstConstructor), not(equalTo(equalMethodButName)));
+        assertThat(describe(firstConstructor), not(equalMethodButName));
         MethodDescription.InDefinedShape equalMethodButReturnType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButReturnType.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethodButReturnType.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(equalMethodButReturnType.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(equalMethodButReturnType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButReturnType,
                 new TypeList.ForLoadedType(firstConstructor.getParameterTypes())));
-        assertThat(describe(firstConstructor), not(equalTo(equalMethodButReturnType)));
+        assertThat(describe(firstConstructor), not(equalMethodButReturnType));
         MethodDescription.InDefinedShape equalMethodButDeclaringType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButDeclaringType.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethodButDeclaringType.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstConstructor.getDeclaringClass()));
         when(equalMethodButDeclaringType.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(equalMethodButDeclaringType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButDeclaringType,
                 new TypeList.ForLoadedType(firstConstructor.getParameterTypes())));
-        assertThat(describe(firstConstructor), not(equalTo(equalMethodButDeclaringType)));
+        assertThat(describe(firstConstructor), not(equalMethodButDeclaringType));
         MethodDescription.InDefinedShape equalMethodButParameterTypes = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButParameterTypes.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         when(equalMethodButParameterTypes.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstConstructor.getDeclaringClass()));
         when(equalMethodButParameterTypes.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(void.class));
         when(equalMethodButParameterTypes.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButParameterTypes,
                 new TypeList.ForLoadedType(secondConstructor.getParameterTypes())));
-        assertThat(describe(firstConstructor), not(equalTo(equalMethodButParameterTypes)));
-        assertThat(describe(firstConstructor), not(equalTo(new Object())));
+        assertThat(describe(firstConstructor), not(equalMethodButParameterTypes));
+        assertThat(describe(firstConstructor), not(new Object()));
         assertThat(describe(firstConstructor), not(equalTo(null)));
     }
 
@@ -275,22 +275,22 @@ public abstract class AbstractMethodDescriptionTest {
     @JavaVersionRule.Enforce(8)
     public void testEqualsParameter() throws Exception {
         ParameterDescription identical = describe(secondMethod).getParameters().get(0);
-        assertThat(identical, equalTo(identical));
-        assertThat(identical, not(equalTo(new Object())));
+        assertThat(identical, is(identical));
+        assertThat(identical, not(new Object()));
         assertThat(identical, not(equalTo(null)));
         assertThat(describe(secondMethod).getParameters().get(0), is(describe(secondMethod).getParameters().get(0)));
         ParameterDescription equal = mock(ParameterDescription.class);
         when(equal.getDeclaringMethod()).thenReturn(describe(secondMethod));
         when(equal.getIndex()).thenReturn(0);
-        assertThat(describe(secondMethod).getParameters().get(0), equalTo(equal));
+        assertThat(describe(secondMethod).getParameters().get(0), is(equal));
         ParameterDescription notEqualMethod = mock(ParameterDescription.class);
         when(equal.getDeclaringMethod()).thenReturn(mock(MethodDescription.class));
         when(equal.getIndex()).thenReturn(0);
-        assertThat(describe(secondMethod).getParameters().get(0), not(equalTo(notEqualMethod)));
+        assertThat(describe(secondMethod).getParameters().get(0), not(notEqualMethod));
         ParameterDescription notEqualMethodIndex = mock(ParameterDescription.class);
         when(equal.getDeclaringMethod()).thenReturn(describe(secondMethod));
         when(equal.getIndex()).thenReturn(1);
-        assertThat(describe(secondMethod).getParameters().get(0), not(equalTo(notEqualMethodIndex)));
+        assertThat(describe(secondMethod).getParameters().get(0), not(notEqualMethodIndex));
     }
 
     @Test

@@ -160,8 +160,8 @@ public class MethodBindingBuilderTest {
         assertThat(methodBinding.hashCode(), is(equalMethodBinding.hashCode()));
         assertThat(methodBinding, is(equalMethodBinding));
         MethodDelegationBinder.MethodBinding unequalMethodBinding = builder.build(mock(StackManipulation.class));
-        assertThat(methodBinding.hashCode(), not(is(unequalMethodBinding.hashCode())));
-        assertThat(methodBinding, not(is(unequalMethodBinding)));
+        assertThat(methodBinding.hashCode(), not(unequalMethodBinding.hashCode()));
+        assertThat(methodBinding, not(unequalMethodBinding));
     }
 
     private static class Key {

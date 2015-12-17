@@ -110,22 +110,22 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
     public void testEqualsHashCodeStaticAdapter() throws Exception {
         assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), is(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode()));
         assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), is(InvocationHandlerAdapter.of(new Foo(FOO))));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), not(is(InvocationHandlerAdapter.of(new Foo(BAR)).hashCode())));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), not(is(InvocationHandlerAdapter.of(new Foo(BAR)))));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), not(is(InvocationHandlerAdapter.of(new Foo(FOO), QUX).hashCode())));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), not(is(InvocationHandlerAdapter.of(new Foo(FOO), QUX))));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO), QUX).hashCode(), not(is(InvocationHandlerAdapter.toInstanceField(QUX).hashCode())));
-        assertThat(InvocationHandlerAdapter.of(new Foo(FOO), QUX), not(is(InvocationHandlerAdapter.toInstanceField(QUX))));
+        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), not(InvocationHandlerAdapter.of(new Foo(BAR)).hashCode()));
+        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), not(InvocationHandlerAdapter.of(new Foo(BAR))));
+        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)).hashCode(), not(InvocationHandlerAdapter.of(new Foo(FOO), QUX).hashCode()));
+        assertThat(InvocationHandlerAdapter.of(new Foo(FOO)), not(InvocationHandlerAdapter.of(new Foo(FOO), QUX)));
+        assertThat(InvocationHandlerAdapter.of(new Foo(FOO), QUX).hashCode(), not(InvocationHandlerAdapter.toInstanceField(QUX).hashCode()));
+        assertThat(InvocationHandlerAdapter.of(new Foo(FOO), QUX), not(InvocationHandlerAdapter.toInstanceField(QUX)));
     }
 
     @Test
     public void testEqualsHashCodeInstanceAdapter() throws Exception {
         assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), is(InvocationHandlerAdapter.toInstanceField(QUX).hashCode()));
         assertThat(InvocationHandlerAdapter.toInstanceField(QUX), is(InvocationHandlerAdapter.toInstanceField(QUX)));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), not(is(InvocationHandlerAdapter.toInstanceField(FOO).hashCode())));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(is(InvocationHandlerAdapter.toInstanceField(FOO))));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), not(is(InvocationHandlerAdapter.of(new Foo(BAR), QUX).hashCode())));
-        assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(is(InvocationHandlerAdapter.of(new Foo(BAR), QUX))));
+        assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), not(InvocationHandlerAdapter.toInstanceField(FOO).hashCode()));
+        assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(InvocationHandlerAdapter.toInstanceField(FOO)));
+        assertThat(InvocationHandlerAdapter.toInstanceField(QUX).hashCode(), not(InvocationHandlerAdapter.of(new Foo(BAR), QUX).hashCode()));
+        assertThat(InvocationHandlerAdapter.toInstanceField(QUX), not(InvocationHandlerAdapter.of(new Foo(BAR), QUX)));
     }
 
     @Test

@@ -101,7 +101,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getRepresentative(), is(method));
         assertThat(methodGraph.listNodes().contains(methodNode), is(true));
         MethodGraph.Node baseNode = methodGraph.getSuperGraph().locate(method.asToken());
-        assertThat(methodNode, not(is(baseNode)));
+        assertThat(methodNode, not(baseNode));
         assertThat(baseNode.getRepresentative(), is(typeDescription.getSuperType().getDeclaredMethods().filter(representedBy(method.asToken())).getOnly()));
     }
 
@@ -159,7 +159,7 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getMethodTypes().contains(method.asTypeToken()), is(true));
         assertThat(methodNode.getRepresentative(), is(method));
         MethodGraph.Node baseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(method.asToken());
-        assertThat(methodNode, not(is(baseNode)));
+        assertThat(methodNode, not(baseNode));
         assertThat(baseNode.getRepresentative(), is(typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly()));
     }
 
@@ -181,10 +181,10 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getRepresentative(), not(second));
         assertThat(methodNode, is(methodGraph.locate(second.asToken())));
         MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asToken());
-        assertThat(methodNode, not(is(firstBaseNode)));
+        assertThat(methodNode, not(firstBaseNode));
         assertThat(firstBaseNode.getRepresentative(), is(first));
         MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asToken());
-        assertThat(methodNode, not(is(secondBaseNode)));
+        assertThat(methodNode, not(secondBaseNode));
         assertThat(secondBaseNode.getRepresentative(), is(first));
     }
 
@@ -206,10 +206,10 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getRepresentative(), not(second));
         assertThat(methodNode, is(methodGraph.locate(second.asToken())));
         MethodGraph.Node firstBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(first.asToken());
-        assertThat(methodNode, not(is(firstBaseNode)));
+        assertThat(methodNode, not(firstBaseNode));
         assertThat(firstBaseNode.getRepresentative(), is(first));
         MethodGraph.Node secondBaseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(second.asToken());
-        assertThat(methodNode, not(is(secondBaseNode)));
+        assertThat(methodNode, not(secondBaseNode));
         assertThat(secondBaseNode.getRepresentative(), is(first));
     }
 

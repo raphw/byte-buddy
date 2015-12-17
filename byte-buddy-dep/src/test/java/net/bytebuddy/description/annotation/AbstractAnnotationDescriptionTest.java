@@ -153,12 +153,12 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test
     public void testPrecondition() throws Exception {
-        assertThat(describe(first), equalTo(describe(first)));
-        assertThat(describe(second), equalTo(describe(second)));
-        assertThat(describe(first), not(equalTo(describe(second))));
-        assertThat(describe(first).getAnnotationType(), equalTo(describe(second).getAnnotationType()));
-        assertThat(describe(first).getAnnotationType(), not(equalTo((TypeDescription) new TypeDescription.ForLoadedType(Other.class))));
-        assertThat(describe(second).getAnnotationType(), not(equalTo((TypeDescription) new TypeDescription.ForLoadedType(Other.class))));
+        assertThat(describe(first), is(describe(first)));
+        assertThat(describe(second), is(describe(second)));
+        assertThat(describe(first), not(describe(second)));
+        assertThat(describe(first).getAnnotationType(), is(describe(second).getAnnotationType()));
+        assertThat(describe(first).getAnnotationType(), not((TypeDescription) new TypeDescription.ForLoadedType(Other.class)));
+        assertThat(describe(second).getAnnotationType(), not((TypeDescription) new TypeDescription.ForLoadedType(Other.class)));
         assertThat(describe(first).getAnnotationType().represents(first.annotationType()), is(true));
         assertThat(describe(second).getAnnotationType().represents(second.annotationType()), is(true));
     }
@@ -181,13 +181,13 @@ public abstract class AbstractAnnotationDescriptionTest {
     public void testHashCode() throws Exception {
         assertThat(describe(first).hashCode(), is(describe(first).hashCode()));
         assertThat(describe(second).hashCode(), is(describe(second).hashCode()));
-        assertThat(describe(first).hashCode(), not(is(describe(second).hashCode())));
+        assertThat(describe(first).hashCode(), not(describe(second).hashCode()));
     }
 
     @Test
     public void testEquals() throws Exception {
         AnnotationDescription identical = describe(first);
-        assertThat(identical, equalTo(identical));
+        assertThat(identical, is(identical));
         AnnotationDescription equalFirst = mock(AnnotationDescription.class);
         when(equalFirst.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(first.annotationType()));
         when(equalFirst.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
@@ -197,7 +197,7 @@ public abstract class AbstractAnnotationDescriptionTest {
                 return AnnotationDescription.ForLoadedAnnotation.of(first).getValue(method);
             }
         });
-        assertThat(describe(first), equalTo(equalFirst));
+        assertThat(describe(first), is(equalFirst));
         AnnotationDescription equalSecond = mock(AnnotationDescription.class);
         when(equalSecond.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(first.annotationType()));
         when(equalSecond.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
@@ -207,7 +207,7 @@ public abstract class AbstractAnnotationDescriptionTest {
                 return AnnotationDescription.ForLoadedAnnotation.of(second).getValue(method);
             }
         });
-        assertThat(describe(second), equalTo(equalSecond));
+        assertThat(describe(second), is(equalSecond));
         AnnotationDescription equalFirstTypeOnly = mock(AnnotationDescription.class);
         when(equalFirstTypeOnly.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(Other.class));
         when(equalFirstTypeOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).then(new Answer<Object>() {
@@ -217,13 +217,13 @@ public abstract class AbstractAnnotationDescriptionTest {
                 return AnnotationDescription.ForLoadedAnnotation.of(first).getValue(method);
             }
         });
-        assertThat(describe(first), not(equalTo(equalFirstTypeOnly)));
+        assertThat(describe(first), not(equalFirstTypeOnly));
         AnnotationDescription equalFirstNameOnly = mock(AnnotationDescription.class);
         when(equalFirstNameOnly.getAnnotationType()).thenReturn(new TypeDescription.ForLoadedType(first.annotationType()));
         when(equalFirstNameOnly.getValue(Mockito.any(MethodDescription.InDefinedShape.class))).thenReturn(null);
-        assertThat(describe(first), not(equalTo(equalFirstNameOnly)));
-        assertThat(describe(first), not(equalTo(equalSecond)));
-        assertThat(describe(first), not(equalTo(new Object())));
+        assertThat(describe(first), not(equalFirstNameOnly));
+        assertThat(describe(first), not(equalSecond));
+        assertThat(describe(first), not(new Object()));
         assertThat(describe(first), not(equalTo(null)));
     }
 
@@ -234,18 +234,18 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     @Test
     public void testLoadedEquals() throws Exception {
-        assertThat(describe(first).prepare(Sample.class).load(), equalTo(first));
-        assertThat(describe(first).prepare(Sample.class).load(), equalTo(describe(first).prepare(Sample.class).load()));
-        assertThat(describe(first).prepare(Sample.class).load(), not(equalTo(describe(second).prepare(Sample.class).load())));
-        assertThat(describe(second).prepare(Sample.class).load(), equalTo(second));
-        assertThat(describe(first).prepare(Sample.class).load(), not(equalTo(second)));
+        assertThat(describe(first).prepare(Sample.class).load(), is(first));
+        assertThat(describe(first).prepare(Sample.class).load(), is(describe(first).prepare(Sample.class).load()));
+        assertThat(describe(first).prepare(Sample.class).load(), not(describe(second).prepare(Sample.class).load()));
+        assertThat(describe(second).prepare(Sample.class).load(), is(second));
+        assertThat(describe(first).prepare(Sample.class).load(), not(second));
     }
 
     @Test
     public void testLoadedHashCode() throws Exception {
-        assertThat(describe(first).prepare(Sample.class).load().hashCode(), equalTo(first.hashCode()));
-        assertThat(describe(second).prepare(Sample.class).load().hashCode(), equalTo(second.hashCode()));
-        assertThat(describe(first).prepare(Sample.class).load().hashCode(), not(equalTo(second.hashCode())));
+        assertThat(describe(first).prepare(Sample.class).load().hashCode(), is(first.hashCode()));
+        assertThat(describe(second).prepare(Sample.class).load().hashCode(), is(second.hashCode()));
+        assertThat(describe(first).prepare(Sample.class).load().hashCode(), not(second.hashCode()));
     }
 
     @Test
