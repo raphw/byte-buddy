@@ -176,36 +176,36 @@ public abstract class AbstractMethodDescriptionTest {
         when(equalMethod.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getReturnType()));
         when(equalMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethod,
                 new GenericTypeList.ForLoadedTypes(firstMethod.getParameterTypes())));
-        assertThat(describe(firstMethod), equalTo(equalMethod));
+        assertThat(describe(firstMethod), is(equalMethod));
         MethodDescription.InDefinedShape equalMethodButName = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButName.getInternalName()).thenReturn(secondMethod.getName());
         when(equalMethodButName.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getDeclaringClass()));
         when(equalMethodButName.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getReturnType()));
         when(equalMethodButName.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButName,
                 new GenericTypeList.ForLoadedTypes(firstMethod.getParameterTypes())));
-        assertThat(describe(firstMethod), not(equalTo(equalMethodButName)));
+        assertThat(describe(firstMethod), not(equalMethodButName));
         MethodDescription.InDefinedShape equalMethodButReturnType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButReturnType.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButReturnType.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
         when(equalMethodButReturnType.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getReturnType()));
         when(equalMethodButReturnType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButReturnType,
                 new GenericTypeList.ForLoadedTypes(firstMethod.getParameterTypes())));
-        assertThat(describe(firstMethod), not(equalTo(equalMethodButReturnType)));
+        assertThat(describe(firstMethod), not(equalMethodButReturnType));
         MethodDescription.InDefinedShape equalMethodButDeclaringType = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButDeclaringType.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButDeclaringType.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getDeclaringClass()));
         when(equalMethodButDeclaringType.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(secondMethod.getReturnType()));
         when(equalMethodButDeclaringType.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButDeclaringType,
                 new GenericTypeList.ForLoadedTypes(firstMethod.getParameterTypes())));
-        assertThat(describe(firstMethod), not(equalTo(equalMethodButDeclaringType)));
+        assertThat(describe(firstMethod), not(equalMethodButDeclaringType));
         MethodDescription.InDefinedShape equalMethodButParameterTypes = mock(MethodDescription.InDefinedShape.class);
         when(equalMethodButParameterTypes.getInternalName()).thenReturn(firstMethod.getName());
         when(equalMethodButParameterTypes.getDeclaringType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getDeclaringClass()));
         when(equalMethodButParameterTypes.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(firstMethod.getReturnType()));
         when(equalMethodButParameterTypes.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(equalMethodButParameterTypes,
                 new GenericTypeList.ForLoadedTypes(secondMethod.getParameterTypes())));
-        assertThat(describe(firstMethod), not(equalTo(equalMethodButParameterTypes)));
-        assertThat(describe(firstMethod), not(equalTo(new Object())));
+        assertThat(describe(firstMethod), not(equalMethodButParameterTypes));
+        assertThat(describe(firstMethod), not(new Object()));
         assertThat(describe(firstMethod), not(equalTo(null)));
     }
 
