@@ -6,14 +6,16 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
+import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import org.objectweb.asm.MethodVisitor;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
 
 /**
  * Represents the creation of a {@link java.lang.reflect.Method} value which can be created from a given
@@ -79,39 +81,26 @@ public abstract class MethodConstant implements StackManipulation {
 
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-        Size argumentSize = prepare(methodVisitor)
-                .aggregate(ArrayFactory.forType(TypeDescription.CLASS)
-                        .withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures()))
-                        .apply(methodVisitor, implementationContext));
-        methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                CLASS_TYPE_INTERNAL_NAME,
-                getMethodName(),
-                getDescriptor(),
-                false);
-        return new Size(1, argumentSize.getMaximalSize());
+        return new Compound(
+                preparation(),
+                ArrayFactory.forType(TypeDescription.CLASS).withValues(typeConstantsFor(methodDescription.getParameters().asTypeList().asErasures())),
+                MethodInvocation.invoke(accessorMethod())
+        ).apply(methodVisitor, implementationContext);
     }
 
     /**
-     * Applies all preparation to the given method visitor.
+     * Returns a stack manipulation that loads the values that are required for loading a method constant onto the operand stack.
      *
-     * @param methodVisitor The method visitor to which the preparation is applied.
-     * @return The size of this preparation.
+     * @return A stack manipulation for loading a method or constructor onto the operand stack.
      */
-    protected abstract Size prepare(MethodVisitor methodVisitor);
+    protected abstract StackManipulation preparation();
 
     /**
-     * Returns the name of the {@link java.lang.Class} method for creating this method constant.
+     * Returns the method for loading a declared method or constructor onto the operand stack.
      *
-     * @return The descriptor for creating this method constant.
+     * @return The method for loading a declared method or constructor onto the operand stack.
      */
-    protected abstract String getMethodName();
-
-    /**
-     * Returns the descriptor of the {@link java.lang.Class} method for creating this method constant.
-     *
-     * @return The descriptor for creating this method constant.
-     */
-    protected abstract String getDescriptor();
+    protected abstract MethodDescription accessorMethod();
 
     /**
      * Returns a cached version of this method constant as specified by {@link CachedMethod} and {@link CachedConstructor}.
@@ -190,15 +179,18 @@ public abstract class MethodConstant implements StackManipulation {
     protected static class ForMethod extends MethodConstant implements CanCache {
 
         /**
-         * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+         * A reference to {@link Class#getDeclaredMethod(String, Class[])}.
          */
-        private static final String GET_DECLARED_METHOD_NAME = "getDeclaredMethod";
+        private static final MethodDescription.InDefinedShape GET_DECLARED_METHOD;
 
-        /**
-         * The descriptor of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+        /*
+         * Loads the method for loading a declared method.
          */
-        private static final String GET_DECLARED_METHOD_DESCRIPTOR =
-                "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;";
+        static {
+            GET_DECLARED_METHOD = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
+                    .filter(named("getDeclaredMethod").and(takesArguments(String.class, Class[].class)))
+                    .getOnly();
+        }
 
         /**
          * Creates a new {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant} for
@@ -211,20 +203,16 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        protected Size prepare(MethodVisitor methodVisitor) {
-            methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().asErasure().getDescriptor()));
-            methodVisitor.visitLdcInsn(methodDescription.getInternalName());
-            return new Size(2, 2);
+        protected StackManipulation preparation() {
+            return new Compound(
+                    ClassConstant.of(methodDescription.getDeclaringType()),
+                    new TextConstant(methodDescription.getInternalName())
+            );
         }
 
         @Override
-        protected String getMethodName() {
-            return GET_DECLARED_METHOD_NAME;
-        }
-
-        @Override
-        protected String getDescriptor() {
-            return GET_DECLARED_METHOD_DESCRIPTOR;
+        protected MethodDescription accessorMethod() {
+            return GET_DECLARED_METHOD;
         }
 
         @Override
@@ -240,15 +228,18 @@ public abstract class MethodConstant implements StackManipulation {
     protected static class ForConstructor extends MethodConstant implements CanCache {
 
         /**
-         * The name of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+         * A reference to {@link Class#getDeclaredConstructor(Class[])}.
          */
-        private static final String GET_DECLARED_CONSTRUCTOR_NAME = "getDeclaredConstructor";
+        private static final MethodDescription.InDefinedShape GET_DECLARED_CONSTRUCTOR;
 
-        /**
-         * The descriptor of the {@link java.lang.Class#getDeclaredMethod(String, Class[])} method.
+        /*
+         * Loads the method for loading a declared constructor.
          */
-        private static final String GET_DECLARED_CONSTRUCTOR_DESCRIPTOR =
-                "([Ljava/lang/Class;)Ljava/lang/reflect/Constructor;";
+        static {
+            GET_DECLARED_CONSTRUCTOR = new TypeDescription.ForLoadedType(Class.class).getDeclaredMethods()
+                    .filter(named("getDeclaredConstructor").and(takesArguments(Class[].class)))
+                    .getOnly();
+        }
 
         /**
          * Creates a new {@link net.bytebuddy.implementation.bytecode.constant.MethodConstant} for
@@ -261,19 +252,13 @@ public abstract class MethodConstant implements StackManipulation {
         }
 
         @Override
-        protected Size prepare(MethodVisitor methodVisitor) {
-            methodVisitor.visitLdcInsn(Type.getType(methodDescription.getDeclaringType().asErasure().getDescriptor()));
-            return new Size(1, 1);
+        protected StackManipulation preparation() {
+            return ClassConstant.of(methodDescription.getDeclaringType());
         }
 
         @Override
-        protected String getMethodName() {
-            return GET_DECLARED_CONSTRUCTOR_NAME;
-        }
-
-        @Override
-        protected String getDescriptor() {
-            return GET_DECLARED_CONSTRUCTOR_DESCRIPTOR;
+        protected MethodDescription accessorMethod() {
+            return GET_DECLARED_CONSTRUCTOR;
         }
 
         @Override

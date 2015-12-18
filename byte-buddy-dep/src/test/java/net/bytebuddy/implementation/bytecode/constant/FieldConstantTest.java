@@ -61,7 +61,9 @@ public class FieldConstantTest {
 
     @Test
     public void testConstantCreation() throws Exception {
-        StackManipulation.Size size = new FieldConstant(fieldDescription).apply(methodVisitor, implementationContext);
+        StackManipulation stackManipulation = new FieldConstant(fieldDescription);
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(2));
         verify(methodVisitor).visitLdcInsn(Type.getObjectType(QUX));
@@ -77,7 +79,9 @@ public class FieldConstantTest {
 
     @Test
     public void testCached() throws Exception {
-        StackManipulation.Size size = new FieldConstant(fieldDescription).cached().apply(methodVisitor, implementationContext);
+        StackManipulation stackManipulation = new FieldConstant(fieldDescription).cached();
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
         verify(implementationContext).cache(new FieldConstant(fieldDescription), new TypeDescription.ForLoadedType(Field.class));
