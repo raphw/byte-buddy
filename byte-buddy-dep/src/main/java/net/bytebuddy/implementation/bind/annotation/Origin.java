@@ -80,7 +80,7 @@ public @interface Origin {
                                                                Assigner assigner) {
             TypeDescription parameterType = target.getType().asErasure();
             if (parameterType.represents(Class.class)) {
-                return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(implementationTarget.getOriginType()));
+                return new MethodDelegationBinder.ParameterBinding.Anonymous(ClassConstant.of(implementationTarget.getOriginType().asErasure()));
             } else if (parameterType.represents(Method.class)) {
                 return source.isMethod()
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(

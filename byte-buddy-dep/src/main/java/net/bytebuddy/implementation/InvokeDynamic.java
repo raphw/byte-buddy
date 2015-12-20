@@ -746,7 +746,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(implementationTarget.getTypeDescription());
+        return new Appender(implementationTarget.getInstrumentedType());
     }
 
     /**

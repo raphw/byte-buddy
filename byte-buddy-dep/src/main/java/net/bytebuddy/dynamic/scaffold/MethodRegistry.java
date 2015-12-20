@@ -129,7 +129,7 @@ public interface MethodRegistry {
 
             @Override
             public Compiled compile(Implementation.Target implementationTarget) {
-                return new Compiled(implementationTarget.getTypeDescription());
+                return new Compiled(implementationTarget.getInstrumentedType());
             }
 
             @Override

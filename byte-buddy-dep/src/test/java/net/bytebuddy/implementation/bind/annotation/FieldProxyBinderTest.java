@@ -243,7 +243,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
             @SuppressWarnings("unchecked")
             public void apply(Implementation.Target mock) {
                 TypeDescription typeDescription = mock(TypeDescription.class);
-                when(mock.getTypeDescription()).thenReturn(typeDescription);
+                when(mock.getInstrumentedType()).thenReturn(typeDescription);
                 FieldList fieldList = mock(FieldList.class);
                 FieldList filteredFieldList = mock(FieldList.class);
                 when(typeDescription.getDeclaredFields()).thenReturn(fieldList);
@@ -256,14 +256,14 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.Getter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
             @Override
             public void apply(Implementation.Target mock) {
-                when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
+                when(mock.getInstrumentedType()).thenReturn(mock(TypeDescription.class));
             }
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.Setter.class).apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.AccessType.Setter.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
             @Override
             public void apply(Implementation.Target mock) {
-                when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
+                when(mock.getInstrumentedType()).thenReturn(mock(TypeDescription.class));
             }
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.AccessorProxy.class).apply();

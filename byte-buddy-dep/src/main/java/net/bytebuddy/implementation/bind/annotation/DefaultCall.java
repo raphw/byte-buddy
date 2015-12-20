@@ -145,7 +145,7 @@ public @interface DefaultCall {
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget,
                                                                       MethodDescription source) {
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asErasures()) {
+                    for (TypeDescription candidate : implementationTarget.getInstrumentedType().getInterfaces().asErasures()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;

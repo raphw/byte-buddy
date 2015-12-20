@@ -264,7 +264,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         @Override
@@ -366,7 +366,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         @Override

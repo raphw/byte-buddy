@@ -255,7 +255,7 @@ public interface Implementation {
          *
          * @return A description of the instrumented type.
          */
-        TypeDescription getTypeDescription();
+        TypeDescription getInstrumentedType();
 
         /**
          * Identifies the origin type of an implementation. The origin type describes the type that is subject to
@@ -265,7 +265,7 @@ public interface Implementation {
          *
          * @return The origin type of this implementation.
          */
-        TypeDescription getOriginType();
+        GenericTypeDescription getOriginType();
 
         /**
          * Creates a special method invocation for invoking the super method of the given method.
@@ -338,7 +338,7 @@ public interface Implementation {
             }
 
             @Override
-            public TypeDescription getTypeDescription() {
+            public TypeDescription getInstrumentedType() {
                 return instrumentedType;
             }
 

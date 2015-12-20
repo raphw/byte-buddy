@@ -10,7 +10,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -228,13 +227,13 @@ public @interface FieldProxy {
                 throw new IllegalStateException(target + " uses a @Field annotation on an non-installed type");
             }
             FieldLocator.Resolution resolution = FieldLocator.of(annotation.getValue(FIELD_NAME, String.class), source)
-                    .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getTypeDescription())
-                    .resolve(implementationTarget.getTypeDescription(), source.isStatic());
+                    .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getInstrumentedType())
+                    .resolve(implementationTarget.getInstrumentedType(), source.isStatic());
             return resolution.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(
                     resolution.getFieldDescription(),
                     assigner,
-                    implementationTarget.getTypeDescription(),
+                    implementationTarget.getInstrumentedType(),
                     accessType,
                     annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
@@ -459,7 +458,7 @@ public @interface FieldProxy {
                      * @param implementationTarget The implementation target of the current instrumentation.
                      */
                     protected Appender(Target implementationTarget) {
-                        typeDescription = implementationTarget.getTypeDescription();
+                        typeDescription = implementationTarget.getInstrumentedType();
                     }
 
                     @Override
@@ -602,7 +601,7 @@ public @interface FieldProxy {
                      * @param implementationTarget The implementation target of the current instrumentation.
                      */
                     protected Appender(Target implementationTarget) {
-                        typeDescription = implementationTarget.getTypeDescription();
+                        typeDescription = implementationTarget.getInstrumentedType();
                     }
 
                     @Override
@@ -725,7 +724,7 @@ public @interface FieldProxy {
                  * @param implementationTarget The implementation target of the current implementation.
                  */
                 protected Appender(Target implementationTarget) {
-                    fieldDescription = implementationTarget.getTypeDescription()
+                    fieldDescription = implementationTarget.getInstrumentedType()
                             .getDeclaredFields()
                             .filter((named(AccessorProxy.FIELD_NAME)))
                             .getOnly();

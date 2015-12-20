@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -613,7 +612,7 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(fieldLocatorFactory.make(implementationTarget.getTypeDescription()));
+            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
         }
 
         @Override
@@ -751,7 +750,7 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(fieldLocatorFactory.make(implementationTarget.getTypeDescription()));
+            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
         }
 
         @Override

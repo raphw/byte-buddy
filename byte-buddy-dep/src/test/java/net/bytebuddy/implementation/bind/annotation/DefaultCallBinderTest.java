@@ -61,7 +61,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).getTypeDescription();
+        verify(implementationTarget).getInstrumentedType();
         verify(implementationTarget).invokeDefault(firstInterface, methodToken);
         verifyNoMoreInteractions(implementationTarget);
     }
@@ -78,7 +78,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
-        verify(implementationTarget).getTypeDescription();
+        verify(implementationTarget).getInstrumentedType();
         verify(implementationTarget).invokeDefault(firstInterface, methodToken);
         verifyNoMoreInteractions(implementationTarget);
     }

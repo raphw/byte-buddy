@@ -893,7 +893,7 @@ public interface MethodDelegationBinder {
          */
         private List<MethodBinding> bind(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
             List<MethodBinding> possibleDelegations = new LinkedList<MethodBinding>();
-            for (MethodDescription targetCandidate : targetCandidates.filter(isVisibleTo(implementationTarget.getTypeDescription()))) {
+            for (MethodDescription targetCandidate : targetCandidates.filter(isVisibleTo(implementationTarget.getInstrumentedType()))) {
                 MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, source, targetCandidate);
                 if (methodBinding.isValid()) {
                     possibleDelegations.add(methodBinding);

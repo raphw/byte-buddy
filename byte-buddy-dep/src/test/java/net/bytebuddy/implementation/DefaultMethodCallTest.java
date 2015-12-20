@@ -172,7 +172,7 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
             public void apply(Implementation.Target mock) {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Arrays.asList(removalType, mock(TypeDescription.class))));
-                when(mock.getTypeDescription()).thenReturn(typeDescription);
+                when(mock.getInstrumentedType()).thenReturn(typeDescription);
             }
         }).create(new ObjectPropertyAssertion.Creator<List<?>>() {
             @Override

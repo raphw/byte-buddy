@@ -137,7 +137,7 @@ public class Forwarding implements Implementation {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(loadDelegate(implementationTarget.getTypeDescription()));
+        return new Appender(loadDelegate(implementationTarget.getInstrumentedType()));
     }
 
     /**

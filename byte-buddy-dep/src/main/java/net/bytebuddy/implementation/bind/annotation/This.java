@@ -72,7 +72,7 @@ public @interface This {
             StackManipulation assignment = source.isStatic()
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX),
-                    assigner.assign(implementationTarget.getTypeDescription(), target.getType().asErasure(), RuntimeType.Verifier.check(target)));
+                    assigner.assign(implementationTarget.getInstrumentedType(), target.getType().asErasure(), RuntimeType.Verifier.check(target)));
             return assignment.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(assignment)
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

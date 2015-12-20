@@ -65,7 +65,7 @@ public class MethodDelegationBinderProcessorTest {
                 .thenReturn(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT);
         when(ambiguityResolver.resolve(source, boundDelegation, boundDelegation))
                 .thenReturn(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
-        when(implementationTarget.getTypeDescription()).thenReturn(instrumentedType);
+        when(implementationTarget.getInstrumentedType()).thenReturn(instrumentedType);
         when(unbindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
         when(bindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
         when(dominantBindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);

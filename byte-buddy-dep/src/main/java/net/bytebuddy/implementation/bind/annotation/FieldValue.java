@@ -8,7 +8,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -91,7 +90,7 @@ public @interface FieldValue {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
             FieldLocator.Resolution resolution = FieldLocator
-                    .of(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getTypeDescription())
+                    .of(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getInstrumentedType())
                     .resolve(annotation.getValue(FIELD_NAME, String.class), source.isStatic());
             if (resolution.isResolved()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(

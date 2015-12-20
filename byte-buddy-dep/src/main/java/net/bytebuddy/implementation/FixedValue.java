@@ -424,7 +424,7 @@ public abstract class FixedValue implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new StaticFieldByteCodeAppender(implementationTarget.getTypeDescription());
+            return new StaticFieldByteCodeAppender(implementationTarget.getInstrumentedType());
         }
 
         @Override

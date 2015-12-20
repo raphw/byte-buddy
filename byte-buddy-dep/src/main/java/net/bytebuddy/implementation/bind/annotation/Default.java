@@ -91,7 +91,7 @@ public @interface Default {
             if (!proxyType.isInterface()) {
                 throw new IllegalStateException(target + " uses the @Default annotation on an invalid type");
             }
-            if (source.isStatic() || !implementationTarget.getTypeDescription().getInterfaces().asErasures().contains(proxyType)) {
+            if (source.isStatic() || !implementationTarget.getInstrumentedType().getInterfaces().asErasures().contains(proxyType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(proxyType,

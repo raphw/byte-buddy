@@ -2007,13 +2007,13 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (methodDescription.isVirtual() && !methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getTypeDescription());
-                } else if (!methodDescription.isVisibleTo(implementationTarget.getTypeDescription())) {
-                    throw new IllegalStateException(implementationTarget.getTypeDescription() + " cannot see " + methodDescription);
+                if (methodDescription.isVirtual() && !methodDescription.isInvokableOn(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getInstrumentedType());
+                } else if (!methodDescription.isVisibleTo(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException(implementationTarget.getInstrumentedType() + " cannot see " + methodDescription);
                 }
                 return methodDescription.isVirtual()
-                        ? MethodInvocation.invoke(methodDescription).virtual(implementationTarget.getTypeDescription())
+                        ? MethodInvocation.invoke(methodDescription).virtual(implementationTarget.getInstrumentedType())
                         : MethodInvocation.invoke(methodDescription);
             }
 
@@ -2048,8 +2048,8 @@ public class MethodCall implements Implementation.Composable {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " virtually");
                 } else if (!methodDescription.isInvokableOn(typeDescription)) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + typeDescription);
-                } else if (!typeDescription.isVisibleTo(implementationTarget.getTypeDescription())) {
-                    throw new IllegalStateException(typeDescription + " is not visible to " + implementationTarget.getTypeDescription());
+                } else if (!typeDescription.isVisibleTo(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException(typeDescription + " is not visible to " + implementationTarget.getInstrumentedType());
                 }
                 return MethodInvocation.invoke(methodDescription).virtual(typeDescription);
             }
@@ -2087,10 +2087,10 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (implementationTarget.getTypeDescription().getSuperType() == null) {
-                    throw new IllegalStateException("Cannot invoke super method for " + implementationTarget.getTypeDescription());
-                } else if (!methodDescription.isInvokableOn(implementationTarget.getOriginType())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as super method of " + implementationTarget.getTypeDescription());
+                if (implementationTarget.getInstrumentedType().getSuperType() == null) {
+                    throw new IllegalStateException("Cannot invoke super method for " + implementationTarget.getInstrumentedType());
+                } else if (!methodDescription.isInvokableOn(implementationTarget.getOriginType().asErasure())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as super method of " + implementationTarget.getInstrumentedType());
                 }
                 StackManipulation stackManipulation = implementationTarget.invokeDominant(methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
@@ -2117,12 +2117,12 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (!methodDescription.isInvokableOn(implementationTarget.getTypeDescription())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as default method of " + implementationTarget.getTypeDescription());
+                if (!methodDescription.isInvokableOn(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as default method of " + implementationTarget.getInstrumentedType());
                 }
                 StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asErasure(), methodDescription.asToken());
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getTypeDescription());
+                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getInstrumentedType());
                 }
                 return stackManipulation;
             }
@@ -2353,14 +2353,14 @@ public class MethodCall implements Implementation.Composable {
             int index = 0;
             StackManipulation[] argumentInstruction = new StackManipulation[argumentLoaders.size()];
             for (ArgumentLoader argumentLoader : argumentLoaders) {
-                argumentInstruction[index] = argumentLoader.resolve(implementationTarget.getTypeDescription(),
+                argumentInstruction[index] = argumentLoader.resolve(implementationTarget.getInstrumentedType(),
                         instrumentedMethod,
                         methodParameters.get(index++),
                         assigner,
                         typing);
             }
             StackManipulation.Size size = new StackManipulation.Compound(
-                    targetHandler.resolve(invokedMethod, implementationTarget.getTypeDescription()),
+                    targetHandler.resolve(invokedMethod, implementationTarget.getInstrumentedType()),
                     new StackManipulation.Compound(argumentInstruction),
                     methodInvoker.invoke(invokedMethod, implementationTarget),
                     terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, typing)

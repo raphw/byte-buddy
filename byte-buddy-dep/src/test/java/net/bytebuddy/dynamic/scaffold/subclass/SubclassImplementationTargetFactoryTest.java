@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -45,13 +46,13 @@ public class SubclassImplementationTargetFactoryTest {
     @Test
     public void testOriginTypeSuperType() throws Exception {
         assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE)
-                .make(instrumentedType, methodGraph).getOriginType(), is(superType));
+                .make(instrumentedType, methodGraph).getOriginType(), is((GenericTypeDescription) superType));
     }
 
     @Test
     public void testOriginTypeLevelType() throws Exception {
         assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE)
-                .make(instrumentedType, methodGraph).getOriginType(), is(instrumentedType));
+                .make(instrumentedType, methodGraph).getOriginType(), is((GenericTypeDescription) instrumentedType));
     }
 
     @Test

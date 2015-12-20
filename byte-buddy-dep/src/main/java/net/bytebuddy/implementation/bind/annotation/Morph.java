@@ -200,7 +200,7 @@ public @interface Morph {
             }
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType().asErasure(),
-                    implementationTarget.getTypeDescription(),
+                    implementationTarget.getInstrumentedType(),
                     specialMethodInvocation,
                     assigner,
                     annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
@@ -253,7 +253,7 @@ public @interface Morph {
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asErasures()) {
+                    for (TypeDescription candidate : implementationTarget.getInstrumentedType().getInterfaces().asErasures()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
@@ -555,7 +555,7 @@ public @interface Morph {
                      * @param implementationTarget The current implementation target.
                      */
                     protected Appender(Target implementationTarget) {
-                        fieldDescription = implementationTarget.getTypeDescription()
+                        fieldDescription = implementationTarget.getInstrumentedType()
                                 .getDeclaredFields()
                                 .filter((named(RedirectionProxy.FIELD_NAME)))
                                 .getOnly();
@@ -667,7 +667,7 @@ public @interface Morph {
                      * @param implementationTarget The current implementation target.
                      */
                     protected Appender(Target implementationTarget) {
-                        typeDescription = implementationTarget.getTypeDescription();
+                        typeDescription = implementationTarget.getInstrumentedType();
                     }
 
                     @Override

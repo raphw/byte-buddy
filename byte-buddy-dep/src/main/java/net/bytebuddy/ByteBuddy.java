@@ -2088,7 +2088,7 @@ public class ByteBuddy {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new ValuesMethodAppender(implementationTarget.getTypeDescription());
+            return new ValuesMethodAppender(implementationTarget.getInstrumentedType());
         }
 
         @Override

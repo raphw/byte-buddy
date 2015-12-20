@@ -109,7 +109,7 @@ public class MethodRegistryDefaultTest {
         when(firstCompiledHandler.assemble(instrumentedMethod, firstAppender)).thenReturn(firstRecord);
         when(secondCompiledHandler.assemble(instrumentedMethod, secondAppender)).thenReturn(secondRecord);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
-        when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
+        when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
         when(methodTransformer.transform(typeDescription, instrumentedMethod)).thenReturn(instrumentedMethod);
         when(returnType.asErasure()).thenReturn(returnType);
         when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);

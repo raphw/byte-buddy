@@ -684,15 +684,15 @@ public class MethodDelegation implements Implementation.Composable {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(implementationDelegate.getPreparingStackAssignment(implementationTarget.getTypeDescription()),
+        return new Appender(implementationDelegate.getPreparingStackAssignment(implementationTarget.getInstrumentedType()),
                 implementationTarget,
-                methodContainer.resolve(implementationTarget.getTypeDescription()),
+                methodContainer.resolve(implementationTarget.getInstrumentedType()),
                 new MethodDelegationBinder.Processor(new TargetMethodAnnotationDrivenBinder(
                         parameterBinders,
                         defaultsProvider,
                         terminationHandler,
                         assigner,
-                        implementationDelegate.getMethodInvoker(implementationTarget.getTypeDescription())
+                        implementationDelegate.getMethodInvoker(implementationTarget.getInstrumentedType())
                 ), ambiguityResolver)
         );
     }

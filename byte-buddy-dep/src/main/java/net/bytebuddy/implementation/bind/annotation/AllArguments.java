@@ -140,7 +140,7 @@ public @interface AllArguments {
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
             for (TypeDescription sourceParameter : includeThis
-                    ? join(implementationTarget.getTypeDescription(), source.getParameters().asTypeList().asErasures())
+                    ? join(implementationTarget.getInstrumentedType(), source.getParameters().asTypeList().asErasures())
                     : source.getParameters().asTypeList().asErasures()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.forType(sourceParameter).loadOffset(offset),

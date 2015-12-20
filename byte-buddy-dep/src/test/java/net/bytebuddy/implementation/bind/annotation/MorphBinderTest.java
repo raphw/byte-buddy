@@ -161,7 +161,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
         ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.MethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
             @Override
             public void apply(Implementation.Target mock) {
-                when(mock.getTypeDescription()).thenReturn(mock(TypeDescription.class));
+                when(mock.getInstrumentedType()).thenReturn(mock(TypeDescription.class));
             }
         }).apply();
         ObjectPropertyAssertion.of(Morph.Binder.RedirectionProxy.StaticFieldConstructor.class).apply();
@@ -175,7 +175,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
                 when(fieldList.filter(named(Morph.Binder.RedirectionProxy.FIELD_NAME))).thenReturn((FieldList) filteredFieldList);
                 when(filteredFieldList.getOnly()).thenReturn(mock(FieldDescription.class));
                 when(typeDescription.getDeclaredFields()).thenReturn((FieldList) fieldList);
-                when(mock.getTypeDescription()).thenReturn(typeDescription);
+                when(mock.getInstrumentedType()).thenReturn(typeDescription);
             }
         }).apply();
         ObjectPropertyAssertion.of(Morph.Binder.DefaultMethodLocator.Implicit.class).apply();

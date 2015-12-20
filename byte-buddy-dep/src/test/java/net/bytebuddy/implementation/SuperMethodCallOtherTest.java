@@ -73,7 +73,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
+        when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
         when(methodDescription.asToken()).thenReturn(methodToken);
     }
 

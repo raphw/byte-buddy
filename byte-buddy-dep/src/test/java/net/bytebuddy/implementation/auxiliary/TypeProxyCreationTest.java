@@ -82,7 +82,7 @@ public class TypeProxyCreationTest {
 
     @Test
     public void testAllIllegal() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(foo);
+        when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))
                 .thenReturn(specialMethodInvocation);
         TypeDescription dynamicType = new TypeProxy(foo,
@@ -109,7 +109,7 @@ public class TypeProxyCreationTest {
 
     @Test
     public void testAllLegal() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(foo);
+        when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
@@ -140,7 +140,7 @@ public class TypeProxyCreationTest {
 
     @Test
     public void testAllLegalSerializable() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(foo);
+        when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
@@ -171,7 +171,7 @@ public class TypeProxyCreationTest {
 
     @Test
     public void testAllLegalNotIgnoreFinalizer() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(foo);
+        when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
@@ -204,7 +204,7 @@ public class TypeProxyCreationTest {
 
     @Test
     public void testForConstructorConstruction() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(foo);
+        when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
@@ -243,7 +243,7 @@ public class TypeProxyCreationTest {
 
     @Test
     public void testForDefaultMethodConstruction() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(foo);
+        when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);
@@ -279,7 +279,7 @@ public class TypeProxyCreationTest {
 
     @Test
     public void testForReflectionFactoryConstruction() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(foo);
+        when(implementationTarget.getInstrumentedType()).thenReturn(foo);
         when(invocationFactory.invoke(eq(implementationTarget), eq(foo), any(MethodDescription.class)))
                 .thenReturn(specialMethodInvocation);
         when(specialMethodInvocation.isValid()).thenReturn(true);

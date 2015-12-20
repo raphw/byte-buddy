@@ -129,7 +129,7 @@ public class DefaultMethodCall implements Implementation {
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(implementationTarget, filterRelevant(implementationTarget.getTypeDescription()));
+        return new Appender(implementationTarget, filterRelevant(implementationTarget.getInstrumentedType()));
     }
 
     /**
@@ -195,7 +195,7 @@ public class DefaultMethodCall implements Implementation {
         protected Appender(Target implementationTarget, List<TypeDescription> prioritizedInterfaces) {
             this.implementationTarget = implementationTarget;
             this.prioritizedInterfaces = prioritizedInterfaces;
-            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getTypeDescription().getInterfaces().asErasures());
+            this.nonPrioritizedInterfaces = new HashSet<TypeDescription>(implementationTarget.getInstrumentedType().getInterfaces().asErasures());
             nonPrioritizedInterfaces.removeAll(prioritizedInterfaces);
         }
 
