@@ -1,6 +1,7 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
@@ -454,31 +455,31 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * A list of detached types representing the parameters.
              */
-            private final List<? extends GenericTypeDescription> typeDescriptions;
+            private final List<? extends TypeDefinition> typeDefinitions;
 
             /**
              * Creates a new parameter type list.
              *
              * @param methodDescription The method description that declares the parameters.
-             * @param typeDescriptions  A list of detached types representing the parameters.
+             * @param typeDefinitions   A list of detached types representing the parameters.
              */
-            public ForTypes(MethodDescription.InDefinedShape methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
+            public ForTypes(MethodDescription.InDefinedShape methodDescription, List<? extends TypeDefinition> typeDefinitions) {
                 this.methodDescription = methodDescription;
-                this.typeDescriptions = typeDescriptions;
+                this.typeDefinitions = typeDefinitions;
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
                 int offset = methodDescription.isStatic() ? 0 : 1;
-                for (GenericTypeDescription typeDescription : typeDescriptions.subList(0, index)) {
-                    offset += typeDescription.getStackSize().getSize();
+                for (TypeDefinition typeDefinition : typeDefinitions.subList(0, index)) {
+                    offset += typeDefinition.getStackSize().getSize();
                 }
-                return new ParameterDescription.Latent(methodDescription, typeDescriptions.get(index), index, offset);
+                return new ParameterDescription.Latent(methodDescription, typeDefinitions.get(index).asGenericType(), index, offset);
             }
 
             @Override
             public int size() {
-                return typeDescriptions.size();
+                return typeDefinitions.size();
             }
         }
     }

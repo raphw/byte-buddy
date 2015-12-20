@@ -1125,7 +1125,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public GenericTypeDescription getReturnType() {
-                        return bridgeType.getReturnType();
+                        return bridgeType.getReturnType().asGenericType();
                     }
 
                     @Override
@@ -2637,7 +2637,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Empty();
+                    return new ParameterList.Empty<ParameterDescription.InDefinedShape>();
                 }
 
                 @Override
@@ -2845,7 +2845,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    attributeAppender.apply(this, instrumentedType, originalType);
+                    attributeAppender.apply(this, instrumentedType, originalType.asGenericType());
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
