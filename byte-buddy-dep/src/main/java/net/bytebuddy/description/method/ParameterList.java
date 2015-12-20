@@ -526,12 +526,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     /**
      * A list of parameter descriptions that yields {@link net.bytebuddy.description.method.ParameterDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase<ParameterDescription> {
+    class TypeSubstituting extends AbstractBase<ParameterDescription.InGenericShape> {
 
         /**
          * The method that is declaring the transformed parameters.
          */
-        private final MethodDescription declaringMethod;
+        private final MethodDescription.InGenericShape declaringMethod;
 
         /**
          * The untransformed parameters that are represented by this list.
@@ -550,7 +550,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @param parameterDescriptions The untransformed parameters that are represented by this list.
          * @param visitor               The visitor to apply to the parameter types before returning them.
          */
-        public TypeSubstituting(MethodDescription declaringMethod,
+        public TypeSubstituting(MethodDescription.InGenericShape declaringMethod,
                                 List<? extends ParameterDescription> parameterDescriptions,
                                 GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             this.declaringMethod = declaringMethod;
@@ -559,7 +559,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ParameterDescription get(int index) {
+        public ParameterDescription.InGenericShape get(int index) {
             return new ParameterDescription.TypeSubstituting(declaringMethod, parameterDescriptions.get(index), visitor);
         }
 

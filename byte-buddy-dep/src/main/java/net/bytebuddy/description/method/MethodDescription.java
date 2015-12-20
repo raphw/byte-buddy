@@ -238,10 +238,20 @@ public interface MethodDescription extends TypeVariableSource,
      */
     TypeToken asTypeToken();
 
+    interface InGenericShape extends MethodDescription {
+
+        @Override
+        GenericTypeDescription getDeclaringType();
+
+        @Override
+        ParameterList<? extends ParameterDescription.InGenericShape> getParameters();
+    }
+
+    // TODO: Remove extends InGenericShape
     /**
      * Represents a method in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */
-    interface InDefinedShape extends MethodDescription, ByteCodeElement.Accessible {
+    interface InDefinedShape extends MethodDescription, ByteCodeElement.Accessible, InGenericShape {
 
         @Override
         TypeDescription getDeclaringType();
@@ -1107,7 +1117,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * A method description that represents a given method but with substituted method types.
      */
-    class TypeSubstituting extends AbstractBase {
+    class TypeSubstituting extends AbstractBase implements InGenericShape {
 
         /**
          * The type that declares this type-substituted method.
@@ -1150,7 +1160,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public ParameterList<?> getParameters() {
+        public ParameterList<? extends ParameterDescription.InGenericShape> getParameters() {
             return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), new VariableRetainingDelegator());
         }
 

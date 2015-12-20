@@ -44,10 +44,11 @@ public interface FieldDescription extends ByteCodeElement,
         GenericTypeDescription getDeclaringType();
     }
 
+    // TODO: Remove extends InGenericShape
     /**
      * Represents a field in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */
-    interface InDefinedShape extends FieldDescription, ByteCodeElement.Accessible {
+    interface InDefinedShape extends FieldDescription, ByteCodeElement.Accessible, InGenericShape {
 
         @Override
         TypeDescription getDeclaringType();
@@ -303,7 +304,7 @@ public interface FieldDescription extends ByteCodeElement,
     /**
      * A field description that represents a given field but with a substituted field type.
      */
-    class TypeSubstituting extends AbstractBase {
+    class TypeSubstituting extends AbstractBase implements InGenericShape {
 
         /**
          * The declaring type of the field.

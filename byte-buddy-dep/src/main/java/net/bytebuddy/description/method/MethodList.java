@@ -215,7 +215,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     /**
      * A list of method descriptions that yields {@link net.bytebuddy.description.method.MethodDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase<MethodDescription> {
+    class TypeSubstituting extends AbstractBase<MethodDescription.InGenericShape> {
 
         /**
          * The methods' declaring type.
@@ -248,7 +248,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public MethodDescription get(int index) {
+        public MethodDescription.InGenericShape get(int index) {
             return new MethodDescription.TypeSubstituting(declaringType, methodDescriptions.get(index), visitor);
         }
 

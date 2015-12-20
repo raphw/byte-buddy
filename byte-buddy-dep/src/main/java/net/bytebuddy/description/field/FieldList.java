@@ -191,7 +191,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     /**
      * A list of field descriptions that yields {@link net.bytebuddy.description.field.FieldDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase<FieldDescription> {
+    class TypeSubstituting extends AbstractBase<FieldDescription.InGenericShape> {
 
         /**
          * The field's actual declaring type.
@@ -224,7 +224,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public FieldDescription get(int index) {
+        public FieldDescription.InGenericShape get(int index) {
             return new FieldDescription.TypeSubstituting(declaringType, fieldDescriptions.get(index), visitor);
         }
 

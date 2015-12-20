@@ -81,10 +81,17 @@ public interface ParameterDescription extends AnnotatedCodeElement,
      */
     int getOffset();
 
+    interface InGenericShape extends ParameterDescription {
+
+        @Override
+        MethodDescription.InGenericShape getDeclaringMethod();
+    }
+
+    // TODO: Remove extends InGenericShape
     /**
      * Represents a parameter in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */
-    interface InDefinedShape extends ParameterDescription {
+    interface InDefinedShape extends ParameterDescription, InGenericShape {
 
         @Override
         MethodDescription.InDefinedShape getDeclaringMethod();
@@ -824,12 +831,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
      * <b>Note</b>: The supplied visitor must assure to not substitute
      * </p>
      */
-    class TypeSubstituting extends AbstractBase {
+    class TypeSubstituting extends AbstractBase implements InGenericShape {
 
         /**
          * The method that declares this type-substituted parameter.
          */
-        private final MethodDescription declaringMethod;
+        private final MethodDescription.InGenericShape declaringMethod;
 
         /**
          * The represented parameter.
@@ -848,7 +855,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
          * @param parameterDescription The represented parameter.
          * @param visitor              A visitor that is applied to the parameter type.
          */
-        public TypeSubstituting(MethodDescription declaringMethod,
+        public TypeSubstituting(MethodDescription.InGenericShape declaringMethod,
                                 ParameterDescription parameterDescription,
                                 GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
             this.declaringMethod = declaringMethod;
@@ -862,7 +869,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public MethodDescription getDeclaringMethod() {
+        public MethodDescription.InGenericShape getDeclaringMethod() {
             return declaringMethod;
         }
 
