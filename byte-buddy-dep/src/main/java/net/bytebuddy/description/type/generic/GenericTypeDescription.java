@@ -364,7 +364,7 @@ public interface GenericTypeDescription extends TypeDefinition {
         /**
          * A visitor that returns the erasure of any visited type. For wildcard types, an exception is thrown.
          */
-        enum TypeErasing implements Visitor<TypeDescription> {
+        enum TypeErasing implements Visitor<GenericTypeDescription> {
 
             /**
              * The singleton instance.
@@ -372,28 +372,28 @@ public interface GenericTypeDescription extends TypeDefinition {
             INSTANCE;
 
             @Override
-            public TypeDescription onGenericArray(GenericTypeDescription genericArray) {
-                return genericArray.asErasure();
+            public GenericTypeDescription onGenericArray(GenericTypeDescription genericArray) {
+                return genericArray.asRawType();
             }
 
             @Override
-            public TypeDescription onWildcard(GenericTypeDescription wildcard) {
-                throw new IllegalArgumentException("Cannot erase a wilcard type");
+            public GenericTypeDescription onWildcard(GenericTypeDescription wildcard) {
+                throw new IllegalArgumentException("Cannot erase a wildcard type");
             }
 
             @Override
-            public TypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
-                return parameterizedType.asErasure();
+            public GenericTypeDescription onParameterizedType(GenericTypeDescription parameterizedType) {
+                return parameterizedType.asRawType();
             }
 
             @Override
-            public TypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
-                return typeVariable.asErasure();
+            public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
+                return typeVariable.asRawType();
             }
 
             @Override
-            public TypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
-                return typeDescription.asErasure();
+            public GenericTypeDescription onNonGenericType(GenericTypeDescription typeDescription) {
+                return typeDescription.asRawType();
             }
 
             @Override

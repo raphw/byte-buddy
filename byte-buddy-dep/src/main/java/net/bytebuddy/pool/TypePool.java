@@ -3582,7 +3582,7 @@ public interface TypePool {
                     : Type.getObjectType(superTypeInternalName).getDescriptor();
             this.signatureResolution = signatureResolution;
             if (interfaceInternalName == null) {
-                interfaceTypeDescriptors = Collections.<String>emptyList();
+                interfaceTypeDescriptors = Collections.emptyList();
             } else {
                 interfaceTypeDescriptors = new ArrayList<String>(interfaceInternalName.length);
                 for (String internalName : interfaceInternalName) {
@@ -4115,32 +4115,32 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
-                        return TokenizedGenericType.toErasure(typePool, fieldTypeDescriptor);
+                        return TokenizedGenericType.toErasure(typePool, fieldTypeDescriptor).asGenericType();
                     }
 
                     @Override
                     public GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
-                        return TokenizedGenericType.toErasure(typePool, returnTypeDescriptor);
+                        return TokenizedGenericType.toErasure(typePool, returnTypeDescriptor).asGenericType();
                     }
 
                     @Override
                     public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                        return new LazyTypeList(typePool, parameterTypeDescriptors).asGenericTypes();
+                        return new LazyTypeList.Generic(typePool, parameterTypeDescriptors);
                     }
 
                     @Override
                     public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                        return new LazyTypeList(typePool, exceptionTypeDescriptors).asGenericTypes();
+                        return new LazyTypeList.Generic(typePool, exceptionTypeDescriptors);
                     }
 
                     @Override
                     public GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
-                        return TokenizedGenericType.toErasure(typePool, superTypeDescriptor);
+                        return TokenizedGenericType.toErasure(typePool, superTypeDescriptor).asGenericType();
                     }
 
                     @Override
                     public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
-                        return new LazyTypeList(typePool, interfaceTypeDescriptors).asGenericTypes();
+                        return new LazyTypeList.Generic(typePool, interfaceTypeDescriptors);
                     }
 
                     @Override
@@ -4532,7 +4532,7 @@ public interface TypePool {
 
                 @Override
                 public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return typePool.describe(name).resolve();
+                    return typePool.describe(name).resolve().asGenericType();
                 }
 
                 @Override
@@ -5062,7 +5062,7 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeDescription getOwnerType() {
-                        return typePool.describe(name).resolve().getEnclosingType();
+                        return typePool.describe(name).resolve().getEnclosingType().asGenericType();
                     }
                 }
             }
@@ -5837,6 +5837,53 @@ public interface TypePool {
                     stackSize += Type.getType(descriptor).getSize();
                 }
                 return stackSize;
+            }
+
+            protected static class Generic extends GenericTypeList.AbstractBase {
+
+                /**
+                 * The type pool to use for locating types.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * A list of type descriptors that this list represents.
+                 */
+                private final List<String> descriptors;
+
+                protected Generic(TypePool typePool, List<String> descriptors) {
+                    this.typePool = typePool;
+                    this.descriptors = descriptors;
+                }
+
+                @Override
+                public GenericTypeDescription get(int index) {
+                    return TokenizedGenericType.toErasure(typePool, descriptors.get(index)).asGenericType();
+                }
+
+                @Override
+                public int size() {
+                    return descriptors.size();
+                }
+
+                @Override
+                public TypeList asErasures() {
+                    return new LazyTypeList(typePool, descriptors);
+                }
+
+                @Override
+                public GenericTypeList asRawTypes() {
+                    return this;
+                }
+
+                @Override
+                public int getStackSize() {
+                    int stackSize = 0;
+                    for (String descriptor : descriptors) {
+                        stackSize += Type.getType(descriptor).getSize();
+                    }
+                    return stackSize;
+                }
             }
         }
 
