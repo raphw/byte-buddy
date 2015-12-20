@@ -201,7 +201,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.<GenericTypeDescription>emptyList(),
                     GenericTypeDescription.OBJECT,
                     Collections.<ParameterDescription.Token>emptyList(),
-                    Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)),
+                    Collections.singletonList(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Exception.class)),
                     Collections.<AnnotationDescription>emptyList(),
                     MethodDescription.NO_DEFAULT_VALUE);
             nodes.put(callMethod.asToken(), new MethodGraph.Node.Simple(callMethod));

@@ -737,7 +737,7 @@ public class TypeProxy implements AuxiliaryType {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(INSTANCE_FIELD,
                     Opcodes.ACC_SYNTHETIC,
-                    TypeProxy.this.implementationTarget.getInstrumentedType()));
+                    implementationTarget.getInstrumentedType().asGenericType()));
         }
 
         @Override
