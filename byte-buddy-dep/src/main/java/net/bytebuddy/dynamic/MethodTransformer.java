@@ -5,6 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
@@ -180,7 +181,7 @@ public interface MethodTransformer {
             /**
              * The method's declaring type.
              */
-            private final GenericTypeDescription declaringType;
+            private final TypeDefinition declaringType;
 
             /**
              * The method representing the transformed method.
@@ -199,7 +200,7 @@ public interface MethodTransformer {
              * @param methodToken   The method representing the transformed method.
              * @param definedShape  The defined shape of the transformed method.
              */
-            protected TransformedMethod(GenericTypeDescription declaringType,
+            protected TransformedMethod(TypeDefinition declaringType,
                                         MethodDescription.Token methodToken,
                                         MethodDescription.InDefinedShape definedShape) {
                 this.declaringType = declaringType;
@@ -238,7 +239,7 @@ public interface MethodTransformer {
             }
 
             @Override
-            public GenericTypeDescription getDeclaringType() {
+            public TypeDefinition getDeclaringType() {
                 return declaringType;
             }
 

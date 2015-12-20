@@ -1520,10 +1520,10 @@ public interface MethodGraph {
                             public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
                                 Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 LinkedHashSet<MethodDescription> methodDescriptions = new LinkedHashSet<MethodDescription>(this.methodDescriptions.size() + 1);
-                                GenericTypeDescription declaringType = methodDescription.getDeclaringType();
+                                TypeDescription declaringType = methodDescription.getDeclaringType().asErasure();
                                 boolean bridge = methodDescription.isBridge();
                                 for (MethodDescription extendedMethod : this.methodDescriptions) {
-                                    if (extendedMethod.getDeclaringType().equals(declaringType)) {
+                                    if (extendedMethod.getDeclaringType().asErasure().equals(declaringType)) {
                                         if (extendedMethod.isBridge() ^ bridge) {
                                             methodDescriptions.add(bridge ? extendedMethod : methodDescription);
                                         } else {

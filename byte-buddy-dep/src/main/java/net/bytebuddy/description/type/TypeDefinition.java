@@ -11,7 +11,7 @@ import java.lang.reflect.Type;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
-public interface TypeDefinition extends NamedElement {
+public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
 
     GenericTypeDescription asGenericType();
 
@@ -22,6 +22,14 @@ public interface TypeDefinition extends NamedElement {
     FieldList<?> getDeclaredFields();
 
     MethodList<?> getDeclaredMethods();
+
+    /**
+     * Returns the erasure of this type. Wildcard types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD})
+     * do not have a well-defined erasure and cause an {@link IllegalStateException} to be thrown.
+     *
+     * @return The erasure of this type.
+     */
+    TypeDescription asErasure();
 
     /**
      * Returns the size of the type described by this instance. Wildcard types

@@ -20,7 +20,7 @@ import java.util.*;
  * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
  * a specialization of a generic type.
  */
-public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDefinition> {
+public interface GenericTypeDescription extends TypeDefinition {
 
     /**
      * A representation of the {@link java.lang.Object} type.
@@ -46,14 +46,6 @@ public interface GenericTypeDescription extends TypeDefinition, Iterable<TypeDef
      * @return The name of this type.
      */
     String getTypeName();
-
-    /**
-     * Returns the erasure of this type. Wildcard types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD})
-     * do not have a well-defined erasure and cause an {@link IllegalStateException} to be thrown.
-     *
-     * @return The erasure of this type.
-     */
-    TypeDescription asErasure();
 
     /**
      * <p>

@@ -1,6 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.DeclaredByType;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
@@ -27,8 +28,8 @@ public class DeclaringTypeMatcher<T extends DeclaredByType> extends ElementMatch
 
     @Override
     public boolean matches(T target) {
-        GenericTypeDescription typeDescription = target.getDeclaringType();
-        return typeDescription != null && typeMatcher.matches(typeDescription);
+        TypeDefinition declaringType = target.getDeclaringType();
+        return declaringType != null && typeMatcher.matches(declaringType.asGenericType());
     }
 
     @Override
