@@ -27,6 +27,8 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
      */
     TypeList asErasures();
 
+    GenericTypeList asRawTypes();
+
     /**
      * Transforms the generic types by applying the supplied visitor to each of them.
      *
@@ -77,6 +79,15 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
                 typeDescriptions.add(genericTypeDescription.asErasure());
             }
             return new TypeList.Explicit(typeDescriptions);
+        }
+
+        @Override
+        public GenericTypeList asRawTypes() {
+            List<GenericTypeDescription> typeDescriptions = new ArrayList<GenericTypeDescription>(size());
+            for (GenericTypeDescription genericTypeDescription : this) {
+                typeDescriptions.add(genericTypeDescription.asRawType());
+            }
+            return new Explicit(typeDescriptions);
         }
     }
 
@@ -640,6 +651,11 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         @Override
         public TypeList asErasures() {
             return new TypeList.Empty();
+        }
+
+        @Override
+        public GenericTypeList asRawTypes() {
+            return this;
         }
 
         @Override

@@ -795,7 +795,7 @@ public interface Implementation {
                 if (!fieldCacheCanAppendEntries) {
                     throw new IllegalStateException("Cached values cannot be registered after defining the type initializer for " + instrumentedType);
                 }
-                fieldCache = new CacheValueField(instrumentedType, fieldType, suffix, fieldValue.hashCode());
+                fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, fieldValue.hashCode());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
@@ -868,7 +868,7 @@ public interface Implementation {
                 /**
                  * The type of the cache's field.
                  */
-                private final TypeDescription fieldType;
+                private final GenericTypeDescription fieldType;
 
                 /**
                  * The suffix to use for the cache field's name.
@@ -888,7 +888,7 @@ public interface Implementation {
                  * @param suffix           The suffix to use for the cache field's name.
                  * @param valueHashCode    The hash value of the field's value for creating a unique field name.
                  */
-                protected CacheValueField(TypeDescription instrumentedType, TypeDescription fieldType, String suffix, int valueHashCode) {
+                protected CacheValueField(TypeDescription instrumentedType, GenericTypeDescription fieldType, String suffix, int valueHashCode) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
                     this.suffix = suffix;
@@ -1055,17 +1055,17 @@ public interface Implementation {
 
                 @Override
                 public GenericTypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asErasure();
+                    return methodDescription.getReturnType().asRawType();
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asErasures());
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override
                 public GenericTypeList getExceptionTypes() {
-                    return methodDescription.getExceptionTypes().asErasures().asGenericTypes();
+                    return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
                 @Override
@@ -1136,12 +1136,12 @@ public interface Implementation {
 
                 @Override
                 public GenericTypeDescription getReturnType() {
-                    return fieldDescription.getType().asErasure();
+                    return fieldDescription.getType().asRawType();
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Empty();
+                    return new ParameterList.Empty<ParameterDescription.InDefinedShape>();
                 }
 
                 @Override
@@ -1222,7 +1222,7 @@ public interface Implementation {
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asErasure()));
+                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
                 }
 
                 @Override
