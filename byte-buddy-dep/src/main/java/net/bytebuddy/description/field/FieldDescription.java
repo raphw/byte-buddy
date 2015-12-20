@@ -38,6 +38,12 @@ public interface FieldDescription extends ByteCodeElement,
      */
     GenericTypeDescription getType();
 
+    interface InGenericShape extends FieldDescription {
+
+        @Override
+        GenericTypeDescription getDeclaringType();
+    }
+
     /**
      * Represents a field in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */

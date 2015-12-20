@@ -40,14 +40,6 @@ public interface GenericTypeDescription extends TypeDefinition {
     Sort getSort();
 
     /**
-     * Returns the name of the type. For generic types, this name is their {@link Object#toString()} representations. For a non-generic
-     * type, it is the fully qualified binary name of the type.
-     *
-     * @return The name of this type.
-     */
-    String getTypeName();
-
-    /**
      * <p>
      * Returns the upper bounds of this type. Any type with a well-defined upper bound is bound by at least one type. If no such
      * type is defined, the bound is implicitly {@link Object}.
@@ -75,20 +67,6 @@ public interface GenericTypeDescription extends TypeDefinition {
      * @return The lower bounds of this type.
      */
     GenericTypeList getLowerBounds();
-
-    /**
-     * <p>
-     * Returns the component type of this type.
-     * </p>
-     * <p>
-     * Only non-generic types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and generic array types
-     * {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}) define a component type. For other
-     * types, an {@link IllegalStateException} is thrown.
-     * </p>
-     *
-     * @return The component type of this type or {@code null} if this type does not represent an array type.
-     */
-    GenericTypeDescription getComponentType();
 
     /**
      * <p>
@@ -141,6 +119,9 @@ public interface GenericTypeDescription extends TypeDefinition {
      * @return This type's type variable symbol.
      */
     String getSymbol();
+
+    @Override
+    GenericTypeDescription getComponentType();
 
     /**
      * Applies a visitor to this generic type description.
