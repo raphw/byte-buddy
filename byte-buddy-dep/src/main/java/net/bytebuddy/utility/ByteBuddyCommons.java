@@ -175,7 +175,7 @@ public final class ByteBuddyCommons {
      * @param <T>             The actual type of the validated instance.
      * @return The input value.
      */
-    public static <T extends GenericTypeDescription> T isExtendable(T typeDescription) {
+    public static <T extends TypeDefinition> T isExtendable(T typeDescription) {
         if (!EXTENDABLE_TYPES.contains(typeDescription.getSort())) {
             throw new IllegalArgumentException("Cannot extend generic type: " + typeDescription);
         } else if (isDefineable(typeDescription.asErasure()).isFinal()) {
@@ -191,7 +191,7 @@ public final class ByteBuddyCommons {
      * @param <T>             The actual type of the input.
      * @return The input value.
      */
-    public static <T extends GenericTypeDescription> T isImplementable(T typeDescription) {
+    public static <T extends TypeDefinition> T isImplementable(T typeDescription) {
         if (!isExtendable(typeDescription).asErasure().isInterface()) {
             throw new IllegalArgumentException("Not an interface: " + typeDescription);
         }
@@ -205,8 +205,8 @@ public final class ByteBuddyCommons {
      * @param <T>              The actual type of the input.
      * @return The input value.
      */
-    public static <T extends Collection<? extends GenericTypeDescription>> T isImplementable(T typeDescriptions) {
-        for (GenericTypeDescription typeDescription : typeDescriptions) {
+    public static <T extends Collection<? extends TypeDefinition>> T isImplementable(T typeDescriptions) {
+        for (TypeDefinition typeDescription : typeDescriptions) {
             isImplementable(typeDescription);
         }
         return typeDescriptions;
