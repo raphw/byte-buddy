@@ -102,7 +102,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().contains(methodNode), is(true));
         MethodGraph.Node baseNode = methodGraph.getSuperGraph().locate(method.asToken());
         assertThat(methodNode, not(baseNode));
-        assertThat(baseNode.getRepresentative(), is(typeDescription.getSuperType().getDeclaredMethods().filter(representedBy(method.asToken())).getOnly()));
+        assertThat(baseNode.getRepresentative(),
+                is((MethodDescription) typeDescription.getSuperType().getDeclaredMethods().filter(representedBy(method.asToken())).getOnly()));
     }
 
     @Test
@@ -160,7 +161,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getRepresentative(), is(method));
         MethodGraph.Node baseNode = methodGraph.getInterfaceGraph(new TypeDescription.ForLoadedType(InterfaceBase.class)).locate(method.asToken());
         assertThat(methodNode, not(baseNode));
-        assertThat(baseNode.getRepresentative(), is(typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly()));
+        assertThat(baseNode.getRepresentative(),
+                is((MethodDescription) typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly()));
     }
 
     @Test
@@ -898,8 +900,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodNode.getMethodTypes().size(), is(2));
         assertThat(methodNode.getMethodTypes().contains(genericMethod.asTypeToken()), is(true));
         assertThat(methodNode.getMethodTypes().contains(genericMethod.asDefined().asTypeToken()), is(true));
-        assertThat(methodNode.getRepresentative(), is(typeDescription.getSuperType().getDeclaredMethods()
-                .filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly()));
+        assertThat(methodNode.getRepresentative(),
+                is((MethodDescription) typeDescription.getSuperType().getDeclaredMethods().filter(isMethod().and(ElementMatchers.not(isBridge()))).getOnly()));
     }
 
     @Test

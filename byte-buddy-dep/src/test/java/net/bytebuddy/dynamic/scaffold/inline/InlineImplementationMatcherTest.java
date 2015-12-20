@@ -38,8 +38,10 @@ public class InlineImplementationMatcherTest {
     public void setUp() throws Exception {
         latentMethodMatcher = new InliningImplementationMatcher(ignoredMethods, predefinedMethods);
         when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(typeDescription.asGenericType()).thenReturn(typeDescription);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(otherType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(otherType.asGenericType()).thenReturn(otherType);
         when(otherType.asErasure()).thenReturn(otherType);
     }
 

@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
@@ -101,7 +102,7 @@ public class MethodTransformerSimpleTest {
     public void testSimpleTransformation() throws Exception {
         when(transformer.transform(methodToken)).thenReturn(methodToken);
         MethodDescription transformed = new MethodTransformer.Simple(transformer).transform(instrumentedType, methodDescription);
-        assertThat(transformed.getDeclaringType(), is(declaringType));
+        assertThat(transformed.getDeclaringType(), is((TypeDefinition) declaringType));
         assertThat(transformed.getInternalName(), is(FOO));
         assertThat(transformed.getModifiers(), is(MODIFIERS));
         assertThat(transformed.getReturnType(), is(returnType));

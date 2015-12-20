@@ -3,6 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -19,11 +20,16 @@ public class DeclaringTypeMatcherTest extends AbstractElementMatcherTest<Declari
     private DeclaredByType declaredByType;
 
     @Mock
-    private TypeDescription typeDescription;
+    private GenericTypeDescription typeDescription;
 
     @SuppressWarnings("unchecked")
     public DeclaringTypeMatcherTest() {
         super((Class<DeclaringTypeMatcher<?>>) (Object) DeclaringTypeMatcher.class, "declaredBy");
+    }
+
+    @Before
+    public void setUp() throws Exception {
+        when(typeDescription.asGenericType()).thenReturn(typeDescription);
     }
 
     @Test
