@@ -82,7 +82,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     @Override
-    public TypeDescription getOriginType() {
+    public GenericTypeDescription getOriginType() {
         return originTypeResolver.identify(instrumentedType);
     }
 
@@ -123,8 +123,8 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          */
         SUPER_TYPE {
             @Override
-            protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription.getSuperType().asErasure();
+            protected GenericTypeDescription identify(TypeDescription typeDescription) {
+                return typeDescription.getSuperType();
             }
         },
 
@@ -133,8 +133,8 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          */
         LEVEL_TYPE {
             @Override
-            protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription;
+            protected GenericTypeDescription identify(TypeDescription typeDescription) {
+                return typeDescription.asGenericType();
             }
         };
 
@@ -144,7 +144,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          * @param typeDescription The type description for which an origin type should be identified.
          * @return The origin type to the given type description.
          */
-        protected abstract TypeDescription identify(TypeDescription typeDescription);
+        protected abstract GenericTypeDescription identify(TypeDescription typeDescription);
 
         @Override
         public String toString() {
