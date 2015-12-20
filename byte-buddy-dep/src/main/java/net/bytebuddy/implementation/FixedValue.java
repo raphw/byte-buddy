@@ -3,6 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -234,9 +235,9 @@ public abstract class FixedValue implements Implementation {
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                           Context implementationContext,
                                           MethodDescription instrumentedMethod,
-                                          TypeDescription fixedValueType,
+                                          GenericTypeDescription fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
-        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType().asErasure(), typing);
+        StackManipulation assignment = assigner.assign(fixedValueType.asErasure(), instrumentedMethod.getReturnType().asErasure(), typing);
         if (!assignment.isValid()) {
             throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
         }
@@ -326,7 +327,7 @@ public abstract class FixedValue implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            return apply(methodVisitor, implementationContext, instrumentedMethod, loadedType, valueLoadInstruction);
+            return apply(methodVisitor, implementationContext, instrumentedMethod, loadedType.asGenericType(), valueLoadInstruction);
         }
 
         @Override
@@ -379,7 +380,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * The type if the field for storing the fixed value.
          */
-        private final TypeDescription fieldType;
+        private final GenericTypeDescription fieldType;
 
         /**
          * Creates a new static field fixed value implementation with a random name for the field containing the fixed
@@ -407,7 +408,7 @@ public abstract class FixedValue implements Implementation {
             super(assigner, typing);
             this.fieldName = fieldName;
             this.fixedValue = fixedValue;
-            fieldType = new TypeDescription.ForLoadedType(fixedValue.getClass());
+            fieldType = new GenericTypeDescription.ForNonGenericType.OfLoadedType(fixedValue.getClass());
         }
 
         @Override

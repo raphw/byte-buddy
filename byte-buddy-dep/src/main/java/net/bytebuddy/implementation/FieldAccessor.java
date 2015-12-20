@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -17,6 +18,8 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
+
+import java.lang.reflect.Type;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static net.bytebuddy.utility.ByteBuddyCommons.*;
@@ -526,16 +529,16 @@ public abstract class FieldAccessor implements Implementation {
          * @param modifier The modifiers for the field.
          * @return A field accessor that defines a field of the given type.
          */
-        AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier);
+        AssignerConfigurable defineAs(Type type, ModifierContributor.ForField... modifier);
 
         /**
          * Defines a field with the given name in the instrumented type.
          *
-         * @param typeDescription The type of the field.
-         * @param modifier        The modifiers for the field.
+         * @param typeDefinition The type of the field.
+         * @param modifier       The modifiers for the field.
          * @return A field accessor that defines a field of the given type.
          */
-        AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier);
+        AssignerConfigurable defineAs(TypeDefinition typeDefinition, ModifierContributor.ForField... modifier);
     }
 
     /**
@@ -700,16 +703,16 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         @Override
-        public AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier) {
-            return defineAs(new TypeDescription.ForLoadedType(nonNull(type)), modifier);
+        public AssignerConfigurable defineAs(Type type, ModifierContributor.ForField... modifier) {
+            return defineAs(TypeDefinition.Sort.describe(type), modifier);
         }
 
         @Override
-        public AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier) {
+        public AssignerConfigurable defineAs(TypeDefinition typeDefinition, ModifierContributor.ForField... modifier) {
             return new ForNamedField(assigner,
                     typing,
                     fieldName,
-                    PreparationHandler.FieldDefiner.of(fieldName, isActualType(typeDescription), nonNull(modifier)),
+                    PreparationHandler.FieldDefiner.of(fieldName, isActualType(typeDefinition).asGenericType(), nonNull(modifier)),
                     FieldLocator.ForInstrumentedType.INSTANCE);
         }
 
@@ -836,7 +839,7 @@ public abstract class FieldAccessor implements Implementation {
                 /**
                  * The type of the field that is to be defined.
                  */
-                private final TypeDescription typeDescription;
+                private final GenericTypeDescription typeDescription;
 
                 /**
                  * The modifier of the field that is to be defined.
@@ -850,7 +853,7 @@ public abstract class FieldAccessor implements Implementation {
                  * @param typeDescription The type of the field that is to be defined.
                  * @param modifiers       The modifiers of the field that is to be defined.
                  */
-                protected FieldDefiner(String name, TypeDescription typeDescription, int modifiers) {
+                protected FieldDefiner(String name, GenericTypeDescription typeDescription, int modifiers) {
                     this.name = name;
                     this.typeDescription = typeDescription;
                     this.modifiers = modifiers;
@@ -864,7 +867,7 @@ public abstract class FieldAccessor implements Implementation {
                  * @param contributor     The modifiers of the field that is to be defined.
                  * @return A corresponding preparation handler.
                  */
-                public static PreparationHandler of(String name, TypeDescription typeDescription, ModifierContributor.ForField... contributor) {
+                public static PreparationHandler of(String name, GenericTypeDescription typeDescription, ModifierContributor.ForField... contributor) {
                     return new FieldDefiner(name, typeDescription, resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor));
                 }
 
