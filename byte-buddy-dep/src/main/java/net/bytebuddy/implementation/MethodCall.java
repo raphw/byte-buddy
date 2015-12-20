@@ -25,6 +25,7 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -404,22 +405,22 @@ public class MethodCall implements Implementation.Composable {
      * @param name The name of the field.
      * @return A method call which assigns the next parameter to the value of the instance field.
      */
-    public MethodCall withInstanceField(Class<?> type, String name) {
-        return withInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), name);
+    public MethodCall withInstanceField(Type type, String name) {
+        return withInstanceField(TypeDefinition.Sort.describe(type), name);
     }
 
     /**
      * Defines a method call which fetches a value from an instance field. The value of the field needs to be
      * defined manually and is initialized with {@code null}. The field itself is defined by this implementation.
      *
-     * @param typeDescription The type of the field.
-     * @param name            The name of the field.
+     * @param typeDefinition The type of the field.
+     * @param name           The name of the field.
      * @return A method call which assigns the next parameter to the value of the instance field.
      */
-    public MethodCall withInstanceField(TypeDescription typeDescription, String name) {
+    public MethodCall withInstanceField(TypeDefinition typeDefinition, String name) {
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(argumentLoaders, new ArgumentLoader.ForInstanceField(nonNull(typeDescription), nonNull(name))),
+                join(argumentLoaders, new ArgumentLoader.ForInstanceField(typeDefinition.asGenericType(), nonNull(name))),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -770,7 +771,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The type of the field.
              */
-            private final TypeDescription fieldType;
+            private final GenericTypeDescription fieldType;
 
             /**
              * Creates a new target handler for storing a method invocation target in an
@@ -779,7 +780,7 @@ public class MethodCall implements Implementation.Composable {
              * @param fieldName The name of the field.
              * @param fieldType The type of the field.
              */
-            public ForInstanceField(String fieldName, TypeDescription fieldType) {
+            public ForInstanceField(String fieldName, GenericTypeDescription fieldType) {
                 this.fieldName = fieldName;
                 this.fieldType = fieldType;
             }
@@ -1147,7 +1148,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The type of the field.
              */
-            private final TypeDescription fieldType;
+            private final GenericTypeDescription fieldType;
 
             /**
              * The name of the field.
@@ -1160,7 +1161,7 @@ public class MethodCall implements Implementation.Composable {
              * @param fieldType The name of the field.
              * @param fieldName The type of the field.
              */
-            public ForInstanceField(TypeDescription fieldType, String fieldName) {
+            public ForInstanceField(GenericTypeDescription fieldType, String fieldName) {
                 this.fieldType = fieldType;
                 this.fieldName = fieldName;
             }
@@ -1177,7 +1178,7 @@ public class MethodCall implements Implementation.Composable {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
-                        assigner.assign(fieldType, targetType, typing));
+                        assigner.assign(fieldType.asErasure(), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign field " + fieldName + " of type " + fieldType + " to " + targetType);
                 }
@@ -2032,14 +2033,14 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The type description to virtually invoke the method upon.
              */
-            private final TypeDescription typeDescription;
+            private final GenericTypeDescription typeDescription;
 
             /**
              * Creates a new method invoking for a virtual method invocation.
              *
              * @param typeDescription The type description to virtually invoke the method upon.
              */
-            protected ForVirtualInvocation(TypeDescription typeDescription) {
+            protected ForVirtualInvocation(GenericTypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
             }
 
@@ -2047,12 +2048,12 @@ public class MethodCall implements Implementation.Composable {
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
                 if (!methodDescription.isVirtual()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " virtually");
-                } else if (!methodDescription.isInvokableOn(typeDescription)) {
+                } else if (!methodDescription.isInvokableOn(typeDescription.asErasure())) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + typeDescription);
-                } else if (!typeDescription.isVisibleTo(implementationTarget.getInstrumentedType())) {
+                } else if (!typeDescription.asErasure().isVisibleTo(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException(typeDescription + " is not visible to " + implementationTarget.getInstrumentedType());
                 }
-                return MethodInvocation.invoke(methodDescription).virtual(typeDescription);
+                return MethodInvocation.invoke(methodDescription).virtual(typeDescription.asErasure());
             }
 
             @Override
@@ -2242,7 +2243,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForStaticField(nonNull(target)),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(new TypeDescription.ForLoadedType(target.getClass())),
+                    new MethodInvoker.ForVirtualInvocation(new GenericTypeDescription.ForNonGenericType.OfLoadedType(target.getClass())),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
@@ -2256,8 +2257,8 @@ public class MethodCall implements Implementation.Composable {
          * @param fieldName The name of the field.
          * @return A method call that invokes the given method on an instance that is read from an instance field.
          */
-        public MethodCall onInstanceField(Class<?> type, String fieldName) {
-            return onInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), nonNull(fieldName));
+        public MethodCall onInstanceField(Type type, String fieldName) {
+            return onInstanceField(TypeDefinition.Sort.describe(type), nonNull(fieldName));
         }
 
         /**
@@ -2268,7 +2269,7 @@ public class MethodCall implements Implementation.Composable {
          * @param fieldName       The name of the field.
          * @return A method call that invokes the given method on an instance that is read from an instance field.
          */
-        public MethodCall onInstanceField(TypeDescription typeDescription, String fieldName) {
+        public MethodCall onInstanceField(GenericTypeDescription typeDescription, String fieldName) {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForInstanceField(nonNull(fieldName), isActualType(typeDescription)),
                     argumentLoaders,
