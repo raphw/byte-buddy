@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
  * This type is used as a place holder for creating methods or fields that refer to the type that currently subject
@@ -12,6 +13,8 @@ public final class TargetType {
      * A description representation of the {@link net.bytebuddy.dynamic.TargetType}.
      */
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
+
+    public static final GenericTypeDescription GENERIC_DESCRIPTION = new GenericTypeDescription.ForNonGenericType.OfLoadedType(TargetType.class);
 
     /**
      * An unusable constructor to avoid instance creation.

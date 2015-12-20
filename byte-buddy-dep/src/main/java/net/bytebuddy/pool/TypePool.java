@@ -3398,18 +3398,8 @@ public interface TypePool {
                 }
 
                 @Override
-                protected GenericTypeDescription getDeclaredSuperType() {
-                    throw new IllegalStateException("Cannot resolve declared super type for lazy facade: " + this);
-                }
-
-                @Override
                 public GenericTypeList getInterfaces() {
                     return resolve().getInterfaces();
-                }
-
-                @Override
-                protected GenericTypeList getDeclaredInterfaces() {
-                    throw new IllegalStateException("Cannot resolve declared interfaces for lazy facade: " + this);
                 }
 
                 @Override
@@ -3617,14 +3607,14 @@ public interface TypePool {
         }
 
         @Override
-        protected GenericTypeDescription getDeclaredSuperType() {
+        public GenericTypeDescription getSuperType() {
             return superTypeDescriptor == null || isInterface()
-                    ? TypeDescription.UNDEFINED
+                    ? GenericTypeDescription.UNDEFINED
                     : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, this);
         }
 
         @Override
-        protected GenericTypeList getDeclaredInterfaces() {
+        public GenericTypeList getInterfaces() {
             return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, this);
         }
 
@@ -3951,7 +3941,7 @@ public interface TypePool {
              *
              * @return The sort of the generic type this token represents.
              */
-            Sort getSort();
+            GenericTypeDescription.Sort getSort();
 
             /**
              * Transforms this token into a generic type reprsentation.
@@ -4058,8 +4048,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Sort getSort() {
-                    return Sort.NON_GENERIC;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.NON_GENERIC;
                 }
 
                 @Override
@@ -4084,8 +4074,8 @@ public interface TypePool {
                 INSTANCE;
 
                 @Override
-                public Sort getSort() {
-                    return Sort.WILDCARD;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.WILDCARD;
                 }
 
                 @Override
@@ -4536,8 +4526,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Sort getSort() {
-                    return Sort.NON_GENERIC;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.NON_GENERIC;
                 }
 
                 @Override
@@ -4583,8 +4573,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Sort getSort() {
-                    return Sort.VARIABLE;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.VARIABLE;
                 }
 
                 @Override
@@ -4641,8 +4631,8 @@ public interface TypePool {
                     }
 
                     @Override
-                    public Sort getSort() {
-                        return Sort.VARIABLE;
+                    public GenericTypeDescription.Sort getSort() {
+                        return GenericTypeDescription.Sort.VARIABLE;
                     }
 
                     @Override
@@ -4738,8 +4728,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Sort getSort() {
-                    return Sort.GENERIC_ARRAY;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.GENERIC_ARRAY;
                 }
 
                 @Override
@@ -4786,8 +4776,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Sort getSort() {
-                    return Sort.WILDCARD;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.WILDCARD;
                 }
 
                 @Override
@@ -4834,8 +4824,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Sort getSort() {
-                    return Sort.WILDCARD;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.WILDCARD;
                 }
 
                 @Override
@@ -4889,8 +4879,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Sort getSort() {
-                    return Sort.PARAMETERIZED;
+                public GenericTypeDescription.Sort getSort() {
+                    return GenericTypeDescription.Sort.PARAMETERIZED;
                 }
 
                 @Override
@@ -4952,8 +4942,8 @@ public interface TypePool {
                     }
 
                     @Override
-                    public Sort getSort() {
-                        return Sort.PARAMETERIZED;
+                    public GenericTypeDescription.Sort getSort() {
+                        return GenericTypeDescription.Sort.PARAMETERIZED;
                     }
 
                     @Override

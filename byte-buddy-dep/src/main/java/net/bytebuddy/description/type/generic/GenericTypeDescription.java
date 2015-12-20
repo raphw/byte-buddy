@@ -32,12 +32,16 @@ public interface GenericTypeDescription extends TypeDefinition {
      */
     GenericTypeDescription VOID = new ForNonGenericType.OfLoadedType(void.class);
 
+    GenericTypeDescription UNDEFINED = null;
+
     /**
      * Returns the sort of the generic type this instance represents.
      *
      * @return The sort of the generic type.
      */
     Sort getSort();
+
+    GenericTypeDescription asRawType();
 
     /**
      * <p>
@@ -435,7 +439,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                 List<GenericTypeDescription> parameters = new ArrayList<GenericTypeDescription>(parameterizedType.getParameters().size());
                 for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
                     if (parameter.accept(PartialErasureReviser.INSTANCE)) {
-                        return parameterizedType.asErasure();
+                        return parameterizedType.asRawType();
                     }
                     parameters.add(parameter.accept(this));
                 }
@@ -443,13 +447,13 @@ public interface GenericTypeDescription extends TypeDefinition {
                 return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure(),
                         parameters,
                         ownerType == null
-                                ? TypeDescription.UNDEFINED
+                                ? UNDEFINED
                                 : ownerType.accept(this));
             }
 
             @Override
             public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
-                return typeVariable.asErasure();
+                return typeVariable.asRawType();
             }
 
             @Override
@@ -678,10 +682,10 @@ public interface GenericTypeDescription extends TypeDefinition {
                 for (GenericTypeDescription parameter : parameterizedType.getParameters()) {
                     parameters.add(parameter.accept(this));
                 }
-                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure().accept(this).asErasure(),
+                return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
                         parameters,
                         ownerType == null
-                                ? TypeDescription.UNDEFINED
+                                ? UNDEFINED
                                 : ownerType.accept(this));
             }
 
@@ -725,7 +729,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                 /**
                  * The declaring type which is filled in for {@link TargetType}.
                  */
-                private final TypeDescription declaringType;
+                private final GenericTypeDescription declaringType;
 
                 /**
                  * The source which is used for locating type variables.
@@ -738,7 +742,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                  * @param declaringType      The declaring type which is filled in for {@link TargetType}.
                  * @param typeVariableSource The source which is used for locating type variables.
                  */
-                protected ForAttachment(TypeDescription declaringType, TypeVariableSource typeVariableSource) {
+                protected ForAttachment(GenericTypeDescription declaringType, TypeVariableSource typeVariableSource) {
                     this.declaringType = declaringType;
                     this.typeVariableSource = typeVariableSource;
                 }
@@ -750,7 +754,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                  * @return A substitutor that attaches visited types to the given field's type context.
                  */
                 public static ForAttachment of(FieldDescription fieldDescription) {
-                    return new ForAttachment(fieldDescription.getDeclaringType().asErasure(), fieldDescription.getDeclaringType().asErasure());
+                    return new ForAttachment(fieldDescription.getDeclaringType().asGenericType(), fieldDescription.getDeclaringType().asErasure());
                 }
 
                 /**
@@ -760,7 +764,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                  * @return A substitutor that attaches visited types to the given method's type context.
                  */
                 public static ForAttachment of(MethodDescription methodDescription) {
-                    return new ForAttachment(methodDescription.getDeclaringType().asErasure(), methodDescription);
+                    return new ForAttachment(methodDescription.getDeclaringType().asGenericType(), methodDescription);
                 }
 
                 /**
@@ -770,7 +774,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                  * @return A substitutor that attaches visited types to the given parameter's type context.
                  */
                 public static ForAttachment of(ParameterDescription parameterDescription) {
-                    return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asErasure(), parameterDescription.getDeclaringMethod());
+                    return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asGenericType(), parameterDescription.getDeclaringMethod());
                 }
 
                 /**
@@ -780,14 +784,14 @@ public interface GenericTypeDescription extends TypeDefinition {
                  * @return A substitutor that attaches visited types to the given type's type context.
                  */
                 public static ForAttachment of(TypeDescription typeDescription) {
-                    return new ForAttachment(typeDescription, typeDescription);
+                    return new ForAttachment(typeDescription.asGenericType(), typeDescription);
                 }
 
                 @Override
                 public GenericTypeDescription onTypeVariable(GenericTypeDescription genericTypeDescription) {
                     GenericTypeDescription typeVariable = typeVariableSource.findVariable(genericTypeDescription.getSymbol());
                     return typeVariable == null
-                            ? genericTypeDescription.asErasure()
+                            ? genericTypeDescription.asRawType()
                             : typeVariable;
                 }
 
@@ -861,7 +865,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                 @Override
                 protected GenericTypeDescription onSimpleType(GenericTypeDescription typeDescription) {
                     return typeMatcher.matches(typeDescription.asErasure())
-                            ? TargetType.DESCRIPTION
+                            ? TargetType.GENERIC_DESCRIPTION
                             : typeDescription;
                 }
 
@@ -974,7 +978,7 @@ public interface GenericTypeDescription extends TypeDefinition {
                 public GenericTypeDescription onTypeVariable(GenericTypeDescription typeVariable) {
                     GenericTypeDescription substitution = bindings.get(typeVariable);
                     return substitution == null
-                            ? typeVariable.asErasure() // Fallback: Never happens for well-defined generic types.
+                            ? typeVariable.asRawType() // Fallback: Never happens for well-defined generic types.
                             : substitution;
                 }
 
@@ -1019,6 +1023,11 @@ public interface GenericTypeDescription extends TypeDefinition {
         }
 
         @Override
+        public GenericTypeDescription asRawType() {
+            return asErasure().asGenericType();
+        }
+
+        @Override
         public boolean represents(Type type) {
             return equals(Sort.describe(type));
         }
@@ -1040,7 +1049,7 @@ public interface GenericTypeDescription extends TypeDefinition {
         public GenericTypeDescription getSuperType() {
             GenericTypeDescription superType = asErasure().getSuperType();
             return superType == null
-                    ? TypeDescription.UNDEFINED
+                    ? UNDEFINED
                     : superType.accept(Visitor.TypeVariableErasing.INSTANCE);
         }
 
@@ -1061,9 +1070,9 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public GenericTypeDescription getOwnerType() {
-            TypeDescription ownerType = asErasure().getOwnerType();
+            TypeDescription ownerType = asErasure().getDeclaringType();
             return ownerType == null
-                    ? TypeDescription.UNDEFINED
+                    ? UNDEFINED
                     : new ForNonGenericType.Latent(ownerType);
         }
 
@@ -1074,7 +1083,7 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public GenericTypeList getParameters() {
-            return asErasure().getParameters();
+            throw new IllegalStateException(); //TODO: Message
         }
 
         @Override
@@ -1089,30 +1098,30 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public GenericTypeList getUpperBounds() {
-            return asErasure().getUpperBounds();
+            throw new IllegalStateException(); //TODO: Message
         }
 
         @Override
         public GenericTypeList getLowerBounds() {
-            return asErasure().getLowerBounds();
+            throw new IllegalStateException(); //TODO: Message
         }
 
         @Override
         public GenericTypeDescription getComponentType() {
             TypeDescription componentType = asErasure().getComponentType();
             return componentType == null
-                    ? TypeDescription.UNDEFINED
+                    ? UNDEFINED
                     : new ForNonGenericType.Latent(componentType);
         }
 
         @Override
         public TypeVariableSource getVariableSource() {
-            return asErasure().getVariableSource();
+            throw new IllegalStateException(); //TODO: Message
         }
 
         @Override
         public String getSymbol() {
-            return asErasure().getSymbol();
+            throw new IllegalStateException(); //TODO: Message
         }
 
         @Override
@@ -1272,7 +1281,7 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public GenericTypeDescription getOwnerType() {
-            return TypeDescription.UNDEFINED;
+            return UNDEFINED;
         }
 
         @Override
@@ -1679,7 +1688,7 @@ public interface GenericTypeDescription extends TypeDefinition {
         public GenericTypeDescription getSuperType() {
             GenericTypeDescription superType = asErasure().getSuperType();
             return superType == null
-                    ? TypeDescription.UNDEFINED
+                    ? UNDEFINED
                     : superType.accept(Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
@@ -1843,7 +1852,7 @@ public interface GenericTypeDescription extends TypeDefinition {
             public GenericTypeDescription getOwnerType() {
                 Type ownerType = parameterizedType.getOwnerType();
                 return ownerType == null
-                        ? TypeDescription.UNDEFINED
+                        ? UNDEFINED
                         : Sort.describe(ownerType);
             }
 
@@ -2247,7 +2256,7 @@ public interface GenericTypeDescription extends TypeDefinition {
             protected GenericTypeDescription resolve() {
                 Type superClass = type.getGenericSuperclass();
                 return superClass == null
-                        ? TypeDescription.UNDEFINED
+                        ? UNDEFINED
                         : Sort.describe(superClass);
             }
 
