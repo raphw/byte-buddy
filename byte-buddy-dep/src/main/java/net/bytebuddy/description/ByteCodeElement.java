@@ -83,7 +83,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          * @param targetTypeMatcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions.
          * @return A token representative of this type dependant.
          */
-        S asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
+        S asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
     }
 
     /**

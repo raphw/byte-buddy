@@ -238,6 +238,10 @@ public final class ElementMatchers {
         return is(GenericTypeDescription.Sort.describe(nonNull(type)));
     }
 
+    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
+        return is(GenericTypeDescription.Sort.describe(nonNull(type)));
+    }
+
     /**
      * Exactly matches a given annotation as an {@link AnnotationDescription}.
      *
@@ -545,7 +549,7 @@ public final class ElementMatchers {
     public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(
             Iterable<? extends TypeDescription> typeDescriptions) {
         List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
-        for (GenericTypeDescription typeDescription : typeDescriptions) {
+        for (TypeDescription typeDescription : typeDescriptions) {
             typeMatchers.add(is(nonNull(typeDescription)));
         }
         return rawTypes(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
@@ -1232,7 +1236,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that exactly matches the provided exception.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(TypeDescription exceptionType) {
-        return !exceptionType.getSort().isWildcard() && exceptionType.asErasure().isAssignableTo(Throwable.class)
+        return !exceptionType.isAssignableTo(Throwable.class)
                 ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<GenericTypeDescription>(rawType(exceptionType)))
                 : new BooleanMatcher<T>(false);
     }
@@ -1681,7 +1685,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher matching the provided field type.
      */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(ElementMatcher<? super TypeDescription> matcher) {
         return genericFieldType(rawType(nonNull(matcher)));
     }
 

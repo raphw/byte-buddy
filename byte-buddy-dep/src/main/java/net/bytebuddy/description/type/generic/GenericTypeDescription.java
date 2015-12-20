@@ -127,9 +127,9 @@ public interface GenericTypeDescription extends TypeDefinition {
     @Override
     GenericTypeDescription getComponentType();
 
-    FieldList<? extends FieldDescription.InGenericShape> getDeclaredFields();
+    FieldList<FieldDescription.InGenericShape> getDeclaredFields();
 
-    MethodList<? extends MethodDescription.InGenericShape> getDeclaredMethods();
+    MethodList<MethodDescription.InGenericShape> getDeclaredMethods();
 
     /**
      * Applies a visitor to this generic type description.
@@ -1059,12 +1059,12 @@ public interface GenericTypeDescription extends TypeDefinition {
         }
 
         @Override
-        public FieldList<? extends FieldDescription.InGenericShape> getDeclaredFields() {
+        public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
             return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.TypeVariableErasing.INSTANCE);
         }
 
         @Override
-        public MethodList<? extends MethodDescription.InGenericShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
             return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.TypeVariableErasing.INSTANCE);
         }
 
@@ -1250,13 +1250,13 @@ public interface GenericTypeDescription extends TypeDefinition {
         }
 
         @Override
-        public FieldList<? extends FieldDescription.InGenericShape> getDeclaredFields() {
-            return new FieldList.Empty();
+        public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
+            return new FieldList.Empty<FieldDescription.InGenericShape>();
         }
 
         @Override
-        public MethodList<? extends MethodDescription.InGenericShape> getDeclaredMethods() {
-            return new MethodList.Empty();
+        public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
+            return new MethodList.Empty<MethodDescription.InGenericShape>();
         }
 
         @Override
@@ -1466,12 +1466,12 @@ public interface GenericTypeDescription extends TypeDefinition {
         }
 
         @Override
-        public FieldList<? extends FieldDescription.InGenericShape> getDeclaredFields() {
+        public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
             throw new IllegalStateException("A wildcard does not imply field definitions: " + this);
         }
 
         @Override
-        public MethodList<? extends MethodDescription.InGenericShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
             throw new IllegalStateException("A wildcard does not imply method definitions: " + this);
         }
 
@@ -1698,12 +1698,12 @@ public interface GenericTypeDescription extends TypeDefinition {
         }
 
         @Override
-        public FieldList<? extends FieldDescription.InGenericShape> getDeclaredFields() {
+        public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
             return new FieldList.TypeSubstituting(this, asErasure().getDeclaredFields(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
         @Override
-        public MethodList<? extends MethodDescription.InGenericShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
             return new MethodList.TypeSubstituting(this, asErasure().getDeclaredMethods(), Visitor.Substitutor.ForTypeVariableBinding.bind(this));
         }
 
@@ -1941,12 +1941,12 @@ public interface GenericTypeDescription extends TypeDefinition {
         }
 
         @Override
-        public FieldList<? extends FieldDescription.InGenericShape> getDeclaredFields() {
+        public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
             throw new IllegalStateException("A type variable does not imply field definitions: " + this);
         }
 
         @Override
-        public MethodList<? extends MethodDescription.InGenericShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
             throw new IllegalStateException("A type variable does not imply method definitions: " + this);
         }
 
@@ -2134,12 +2134,12 @@ public interface GenericTypeDescription extends TypeDefinition {
         }
 
         @Override
-        public FieldList<? extends FieldDescription.InGenericShape> getDeclaredFields() {
+        public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
             return resolve().getDeclaredFields();
         }
 
         @Override
-        public MethodList<? extends MethodDescription.InGenericShape> getDeclaredMethods() {
+        public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
             return resolve().getDeclaredMethods();
         }
 

@@ -247,11 +247,10 @@ public interface MethodDescription extends TypeVariableSource,
         ParameterList<? extends ParameterDescription.InGenericShape> getParameters();
     }
 
-    // TODO: Remove extends InGenericShape
     /**
      * Represents a method in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */
-    interface InDefinedShape extends MethodDescription, ByteCodeElement.Accessible, InGenericShape {
+    interface InDefinedShape extends MethodDescription, ByteCodeElement.Accessible {
 
         @Override
         TypeDescription getDeclaringType();
@@ -573,7 +572,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Token asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
+        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             GenericTypeDescription.Visitor<GenericTypeDescription> visitor = new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher);
             return new Token(getInternalName(),
                     getModifiers(),
@@ -1074,7 +1073,7 @@ public interface MethodDescription extends TypeVariableSource,
 
             @Override
             public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                return new ParameterList.Empty();
+                return new ParameterList.Empty<ParameterDescription.InDefinedShape>();
             }
 
             @Override
@@ -1226,7 +1225,7 @@ public interface MethodDescription extends TypeVariableSource,
                 return new GenericTypeDescription.ForParameterizedType.Latent(parameterizedType.asErasure(),
                         parameters,
                         ownerType == null
-                                ? TypeDescription.UNDEFINED
+                                ? GenericTypeDescription.UNDEFINED
                                 : ownerType.accept(this));
             }
 

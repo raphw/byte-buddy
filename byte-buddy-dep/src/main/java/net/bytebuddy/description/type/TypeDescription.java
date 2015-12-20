@@ -1017,12 +1017,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-            return new FieldList.Empty();
+            return new FieldList.Empty<FieldDescription.InDefinedShape>();
         }
 
         @Override
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-            return new MethodList.Empty();
+            return new MethodList.Empty<MethodDescription.InDefinedShape>();
         }
 
         @Override
@@ -1265,12 +1265,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-            return new FieldList.Empty();
+            return new FieldList.Empty<FieldDescription.InDefinedShape>();
         }
 
         @Override
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-            return new MethodList.Empty();
+            return new MethodList.Empty<MethodDescription.InDefinedShape>();
         }
 
         @Override

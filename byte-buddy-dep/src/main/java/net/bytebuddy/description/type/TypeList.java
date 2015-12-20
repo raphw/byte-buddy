@@ -37,22 +37,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     int getStackSize();
 
     /**
-     * Represents this list of types into a list of generic types. Invoking this method does not transform types, i.e.
-     * no generic information is attached.
-     *
-     * @return This list of types represented as generic types.
-     */
-    GenericTypeList asGenericTypes();
-
-    /**
-     * Transforms the types of this list by applying the supplied visitor.
-     *
-     * @param visitor The visitor to apply to each type.
-     * @return This type list with all types transformed by the supplied visitor.
-     */
-    GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
-
-    /**
      * An abstract base implementation of a type list.
      */
     abstract class AbstractBase extends FilterableList.AbstractBase<TypeDescription, TypeList> implements TypeList {
@@ -60,15 +44,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         @Override
         protected TypeList wrap(List<TypeDescription> values) {
             return new Explicit(values);
-        }
-
-        @Override
-        public GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-            List<GenericTypeDescription> visited = new ArrayList<GenericTypeDescription>(size());
-            for (TypeDescription typeDescription : this) {
-                visited.add(typeDescription.accept(visitor));
-            }
-            return new GenericTypeList.Explicit(visited);
         }
     }
 
@@ -126,11 +101,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         public int getStackSize() {
             return StackSize.sizeOf(types);
         }
-
-        @Override
-        public GenericTypeList asGenericTypes() {
-            return new GenericTypeList.ForLoadedTypes(types);
-        }
     }
 
     /**
@@ -182,11 +152,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
             return stackSize;
         }
-
-        @Override
-        public GenericTypeList asGenericTypes() {
-            return new GenericTypeList.Explicit(typeDescriptions);
-        }
     }
 
     /**
@@ -203,16 +168,6 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         @Override
         public int getStackSize() {
             return 0;
-        }
-
-        @Override
-        public GenericTypeList asGenericTypes() {
-            return new GenericTypeList.Empty();
-        }
-
-        @Override
-        public GenericTypeList accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
-            return new GenericTypeList.Empty();
         }
     }
 }

@@ -35,7 +35,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
      * @param targetTypeMatcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
 
     /**
      * Returns this list of these field descriptions resolved to their defined shape.
@@ -57,7 +57,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             List<FieldDescription.Token> tokens = new ArrayList<FieldDescription.Token>(size());
             for (FieldDescription fieldDescription : this) {
                 tokens.add(fieldDescription.asToken(targetTypeMatcher));
@@ -237,8 +237,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     /**
      * An implementation of an empty field list.
      */
-    class Empty extends FilterableList.Empty<FieldDescription.InDefinedShape, FieldList<FieldDescription.InDefinedShape>>
-            implements FieldList<FieldDescription.InDefinedShape> {
+    class Empty<S extends FieldDescription> extends FilterableList.Empty<S, FieldList<S>> implements FieldList<S> {
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
@@ -246,13 +245,14 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.<FieldDescription.Token>emptyList());
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public FieldList<FieldDescription.InDefinedShape> asDefined() {
-            return this;
+            return (FieldList<FieldDescription.InDefinedShape>) this;
         }
     }
 }

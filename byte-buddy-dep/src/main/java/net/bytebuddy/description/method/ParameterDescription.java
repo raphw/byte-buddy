@@ -87,11 +87,10 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         MethodDescription.InGenericShape getDeclaringMethod();
     }
 
-    // TODO: Remove extends InGenericShape
     /**
      * Represents a parameter in its defined shape, i.e. in the form it is defined by a class without its type variables being resolved.
      */
-    interface InDefinedShape extends ParameterDescription, InGenericShape {
+    interface InDefinedShape extends ParameterDescription {
 
         @Override
         MethodDescription.InDefinedShape getDeclaringMethod();
@@ -153,7 +152,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public Token asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
+        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new Token(getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
                     getDeclaredAnnotations(),
                     isNamed()
@@ -332,7 +331,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             List<Annotation> getDeclaredAnnotations(Object parameter);
 
             /**
-             * Returns the given parameter's declaring exectuable, i.e, method or constructor.
+             * Returns the given parameter's declaring executable, i.e, method or constructor.
              *
              * @param parameter The parameter to introspect.
              * @return The parameter's declaring executable.
@@ -565,7 +564,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public GenericTypeDescription getType() {
-                return new TypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType);
+                return new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType);
             }
 
             @Override
@@ -637,7 +636,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public GenericTypeDescription getType() {
-                return new TypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType);
+                return new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType);
             }
 
             @Override
