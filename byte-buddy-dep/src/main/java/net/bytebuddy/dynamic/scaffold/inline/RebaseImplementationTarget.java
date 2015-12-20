@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -96,8 +97,8 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     }
 
     @Override
-    public TypeDescription getOriginType() {
-        return instrumentedType;
+    public GenericTypeDescription getOriginType() {
+        return instrumentedType.asGenericType();
     }
 
     @Override
