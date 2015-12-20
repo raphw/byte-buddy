@@ -64,7 +64,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           NamingStrategy namingStrategy,
                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                           Implementation.Context.Factory implementationContextFactory,
-                                          List<TypeDescription> interfaceTypes,
+                                          List<GenericTypeDescription> interfaceTypes,
                                           int modifiers,
                                           TypeAttributeAppender attributeAppender,
                                           ElementMatcher<? super MethodDescription> ignoredMethods,

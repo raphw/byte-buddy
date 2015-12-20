@@ -670,7 +670,7 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testGenericTypes() throws Exception {
-        assertThat(describe(genericMethod).getReturnType(), is(GenericTypeDescription.Sort.describe(genericMethod.getGenericReturnType())));
+        assertThat(describe(genericMethod).getReturnType(), is(TypeDefinition.Sort.describe(genericMethod.getGenericReturnType())));
         assertThat(describe(genericMethod).getParameters().asTypeList(),
                 is((GenericTypeList) new GenericTypeList.ForLoadedTypes(genericMethod.getGenericParameterTypes())));
         assertThat(describe(genericMethod).getExceptionTypes(),
@@ -680,7 +680,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Test
     public void testGenericTypesOfMethodWithoutException() throws Exception {
         assertThat(describe(genericMethodWithRawException).getReturnType(),
-                is(GenericTypeDescription.Sort.describe(genericMethodWithRawException.getGenericReturnType())));
+                is(TypeDefinition.Sort.describe(genericMethodWithRawException.getGenericReturnType())));
         assertThat(describe(genericMethodWithRawException).getParameters().asTypeList(),
                 is((GenericTypeList) new GenericTypeList.ForLoadedTypes(genericMethodWithRawException.getGenericParameterTypes())));
         assertThat(describe(genericMethodWithRawException).getExceptionTypes(),

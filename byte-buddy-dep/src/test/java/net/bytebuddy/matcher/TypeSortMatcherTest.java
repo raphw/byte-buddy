@@ -20,7 +20,7 @@ public class TypeSortMatcherTest extends AbstractElementMatcherTest<TypeSortMatc
     private GenericTypeDescription genericTypeDescription;
 
     @Mock
-    private ElementMatcher<GenericTypeDescription.Sort> matcher;
+    private ElementMatcher<TypeDefinition.Sort> matcher;
 
     @SuppressWarnings("unchecked")
     public TypeSortMatcherTest() {
@@ -29,23 +29,23 @@ public class TypeSortMatcherTest extends AbstractElementMatcherTest<TypeSortMatc
 
     @Test
     public void testMatch() throws Exception {
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(matcher.matches(GenericTypeDescription.Sort.NON_GENERIC)).thenReturn(true);
+        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(matcher.matches(TypeDefinition.Sort.NON_GENERIC)).thenReturn(true);
         assertThat(new TypeSortMatcher<GenericTypeDescription>(matcher).matches(genericTypeDescription), is(true));
         verify(genericTypeDescription).getSort();
         verifyNoMoreInteractions(genericTypeDescription);
-        verify(matcher).matches(GenericTypeDescription.Sort.NON_GENERIC);
+        verify(matcher).matches(TypeDefinition.Sort.NON_GENERIC);
         verifyNoMoreInteractions(matcher);
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(matcher.matches(GenericTypeDescription.Sort.NON_GENERIC)).thenReturn(false);
+        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(matcher.matches(TypeDefinition.Sort.NON_GENERIC)).thenReturn(false);
         assertThat(new TypeSortMatcher<GenericTypeDescription>(matcher).matches(genericTypeDescription), is(false));
         verify(genericTypeDescription).getSort();
         verifyNoMoreInteractions(genericTypeDescription);
-        verify(matcher).matches(GenericTypeDescription.Sort.NON_GENERIC);
+        verify(matcher).matches(TypeDefinition.Sort.NON_GENERIC);
         verifyNoMoreInteractions(matcher);
     }
 }

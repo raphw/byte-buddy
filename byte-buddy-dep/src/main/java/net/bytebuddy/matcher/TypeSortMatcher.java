@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
@@ -12,14 +13,14 @@ public class TypeSortMatcher<T extends GenericTypeDescription> extends ElementMa
     /**
      * An element matcher to be applied to the type's sort.
      */
-    private final ElementMatcher<? super GenericTypeDescription.Sort> matcher;
+    private final ElementMatcher<? super TypeDefinition.Sort> matcher;
 
     /**
      * Creates a new type sort matcher.
      *
      * @param matcher An element matcher to be applied to the type's sort.
      */
-    public TypeSortMatcher(ElementMatcher<? super GenericTypeDescription.Sort> matcher) {
+    public TypeSortMatcher(ElementMatcher<? super TypeDefinition.Sort> matcher) {
         this.matcher = matcher;
     }
 

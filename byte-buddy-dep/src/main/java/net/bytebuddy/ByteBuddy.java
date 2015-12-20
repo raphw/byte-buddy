@@ -2077,12 +2077,12 @@ public class ByteBuddy {
             for (String value : values) {
                 instrumentedType = instrumentedType.withField(new FieldDescription.Token(value,
                         ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM,
-                        TargetType.DESCRIPTION));
+                        TargetType.GENERIC_DESCRIPTION));
             }
             return instrumentedType
                     .withField(new FieldDescription.Token(ENUM_VALUES,
                             ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
-                            TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1)))
+                            GenericTypeDescription.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)))
                     .withInitializer(new InitializationAppender(values));
         }
 

@@ -4,6 +4,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -49,7 +50,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     /**
      * A type description of the {@link InvocationHandler}.
      */
-    private static final TypeDescription INVOCATION_HANDLER_TYPE = new TypeDescription.ForLoadedType(InvocationHandler.class);
+    private static final GenericTypeDescription INVOCATION_HANDLER_TYPE = new GenericTypeDescription.ForNonGenericType.OfLoadedType(InvocationHandler.class);
 
     /**
      * The name of the field for storing an invocation handler.

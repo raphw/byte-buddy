@@ -2,6 +2,8 @@ package net.bytebuddy.utility;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
@@ -59,8 +61,8 @@ public enum JavaType {
         } catch (Exception ignored) {
             typeDescription = new TypeDescription.Latent(typeName,
                     modifiers,
-                    new TypeDescription.ForLoadedType(superType),
-                    new TypeList.ForLoadedType(interfaces));
+                    new GenericTypeDescription.ForNonGenericType.OfLoadedType(superType),
+                    new GenericTypeList.ForLoadedTypes(interfaces));
         }
         this.typeDescription = typeDescription;
     }

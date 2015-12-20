@@ -91,7 +91,7 @@ public class InstrumentedTypeTest {
                 TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1)));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getType().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(fieldDescription.getType().asErasure().isArray(), is(true));
         assertThat(fieldDescription.getType().asErasure().getComponentType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
@@ -270,7 +270,7 @@ public class InstrumentedTypeTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         TypeDescription other = mock(TypeDescription.class);
         when(other.getInternalName()).thenReturn(instrumentedType.getInternalName());
-        when(other.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(other.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(other.asErasure()).thenReturn(other);
         assertThat(instrumentedType, is(other));
         verify(other, atLeast(1)).getInternalName();

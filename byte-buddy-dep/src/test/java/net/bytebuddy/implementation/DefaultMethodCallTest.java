@@ -162,7 +162,7 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.isInterface()).thenReturn(true);
                 when(typeDescription.asErasure()).thenReturn(typeDescription);
-                when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+                when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
                 return Collections.singletonList(typeDescription);
             }
         }).apply();

@@ -39,10 +39,10 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         latentMethodMatcher = new SubclassDynamicTypeBuilder.InstrumentableMatcher(ignoredMethods);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(typeDescription.asGenericType()).thenReturn(typeDescription);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(otherType.asErasure()).thenReturn(otherType);
         when(otherType.asGenericType()).thenReturn(otherType);
-        when(otherType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(otherType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
     }
 
     @Test

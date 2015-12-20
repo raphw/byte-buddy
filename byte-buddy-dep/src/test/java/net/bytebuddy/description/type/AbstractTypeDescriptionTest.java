@@ -245,14 +245,14 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         TypeDescription identical = describe(SampleClass.class);
         assertThat(identical, is(identical));
         TypeDescription equalFirst = mock(TypeDescription.class);
-        when(equalFirst.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(equalFirst.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(equalFirst.asErasure()).thenReturn(equalFirst);
         when(equalFirst.getInternalName()).thenReturn(Type.getInternalName(SampleClass.class));
         assertThat(describe(SampleClass.class), is(equalFirst));
         assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
         assertThat(describe(SampleClass.class), not((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class)));
         GenericTypeDescription nonRawType = mock(GenericTypeDescription.class);
-        when(nonRawType.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
+        when(nonRawType.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         assertThat(describe(SampleClass.class), not(nonRawType));
         assertThat(describe(SampleClass.class), not(new Object()));
         assertThat(describe(SampleClass.class), not(equalTo(null)));

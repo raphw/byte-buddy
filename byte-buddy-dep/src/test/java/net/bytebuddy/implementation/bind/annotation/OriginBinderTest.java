@@ -103,7 +103,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testStringBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(String.class)).thenReturn(true);
-        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -113,7 +113,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testModifierBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(int.class)).thenReturn(true);
-        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -146,7 +146,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
         when(targetType.getName()).thenReturn(FOO);
-        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         Origin.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

@@ -13,6 +13,7 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -2525,7 +2526,7 @@ public interface DynamicType {
                             Collections.<GenericTypeDescription>emptyList(),
                             methodToken.getReturnType(),
                             methodToken.getParameterTokens(),
-                            unique(isThrowable(new ArrayList<TypeDescription>(exceptionTypes))),
+                            unique(isThrowable(new GenericTypeList.ForTypeDefinitions(toList(exceptionTypes)))),
                             Collections.<AnnotationDescription>emptyList(),
                             null));
                 }

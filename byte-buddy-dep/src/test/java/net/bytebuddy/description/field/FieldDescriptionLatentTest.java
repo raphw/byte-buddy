@@ -13,7 +13,7 @@ public class FieldDescriptionLatentTest extends AbstractFieldDescriptionTest {
         return new FieldDescription.Latent(new TypeDescription.ForLoadedType(field.getDeclaringClass()),
                 field.getName(),
                 field.getModifiers(),
-                GenericTypeDescription.Sort.describe(field.getGenericType()),
+                TypeDefinition.Sort.describe(field.getGenericType()),
                 new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations()));
     }
 }

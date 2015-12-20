@@ -16,14 +16,14 @@ public abstract class AbstractParameterListTest<U extends ParameterDescription, 
     @SuppressWarnings("unchecked")
     public void testTokenWithoutMatcher() throws Exception {
         assertThat(asList(Collections.singletonList(getFirst())).asTokenList().size(), is(1));
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList().getOnly().getType(), is(GenericTypeDescription.Sort.describe(Void.class)));
+        assertThat(asList(Collections.singletonList(getFirst())).asTokenList().getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testTokenWithMatcher() throws Exception {
         assertThat(asList(Collections.singletonList(getFirst())).asTokenList(none()).size(), is(1));
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList(none()).getOnly().getType(), is(GenericTypeDescription.Sort.describe(Void.class)));
+        assertThat(asList(Collections.singletonList(getFirst())).asTokenList(none()).getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));
     }
 
     @Test

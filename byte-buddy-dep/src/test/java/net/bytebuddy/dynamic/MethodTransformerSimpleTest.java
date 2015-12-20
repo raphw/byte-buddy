@@ -73,7 +73,7 @@ public class MethodTransformerSimpleTest {
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(exceptionType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(exceptionType);
         when(typeVariable.getSymbol()).thenReturn(QUX);
-        when(typeVariable.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
+        when(typeVariable.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(methodDescription.asToken()).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);

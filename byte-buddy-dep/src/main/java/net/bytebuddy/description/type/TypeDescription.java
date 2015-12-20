@@ -353,6 +353,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
+        public Sort getSort() {
+            return Sort.NON_GENERIC;
+        }
+
+        @Override
         public boolean isInstance(Object value) {
             return isAssignableFrom(value.getClass());
         }
@@ -602,8 +607,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public boolean equals(Object other) {
-            return other == this || other instanceof TypeDescription
-                    && getInternalName().equals(((TypeDescription) other).getInternalName());
+            return other == this || other instanceof TypeDefinition
+                    && ((TypeDefinition) other).getSort().isNonGeneric()
+                    && getInternalName().equals(((TypeDefinition) other).asErasure().getInternalName());
         }
 
         @Override

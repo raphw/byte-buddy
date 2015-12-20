@@ -71,7 +71,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     NamingStrategy namingStrategy,
                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                     Implementation.Context.Factory implementationContextFactory,
-                                    List<TypeDescription> interfaceTypes,
+                                    List<GenericTypeDescription> interfaceTypes,
                                     int modifiers,
                                     TypeAttributeAppender attributeAppender,
                                     ElementMatcher<? super MethodDescription> ignoredMethods,

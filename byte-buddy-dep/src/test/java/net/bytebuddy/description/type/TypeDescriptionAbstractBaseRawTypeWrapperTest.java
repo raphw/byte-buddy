@@ -13,8 +13,8 @@ public class TypeDescriptionAbstractBaseRawTypeWrapperTest {
     @Test
     public void testRawType() throws Exception {
         GenericTypeDescription rawType = new TypeDescription.ForLoadedType(Foo.class).accept(TypeDescription.AbstractBase.RawTypeWrapper.INSTANCE);
-        assertThat(rawType.getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
-        assertThat(rawType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().getSort(), is(GenericTypeDescription.Sort.NON_GENERIC));
+        assertThat(rawType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(rawType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(rawType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType(), is((GenericTypeDescription) TypeDescription.OBJECT));
     }
 

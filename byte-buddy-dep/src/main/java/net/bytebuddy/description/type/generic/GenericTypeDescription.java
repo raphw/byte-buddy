@@ -34,13 +34,6 @@ public interface GenericTypeDescription extends TypeDefinition {
 
     GenericTypeDescription UNDEFINED = null;
 
-    /**
-     * Returns the sort of the generic type this instance represents.
-     *
-     * @return The sort of the generic type.
-     */
-    Sort getSort();
-
     GenericTypeDescription asRawType();
 
     /**
@@ -49,9 +42,9 @@ public interface GenericTypeDescription extends TypeDefinition {
      * type is defined, the bound is implicitly {@link Object}.
      * </p>
      * <p>
-     * Only non-symbolic type variables ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#VARIABLE},
-     * {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#VARIABLE_DETACHED}) and wildcard types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD}) have well-defined upper bounds. For other
+     * Only non-symbolic type variables ({@link net.bytebuddy.description.type.TypeDefition.Sort#VARIABLE},
+     * {@link net.bytebuddy.description.type.TypeDefition.Sort#VARIABLE_DETACHED}) and wildcard types
+     * ({@link net.bytebuddy.description.type.TypeDefition.Sort#WILDCARD}) have well-defined upper bounds. For other
      * types, an {@link IllegalStateException} is thrown.
      * </p>
      *
@@ -139,137 +132,6 @@ public interface GenericTypeDescription extends TypeDefinition {
      * @return The visitor's return value.
      */
     <T> T accept(Visitor<T> visitor);
-
-    /**
-     * Represents a {@link GenericTypeDescription}'s form.
-     */
-    enum Sort {
-
-        /**
-         * Represents a non-generic type.
-         */
-        NON_GENERIC,
-
-        /**
-         * Represents a generic array type.
-         */
-        GENERIC_ARRAY,
-
-        /**
-         * Represents a parameterized type.
-         */
-        PARAMETERIZED,
-
-        /**
-         * Represents a wildcard type.
-         */
-        WILDCARD,
-
-        /**
-         * Represents a type variable that is attached to a {@link TypeVariableSource}.
-         */
-        VARIABLE,
-
-        /**
-         * Represents a type variable that is not attached to a {@link TypeVariableSource} but defines type bounds.
-         */
-        VARIABLE_DETACHED,
-
-        /**
-         * Represents a type variable that is merely symbolic and is not attached to a {@link TypeVariableSource} and does not defined bounds.
-         */
-        VARIABLE_SYMBOLIC;
-
-        /**
-         * Describes a loaded generic type as a {@link GenericTypeDescription}.
-         *
-         * @param type The type to describe.
-         * @return A description of the provided generic type.
-         */
-        public static GenericTypeDescription describe(Type type) {
-            if (type instanceof Class<?>) {
-                return new ForNonGenericType.OfLoadedType((Class<?>) type);
-            } else if (type instanceof GenericArrayType) {
-                return new ForGenericArray.OfLoadedType((GenericArrayType) type);
-            } else if (type instanceof ParameterizedType) {
-                return new ForParameterizedType.OfLoadedType((ParameterizedType) type);
-            } else if (type instanceof TypeVariable) {
-                return new ForTypeVariable.OfLoadedType((TypeVariable<?>) type);
-            } else if (type instanceof WildcardType) {
-                return new ForWildcardType.OfLoadedType((WildcardType) type);
-            } else {
-                throw new IllegalArgumentException("Unknown type: " + type);
-            }
-        }
-
-        /**
-         * Checks if this type form represents a non-generic type.
-         *
-         * @return {@code true} if this type form represents a non-generic.
-         */
-        public boolean isNonGeneric() {
-            return this == NON_GENERIC;
-        }
-
-        /**
-         * Checks if this type form represents a parameterized type.
-         *
-         * @return {@code true} if this type form represents a parameterized type.
-         */
-        public boolean isParameterized() {
-            return this == PARAMETERIZED;
-        }
-
-        /**
-         * Checks if this type form represents a generic array.
-         *
-         * @return {@code true} if this type form represents a generic array.
-         */
-        public boolean isGenericArray() {
-            return this == GENERIC_ARRAY;
-        }
-
-        /**
-         * Checks if this type form represents a wildcard.
-         *
-         * @return {@code true} if this type form represents a wildcard.
-         */
-        public boolean isWildcard() {
-            return this == WILDCARD;
-        }
-
-        /**
-         * Checks if this type form represents an attached type variable.
-         *
-         * @return {@code true} if this type form represents an attached type variable.
-         */
-        public boolean isTypeVariable() {
-            return this == VARIABLE;
-        }
-
-        /**
-         * Checks if this type form represents a detached type variable.
-         *
-         * @return {@code true} if this type form represents a detached type variable.
-         */
-        public boolean isDetachedTypeVariable() {
-            return this == VARIABLE_DETACHED;
-        }
-
-        /**
-         * Checks if this type form represents a symbolic type variable.
-         *
-         * @return {@code true} if this type form represents a symbolic type variable.
-         */
-        public boolean isSymbolicTypeVariable() {
-            return this == VARIABLE_SYMBOLIC;
-        }
-
-        @Override
-        public String toString() {
-            return "GenericTypeDescription.Sort." + name();
-        }
-    }
 
     /**
      * A visitor that can be applied to a {@link GenericTypeDescription} for differentiating on the sort of the visited type.
@@ -1083,7 +945,7 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public GenericTypeList getParameters() {
-            throw new IllegalStateException(); //TODO: Message
+            throw new IllegalStateException("A non-generic type does not imply type parameters: " + this);
         }
 
         @Override
@@ -1098,12 +960,12 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public GenericTypeList getUpperBounds() {
-            throw new IllegalStateException(); //TODO: Message
+            throw new IllegalStateException("A non-generic type does not imply upper type bounds: " + this);
         }
 
         @Override
         public GenericTypeList getLowerBounds() {
-            throw new IllegalStateException(); //TODO: Message
+            throw new IllegalStateException("A non-generic type does not imply lower type bounds: " + this);
         }
 
         @Override
@@ -1116,12 +978,12 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public TypeVariableSource getVariableSource() {
-            throw new IllegalStateException(); //TODO: Message
+            throw new IllegalStateException("A non-generic type does not imply a type variable source: " + this);
         }
 
         @Override
         public String getSymbol() {
-            throw new IllegalStateException(); //TODO: Message
+            throw new IllegalStateException("A non-generic type does not imply a symbol: " + this);
         }
 
         @Override

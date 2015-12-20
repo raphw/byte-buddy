@@ -22,6 +22,6 @@ public class GenericTypeListForLoadedTypesTest extends AbstractGenericTypeListTe
 
     @Override
     protected GenericTypeDescription asElement(Type element) {
-        return GenericTypeDescription.Sort.describe(element);
+        return TypeDefinition.Sort.describe(element);
     }
 }

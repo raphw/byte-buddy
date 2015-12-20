@@ -12,6 +12,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -235,11 +236,11 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given type.
      */
     public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> is(Type type) {
-        return is(GenericTypeDescription.Sort.describe(nonNull(type)));
+        return is(TypeDefinition.Sort.describe(nonNull(type)));
     }
 
     public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
-        return is(GenericTypeDescription.Sort.describe(nonNull(type)));
+        return is(TypeDefinition.Sort.describe(nonNull(type)));
     }
 
     /**
@@ -586,9 +587,9 @@ public final class ElementMatchers {
      * @return A matcher that matches type variables with the given name.
      */
     public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(ElementMatcher<? super NamedElement> matcher) {
-        return new TypeSortMatcher<T>(anyOf(GenericTypeDescription.Sort.VARIABLE,
-                GenericTypeDescription.Sort.VARIABLE_DETACHED,
-                GenericTypeDescription.Sort.VARIABLE_SYMBOLIC)).and(matcher);
+        return new TypeSortMatcher<T>(anyOf(TypeDefinition.Sort.VARIABLE,
+                TypeDefinition.Sort.VARIABLE_DETACHED,
+                TypeDefinition.Sort.VARIABLE_SYMBOLIC)).and(matcher);
     }
 
     /**
@@ -750,7 +751,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by the given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(Type type) {
-        return isDeclaredByGeneric(GenericTypeDescription.Sort.describe(nonNull(type)));
+        return isDeclaredByGeneric(TypeDefinition.Sort.describe(nonNull(type)));
     }
 
     /**
@@ -993,7 +994,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given generic return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(Type type) {
-        return returnsGeneric(GenericTypeDescription.Sort.describe(nonNull(type)));
+        return returnsGeneric(TypeDefinition.Sort.describe(nonNull(type)));
     }
 
     /**
@@ -1199,7 +1200,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that exactly matches the provided generic exception.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(Type exceptionType) {
-        return declaresGenericException(GenericTypeDescription.Sort.describe(exceptionType));
+        return declaresGenericException(TypeDefinition.Sort.describe(exceptionType));
     }
 
     /**
@@ -1401,7 +1402,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any setter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(Type type) {
-        return isSetter(GenericTypeDescription.Sort.describe(nonNull(type)));
+        return isSetter(TypeDefinition.Sort.describe(nonNull(type)));
     }
 
     /**
@@ -1445,7 +1446,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a getter method with the given type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(Type type) {
-        return isGetter(GenericTypeDescription.Sort.describe(nonNull(type)));
+        return isGetter(TypeDefinition.Sort.describe(nonNull(type)));
     }
 
     /**
@@ -1608,7 +1609,7 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches generic types of the given sort.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(GenericTypeDescription.Sort sort) {
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(TypeDefinition.Sort sort) {
         return ofSort(is(nonNull(sort)));
     }
 
@@ -1619,7 +1620,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches generic types of the given sort.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(ElementMatcher<? super GenericTypeDescription.Sort> matcher) {
+    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(ElementMatcher<? super TypeDefinition.Sort> matcher) {
         return new TypeSortMatcher<T>(nonNull(matcher));
     }
 
@@ -1631,7 +1632,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> genericFieldType(Type fieldType) {
-        return genericFieldType(GenericTypeDescription.Sort.describe(fieldType));
+        return genericFieldType(TypeDefinition.Sort.describe(fieldType));
     }
 
     /**

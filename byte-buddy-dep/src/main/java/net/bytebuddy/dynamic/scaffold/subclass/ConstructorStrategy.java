@@ -106,7 +106,7 @@ public interface ConstructorStrategy {
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
                 GenericTypeDescription superType = instrumentedType.getSuperType();
                 return (superType == null
-                        ? new MethodList.Empty()
+                        ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList();
             }
 
@@ -129,7 +129,7 @@ public interface ConstructorStrategy {
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
                 GenericTypeDescription superType = instrumentedType.getSuperType();
                 return (superType == null
-                        ? new MethodList.Empty()
+                        ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superType.asErasure().getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
             }
 

@@ -168,11 +168,11 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialMethod.getInternalName()).thenReturn(FOO);
         when(firstSpecialMethod.getExceptionTypes()).thenReturn(firstSpecialExceptionTypes);
         when(firstSpecialParameterType.getDescriptor()).thenReturn(BAZ);
-        when(firstSpecialParameterType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(firstSpecialParameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(firstSpecialReturnType.getDescriptor()).thenReturn(QUX);
-        when(firstSpecialReturnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(firstSpecialReturnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(firstSpecialExceptionType.getInternalName()).thenReturn(FOO);
-        when(firstSpecialExceptionType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(firstSpecialExceptionType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(firstSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
@@ -186,15 +186,15 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialParameterType.getDescriptor()).thenReturn(BAR);
         when(secondSpecialReturnType.getDescriptor()).thenReturn(FOO);
         when(secondSpecialExceptionType.getInternalName()).thenReturn(BAZ);
-        when(secondSpecialExceptionType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(secondSpecialExceptionType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(secondSpecialParameterType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(secondSpecialParameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(secondSpecialReturnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(secondSpecialReturnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod,
                 Collections.singletonList(secondSpecialParameterType)));
-        when(firstFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(firstFieldType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(firstFieldType.asErasure()).thenReturn(firstFieldType);
         when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType);
         when(firstField.getType()).thenReturn(firstFieldType);
@@ -204,7 +204,7 @@ public class ImplementationContextDefaultTest {
         when(firstField.getDeclaringType()).thenReturn(firstFieldDeclaringType);
         when(firstField.asDefined()).thenReturn(firstField);
         when(firstFieldDeclaringType.getInternalName()).thenReturn(QUX);
-        when(secondFieldType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(secondFieldType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondFieldType.asErasure()).thenReturn(secondFieldType);
         when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType);
         when(secondField.getType()).thenReturn(secondFieldType);

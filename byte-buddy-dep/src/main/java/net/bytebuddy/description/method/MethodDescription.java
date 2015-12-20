@@ -6,6 +6,7 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -369,7 +370,7 @@ public interface MethodDescription extends TypeVariableSource,
                 returnType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitReturnType()));
                 generic = generic || !returnType.getSort().isNonGeneric();
                 GenericTypeList exceptionTypes = getExceptionTypes();
-                if (!exceptionTypes.filter(not(ofSort(GenericTypeDescription.Sort.NON_GENERIC))).isEmpty()) {
+                if (!exceptionTypes.filter(not(ofSort(TypeDefinition.Sort.NON_GENERIC))).isEmpty()) {
                     for (GenericTypeDescription exceptionType : exceptionTypes) {
                         exceptionType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(signatureWriter.visitExceptionType()));
                         generic = generic || !exceptionType.getSort().isNonGeneric();

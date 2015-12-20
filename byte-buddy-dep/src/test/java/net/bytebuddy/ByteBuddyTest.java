@@ -77,7 +77,7 @@ public class ByteBuddyTest {
         when(modifierContributorForType.getMask()).thenReturn(MASK);
         when(interfaceTypes.isInterface()).thenReturn(true);
         when(interfaceTypes.asErasure()).thenReturn(interfaceTypes);
-        when(interfaceTypes.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(interfaceTypes.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
     }
 
     @Test

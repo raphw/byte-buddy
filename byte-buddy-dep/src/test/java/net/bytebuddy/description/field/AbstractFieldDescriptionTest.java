@@ -175,7 +175,7 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testGenericTypes() throws Exception {
-        assertThat(describe(genericField).getType(), is(GenericTypeDescription.Sort.describe(genericField.getGenericType())));
+        assertThat(describe(genericField).getType(), is(TypeDefinition.Sort.describe(genericField.getGenericType())));
         assertThat(describe(genericField).getType().asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(genericField.getType())));
     }
 

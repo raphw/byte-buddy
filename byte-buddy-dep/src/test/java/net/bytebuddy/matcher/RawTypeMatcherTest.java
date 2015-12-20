@@ -34,7 +34,7 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
     @Test
     public void testMatch() throws Exception {
         when(elementMatcher.matches(typeDescription)).thenReturn(true);
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(true));
         verify(genericTypeDescription).getSort();
         verify(genericTypeDescription).asErasure();
@@ -46,7 +46,7 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
 
     @Test
     public void testNoMatchWildcard() throws Exception {
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.WILDCARD);
+        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
         assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(false));
         verify(genericTypeDescription).getSort();
         verifyNoMoreInteractions(genericTypeDescription);
@@ -57,7 +57,7 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
     @Test
     public void testNoMatch() throws Exception {
         when(elementMatcher.matches(typeDescription)).thenReturn(false);
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(false));
         verify(genericTypeDescription).getSort();
         verify(genericTypeDescription).asErasure();

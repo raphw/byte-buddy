@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -732,7 +733,7 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                new TypeDescription.ForLoadedType(target.getClass())))
+                                new GenericTypeDescription.ForNonGenericType.OfLoadedType(target.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
             }
 
@@ -1114,7 +1115,7 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                new TypeDescription.ForLoadedType(value.getClass())))
+                                new GenericTypeDescription.ForNonGenericType.OfLoadedType(value.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, value));
             }
 

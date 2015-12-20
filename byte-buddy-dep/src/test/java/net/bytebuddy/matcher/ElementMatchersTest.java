@@ -373,16 +373,16 @@ public class ElementMatchersTest {
 
     @Test
     public void testRawType() throws Exception {
-        assertThat(ElementMatchers.rawType(Exception.class).matches(GenericTypeDescription.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(true));
-        assertThat(ElementMatchers.rawType(Object.class).matches(GenericTypeDescription.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(false));
+        assertThat(ElementMatchers.rawType(Exception.class).matches(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(true));
+        assertThat(ElementMatchers.rawType(Object.class).matches(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0])), is(false));
     }
 
     @Test
     public void testRawTypes() throws Exception {
         assertThat(ElementMatchers.rawTypes(Exception.class)
-                .matches(Collections.singletonList(GenericTypeDescription.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))), is(true));
+                .matches(Collections.singletonList(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))), is(true));
         assertThat(ElementMatchers.rawTypes(Object.class)
-                .matches(Collections.singletonList(GenericTypeDescription.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))), is(false));
+                .matches(Collections.singletonList(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))), is(false));
     }
 
     @Test
@@ -666,7 +666,7 @@ public class ElementMatchersTest {
     public void testTakesArgumentsGeneric() throws Exception {
         assertThat(ElementMatchers.takesGenericArguments(GenericMethodType.class.getTypeParameters()[0])
                 .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
-        assertThat(ElementMatchers.takesGenericArguments(GenericTypeDescription.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))
+        assertThat(ElementMatchers.takesGenericArguments(TypeDefinition.Sort.describe(GenericMethodType.class.getTypeParameters()[0]))
                 .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
         assertThat(ElementMatchers.takesGenericArguments(Exception.class)
                 .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
@@ -947,8 +947,8 @@ public class ElementMatchersTest {
 
     @Test
     public void testTypeSort() throws Exception {
-        assertThat(ElementMatchers.ofSort(GenericTypeDescription.Sort.NON_GENERIC).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.ofSort(GenericTypeDescription.Sort.VARIABLE).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.ofSort(TypeDefinition.Sort.NON_GENERIC).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(ElementMatchers.ofSort(TypeDefinition.Sort.VARIABLE).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
     }
 
     @Test

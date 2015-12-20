@@ -15,7 +15,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     protected GenericTypeDescription describe(Field field) {
-        return GenericTypeDescription.Sort.describe(field.getGenericType());
+        return TypeDefinition.Sort.describe(field.getGenericType());
     }
 
     @Override

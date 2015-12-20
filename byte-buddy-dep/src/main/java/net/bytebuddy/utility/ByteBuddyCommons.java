@@ -1,6 +1,7 @@
 package net.bytebuddy.utility;
 
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.objectweb.asm.Opcodes;
@@ -71,8 +72,8 @@ public final class ByteBuddyCommons {
     /**
      * A set of all generic type sorts that can possibly define an extendable type.
      */
-    private static final Set<GenericTypeDescription.Sort> EXTENDABLE_TYPES = EnumSet.of(GenericTypeDescription.Sort.NON_GENERIC,
-            GenericTypeDescription.Sort.PARAMETERIZED);
+    private static final Set<TypeDefinition.Sort> EXTENDABLE_TYPES = EnumSet.of(TypeDefinition.Sort.NON_GENERIC,
+            TypeDefinition.Sort.PARAMETERIZED);
 
     /**
      * This utility class is not supposed to be instantiated.
@@ -218,7 +219,7 @@ public final class ByteBuddyCommons {
      * @param <T>             The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends GenericTypeDescription> T isActualType(T typeDescription) {
+    public static <T extends TypeDefinition> T isActualType(T typeDescription) {
         if (isActualTypeOrVoid(typeDescription).represents(void.class)) {
             throw new IllegalArgumentException("The void non-type cannot be assigned a value");
         }
@@ -232,8 +233,8 @@ public final class ByteBuddyCommons {
      * @param <T>              The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends Collection<? extends GenericTypeDescription>> T isActualType(T typeDescriptions) {
-        for (GenericTypeDescription typeDescription : typeDescriptions) {
+    public static <T extends Collection<? extends TypeDefinition>> T isActualType(T typeDescriptions) {
+        for (TypeDefinition typeDescription : typeDescriptions) {
             isActualType(typeDescription);
         }
         return typeDescriptions;
@@ -246,7 +247,7 @@ public final class ByteBuddyCommons {
      * @param <T>             The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends GenericTypeDescription> T isActualTypeOrVoid(T typeDescription) {
+    public static <T extends TypeDefinition> T isActualTypeOrVoid(T typeDescription) {
         if (typeDescription.getSort().isWildcard()) {
             throw new IllegalArgumentException("Not a top-level type: " + typeDescription);
         }
@@ -260,8 +261,8 @@ public final class ByteBuddyCommons {
      * @param <T>              The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends Collection<? extends GenericTypeDescription>> T isActualTypeOrVoid(T typeDescriptions) {
-        for (GenericTypeDescription typeDescription : typeDescriptions) {
+    public static <T extends Collection<? extends TypeDefinition>> T isActualTypeOrVoid(T typeDescriptions) {
+        for (TypeDefinition typeDescription : typeDescriptions) {
             isActualTypeOrVoid(typeDescription);
         }
         return typeDescriptions;
@@ -396,15 +397,15 @@ public final class ByteBuddyCommons {
      * @param <T>   The element type.
      * @return A joined list of both given lists.
      */
-    public static <T extends GenericTypeDescription> List<T> joinUniqueRaw(Collection<? extends T> left, Collection<? extends T> right) {
+    public static <T extends TypeDefinition> List<T> joinUniqueRaw(Collection<? extends T> left, Collection<? extends T> right) {
         List<T> result = new ArrayList<T>(left.size() + right.size());
-        Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>();
+        Map<TypeDescription, TypeDefinition> types = new HashMap<TypeDescription, TypeDefinition>();
         for (T typeDescription : left) {
             types.put(typeDescription.asErasure(), typeDescription);
             result.add(typeDescription);
         }
         for (T typeDescription : right) {
-            GenericTypeDescription conflictingType = types.put(typeDescription.asErasure(), typeDescription);
+            TypeDefinition conflictingType = types.put(typeDescription.asErasure(), typeDescription);
             if (conflictingType != null && !conflictingType.equals(typeDescription)) {
                 throw new IllegalArgumentException("Conflicting type erasures: " + conflictingType + " and " + typeDescription);
             } else if (conflictingType == null) {

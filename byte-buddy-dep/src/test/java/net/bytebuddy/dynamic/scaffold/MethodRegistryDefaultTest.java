@@ -112,10 +112,10 @@ public class MethodRegistryDefaultTest {
         when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
         when(methodTransformer.transform(typeDescription, instrumentedMethod)).thenReturn(instrumentedMethod);
         when(returnType.asErasure()).thenReturn(returnType);
-        when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(returnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(returnType.isVisibleTo(typeDescription)).thenReturn(true);
         when(parameterType.asErasure()).thenReturn(parameterType);
-        when(parameterType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(parameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(parameterType.isVisibleTo(typeDescription)).thenReturn(true);
         when(instrumentedMethod.getReturnType()).thenReturn(returnType);
         when(instrumentedMethod.getParameters()).thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));

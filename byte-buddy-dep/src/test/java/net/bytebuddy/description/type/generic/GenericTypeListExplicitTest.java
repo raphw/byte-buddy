@@ -6,12 +6,12 @@ public class GenericTypeListExplicitTest extends AbstractGenericTypeListTest<Gen
 
     @Override
     protected GenericTypeDescription getFirst() throws Exception {
-        return GenericTypeDescription.Sort.describe(Holder.class.getGenericInterfaces()[0]);
+        return TypeDefinition.Sort.describe(Holder.class.getGenericInterfaces()[0]);
     }
 
     @Override
     protected GenericTypeDescription getSecond() throws Exception {
-        return GenericTypeDescription.Sort.describe(Holder.class.getGenericInterfaces()[1]);
+        return TypeDefinition.Sort.describe(Holder.class.getGenericInterfaces()[1]);
     }
 
     @Override

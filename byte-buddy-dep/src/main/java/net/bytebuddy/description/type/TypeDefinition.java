@@ -5,9 +5,10 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.implementation.bytecode.StackSize;
 
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
@@ -36,6 +37,13 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
      * @return The component type of this type or {@code null} if this type does not represent an array type.
      */
     TypeDefinition getComponentType();
+
+    /**
+     * Returns the sort of the generic type this instance represents.
+     *
+     * @return The sort of the generic type.
+     */
+    Sort getSort();
 
     /**
      * Returns the erasure of this type. Wildcard types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD})
@@ -83,6 +91,137 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
      * @return {@code true} if the type described by this instance represents {@code type}.
      */
     boolean represents(Type type);
+
+    /**
+     * Represents a {@link GenericTypeDescription}'s form.
+     */
+    enum Sort {
+
+        /**
+         * Represents a non-generic type.
+         */
+        NON_GENERIC,
+
+        /**
+         * Represents a generic array type.
+         */
+        GENERIC_ARRAY,
+
+        /**
+         * Represents a parameterized type.
+         */
+        PARAMETERIZED,
+
+        /**
+         * Represents a wildcard type.
+         */
+        WILDCARD,
+
+        /**
+         * Represents a type variable that is attached to a {@link TypeVariableSource}.
+         */
+        VARIABLE,
+
+        /**
+         * Represents a type variable that is not attached to a {@link TypeVariableSource} but defines type bounds.
+         */
+        VARIABLE_DETACHED,
+
+        /**
+         * Represents a type variable that is merely symbolic and is not attached to a {@link TypeVariableSource} and does not defined bounds.
+         */
+        VARIABLE_SYMBOLIC;
+
+        /**
+         * Describes a loaded generic type as a {@link GenericTypeDescription}.
+         *
+         * @param type The type to describe.
+         * @return A description of the provided generic type.
+         */
+        public static GenericTypeDescription describe(Type type) {
+            if (type instanceof Class<?>) {
+                return new GenericTypeDescription.ForNonGenericType.OfLoadedType((Class<?>) type);
+            } else if (type instanceof GenericArrayType) {
+                return new GenericTypeDescription.ForGenericArray.OfLoadedType((GenericArrayType) type);
+            } else if (type instanceof ParameterizedType) {
+                return new GenericTypeDescription.ForParameterizedType.OfLoadedType((ParameterizedType) type);
+            } else if (type instanceof TypeVariable) {
+                return new GenericTypeDescription.ForTypeVariable.OfLoadedType((TypeVariable<?>) type);
+            } else if (type instanceof WildcardType) {
+                return new GenericTypeDescription.ForWildcardType.OfLoadedType((WildcardType) type);
+            } else {
+                throw new IllegalArgumentException("Unknown type: " + type);
+            }
+        }
+
+        /**
+         * Checks if this type form represents a non-generic type.
+         *
+         * @return {@code true} if this type form represents a non-generic.
+         */
+        public boolean isNonGeneric() {
+            return this == NON_GENERIC;
+        }
+
+        /**
+         * Checks if this type form represents a parameterized type.
+         *
+         * @return {@code true} if this type form represents a parameterized type.
+         */
+        public boolean isParameterized() {
+            return this == PARAMETERIZED;
+        }
+
+        /**
+         * Checks if this type form represents a generic array.
+         *
+         * @return {@code true} if this type form represents a generic array.
+         */
+        public boolean isGenericArray() {
+            return this == GENERIC_ARRAY;
+        }
+
+        /**
+         * Checks if this type form represents a wildcard.
+         *
+         * @return {@code true} if this type form represents a wildcard.
+         */
+        public boolean isWildcard() {
+            return this == WILDCARD;
+        }
+
+        /**
+         * Checks if this type form represents an attached type variable.
+         *
+         * @return {@code true} if this type form represents an attached type variable.
+         */
+        public boolean isTypeVariable() {
+            return this == VARIABLE;
+        }
+
+        /**
+         * Checks if this type form represents a detached type variable.
+         *
+         * @return {@code true} if this type form represents a detached type variable.
+         */
+        public boolean isDetachedTypeVariable() {
+            return this == VARIABLE_DETACHED;
+        }
+
+        /**
+         * Checks if this type form represents a symbolic type variable.
+         *
+         * @return {@code true} if this type form represents a symbolic type variable.
+         */
+        public boolean isSymbolicTypeVariable() {
+            return this == VARIABLE_SYMBOLIC;
+        }
+
+        @Override
+        public String toString() {
+            return "TypeDefinition.Sort." + name();
+        }
+    }
 
     /**
      * An iterator that iterates over a type's class hierarchy.
