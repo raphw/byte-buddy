@@ -3932,7 +3932,7 @@ public interface TypePool {
         }
 
         /**
-         * A token reprepresenting a generic type.
+         * A token that represents a generic Java type.
          */
         protected interface GenericTypeToken {
 
@@ -4005,7 +4005,7 @@ public interface TypePool {
                 /**
                  * A description of this primitive type token.
                  */
-                private final TypeDescription typeDescription;
+                private final GenericTypeDescription typeDescription;
 
                 /**
                  * Creates a new primitive type token.
@@ -4013,7 +4013,7 @@ public interface TypePool {
                  * @param type The loaded type representing this primitive.
                  */
                 ForPrimitiveType(Class<?> type) {
-                    typeDescription = new TypeDescription.ForLoadedType(type);
+                    typeDescription = new GenericTypeDescription.ForNonGenericType.OfLoadedType(type);
                 }
 
                 /**
@@ -5837,32 +5837,6 @@ public interface TypePool {
                     stackSize += Type.getType(descriptor).getSize();
                 }
                 return stackSize;
-            }
-
-            @Override
-            public GenericTypeList asGenericTypes() {
-                return new Generified();
-            }
-
-            /**
-             * A representation of the lazy type list as generic types.
-             */
-            private class Generified extends GenericTypeList.AbstractBase {
-
-                @Override
-                public GenericTypeDescription get(int index) {
-                    return LazyTypeList.this.get(index);
-                }
-
-                @Override
-                public int size() {
-                    return LazyTypeList.this.size();
-                }
-
-                @Override
-                public TypeList asErasures() {
-                    return LazyTypeList.this;
-                }
             }
         }
 
