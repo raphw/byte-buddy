@@ -89,11 +89,11 @@ public class FieldAccessTest {
         when(declaringType.asErasure()).thenReturn(declaringType);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(fieldDescription.getType()).thenReturn(genericFieldType);
-        when(genericFieldType.asErasure()).thenReturn(fieldType); // TODO
+        when(genericFieldType.asErasure()).thenReturn(fieldType);
+        when(genericFieldType.getStackSize()).thenReturn(fieldSize);
         when(declaringType.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getInternalName()).thenReturn(BAR);
         when(fieldDescription.getDescriptor()).thenReturn(QUX);
-        when(fieldType.getStackSize()).thenReturn(fieldSize);
         when(fieldDescription.isStatic()).thenReturn(isStatic);
     }
 

@@ -486,7 +486,7 @@ public class TypeProxy implements AuxiliaryType {
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(implementationTarget.getInstrumentedType()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
@@ -589,7 +589,7 @@ public class TypeProxy implements AuxiliaryType {
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(implementationTarget.getInstrumentedType()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
@@ -680,7 +680,7 @@ public class TypeProxy implements AuxiliaryType {
                     Duplication.SINGLE,
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(implementationTarget.getInstrumentedType()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);

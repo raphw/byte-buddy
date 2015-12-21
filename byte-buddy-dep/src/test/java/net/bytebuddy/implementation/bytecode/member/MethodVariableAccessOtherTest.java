@@ -17,7 +17,7 @@ public class MethodVariableAccessOtherTest {
         TypeDescription voidTypeDescription = mock(TypeDescription.class);
         when(voidTypeDescription.isPrimitive()).thenReturn(true);
         when(voidTypeDescription.represents(void.class)).thenReturn(true);
-        MethodVariableAccess.forType(voidTypeDescription);
+        MethodVariableAccess.of(voidTypeDescription);
     }
 
     @Test

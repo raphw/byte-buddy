@@ -70,7 +70,7 @@ public enum MethodVariableAccess {
      * @param typeDescription The type of the variable to be loaded.
      * @return An accessor for the given type.
      */
-    public static MethodVariableAccess forType(TypeDescription typeDescription) {
+    public static MethodVariableAccess of(TypeDescription typeDescription) {
         if (typeDescription.isPrimitive()) {
             if (typeDescription.represents(long.class)) {
                 return LONG;
@@ -149,10 +149,10 @@ public enum MethodVariableAccess {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(methodDescription.getParameters().size() * 2);
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>();
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
                 TypeDescription parameterType = parameterDescription.getType().asErasure();
-                stackManipulations.add(forType(parameterType).loadOffset(parameterDescription.getOffset()));
+                stackManipulations.add(of(parameterType).loadOffset(parameterDescription.getOffset()));
                 stackManipulations.add(typeCastingHandler.ofIndex(parameterType, parameterDescription.getIndex()));
             }
             return new Compound(stackManipulations).apply(methodVisitor, implementationContext);

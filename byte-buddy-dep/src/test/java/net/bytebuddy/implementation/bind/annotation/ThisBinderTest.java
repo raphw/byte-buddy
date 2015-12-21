@@ -112,14 +112,14 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveType() throws Exception {
-        when(parameterType.isPrimitive()).thenReturn(true);
+        when(genericParameterType.isPrimitive()).thenReturn(true);
         when(target.getType()).thenReturn(genericParameterType);
         This.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayType() throws Exception {
-        when(parameterType.isArray()).thenReturn(true);
+        when(genericParameterType.isArray()).thenReturn(true);
         when(target.getType()).thenReturn(genericParameterType);
         This.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }

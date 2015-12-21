@@ -994,7 +994,7 @@ public class MethodCall implements Implementation.Composable {
                 }
                 ParameterDescription parameterDescription = interceptedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(parameterDescription.getType().asErasure()).loadOffset(parameterDescription.getOffset()),
+                        MethodVariableAccess.of(parameterDescription.getType().asErasure()).loadOffset(parameterDescription.getOffset()),
                         assigner.assign(parameterDescription.getType().asErasure(), targetType, typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + targetType + " for " + interceptedMethod);

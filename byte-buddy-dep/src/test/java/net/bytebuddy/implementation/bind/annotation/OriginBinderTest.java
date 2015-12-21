@@ -46,7 +46,8 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(genericTargetType);
-        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
+        when(targetType.asErasure()).thenReturn(targetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType);
         when(source.asDefined()).thenReturn(methodDescription);
     }
 
@@ -126,8 +127,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
-        targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
-        when(target.getType()).thenReturn(genericTargetType);
+        when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load()));
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -139,8 +139,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
-        targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
-        when(target.getType()).thenReturn(genericTargetType);
+        when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load()));
         when(methodDescription.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -149,7 +148,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
-        when(targetType.getName()).thenReturn(FOO);
+        when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         Origin.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }

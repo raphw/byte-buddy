@@ -74,13 +74,13 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveParameterType() throws Exception {
-        when(targetType.isPrimitive()).thenReturn(true);
+        when(genericTargetType.isPrimitive()).thenReturn(true);
         Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayParameterType() throws Exception {
-        when(targetType.isArray()).thenReturn(true);
+        when(genericTargetType.isArray()).thenReturn(true);
         Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

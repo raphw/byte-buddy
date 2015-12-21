@@ -131,7 +131,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
         int currentIndex = 1;
         for (TypeDescription parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
-                    MethodVariableAccess.forType(parameterType).loadOffset(currentIndex),
+                    MethodVariableAccess.of(parameterType).loadOffset(currentIndex),
                     assigner.assign(parameterType, TypeDescription.OBJECT, Assigner.Typing.STATIC)));
             currentIndex += parameterType.getStackSize().getSize();
         }
@@ -418,7 +418,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         implementationContext,
                         instrumentedMethod,
                         instrumentedType,
-                        MethodVariableAccess.forType(instrumentedType).loadOffset(0));
+                        MethodVariableAccess.of(instrumentedType).loadOffset(0));
             }
 
             @Override

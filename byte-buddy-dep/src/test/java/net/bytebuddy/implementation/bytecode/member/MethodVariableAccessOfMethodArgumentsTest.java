@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bytecode.member;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -35,7 +36,10 @@ public class MethodVariableAccessOfMethodArgumentsTest {
     private MethodDescription.InDefinedShape methodDescription, bridgeMethod;
 
     @Mock
-    private TypeDescription declaringType, firstParameterType, secondParameterType;
+    private TypeDescription declaringType, firstRawParameterType, secondRawParameterType;
+
+    @Mock
+    private GenericTypeDescription firstParameterType, secondParameterType;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -49,13 +53,17 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(firstParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(firstParameterType.asErasure()).thenReturn(firstRawParameterType);
+        when(firstParameterType.asGenericType()).thenReturn(firstParameterType);
+        when(secondParameterType.asErasure()).thenReturn(secondRawParameterType);
         when(secondParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(firstParameterType.asErasure()).thenReturn(firstParameterType);
-        when(secondParameterType.asErasure()).thenReturn(secondParameterType);
+        when(secondParameterType.asGenericType()).thenReturn(secondParameterType);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription,
                 Arrays.asList(firstParameterType, secondParameterType)));
         when(bridgeMethod.getDeclaringType()).thenReturn(declaringType);
-        when(secondParameterType.getInternalName()).thenReturn(FOO);
+        when(secondRawParameterType.getInternalName()).thenReturn(FOO);
+        when(firstParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstParameterType);
+        when(secondParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondParameterType);
     }
 
     @After

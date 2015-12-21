@@ -1765,7 +1765,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    return new Resolved.Simple(MethodVariableAccess.forType(parameters.get(index).getType().asErasure())
+                    return new Resolved.Simple(MethodVariableAccess.of(parameters.get(index).getType().asErasure())
                             .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()), parameters.get(index).getType().asErasure());
                 }
 
@@ -1829,7 +1829,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     if (!stackManipulation.isValid()) {
                         throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
                     }
-                    return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.forType(parameters.get(index)
+                    return new Resolved.Simple(new StackManipulation.Compound(MethodVariableAccess.of(parameters.get(index)
                             .getType().asErasure()).loadOffset(parameters.get(index).getOffset()), stackManipulation), typeDescription);
                 }
 

@@ -142,7 +142,7 @@ public abstract class FieldAccessor implements Implementation {
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
-                        MethodVariableAccess.forType(fieldDescription.getType().asErasure())
+                        MethodVariableAccess.of(fieldDescription.getType().asErasure())
                                 .loadOffset(methodDescription.getParameters().get(0).getOffset()),
                         stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()

@@ -617,7 +617,7 @@ public @interface FieldProxy {
                                         MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
-                                MethodVariableAccess.forType(parameterType).loadOffset(1),
+                                MethodVariableAccess.of(parameterType).loadOffset(1),
                                 assigner.assign(parameterType, setterMethod.getParameters().get(0).getType().asErasure(), Assigner.Typing.DYNAMIC),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID

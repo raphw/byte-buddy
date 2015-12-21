@@ -77,8 +77,8 @@ public class MethodConstantTest {
         when(parameterType.getDescriptor()).thenReturn(QUX);
         when(fieldDescription.getType()).thenReturn(genericFieldType);
         when(fieldDescription.isStatic()).thenReturn(true);
-        when(fieldType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(genericFieldType.asErasure()).thenReturn(fieldType); // TODO
+        when(genericFieldType.asErasure()).thenReturn(fieldType);
+        when(genericFieldType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getInternalName()).thenReturn(BAZ);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
