@@ -52,11 +52,14 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         when(instrumentedType.getDeclaredFields())
                 .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
         when(fieldDescription.getType()).thenReturn(genericFieldType);
-        when(fieldType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(genericFieldType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(genericFieldType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(genericFieldType.asErasure()).thenReturn(fieldType);
         when(fieldType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
-        when(genericFieldType.asErasure()).thenReturn(fieldType); // TODO
-        when(genericSetterType.asErasure()).thenReturn(setterType); // TODO
-        when(genericGetterType.asErasure()).thenReturn(getterType); // TODO
+        when(fieldType.asErasure()).thenReturn(fieldType);
+        when(fieldType.getInternalName()).thenReturn(FOO);
+        when(genericSetterType.asErasure()).thenReturn(setterType);
+        when(genericGetterType.asErasure()).thenReturn(getterType);
     }
 
     @Override
