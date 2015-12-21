@@ -17,14 +17,14 @@ public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinitio
     /**
      * The matcher to be applied to the raw types.
      */
-    private final ElementMatcher<? super Iterable<? extends TypeDefinition>> matcher;
+    private final ElementMatcher<? super Iterable<? extends TypeDescription>> matcher;
 
     /**
      * Creates a new raw type matcher.
      *
      * @param matcher The matcher to be applied to the raw types.
      */
-    public CollectionRawTypeMatcher(ElementMatcher<? super Iterable<? extends TypeDefinition>> matcher) {
+    public CollectionRawTypeMatcher(ElementMatcher<? super Iterable<? extends TypeDescription>> matcher) {
         this.matcher = matcher;
     }
 
