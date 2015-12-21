@@ -32,8 +32,8 @@ public class MethodDescriptionLatentTest extends AbstractMethodDescriptionTest {
     public void testTypeInitializer() throws Exception {
         TypeDescription typeDescription = mock(TypeDescription.class);
         MethodDescription.InDefinedShape typeInitializer = new MethodDescription.Latent.TypeInitializer(typeDescription);
-        assertThat(typeInitializer.getDeclaringType(), is((GenericTypeDescription) typeDescription));
-        assertThat(typeInitializer.getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(void.class)));
+        assertThat(typeInitializer.getDeclaringType(), is(typeDescription));
+        assertThat(typeInitializer.getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
         assertThat(typeInitializer.getParameters(), is((ParameterList) new ParameterList.Empty()));
         assertThat(typeInitializer.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(typeInitializer.getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));

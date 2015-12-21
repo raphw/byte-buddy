@@ -35,18 +35,6 @@ public abstract class AbstractTypeListTest<U> extends AbstractFilterableListTest
         assertThat(asList(Arrays.asList(getFirst(), getSecond())).getStackSize(), is(2));
     }
 
-    @Test
-    public void testGenericTypes() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asGenericTypes().size(), is(1));
-        assertThat(asList(Collections.singletonList(getFirst())).asGenericTypes().getOnly(), is((GenericTypeDescription) asElement(getFirst())));
-    }
-
-    @Test
-    public void testVisitor() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).accept(GenericTypeDescription.Visitor.NoOp.INSTANCE),
-                is((GenericTypeList) new GenericTypeList.Explicit(asList(Collections.singletonList(getFirst())))));
-    }
-
     protected interface Foo {
         /* empty */
     }

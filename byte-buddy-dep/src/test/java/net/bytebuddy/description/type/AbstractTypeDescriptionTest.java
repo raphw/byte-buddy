@@ -68,27 +68,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     protected abstract TypeDescription describe(Class<?> type);
 
     @Test
-    public void testGenericTypeProperties() throws Exception {
-        assertThat(describe(Object.class).getOwnerType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(Object.class).getParameters().size(), is(0));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNoUpperBounds() throws Exception {
-        describe(Object.class).getUpperBounds();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNoLowerBounds() throws Exception {
-        describe(Object.class).getLowerBounds();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNoSymbol() throws Exception {
-        describe(Object.class).getSymbol();
-    }
-
-    @Test
     public void testPrecondition() throws Exception {
         assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
         assertThat(describe(SampleClass.class), not(describe(SampleAnnotation.class)));
@@ -251,13 +230,13 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(SampleClass.class), is(equalFirst));
         assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
         assertThat(describe(SampleClass.class), not((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class)));
-        GenericTypeDescription nonRawType = mock(GenericTypeDescription.class);
+        TypeDefinition nonRawType = mock(GenericTypeDescription.class);
         when(nonRawType.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         assertThat(describe(SampleClass.class), not(nonRawType));
         assertThat(describe(SampleClass.class), not(new Object()));
         assertThat(describe(SampleClass.class), not(equalTo(null)));
         assertThat(describe(Object[].class), is((TypeDescription) new TypeDescription.ForLoadedType(Object[].class)));
-        assertThat(describe(Object[].class), not((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(describe(Object[].class), not((TypeDescription) TypeDescription.OBJECT));
     }
 
     @Test
@@ -302,10 +281,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(SampleInterface.class).getSuperType(), nullValue(GenericTypeDescription.class));
         assertThat(describe(SampleAnnotation.class).getSuperType(), nullValue(GenericTypeDescription.class));
         assertThat(describe(void.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(SampleClass.class).getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(describe(SampleClass.class).getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
         assertThat(describe(SampleIndirectInterfaceImplementation.class).getSuperType(),
                 is((GenericTypeDescription) new TypeDescription.ForLoadedType(SampleInterfaceImplementation.class)));
-        assertThat(describe(Object[].class).getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(describe(Object[].class).getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
     }
 
     @Test
@@ -391,12 +370,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(SamplePackagePrivate.class).isVisibleTo(new TypeDescription.ForLoadedType(SampleClass.class)), is(true));
         assertThat(describe(SampleInterface.class).isVisibleTo(new TypeDescription.ForLoadedType(SampleClass.class)), is(true));
         assertThat(describe(SampleAnnotation.class).isVisibleTo(new TypeDescription.ForLoadedType(SampleClass.class)), is(true));
-        assertThat(describe(SamplePackagePrivate.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(describe(SampleInterface.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(describe(SampleAnnotation.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(describe(int.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(describe(SampleInterface[].class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.OBJECT), is(false));
+        assertThat(describe(SampleInterface.class).isVisibleTo(TypeDescription.OBJECT), is(true));
+        assertThat(describe(SampleAnnotation.class).isVisibleTo(TypeDescription.OBJECT), is(false));
+        assertThat(describe(int.class).isVisibleTo(TypeDescription.OBJECT), is(true));
+        assertThat(describe(SampleInterface[].class).isVisibleTo(TypeDescription.OBJECT), is(true));
+        assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(TypeDescription.OBJECT), is(false));
     }
 
     @Test

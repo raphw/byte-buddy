@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -20,7 +21,7 @@ public class GenericTypeDescriptionVisitorForAttachmentTest {
         GenericTypeDescription original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         GenericTypeDescription detached = original.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
-        GenericTypeDescription attached = detached.accept(new GenericTypeDescription.Visitor.Substitutor.ForAttachment(target, target));
+        GenericTypeDescription attached = detached.accept(new GenericTypeDescription.Visitor.Substitutor.ForAttachment(target.asGenericType(), target));
         assertThat(attached.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(attached.asErasure(), sameInstance(target));
         assertThat(attached.getParameters().size(), is(4));

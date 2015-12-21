@@ -41,7 +41,7 @@ public class FixedValueTest extends AbstractImplementationTest {
 
     @Test
     public void testTypeDescriptionConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(new TypeDescription.ForLoadedType(Object.class))).getLoaded();
+        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(TypeDescription.OBJECT)).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(qux.newInstance().bar(), is((Object) Object.class));
     }

@@ -3,7 +3,6 @@ package net.bytebuddy.utility;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Modifier;
@@ -127,29 +126,29 @@ public final class ByteBuddyCommons {
     /**
      * Validates that a type is a throwable type.
      *
-     * @param typeDescription The type to validate.
-     * @param <T>             The type of the input value.
+     * @param typeDefinition The type to validate.
+     * @param <T>            The type of the input value.
      * @return The input value.
      */
-    public static <T extends GenericTypeDescription> T isThrowable(T typeDescription) {
-        if (!isActualType(typeDescription).asErasure().isAssignableTo(Throwable.class)) {
-            throw new IllegalArgumentException("Cannot throw instances of: " + typeDescription);
+    public static <T extends TypeDefinition> T isThrowable(T typeDefinition) {
+        if (!isActualType(typeDefinition).asErasure().isAssignableTo(Throwable.class)) {
+            throw new IllegalArgumentException("Cannot throw instances of: " + typeDefinition);
         }
-        return typeDescription;
+        return typeDefinition;
     }
 
     /**
      * Validates that a collection of types only contains throwable types.
      *
-     * @param typeDescriptions The types to validate.
-     * @param <T>              The type of the input value.
+     * @param typeDefinitions The types to validate.
+     * @param <T>             The type of the input value.
      * @return The input value.
      */
-    public static <T extends Collection<? extends GenericTypeDescription>> T isThrowable(T typeDescriptions) {
-        for (GenericTypeDescription typeDescription : typeDescriptions) {
-            isThrowable(typeDescription);
+    public static <T extends Collection<? extends TypeDefinition>> T isThrowable(T typeDefinitions) {
+        for (TypeDefinition typeDefinition : typeDefinitions) {
+            isThrowable(typeDefinition);
         }
-        return typeDescriptions;
+        return typeDefinitions;
     }
 
     /**
@@ -187,85 +186,85 @@ public final class ByteBuddyCommons {
     /**
      * Verifies that a type can be implemented.
      *
-     * @param typeDescription The type to verify.
-     * @param <T>             The actual type of the input.
+     * @param typeDefinition The type to verify.
+     * @param <T>            The actual type of the input.
      * @return The input value.
      */
-    public static <T extends TypeDefinition> T isImplementable(T typeDescription) {
-        if (!isExtendable(typeDescription).asErasure().isInterface()) {
-            throw new IllegalArgumentException("Not an interface: " + typeDescription);
+    public static <T extends TypeDefinition> T isImplementable(T typeDefinition) {
+        if (!isExtendable(typeDefinition).asErasure().isInterface()) {
+            throw new IllegalArgumentException("Not an interface: " + typeDefinition);
         }
-        return typeDescription;
+        return typeDefinition;
     }
 
     /**
      * Verifies that a collection of types can be implemented.
      *
-     * @param typeDescriptions The types to verify.
-     * @param <T>              The actual type of the input.
+     * @param typeDefinitions The types to verify.
+     * @param <T>             The actual type of the input.
      * @return The input value.
      */
-    public static <T extends Collection<? extends TypeDefinition>> T isImplementable(T typeDescriptions) {
-        for (TypeDefinition typeDescription : typeDescriptions) {
-            isImplementable(typeDescription);
+    public static <T extends Collection<? extends TypeDefinition>> T isImplementable(T typeDefinitions) {
+        for (TypeDefinition typeDefinition : typeDefinitions) {
+            isImplementable(typeDefinition);
         }
-        return typeDescriptions;
+        return typeDefinitions;
     }
 
     /**
      * Validates that a type represents an actual type, i.e. not a wildcard and not {@code void}.
      *
-     * @param typeDescription The type to validate.
-     * @param <T>             The actual type of the argument.
+     * @param typeDefinition The type to validate.
+     * @param <T>            The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends TypeDefinition> T isActualType(T typeDescription) {
-        if (isActualTypeOrVoid(typeDescription).represents(void.class)) {
+    public static <T extends TypeDefinition> T isActualType(T typeDefinition) {
+        if (isActualTypeOrVoid(typeDefinition).represents(void.class)) {
             throw new IllegalArgumentException("The void non-type cannot be assigned a value");
         }
-        return typeDescription;
+        return typeDefinition;
     }
 
     /**
      * Validates that a collection of types represents an actual type, i.e. not a wildcard and not {@code void}.
      *
-     * @param typeDescriptions The types to validate.
-     * @param <T>              The actual type of the argument.
+     * @param typeDefinitions The types to validate.
+     * @param <T>             The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends Collection<? extends TypeDefinition>> T isActualType(T typeDescriptions) {
-        for (TypeDefinition typeDescription : typeDescriptions) {
+    public static <T extends Collection<? extends TypeDefinition>> T isActualType(T typeDefinitions) {
+        for (TypeDefinition typeDescription : typeDefinitions) {
             isActualType(typeDescription);
         }
-        return typeDescriptions;
+        return typeDefinitions;
     }
 
     /**
      * Validates that a type represents an actual type or {@code void}, i.e. not a wildcard.
      *
-     * @param typeDescription The type to validate.
-     * @param <T>             The actual type of the argument.
+     * @param typeDefinition The type to validate.
+     * @param <T>            The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends TypeDefinition> T isActualTypeOrVoid(T typeDescription) {
-        if (typeDescription.getSort().isWildcard()) {
-            throw new IllegalArgumentException("Not a top-level type: " + typeDescription);
+    public static <T extends TypeDefinition> T isActualTypeOrVoid(T typeDefinition) {
+        if (typeDefinition.getSort().isWildcard()) {
+            throw new IllegalArgumentException("Not a top-level type: " + typeDefinition);
         }
-        return typeDescription;
+        return typeDefinition;
     }
 
     /**
      * Validates that a collection of types represents an actual type or {@code void}, i.e. not a wildcard.
      *
-     * @param typeDescriptions The types to validate.
-     * @param <T>              The actual type of the argument.
+     * @param typeDefinition The types to validate.
+     * @param <T>            The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends Collection<? extends TypeDefinition>> T isActualTypeOrVoid(T typeDescriptions) {
-        for (TypeDefinition typeDescription : typeDescriptions) {
+    public static <T extends Collection<? extends TypeDefinition>> T isActualTypeOrVoid(T typeDefinition) {
+        for (TypeDefinition typeDescription : typeDefinition) {
             isActualTypeOrVoid(typeDescription);
         }
-        return typeDescriptions;
+        return typeDefinition;
     }
 
     /**
@@ -373,19 +372,19 @@ public final class ByteBuddyCommons {
     /**
      * Validates that a collection of generic type descriptions does not contain duplicate type erasure.
      *
-     * @param typeDescriptions The type descriptions to validate for being unique.
-     * @param <T>              The actual type of the argument.
+     * @param typeDefinitions The type definitions to validate for being unique.
+     * @param <T>             The actual type of the argument.
      * @return The input value.
      */
-    public static <T extends Collection<? extends GenericTypeDescription>> T uniqueRaw(T typeDescriptions) {
-        Map<TypeDescription, GenericTypeDescription> types = new HashMap<TypeDescription, GenericTypeDescription>();
-        for (GenericTypeDescription typeDescription : typeDescriptions) {
-            GenericTypeDescription conflictingType = types.put(typeDescription.asErasure(), typeDescription);
+    public static <T extends Collection<? extends TypeDefinition>> T uniqueRaw(T typeDefinitions) {
+        Map<TypeDescription, TypeDefinition> types = new HashMap<TypeDescription, TypeDefinition>();
+        for (TypeDefinition typeDefinition : typeDefinitions) {
+            TypeDefinition conflictingType = types.put(typeDefinition.asErasure(), typeDefinition);
             if (conflictingType != null) {
-                throw new IllegalArgumentException("Duplicate types: " + typeDescription + " and " + conflictingType);
+                throw new IllegalArgumentException("Duplicate types: " + typeDefinition + " and " + conflictingType);
             }
         }
-        return typeDescriptions;
+        return typeDefinitions;
     }
 
     /**
@@ -400,16 +399,16 @@ public final class ByteBuddyCommons {
     public static <T extends TypeDefinition> List<T> joinUniqueRaw(Collection<? extends T> left, Collection<? extends T> right) {
         List<T> result = new ArrayList<T>(left.size() + right.size());
         Map<TypeDescription, TypeDefinition> types = new HashMap<TypeDescription, TypeDefinition>();
-        for (T typeDescription : left) {
-            types.put(typeDescription.asErasure(), typeDescription);
-            result.add(typeDescription);
+        for (T typeDefinition : left) {
+            types.put(typeDefinition.asErasure(), typeDefinition);
+            result.add(typeDefinition);
         }
-        for (T typeDescription : right) {
-            TypeDefinition conflictingType = types.put(typeDescription.asErasure(), typeDescription);
-            if (conflictingType != null && !conflictingType.equals(typeDescription)) {
-                throw new IllegalArgumentException("Conflicting type erasures: " + conflictingType + " and " + typeDescription);
+        for (T typeDefinition : right) {
+            TypeDefinition conflictingType = types.put(typeDefinition.asErasure(), typeDefinition);
+            if (conflictingType != null && !conflictingType.equals(typeDefinition)) {
+                throw new IllegalArgumentException("Conflicting type erasures: " + conflictingType + " and " + typeDefinition);
             } else if (conflictingType == null) {
-                result.add(typeDescription);
+                result.add(typeDefinition);
             }
         }
         return result;

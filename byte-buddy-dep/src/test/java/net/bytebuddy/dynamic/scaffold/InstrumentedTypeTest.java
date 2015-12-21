@@ -281,7 +281,7 @@ public class InstrumentedTypeTest {
         assertThat(makePlainInstrumentedType().isAssignableFrom(Object.class), is(false));
         assertThat(makePlainInstrumentedType().isAssignableFrom(Serializable.class), is(false));
         assertThat(makePlainInstrumentedType().isAssignableFrom(Integer.class), is(false));
-        TypeDescription objectTypeDescription = new TypeDescription.ForLoadedType(Object.class);
+        TypeDescription objectTypeDescription = TypeDescription.OBJECT;
         assertThat(makePlainInstrumentedType().isAssignableFrom(objectTypeDescription), is(false));
         TypeDescription serializableTypeDescription = new TypeDescription.ForLoadedType(Serializable.class);
         assertThat(makePlainInstrumentedType().isAssignableFrom(serializableTypeDescription), is(false));
@@ -309,7 +309,7 @@ public class InstrumentedTypeTest {
 
     @Test
     public void testSuperType() {
-        assertThat(makePlainInstrumentedType().getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
         assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Integer.class)));
         assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class)));
     }

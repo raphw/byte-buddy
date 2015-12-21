@@ -8,7 +8,7 @@ public class ArrayAccessOtherTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testVoidThrowsException() throws Exception {
-        ArrayAccess.of(new TypeDescription.ForLoadedType(void.class));
+        ArrayAccess.of(TypeDescription.VOID);
     }
 
     @Test

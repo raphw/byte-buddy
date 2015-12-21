@@ -32,6 +32,27 @@ public abstract class AbstractGenericTypeDescriptionTest {
     protected abstract GenericTypeDescription describe(Method method);
 
     @Test
+    public void testNonGenericTypeNoOwnerType() throws Exception { // TODO: Still true?
+        assertThat(describe(NonGeneric.class.getDeclaredField(FOO)).getOwnerType(), nullValue(GenericTypeDescription.class));
+        assertThat(describe(NonGeneric.class.getDeclaredField(FOO)).getParameters().size(), is(0));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonGenericTypeNoUpperBounds() throws Exception {
+        describe(NonGeneric.class.getDeclaredField(FOO)).getUpperBounds();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonGenericTypeNoLowerBounds() throws Exception {
+        describe(NonGeneric.class.getDeclaredField(FOO)).getLowerBounds();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonGenericTypeNoSymbol() throws Exception {
+        describe(NonGeneric.class.getDeclaredField(FOO)).getSymbol();
+    }
+
+    @Test
     public void testSimpleParameterizedType() throws Exception {
         GenericTypeDescription genericTypeDescription = describe(SimpleParameterizedType.class.getDeclaredField(FOO));
         assertThat(genericTypeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
@@ -759,7 +780,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         assertThat(genericTypeDescription.getUpperBounds().size(), is(1));
         GenericTypeDescription upperBound = genericTypeDescription.getUpperBounds().getOnly();
         assertThat(upperBound.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(upperBound.asErasure(), is((GenericTypeDescription) genericTypeDescription.asErasure()));
+        assertThat(upperBound.asErasure(), is(genericTypeDescription.asErasure()));
         assertThat(upperBound.getParameters().size(), is(1));
         assertThat(upperBound.getParameters().getOnly(), is(genericTypeDescription));
     }
@@ -1147,6 +1168,12 @@ public abstract class AbstractGenericTypeDescriptionTest {
     @SuppressWarnings("unused")
     public interface Qux<T, U> {
         /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public static class NonGeneric {
+
+        Object foo;
     }
 
     @SuppressWarnings("unused")

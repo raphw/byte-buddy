@@ -71,8 +71,8 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsType() throws Exception {
-        assertThat(ElementMatchers.is(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.is(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.is(Object.class).matches(TypeDescription.OBJECT), is(true));
+        assertThat(ElementMatchers.is(String.class).matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test
@@ -195,9 +195,9 @@ public class ElementMatchersTest {
 
     @Test
     public void testAnyOfType() throws Exception {
-        assertThat(ElementMatchers.anyOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.anyOf(String.class, Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.anyOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.anyOf(Object.class).matches(TypeDescription.OBJECT), is(true));
+        assertThat(ElementMatchers.anyOf(String.class, Object.class).matches(TypeDescription.OBJECT), is(true));
+        assertThat(ElementMatchers.anyOf(String.class).matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test
@@ -281,9 +281,9 @@ public class ElementMatchersTest {
 
     @Test
     public void testNoneOfType() throws Exception {
-        assertThat(ElementMatchers.noneOf(Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.noneOf(String.class, Object.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.noneOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(ElementMatchers.noneOf(Object.class).matches(TypeDescription.OBJECT), is(false));
+        assertThat(ElementMatchers.noneOf(String.class, Object.class).matches(TypeDescription.OBJECT), is(false));
+        assertThat(ElementMatchers.noneOf(String.class).matches(TypeDescription.OBJECT), is(true));
     }
 
     @Test
@@ -521,7 +521,7 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.isAnnotatedWith(IsAnnotatedWithAnnotation.class)
                 .matches(new TypeDescription.ForLoadedType(IsAnnotatedWith.class)), is(true));
         assertThat(ElementMatchers.isAnnotatedWith(IsAnnotatedWithAnnotation.class)
-                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+                .matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test
@@ -929,11 +929,11 @@ public class ElementMatchersTest {
 
     @Test
     public void testIsSubOrSuperType() throws Exception {
-        assertThat(ElementMatchers.isSubTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(ElementMatchers.isSubTypeOf(Object.class).matches(new TypeDescription.ForLoadedType(String.class)), is(true));
-        assertThat(ElementMatchers.isSubTypeOf(Serializable.class).matches(new TypeDescription.ForLoadedType(String.class)), is(true));
-        assertThat(ElementMatchers.isSuperTypeOf(Object.class).matches(new TypeDescription.ForLoadedType(String.class)), is(false));
-        assertThat(ElementMatchers.isSuperTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
+        assertThat(ElementMatchers.isSubTypeOf(String.class).matches(TypeDescription.OBJECT), is(false));
+        assertThat(ElementMatchers.isSubTypeOf(Object.class).matches(TypeDescription.STRING), is(true));
+        assertThat(ElementMatchers.isSubTypeOf(Serializable.class).matches(TypeDescription.STRING), is(true));
+        assertThat(ElementMatchers.isSuperTypeOf(Object.class).matches(TypeDescription.STRING), is(false));
+        assertThat(ElementMatchers.isSuperTypeOf(String.class).matches(TypeDescription.OBJECT), is(true));
         assertThat(ElementMatchers.isSuperTypeOf(String.class).matches(new TypeDescription.ForLoadedType(Serializable.class)), is(true));
     }
 
@@ -947,8 +947,8 @@ public class ElementMatchersTest {
 
     @Test
     public void testTypeSort() throws Exception {
-        assertThat(ElementMatchers.ofSort(TypeDefinition.Sort.NON_GENERIC).matches(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(ElementMatchers.ofSort(TypeDefinition.Sort.VARIABLE).matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(ElementMatchers.ofSort(TypeDefinition.Sort.NON_GENERIC).matches(TypeDescription.OBJECT), is(true));
+        assertThat(ElementMatchers.ofSort(TypeDefinition.Sort.VARIABLE).matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test
@@ -956,11 +956,11 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.declaresField(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
                 .matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
         assertThat(ElementMatchers.declaresField(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
-                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+                .matches(TypeDescription.OBJECT), is(false));
         assertThat(ElementMatchers.declaresMethod(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
                 .matches(new TypeDescription.ForLoadedType(DeclaresFieldOrMethod.class)), is(true));
         assertThat(ElementMatchers.declaresMethod(ElementMatchers.isAnnotatedWith(OtherAnnotation.class))
-                .matches(new TypeDescription.ForLoadedType(Object.class)), is(false));
+                .matches(TypeDescription.OBJECT), is(false));
     }
 
     @Test

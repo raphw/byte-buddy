@@ -397,7 +397,7 @@ public abstract class AbstractAnnotationDescriptionTest {
                 methodName,
                 Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),
-                new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
+                new GenericTypeDescription.ForNonGenericType.OfLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),

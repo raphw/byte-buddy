@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
@@ -29,6 +30,9 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
     protected TypeDescription sourceType;
 
     @Mock
+    protected GenericTypeDescription genericSourceType;
+
+    @Mock
     private ParameterDescription sourceParameter;
 
     protected static Matcher<? super ArgumentTypeResolver.ParameterIndexToken> describesArgument(int... index) {
@@ -46,10 +50,10 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
         super.setUp();
         when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
         when(sourceParameterList.get(anyInt())).thenReturn(sourceParameter);
-        when(sourceParameter.getType()).thenReturn(sourceType);
+        when(sourceParameter.getType()).thenReturn(genericSourceType); // TODO
+        when(genericSourceType.asErasure()).thenReturn(sourceType);
         when(leftMethod.getParameters()).thenReturn((ParameterList) leftParameterList);
         when(rightMethod.getParameters()).thenReturn((ParameterList) rightParameterList);
-        when(sourceType.asErasure()).thenReturn(sourceType);
     }
 
     private static class IndexTokenMatcher extends BaseMatcher<ArgumentTypeResolver.ParameterIndexToken> {

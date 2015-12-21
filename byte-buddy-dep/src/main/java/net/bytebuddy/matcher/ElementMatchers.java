@@ -321,7 +321,7 @@ public final class ElementMatchers {
      * @param <T>   The type of the matched object.
      * @return A matcher that checks for the equality with any of the given objects.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> anyOf(Type... value) {
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> anyOf(Type... value) {
         return anyOf(new GenericTypeList.ForLoadedTypes(nonNull(value)));
     }
 

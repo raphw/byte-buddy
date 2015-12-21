@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -30,6 +31,9 @@ public class InlineImplementationMatcherTest {
     private TypeDescription typeDescription, otherType;
 
     @Mock
+    private GenericTypeDescription genericTypeDescription, otherGenericType;
+
+    @Mock
     private ElementMatcher<? super MethodDescription> ignoredMethods, predefinedMethods;
 
     private LatentMethodMatcher latentMethodMatcher;
@@ -38,11 +42,11 @@ public class InlineImplementationMatcherTest {
     public void setUp() throws Exception {
         latentMethodMatcher = new InliningImplementationMatcher(ignoredMethods, predefinedMethods);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
-        when(typeDescription.asGenericType()).thenReturn(typeDescription);
-        when(typeDescription.asErasure()).thenReturn(typeDescription);
+        when(typeDescription.asGenericType()).thenReturn(genericTypeDescription); // TODO
+        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
         when(otherType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
-        when(otherType.asGenericType()).thenReturn(otherType);
-        when(otherType.asErasure()).thenReturn(otherType);
+        when(otherType.asGenericType()).thenReturn(otherGenericType); // TODO
+        when(otherGenericType.asErasure()).thenReturn(otherType);
     }
 
     @Test

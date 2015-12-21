@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -47,6 +48,9 @@ public class FieldAccessTest {
     private TypeDescription declaringType, fieldType;
 
     @Mock
+    private GenericTypeDescription genericFieldType;
+
+    @Mock
     private MethodVisitor methodVisitor;
 
     @Mock
@@ -84,7 +88,8 @@ public class FieldAccessTest {
     public void setUp() throws Exception {
         when(declaringType.asErasure()).thenReturn(declaringType);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
-        when(fieldDescription.getType()).thenReturn(fieldType);
+        when(fieldDescription.getType()).thenReturn(genericFieldType);
+        when(genericFieldType.asErasure()).thenReturn(fieldType); // TODO
         when(declaringType.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getInternalName()).thenReturn(BAR);
         when(fieldDescription.getDescriptor()).thenReturn(QUX);

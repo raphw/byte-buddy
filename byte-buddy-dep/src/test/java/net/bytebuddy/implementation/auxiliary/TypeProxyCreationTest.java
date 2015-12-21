@@ -76,7 +76,7 @@ public class TypeProxyCreationTest {
         when(proxyMethod.getDeclaringType()).thenReturn(foo);
         when(proxyMethod.getInternalName()).thenReturn(FOO);
         when(proxyMethod.getDescriptor()).thenReturn(FOO);
-        when(proxyMethod.getReturnType()).thenReturn(new TypeDescription.ForLoadedType(Object.class));
+        when(proxyMethod.getReturnType()).thenReturn(TypeDescription.OBJECT);
         when(proxyMethod.asDefined()).thenReturn(proxyMethod);
     }
 
@@ -213,7 +213,7 @@ public class TypeProxyCreationTest {
         when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
         StackManipulation stackManipulation = new TypeProxy.ForSuperMethodByConstructor(foo,
                 implementationTarget,
-                Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(Void.class)),
+                Collections.<TypeDescription>singletonList(TypeDescription.VOID),
                 true,
                 false);
         MethodVisitor methodVisitor = mock(MethodVisitor.class);

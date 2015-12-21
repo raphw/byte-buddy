@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -31,6 +32,9 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
     @Mock
     private TypeDescription leftType, rightType, superType;
 
+    @Mock
+    private GenericTypeDescription genericSuperType;
+
     private TypeWriter.Default.FrameComputingClassWriter frameComputingClassWriter;
 
     @Before
@@ -40,8 +44,8 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
         when(typePool.describe(BAR.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(rightType));
         when(leftType.getInternalName()).thenReturn(QUX);
         when(rightType.getInternalName()).thenReturn(BAZ);
-        when(leftType.getSuperType()).thenReturn(superType);
-        when(superType.asErasure()).thenReturn(superType);
+        when(leftType.getSuperType()).thenReturn(genericSuperType); // TODO: Refactoring
+        when(genericSuperType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(FOOBAR);
     }
 

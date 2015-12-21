@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -24,10 +25,10 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
     private final Class<?> secondType;
 
     @Mock
-    private TypeDescription firstPrimitive;
+    private GenericTypeDescription firstPrimitive, secondPrimitive;
 
     @Mock
-    private TypeDescription secondPrimitive;
+    private TypeDescription firstRawPrimitive, secondRawPrimitive;
 
     public ArgumentTypeResolverPrimitiveTest(Class<?> firstType, Class<?> secondType) {
         this.firstType = firstType;
@@ -83,8 +84,8 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         when(firstPrimitive.represents(firstType)).thenReturn(true);
         when(secondPrimitive.isPrimitive()).thenReturn(true);
         when(secondPrimitive.represents(secondType)).thenReturn(true);
-        when(firstPrimitive.asErasure()).thenReturn(firstPrimitive);
-        when(secondPrimitive.asErasure()).thenReturn(secondPrimitive);
+        when(firstPrimitive.asErasure()).thenReturn(firstRawPrimitive); // TODO
+        when(secondPrimitive.asErasure()).thenReturn(secondRawPrimitive); // TODO
     }
 
     @Test
@@ -112,8 +113,8 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         testDominance(firstPrimitive, firstPrimitive, MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
     }
 
-    private void testDominance(TypeDescription leftPrimitive,
-                               TypeDescription rightPrimitive,
+    private void testDominance(GenericTypeDescription leftPrimitive,
+                               GenericTypeDescription rightPrimitive,
                                MethodDelegationBinder.AmbiguityResolver.Resolution expected) throws Exception {
         when(sourceParameterList.size()).thenReturn(2);
         when(sourceType.isPrimitive()).thenReturn(true);

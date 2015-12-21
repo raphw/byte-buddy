@@ -26,12 +26,12 @@ public class ArrayFactoryObjectPropertiesTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testVoidIsIllegal() throws Exception {
-        ArrayFactory.forType(new TypeDescription.ForLoadedType(void.class));
+        ArrayFactory.forType(TypeDescription.VOID);
     }
 
     @Test
     public void testIllegalArrayStackManipulation() throws Exception {
-        assertThat(ArrayFactory.forType(new TypeDescription.ForLoadedType(Object.class))
+        assertThat(ArrayFactory.forType(TypeDescription.OBJECT)
                 .new ArrayStackManipulation(Collections.<StackManipulation>singletonList(StackManipulation.Illegal.INSTANCE))
                 .isValid(), is(false));
     }
