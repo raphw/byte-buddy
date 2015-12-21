@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -31,10 +32,13 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerDroppingTest {
     @Mock
     private TypeDescription targetType;
 
+    @Mock
+    private GenericTypeDescription genericTargetType;
+
     @Before
     public void setUp() throws Exception {
-        when(target.getReturnType()).thenReturn(targetType);
-        when(targetType.asErasure()).thenReturn(targetType);
+        when(target.getReturnType()).thenReturn(genericTargetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
         when(targetType.getStackSize()).thenReturn(StackSize.SINGLE);
     }
 

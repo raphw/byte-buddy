@@ -2,7 +2,9 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -160,8 +162,8 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.asErasure()).thenReturn(typeDescription);
                 when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(typeDescription)));
-                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty());
-                when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
+                when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
                 return typeDescription;
             }
         }).apply();

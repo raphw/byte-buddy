@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.TargetType;
@@ -43,8 +44,8 @@ public class InstrumentedTypeTest {
         return new InstrumentedType.Default(FOO + "." + BAZ,
                 Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),
-                TypeDescription.OBJECT,
-                Collections.<GenericTypeDescription>singletonList(new TypeDescription.ForLoadedType(Serializable.class)),
+                GenericTypeDescription.OBJECT,
+                Collections.<GenericTypeDescription>singletonList(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Serializable.class)),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
@@ -55,16 +56,17 @@ public class InstrumentedTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testWithField() throws Exception {
-        TypeDescription fieldType = mock(TypeDescription.class);
-        when(fieldType.asErasure()).thenReturn(fieldType);
+        GenericTypeDescription fieldType = mock(GenericTypeDescription.class);
         when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType);
-        when(fieldType.getName()).thenReturn(FOO);
+        TypeDescription rawFieldType = mock(TypeDescription.class);
+        when(fieldType.asErasure()).thenReturn(rawFieldType);
+        when(rawFieldType.getName()).thenReturn(FOO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getType(), is((GenericTypeDescription) fieldType));
+        assertThat(fieldDescription.getType(), is(fieldType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
@@ -74,7 +76,7 @@ public class InstrumentedTypeTest {
     public void testWithFieldOfInstrumentedType() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TargetType.DESCRIPTION));
+        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TargetType.GENERIC_DESCRIPTION));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -88,7 +90,7 @@ public class InstrumentedTypeTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC,
-                TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1)));
+                GenericTypeDescription.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -102,10 +104,11 @@ public class InstrumentedTypeTest {
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testWithFieldDouble() throws Exception {
-        TypeDescription fieldType = mock(TypeDescription.class);
-        when(fieldType.asErasure()).thenReturn(fieldType);
+        GenericTypeDescription fieldType = mock(GenericTypeDescription.class);
         when(fieldType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(fieldType);
-        when(fieldType.getName()).thenReturn(FOO);
+        TypeDescription rawFieldType = mock(TypeDescription.class);
+        when(fieldType.asErasure()).thenReturn(rawFieldType);
+        when(rawFieldType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
                 .withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType))
                 .withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType));
@@ -114,15 +117,17 @@ public class InstrumentedTypeTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testWithMethod() throws Exception {
-        TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asErasure()).thenReturn(returnType);
+        GenericTypeDescription returnType = mock(GenericTypeDescription.class);
         when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
-        TypeDescription parameterType = mock(TypeDescription.class);
-        when(parameterType.asErasure()).thenReturn(parameterType);
+        TypeDescription rawReturnType = mock(TypeDescription.class);
+        when(returnType.asErasure()).thenReturn(rawReturnType);
+        when(rawReturnType.getName()).thenReturn(FOO);
+        GenericTypeDescription parameterType = mock(GenericTypeDescription.class);
         when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        when(returnType.getName()).thenReturn(FOO);
-        when(parameterType.getName()).thenReturn(QUX);
-        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        TypeDescription rawParameterType = mock(TypeDescription.class);
+        when(parameterType.asErasure()).thenReturn(rawParameterType);
+        when(rawParameterType.getName()).thenReturn(QUX);
+        when(rawParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
@@ -131,9 +136,9 @@ public class InstrumentedTypeTest {
                 Collections.singletonList(parameterType)));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getReturnType(), is((GenericTypeDescription) returnType));
+        assertThat(methodDescription.getReturnType(), is(returnType));
         assertThat(methodDescription.getParameters().size(), is(1));
-        assertThat(methodDescription.getParameters().asTypeList(), is(Collections.<GenericTypeDescription>singletonList(parameterType)));
+        assertThat(methodDescription.getParameters().asTypeList(), is(Collections.singletonList(parameterType)));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
@@ -146,8 +151,8 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                TargetType.DESCRIPTION,
-                Collections.singletonList(TargetType.DESCRIPTION)));
+                TargetType.GENERIC_DESCRIPTION,
+                Collections.singletonList(TargetType.GENERIC_DESCRIPTION)));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType(), sameInstance((GenericTypeDescription) instrumentedType));
@@ -165,8 +170,8 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1),
-                Collections.singletonList(TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION, 1))));
+                GenericTypeDescription.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1),
+                Collections.singletonList(GenericTypeDescription.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asErasure().isArray(), is(true));
@@ -183,13 +188,14 @@ public class InstrumentedTypeTest {
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testWithMethodDouble() throws Exception {
-        TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asErasure()).thenReturn(returnType);
-        when(returnType.getName()).thenReturn(FOO);
+        GenericTypeDescription returnType = mock(GenericTypeDescription.class);
         when(returnType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
+        TypeDescription rawReturnType = mock(TypeDescription.class);
+        when(returnType.asErasure()).thenReturn(rawReturnType);
+        when(rawReturnType.getName()).thenReturn(FOO);
         makePlainInstrumentedType()
-                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<TypeDescription>emptyList()))
-                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<TypeDescription>emptyList()));
+                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<GenericTypeDescription>emptyList()))
+                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<GenericTypeDescription>emptyList()));
     }
 
     @Test

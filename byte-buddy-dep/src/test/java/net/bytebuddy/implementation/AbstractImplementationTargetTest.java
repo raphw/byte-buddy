@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -33,12 +34,15 @@ public abstract class AbstractImplementationTargetTest {
     protected TypeDescription instrumentedType, methodDeclaringType, returnType, defaultMethodDeclaringType;
 
     @Mock
-    protected MethodDescription.InDefinedShape invokableMethod, defaultMethod;
+    protected GenericTypeDescription genericInstrumentedType, genericReturnType;
 
-    protected Implementation.Target implementationTarget;
+    @Mock
+    protected MethodDescription.InDefinedShape invokableMethod, defaultMethod;
 
     @Mock
     protected MethodDescription.Token invokableToken, defaultToken;
+
+    protected Implementation.Target implementationTarget;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -53,7 +57,7 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultGraph.locate(defaultToken)).thenReturn(new MethodGraph.Node.Simple(defaultMethod));
         when(methodDeclaringType.asErasure()).thenReturn(methodDeclaringType);
         when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);
-        when(invokableMethod.getReturnType()).thenReturn(returnType);
+        when(invokableMethod.getReturnType()).thenReturn(genericReturnType);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(returnType.asErasure()).thenReturn(returnType);
         when(invokableMethod.getInternalName()).thenReturn(FOO);
@@ -63,13 +67,15 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultMethod.getInternalName()).thenReturn(QUXBAZ);
         when(defaultMethod.getDescriptor()).thenReturn(FOOBAZ);
         when(defaultMethod.getDeclaringType()).thenReturn(defaultMethodDeclaringType);
-        when(defaultMethod.getReturnType()).thenReturn(returnType);
+        when(defaultMethod.getReturnType()).thenReturn(genericReturnType);
         when(defaultMethod.asToken()).thenReturn(defaultToken);
         when(defaultMethod.asDefined()).thenReturn(defaultMethod);
         when(defaultMethod.isSpecializableFor(defaultMethodDeclaringType)).thenReturn(true);
         when(defaultMethodDeclaringType.isInterface()).thenReturn(true);
         when(defaultMethodDeclaringType.asErasure()).thenReturn(defaultMethodDeclaringType);
         when(defaultMethodDeclaringType.getInternalName()).thenReturn(BAZBAR);
+        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
+        when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType); // TODO
         implementationTarget = makeImplementationTarget();
     }
 

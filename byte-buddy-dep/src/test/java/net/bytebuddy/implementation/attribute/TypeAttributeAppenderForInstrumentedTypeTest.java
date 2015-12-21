@@ -40,7 +40,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
     public void testDoesNotApplyForTargetTypeBeingInstrumentedType() throws Exception {
         when(typeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
-        new TypeAttributeAppender.ForInstrumentedType(valueFilter).apply(classVisitor, typeDescription, typeDescription);
+        new TypeAttributeAppender.ForInstrumentedType(valueFilter).apply(classVisitor, typeDescription, genericTypeDescription);
         verify(typeDescription).getSuperType();
         verifyNoMoreInteractions(typeDescription);
     }

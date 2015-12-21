@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -43,18 +44,21 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Mock
     private TypeDescription superType;
 
+    @Mock
+    private GenericTypeDescription genericSuperType;
+
     @Override
     @Before
     public void setUp() throws Exception {
         when(methodGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
-        when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.asErasure()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
+        when(genericSuperType.asErasure()).thenReturn(superType); // TODO
         when(superType.getInternalName()).thenReturn(BAR);
         when(rebasedMethod.getInternalName()).thenReturn(QUX);
         when(rebasedMethod.getDescriptor()).thenReturn(FOO);
         when(rebasedMethod.asDefined()).thenReturn(rebasedMethod);
-        when(rebasedMethod.getReturnType()).thenReturn(returnType);
-        when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty());
+        when(rebasedMethod.getReturnType()).thenReturn(genericReturnType);
+        when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(rebasedMethod.asToken()).thenReturn(rebasedToken);
         when(methodRebaseResolver.resolve(rebasedMethod)).thenReturn(resolution);

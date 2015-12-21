@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -25,10 +26,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     private FieldDescription.InDefinedShape fieldDescription;
 
     @Mock
-    private TypeDescription fieldType;
-
-    @Mock
-    private TypeDescription targetType;
+    private GenericTypeDescription fieldType, targetType;
 
     public FieldValueBinderTest() {
         super(FieldValue.class);
@@ -40,8 +38,6 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
         super.setUp();
         when(fieldDescription.asDefined()).thenReturn(fieldDescription);
         when(fieldDescription.getType()).thenReturn(fieldType);
-        when(fieldType.asErasure()).thenReturn(fieldType);
-        when(targetType.asErasure()).thenReturn(targetType);
         when(target.getType()).thenReturn(targetType);
     }
 
@@ -151,7 +147,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     public void testIllegalAssignmentNoField() throws Exception {
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Empty());
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
                 source,
                 target,
