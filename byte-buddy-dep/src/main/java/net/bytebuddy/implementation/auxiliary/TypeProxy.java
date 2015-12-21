@@ -483,12 +483,10 @@ public class TypeProxy implements AuxiliaryType {
                     TypeCreation.forType(proxyType),
                     Duplication.SINGLE,
                     new Compound(constructorValue),
-                    MethodInvocation.invoke(proxyType.getDeclaredMethods()
-                            .filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
+                    MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
                     Duplication.SINGLE,
                     MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields()
-                            .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
+                    FieldAccess.forField(proxyType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
         }
 

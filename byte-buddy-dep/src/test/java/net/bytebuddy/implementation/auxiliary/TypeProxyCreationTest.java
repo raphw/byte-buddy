@@ -93,7 +93,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getSuperType().asErasure(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
@@ -124,7 +124,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getSuperType().asErasure(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
@@ -155,7 +155,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getSuperType().asErasure(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedTypes(Serializable.class)));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
@@ -186,7 +186,7 @@ public class TypeProxyCreationTest {
                 .make(BAR, ClassFileVersion.forCurrentJavaVersion(), methodAccessorFactory)
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
-        assertThat(dynamicType.getSuperType(), is((GenericTypeDescription) foo));
+        assertThat(dynamicType.getSuperType().asErasure(), is(foo));
         assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
@@ -213,7 +213,7 @@ public class TypeProxyCreationTest {
         when(methodAccessorFactory.registerAccessorFor(specialMethodInvocation)).thenReturn(proxyMethod);
         StackManipulation stackManipulation = new TypeProxy.ForSuperMethodByConstructor(foo,
                 implementationTarget,
-                Collections.<TypeDescription>singletonList(TypeDescription.VOID),
+                Collections.singletonList((TypeDescription) new TypeDescription.ForLoadedType(Void.class)),
                 true,
                 false);
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
@@ -342,7 +342,7 @@ public class TypeProxyCreationTest {
         verifyNoMoreInteractions(specialMethodInvocation);
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unused")
     public static class Foo {
 
         private Void target;
@@ -351,7 +351,7 @@ public class TypeProxyCreationTest {
         }
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings("unused")
     public static class FooProxyMake {
 
         private Void target;
