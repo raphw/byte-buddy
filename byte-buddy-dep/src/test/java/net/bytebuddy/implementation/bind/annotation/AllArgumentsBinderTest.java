@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -31,6 +32,9 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     @Mock
     private TypeDescription targetType, componentType;
 
+    @Mock
+    private GenericTypeDescription genericTargetType;
+
     public AllArgumentsBinderTest() {
         super(AllArguments.class);
     }
@@ -41,7 +45,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         super.setUp();
         when(firstSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(targetType.asErasure()).thenReturn(targetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
     }
 
     @Override
@@ -72,7 +76,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(targetAnnotation));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -96,7 +100,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -119,7 +123,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(componentType.getInternalName()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
@@ -146,10 +150,11 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     @Test(expected = IllegalStateException.class)
     public void testNonArrayTypeBinding() throws Exception {
         when(target.getIndex()).thenReturn(0);
-        TypeDescription targetType = mock(TypeDescription.class);
+        GenericTypeDescription targetType = mock(GenericTypeDescription.class);
+        TypeDescription rawTargetType = mock(TypeDescription.class);
+        when(targetType.asErasure()).thenReturn(rawTargetType); // TODO
         when(targetType.isArray()).thenReturn(false);
         when(target.getType()).thenReturn(targetType);
-        when(targetType.asErasure()).thenReturn(targetType);
         AllArguments.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

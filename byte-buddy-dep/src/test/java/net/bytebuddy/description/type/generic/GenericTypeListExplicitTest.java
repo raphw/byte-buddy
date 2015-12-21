@@ -1,5 +1,7 @@
 package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.type.TypeDefinition;
+
 import java.util.List;
 
 public class GenericTypeListExplicitTest extends AbstractGenericTypeListTest<GenericTypeDescription> {

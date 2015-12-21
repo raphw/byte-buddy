@@ -68,16 +68,6 @@ public class TypePoolLazyFacadeTest {
         verifyNoMoreInteractions(typeDescription);
     }
 
-    @Test(expected = IllegalStateException.class)
-    public void testDeclaredSuperTypeThrowsException() throws Exception {
-        new TypePool.LazyFacade.LazyResolution.LazyTypeDescription(typePool, FOO).getDeclaredSuperType();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testDeclaredInterfacesThrowsException() throws Exception {
-        new TypePool.LazyFacade.LazyResolution.LazyTypeDescription(typePool, FOO).getDeclaredInterfaces();
-    }
-
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyFacade.class).apply();

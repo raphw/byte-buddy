@@ -97,8 +97,8 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     }
 
     @Override
-    public GenericTypeDescription getOriginType() {
-        return instrumentedType.asGenericType();
+    public TypeDescription getOriginType() {
+        return instrumentedType;
     }
 
     @Override

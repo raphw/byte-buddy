@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -17,6 +18,9 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     private TypeDescription targetType;
 
     @Mock
+    private GenericTypeDescription genericTargetType;
+
+    @Mock
     private Super.Instantiation instantiation;
 
     public SuperBinderTest() {
@@ -27,7 +31,8 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
         when(annotation.strategy()).thenReturn(instantiation);
         when(instantiation.proxyFor(targetType, implementationTarget, annotationDescription)).thenReturn(stackManipulation);
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);

@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,16 +17,13 @@ import static org.mockito.Mockito.*;
 public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResolverTest {
 
     @Mock
-    private TypeDescription weakTargetType;
+    private TypeDescription weakTargetType, dominantTargetType;
 
     @Mock
-    private TypeDescription dominantTargetType;
+    private GenericTypeDescription genericWeakTargetType, genericDominantTargetType;
 
     @Mock
-    private ParameterDescription weakTargetParameter;
-
-    @Mock
-    private ParameterDescription dominantTargetParameter;
+    private ParameterDescription weakTargetParameter, dominantTargetParameter;
 
     @Override
     @Before
@@ -35,10 +33,10 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         when(weakTargetType.isAssignableFrom(weakTargetType)).thenReturn(true);
         when(weakTargetType.isAssignableTo(weakTargetType)).thenReturn(true);
         when(dominantTargetType.isAssignableTo(weakTargetType)).thenReturn(true);
-        when(weakTargetParameter.getType()).thenReturn(weakTargetType);
-        when(dominantTargetParameter.getType()).thenReturn(dominantTargetType);
-        when(weakTargetType.asErasure()).thenReturn(weakTargetType);
-        when(dominantTargetType.asErasure()).thenReturn(dominantTargetType);
+        when(weakTargetParameter.getType()).thenReturn(genericWeakTargetType);
+        when(dominantTargetParameter.getType()).thenReturn(genericDominantTargetType);
+        when(genericWeakTargetType.asErasure()).thenReturn(weakTargetType); // TODO
+        when(genericDominantTargetType.asErasure()).thenReturn(dominantTargetType); // TODO
     }
 
     @Test

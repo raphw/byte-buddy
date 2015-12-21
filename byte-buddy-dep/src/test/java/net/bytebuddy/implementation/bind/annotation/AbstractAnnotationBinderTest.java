@@ -4,6 +4,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -93,10 +94,10 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
         when(implementationTarget.getInstrumentedType()).thenReturn(instrumentedType);
         when(implementationTarget.getOriginType()).thenReturn(instrumentedType);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
-        when(instrumentedType.iterator()).then(new Answer<Iterator<GenericTypeDescription>>() {
+        when(instrumentedType.iterator()).then(new Answer<Iterator<TypeDefinition>>() {
             @Override
-            public Iterator<GenericTypeDescription> answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.<GenericTypeDescription>singleton(instrumentedType).iterator();
+            public Iterator<TypeDefinition> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return Collections.<TypeDefinition>singleton(instrumentedType).iterator();
             }
         });
     }

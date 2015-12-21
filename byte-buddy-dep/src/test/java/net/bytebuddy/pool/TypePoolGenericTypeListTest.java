@@ -1,5 +1,6 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.generic.AbstractGenericTypeListTest;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;

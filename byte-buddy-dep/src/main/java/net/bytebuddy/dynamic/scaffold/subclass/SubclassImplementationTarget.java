@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -82,7 +83,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     }
 
     @Override
-    public GenericTypeDescription getOriginType() {
+    public TypeDefinition getOriginType() {
         return originTypeResolver.identify(instrumentedType);
     }
 
@@ -123,7 +124,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          */
         SUPER_TYPE {
             @Override
-            protected GenericTypeDescription identify(TypeDescription typeDescription) {
+            protected TypeDefinition identify(TypeDescription typeDescription) {
                 return typeDescription.getSuperType();
             }
         },
@@ -133,8 +134,8 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          */
         LEVEL_TYPE {
             @Override
-            protected GenericTypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription.asGenericType();
+            protected TypeDefinition identify(TypeDescription typeDescription) {
+                return typeDescription;
             }
         };
 
@@ -144,7 +145,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          * @param typeDescription The type description for which an origin type should be identified.
          * @return The origin type to the given type description.
          */
-        protected abstract GenericTypeDescription identify(TypeDescription typeDescription);
+        protected abstract TypeDefinition identify(TypeDescription typeDescription);
 
         @Override
         public String toString() {

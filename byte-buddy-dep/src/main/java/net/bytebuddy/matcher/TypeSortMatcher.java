@@ -8,7 +8,7 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
  *
  * @param <T> The type of the matched entity.
  */
-public class TypeSortMatcher<T extends GenericTypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class TypeSortMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * An element matcher to be applied to the type's sort.

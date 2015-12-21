@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -45,6 +46,9 @@ public class MethodBindingBuilderTest {
     @Mock
     private MethodVisitor methodVisitor;
 
+    @Mock
+    private GenericTypeDescription returnType;
+
     @Mock(answer = Answers.RETURNS_MOCKS)
     private StackManipulation legalStackManipulation, illegalStackManipulation;
 
@@ -63,9 +67,8 @@ public class MethodBindingBuilderTest {
         when(methodDescription.getInternalName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(methodDescription.getStackSize()).thenReturn(0);
-        TypeDescription returnTpeDescription = mock(TypeDescription.class);
-        when(methodDescription.getReturnType()).thenReturn(returnTpeDescription);
-        when(returnTpeDescription.getStackSize()).thenReturn(StackSize.ZERO);
+        when(methodDescription.getReturnType()).thenReturn(returnType); // TODO
+        when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(legalStackManipulation.isValid()).thenReturn(true);
         when(illegalStackManipulation.isValid()).thenReturn(false);
     }

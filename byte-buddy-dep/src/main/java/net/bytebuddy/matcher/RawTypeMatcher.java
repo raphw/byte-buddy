@@ -1,5 +1,6 @@
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
@@ -9,7 +10,7 @@ import net.bytebuddy.description.type.generic.GenericTypeDescription;
  *
  * @param <T> The type of the matched entity.
  */
-public class RawTypeMatcher<T extends GenericTypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class RawTypeMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The matcher to apply to the raw type of the matched element.

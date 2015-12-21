@@ -409,7 +409,7 @@ public final class ElementMatchers {
      * @param <T>   The type of the matched object.
      * @return A matcher that checks for the equality with none of the given objects.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> noneOf(Type... value) {
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> noneOf(Type... value) {
         return noneOf(new GenericTypeList.ForLoadedTypes(nonNull(value)));
     }
 
@@ -575,7 +575,7 @@ public final class ElementMatchers {
      * @param <T>    The type of the matched object.
      * @return A matcher that matches type variables with the given name.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(String symbol) {
+    public static <T extends TypeDefinition> ElementMatcher<T> isVariable(String symbol) {
         return isVariable(named(nonNull(symbol)));
     }
 
@@ -586,7 +586,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches type variables with the given name.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher<T> isVariable(ElementMatcher<? super NamedElement> matcher) {
+    public static <T extends TypeDefinition> ElementMatcher<T> isVariable(ElementMatcher<? super NamedElement> matcher) {
         return new TypeSortMatcher<T>(anyOf(TypeDefinition.Sort.VARIABLE,
                 TypeDefinition.Sort.VARIABLE_DETACHED,
                 TypeDefinition.Sort.VARIABLE_SYMBOLIC)).and(matcher);
@@ -1067,25 +1067,25 @@ public final class ElementMatchers {
     /**
      * Matches a method description that takes the provided generic arguments.
      *
-     * @param typeDescription The arguments to match against the matched method.
+     * @param typeDefinition The arguments to match against the matched method.
      * @param <T>             The type of the matched object.
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(GenericTypeDescription... typeDescription) {
-        return takesGenericArguments((Arrays.asList(nonNull(typeDescription))));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(TypeDefinition... typeDefinition) {
+        return takesGenericArguments((Arrays.asList(nonNull(typeDefinition))));
     }
 
     /**
      * Matches a method description that takes the provided generic arguments.
      *
-     * @param typeDescriptions The arguments to match against the matched method.
+     * @param typeDefinitions The arguments to match against the matched method.
      * @param <T>              The type of the matched object.
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(List<? extends GenericTypeDescription> typeDescriptions) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(List<? extends TypeDefinition> typeDefinitions) {
         List<ElementMatcher<? super GenericTypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super GenericTypeDescription>>();
-        for (GenericTypeDescription typeDescription : typeDescriptions) {
-            typeMatchers.add(is(nonNull(typeDescription)));
+        for (TypeDefinition typeDefinition : typeDefinitions) {
+            typeMatchers.add(is(nonNull(typeDefinition)));
         }
         return takesGenericArguments(new CollectionOneToOneMatcher<GenericTypeDescription>(typeMatchers));
     }
@@ -1587,7 +1587,7 @@ public final class ElementMatchers {
      * @param <T>          The type of the matched object.
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared field.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
         return new DeclaringFieldMatcher<T>(new CollectionItemMatcher<FieldDescription>(nonNull(fieldMatcher)));
     }
 
@@ -1598,7 +1598,7 @@ public final class ElementMatchers {
      * @param <T>           The type of the matched object.
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared methods.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
         return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
     }
 
@@ -1609,7 +1609,7 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches generic types of the given sort.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(TypeDefinition.Sort sort) {
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> ofSort(TypeDefinition.Sort sort) {
         return ofSort(is(nonNull(sort)));
     }
 
@@ -1620,7 +1620,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches generic types of the given sort.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> ofSort(ElementMatcher<? super TypeDefinition.Sort> matcher) {
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> ofSort(ElementMatcher<? super TypeDefinition.Sort> matcher) {
         return new TypeSortMatcher<T>(nonNull(matcher));
     }
 

@@ -6,6 +6,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
@@ -265,7 +266,7 @@ public interface Implementation {
          *
          * @return The origin type of this implementation.
          */
-        GenericTypeDescription getOriginType();
+        TypeDefinition getOriginType();
 
         /**
          * Creates a special method invocation for invoking the super method of the given method.
