@@ -143,8 +143,7 @@ public class ImplementationContextDefaultTest {
     private AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     @Mock
-    private TypeDescription firstSpecialType, secondSpecialType,
-            firstDeclaringType, secondDeclaringType;
+    private TypeDescription firstSpecialType, secondSpecialType, firstDeclaringType, secondDeclaringType;
 
     @Mock
     private FieldDescription.InDefinedShape firstField, secondField;
@@ -180,6 +179,8 @@ public class ImplementationContextDefaultTest {
         when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType);
         when(firstFieldType.asErasure()).thenReturn(firstRawFieldType);
         when(firstFieldType.asRawType()).thenReturn(firstFieldType);
+        when(firstFieldType.asGenericType()).thenReturn(firstFieldType);
+        when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType);
         when(firstRawFieldType.asGenericType()).thenReturn(firstFieldType);
         when(firstRawFieldType.getDescriptor()).thenReturn(BAR);
         when(secondFieldType.getStackSize()).thenReturn(StackSize.ZERO);
@@ -187,6 +188,8 @@ public class ImplementationContextDefaultTest {
         when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType);
         when(secondFieldType.asErasure()).thenReturn(secondRawFieldType);
         when(secondFieldType.asRawType()).thenReturn(secondFieldType);
+        when(secondFieldType.asGenericType()).thenReturn(secondFieldType);
+        when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType);
         when(secondRawFieldType.asGenericType()).thenReturn(secondFieldType);
         when(secondRawFieldType.getDescriptor()).thenReturn(QUX);
         when(injectedCode.getByteCodeAppender()).thenReturn(injectedCodeAppender);
@@ -207,6 +210,8 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType);
         when(firstRawSpecialExceptionType.getInternalName()).thenReturn(FOO);
         when(firstSpecialExceptionType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(firstSpecialExceptionType.asGenericType()).thenReturn(firstSpecialExceptionType);
+        when(firstSpecialExceptionType.asRawType()).thenReturn(firstSpecialExceptionType);
         when(firstSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstSpecialParameterType.asGenericType()).thenReturn(firstSpecialParameterType);
         when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType);
@@ -222,6 +227,8 @@ public class ImplementationContextDefaultTest {
         when(secondRawSpecialReturnType.getDescriptor()).thenReturn(FOO);
         when(secondRawSpecialExceptionType.getInternalName()).thenReturn(BAZ);
         when(secondSpecialExceptionType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(secondSpecialExceptionType.asGenericType()).thenReturn(secondSpecialExceptionType);
+        when(secondSpecialExceptionType.asRawType()).thenReturn(secondSpecialExceptionType);
         when(secondSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialParameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondSpecialParameterType.asGenericType()).thenReturn(secondSpecialParameterType);
