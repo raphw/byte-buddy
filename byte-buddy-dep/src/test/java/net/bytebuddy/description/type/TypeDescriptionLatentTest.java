@@ -27,10 +27,9 @@ public class TypeDescriptionLatentTest {
     private GenericTypeDescription superType, interfaceType;
 
     @Before
-    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(superType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(superType);
-        when(interfaceType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(interfaceType);
+        when(superType.asGenericType()).thenReturn(superType);
+        when(interfaceType.asGenericType()).thenReturn(interfaceType);
     }
 
     @Test

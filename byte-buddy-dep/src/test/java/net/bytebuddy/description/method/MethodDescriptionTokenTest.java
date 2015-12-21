@@ -45,9 +45,11 @@ public class MethodDescriptionTokenTest {
 
     @Before
     public void setUp() throws Exception {
+        when(first.asGenericType()).thenReturn(first);
         when(first.asErasure()).thenReturn(firstRaw);
-        when(second.asErasure()).thenReturn(secondRaw);
         when(firstParameter.getType()).thenReturn(first);
+        when(second.asGenericType()).thenReturn(second);
+        when(second.asErasure()).thenReturn(secondRaw);
         when(secondParameter.getType()).thenReturn(second);
     }
 
