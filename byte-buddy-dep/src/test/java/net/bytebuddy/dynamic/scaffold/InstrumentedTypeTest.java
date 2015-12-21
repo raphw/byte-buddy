@@ -315,7 +315,7 @@ public class InstrumentedTypeTest {
 
     @Test
     public void testSuperType() {
-        assertThat(makePlainInstrumentedType().getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(makePlainInstrumentedType().getSuperType(), is(GenericTypeDescription.OBJECT));
         assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Integer.class)));
         assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class)));
     }

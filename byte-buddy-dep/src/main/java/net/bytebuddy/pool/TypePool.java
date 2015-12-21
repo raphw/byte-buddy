@@ -5063,7 +5063,10 @@ public interface TypePool {
 
                     @Override
                     public GenericTypeDescription getOwnerType() {
-                        return typePool.describe(name).resolve().getEnclosingType().asGenericType();
+                        TypeDescription ownerType = typePool.describe(name).resolve().getEnclosingType();
+                        return ownerType == null
+                                ? UNDEFINED
+                                : ownerType.asGenericType();
                     }
                 }
             }

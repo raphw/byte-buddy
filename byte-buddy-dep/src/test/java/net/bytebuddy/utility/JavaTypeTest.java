@@ -27,7 +27,7 @@ public class JavaTypeTest {
     public void testMethodHandle() throws Exception {
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getName(), is("java.lang.invoke.MethodHandle"));
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
-        assertThat(JavaType.METHOD_HANDLE.getTypeStub().getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(JavaType.METHOD_HANDLE.getTypeStub().getSuperType(), is(GenericTypeDescription.OBJECT));
         assertThat(JavaType.METHOD_HANDLE.getTypeStub().getInterfaces().size(), is(0));
     }
 
@@ -35,16 +35,16 @@ public class JavaTypeTest {
     public void testMethodType() throws Exception {
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getName(), is("java.lang.invoke.MethodType"));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
-        assertThat(JavaType.METHOD_TYPE.getTypeStub().getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(JavaType.METHOD_TYPE.getTypeStub().getSuperType(), is(GenericTypeDescription.OBJECT));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().size(), is(1));
-        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(new TypeDescription.ForLoadedType(Serializable.class)), is(true));
+        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Serializable.class)), is(true));
     }
 
     @Test
     public void testMethodTypesLookup() throws Exception {
         assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getName(), is("java.lang.invoke.MethodHandles$Lookup"));
         assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL));
-        assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getSuperType(), is(GenericTypeDescription.OBJECT));
         assertThat(JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().getInterfaces().size(), is(0));
     }
 
@@ -52,7 +52,7 @@ public class JavaTypeTest {
     public void testCallSite() throws Exception {
         assertThat(JavaType.CALL_SITE.getTypeStub().getName(), is("java.lang.invoke.CallSite"));
         assertThat(JavaType.CALL_SITE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
-        assertThat(JavaType.CALL_SITE.getTypeStub().getSuperType(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(JavaType.CALL_SITE.getTypeStub().getSuperType(), is(GenericTypeDescription.OBJECT));
         assertThat(JavaType.CALL_SITE.getTypeStub().getInterfaces().size(), is(0));
     }
 
@@ -62,8 +62,8 @@ public class JavaTypeTest {
         assertThat(JavaType.EXECUTABLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(AccessibleObject.class)));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().size(), is(2));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.ForLoadedType(Member.class)), is(true));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.ForLoadedType(GenericDeclaration.class)), is(true));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Member.class)), is(true));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new GenericTypeDescription.ForNonGenericType.OfLoadedType(GenericDeclaration.class)), is(true));
     }
 
     @Test

@@ -83,11 +83,11 @@ public abstract class AbstractMethodDescriptionTest {
 
     @Test
     public void testReturnType() throws Exception {
-        assertThat(describe(firstMethod).getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(firstMethod.getReturnType())));
-        assertThat(describe(secondMethod).getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(secondMethod.getReturnType())));
-        assertThat(describe(thirdMethod).getReturnType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(thirdMethod.getReturnType())));
-        assertThat(describe(firstConstructor).getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
-        assertThat(describe(secondConstructor).getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
+        assertThat(describe(firstMethod).getReturnType(), is((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(firstMethod.getReturnType())));
+        assertThat(describe(secondMethod).getReturnType(), is((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(secondMethod.getReturnType())));
+        assertThat(describe(thirdMethod).getReturnType(), is((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(thirdMethod.getReturnType())));
+        assertThat(describe(firstConstructor).getReturnType(), is(GenericTypeDescription.VOID));
+        assertThat(describe(secondConstructor).getReturnType(), is(GenericTypeDescription.VOID));
     }
 
     @Test

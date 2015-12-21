@@ -599,7 +599,7 @@ public class ImplementationContextDefaultTest {
         MethodDescription.InDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField);
         assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter,
                 Collections.singletonList(firstFieldType))));
-        assertThat(firstFieldSetter.getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
+        assertThat(firstFieldSetter.getReturnType(), is(GenericTypeDescription.VOID));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(accessorMethodModifiers));
         assertThat(firstFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));
@@ -608,7 +608,7 @@ public class ImplementationContextDefaultTest {
         MethodDescription.InDefinedShape secondFieldSetter = implementationContext.registerSetterFor(secondField);
         assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter,
                 Collections.singletonList(secondFieldType))));
-        assertThat(secondFieldSetter.getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
+        assertThat(secondFieldSetter.getReturnType(), is(GenericTypeDescription.VOID));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
         assertThat(secondFieldSetter.getExceptionTypes(), is((GenericTypeList) new GenericTypeList.Empty()));

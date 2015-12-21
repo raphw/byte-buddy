@@ -59,6 +59,6 @@ public class MethodDescriptionLatentTypeInitializerTest {
 
     @Test
     public void testReturnType() throws Exception {
-        assertThat(typeInitializer.getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
+        assertThat(typeInitializer.getReturnType(), is(GenericTypeDescription.VOID));
     }
 }
