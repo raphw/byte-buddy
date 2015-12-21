@@ -79,7 +79,7 @@ public class InstrumentedTypeTest {
         instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TargetType.GENERIC_DESCRIPTION));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
-        assertThat(fieldDescription.getType(), sameInstance((GenericTypeDescription) instrumentedType));
+        assertThat(fieldDescription.getType().asErasure(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
@@ -124,6 +124,7 @@ public class InstrumentedTypeTest {
         when(rawReturnType.getName()).thenReturn(FOO);
         GenericTypeDescription parameterType = mock(GenericTypeDescription.class);
         when(parameterType.accept(Mockito.any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
+        when(parameterType.asGenericType()).thenReturn(parameterType);
         TypeDescription rawParameterType = mock(TypeDescription.class);
         when(parameterType.asErasure()).thenReturn(rawParameterType);
         when(rawParameterType.getName()).thenReturn(QUX);
@@ -155,9 +156,9 @@ public class InstrumentedTypeTest {
                 Collections.singletonList(TargetType.GENERIC_DESCRIPTION)));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
-        assertThat(methodDescription.getReturnType(), sameInstance((GenericTypeDescription) instrumentedType));
+        assertThat(methodDescription.getReturnType().asErasure(), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getParameters().size(), is(1));
-        assertThat(methodDescription.getParameters().asTypeList().get(0), sameInstance((GenericTypeDescription) instrumentedType));
+        assertThat(methodDescription.getParameters().asTypeList().get(0).asErasure(), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
@@ -175,10 +176,10 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asErasure().isArray(), is(true));
-        assertThat(methodDescription.getReturnType().getComponentType(), sameInstance((GenericTypeDescription) instrumentedType));
+        assertThat(methodDescription.getReturnType().getComponentType().asErasure(), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getParameters().size(), is(1));
         assertThat(methodDescription.getParameters().asTypeList().asErasures().get(0).isArray(), is(true));
-        assertThat(methodDescription.getParameters().asTypeList().get(0).getComponentType(), sameInstance((GenericTypeDescription) instrumentedType));
+        assertThat(methodDescription.getParameters().asTypeList().get(0).getComponentType().asErasure(), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
