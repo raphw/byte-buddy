@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -19,6 +20,9 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Mock
     private TypeDescription parameterType;
 
+    @Mock
+    private GenericTypeDescription genericParameterType;
+
     public ThisBinderTest() {
         super(This.class);
     }
@@ -28,7 +32,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     public void setUp() throws Exception {
         super.setUp();
         when(stackManipulation.isValid()).thenReturn(true);
-        when(parameterType.asErasure()).thenReturn(parameterType);
+        when(genericParameterType.asErasure()).thenReturn(parameterType); // TODO
     }
 
     @Override
@@ -39,7 +43,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Test
     public void testLegalBinding() throws Exception {
         when(stackManipulation.isValid()).thenReturn(true);
-        when(target.getType()).thenReturn(parameterType);
+        when(target.getType()).thenReturn(genericParameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -53,7 +57,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Test
     public void testLegalBindingRuntimeType() throws Exception {
         when(stackManipulation.isValid()).thenReturn(true);
-        when(target.getType()).thenReturn(parameterType);
+        when(target.getType()).thenReturn(genericParameterType);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
@@ -69,7 +73,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Test
     public void testIllegalBinding() throws Exception {
         when(stackManipulation.isValid()).thenReturn(false);
-        when(target.getType()).thenReturn(parameterType);
+        when(target.getType()).thenReturn(genericParameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
@@ -87,7 +91,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         when(stackManipulation.isValid()).thenReturn(true);
         when(annotation.optional()).thenReturn(true);
         when(source.isStatic()).thenReturn(true);
-        when(target.getType()).thenReturn(parameterType);
+        when(target.getType()).thenReturn(genericParameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -99,7 +103,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
 
     @Test
     public void testStaticMethodIllegal() throws Exception {
-        when(target.getType()).thenReturn(parameterType);
+        when(target.getType()).thenReturn(genericParameterType);
         when(source.isStatic()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -109,14 +113,14 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveType() throws Exception {
         when(parameterType.isPrimitive()).thenReturn(true);
-        when(target.getType()).thenReturn(parameterType);
+        when(target.getType()).thenReturn(genericParameterType);
         This.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayType() throws Exception {
         when(parameterType.isArray()).thenReturn(true);
-        when(target.getType()).thenReturn(parameterType);
+        when(target.getType()).thenReturn(genericParameterType);
         This.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

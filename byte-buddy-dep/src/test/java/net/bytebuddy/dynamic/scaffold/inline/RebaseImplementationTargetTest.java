@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -183,7 +184,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
 
     @Test
     public void testOriginType() throws Exception {
-        assertThat(implementationTarget.getOriginType(), is((GenericTypeDescription) instrumentedType));
+        assertThat(implementationTarget.getOriginType(), is((TypeDefinition) instrumentedType));
     }
 
     @Test

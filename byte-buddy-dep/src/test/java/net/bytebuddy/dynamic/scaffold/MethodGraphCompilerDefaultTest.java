@@ -908,12 +908,12 @@ public class MethodGraphCompilerDefaultTest {
     public void testOrphanedBridge() throws Exception {
         MethodDescription.Token bridgeMethod = new MethodDescription.Token("foo",
                 Opcodes.ACC_BRIDGE,
-                TypeDescription.VOID,
+                GenericTypeDescription.VOID,
                 Collections.<GenericTypeDescription>emptyList());
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
                 Collections.<GenericTypeDescription>emptyList(),
-                TypeDescription.OBJECT,
+                GenericTypeDescription.OBJECT,
                 Collections.<GenericTypeDescription>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.singletonList(bridgeMethod),

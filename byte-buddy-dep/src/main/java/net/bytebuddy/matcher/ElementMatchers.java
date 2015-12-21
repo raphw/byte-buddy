@@ -235,11 +235,7 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return An element matcher that exactly matches the given type.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> is(Type type) {
-        return is(TypeDefinition.Sort.describe(nonNull(type)));
-    }
-
-    public static <T extends TypeDescription> ElementMatcher.Junction<T> is(Class<?> type) {
+    public static <T extends TypeDefinition> ElementMatcher.Junction<T> is(Type type) {
         return is(TypeDefinition.Sort.describe(nonNull(type)));
     }
 

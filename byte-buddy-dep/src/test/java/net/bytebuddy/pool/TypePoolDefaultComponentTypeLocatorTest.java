@@ -3,6 +3,7 @@ package net.bytebuddy.pool;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
@@ -32,12 +33,15 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         when(typeDescription.getDeclaredMethods())
                 .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)));
         when(methodDescription.getSourceCodeName()).thenReturn(FOO);
-        TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asErasure()).thenReturn(returnType);
+        GenericTypeDescription returnType = mock(GenericTypeDescription.class);
+        TypeDescription rawReturnType = mock(TypeDescription.class);
+        when(returnType.asErasure()).thenReturn(rawReturnType); // TODO
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        TypeDescription componentType = mock(TypeDescription.class);
+        GenericTypeDescription componentType = mock(GenericTypeDescription.class);
+        TypeDescription rawComponentType = mock(TypeDescription.class);
+        when(componentType.asErasure()).thenReturn(rawComponentType); // TODO
+        when(rawComponentType.getName()).thenReturn(QUX);
         when(returnType.getComponentType()).thenReturn(componentType);
-        when(componentType.getName()).thenReturn(QUX);
         assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR).bind(FOO).lookup(), is(QUX));
     }
 

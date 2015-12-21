@@ -18,14 +18,4 @@ public class TypeListEmptyTest {
     public void testSize() throws Exception {
         assertThat(new TypeList.Empty().getStackSize(), is(0));
     }
-
-    @Test
-    public void testGenericList() throws Exception {
-        assertThat(new TypeList.Empty().asGenericTypes().size(), is(0));
-    }
-
-    @Test
-    public void testVisitor() throws Exception {
-        assertThat(new TypeList.Empty().accept(GenericTypeDescription.Visitor.NoOp.INSTANCE).size(), is(0));
-    }
 }

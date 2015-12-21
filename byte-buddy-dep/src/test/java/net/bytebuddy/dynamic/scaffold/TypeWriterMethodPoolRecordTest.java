@@ -5,6 +5,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
@@ -189,7 +190,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testDefaultValueMethod() throws Exception {
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
+        when(methodDescription.getReturnType()).thenReturn(new GenericTypeDescription.ForNonGenericType.OfLoadedType(String.class));
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,
@@ -211,7 +212,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testDefaultValueMethodHeadOnly() throws Exception {
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
+        when(methodDescription.getReturnType()).thenReturn(new GenericTypeDescription.ForNonGenericType.OfLoadedType(String.class));
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
@@ -246,7 +247,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testDefaultValueMethodWithParameters() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.STRING);
+        when(methodDescription.getReturnType()).thenReturn(new GenericTypeDescription.ForNonGenericType.OfLoadedType(String.class));
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,

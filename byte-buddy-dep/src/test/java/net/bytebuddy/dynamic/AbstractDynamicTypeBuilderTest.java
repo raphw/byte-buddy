@@ -415,7 +415,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(FOO,
                     MODIFIERS,
-                    TypeDescription.OBJECT,
+                    GenericTypeDescription.OBJECT,
                     Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make())));
         }
 
@@ -432,10 +432,10 @@ public abstract class AbstractDynamicTypeBuilderTest {
             return instrumentedType.withMethod(new MethodDescription.Token(FOO,
                     MODIFIERS,
                     Collections.<GenericTypeDescription>emptyList(),
-                    TypeDescription.OBJECT,
-                    Collections.singletonList(new ParameterDescription.Token(TypeDescription.OBJECT,
+                    GenericTypeDescription.OBJECT,
+                    Collections.singletonList(new ParameterDescription.Token(GenericTypeDescription.OBJECT,
                             Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, QUX).make()))),
-                    Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)),
+                    Collections.singletonList(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make()),
                     MethodDescription.NO_DEFAULT_VALUE));
         }

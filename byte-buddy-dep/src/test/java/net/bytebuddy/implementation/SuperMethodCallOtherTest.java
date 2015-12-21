@@ -2,8 +2,10 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -54,6 +56,9 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     private TypeDescription typeDescription, superType, returnType, declaringType;
 
     @Mock
+    private GenericTypeDescription genericSuperType, genericReturnType;
+
+    @Mock
     private Implementation.Target implementationTarget;
 
     @Mock
@@ -75,6 +80,8 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     public void setUp() throws Exception {
         when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
         when(methodDescription.asToken()).thenReturn(methodToken);
+        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
+        when(genericSuperType.asErasure()).thenReturn(superType); // TODO
     }
 
     @Test
@@ -86,7 +93,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testConstructor() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
+        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
@@ -97,10 +104,10 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testStaticMethod() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
+        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
         when(methodDescription.isStatic()).thenReturn(true);
-        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
-        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
+        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
@@ -111,9 +118,9 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testNoSuper() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
-        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
-        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
+        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);

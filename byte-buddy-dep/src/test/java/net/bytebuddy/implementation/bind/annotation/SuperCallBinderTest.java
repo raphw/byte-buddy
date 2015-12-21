@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -19,6 +20,9 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     private TypeDescription targetParameterType;
 
     @Mock
+    private GenericTypeDescription genericTargetParameterType;
+
+    @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Mock
@@ -32,9 +36,9 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetParameterType);
+        when(target.getType()).thenReturn(genericTargetParameterType);
+        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType); // TODO
         when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
-        when(targetParameterType.asErasure()).thenReturn(targetParameterType);
         when(source.asToken()).thenReturn(sourceToken);
     }
 

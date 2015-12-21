@@ -19,19 +19,16 @@ public class GenericTypeDescriptionVisitorTypeErasingTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private GenericTypeDescription genericTypeDescription;
-
-    @Mock
-    private TypeDescription typeDescription;
+    private GenericTypeDescription genericTypeDescription, rawType;
 
     @Before
     public void setUp() throws Exception {
-        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
+        when(genericTypeDescription.asRawType()).thenReturn(rawType);
     }
 
     @Test
     public void testGenericArray() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onGenericArray(genericTypeDescription), is(typeDescription));
+        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onGenericArray(genericTypeDescription), is(rawType));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -41,17 +38,17 @@ public class GenericTypeDescriptionVisitorTypeErasingTest {
 
     @Test
     public void testParameterized() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onParameterizedType(genericTypeDescription), is(typeDescription));
+        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onParameterizedType(genericTypeDescription), is(rawType));
     }
 
     @Test
     public void testTypeVariable() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onTypeVariable(genericTypeDescription), is(typeDescription));
+        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onTypeVariable(genericTypeDescription), is(rawType));
     }
 
     @Test
     public void testNonGeneric() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onNonGenericType(genericTypeDescription), is(typeDescription));
+        assertThat(GenericTypeDescription.Visitor.TypeErasing.INSTANCE.onNonGenericType(genericTypeDescription), is(rawType));
     }
 
     @Test

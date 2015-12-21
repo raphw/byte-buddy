@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type.generic;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;

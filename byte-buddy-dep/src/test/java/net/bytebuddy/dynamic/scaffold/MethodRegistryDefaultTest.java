@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
@@ -84,6 +85,9 @@ public class MethodRegistryDefaultTest {
     private TypeDescription returnType, parameterType;
 
     @Mock
+    private GenericTypeDescription genericReturnType, genericParameterType;
+
+    @Mock
     private ParameterDescription.InDefinedShape parameterDescription;
 
     @Before
@@ -111,15 +115,15 @@ public class MethodRegistryDefaultTest {
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
         when(methodTransformer.transform(typeDescription, instrumentedMethod)).thenReturn(instrumentedMethod);
-        when(returnType.asErasure()).thenReturn(returnType);
+        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
         when(returnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(returnType.isVisibleTo(typeDescription)).thenReturn(true);
-        when(parameterType.asErasure()).thenReturn(parameterType);
+        when(genericParameterType.asErasure()).thenReturn(parameterType); // TODO
         when(parameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(parameterType.isVisibleTo(typeDescription)).thenReturn(true);
-        when(instrumentedMethod.getReturnType()).thenReturn(returnType);
+        when(instrumentedMethod.getReturnType()).thenReturn(genericReturnType);
         when(instrumentedMethod.getParameters()).thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));
-        when(parameterDescription.getType()).thenReturn(parameterType);
+        when(parameterDescription.getType()).thenReturn(genericParameterType);
     }
 
     @Test
@@ -318,13 +322,13 @@ public class MethodRegistryDefaultTest {
         when(typeDescription.isPublic()).thenReturn(true);
         when(instrumentedMethod.isPublic()).thenReturn(true);
         when(declaringType.isPackagePrivate()).thenReturn(true);
-        TypeDescription superType = mock(TypeDescription.class);
-        when(superType.asErasure()).thenReturn(superType);
+        GenericTypeDescription superType = mock(GenericTypeDescription.class);
+        TypeDescription rawSuperType = mock(TypeDescription.class);
+        when(superType.asErasure()).thenReturn(rawSuperType); // TODO
         when(typeDescription.getSuperType()).thenReturn(superType);
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
         when(instrumentedMethod.asToken()).thenReturn(methodToken);
         when(methodToken.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(methodToken);
-        when(typeDescription.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(typeDescription);
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)

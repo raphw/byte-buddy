@@ -10,16 +10,16 @@ public class FieldListEmptyTest {
 
     @Test
     public void testTokenListWithFilter() throws Exception {
-        assertThat(new FieldList.Empty().asTokenList(none()).size(), is(0));
+        assertThat(new FieldList.Empty<FieldDescription>().asTokenList(none()).size(), is(0));
     }
 
     @Test
     public void testTokenListWithoutFilter() throws Exception {
-        assertThat(new FieldList.Empty().asTokenList().size(), is(0));
+        assertThat(new FieldList.Empty<FieldDescription>().asTokenList().size(), is(0));
     }
 
     @Test
     public void testDeclaredList() throws Exception {
-        assertThat(new FieldList.Empty().asDefined().size(), is(0));
+        assertThat(new FieldList.Empty<FieldDescription>().asDefined().size(), is(0));
     }
 }

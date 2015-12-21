@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bytecode.member;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -52,9 +51,7 @@ public class MethodVariableAccessOfMethodArgumentsTest {
         when(firstParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondParameterType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(firstParameterType.asErasure()).thenReturn(firstParameterType);
-        when(firstParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstParameterType);
         when(secondParameterType.asErasure()).thenReturn(secondParameterType);
-        when(secondParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondParameterType);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription,
                 Arrays.asList(firstParameterType, secondParameterType)));
         when(bridgeMethod.getDeclaringType()).thenReturn(declaringType);

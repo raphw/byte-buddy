@@ -17,31 +17,31 @@ public class GenericTypeDescriptionVisitorNoOpTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription typeDescription;
+    private GenericTypeDescription typeDescription;
 
     @Test
     public void testVisitGenericArray() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onGenericArray(typeDescription), is((GenericTypeDescription) typeDescription));
+        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onGenericArray(typeDescription), is(typeDescription));
     }
 
     @Test
     public void testVisitWildcard() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onWildcard(typeDescription), is((GenericTypeDescription) typeDescription));
+        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onWildcard(typeDescription), is(typeDescription));
     }
 
     @Test
     public void testVisitParameterized() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onParameterizedType(typeDescription), is((GenericTypeDescription) typeDescription));
+        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onParameterizedType(typeDescription), is(typeDescription));
     }
 
     @Test
     public void testVisitTypeVariable() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onTypeVariable(typeDescription), is((GenericTypeDescription) typeDescription));
+        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onTypeVariable(typeDescription), is(typeDescription));
     }
 
     @Test
     public void testVisitNonGenericType() throws Exception {
-        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onNonGenericType(typeDescription), is((GenericTypeDescription) typeDescription));
+        assertThat(GenericTypeDescription.Visitor.NoOp.INSTANCE.onNonGenericType(typeDescription), is(typeDescription));
     }
 
     @Test
