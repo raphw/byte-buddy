@@ -4,6 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -109,21 +110,6 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         verifyZeroInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-    }
-
-    @Test
-    public void testSuperTypeOrigin() throws Exception {
-        assertThat(new SubclassImplementationTarget(instrumentedType,
-                methodGraph,
-                SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE).getOriginType(), is(superType));
-    }
-
-    @Test
-    public void testLevelTypeOrigin() throws Exception {
-        assertThat(new SubclassImplementationTarget(instrumentedType,
-                        methodGraph,
-                        SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE).getOriginType(),
-                is(genericInstrumentedType));
     }
 
     @Test

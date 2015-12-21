@@ -67,6 +67,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     private TypeDescription typeDescription, returnType, parameterType;
 
     @Mock
+    private GenericTypeDescription genericReturnType;
+
+    @Mock
     private MethodVisitor methodVisitor;
 
     @Mock
@@ -76,7 +79,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(typeDescription.getInternalName()).thenReturn(BAR);
@@ -86,17 +89,15 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
-        when(returnType.asErasure()).thenReturn(returnType);
-        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
+        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
         when(parameterType.asErasure()).thenReturn(parameterType);
-        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
     }
 
     @Test
     public void testPreservation() throws Exception {
         MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedMethod.of(methodDescription, methodNameTransformer);
         assertThat(resolution.isRebased(), is(true));
-        assertThat(resolution.getResolvedMethod().getDeclaringType(), is((GenericTypeDescription) typeDescription));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(rebasedMethodModifiers));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
@@ -118,8 +119,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
                 when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
                 when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                TypeDescription returnType = mock(TypeDescription.class);
-                when(returnType.asErasure()).thenReturn(returnType);
+                GenericTypeDescription returnType = mock(GenericTypeDescription.class);
+                TypeDescription rawReturnType = mock(TypeDescription.class);
+                when(returnType.asErasure()).thenReturn(rawReturnType);
                 when(mock.getReturnType()).thenReturn(returnType);
             }
         }).refine(new ObjectPropertyAssertion.Refinement<MethodRebaseResolver.MethodNameTransformer>() {

@@ -3,6 +3,7 @@ package net.bytebuddy;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -52,7 +53,10 @@ public class ByteBuddyTest {
     private ElementMatcher<? super MethodDescription> methodMatcher;
 
     @Mock
-    private TypeDescription interfaceTypes;
+    private GenericTypeDescription interfaceType;
+
+    @Mock
+    private TypeDescription rawInterfaceType;
 
     @Mock
     private MethodGraph.Compiler methodGraphCompiler;
@@ -75,9 +79,9 @@ public class ByteBuddyTest {
     @Before
     public void setUp() throws Exception {
         when(modifierContributorForType.getMask()).thenReturn(MASK);
-        when(interfaceTypes.isInterface()).thenReturn(true);
-        when(interfaceTypes.asErasure()).thenReturn(interfaceTypes);
-        when(interfaceTypes.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(interfaceType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(interfaceType.asErasure()).thenReturn(rawInterfaceType);
+        when(rawInterfaceType.isInterface()).thenReturn(true);
     }
 
     @Test
@@ -90,7 +94,7 @@ public class ByteBuddyTest {
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
-                .withImplementing(interfaceTypes)
+                .withImplementing(interfaceType)
                 .withMethodGraphCompiler(methodGraphCompiler)
                 .withModifiers(modifierContributorForType)
                 .withNamingStrategy(namingStrategy)
@@ -107,7 +111,7 @@ public class ByteBuddyTest {
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
-                .withImplementing(interfaceTypes)
+                .withImplementing(interfaceType)
                 .withMethodGraphCompiler(methodGraphCompiler)
                 .withModifiers(modifierContributorForType)
                 .withNamingStrategy(namingStrategy)
@@ -124,7 +128,7 @@ public class ByteBuddyTest {
         assertThat(byteBuddy.defaultMethodAttributeAppenderFactory, is(methodAttributeAppenderFactory));
         assertThat(byteBuddy.ignoredMethods, is((ElementMatcher) methodMatcher));
         assertThat(byteBuddy.interfaceTypes.size(), is(1));
-        assertThat(byteBuddy.interfaceTypes, hasItem(interfaceTypes));
+        assertThat(byteBuddy.interfaceTypes, hasItem(interfaceType));
         assertThat(byteBuddy.methodGraphCompiler, is(methodGraphCompiler));
         assertThat(byteBuddy.modifiers.isDefined(), is(true));
         assertThat(byteBuddy.modifiers.resolve(0), is(MASK));

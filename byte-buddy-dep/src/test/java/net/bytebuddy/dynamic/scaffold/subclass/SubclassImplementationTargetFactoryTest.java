@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -29,12 +30,15 @@ public class SubclassImplementationTargetFactoryTest {
     @Mock
     private TypeDescription instrumentedType, superType;
 
+    @Mock
+    private GenericTypeDescription genericSuperType;
+
     private Implementation.Target.Factory factory;
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.asErasure()).thenReturn(superType);
+        when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
+        when(genericSuperType.asErasure()).thenReturn(superType); // TODO
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
         factory = new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE);
     }
@@ -47,13 +51,13 @@ public class SubclassImplementationTargetFactoryTest {
     @Test
     public void testOriginTypeSuperType() throws Exception {
         assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE)
-                .make(instrumentedType, methodGraph).getOriginType(), is((GenericTypeDescription) superType));
+                .make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) genericSuperType));
     }
 
     @Test
     public void testOriginTypeLevelType() throws Exception {
         assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE)
-                .make(instrumentedType, methodGraph).getOriginType(), is((GenericTypeDescription) instrumentedType));
+                .make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) instrumentedType));
     }
 
     @Test
