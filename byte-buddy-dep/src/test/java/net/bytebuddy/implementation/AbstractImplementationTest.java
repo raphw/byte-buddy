@@ -49,7 +49,7 @@ public abstract class AbstractImplementationTest {
                 new NamingStrategy.SuffixingRandom(SUFFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(SUFFIX),
                 Implementation.Context.Default.Factory.INSTANCE,
-                new TypeList.ForLoadedType(Arrays.asList(interfaces)),
+                new TypeList.ForLoadedTypes(Arrays.asList(interfaces)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isSynthetic(),

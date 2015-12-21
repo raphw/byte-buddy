@@ -33,7 +33,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -44,7 +44,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -55,7 +55,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(QUX));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -78,7 +78,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -110,7 +110,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -121,7 +121,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(QUX));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -137,7 +137,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test(expected = IllegalArgumentException.class)

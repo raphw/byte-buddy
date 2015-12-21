@@ -526,7 +526,7 @@ public final class ElementMatchers {
      * @return A matcher that matches an iteration of generic types' raw types against the provided non-generic types.
      */
     public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(Class<?>... type) {
-        return rawTypes(new TypeList.ForLoadedType(type));
+        return rawTypes(new TypeList.ForLoadedTypes(type));
     }
 
     /**

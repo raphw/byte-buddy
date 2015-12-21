@@ -534,7 +534,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withNullValue(Class<?>... type) {
-        return withNullValue(new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
+        return withNullValue(new TypeList.ForLoadedTypes(nonNull(type)).toArray(new TypeDescription[type.length]));
     }
 
     /**
@@ -609,7 +609,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @return This implementation where {@code this} references are passed as the next arguments.
      */
     public InvokeDynamic withThis(Class<?>... type) {
-        return withThis(new TypeList.ForLoadedType(type).toArray(new TypeDescription[type.length]));
+        return withThis(new TypeList.ForLoadedTypes(type).toArray(new TypeDescription[type.length]));
     }
 
     /**

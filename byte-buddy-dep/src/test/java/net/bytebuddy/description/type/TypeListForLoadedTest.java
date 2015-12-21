@@ -16,7 +16,7 @@ public class TypeListForLoadedTest extends AbstractTypeListTest<Class<?>> {
 
     @Override
     protected TypeList asList(List<Class<?>> elements) {
-        return new TypeList.ForLoadedType(elements);
+        return new TypeList.ForLoadedTypes(elements);
     }
 
     @Override

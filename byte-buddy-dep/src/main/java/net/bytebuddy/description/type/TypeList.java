@@ -1,13 +1,10 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -50,7 +47,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
     /**
      * Implementation of a type list for an array of loaded types.
      */
-    class ForLoadedType extends AbstractBase {
+    class ForLoadedTypes extends AbstractBase {
 
         /**
          * The loaded types this type list represents.
@@ -62,7 +59,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          *
          * @param type The types to be represented by this list.
          */
-        public ForLoadedType(Class<?>... type) {
+        public ForLoadedTypes(Class<?>... type) {
             this(Arrays.asList(type));
         }
 
@@ -71,7 +68,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          *
          * @param types The types to be represented by this list.
          */
-        public ForLoadedType(List<? extends Class<?>> types) {
+        public ForLoadedTypes(List<? extends Class<?>> types) {
             this.types = types;
         }
 

@@ -4,7 +4,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.List;
 
-public class MethodListForLoadedTypeTest extends AbstractMethodListTest<Method, MethodDescription.InDefinedShape> {
+public class MethodListForLoadedTypesTest extends AbstractMethodListTest<Method, MethodDescription.InDefinedShape> {
 
     @Override
     protected Method getFirst() throws Exception {

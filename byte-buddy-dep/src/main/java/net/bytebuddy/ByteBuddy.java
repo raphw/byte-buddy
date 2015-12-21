@@ -360,7 +360,7 @@ public class ByteBuddy {
      * interfaces.
      */
     public DynamicType.Builder<?> makeInterface(Class<?>... type) {
-        return makeInterface(new TypeList.ForLoadedType(nonNull(type)));
+        return makeInterface(new TypeList.ForLoadedTypes(nonNull(type)));
     }
 
     /**

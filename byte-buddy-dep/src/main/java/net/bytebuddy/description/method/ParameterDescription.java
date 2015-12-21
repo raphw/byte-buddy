@@ -6,6 +6,7 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -1074,20 +1075,20 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             /**
              * The list of types to represent as parameter tokens.
              */
-            private final List<? extends GenericTypeDescription> typeDescriptions;
+            private final List<? extends TypeDefinition> typeDescriptions;
 
             /**
              * Creates a new list of types that represent parameters.
              *
              * @param typeDescriptions The types to represent.
              */
-            public TypeList(List<? extends GenericTypeDescription> typeDescriptions) {
+            public TypeList(List<? extends TypeDefinition> typeDescriptions) {
                 this.typeDescriptions = typeDescriptions;
             }
 
             @Override
             public Token get(int index) {
-                return new Token(typeDescriptions.get(index));
+                return new Token(typeDescriptions.get(index).asGenericType());
             }
 
             @Override

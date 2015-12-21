@@ -414,7 +414,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
         @Override
         public TypeList asErasures() {
-            return new TypeList.ForLoadedType(type.getInterfaces());
+            return new TypeList.ForLoadedTypes(type.getInterfaces());
         }
 
         /**
@@ -493,7 +493,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
         @Override
         public TypeList asErasures() {
-            return new TypeList.ForLoadedType(constructor.getExceptionTypes());
+            return new TypeList.ForLoadedTypes(constructor.getExceptionTypes());
         }
 
         /**
@@ -572,7 +572,7 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
         @Override
         public TypeList asErasures() {
-            return new TypeList.ForLoadedType(method.getExceptionTypes());
+            return new TypeList.ForLoadedTypes(method.getExceptionTypes());
         }
 
         /**

@@ -1580,7 +1580,7 @@ public interface AnnotationDescription {
             if (typeDescription.represents(Class.class)) {
                 value = new TypeDescription.ForLoadedType((Class<?>) value);
             } else if (typeDescription.represents(Class[].class)) {
-                value = new TypeList.ForLoadedType((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
+                value = new TypeList.ForLoadedTypes((Class<?>[]) value).toArray(new TypeDescription[((Class<?>[]) value).length]);
             } else if (typeDescription.isAssignableTo(Enum.class)) {
                 value = new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value);
             } else if (typeDescription.isAssignableTo(Enum[].class)) {
@@ -1992,7 +1992,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional type array property.
          */
         public Builder defineTypeArray(String property, Class<?>... type) {
-            return defineTypeArray(property, new TypeList.ForLoadedType(nonNull(type)).toArray(new TypeDescription[type.length]));
+            return defineTypeArray(property, new TypeList.ForLoadedTypes(nonNull(type)).toArray(new TypeDescription[type.length]));
         }
 
         /**

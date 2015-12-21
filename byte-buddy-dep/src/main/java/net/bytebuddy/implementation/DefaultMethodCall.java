@@ -61,7 +61,7 @@ public class DefaultMethodCall implements Implementation {
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(Class<?>... prioritizedInterface) {
-        return prioritize(new TypeList.ForLoadedType(nonNull(prioritizedInterface)));
+        return prioritize(new TypeList.ForLoadedTypes(nonNull(prioritizedInterface)));
     }
 
     /**
@@ -76,7 +76,7 @@ public class DefaultMethodCall implements Implementation {
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(Iterable<? extends Class<?>> prioritizedInterface) {
-        return prioritize(new TypeList.ForLoadedType(toList(prioritizedInterface)));
+        return prioritize(new TypeList.ForLoadedTypes(toList(prioritizedInterface)));
     }
 
     /**

@@ -26,7 +26,7 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfLoadedType() throws Exception {
         JavaInstance.MethodType methodType = JavaInstance.MethodType.of(void.class, Foo.class);
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Foo.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Foo.class)));
     }
 
     @Test
@@ -34,7 +34,7 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfMethod() throws Exception {
         JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Foo.class.getDeclaredMethod(BAR, Void.class));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -42,7 +42,7 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfStaticMethod() throws Exception {
         JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Foo.class.getDeclaredMethod(QUX, Void.class));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -50,7 +50,7 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfConstructor() throws Exception {
         JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Foo.class.getDeclaredConstructor(Void.class));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -73,7 +73,7 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfSetter() throws Exception {
         JavaInstance.MethodType methodType = JavaInstance.MethodType.ofSetter(Foo.class.getDeclaredField(BAR));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -81,7 +81,7 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfStaticSetter() throws Exception {
         JavaInstance.MethodType methodType = JavaInstance.MethodType.ofSetter(Foo.class.getDeclaredField(QUX));
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Void.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
     }
 
     @Test
@@ -99,7 +99,7 @@ public class JavaInstanceMethodTypeTest {
                 .invoke(null, void.class, new Class<?>[]{Object.class});
         JavaInstance.MethodType methodType = JavaInstance.MethodType.of(loadedMethodType);
         assertThat(methodType.getReturnType(), is((TypeDescription) new TypeDescription.ForLoadedType(void.class)));
-        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedType(Object.class)));
+        assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Object.class)));
     }
 
     @Test

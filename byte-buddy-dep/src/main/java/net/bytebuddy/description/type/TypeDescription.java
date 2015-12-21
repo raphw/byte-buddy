@@ -784,7 +784,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public TypeList getDeclaredTypes() {
-            return new TypeList.ForLoadedType(type.getDeclaredClasses());
+            return new TypeList.ForLoadedTypes(type.getDeclaredClasses());
         }
 
         @Override

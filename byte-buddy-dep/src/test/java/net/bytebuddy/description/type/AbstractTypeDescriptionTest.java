@@ -442,7 +442,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     public void testDeclaredTypes() throws Exception {
         assertThat(describe(SampleClass.class).getDeclaredTypes().size(), is(0));
         assertThat(describe(AbstractTypeDescriptionTest.class).getDeclaredTypes(),
-                is((TypeList) new TypeList.ForLoadedType(AbstractTypeDescriptionTest.class.getDeclaredClasses())));
+                is((TypeList) new TypeList.ForLoadedTypes(AbstractTypeDescriptionTest.class.getDeclaredClasses())));
     }
 
     @Test

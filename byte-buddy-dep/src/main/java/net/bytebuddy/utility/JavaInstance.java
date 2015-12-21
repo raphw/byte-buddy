@@ -121,7 +121,7 @@ public interface JavaInstance {
          * @return A method type of the given return type and parameter types.
          */
         public static MethodType of(Class<?> returnType, Class<?>... parameterType) {
-            return of(new TypeDescription.ForLoadedType(nonNull(returnType)), new TypeList.ForLoadedType(nonNull(parameterType)));
+            return of(new TypeDescription.ForLoadedType(nonNull(returnType)), new TypeList.ForLoadedTypes(nonNull(parameterType)));
         }
 
         /**
@@ -573,7 +573,7 @@ public interface JavaInstance {
                     new TypeDescription.ForLoadedType(dispatcher.getDeclaringClass(methodHandleInfo)),
                     dispatcher.getName(methodHandleInfo),
                     new TypeDescription.ForLoadedType(dispatcher.returnType(methodType)),
-                    new TypeList.ForLoadedType(dispatcher.parameterArray(methodType)));
+                    new TypeList.ForLoadedTypes(dispatcher.parameterArray(methodType)));
         }
 
         /**
