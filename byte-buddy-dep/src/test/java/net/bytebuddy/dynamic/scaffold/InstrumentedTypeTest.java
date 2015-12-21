@@ -316,14 +316,14 @@ public class InstrumentedTypeTest {
     @Test
     public void testSuperType() {
         assertThat(makePlainInstrumentedType().getSuperType(), is(GenericTypeDescription.OBJECT));
-        assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Integer.class)));
-        assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(Integer.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), not((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(Serializable.class)));
     }
 
     @Test
     public void testInterfaces() {
         assertThat(makePlainInstrumentedType().getInterfaces().size(), is(1));
-        assertThat(makePlainInstrumentedType().getInterfaces().getOnly(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Serializable.class)));
+        assertThat(makePlainInstrumentedType().getInterfaces().getOnly(), is((TypeDefinition) new TypeDescription.ForLoadedType(Serializable.class)));
     }
 
     @Test

@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -60,7 +61,7 @@ public class JavaTypeTest {
     public void testExecutable() throws Exception {
         assertThat(JavaType.EXECUTABLE.getTypeStub().getName(), is("java.lang.reflect.Executable"));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(AccessibleObject.class)));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getSuperType(), is((TypeDefinition) new TypeDescription.ForLoadedType(AccessibleObject.class)));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().size(), is(2));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Member.class)), is(true));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new GenericTypeDescription.ForNonGenericType.OfLoadedType(GenericDeclaration.class)), is(true));

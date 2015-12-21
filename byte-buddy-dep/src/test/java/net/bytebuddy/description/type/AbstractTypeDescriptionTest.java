@@ -283,7 +283,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(void.class).getSuperType(), nullValue(GenericTypeDescription.class));
         assertThat(describe(SampleClass.class).getSuperType(), is(GenericTypeDescription.OBJECT));
         assertThat(describe(SampleIndirectInterfaceImplementation.class).getSuperType(),
-                is((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(SampleInterfaceImplementation.class)));
+                is((TypeDefinition) new TypeDescription.ForLoadedType(SampleInterfaceImplementation.class)));
         assertThat(describe(Object[].class).getSuperType(), is(GenericTypeDescription.OBJECT));
     }
 

@@ -43,8 +43,8 @@ public abstract class AbstractFieldDescriptionTest {
 
     @Test
     public void testFieldType() throws Exception {
-        assertThat(describe(first).getType(), is((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(first.getType())));
-        assertThat(describe(second).getType(), is((GenericTypeDescription) new GenericTypeDescription.ForNonGenericType.OfLoadedType(second.getType())));
+        assertThat(describe(first).getType(), is((TypeDefinition) new TypeDescription.ForLoadedType(first.getType())));
+        assertThat(describe(second).getType(), is((TypeDefinition) new TypeDescription.ForLoadedType(second.getType())));
     }
 
     @Test
