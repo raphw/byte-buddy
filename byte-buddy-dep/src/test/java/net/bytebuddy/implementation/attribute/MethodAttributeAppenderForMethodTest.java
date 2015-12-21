@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -47,7 +48,7 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testMethodIllegalApplicationThrowsException() throws Exception {
-        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         new MethodAttributeAppender.ForMethod(method, valueFilter).apply(methodVisitor, methodDescription);
     }
 
@@ -71,7 +72,7 @@ public class MethodAttributeAppenderForMethodTest extends AbstractMethodAttribut
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testIllegalConstructorApplicationThrowsException() throws Exception {
-        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         new MethodAttributeAppender.ForMethod(constructor, valueFilter).apply(methodVisitor, methodDescription);
     }
 

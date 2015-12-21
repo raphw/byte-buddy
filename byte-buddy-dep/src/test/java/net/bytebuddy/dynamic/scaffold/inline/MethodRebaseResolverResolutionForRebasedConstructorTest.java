@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -45,6 +46,9 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     private TypeDescription typeDescription, returnType, parameterType, placeholderType, otherPlaceHolderType;
 
     @Mock
+    private GenericTypeDescription genericReturnType;
+
+    @Mock
     private MethodVisitor methodVisitor;
 
     @Mock
@@ -56,7 +60,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
@@ -65,17 +69,15 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(placeholderType.getDescriptor()).thenReturn(BAZ);
         when(otherPlaceHolderType.getDescriptor()).thenReturn(FOO);
-        when(returnType.asErasure()).thenReturn(returnType);
-        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
+        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
         when(parameterType.asErasure()).thenReturn(parameterType);
-        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
     }
 
     @Test
     public void testPreservation() throws Exception {
         MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedConstructor.of(methodDescription, placeholderType);
         assertThat(resolution.isRebased(), is(true));
-        assertThat(resolution.getResolvedMethod().getDeclaringType(), is((GenericTypeDescription) typeDescription));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
         assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) TypeDescription.VOID));
@@ -95,11 +97,12 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         ObjectPropertyAssertion.of(MethodRebaseResolver.Resolution.ForRebasedConstructor.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {
-                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
+                when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
                 when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                TypeDescription returnType = mock(TypeDescription.class);
-                when(returnType.asErasure()).thenReturn(returnType);
+                GenericTypeDescription returnType = mock(GenericTypeDescription.class);
+                TypeDescription rawReturnType = mock(TypeDescription.class);
+                when(returnType.asErasure()).thenReturn(rawReturnType);
                 when(mock.getReturnType()).thenReturn(returnType);
                 when(mock.getInternalName()).thenReturn(FOO + System.identityHashCode(mock));
             }

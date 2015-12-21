@@ -3,6 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -526,7 +527,7 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription firstFieldGetter = implementationContext.registerGetterFor(firstField);
-        assertThat(firstFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
+        assertThat(firstFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty<ParameterDescription>()));
         assertThat(firstFieldGetter.getReturnType(), is(firstFieldType));
         assertThat(firstFieldGetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldGetter.getModifiers(), is(accessorMethodModifiers));
@@ -534,7 +535,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerGetterFor(firstField), is(firstFieldGetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription secondFieldGetter = implementationContext.registerGetterFor(secondField);
-        assertThat(secondFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty()));
+        assertThat(secondFieldGetter.getParameters(), is((ParameterList) new ParameterList.Empty<ParameterDescription>()));
         assertThat(secondFieldGetter.getReturnType(), is(secondFieldType));
         assertThat(secondFieldGetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldGetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));

@@ -27,7 +27,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
-        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getDeclaringType()).thenReturn(mock(GenericTypeDescription.class));
         MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter).make(instrumentedType);
         methodAttributeAppender.apply(methodVisitor, methodDescription);

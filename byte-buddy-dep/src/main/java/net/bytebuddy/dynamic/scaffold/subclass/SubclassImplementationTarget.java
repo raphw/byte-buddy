@@ -40,7 +40,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         super(instrumentedType, methodGraph);
         GenericTypeDescription superType = instrumentedType.getSuperType();
         MethodList<?> superConstructors = superType == null
-                ? new MethodList.Empty()
+                ? new MethodList.Empty<MethodDescription.InGenericShape>()
                 : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
         this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>();
         for (MethodDescription superConstructor : superConstructors) {

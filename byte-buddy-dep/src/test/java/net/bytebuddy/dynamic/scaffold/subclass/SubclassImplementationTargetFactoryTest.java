@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -34,7 +35,7 @@ public class SubclassImplementationTargetFactoryTest {
     public void setUp() throws Exception {
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.asErasure()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
         factory = new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE);
     }
 

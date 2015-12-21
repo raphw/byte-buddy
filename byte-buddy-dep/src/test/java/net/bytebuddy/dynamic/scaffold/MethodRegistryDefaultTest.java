@@ -101,9 +101,9 @@ public class MethodRegistryDefaultTest {
         when(typeDescription.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
         when(methodGraphCompiler.compile(typeDescription)).thenReturn(methodGraph);
         when(methodGraph.listNodes()).thenReturn(new MethodGraph.NodeList(Collections.singletonList(new MethodGraph.Node.Simple(instrumentedMethod))));
-        when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
+        when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
         when(methodFilter.resolve(typeDescription)).thenReturn((ElementMatcher) resolvedMethodFilter);
         when(firstMatcher.resolve(typeDescription)).thenReturn((ElementMatcher) firstFilter);
         when(secondMatcher.resolve(typeDescription)).thenReturn((ElementMatcher) secondFilter);

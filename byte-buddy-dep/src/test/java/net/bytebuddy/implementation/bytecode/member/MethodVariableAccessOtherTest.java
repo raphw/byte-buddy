@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -29,7 +30,7 @@ public class MethodVariableAccessOtherTest {
                 .refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
                     @Override
                     public void apply(MethodDescription mock) {
-                        when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
+                        when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
                     }
                 }).applyBasic();
         ObjectPropertyAssertion.of(MethodVariableAccess.MethodLoading.TypeCastingHandler.NoOp.class).apply();
