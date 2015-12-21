@@ -7,6 +7,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
@@ -49,6 +50,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Type;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -99,7 +101,7 @@ public class ByteBuddy {
     /**
      * A list of interface types to be implemented by any class that is implemented by the current configuration.
      */
-    protected final List<TypeDescription> interfaceTypes;
+    protected final List<GenericTypeDescription> interfaceTypes;
 
     /**
      * A matcher for identifying methods that should never be intercepted.
@@ -161,7 +163,7 @@ public class ByteBuddy {
                 new NamingStrategy.Unbound.Default(BYTE_BUDDY_DEFAULT_PREFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_SUFFIX),
                 Implementation.Context.Default.Factory.INSTANCE,
-                new TypeList.Empty(),
+                new GenericTypeList.Empty(),
                 isSynthetic().or(isDefaultFinalizer()),
                 ClassVisitorWrapper.NoOp.INSTANCE,
                 new MethodRegistry.Default(),
@@ -197,7 +199,7 @@ public class ByteBuddy {
                         NamingStrategy.Unbound namingStrategy,
                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                         Implementation.Context.Factory implementationContextFactory,
-                        List<TypeDescription> interfaceTypes,
+                        List<GenericTypeDescription> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         ClassVisitorWrapper classVisitorWrapper,
                         MethodRegistry methodRegistry,
@@ -247,6 +249,31 @@ public class ByteBuddy {
     }
 
     /**
+     * Creates a dynamic type builder that creates a subclass of a given loaded type where the subclass
+     * is created by the {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
+     * strategy.
+     *
+     * @param superType The type or interface to be extended or implemented by the dynamic type.
+     * @param <T>       The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
+     */
+    public <T> DynamicType.Builder<T> subclass(Type superType) {
+        return subclass(TypeDefinition.Sort.describe(superType));
+    }
+
+    /**
+     * Creates a dynamic type builder that creates a subclass of a given loaded type.
+     *
+     * @param superType           The type or interface to be extended or implemented by the dynamic type.
+     * @param constructorStrategy The constructor strategy to apply.
+     * @param <T>                 The most specific known type that the created dynamic type represents.
+     * @return A dynamic type builder for this configuration that extends or implements the given loaded type.
+     */
+    public <T> DynamicType.Builder<T> subclass(Type superType, ConstructorStrategy constructorStrategy) {
+        return subclass(TypeDefinition.Sort.describe(superType), constructorStrategy);
+    }
+
+    /**
      * Creates a dynamic type builder that creates a subclass of a given type description where the subclass
      * is created by the {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy.Default#IMITATE_SUPER_TYPE}
      * strategy.
@@ -255,7 +282,7 @@ public class ByteBuddy {
      * @param <T>       The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
-    public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
+    public <T> DynamicType.Builder<T> subclass(TypeDefinition superType) {
         return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE);
     }
 
@@ -267,19 +294,19 @@ public class ByteBuddy {
      * @param <T>                 The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
-    public <T> DynamicType.Builder<T> subclass(TypeDescription superType, ConstructorStrategy constructorStrategy) {
-        GenericTypeDescription actualSuperType = isExtendable(superType);
-        List<TypeDescription> interfaceTypes = this.interfaceTypes;
-        if (nonNull(superType).isInterface()) {
+    public <T> DynamicType.Builder<T> subclass(TypeDefinition superType, ConstructorStrategy constructorStrategy) {
+        GenericTypeDescription actualSuperType = isExtendable(superType).asGenericType();
+        List<GenericTypeDescription> interfaceTypes = this.interfaceTypes;
+        if (nonNull(superType).asErasure().isInterface()) {
             actualSuperType = GenericTypeDescription.OBJECT;
-            interfaceTypes = joinUniqueRaw(interfaceTypes, Collections.singleton(superType));
+            interfaceTypes = joinUniqueRaw(interfaceTypes, Collections.singleton(superType.asGenericType()));
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
-                nonNull(namingStrategy.subclass(superType)),
+                nonNull(namingStrategy.subclass(superType.asErasure())),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 interfaceTypes,
-                modifiers.resolve(superType.getModifiers() & ~TypeManifestation.ANNOTATION.getMask()),
+                modifiers.resolve(superType.asErasure().getModifiers() & ~TypeManifestation.ANNOTATION.getMask()),
                 typeAttributeAppender,
                 ignoredMethods,
                 classVisitorWrapper,
@@ -321,6 +348,17 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
+    public DynamicType.Builder<?> makeInterface(Type... type) {
+        return makeInterface(new GenericTypeList.ForLoadedTypes(nonNull(type)));
+    }
+
+    /**
+     * Creates a dynamic type builder for an interface that extends a number of given interfaces.
+     *
+     * @param type The interface types to extend.
+     * @return A dynamic type builder for this configuration that defines an interface that extends the specified
+     * interfaces.
+     */
     public DynamicType.Builder<?> makeInterface(Class<?>... type) {
         return makeInterface(new TypeList.ForLoadedType(nonNull(type)));
     }
@@ -332,34 +370,34 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
-        return makeInterface(new TypeList.ForLoadedType(toList(types)));
+    public DynamicType.Builder<?> makeInterface(Iterable<? extends Type> types) {
+        return makeInterface(new GenericTypeList.ForLoadedTypes(toList(types)));
     }
 
     /**
      * Creates a dynamic type builder for an interface that extends a number of given interfaces.
      *
-     * @param typeDescription Descriptions of the interface types to extend.
+     * @param typeDefinition Descriptions of the interface types to extend.
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
-        return makeInterface(Arrays.asList(typeDescription));
+    public DynamicType.Builder<?> makeInterface(TypeDefinition... typeDefinition) {
+        return makeInterface(Arrays.asList(typeDefinition));
     }
 
     /**
      * Creates a dynamic type builder for an interface that extends a number of given interfaces.
      *
-     * @param typeDescriptions The interface types to extend.
+     * @param typeDefinitions The interface types to extend.
      * @return A dynamic type builder for this configuration that defines an interface that extends the specified
      * interfaces.
      */
-    public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDescription> typeDescriptions) {
+    public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDefinition> typeDefinitions) {
         return new SubclassDynamicTypeBuilder<Object>(classFileVersion,
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                join(interfaceTypes, toList(nonNull(typeDescriptions))),
+                join(interfaceTypes, new GenericTypeList.Explicit(toList(nonNull(typeDefinitions)))),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.INTERFACE.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
@@ -385,7 +423,7 @@ public class ByteBuddy {
                 new NamingStrategy.Fixed(isValidIdentifier(name) + "." + PackageDescription.PACKAGE_CLASS_NAME),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                new TypeList.Empty(),
+                new GenericTypeList.Empty(),
                 PackageDescription.PACKAGE_MODIFIERS,
                 typeAttributeAppender,
                 ignoredMethods,
@@ -434,7 +472,7 @@ public class ByteBuddy {
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(Annotation.class)),
+                Collections.<GenericTypeDescription>singletonList(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Annotation.class)),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.ANNOTATION.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
@@ -513,17 +551,17 @@ public class ByteBuddy {
      * {@link net.bytebuddy.ByteBuddy#redefine(Class, net.bytebuddy.dynamic.ClassFileLocator)}.
      * </p>
      * <p>
-     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code type} and the
      * corresponding class file get out of sync, i.e. a type is redefined several times without providing an updated
      * version of the class file.
      * </p>
      *
-     * @param levelType The type to redefine.
+     * @param type The type to redefine.
      * @param <T>       The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
-    public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
-        return redefine(levelType, ClassFileLocator.ForClassLoader.of(levelType.getClassLoader()));
+    public <T> DynamicType.Builder<T> redefine(Class<T> type) {
+        return redefine(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
     }
 
     /**
@@ -536,13 +574,13 @@ public class ByteBuddy {
      * version of the class file.
      * </p>
      *
-     * @param levelType        The type to redefine.
+     * @param type        The type to redefine.
      * @param classFileLocator A locator for finding a class file that represents a type.
      * @param <T>              The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
-    public <T> DynamicType.Builder<T> redefine(Class<T> levelType, ClassFileLocator classFileLocator) {
-        return redefine(new TypeDescription.ForLoadedType(nonNull(levelType)), classFileLocator);
+    public <T> DynamicType.Builder<T> redefine(Class<T> type, ClassFileLocator classFileLocator) {
+        return redefine(new TypeDescription.ForLoadedType(nonNull(type)), classFileLocator);
     }
 
     /**
@@ -550,23 +588,23 @@ public class ByteBuddy {
      * Creates a dynamic type builder for redefining of the given type.
      * </p>
      * <p>
-     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code typeDescription} and the
      * corresponding class file get out of sync, i.e. a type is redefined several times without providing an updated
      * version of the class file.
      * </p>
      *
-     * @param levelType        The type to redefine.
+     * @param typeDescription        The type to redefine.
      * @param classFileLocator A locator for finding a class file that represents a type.
      * @param <T>              The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that redefines the given type description.
      */
-    public <T> DynamicType.Builder<T> redefine(TypeDescription levelType, ClassFileLocator classFileLocator) {
+    public <T> DynamicType.Builder<T> redefine(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new RedefinitionDynamicTypeBuilder<T>(classFileVersion,
-                nonNull(namingStrategy.redefine(levelType)),
+                nonNull(namingStrategy.redefine(typeDescription)),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 interfaceTypes,
-                modifiers.resolve(levelType.getModifiers()),
+                modifiers.resolve(typeDescription.getModifiers()),
                 typeAttributeAppender,
                 ignoredMethods,
                 classVisitorWrapper,
@@ -575,7 +613,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                nonNull(levelType),
+                nonNull(typeDescription),
                 nonNull(classFileLocator));
     }
 
@@ -590,16 +628,16 @@ public class ByteBuddy {
      * {@link net.bytebuddy.ByteBuddy#rebase(Class, net.bytebuddy.dynamic.ClassFileLocator)}.
      * </p>
      * <p>
-     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code type} and the
      * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
      * </p>
      *
-     * @param levelType The type which is to be rebased.
+     * @param type The type which is to be rebased.
      * @param <T>       The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
-    public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
-        return rebase(levelType, ClassFileLocator.ForClassLoader.of(levelType.getClassLoader()));
+    public <T> DynamicType.Builder<T> rebase(Class<T> type) {
+        return rebase(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
     }
 
     /**
@@ -610,17 +648,17 @@ public class ByteBuddy {
      * The result is a rebased type with subclass semantics.
      * </p>
      * <p>
-     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code type} and the
      * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
      * </p>
      *
-     * @param levelType        The type which is to be rebased.
+     * @param type        The type which is to be rebased.
      * @param classFileLocator A locator for finding a class file that represents a type.
      * @param <T>              The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
-    public <T> DynamicType.Builder<T> rebase(Class<T> levelType, ClassFileLocator classFileLocator) {
-        return rebase(new TypeDescription.ForLoadedType(nonNull(levelType)), classFileLocator);
+    public <T> DynamicType.Builder<T> rebase(Class<T> type, ClassFileLocator classFileLocator) {
+        return rebase(new TypeDescription.ForLoadedType(nonNull(type)), classFileLocator);
     }
 
     /**
@@ -631,20 +669,20 @@ public class ByteBuddy {
      * The result is a rebased type with subclass semantics.
      * </p>
      * <p>
-     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code type} and the
      * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
      * </p>
      *
-     * @param levelType             The type which is to be rebased.
+     * @param type             The type which is to be rebased.
      * @param classFileLocator      A locator for finding a class file that represents a type.
      * @param methodNameTransformer The method name transformer that is used for rebasing methods.
      * @param <T>                   The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
-    public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
+    public <T> DynamicType.Builder<T> rebase(Class<T> type,
                                              ClassFileLocator classFileLocator,
                                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-        return rebase(new TypeDescription.ForLoadedType(nonNull(levelType)), classFileLocator, methodNameTransformer);
+        return rebase(new TypeDescription.ForLoadedType(nonNull(type)), classFileLocator, methodNameTransformer);
     }
 
     /**
@@ -655,17 +693,17 @@ public class ByteBuddy {
      * The result is a rebased type with subclass semantics.
      * </p>
      * <p>
-     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code typeDescription} and the
      * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
      * </p>
      *
-     * @param levelType        The type which is to be rebased.
+     * @param typeDescription        The type which is to be rebased.
      * @param classFileLocator A locator for finding a class file that represents a type.
      * @param <T>              The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
-    public <T> DynamicType.Builder<T> rebase(TypeDescription levelType, ClassFileLocator classFileLocator) {
-        return rebase(levelType, classFileLocator, MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix());
+    public <T> DynamicType.Builder<T> rebase(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        return rebase(typeDescription, classFileLocator, MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix());
     }
 
     /**
@@ -676,25 +714,25 @@ public class ByteBuddy {
      * The result is a rebased type with subclass semantics.
      * </p>
      * <p>
-     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code levelType} and the
+     * <b>Note</b>: It is possible to experience unexpected errors in case that the provided {@code typeDescription} and the
      * corresponding class file get out of sync, i.e. a type is rebased several times without updating the class file.
      * </p>
      *
-     * @param levelType             The type which is to be rebased.
+     * @param typeDescription             The type which is to be rebased.
      * @param classFileLocator      A locator for finding a class file that represents a type.
      * @param methodNameTransformer The method name transformer that is used for rebasing methods.
      * @param <T>                   The most specific known type that the created dynamic type represents.
      * @return A dynamic type builder for this configuration that creates a rebased version of the given type.
      */
-    public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
+    public <T> DynamicType.Builder<T> rebase(TypeDescription typeDescription,
                                              ClassFileLocator classFileLocator,
                                              MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
         return new RebaseDynamicTypeBuilder<T>(classFileVersion,
-                nonNull(namingStrategy.rebase(isDefineable(levelType))),
+                nonNull(namingStrategy.rebase(isDefineable(typeDescription))),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 interfaceTypes,
-                modifiers.resolve(levelType.getModifiers()),
+                modifiers.resolve(typeDescription.getModifiers()),
                 TypeAttributeAppender.NoOp.INSTANCE,
                 ignoredMethods,
                 classVisitorWrapper,
@@ -703,7 +741,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                levelType,
+                typeDescription,
                 nonNull(classFileLocator),
                 nonNull(methodNameTransformer));
     }
@@ -919,8 +957,8 @@ public class ByteBuddy {
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(Class<?>... type) {
-        return withImplementing(new TypeList.ForLoadedType(nonNull(type)));
+    public OptionalMethodInterception withImplementing(Type... type) {
+        return withImplementing(new GenericTypeList.ForLoadedTypes(nonNull(type)));
     }
 
     /**
@@ -930,34 +968,34 @@ public class ByteBuddy {
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(Iterable<? extends Class<?>> types) {
-        return withImplementing(new TypeList.ForLoadedType(toList(types)));
+    public OptionalMethodInterception withImplementing(Iterable<? extends Type> types) {
+        return withImplementing(new GenericTypeList.ForLoadedTypes(toList(types)));
     }
 
     /**
      * Defines all dynamic types that are created by this configuration to implement the given interfaces.
      *
-     * @param type The interface types to implement.
-     * @return The same configuration where any dynamic type that is created by the resulting configuration will
+     * @param typeDefinition The interface types to implement.
+     * @return The same configuration where any dynamic typeDefinition that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(TypeDescription... type) {
-        return withImplementing(Arrays.asList(type));
+    public OptionalMethodInterception withImplementing(TypeDefinition... typeDefinition) {
+        return withImplementing(Arrays.asList(typeDefinition));
     }
 
     /**
-     * Defines all dynamic types that are created by this configuration to implement the given interfaces.
+     * Defines all dynamic typeDefinitions that are created by this configuration to implement the given interfaces.
      *
-     * @param types The interface types to implement.
+     * @param typeDefinitions The interface typeDefinitions to implement.
      * @return The same configuration where any dynamic type that is created by the resulting configuration will
      * implement the given interfaces.
      */
-    public OptionalMethodInterception withImplementing(Collection<? extends TypeDescription> types) {
+    public OptionalMethodInterception withImplementing(Collection<? extends TypeDefinition> typeDefinitions) {
         return new OptionalMethodInterception(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                joinUniqueRaw(interfaceTypes, toList(isImplementable(types))),
+                joinUniqueRaw(interfaceTypes, new GenericTypeList.Explicit(toList(isImplementable(typeDefinitions)))),
                 ignoredMethods,
                 classVisitorWrapper,
                 methodRegistry,
@@ -966,7 +1004,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new GenericTypeList.Explicit(toList(types)).asErasures()))));
+                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new GenericTypeList.Explicit(toList(typeDefinitions)).asErasures()))));
     }
 
     /**
@@ -1396,7 +1434,7 @@ public class ByteBuddy {
                                          NamingStrategy.Unbound namingStrategy,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          Implementation.Context.Factory implementationContextFactory,
-                                         List<TypeDescription> interfaceTypes,
+                                         List<GenericTypeDescription> interfaceTypes,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
                                          ClassVisitorWrapper classVisitorWrapper,
                                          MethodRegistry methodRegistry,
@@ -1637,7 +1675,7 @@ public class ByteBuddy {
                                              NamingStrategy.Unbound namingStrategy,
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              Implementation.Context.Factory implementationContextFactory,
-                                             List<TypeDescription> interfaceTypes,
+                                             List<GenericTypeDescription> interfaceTypes,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
                                              ClassVisitorWrapper classVisitorWrapper,
                                              MethodRegistry methodRegistry,
@@ -1747,7 +1785,7 @@ public class ByteBuddy {
                         NamingStrategy.Unbound namingStrategy,
                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                         Implementation.Context.Factory implementationContextFactory,
-                        List<TypeDescription> interfaceTypes,
+                        List<GenericTypeDescription> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         ClassVisitorWrapper classVisitorWrapper,
                         MethodRegistry methodRegistry,
@@ -1772,6 +1810,16 @@ public class ByteBuddy {
         }
 
         @Override
+        public <T> DynamicType.Builder<T> subclass(Type superType) {
+            return materialize().subclass(superType);
+        }
+
+        @Override
+        public <T> DynamicType.Builder<T> subclass(Type superType, ConstructorStrategy constructorStrategy) {
+            return materialize().subclass(superType, constructorStrategy);
+        }
+
+        @Override
         public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
             return materialize().subclass(superType);
         }
@@ -1782,62 +1830,62 @@ public class ByteBuddy {
         }
 
         @Override
-        public <T> DynamicType.Builder<T> subclass(TypeDescription superType) {
+        public <T> DynamicType.Builder<T> subclass(TypeDefinition superType) {
             return materialize().subclass(superType);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> subclass(TypeDescription superType,
+        public <T> DynamicType.Builder<T> subclass(TypeDefinition superType,
                                                    ConstructorStrategy constructorStrategy) {
             return materialize().subclass(superType, constructorStrategy);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> redefine(Class<T> levelType) {
-            return materialize().redefine(levelType);
+        public <T> DynamicType.Builder<T> redefine(Class<T> type) {
+            return materialize().redefine(type);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> redefine(Class<T> levelType,
+        public <T> DynamicType.Builder<T> redefine(Class<T> type,
                                                    ClassFileLocator classFileLocator) {
-            return materialize().redefine(levelType, classFileLocator);
+            return materialize().redefine(type, classFileLocator);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> redefine(TypeDescription levelType,
+        public <T> DynamicType.Builder<T> redefine(TypeDescription typeDescription,
                                                    ClassFileLocator classFileLocator) {
-            return materialize().redefine(levelType, classFileLocator);
+            return materialize().redefine(typeDescription, classFileLocator);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> rebase(Class<T> levelType) {
-            return materialize().rebase(levelType);
+        public <T> DynamicType.Builder<T> rebase(Class<T> type) {
+            return materialize().rebase(type);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
+        public <T> DynamicType.Builder<T> rebase(Class<T> type,
                                                  ClassFileLocator classFileLocator) {
-            return materialize().rebase(levelType, classFileLocator);
+            return materialize().rebase(type, classFileLocator);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> rebase(Class<T> levelType,
+        public <T> DynamicType.Builder<T> rebase(Class<T> type,
                                                  ClassFileLocator classFileLocator,
                                                  MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-            return materialize().rebase(levelType, classFileLocator, methodNameTransformer);
+            return materialize().rebase(type, classFileLocator, methodNameTransformer);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
+        public <T> DynamicType.Builder<T> rebase(TypeDescription typeDescription,
                                                  ClassFileLocator classFileLocator) {
-            return materialize().rebase(levelType, classFileLocator);
+            return materialize().rebase(typeDescription, classFileLocator);
         }
 
         @Override
-        public <T> DynamicType.Builder<T> rebase(TypeDescription levelType,
+        public <T> DynamicType.Builder<T> rebase(TypeDescription typeDescription,
                                                  ClassFileLocator classFileLocator,
                                                  MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
-            return materialize().rebase(levelType, classFileLocator, methodNameTransformer);
+            return materialize().rebase(typeDescription, classFileLocator, methodNameTransformer);
         }
 
         @Override
@@ -1891,23 +1939,23 @@ public class ByteBuddy {
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(Class<?>... type) {
+        public OptionalMethodInterception withImplementing(Type... type) {
             return materialize().withImplementing(type);
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(Iterable<? extends Class<?>> types) {
+        public OptionalMethodInterception withImplementing(Iterable<? extends Type> types) {
             return materialize().withImplementing(types);
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(TypeDescription... type) {
-            return materialize().withImplementing(type);
+        public OptionalMethodInterception withImplementing(TypeDefinition... typeDefinition) {
+            return materialize().withImplementing(typeDefinition);
         }
 
         @Override
-        public OptionalMethodInterception withImplementing(Collection<? extends TypeDescription> types) {
-            return materialize().withImplementing(types);
+        public OptionalMethodInterception withImplementing(Collection<? extends TypeDefinition> typeDefinitions) {
+            return materialize().withImplementing(typeDefinitions);
         }
 
         @Override
@@ -1956,18 +2004,23 @@ public class ByteBuddy {
         }
 
         @Override
-        public DynamicType.Builder<?> makeInterface(TypeDescription... typeDescription) {
-            return materialize().makeInterface(typeDescription);
+        public DynamicType.Builder<?> makeInterface(Type... type) {
+            return materialize().makeInterface(type);
         }
 
         @Override
-        public DynamicType.Builder<?> makeInterface(Iterable<? extends Class<?>> types) {
+        public DynamicType.Builder<?> makeInterface(TypeDefinition... typeDefinition) {
+            return materialize().makeInterface(typeDefinition);
+        }
+
+        @Override
+        public DynamicType.Builder<?> makeInterface(Iterable<? extends Type> types) {
             return materialize().makeInterface(types);
         }
 
         @Override
-        public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDescription> typeDescriptions) {
-            return materialize().makeInterface(typeDescriptions);
+        public DynamicType.Builder<?> makeInterface(Collection<? extends TypeDefinition> typeDefinitions) {
+            return materialize().makeInterface(typeDefinitions);
         }
 
         @Override

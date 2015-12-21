@@ -99,48 +99,25 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
         /**
          * The generic types represented by this list.
          */
-        private final List<? extends GenericTypeDescription> genericTypes;
+        private final List<? extends TypeDefinition> genericTypes;
 
         /**
          * Creates a new explicit list of generic types.
          *
          * @param genericTypes The generic types represented by this list.
          */
-        public Explicit(List<? extends GenericTypeDescription> genericTypes) {
+        public Explicit(List<? extends TypeDefinition> genericTypes) {
             this.genericTypes = genericTypes;
         }
 
         @Override
         public GenericTypeDescription get(int index) {
-            return genericTypes.get(index);
+            return genericTypes.get(index).asGenericType();
         }
 
         @Override
         public int size() {
             return genericTypes.size();
-        }
-    }
-
-    class ForTypeDefinitions extends AbstractBase {
-
-        private final List<? extends TypeDefinition> typeDefinitions;
-
-        public ForTypeDefinitions(TypeDefinition... typeDefinition) {
-            this(Arrays.asList(typeDefinition));
-        }
-
-        public ForTypeDefinitions(List<? extends TypeDefinition> typeDefinitions) {
-            this.typeDefinitions = typeDefinitions;
-        }
-
-        @Override
-        public GenericTypeDescription get(int index) {
-            return typeDefinitions.get(index).asGenericType();
-        }
-
-        @Override
-        public int size() {
-            return typeDefinitions.size();
         }
     }
 
