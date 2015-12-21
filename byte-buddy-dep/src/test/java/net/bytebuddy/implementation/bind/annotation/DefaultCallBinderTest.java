@@ -26,7 +26,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     private TypeDescription targetParameterType, firstInterface, secondInterface;
 
     @Mock
-    private GenericTypeDescription genericTargetParameterType;
+    private GenericTypeDescription genericTargetParameterType, firstGenericInterface, secondGenericInterface;
 
     @Mock
     private MethodDescription.Token methodToken;
@@ -43,10 +43,12 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(genericTargetParameterType);
-        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType); // TODO
+        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType);
         when(implementationTarget.invokeDefault(any(TypeDescription.class), eq(methodToken))).thenReturn(specialMethodInvocation);
-        when(firstInterface.asErasure()).thenReturn(firstInterface);
-        when(secondInterface.asErasure()).thenReturn(secondInterface);
+        when(firstGenericInterface.asErasure()).thenReturn(firstInterface);
+        when(secondGenericInterface.asErasure()).thenReturn(secondInterface);
+        when(firstInterface.asGenericType()).thenReturn(firstGenericInterface);
+        when(secondInterface.asGenericType()).thenReturn(secondGenericInterface);
     }
 
     @Override

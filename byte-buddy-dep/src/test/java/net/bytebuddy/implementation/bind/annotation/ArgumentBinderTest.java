@@ -40,9 +40,11 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
-        when(genericSourceType.asErasure()).thenReturn(sourceType); // TODO
+        when(genericSourceType.asErasure()).thenReturn(sourceType);
+        when(sourceType.asGenericType()).thenReturn(genericSourceType);
         when(genericSourceType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(genericSourceType);
-        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
+        when(genericTargetType.asErasure()).thenReturn(targetType);
+        when(targetType.asGenericType()).thenReturn(genericTargetType);
         when(genericTargetType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(targetType);
     }
 

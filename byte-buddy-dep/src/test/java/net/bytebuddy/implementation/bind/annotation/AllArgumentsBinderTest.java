@@ -73,7 +73,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(stackManipulation.isValid()).thenReturn(true);
         when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
-        when(targetType.isArray()).thenReturn(true);
+        when(genericTargetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(target.getType()).thenReturn(genericTargetType);
@@ -97,7 +97,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(stackManipulation.isValid()).thenReturn(false);
         when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
-        when(targetType.isArray()).thenReturn(true);
+        when(genericTargetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(target.getType()).thenReturn(genericTargetType);
@@ -120,7 +120,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(stackManipulation.isValid()).thenReturn(false);
         when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
         when(source.isStatic()).thenReturn(false);
-        when(targetType.isArray()).thenReturn(true);
+        when(genericTargetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(target.getType()).thenReturn(genericTargetType);
