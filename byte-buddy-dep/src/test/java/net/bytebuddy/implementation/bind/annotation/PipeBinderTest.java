@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -23,6 +24,9 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     @Mock
     private TypeDescription targetMethodType;
 
+    @Mock
+    private GenericTypeDescription genericTargetMethodType;
+
     public PipeBinderTest() {
         super(Pipe.class);
     }
@@ -32,8 +36,8 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     public void setUp() throws Exception {
         super.setUp();
         when(targetMethod.getDeclaringType()).thenReturn(targetMethodType);
+        when(genericTargetMethodType.asErasure()).thenReturn(targetMethodType);
         binder = new Pipe.Binder(targetMethod);
-        when(targetMethodType.asErasure()).thenReturn(targetMethodType);
     }
 
     @Override
@@ -43,7 +47,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
 
     @Test
     public void testParameterBinding() throws Exception {
-        when(target.getType()).thenReturn(targetMethodType);
+        when(target.getType()).thenReturn(genericTargetMethodType);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotationDescription,
                 source,
                 target,
@@ -54,7 +58,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
 
     @Test
     public void testCannotPipeStaticMethod() throws Exception {
-        when(target.getType()).thenReturn(targetMethodType);
+        when(target.getType()).thenReturn(genericTargetMethodType);
         when(source.isStatic()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = binder.bind(annotationDescription,
                 source,
@@ -66,8 +70,9 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
 
     @Test(expected = IllegalStateException.class)
     public void testParameterBindingOnIllegalTargetTypeThrowsException() throws Exception {
-        TypeDescription targetType = mock(TypeDescription.class);
-        when(targetType.asErasure()).thenReturn(targetType);
+        GenericTypeDescription targetType = mock(GenericTypeDescription.class);
+        TypeDescription rawTargetType = mock(TypeDescription.class);
+        when(targetType.asErasure()).thenReturn(rawTargetType);
         when(target.getType()).thenReturn(targetType);
         binder.bind(annotationDescription,
                 source,

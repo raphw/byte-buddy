@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -31,6 +32,9 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     private TypeDescription targetType;
 
     @Mock
+    private GenericTypeDescription genericTargetType;
+
+    @Mock
     private MethodDescription.InDefinedShape methodDescription;
 
     public OriginBinderTest() {
@@ -41,8 +45,8 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetType);
-        when(targetType.asErasure()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
         when(source.asDefined()).thenReturn(methodDescription);
     }
 
@@ -123,7 +127,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -136,7 +140,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
         targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
         when(methodDescription.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);

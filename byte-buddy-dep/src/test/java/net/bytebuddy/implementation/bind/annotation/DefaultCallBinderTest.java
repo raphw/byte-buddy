@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -25,6 +26,9 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     private TypeDescription targetParameterType, firstInterface, secondInterface;
 
     @Mock
+    private GenericTypeDescription genericTargetParameterType;
+
+    @Mock
     private MethodDescription.Token methodToken;
 
     @Mock
@@ -38,8 +42,8 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetParameterType);
-        when(targetParameterType.asErasure()).thenReturn(targetParameterType);
+        when(target.getType()).thenReturn(genericTargetParameterType);
+        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType); // TODO
         when(implementationTarget.invokeDefault(any(TypeDescription.class), eq(methodToken))).thenReturn(specialMethodInvocation);
         when(firstInterface.asErasure()).thenReturn(firstInterface);
         when(secondInterface.asErasure()).thenReturn(secondInterface);
