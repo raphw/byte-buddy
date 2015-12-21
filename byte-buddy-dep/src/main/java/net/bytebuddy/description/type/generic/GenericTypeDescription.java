@@ -945,7 +945,7 @@ public interface GenericTypeDescription extends TypeDefinition {
 
         @Override
         public GenericTypeList getParameters() {
-            throw new IllegalStateException("A non-generic type does not imply type parameters: " + this);
+            return new GenericTypeList.Empty();
         }
 
         @Override

@@ -79,13 +79,13 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        when(firstPrimitive.asErasure()).thenReturn(firstRawPrimitive);
+        when(secondPrimitive.asErasure()).thenReturn(secondRawPrimitive);
         when(sourceType.isPrimitive()).thenReturn(true);
-        when(firstPrimitive.isPrimitive()).thenReturn(true);
-        when(firstPrimitive.represents(firstType)).thenReturn(true);
-        when(secondPrimitive.isPrimitive()).thenReturn(true);
-        when(secondPrimitive.represents(secondType)).thenReturn(true);
-        when(firstPrimitive.asErasure()).thenReturn(firstRawPrimitive); // TODO
-        when(secondPrimitive.asErasure()).thenReturn(secondRawPrimitive); // TODO
+        when(firstRawPrimitive.isPrimitive()).thenReturn(true);
+        when(firstRawPrimitive.represents(firstType)).thenReturn(true);
+        when(secondRawPrimitive.isPrimitive()).thenReturn(true);
+        when(secondRawPrimitive.represents(secondType)).thenReturn(true);
     }
 
     @Test
