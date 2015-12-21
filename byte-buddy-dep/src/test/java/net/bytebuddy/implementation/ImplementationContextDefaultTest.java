@@ -179,12 +179,14 @@ public class ImplementationContextDefaultTest {
         when(firstFieldType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(firstFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstFieldType);
         when(firstFieldType.asErasure()).thenReturn(firstRawFieldType);
+        when(firstFieldType.asRawType()).thenReturn(firstFieldType);
         when(firstRawFieldType.asGenericType()).thenReturn(firstFieldType);
         when(firstRawFieldType.getDescriptor()).thenReturn(BAR);
         when(secondFieldType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondFieldType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondFieldType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(secondFieldType);
         when(secondFieldType.asErasure()).thenReturn(secondRawFieldType);
+        when(secondFieldType.asRawType()).thenReturn(secondFieldType);
         when(secondRawFieldType.asGenericType()).thenReturn(secondFieldType);
         when(secondRawFieldType.getDescriptor()).thenReturn(QUX);
         when(injectedCode.getByteCodeAppender()).thenReturn(injectedCodeAppender);
