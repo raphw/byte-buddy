@@ -43,7 +43,13 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     private GenericTypeDescription genericTypeDescription;
 
     @Mock
-    private TypeDescription typeDescription, returnType, parameterType, placeholderType, otherPlaceHolderType;
+    private TypeDescription typeDescription, returnType, otherPlaceHolderType, rawPlaceholderType;
+
+    @Mock
+    private GenericTypeDescription parameterType, placeholderType;
+
+    @Mock
+    private TypeDescription rawParameterType;
 
     @Mock
     private GenericTypeDescription genericReturnType;
@@ -61,21 +67,24 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(genericReturnType);
-        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(placeholderType.asErasure()).thenReturn(rawPlaceholderType);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
+        when(parameterType.asGenericType()).thenReturn(parameterType);
+        when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(parameterType.asErasure()).thenReturn(rawParameterType);
+        when(rawParameterType.asGenericType()).thenReturn(parameterType); // TODO
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
         when(typeDescription.getInternalName()).thenReturn(BAR);
-        when(placeholderType.getDescriptor()).thenReturn(BAZ);
+        when(rawPlaceholderType.getDescriptor()).thenReturn(BAZ);
         when(otherPlaceHolderType.getDescriptor()).thenReturn(FOO);
         when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
-        when(parameterType.asErasure()).thenReturn(parameterType);
     }
 
     @Test
     public void testPreservation() throws Exception {
-        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedConstructor.of(methodDescription, placeholderType);
+        MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedConstructor.of(methodDescription, rawPlaceholderType);
         assertThat(resolution.isRebased(), is(true));
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));

@@ -83,6 +83,8 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
      */
     abstract class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
 
+        private static final int ONLY = 0;
+
         @Override
         @SuppressWarnings("unchecked")
         public S filter(ElementMatcher<? super T> elementMatcher) {
@@ -101,9 +103,8 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
         public T getOnly() {
             if (size() != 1) {
                 throw new IllegalStateException("size = " + size());
-            } else {
-                return get(0);
             }
+            return get(ONLY);
         }
 
         @Override

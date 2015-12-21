@@ -74,6 +74,7 @@ public class MethodTransformerSimpleTest {
         when(exceptionType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(exceptionType);
         when(typeVariable.getSymbol()).thenReturn(QUX);
         when(typeVariable.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(typeVariable.asGenericType()).thenReturn(typeVariable);
         when(methodDescription.asToken()).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);
@@ -96,6 +97,7 @@ public class MethodTransformerSimpleTest {
         when(declaringType.asErasure()).thenReturn(rawDeclaringType);
         when(returnType.asErasure()).thenReturn(rawReturnType);
         when(parameterType.asErasure()).thenReturn(rawParameterType);
+        when(exceptionType.asGenericType()).thenReturn(exceptionType);
     }
 
     @Test

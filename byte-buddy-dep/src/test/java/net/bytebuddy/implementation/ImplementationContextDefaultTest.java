@@ -125,6 +125,12 @@ public class ImplementationContextDefaultTest {
     private TypeDescription firstRawSpecialParameterType, secondRawSpecialParameterType;
 
     @Mock
+    private GenericTypeDescription firstSpecialExceptionType, secondSpecialExceptionType;
+
+    @Mock
+    private TypeDescription firstRawSpecialExceptionType, secondRawSpecialExceptionType;
+
+    @Mock
     private ByteCodeAppender injectedCodeAppender, terminationAppender;
 
     @Mock
@@ -138,7 +144,6 @@ public class ImplementationContextDefaultTest {
 
     @Mock
     private TypeDescription firstSpecialType, secondSpecialType,
-            firstSpecialExceptionType, secondSpecialExceptionType,
             firstDeclaringType, secondDeclaringType;
 
     @Mock
@@ -196,10 +201,13 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialParameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(firstRawSpecialReturnType.getDescriptor()).thenReturn(QUX);
         when(firstSpecialReturnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
-        when(firstSpecialExceptionType.getInternalName()).thenReturn(FOO);
+        when(firstSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(firstSpecialReturnType.asRawType()).thenReturn(firstSpecialReturnType);
+        when(firstRawSpecialExceptionType.getInternalName()).thenReturn(FOO);
         when(firstSpecialExceptionType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(firstSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(firstSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(firstSpecialParameterType.asGenericType()).thenReturn(firstSpecialParameterType);
+        when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType);
         when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(firstSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(firstSpecialMethod,
                 Collections.singletonList(firstSpecialParameterType)));
@@ -210,12 +218,15 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialMethod.getExceptionTypes()).thenReturn(secondSpecialExceptionTypes);
         when(secondRawSpecialParameterType.getDescriptor()).thenReturn(BAR);
         when(secondRawSpecialReturnType.getDescriptor()).thenReturn(FOO);
-        when(secondSpecialExceptionType.getInternalName()).thenReturn(BAZ);
+        when(secondRawSpecialExceptionType.getInternalName()).thenReturn(BAZ);
         when(secondSpecialExceptionType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondSpecialParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialParameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(secondSpecialParameterType.asGenericType()).thenReturn(secondSpecialParameterType);
+        when(secondSpecialParameterType.asRawType()).thenReturn(secondSpecialParameterType);
         when(secondSpecialReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondSpecialReturnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType);
         when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
         when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod,
                 Collections.singletonList(secondSpecialParameterType)));
@@ -235,8 +246,8 @@ public class ImplementationContextDefaultTest {
         when(secondFieldDeclaringType.getInternalName()).thenReturn(BAZ);
         when(firstSpecialReturnType.asErasure()).thenReturn(firstRawSpecialReturnType);
         when(secondSpecialReturnType.asErasure()).thenReturn(secondRawSpecialReturnType);
-        when(firstSpecialExceptionType.asErasure()).thenReturn(firstSpecialExceptionType);
-        when(secondSpecialExceptionType.asErasure()).thenReturn(secondSpecialExceptionType);
+        when(firstSpecialExceptionType.asErasure()).thenReturn(firstRawSpecialExceptionType);
+        when(secondSpecialExceptionType.asErasure()).thenReturn(secondRawSpecialExceptionType);
         when(firstSpecialParameterType.asErasure()).thenReturn(firstRawSpecialParameterType);
         when(secondSpecialParameterType.asErasure()).thenReturn(secondRawSpecialParameterType);
         when(firstSpecialParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(firstSpecialParameterType);
