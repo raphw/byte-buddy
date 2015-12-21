@@ -18,7 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
-public class IgnoreForBindingVerifierTest {
+public class IgnoreForBindingVerifierTest extends AbstractAnnotationTest<IgnoreForBinding> {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -28,6 +28,10 @@ public class IgnoreForBindingVerifierTest {
 
     @Mock
     private AnnotationList annotationList;
+
+    public IgnoreForBindingVerifierTest() {
+        super(IgnoreForBinding.class);
+    }
 
     @Before
     public void setUp() throws Exception {

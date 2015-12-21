@@ -28,9 +28,7 @@ import java.util.Iterator;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
-
-    private final Class<T> annotationType;
+public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends AbstractAnnotationTest<T> {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -67,7 +65,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> {
     protected TypeList rawSourceTypeList;
 
     protected AbstractAnnotationBinderTest(Class<T> annotationType) {
-        this.annotationType = annotationType;
+        super(annotationType);
     }
 
     protected abstract TargetMethodAnnotationDrivenBinder.ParameterBinder<T> getSimpleBinder();
