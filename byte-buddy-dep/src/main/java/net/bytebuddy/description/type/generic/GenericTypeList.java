@@ -101,6 +101,10 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
          */
         private final List<? extends TypeDefinition> genericTypes;
 
+        public Explicit(TypeDefinition... typeDefinition) {
+            this(Arrays.asList(typeDefinition));
+        }
+
         /**
          * Creates a new explicit list of generic types.
          *

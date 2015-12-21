@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -44,9 +43,6 @@ public class ConstructorStrategyDefaultTest {
     private GenericTypeDescription superType;
 
     @Mock
-    private TypeDescription rawSuperType;
-
-    @Mock
     private MethodList<?> methodList, filteredMethodList;
 
     @Mock
@@ -61,7 +57,6 @@ public class ConstructorStrategyDefaultTest {
                 any(MethodTransformer.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn((MethodList) methodList);
-        when(superType.asErasure()).thenReturn(rawSuperType); // TODO
         when(filteredMethodList.asTokenList()).thenReturn(filteredMethodTokenList);
     }
 

@@ -81,8 +81,8 @@ public class MethodTransformerSimpleTest {
         when(methodToken.getInternalName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
-        when(methodToken.getTypeVariables()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(typeVariable)));
-        when(methodToken.getExceptionTypes()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(exceptionType)));
+        when(methodToken.getTypeVariables()).thenReturn(new GenericTypeList.Explicit(typeVariable));
+        when(methodToken.getExceptionTypes()).thenReturn(new GenericTypeList.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
                 .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.singletonList(parameterToken)));
         when(methodToken.getAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(methodAnnotation)));

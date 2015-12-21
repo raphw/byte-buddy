@@ -161,7 +161,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
             public TypeDescription create() {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.asErasure()).thenReturn(typeDescription);
-                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(typeDescription)));
+                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(typeDescription));
                 when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
                 when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
                 return typeDescription;

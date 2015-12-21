@@ -12,7 +12,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -63,7 +62,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         doReturn(VOID_TYPE).when(annotation).targetType();
         when(source.asToken()).thenReturn(methodToken);
         when(source.isSpecializableFor(firstInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Arrays.asList(firstInterface, secondInterface)));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(firstInterface, secondInterface));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -80,7 +79,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(source.asToken()).thenReturn(methodToken);
         when(source.isSpecializableFor(firstInterface)).thenReturn(true);
         when(source.isSpecializableFor(secondInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Arrays.asList(firstInterface, secondInterface)));
+        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(firstInterface, secondInterface));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));

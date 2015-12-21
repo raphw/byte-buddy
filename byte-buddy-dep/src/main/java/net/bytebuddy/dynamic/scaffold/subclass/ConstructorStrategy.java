@@ -130,7 +130,7 @@ public interface ConstructorStrategy {
                 GenericTypeDescription superType = instrumentedType.getSuperType();
                 return (superType == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.asErasure().getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
+                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
             }
 
             @Override

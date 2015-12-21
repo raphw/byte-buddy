@@ -157,8 +157,8 @@ public class ImplementationContextDefaultTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        firstSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(firstSpecialExceptionType));
-        secondSpecialExceptionTypes = new GenericTypeList.Explicit(Collections.singletonList(secondSpecialExceptionType));
+        firstSpecialExceptionTypes = new GenericTypeList.Explicit(firstSpecialExceptionType);
+        secondSpecialExceptionTypes = new GenericTypeList.Explicit(secondSpecialExceptionType);
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.isInterface()).thenReturn(interfaceType);
