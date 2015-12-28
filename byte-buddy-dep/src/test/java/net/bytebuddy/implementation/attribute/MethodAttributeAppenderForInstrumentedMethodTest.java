@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -28,7 +27,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-        when(methodDescription.getDeclaringType()).thenReturn(mock(GenericTypeDescription.class));
+        when(methodDescription.getDeclaringType()).thenReturn(mock(TypeDescription.Generic.class));
         MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter).make(instrumentedType);
         methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
@@ -50,7 +49,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
                 .thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters())
                 .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Collections.singletonList(parameterDescription)));
-        when(methodDescription.getDeclaringType()).thenReturn(mock(GenericTypeDescription.class));
+        when(methodDescription.getDeclaringType()).thenReturn(mock(TypeDescription.Generic.class));
         MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.ForInstrumentedMethod(valueFilter).make(instrumentedType);
         methodAttributeAppender.apply(methodVisitor, methodDescription);
         verify(methodVisitor).visitParameterAnnotation(0, Type.getDescriptor(Baz.class), true);

@@ -1,9 +1,9 @@
 package net.bytebuddy.pool;
 
+import net.bytebuddy.description.type.AbstractGenericTypeListTest;
 import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.generic.AbstractGenericTypeListTest;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import org.junit.After;
 import org.junit.Before;
 
@@ -37,12 +37,12 @@ public class TypePoolGenericTypeListTest extends AbstractGenericTypeListTest<Typ
     }
 
     @Override
-    protected GenericTypeList asList(List<Type> elements) {
+    protected TypeList.Generic asList(List<Type> elements) {
         return typePool.describe(Holder.class.getName()).resolve().getInterfaces().filter(anyOf(elements.toArray(new Type[elements.size()])));
     }
 
     @Override
-    protected GenericTypeDescription asElement(Type element) {
+    protected TypeDescription.Generic asElement(Type element) {
         return TypeDefinition.Sort.describe(element);
     }
 }

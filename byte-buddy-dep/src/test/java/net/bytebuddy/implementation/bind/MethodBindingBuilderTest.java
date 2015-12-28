@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -47,7 +46,7 @@ public class MethodBindingBuilderTest {
     private MethodVisitor methodVisitor;
 
     @Mock
-    private GenericTypeDescription returnType;
+    private TypeDescription.Generic returnType;
 
     @Mock(answer = Answers.RETURNS_MOCKS)
     private StackManipulation legalStackManipulation, illegalStackManipulation;

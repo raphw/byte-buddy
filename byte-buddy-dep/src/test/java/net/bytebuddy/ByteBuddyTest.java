@@ -5,7 +5,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
@@ -53,7 +52,7 @@ public class ByteBuddyTest {
     private ElementMatcher<? super MethodDescription> methodMatcher;
 
     @Mock
-    private GenericTypeDescription interfaceType;
+    private TypeDescription.Generic interfaceType;
 
     @Mock
     private TypeDescription rawInterfaceType;

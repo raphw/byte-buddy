@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -18,7 +17,7 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     private TypeDescription targetType;
 
     @Mock
-    private GenericTypeDescription genericTargetType;
+    private TypeDescription.Generic genericTargetType;
 
     @Mock
     private Super.Instantiation instantiation;

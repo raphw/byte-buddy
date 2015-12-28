@@ -9,8 +9,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -57,7 +56,7 @@ public class MethodTransformerSimpleTest {
     private ParameterDescription.InDefinedShape definedParameter;
 
     @Mock
-    private GenericTypeDescription returnType, typeVariable, parameterType, exceptionType, declaringType;
+    private TypeDescription.Generic returnType, typeVariable, parameterType, exceptionType, declaringType;
 
     @Mock
     private AnnotationDescription methodAnnotation, parameterAnnotation;
@@ -68,10 +67,10 @@ public class MethodTransformerSimpleTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(returnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(returnType);
-        when(typeVariable.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(typeVariable);
-        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        when(exceptionType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(exceptionType);
+        when(returnType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(returnType);
+        when(typeVariable.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(typeVariable);
+        when(parameterType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(parameterType);
+        when(exceptionType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(exceptionType);
         when(typeVariable.getSymbol()).thenReturn(QUX);
         when(typeVariable.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(typeVariable.asGenericType()).thenReturn(typeVariable);
@@ -81,8 +80,8 @@ public class MethodTransformerSimpleTest {
         when(methodToken.getInternalName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
-        when(methodToken.getTypeVariables()).thenReturn(new GenericTypeList.Explicit(typeVariable));
-        when(methodToken.getExceptionTypes()).thenReturn(new GenericTypeList.Explicit(exceptionType));
+        when(methodToken.getTypeVariables()).thenReturn(new TypeList.Generic.Explicit(typeVariable));
+        when(methodToken.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
                 .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.singletonList(parameterToken)));
         when(methodToken.getAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(methodAnnotation)));

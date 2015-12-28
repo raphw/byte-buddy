@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that matches a method's parameter's type.
@@ -13,14 +13,14 @@ public class MethodParameterTypeMatcher<T extends ParameterDescription> extends 
     /**
      * The matcher to apply to the type of the parameter.
      */
-    private final ElementMatcher<? super GenericTypeDescription> matcher;
+    private final ElementMatcher<? super TypeDescription.Generic> matcher;
 
     /**
      * Creates a new matcher for a method's parameter's type.
      *
      * @param matcher The matcher to apply to the type of the parameter.
      */
-    public MethodParameterTypeMatcher(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public MethodParameterTypeMatcher(ElementMatcher<? super TypeDescription.Generic> matcher) {
         this.matcher = matcher;
     }
 

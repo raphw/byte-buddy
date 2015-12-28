@@ -7,7 +7,6 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
@@ -32,7 +31,7 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
 
-    private final GenericTypeDescription superType;
+    private final TypeDescription.Generic superType;
 
     /**
      * A strategy that is used to define and implement constructors based on the subclassed type.
@@ -66,7 +65,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       NamingStrategy namingStrategy,
                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                       Implementation.Context.Factory implementationContextFactory,
-                                      List<GenericTypeDescription> interfaceTypes,
+                                      List<TypeDescription.Generic> interfaceTypes,
                                       int modifiers,
                                       TypeAttributeAppender attributeAppender,
                                       ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -76,14 +75,14 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       MethodGraph.Compiler methodGraphCompiler,
                                       FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                       MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                      GenericTypeDescription superType,
+                                      TypeDescription.Generic superType,
                                       ConstructorStrategy constructorStrategy) {
         this(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 InstrumentedType.TypeInitializer.None.INSTANCE,
-                new ArrayList<GenericTypeDescription>(interfaceTypes),
+                new ArrayList<TypeDescription.Generic>(interfaceTypes),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
@@ -132,7 +131,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          Implementation.Context.Factory implementationContextFactory,
                                          InstrumentedType.TypeInitializer typeInitializer,
-                                         List<GenericTypeDescription> interfaceTypes,
+                                         List<TypeDescription.Generic> interfaceTypes,
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -144,7 +143,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
                                          List<FieldDescription.Token> fieldTokens,
                                          List<MethodDescription.Token> methodTokens,
-                                         GenericTypeDescription superType,
+                                         TypeDescription.Generic superType,
                                          ConstructorStrategy constructorStrategy) {
         super(classFileVersion,
                 namingStrategy,
@@ -173,7 +172,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  InstrumentedType.TypeInitializer typeInitializer,
-                                                 List<GenericTypeDescription> interfaceTypes,
+                                                 List<TypeDescription.Generic> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -215,7 +214,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                 modifiers,
                                 classFileVersion)),
                                 modifiers,
-                                Collections.<GenericTypeDescription>emptyList(),
+                                Collections.<TypeDescription.Generic>emptyList(),
                                 superType,
                                 interfaceTypes,
                                 fieldTokens,

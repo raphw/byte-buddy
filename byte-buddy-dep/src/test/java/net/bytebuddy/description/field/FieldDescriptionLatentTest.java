@@ -3,7 +3,6 @@ package net.bytebuddy.description.field;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 import java.lang.reflect.Field;
 

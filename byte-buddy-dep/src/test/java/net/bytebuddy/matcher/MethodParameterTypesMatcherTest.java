@@ -1,8 +1,8 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -16,10 +16,10 @@ import static org.mockito.Mockito.*;
 public class MethodParameterTypesMatcherTest extends AbstractElementMatcherTest<MethodParameterTypesMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super List<? extends GenericTypeDescription>> parameterMatcher;
+    private ElementMatcher<? super List<? extends TypeDescription.Generic>> parameterMatcher;
 
     @Mock
-    private GenericTypeList typeList;
+    private TypeList.Generic typeList;
 
     @Mock
     private ParameterList parameterList;

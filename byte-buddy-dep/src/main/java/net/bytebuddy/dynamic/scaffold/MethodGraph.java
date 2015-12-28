@@ -5,7 +5,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -501,10 +500,10 @@ public interface MethodGraph {
             public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 Map<TypeDefinition, Key.Store<T>> snapshots = new HashMap<TypeDefinition, Key.Store<T>>();
                 Key.Store<?> rootStore = doAnalyze(typeDefinition, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
-                GenericTypeDescription superType = typeDefinition.getSuperType();
-                List<GenericTypeDescription> interfaceTypes = typeDefinition.getInterfaces();
+                TypeDescription.Generic superType = typeDefinition.getSuperType();
+                List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
-                for (GenericTypeDescription interfaceType : interfaceTypes) {
+                for (TypeDescription.Generic interfaceType : interfaceTypes) {
                     interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
@@ -562,7 +561,7 @@ public interface MethodGraph {
                                              ElementMatcher<? super MethodDescription> relevanceMatcher) {
                 Key.Store<T> store = analyzeNullable(typeDefinition.getSuperType(), snapshots, relevanceMatcher);
                 Key.Store<T> interfaceStore = new Key.Store<T>();
-                for (GenericTypeDescription interfaceType : typeDefinition.getInterfaces()) {
+                for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces()) {
                     interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, relevanceMatcher));
                 }
                 store = store.inject(interfaceStore);

@@ -1,11 +1,9 @@
-package net.bytebuddy.description.type.generic;
-
-import net.bytebuddy.description.type.TypeDefinition;
+package net.bytebuddy.description.type;
 
 import java.lang.reflect.Type;
 import java.util.List;
 
-public class GenericTypeListForLoadedTypesTest extends AbstractGenericTypeListTest<Type> {
+public class TypeListGenericForLoadedTypesTest extends AbstractGenericTypeListTest<Type> {
 
     @Override
     protected Type getFirst() throws Exception {
@@ -18,12 +16,12 @@ public class GenericTypeListForLoadedTypesTest extends AbstractGenericTypeListTe
     }
 
     @Override
-    protected GenericTypeList asList(List<Type> elements) {
-        return new GenericTypeList.ForLoadedTypes(elements);
+    protected TypeList.Generic asList(List<Type> elements) {
+        return new TypeList.Generic.ForLoadedTypes(elements);
     }
 
     @Override
-    protected GenericTypeDescription asElement(Type element) {
+    protected TypeDescription.Generic asElement(Type element) {
         return TypeDefinition.Sort.describe(element);
     }
 }

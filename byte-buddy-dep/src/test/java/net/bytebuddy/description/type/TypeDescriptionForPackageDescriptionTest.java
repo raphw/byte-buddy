@@ -1,7 +1,6 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.annotation.AnnotationList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -76,6 +75,6 @@ public class TypeDescriptionForPackageDescriptionTest {
 
     @Test
     public void testSuperType() throws Exception {
-        assertThat(typeDescription.getSuperType(), is(GenericTypeDescription.OBJECT));
+        assertThat(typeDescription.getSuperType(), is(TypeDescription.Generic.OBJECT));
     }
 }

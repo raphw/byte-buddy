@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,7 +19,7 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
     private TypeDescription weakTargetType, dominantTargetType;
 
     @Mock
-    private GenericTypeDescription genericWeakTargetType, genericDominantTargetType;
+    private TypeDescription.Generic genericWeakTargetType, genericDominantTargetType;
 
     @Mock
     private ParameterDescription weakTargetParameter, dominantTargetParameter;

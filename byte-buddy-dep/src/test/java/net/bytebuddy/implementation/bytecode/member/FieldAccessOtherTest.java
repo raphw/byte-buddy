@@ -4,7 +4,6 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -33,7 +32,7 @@ public class FieldAccessOtherTest {
     private EnumerationDescription enumerationDescription;
 
     @Mock
-    private GenericTypeDescription genericType, declaredType;
+    private TypeDescription.Generic genericType, declaredType;
 
     @Mock
     private TypeDescription enumerationType;

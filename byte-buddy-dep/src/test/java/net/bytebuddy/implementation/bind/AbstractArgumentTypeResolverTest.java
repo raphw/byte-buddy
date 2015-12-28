@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bind;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.hamcrest.BaseMatcher;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
@@ -30,7 +29,7 @@ public class AbstractArgumentTypeResolverTest extends AbstractAmbiguityResolverT
     protected TypeDescription sourceType;
 
     @Mock
-    protected GenericTypeDescription genericSourceType;
+    protected TypeDescription.Generic genericSourceType;
 
     @Mock
     private ParameterDescription sourceParameter;

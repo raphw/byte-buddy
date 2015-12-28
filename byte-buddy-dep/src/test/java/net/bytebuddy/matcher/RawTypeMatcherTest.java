@@ -2,7 +2,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;

@@ -1,7 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import org.junit.Test;
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
-    private final GenericTypeDescription typeDescription;
+    private final TypeDescription.Generic typeDescription;
 
     private final int opcode;
 
@@ -33,7 +32,7 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
     public EmptyBinderTest(Class<?> type, int opcode) {
         super(Empty.class);
-        typeDescription = new GenericTypeDescription.ForNonGenericType.OfLoadedType(type);
+        typeDescription = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(type);
         this.opcode = opcode;
     }
 

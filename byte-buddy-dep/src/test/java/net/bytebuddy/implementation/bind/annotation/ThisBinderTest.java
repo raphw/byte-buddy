@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -21,7 +20,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     private TypeDescription parameterType;
 
     @Mock
-    private GenericTypeDescription genericParameterType;
+    private TypeDescription.Generic genericParameterType;
 
     public ThisBinderTest() {
         super(This.class);

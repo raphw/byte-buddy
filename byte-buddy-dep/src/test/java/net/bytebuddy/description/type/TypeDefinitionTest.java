@@ -1,6 +1,5 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -21,32 +20,32 @@ public class TypeDefinitionTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNegativeArityGenericArray() throws Exception {
-        GenericTypeDescription.ForGenericArray.Latent.of(mock(GenericTypeDescription.class), -1);
+        TypeDescription.Generic.ForGenericArray.Latent.of(mock(TypeDescription.Generic.class), -1);
     }
 
     @Test
     public void testZeroArityReturnsInstance() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
-        assertThat(GenericTypeDescription.ForGenericArray.Latent.of(typeDescription, 0), sameInstance(typeDescription));
+        assertThat(TypeDescription.Generic.ForGenericArray.Latent.of(typeDescription, 0), sameInstance(typeDescription));
     }
 
     @Test
     public void testNonGenericArrayType() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
-        assertThat(GenericTypeDescription.ForGenericArray.Latent.of(typeDescription, 1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(GenericTypeDescription.ForGenericArray.Latent.of(typeDescription, 1).getComponentType(), is(typeDescription));
+        assertThat(TypeDescription.Generic.ForGenericArray.Latent.of(typeDescription, 1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(TypeDescription.Generic.ForGenericArray.Latent.of(typeDescription, 1).getComponentType(), is(typeDescription));
     }
 
     @Test
     public void testZeroArityIteratesTypesInstance() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        GenericTypeDescription componentType = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        TypeDescription.Generic componentType = mock(TypeDescription.Generic.class);
         when(typeDescription.getComponentType()).thenReturn(componentType);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
         when(componentType.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
-        GenericTypeDescription result = GenericTypeDescription.ForGenericArray.Latent.of(typeDescription, 1);
+        TypeDescription.Generic result = TypeDescription.Generic.ForGenericArray.Latent.of(typeDescription, 1);
         assertThat(result.getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(result.getComponentType().getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(result.getComponentType().getComponentType(), is(componentType));
@@ -54,12 +53,12 @@ public class TypeDefinitionTest {
 
     @Test
     public void testZeroArityIteratesTypesInstanceNonGeneric() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
-        GenericTypeDescription componentType = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        TypeDescription.Generic componentType = mock(TypeDescription.Generic.class);
         when(typeDescription.getComponentType()).thenReturn(componentType);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
         when(componentType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
-        GenericTypeDescription result = GenericTypeDescription.ForGenericArray.Latent.of(typeDescription, 1);
+        TypeDescription.Generic result = TypeDescription.Generic.ForGenericArray.Latent.of(typeDescription, 1);
         assertThat(result.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(result.getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(result.getComponentType().getComponentType(), is(componentType));

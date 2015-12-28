@@ -2,7 +2,6 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -29,7 +28,7 @@ public class MethodDescriptionTokenTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private GenericTypeDescription first, second;
+    private TypeDescription.Generic first, second;
 
     @Mock
     private AnnotationDescription firstAnnotation, secondAnnotation;
@@ -57,18 +56,18 @@ public class MethodDescriptionTokenTest {
     public void testMethodEqualityHashCode() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode(),
                 is(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode()));
     }
@@ -77,18 +76,18 @@ public class MethodDescriptionTokenTest {
     public void testMethodNameInequalityHashCode() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode(),
                 not(new MethodDescription.Token(BAR,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode()));
     }
@@ -97,18 +96,18 @@ public class MethodDescriptionTokenTest {
     public void testReturnTypeInequalityHashCode() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode(),
                 not(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         second,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode()));
     }
@@ -117,18 +116,18 @@ public class MethodDescriptionTokenTest {
     public void testParameterTypeInequalityHashCode() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode(),
                 not(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(secondParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode()));
     }
@@ -137,18 +136,18 @@ public class MethodDescriptionTokenTest {
     public void testParameterTypeLengthInequalityHashCode() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode(),
                 not(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE).hashCode()));
     }
@@ -157,18 +156,18 @@ public class MethodDescriptionTokenTest {
     public void testMethodEquality() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE),
                 is(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)));
     }
@@ -177,18 +176,18 @@ public class MethodDescriptionTokenTest {
     public void testMethodNameInequality() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE),
                 not(new MethodDescription.Token(BAR,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)));
     }
@@ -197,18 +196,18 @@ public class MethodDescriptionTokenTest {
     public void testReturnTypeInequality() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE),
                 not(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         second,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)));
     }
@@ -217,18 +216,18 @@ public class MethodDescriptionTokenTest {
     public void testParameterTypeInequality() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE),
                 not(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(secondParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)));
     }
@@ -237,18 +236,18 @@ public class MethodDescriptionTokenTest {
     public void testParameterTypeLengthInequality() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE),
                 not(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         first,
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
+                        Collections.singletonList(mock(TypeDescription.Generic.class)),
                         Collections.singletonList(mock(AnnotationDescription.class)),
                         MethodDescription.NO_DEFAULT_VALUE)));
     }

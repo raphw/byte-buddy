@@ -13,8 +13,6 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -1223,7 +1221,7 @@ public interface DynamicType {
             /**
              * The interface types to implement as specified for this builder.
              */
-            protected final List<GenericTypeDescription> interfaceTypes;
+            protected final List<TypeDescription.Generic> interfaceTypes;
 
             /**
              * The modifiers specified for this builder.
@@ -1312,7 +1310,7 @@ public interface DynamicType {
                                    AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                    Implementation.Context.Factory implementationContextFactory,
                                    InstrumentedType.TypeInitializer typeInitializer,
-                                   List<GenericTypeDescription> interfaceTypes,
+                                   List<TypeDescription.Generic> interfaceTypes,
                                    int modifiers,
                                    TypeAttributeAppender attributeAppender,
                                    ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -1345,12 +1343,12 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Type... interfaceType) {
-                return implement(new GenericTypeList.ForLoadedTypes(nonNull(interfaceType)));
+                return implement(new TypeList.Generic.ForLoadedTypes(nonNull(interfaceType)));
             }
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Iterable<? extends Type> interfaceTypes) {
-                return implement(new GenericTypeList.ForLoadedTypes(toList(interfaceTypes)));
+                return implement(new TypeList.Generic.ForLoadedTypes(toList(interfaceTypes)));
             }
 
             @Override
@@ -1360,7 +1358,7 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Collection<? extends TypeDefinition> interfaceTypes) {
-                return new DefaultOptionalMatchedMethodInterception(new GenericTypeList.Explicit(toList(isImplementable(interfaceTypes))));
+                return new DefaultOptionalMatchedMethodInterception(new TypeList.Generic.Explicit(toList(isImplementable(interfaceTypes))));
             }
 
             @Override
@@ -1375,14 +1373,14 @@ public interface DynamicType {
                                                                          ModifierContributor.ForMethod... modifier) {
                 return defineMethod(name,
                         TypeDefinition.Sort.describe(returnType),
-                        new GenericTypeList.ForLoadedTypes(nonNull(parameterTypes)),
+                        new TypeList.Generic.ForLoadedTypes(nonNull(parameterTypes)),
                         modifier);
             }
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(Iterable<? extends Type> parameterTypes,
                                                                               ModifierContributor.ForMethod... modifier) {
-                return defineConstructor(new GenericTypeList.ForLoadedTypes(toList(parameterTypes)), modifier);
+                return defineConstructor(new TypeList.Generic.ForLoadedTypes(toList(parameterTypes)), modifier);
             }
 
             @Override
@@ -1703,10 +1701,10 @@ public interface DynamicType {
                                                                          ModifierContributor.ForMethod... modifier) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(isValidIdentifier(name),
                         resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)),
-                        Collections.<GenericTypeDescription>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
                         returnType.asGenericType(),
                         new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
-                        Collections.<GenericTypeDescription>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
             }
@@ -1734,7 +1732,7 @@ public interface DynamicType {
                                                                          int modifiers) {
                 return defineMethod(name,
                         TypeDefinition.Sort.describe(nonNull(returnType)),
-                        new GenericTypeList.ForLoadedTypes(nonNull(parameterTypes)),
+                        new TypeList.Generic.ForLoadedTypes(nonNull(parameterTypes)),
                         modifiers);
             }
 
@@ -1745,10 +1743,10 @@ public interface DynamicType {
                                                                          int modifiers) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(isValidIdentifier(name),
                         modifiers,
-                        Collections.<GenericTypeDescription>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
                         returnType.asGenericType(),
                         new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
-                        Collections.<GenericTypeDescription>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
             }
@@ -1775,17 +1773,17 @@ public interface DynamicType {
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(Iterable<? extends Type> parameterTypes, int modifiers) {
-                return defineConstructor(new GenericTypeList.ForLoadedTypes(toList(parameterTypes)), modifiers);
+                return defineConstructor(new TypeList.Generic.ForLoadedTypes(toList(parameterTypes)), modifiers);
             }
 
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(List<? extends TypeDefinition> parameterTypes, int modifiers) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                         modifiers,
-                        Collections.<GenericTypeDescription>emptyList(),
-                        GenericTypeDescription.VOID,
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        TypeDescription.Generic.VOID,
                         new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
-                        Collections.<GenericTypeDescription>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
             }
@@ -1848,7 +1846,7 @@ public interface DynamicType {
                                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                       Implementation.Context.Factory implementationContextFactory,
                                                       InstrumentedType.TypeInitializer typeInitializer,
-                                                      List<GenericTypeDescription> interfaceTypes,
+                                                      List<TypeDescription.Generic> interfaceTypes,
                                                       int modifiers,
                                                       TypeAttributeAppender attributeAppender,
                                                       ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -2519,10 +2517,10 @@ public interface DynamicType {
                 public MatchedMethodInterception<S> throwing(Collection<? extends TypeDescription> exceptionTypes) {
                     return materialize(new MethodDescription.Token(methodToken.getInternalName(),
                             methodToken.getModifiers(),
-                            Collections.<GenericTypeDescription>emptyList(),
+                            Collections.<TypeDescription.Generic>emptyList(),
                             methodToken.getReturnType(),
                             methodToken.getParameterTokens(),
-                            unique(isThrowable(new GenericTypeList.Explicit(toList(exceptionTypes)))),
+                            unique(isThrowable(new TypeList.Generic.Explicit(toList(exceptionTypes)))),
                             Collections.<AnnotationDescription>emptyList(),
                             null));
                 }
@@ -2789,14 +2787,14 @@ public interface DynamicType {
                 /**
                  * A list of all interfaces to implement.
                  */
-                private List<GenericTypeDescription> additionalInterfaceTypes;
+                private List<TypeDescription.Generic> additionalInterfaceTypes;
 
                 /**
                  * Creates a new subclass optional matched method interception.
                  *
                  * @param interfaceTypes An array of all interfaces to implement.
                  */
-                protected DefaultOptionalMatchedMethodInterception(List<GenericTypeDescription> interfaceTypes) {
+                protected DefaultOptionalMatchedMethodInterception(List<TypeDescription.Generic> interfaceTypes) {
                     additionalInterfaceTypes = interfaceTypes;
                 }
 

@@ -2,7 +2,6 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
@@ -37,7 +36,7 @@ public class FieldAccessorPreparationTest {
     @Test
     public void testPreparationDefineField() throws Exception {
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).prepare(instrumentedType), is(instrumentedType));
-        verify(instrumentedType).withField(new FieldDescription.Token(FOO, NO_MODIFIERS, new GenericTypeDescription.ForNonGenericType.OfLoadedType(TYPE)));
+        verify(instrumentedType).withField(new FieldDescription.Token(FOO, NO_MODIFIERS, new TypeDescription.Generic.ForNonGenericType.OfLoadedType(TYPE)));
         verify(instrumentedType).isInterface();
         verifyNoMoreInteractions(instrumentedType);
     }

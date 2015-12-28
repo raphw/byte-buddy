@@ -3,7 +3,6 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -235,7 +234,7 @@ public abstract class FixedValue implements Implementation {
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                           Context implementationContext,
                                           MethodDescription instrumentedMethod,
-                                          GenericTypeDescription fixedValueType,
+                                          TypeDescription.Generic fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
         StackManipulation assignment = assigner.assign(fixedValueType.asErasure(), instrumentedMethod.getReturnType().asErasure(), typing);
         if (!assignment.isValid()) {
@@ -380,7 +379,7 @@ public abstract class FixedValue implements Implementation {
         /**
          * The type if the field for storing the fixed value.
          */
-        private final GenericTypeDescription fieldType;
+        private final TypeDescription.Generic fieldType;
 
         /**
          * Creates a new static field fixed value implementation with a random name for the field containing the fixed
@@ -408,7 +407,7 @@ public abstract class FixedValue implements Implementation {
             super(assigner, typing);
             this.fieldName = fieldName;
             this.fixedValue = fixedValue;
-            fieldType = new GenericTypeDescription.ForNonGenericType.OfLoadedType(fixedValue.getClass());
+            fieldType = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(fixedValue.getClass());
         }
 
         @Override

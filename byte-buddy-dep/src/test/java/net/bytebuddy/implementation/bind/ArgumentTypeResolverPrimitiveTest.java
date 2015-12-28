@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -25,7 +24,7 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
     private final Class<?> secondType;
 
     @Mock
-    private GenericTypeDescription firstPrimitive, secondPrimitive;
+    private TypeDescription.Generic firstPrimitive, secondPrimitive;
 
     @Mock
     private TypeDescription firstRawPrimitive, secondRawPrimitive;
@@ -113,8 +112,8 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         testDominance(firstPrimitive, firstPrimitive, MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
     }
 
-    private void testDominance(GenericTypeDescription leftPrimitive,
-                               GenericTypeDescription rightPrimitive,
+    private void testDominance(TypeDescription.Generic leftPrimitive,
+                               TypeDescription.Generic rightPrimitive,
                                MethodDelegationBinder.AmbiguityResolver.Resolution expected) throws Exception {
         when(sourceParameterList.size()).thenReturn(2);
         when(sourceType.isPrimitive()).thenReturn(true);

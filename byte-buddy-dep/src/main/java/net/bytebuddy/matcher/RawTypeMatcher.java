@@ -2,10 +2,9 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
- * An element matcher that matches its argument's {@link GenericTypeDescription} raw type against the
+ * An element matcher that matches its argument's {@link TypeDescription.Generic} raw type against the
  * given matcher for a {@link TypeDescription}. A wildcard is not matched but returns a negative result.
  *
  * @param <T> The type of the matched entity.

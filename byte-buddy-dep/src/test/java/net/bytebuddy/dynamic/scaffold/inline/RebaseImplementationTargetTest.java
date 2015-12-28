@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
@@ -46,7 +45,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private TypeDescription superType;
 
     @Mock
-    private GenericTypeDescription genericSuperType;
+    private TypeDescription.Generic genericSuperType;
 
     @Override
     @Before

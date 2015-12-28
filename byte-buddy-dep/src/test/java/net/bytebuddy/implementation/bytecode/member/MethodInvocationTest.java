@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -43,7 +42,7 @@ public class MethodInvocationTest {
     private MethodDescription.InDefinedShape methodDescription;
 
     @Mock
-    private GenericTypeDescription returnType, otherType;
+    private TypeDescription.Generic returnType, otherType;
 
     @Mock
     private TypeDescription declaringType, rawOtherType;

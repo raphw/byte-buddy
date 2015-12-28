@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -33,7 +32,7 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerDroppingTest {
     private TypeDescription targetType;
 
     @Mock
-    private GenericTypeDescription genericTargetType;
+    private TypeDescription.Generic genericTargetType;
 
     @Before
     public void setUp() throws Exception {

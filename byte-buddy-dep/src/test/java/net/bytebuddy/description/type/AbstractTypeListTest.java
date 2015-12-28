@@ -1,7 +1,5 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.matcher.AbstractFilterableListTest;
 import org.junit.Test;
 

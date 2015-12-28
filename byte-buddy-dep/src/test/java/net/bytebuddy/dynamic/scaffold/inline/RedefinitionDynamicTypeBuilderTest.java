@@ -6,8 +6,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
@@ -133,14 +132,14 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         }).create(new ObjectPropertyAssertion.Creator<TypeDescription>() {
             @Override
             public TypeDescription create() {
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                GenericTypeDescription generictypeDescription = mock(GenericTypeDescription.class);
-                when(generictypeDescription.asErasure()).thenReturn(typeDescription);
-                when(generictypeDescription.asGenericType()).thenReturn(generictypeDescription);
-                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(generictypeDescription));
-                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
-                when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
-                return typeDescription;
+                TypeDescription rawTypeDescription = mock(TypeDescription.class);
+                TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+                when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+                when(typeDescription.asGenericType()).thenReturn(typeDescription);
+                when(rawTypeDescription.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(typeDescription));
+                when(rawTypeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
+                when(rawTypeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+                return rawTypeDescription;
             }
         }).apply();
     }

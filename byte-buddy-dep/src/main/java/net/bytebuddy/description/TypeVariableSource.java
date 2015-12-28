@@ -1,8 +1,8 @@
-package net.bytebuddy.description.type.generic;
+package net.bytebuddy.description;
 
-import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 
 /**
  * A type variable source represents a byte code element that can declare type variables.
@@ -14,7 +14,7 @@ public interface TypeVariableSource extends ByteCodeElement {
      *
      * @return The type variables that are declared by this element.
      */
-    GenericTypeList getTypeVariables();
+    TypeList.Generic getTypeVariables();
 
     /**
      * Returns the enclosing source of type variables that are valid in the scope of this type variable source.
@@ -29,7 +29,7 @@ public interface TypeVariableSource extends ByteCodeElement {
      * @param symbol The symbolic name of the type variable.
      * @return The type variable.
      */
-    GenericTypeDescription findVariable(String symbol);
+    TypeDescription.Generic findVariable(String symbol);
 
     /**
      * Applies a visitor on this type variable source.

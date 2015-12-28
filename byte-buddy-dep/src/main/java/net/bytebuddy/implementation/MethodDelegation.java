@@ -5,7 +5,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -422,7 +421,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Object delegate, Type type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-        GenericTypeDescription typeDescription = TypeDefinition.Sort.describe(type);
+        TypeDescription.Generic typeDescription = TypeDefinition.Sort.describe(type);
         if (!typeDescription.asErasure().isInstance(delegate)) {
             throw new IllegalArgumentException(delegate + " is not an instance of " + type);
         }
@@ -839,7 +838,7 @@ public class MethodDelegation implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
-                                new GenericTypeDescription.ForNonGenericType.OfLoadedType(delegate.getClass())))
+                                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(delegate.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, delegate));
             }
 
@@ -887,7 +886,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * The type of the method delegation target.
              */
-            private final GenericTypeDescription fieldType;
+            private final TypeDescription.Generic fieldType;
 
             /**
              * Creates a new instance field implementation delegate.
@@ -896,7 +895,7 @@ public class MethodDelegation implements Implementation.Composable {
              *                  field type.
              * @param fieldName The name of the field.
              */
-            public ForInstanceField(GenericTypeDescription fieldType, String fieldName) {
+            public ForInstanceField(TypeDescription.Generic fieldType, String fieldName) {
                 this.fieldType = fieldType;
                 this.fieldName = fieldName;
             }
@@ -1096,7 +1095,7 @@ public class MethodDelegation implements Implementation.Composable {
             /**
              * The target type for which the virtual methods should be extracted.
              */
-            private final GenericTypeDescription targetType;
+            private final TypeDescription.Generic targetType;
 
             /**
              * A matcher representing a filter to be applied to the extracted methods.
@@ -1109,7 +1108,7 @@ public class MethodDelegation implements Implementation.Composable {
              * @param methodGraphCompiler The method graph compiler to use.
              * @param targetType          The target type for which the virtual methods should be extracted.
              */
-            protected ForVirtualMethods(MethodGraph.Compiler methodGraphCompiler, GenericTypeDescription targetType) {
+            protected ForVirtualMethods(MethodGraph.Compiler methodGraphCompiler, TypeDescription.Generic targetType) {
                 this(methodGraphCompiler, targetType, any());
             }
 
@@ -1121,7 +1120,7 @@ public class MethodDelegation implements Implementation.Composable {
              * @param matcher             A matcher representing a filter to be applied to the extracted methods.
              */
             private ForVirtualMethods(MethodGraph.Compiler methodGraphCompiler,
-                                      GenericTypeDescription targetType,
+                                      TypeDescription.Generic targetType,
                                       ElementMatcher<? super MethodDescription> matcher) {
                 this.methodGraphCompiler = methodGraphCompiler;
                 this.targetType = targetType;

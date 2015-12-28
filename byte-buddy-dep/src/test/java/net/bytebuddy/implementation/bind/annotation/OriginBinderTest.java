@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -32,7 +31,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     private TypeDescription targetType;
 
     @Mock
-    private GenericTypeDescription genericTargetType;
+    private TypeDescription.Generic genericTargetType;
 
     @Mock
     private MethodDescription.InDefinedShape methodDescription;

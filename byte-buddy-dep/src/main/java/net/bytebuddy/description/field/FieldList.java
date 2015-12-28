@@ -2,7 +2,6 @@ package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -196,7 +195,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         /**
          * The field's actual declaring type.
          */
-        private final GenericTypeDescription declaringType;
+        private final TypeDescription.Generic declaringType;
 
         /**
          * The field descriptions to be transformed.
@@ -206,7 +205,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         /**
          * The visitor to apply to a field description.
          */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a new type substituting field list.
@@ -215,9 +214,9 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
          * @param fieldDescriptions The field descriptions to be transformed.
          * @param visitor           The visitor to apply to a field description.
          */
-        public TypeSubstituting(GenericTypeDescription declaringType,
+        public TypeSubstituting(TypeDescription.Generic declaringType,
                                 List<? extends FieldDescription> fieldDescriptions,
-                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             this.declaringType = declaringType;
             this.fieldDescriptions = fieldDescriptions;
             this.visitor = visitor;

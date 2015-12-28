@@ -7,8 +7,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 
 import java.util.Arrays;
 import java.util.List;
@@ -209,13 +208,13 @@ public interface MethodTransformer {
             }
 
             @Override
-            public GenericTypeList getTypeVariables() {
-                return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, methodToken.getTypeVariables());
+            public TypeList.Generic getTypeVariables() {
+                return TypeList.Generic.ForDetachedTypes.OfTypeVariable.attach(this, methodToken.getTypeVariables());
             }
 
             @Override
-            public GenericTypeDescription getReturnType() {
-                return methodToken.getReturnType().accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+            public TypeDescription.Generic getReturnType() {
+                return methodToken.getReturnType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
             }
 
             @Override
@@ -224,8 +223,8 @@ public interface MethodTransformer {
             }
 
             @Override
-            public GenericTypeList getExceptionTypes() {
-                return GenericTypeList.ForDetachedTypes.attach(this, methodToken.getExceptionTypes());
+            public TypeList.Generic getExceptionTypes() {
+                return TypeList.Generic.ForDetachedTypes.attach(this, methodToken.getExceptionTypes());
             }
 
             @Override
@@ -301,8 +300,8 @@ public interface MethodTransformer {
                 }
 
                 @Override
-                public GenericTypeDescription getType() {
-                    return parameterToken.getType().accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+                public TypeDescription.Generic getType() {
+                    return parameterToken.getType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
                 }
 
                 @Override

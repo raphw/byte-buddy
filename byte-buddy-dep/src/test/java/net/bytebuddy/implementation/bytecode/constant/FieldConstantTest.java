@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bytecode.constant;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -37,7 +36,7 @@ public class FieldConstantTest {
     private TypeDescription declaringType, cacheDeclaringType, cacheFieldType;
 
     @Mock
-    private GenericTypeDescription genericCacheFieldType;
+    private TypeDescription.Generic genericCacheFieldType;
 
     @Mock
     private MethodVisitor methodVisitor;

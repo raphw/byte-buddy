@@ -8,8 +8,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -869,7 +868,7 @@ public interface Implementation {
                 /**
                  * The type of the cache's field.
                  */
-                private final GenericTypeDescription fieldType;
+                private final TypeDescription.Generic fieldType;
 
                 /**
                  * The suffix to use for the cache field's name.
@@ -889,7 +888,7 @@ public interface Implementation {
                  * @param suffix           The suffix to use for the cache field's name.
                  * @param valueHashCode    The hash value of the field's value for creating a unique field name.
                  */
-                protected CacheValueField(TypeDescription instrumentedType, GenericTypeDescription fieldType, String suffix, int valueHashCode) {
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix, int valueHashCode) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
                     this.suffix = suffix;
@@ -897,7 +896,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getType() {
+                public TypeDescription.Generic getType() {
                     return fieldType;
                 }
 
@@ -1055,7 +1054,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
+                public TypeDescription.Generic getReturnType() {
                     return methodDescription.getReturnType().asRawType();
                 }
 
@@ -1065,7 +1064,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
+                public TypeList.Generic getExceptionTypes() {
                     return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
@@ -1075,8 +1074,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1136,7 +1135,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
+                public TypeDescription.Generic getReturnType() {
                     return fieldDescription.getType().asRawType();
                 }
 
@@ -1146,8 +1145,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getExceptionTypes() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1156,8 +1155,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1217,8 +1216,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return GenericTypeDescription.VOID;
+                public TypeDescription.Generic getReturnType() {
+                    return TypeDescription.Generic.VOID;
                 }
 
                 @Override
@@ -1227,8 +1226,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getExceptionTypes() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1237,8 +1236,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override

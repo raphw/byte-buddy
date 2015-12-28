@@ -10,7 +10,6 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
@@ -415,7 +414,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(FOO,
                     MODIFIERS,
-                    GenericTypeDescription.OBJECT,
+                    TypeDescription.Generic.OBJECT,
                     Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make())));
         }
 
@@ -431,11 +430,11 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withMethod(new MethodDescription.Token(FOO,
                     MODIFIERS,
-                    Collections.<GenericTypeDescription>emptyList(),
-                    GenericTypeDescription.OBJECT,
-                    Collections.singletonList(new ParameterDescription.Token(GenericTypeDescription.OBJECT,
+                    Collections.<TypeDescription.Generic>emptyList(),
+                    TypeDescription.Generic.OBJECT,
+                    Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT,
                             Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, QUX).make()))),
-                    Collections.singletonList(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Exception.class)),
+                    Collections.singletonList(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make()),
                     MethodDescription.NO_DEFAULT_VALUE));
         }

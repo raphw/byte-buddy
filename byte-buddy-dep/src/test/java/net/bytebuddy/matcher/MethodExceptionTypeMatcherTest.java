@@ -1,8 +1,8 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -16,13 +16,13 @@ import static org.mockito.Mockito.*;
 public class MethodExceptionTypeMatcherTest extends AbstractElementMatcherTest<MethodExceptionTypeMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super List<? extends GenericTypeDescription>> exceptionMatcher;
+    private ElementMatcher<? super List<? extends TypeDescription.Generic>> exceptionMatcher;
 
     @Mock
     private MethodDescription methodDescription;
 
     @Mock
-    private GenericTypeList typeList;
+    private TypeList.Generic typeList;
 
     @SuppressWarnings("unchecked")
     public MethodExceptionTypeMatcherTest() {

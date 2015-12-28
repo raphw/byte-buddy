@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -839,7 +838,7 @@ public abstract class FieldAccessor implements Implementation {
                 /**
                  * The type of the field that is to be defined.
                  */
-                private final GenericTypeDescription typeDescription;
+                private final TypeDescription.Generic typeDescription;
 
                 /**
                  * The modifier of the field that is to be defined.
@@ -853,7 +852,7 @@ public abstract class FieldAccessor implements Implementation {
                  * @param typeDescription The type of the field that is to be defined.
                  * @param modifiers       The modifiers of the field that is to be defined.
                  */
-                protected FieldDefiner(String name, GenericTypeDescription typeDescription, int modifiers) {
+                protected FieldDefiner(String name, TypeDescription.Generic typeDescription, int modifiers) {
                     this.name = name;
                     this.typeDescription = typeDescription;
                     this.modifiers = modifiers;
@@ -867,7 +866,7 @@ public abstract class FieldAccessor implements Implementation {
                  * @param contributor     The modifiers of the field that is to be defined.
                  * @return A corresponding preparation handler.
                  */
-                public static PreparationHandler of(String name, GenericTypeDescription typeDescription, ModifierContributor.ForField... contributor) {
+                public static PreparationHandler of(String name, TypeDescription.Generic typeDescription, ModifierContributor.ForField... contributor) {
                     return new FieldDefiner(name, typeDescription, resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor));
                 }
 

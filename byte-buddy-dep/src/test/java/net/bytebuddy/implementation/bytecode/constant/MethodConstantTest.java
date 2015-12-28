@@ -5,8 +5,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -43,13 +41,13 @@ public class MethodConstantTest {
     private TypeDescription declaringType, parameterType, fieldType;
 
     @Mock
-    private GenericTypeDescription genericFieldType;
+    private TypeDescription.Generic genericFieldType;
 
     @Mock
     private ParameterList<?> parameterList;
 
     @Mock
-    private GenericTypeList typeList;
+    private TypeList.Generic typeList;
 
     @Mock
     private TypeList rawTypeList;

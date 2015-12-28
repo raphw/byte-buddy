@@ -2,7 +2,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 import static net.bytebuddy.matcher.ElementMatchers.representedBy;
 
@@ -85,7 +84,7 @@ public interface LatentMethodMatcher {
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
             // Casting required for JDK 6.
             return (ElementMatcher<? super MethodDescription>) representedBy(methodToken
-                    .accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
+                    .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
         }
 
         @Override

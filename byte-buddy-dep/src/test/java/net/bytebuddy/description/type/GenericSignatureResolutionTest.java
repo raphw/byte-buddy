@@ -1,9 +1,8 @@
-package net.bytebuddy.description.type.generic;
+package net.bytebuddy.description.type;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.FixedValue;
@@ -194,7 +193,7 @@ public class GenericSignatureResolutionTest {
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(InterfaceType.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
-        assertThat(createdType.getSuperType(), nullValue(GenericTypeDescription.class));
+        assertThat(createdType.getSuperType(), nullValue(TypeDescription.Generic.class));
         assertThat(createdType.getInterfaces(), is(originalType.getInterfaces()));
     }
 

@@ -2,8 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -168,17 +167,17 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
             }
         }).apply();
         final TypeDescription removalType = mock(TypeDescription.class);
-        final GenericTypeDescription genericRemovalType = mock(GenericTypeDescription.class);
+        final TypeDescription.Generic genericRemovalType = mock(TypeDescription.Generic.class);
         when(genericRemovalType.asGenericType()).thenReturn(genericRemovalType);
         when(genericRemovalType.asErasure()).thenReturn(removalType);
         ObjectPropertyAssertion.of(DefaultMethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
             @Override
             public void apply(Implementation.Target mock) {
                 TypeDescription typeDescription = mock(TypeDescription.class), otherType = mock(TypeDescription.class);
-                GenericTypeDescription otherGenericType = mock(GenericTypeDescription.class);
+                TypeDescription.Generic otherGenericType = mock(TypeDescription.Generic.class);
                 when(otherGenericType.asErasure()).thenReturn(otherType);
                 when(otherGenericType.asGenericType()).thenReturn(otherGenericType);
-                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(genericRemovalType, otherGenericType));
+                when(typeDescription.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(genericRemovalType, otherGenericType));
                 when(mock.getInstrumentedType()).thenReturn(typeDescription);
             }
         }).create(new ObjectPropertyAssertion.Creator<List<?>>() {

@@ -2,8 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -25,7 +24,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     private TypeDescription targetParameterType, firstInterface, secondInterface;
 
     @Mock
-    private GenericTypeDescription genericTargetParameterType, firstGenericInterface, secondGenericInterface;
+    private TypeDescription.Generic genericTargetParameterType, firstGenericInterface, secondGenericInterface;
 
     @Mock
     private MethodDescription.Token methodToken;
@@ -62,7 +61,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         doReturn(VOID_TYPE).when(annotation).targetType();
         when(source.asToken()).thenReturn(methodToken);
         when(source.isSpecializableFor(firstInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(firstInterface, secondInterface));
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -79,7 +78,7 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(source.asToken()).thenReturn(methodToken);
         when(source.isSpecializableFor(firstInterface)).thenReturn(true);
         when(source.isSpecializableFor(secondInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(firstInterface, secondInterface));
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));

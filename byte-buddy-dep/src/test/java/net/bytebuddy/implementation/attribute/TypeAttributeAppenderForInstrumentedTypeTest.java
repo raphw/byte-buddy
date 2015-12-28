@@ -19,30 +19,30 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(typeDescription.getSuperType()).thenReturn(targetType);
+        when(rawTypeDescription.getSuperType()).thenReturn(targetType);
         when(targetType.asErasure()).thenReturn(rawSuperType);
     }
 
     @Test
     public void testSuperTypeAnnotationAppender() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(targetType);
+        when(rawTypeDescription.getSuperType()).thenReturn(targetType);
         when(rawSuperType.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
-        new TypeAttributeAppender.ForInstrumentedType(valueFilter).apply(classVisitor, typeDescription, targetType);
+        new TypeAttributeAppender.ForInstrumentedType(valueFilter).apply(classVisitor, rawTypeDescription, targetType);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(classVisitor);
-        verify(typeDescription).getSuperType();
-        verifyNoMoreInteractions(typeDescription);
+        verify(rawTypeDescription).getSuperType();
+        verifyNoMoreInteractions(rawTypeDescription);
     }
 
     @Test
     public void testDoesNotApplyForTargetTypeBeingInstrumentedType() throws Exception {
-        when(typeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
+        when(rawTypeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
-        new TypeAttributeAppender.ForInstrumentedType(valueFilter).apply(classVisitor, typeDescription, genericTypeDescription);
-        verify(typeDescription).getSuperType();
-        verifyNoMoreInteractions(typeDescription);
+        new TypeAttributeAppender.ForInstrumentedType(valueFilter).apply(classVisitor, rawTypeDescription, typeDescription);
+        verify(rawTypeDescription).getSuperType();
+        verifyNoMoreInteractions(rawTypeDescription);
     }
 
     @Test

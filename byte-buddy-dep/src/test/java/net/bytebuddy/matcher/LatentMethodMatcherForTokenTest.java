@@ -3,7 +3,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -34,7 +33,7 @@ public class LatentMethodMatcherForTokenTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(methodToken.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(methodToken);
+        when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);
     }
 
     @Test

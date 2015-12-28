@@ -3,7 +3,6 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
@@ -36,7 +35,7 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerReturningTest {
     private TypeDescription sourceType, targetType;
 
     @Mock
-    private GenericTypeDescription genericSourceType, genericTargetType;
+    private TypeDescription.Generic genericSourceType, genericTargetType;
 
     @Mock
     private StackManipulation stackManipulation;

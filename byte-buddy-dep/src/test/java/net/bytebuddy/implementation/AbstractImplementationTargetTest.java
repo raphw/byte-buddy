@@ -2,7 +2,6 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -34,7 +33,7 @@ public abstract class AbstractImplementationTargetTest {
     protected TypeDescription instrumentedType, methodDeclaringType, returnType, defaultMethodDeclaringType;
 
     @Mock
-    protected GenericTypeDescription genericInstrumentedType, genericReturnType;
+    protected TypeDescription.Generic genericInstrumentedType, genericReturnType;
 
     @Mock
     protected MethodDescription.InDefinedShape invokableMethod, defaultMethod;

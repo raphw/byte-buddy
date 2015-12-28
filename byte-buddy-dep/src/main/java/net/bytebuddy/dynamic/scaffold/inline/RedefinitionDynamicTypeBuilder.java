@@ -6,7 +6,6 @@ import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
@@ -64,7 +63,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           NamingStrategy namingStrategy,
                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                           Implementation.Context.Factory implementationContextFactory,
-                                          List<GenericTypeDescription> interfaceTypes,
+                                          List<TypeDescription.Generic> interfaceTypes,
                                           int modifiers,
                                           TypeAttributeAppender attributeAppender,
                                           ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -129,7 +128,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              Implementation.Context.Factory implementationContextFactory,
                                              InstrumentedType.TypeInitializer typeInitializer,
-                                             List<GenericTypeDescription> interfaceTypes,
+                                             List<TypeDescription.Generic> interfaceTypes,
                                              int modifiers,
                                              TypeAttributeAppender attributeAppender,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -170,7 +169,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  InstrumentedType.TypeInitializer typeInitializer,
-                                                 List<GenericTypeDescription> interfaceTypes,
+                                                 List<TypeDescription.Generic> interfaceTypes,
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
@@ -208,7 +207,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy
                         .name(new NamingStrategy.UnnamedType.Default(originalType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        originalType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(originalType))),
+                        originalType.getTypeVariables().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(is(originalType))),
                         originalType.getSuperType(),
                         interfaceTypes,
                         fieldTokens,

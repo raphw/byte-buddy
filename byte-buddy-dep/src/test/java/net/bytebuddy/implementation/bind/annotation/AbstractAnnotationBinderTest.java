@@ -7,8 +7,6 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -60,7 +58,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
     protected ParameterList<?> sourceParameterList;
 
     @Mock
-    protected GenericTypeList sourceTypeList;
+    protected TypeList.Generic sourceTypeList;
 
     @Mock
     protected TypeList rawSourceTypeList;

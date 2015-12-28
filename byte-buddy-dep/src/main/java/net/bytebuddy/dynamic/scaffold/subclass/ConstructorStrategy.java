@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
@@ -75,7 +74,7 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                GenericTypeDescription superType = instrumentedType.getSuperType();
+                TypeDescription.Generic superType = instrumentedType.getSuperType();
                 MethodList<?> defaultConstructors = superType == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
@@ -104,7 +103,7 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                GenericTypeDescription superType = instrumentedType.getSuperType();
+                TypeDescription.Generic superType = instrumentedType.getSuperType();
                 return (superType == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList();
@@ -127,7 +126,7 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE_PUBLIC {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                GenericTypeDescription superType = instrumentedType.getSuperType();
+                TypeDescription.Generic superType = instrumentedType.getSuperType();
                 return (superType == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();

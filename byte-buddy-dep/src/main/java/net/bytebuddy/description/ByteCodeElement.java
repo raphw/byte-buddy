@@ -2,7 +2,6 @@ package net.bytebuddy.description;
 
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -122,7 +121,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          * @param visitor The visitor to transform all types that are represented by this token.
          * @return This token with all of its represented types transformed by the supplied visitor.
          */
-        T accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+        T accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
 
         /**
          * A list of tokens.
@@ -151,7 +150,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
              * @param visitor The visitor to apply to all tokens.
              * @return A list containing the transformed tokens.
              */
-            public TokenList<S> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            public TokenList<S> accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                 List<S> tokens = new ArrayList<S>(this.tokens.size());
                 for (S token : this.tokens) {
                     tokens.add(token.accept(visitor));

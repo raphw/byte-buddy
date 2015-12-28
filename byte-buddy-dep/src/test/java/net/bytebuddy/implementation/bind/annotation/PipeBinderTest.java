@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -25,7 +24,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
     private TypeDescription targetMethodType;
 
     @Mock
-    private GenericTypeDescription genericTargetMethodType;
+    private TypeDescription.Generic genericTargetMethodType;
 
     public PipeBinderTest() {
         super(Pipe.class);
@@ -70,7 +69,7 @@ public class PipeBinderTest extends AbstractAnnotationBinderTest<Pipe> {
 
     @Test(expected = IllegalStateException.class)
     public void testParameterBindingOnIllegalTargetTypeThrowsException() throws Exception {
-        GenericTypeDescription targetType = mock(GenericTypeDescription.class);
+        TypeDescription.Generic targetType = mock(TypeDescription.Generic.class);
         TypeDescription rawTargetType = mock(TypeDescription.class);
         when(targetType.asErasure()).thenReturn(rawTargetType);
         when(target.getType()).thenReturn(targetType);

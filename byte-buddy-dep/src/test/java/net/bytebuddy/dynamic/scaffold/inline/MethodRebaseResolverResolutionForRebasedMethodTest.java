@@ -4,8 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -67,7 +66,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     private TypeDescription typeDescription, returnType, parameterType;
 
     @Mock
-    private GenericTypeDescription genericReturnType, genericParameterType;
+    private TypeDescription.Generic genericReturnType, genericParameterType;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -91,12 +90,12 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(genericParameterType)));
         when(genericReturnType.asErasure()).thenReturn(returnType);
         when(genericReturnType.asRawType()).thenReturn(genericReturnType);
-        when(genericReturnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(genericReturnType);
+        when(genericReturnType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(genericReturnType);
         when(genericParameterType.asErasure()).thenReturn(parameterType);
         when(genericParameterType.asGenericType()).thenReturn(genericParameterType);
         when(parameterType.asGenericType()).thenReturn(genericParameterType);
         when(genericParameterType.asRawType()).thenReturn(genericParameterType);
-        when(genericParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(genericParameterType);
+        when(genericParameterType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(genericParameterType);
     }
 
     @Test
@@ -123,9 +122,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
             @Override
             public void apply(MethodDescription mock) {
                 when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-                when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
+                when(mock.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                GenericTypeDescription returnType = mock(GenericTypeDescription.class);
+                TypeDescription.Generic returnType = mock(TypeDescription.Generic.class);
                 TypeDescription rawReturnType = mock(TypeDescription.class);
                 when(returnType.asErasure()).thenReturn(rawReturnType);
                 when(mock.getReturnType()).thenReturn(returnType);

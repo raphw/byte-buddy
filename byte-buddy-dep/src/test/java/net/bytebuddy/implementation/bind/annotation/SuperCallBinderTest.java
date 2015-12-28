@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -20,7 +19,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     private TypeDescription targetParameterType;
 
     @Mock
-    private GenericTypeDescription genericTargetParameterType;
+    private TypeDescription.Generic genericTargetParameterType;
 
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;

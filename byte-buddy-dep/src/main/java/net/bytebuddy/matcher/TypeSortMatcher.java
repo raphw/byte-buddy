@@ -1,7 +1,6 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
  * An element matcher that validates that a given generic type description represents a type of a given name.

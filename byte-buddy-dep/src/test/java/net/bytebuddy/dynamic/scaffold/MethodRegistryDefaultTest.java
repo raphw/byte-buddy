@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -85,7 +84,7 @@ public class MethodRegistryDefaultTest {
     private TypeDescription returnType, parameterType;
 
     @Mock
-    private GenericTypeDescription genericReturnType, genericParameterType;
+    private TypeDescription.Generic genericReturnType, genericParameterType;
 
     @Mock
     private ParameterDescription.InDefinedShape parameterDescription;
@@ -322,13 +321,13 @@ public class MethodRegistryDefaultTest {
         when(typeDescription.isPublic()).thenReturn(true);
         when(instrumentedMethod.isPublic()).thenReturn(true);
         when(declaringType.isPackagePrivate()).thenReturn(true);
-        GenericTypeDescription superType = mock(GenericTypeDescription.class);
+        TypeDescription.Generic superType = mock(TypeDescription.Generic.class);
         TypeDescription rawSuperType = mock(TypeDescription.class);
         when(superType.asErasure()).thenReturn(rawSuperType);
         when(typeDescription.getSuperType()).thenReturn(superType);
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
         when(instrumentedMethod.asToken()).thenReturn(methodToken);
-        when(methodToken.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(methodToken);
+        when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)

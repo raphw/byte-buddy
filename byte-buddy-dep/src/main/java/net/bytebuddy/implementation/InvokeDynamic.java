@@ -9,7 +9,6 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
@@ -1534,7 +1533,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * The type of the static field.
                  */
-                private final GenericTypeDescription fieldType;
+                private final TypeDescription.Generic fieldType;
 
                 /**
                  * The name of the field.
@@ -1547,7 +1546,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @param value     The value that is to be provided to the bootstrapped method.
                  * @param fieldType The type of the field which is also provided to the bootstrap method.
                  */
-                public ForStaticField(Object value, GenericTypeDescription fieldType) {
+                public ForStaticField(Object value, TypeDescription.Generic fieldType) {
                     this.value = value;
                     this.fieldType = fieldType;
                     name = String.format("%s$%s", FIELD_PREFIX, RandomString.make());
@@ -1560,7 +1559,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @return A corresponding argument provider.
                  */
                 public static ArgumentProvider of(Object value) {
-                    return new ForStaticField(value, new GenericTypeDescription.ForNonGenericType.OfLoadedType(value.getClass()));
+                    return new ForStaticField(value, new TypeDescription.Generic.ForNonGenericType.OfLoadedType(value.getClass()));
                 }
 
                 @Override
@@ -1616,7 +1615,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 /**
                  * The type of the field.
                  */
-                private final GenericTypeDescription fieldType;
+                private final TypeDescription.Generic fieldType;
 
                 /**
                  * Creates a new argument provider that provides a value from an instance field.
@@ -1624,7 +1623,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @param fieldName The name of the field.
                  * @param fieldType The type of the field.
                  */
-                public ForInstanceField(String fieldName, GenericTypeDescription fieldType) {
+                public ForInstanceField(String fieldName, TypeDescription.Generic fieldType) {
                     this.fieldName = fieldName;
                     this.fieldType = fieldType;
                 }

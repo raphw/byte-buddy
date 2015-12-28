@@ -10,8 +10,6 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.MethodTransformer;
@@ -101,7 +99,7 @@ public class ByteBuddy {
     /**
      * A list of interface types to be implemented by any class that is implemented by the current configuration.
      */
-    protected final List<GenericTypeDescription> interfaceTypes;
+    protected final List<TypeDescription.Generic> interfaceTypes;
 
     /**
      * A matcher for identifying methods that should never be intercepted.
@@ -163,7 +161,7 @@ public class ByteBuddy {
                 new NamingStrategy.Unbound.Default(BYTE_BUDDY_DEFAULT_PREFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(BYTE_BUDDY_DEFAULT_SUFFIX),
                 Implementation.Context.Default.Factory.INSTANCE,
-                new GenericTypeList.Empty(),
+                new TypeList.Generic.Empty(),
                 isSynthetic().or(isDefaultFinalizer()),
                 ClassVisitorWrapper.NoOp.INSTANCE,
                 new MethodRegistry.Default(),
@@ -199,7 +197,7 @@ public class ByteBuddy {
                         NamingStrategy.Unbound namingStrategy,
                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                         Implementation.Context.Factory implementationContextFactory,
-                        List<GenericTypeDescription> interfaceTypes,
+                        List<TypeDescription.Generic> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         ClassVisitorWrapper classVisitorWrapper,
                         MethodRegistry methodRegistry,
@@ -295,10 +293,10 @@ public class ByteBuddy {
      * @return A dynamic type builder for this configuration that extends or implements the given type description.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDefinition superType, ConstructorStrategy constructorStrategy) {
-        GenericTypeDescription actualSuperType = isExtendable(superType).asGenericType();
-        List<GenericTypeDescription> interfaceTypes = this.interfaceTypes;
+        TypeDescription.Generic actualSuperType = isExtendable(superType).asGenericType();
+        List<TypeDescription.Generic> interfaceTypes = this.interfaceTypes;
         if (nonNull(superType).asErasure().isInterface()) {
-            actualSuperType = GenericTypeDescription.OBJECT;
+            actualSuperType = TypeDescription.Generic.OBJECT;
             interfaceTypes = joinUniqueRaw(interfaceTypes, Collections.singleton(superType.asGenericType()));
         }
         return new SubclassDynamicTypeBuilder<T>(classFileVersion,
@@ -349,7 +347,7 @@ public class ByteBuddy {
      * interfaces.
      */
     public DynamicType.Builder<?> makeInterface(Type... type) {
-        return makeInterface(new GenericTypeList.ForLoadedTypes(nonNull(type)));
+        return makeInterface(new TypeList.Generic.ForLoadedTypes(nonNull(type)));
     }
 
     /**
@@ -371,7 +369,7 @@ public class ByteBuddy {
      * interfaces.
      */
     public DynamicType.Builder<?> makeInterface(Iterable<? extends Type> types) {
-        return makeInterface(new GenericTypeList.ForLoadedTypes(toList(types)));
+        return makeInterface(new TypeList.Generic.ForLoadedTypes(toList(types)));
     }
 
     /**
@@ -397,7 +395,7 @@ public class ByteBuddy {
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                join(interfaceTypes, new GenericTypeList.Explicit(toList(nonNull(typeDefinitions)))),
+                join(interfaceTypes, new TypeList.Generic.Explicit(toList(nonNull(typeDefinitions)))),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.INTERFACE.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
@@ -407,7 +405,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                GenericTypeDescription.OBJECT,
+                TypeDescription.Generic.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -423,7 +421,7 @@ public class ByteBuddy {
                 new NamingStrategy.Fixed(isValidIdentifier(name) + "." + PackageDescription.PACKAGE_CLASS_NAME),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                new GenericTypeList.Empty(),
+                new TypeList.Generic.Empty(),
                 PackageDescription.PACKAGE_MODIFIERS,
                 typeAttributeAppender,
                 ignoredMethods,
@@ -433,7 +431,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                GenericTypeDescription.OBJECT,
+                TypeDescription.Generic.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -472,7 +470,7 @@ public class ByteBuddy {
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                Collections.<GenericTypeDescription>singletonList(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Annotation.class)),
+                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Annotation.class)),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.ANNOTATION.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
@@ -482,7 +480,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                GenericTypeDescription.OBJECT,
+                TypeDescription.Generic.OBJECT,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
 
@@ -507,7 +505,7 @@ public class ByteBuddy {
         if (unique(nonNull(values)).isEmpty()) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
-        GenericTypeDescription enumType = new GenericTypeDescription.ForNonGenericType.OfLoadedType(Enum.class);
+        TypeDescription.Generic enumType = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Enum.class);
         return new SubclassDynamicTypeBuilder<Enum<?>>(classFileVersion,
                 nonNull(namingStrategy.subclass(enumType.asErasure())),
                 auxiliaryTypeNamingStrategy,
@@ -958,7 +956,7 @@ public class ByteBuddy {
      * implement the given interfaces.
      */
     public OptionalMethodInterception withImplementing(Type... type) {
-        return withImplementing(new GenericTypeList.ForLoadedTypes(nonNull(type)));
+        return withImplementing(new TypeList.Generic.ForLoadedTypes(nonNull(type)));
     }
 
     /**
@@ -969,7 +967,7 @@ public class ByteBuddy {
      * implement the given interfaces.
      */
     public OptionalMethodInterception withImplementing(Iterable<? extends Type> types) {
-        return withImplementing(new GenericTypeList.ForLoadedTypes(toList(types)));
+        return withImplementing(new TypeList.Generic.ForLoadedTypes(toList(types)));
     }
 
     /**
@@ -995,7 +993,7 @@ public class ByteBuddy {
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                joinUniqueRaw(interfaceTypes, new GenericTypeList.Explicit(toList(isImplementable(typeDefinitions)))),
+                joinUniqueRaw(interfaceTypes, new TypeList.Generic.Explicit(toList(isImplementable(typeDefinitions)))),
                 ignoredMethods,
                 classVisitorWrapper,
                 methodRegistry,
@@ -1004,7 +1002,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new GenericTypeList.Explicit(toList(typeDefinitions)).asErasures()))));
+                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new TypeList.Generic.Explicit(toList(typeDefinitions)).asErasures()))));
     }
 
     /**
@@ -1434,7 +1432,7 @@ public class ByteBuddy {
                                          NamingStrategy.Unbound namingStrategy,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                          Implementation.Context.Factory implementationContextFactory,
-                                         List<GenericTypeDescription> interfaceTypes,
+                                         List<TypeDescription.Generic> interfaceTypes,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
                                          ClassVisitorWrapper classVisitorWrapper,
                                          MethodRegistry methodRegistry,
@@ -1675,7 +1673,7 @@ public class ByteBuddy {
                                              NamingStrategy.Unbound namingStrategy,
                                              AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                              Implementation.Context.Factory implementationContextFactory,
-                                             List<GenericTypeDescription> interfaceTypes,
+                                             List<TypeDescription.Generic> interfaceTypes,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
                                              ClassVisitorWrapper classVisitorWrapper,
                                              MethodRegistry methodRegistry,
@@ -1785,7 +1783,7 @@ public class ByteBuddy {
                         NamingStrategy.Unbound namingStrategy,
                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                         Implementation.Context.Factory implementationContextFactory,
-                        List<GenericTypeDescription> interfaceTypes,
+                        List<TypeDescription.Generic> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
                         ClassVisitorWrapper classVisitorWrapper,
                         MethodRegistry methodRegistry,
@@ -2135,7 +2133,7 @@ public class ByteBuddy {
             return instrumentedType
                     .withField(new FieldDescription.Token(ENUM_VALUES,
                             ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
-                            GenericTypeDescription.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)))
+                            TypeDescription.Generic.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)))
                     .withInitializer(new InitializationAppender(values));
         }
 
@@ -2184,7 +2182,7 @@ public class ByteBuddy {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 FieldDescription valuesField = instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly();
-                MethodDescription cloneMethod = GenericTypeDescription.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
+                MethodDescription cloneMethod = TypeDescription.Generic.OBJECT.getDeclaredMethods().filter(named(CLONE_METHOD_NAME)).getOnly();
                 return new Size(new StackManipulation.Compound(
                         FieldAccess.forField(valuesField).getter(),
                         MethodInvocation.invoke(cloneMethod).virtual(valuesField.getType().asErasure()),

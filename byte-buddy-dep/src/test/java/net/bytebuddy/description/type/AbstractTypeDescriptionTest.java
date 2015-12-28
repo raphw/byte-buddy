@@ -3,9 +3,6 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.generic.AbstractGenericTypeDescriptionTest;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -33,7 +30,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDescriptionTest {
+public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptionGenericTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -230,7 +227,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(SampleClass.class), is(equalFirst));
         assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
         assertThat(describe(SampleClass.class), not((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class)));
-        TypeDefinition nonRawType = mock(GenericTypeDescription.class);
+        TypeDefinition nonRawType = mock(TypeDescription.Generic.class);
         when(nonRawType.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         assertThat(describe(SampleClass.class), not(nonRawType));
         assertThat(describe(SampleClass.class), not(new Object()));
@@ -277,27 +274,27 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testSuperType() throws Exception {
-        assertThat(describe(Object.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(SampleInterface.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(SampleAnnotation.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(void.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(SampleClass.class).getSuperType(), is(GenericTypeDescription.OBJECT));
+        assertThat(describe(Object.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleInterface.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleAnnotation.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(void.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleClass.class).getSuperType(), is(TypeDescription.Generic.OBJECT));
         assertThat(describe(SampleIndirectInterfaceImplementation.class).getSuperType(),
                 is((TypeDefinition) new TypeDescription.ForLoadedType(SampleInterfaceImplementation.class)));
-        assertThat(describe(Object[].class).getSuperType(), is(GenericTypeDescription.OBJECT));
+        assertThat(describe(Object[].class).getSuperType(), is(TypeDescription.Generic.OBJECT));
     }
 
     @Test
     public void testInterfaces() throws Exception {
-        assertThat(describe(Object.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
-        assertThat(describe(SampleInterface.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
-        assertThat(describe(SampleAnnotation.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedTypes(Annotation.class)));
+        assertThat(describe(Object.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
+        assertThat(describe(SampleInterface.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
+        assertThat(describe(SampleAnnotation.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(Annotation.class)));
         assertThat(describe(SampleInterfaceImplementation.class).getInterfaces(),
-                is((GenericTypeList) new GenericTypeList.ForLoadedTypes(SampleInterface.class)));
-        assertThat(describe(SampleIndirectInterfaceImplementation.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
+                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(SampleInterface.class)));
+        assertThat(describe(SampleIndirectInterfaceImplementation.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
         assertThat(describe(SampleTransitiveInterfaceImplementation.class).getInterfaces(),
-                is((GenericTypeList) new GenericTypeList.ForLoadedTypes(SampleTransitiveInterface.class)));
-        assertThat(describe(Object[].class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedTypes(Cloneable.class, Serializable.class)));
+                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(SampleTransitiveInterface.class)));
+        assertThat(describe(Object[].class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(Cloneable.class, Serializable.class)));
     }
 
     @Test

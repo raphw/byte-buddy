@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -33,7 +32,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     private TypeDescription targetType, componentType;
 
     @Mock
-    private GenericTypeDescription genericTargetType;
+    private TypeDescription.Generic genericTargetType;
 
     public AllArgumentsBinderTest() {
         super(AllArguments.class);
@@ -150,7 +149,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     @Test(expected = IllegalStateException.class)
     public void testNonArrayTypeBinding() throws Exception {
         when(target.getIndex()).thenReturn(0);
-        GenericTypeDescription targetType = mock(GenericTypeDescription.class);
+        TypeDescription.Generic targetType = mock(TypeDescription.Generic.class);
         TypeDescription rawTargetType = mock(TypeDescription.class);
         when(targetType.asErasure()).thenReturn(rawTargetType);
         when(targetType.isArray()).thenReturn(false);

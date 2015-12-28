@@ -4,7 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -31,7 +30,7 @@ public class SubclassImplementationTargetFactoryTest {
     private TypeDescription instrumentedType, superType;
 
     @Mock
-    private GenericTypeDescription genericSuperType;
+    private TypeDescription.Generic genericSuperType;
 
     private Implementation.Target.Factory factory;
 

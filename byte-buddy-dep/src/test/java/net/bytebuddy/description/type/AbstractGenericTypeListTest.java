@@ -1,4 +1,4 @@
-package net.bytebuddy.description.type.generic;
+package net.bytebuddy.description.type;
 
 import net.bytebuddy.matcher.AbstractFilterableListTest;
 import org.junit.Test;
@@ -9,7 +9,7 @@ import java.util.Collections;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public abstract class AbstractGenericTypeListTest<U> extends AbstractFilterableListTest<GenericTypeDescription, GenericTypeList, U> {
+public abstract class AbstractGenericTypeListTest<U> extends AbstractFilterableListTest<TypeDescription.Generic, TypeList.Generic, U> {
 
     @Test
     public void testRawTypes() throws Exception {
@@ -19,7 +19,7 @@ public abstract class AbstractGenericTypeListTest<U> extends AbstractFilterableL
 
     @Test
     public void testVisitor() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).accept(GenericTypeDescription.Visitor.NoOp.INSTANCE),
+        assertThat(asList(Collections.singletonList(getFirst())).accept(TypeDescription.Generic.Visitor.NoOp.INSTANCE),
                 is(asList(Collections.singletonList(getFirst()))));
     }
 

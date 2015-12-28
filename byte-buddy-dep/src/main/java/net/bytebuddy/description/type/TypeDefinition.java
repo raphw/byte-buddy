@@ -1,11 +1,9 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.NamedElement;
+import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.implementation.bytecode.StackSize;
 
 import java.lang.reflect.*;
@@ -14,11 +12,11 @@ import java.util.NoSuchElementException;
 
 public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
 
-    GenericTypeDescription asGenericType();
+    TypeDescription.Generic asGenericType();
 
-    GenericTypeDescription getSuperType();
+    TypeDescription.Generic getSuperType();
 
-    GenericTypeList getInterfaces();
+    TypeList.Generic getInterfaces();
 
     FieldList<?> getDeclaredFields();
 
@@ -29,8 +27,8 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
      * Returns the component type of this type.
      * </p>
      * <p>
-     * Only non-generic types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#NON_GENERIC}) and generic array types
-     * {@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#GENERIC_ARRAY}) define a component type. For other
+     * Only non-generic types ({@link TypeDescription.Generic.Sort#NON_GENERIC}) and generic array types
+     * {@link TypeDescription.Generic.Sort#GENERIC_ARRAY}) define a component type. For other
      * types, an {@link IllegalStateException} is thrown.
      * </p>
      *
@@ -46,7 +44,7 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     Sort getSort();
 
     /**
-     * Returns the erasure of this type. Wildcard types ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD})
+     * Returns the erasure of this type. Wildcard types ({@link TypeDescription.Generic.Sort#WILDCARD})
      * do not have a well-defined erasure and cause an {@link IllegalStateException} to be thrown.
      *
      * @return The erasure of this type.
@@ -63,7 +61,7 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
 
     /**
      * Returns the size of the type described by this instance. Wildcard types
-     * ({@link net.bytebuddy.description.type.generic.GenericTypeDescription.Sort#WILDCARD} do not have a well-defined a stack size and
+     * ({@link TypeDescription.Generic.Sort#WILDCARD} do not have a well-defined a stack size and
      * cause an {@link IllegalStateException} to be thrown.
      *
      * @return The size of the type described by this instance.
@@ -93,7 +91,7 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     boolean represents(Type type);
 
     /**
-     * Represents a {@link GenericTypeDescription}'s form.
+     * Represents a {@link TypeDescription.Generic}'s form.
      */
     enum Sort {
 
@@ -133,88 +131,70 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
         VARIABLE_SYMBOLIC;
 
         /**
-         * Describes a loaded generic type as a {@link GenericTypeDescription}.
+         * Describes a loaded generic type as a {@link TypeDescription.Generic}.
          *
          * @param type The type to describe.
          * @return A description of the provided generic type.
          */
-        public static GenericTypeDescription describe(Type type) {
+        public static TypeDescription.Generic describe(Type type) {
             if (type instanceof Class<?>) {
-                return new GenericTypeDescription.ForNonGenericType.OfLoadedType((Class<?>) type);
+                return new TypeDescription.Generic.ForNonGenericType.OfLoadedType((Class<?>) type);
             } else if (type instanceof GenericArrayType) {
-                return new GenericTypeDescription.ForGenericArray.OfLoadedType((GenericArrayType) type);
+                return new TypeDescription.Generic.ForGenericArray.OfLoadedType((GenericArrayType) type);
             } else if (type instanceof ParameterizedType) {
-                return new GenericTypeDescription.ForParameterizedType.OfLoadedType((ParameterizedType) type);
+                return new TypeDescription.Generic.ForParameterizedType.OfLoadedType((ParameterizedType) type);
             } else if (type instanceof TypeVariable) {
-                return new GenericTypeDescription.ForTypeVariable.OfLoadedType((TypeVariable<?>) type);
+                return new TypeDescription.Generic.ForTypeVariable.OfLoadedType((TypeVariable<?>) type);
             } else if (type instanceof WildcardType) {
-                return new GenericTypeDescription.ForWildcardType.OfLoadedType((WildcardType) type);
+                return new TypeDescription.Generic.ForWildcardType.OfLoadedType((WildcardType) type);
             } else {
                 throw new IllegalArgumentException("Unknown type: " + type);
             }
         }
 
         /**
-         * Checks if this type form represents a non-generic type.
+         * Checks if this type sort represents a non-generic type.
          *
-         * @return {@code true} if this type form represents a non-generic.
+         * @return {@code true} if this sort form represents a non-generic.
          */
         public boolean isNonGeneric() {
             return this == NON_GENERIC;
         }
 
         /**
-         * Checks if this type form represents a parameterized type.
+         * Checks if this type sort represents a parameterized type.
          *
-         * @return {@code true} if this type form represents a parameterized type.
+         * @return {@code true} if this sort form represents a parameterized type.
          */
         public boolean isParameterized() {
             return this == PARAMETERIZED;
         }
 
         /**
-         * Checks if this type form represents a generic array.
+         * Checks if this type sort represents a generic array.
          *
-         * @return {@code true} if this type form represents a generic array.
+         * @return {@code true} if this type sort represents a generic array.
          */
         public boolean isGenericArray() {
             return this == GENERIC_ARRAY;
         }
 
         /**
-         * Checks if this type form represents a wildcard.
+         * Checks if this type sort represents a wildcard.
          *
-         * @return {@code true} if this type form represents a wildcard.
+         * @return {@code true} if this type sort represents a wildcard.
          */
         public boolean isWildcard() {
             return this == WILDCARD;
         }
 
         /**
-         * Checks if this type form represents an attached type variable.
+         * Checks if this type sort represents a type variable of any form.
          *
-         * @return {@code true} if this type form represents an attached type variable.
+         * @return {@code true} if this type sort represents an attached type variable.
          */
         public boolean isTypeVariable() {
-            return this == VARIABLE;
-        }
-
-        /**
-         * Checks if this type form represents a detached type variable.
-         *
-         * @return {@code true} if this type form represents a detached type variable.
-         */
-        public boolean isDetachedTypeVariable() {
-            return this == VARIABLE_DETACHED;
-        }
-
-        /**
-         * Checks if this type form represents a symbolic type variable.
-         *
-         * @return {@code true} if this type form represents a symbolic type variable.
-         */
-        public boolean isSymbolicTypeVariable() {
-            return this == VARIABLE_SYMBOLIC;
+            return this == VARIABLE || this == VARIABLE_DETACHED || this == VARIABLE_SYMBOLIC;
         }
 
         @Override

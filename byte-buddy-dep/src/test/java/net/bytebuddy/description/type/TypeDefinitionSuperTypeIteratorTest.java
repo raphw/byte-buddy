@@ -1,8 +1,5 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -27,7 +24,7 @@ public class TypeDefinitionSuperTypeIteratorTest {
     private TypeDescription typeDescription;
 
     @Mock
-    private GenericTypeDescription superType;
+    private TypeDescription.Generic superType;
 
     @Before
     public void setUp() throws Exception {
@@ -59,6 +56,6 @@ public class TypeDefinitionSuperTypeIteratorTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(GenericTypeDescription.SuperTypeIterator.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.SuperTypeIterator.class).applyBasic();
     }
 }

@@ -11,8 +11,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
@@ -875,7 +874,7 @@ public interface TypeWriter<T> {
                          * @return A method description of the visibility bridge.
                          */
                         protected static MethodDescription of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
-                            return new VisibilityBridge(instrumentedType, bridgeTarget.asToken().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE));
+                            return new VisibilityBridge(instrumentedType, bridgeTarget.asToken().accept(TypeDescription.Generic.Visitor.TypeErasing.INSTANCE));
                         }
 
                         @Override
@@ -889,12 +888,12 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        public GenericTypeDescription getReturnType() {
+                        public TypeDescription.Generic getReturnType() {
                             return bridgeTarget.getReturnType();
                         }
 
                         @Override
-                        public GenericTypeList getExceptionTypes() {
+                        public TypeList.Generic getExceptionTypes() {
                             return bridgeTarget.getExceptionTypes();
                         }
 
@@ -904,8 +903,8 @@ public interface TypeWriter<T> {
                         }
 
                         @Override
-                        public GenericTypeList getTypeVariables() {
-                            return new GenericTypeList.Empty();
+                        public TypeList.Generic getTypeVariables() {
+                            return new TypeList.Generic.Empty();
                         }
 
                         @Override
@@ -1124,13 +1123,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public GenericTypeDescription getReturnType() {
+                    public TypeDescription.Generic getReturnType() {
                         return bridgeType.getReturnType().asGenericType();
                     }
 
                     @Override
-                    public GenericTypeList getExceptionTypes() {
-                        return bridgeTarget.getExceptionTypes().accept(GenericTypeDescription.Visitor.TypeErasing.INSTANCE);
+                    public TypeList.Generic getExceptionTypes() {
+                        return bridgeTarget.getExceptionTypes().accept(TypeDescription.Generic.Visitor.TypeErasing.INSTANCE);
                     }
 
                     @Override
@@ -1139,8 +1138,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public GenericTypeList getTypeVariables() {
-                        return new GenericTypeList.Empty();
+                    public TypeList.Generic getTypeVariables() {
+                        return new TypeList.Generic.Empty();
                     }
 
                     @Override
@@ -1196,12 +1195,12 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public GenericTypeDescription getReturnType() {
+                    public TypeDescription.Generic getReturnType() {
                         return bridgeTarget.getReturnType();
                     }
 
                     @Override
-                    public GenericTypeList getExceptionTypes() {
+                    public TypeList.Generic getExceptionTypes() {
                         return bridgeTarget.getExceptionTypes();
                     }
 
@@ -1211,7 +1210,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public GenericTypeList getTypeVariables() {
+                    public TypeList.Generic getTypeVariables() {
                         return bridgeTarget.getTypeVariables();
                     }
 
@@ -2641,13 +2640,13 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return GenericTypeDescription.VOID;
+                public TypeDescription.Generic getReturnType() {
+                    return TypeDescription.Generic.VOID;
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getExceptionTypes() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -2656,8 +2655,8 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override

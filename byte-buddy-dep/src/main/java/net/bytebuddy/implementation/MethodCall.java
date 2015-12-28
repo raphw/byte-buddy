@@ -8,7 +8,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -734,7 +733,7 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                new GenericTypeDescription.ForNonGenericType.OfLoadedType(target.getClass())))
+                                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(target.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
             }
 
@@ -771,7 +770,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The type of the field.
              */
-            private final GenericTypeDescription fieldType;
+            private final TypeDescription.Generic fieldType;
 
             /**
              * Creates a new target handler for storing a method invocation target in an
@@ -780,7 +779,7 @@ public class MethodCall implements Implementation.Composable {
              * @param fieldName The name of the field.
              * @param fieldType The type of the field.
              */
-            public ForInstanceField(String fieldName, GenericTypeDescription fieldType) {
+            public ForInstanceField(String fieldName, TypeDescription.Generic fieldType) {
                 this.fieldName = fieldName;
                 this.fieldType = fieldType;
             }
@@ -1116,7 +1115,7 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                new GenericTypeDescription.ForNonGenericType.OfLoadedType(value.getClass())))
+                                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(value.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, value));
             }
 
@@ -1148,7 +1147,7 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The type of the field.
              */
-            private final GenericTypeDescription fieldType;
+            private final TypeDescription.Generic fieldType;
 
             /**
              * The name of the field.
@@ -1161,7 +1160,7 @@ public class MethodCall implements Implementation.Composable {
              * @param fieldType The name of the field.
              * @param fieldName The type of the field.
              */
-            public ForInstanceField(GenericTypeDescription fieldType, String fieldName) {
+            public ForInstanceField(TypeDescription.Generic fieldType, String fieldName) {
                 this.fieldType = fieldType;
                 this.fieldName = fieldName;
             }
@@ -2033,14 +2032,14 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The type description to virtually invoke the method upon.
              */
-            private final GenericTypeDescription typeDescription;
+            private final TypeDescription.Generic typeDescription;
 
             /**
              * Creates a new method invoking for a virtual method invocation.
              *
              * @param typeDescription The type description to virtually invoke the method upon.
              */
-            protected ForVirtualInvocation(GenericTypeDescription typeDescription) {
+            protected ForVirtualInvocation(TypeDescription.Generic typeDescription) {
                 this.typeDescription = typeDescription;
             }
 
@@ -2243,7 +2242,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForStaticField(nonNull(target)),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(new GenericTypeDescription.ForNonGenericType.OfLoadedType(target.getClass())),
+                    new MethodInvoker.ForVirtualInvocation(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(target.getClass())),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
@@ -2269,7 +2268,7 @@ public class MethodCall implements Implementation.Composable {
          * @param fieldName       The name of the field.
          * @return A method call that invokes the given method on an instance that is read from an instance field.
          */
-        public MethodCall onInstanceField(GenericTypeDescription typeDescription, String fieldName) {
+        public MethodCall onInstanceField(TypeDescription.Generic typeDescription, String fieldName) {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForInstanceField(nonNull(fieldName), isActualType(typeDescription)),
                     argumentLoaders,

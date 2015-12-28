@@ -5,7 +5,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -56,7 +55,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     private TypeDescription typeDescription, superType, returnType, declaringType;
 
     @Mock
-    private GenericTypeDescription genericSuperType, genericReturnType;
+    private TypeDescription.Generic genericSuperType, genericReturnType;
 
     @Mock
     private Implementation.Target implementationTarget;

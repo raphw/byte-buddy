@@ -4,7 +4,6 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.ArgumentTypeResolver;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -29,7 +28,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
     private TypeDescription sourceType, targetType;
 
     @Mock
-    private GenericTypeDescription genericSourceType, genericTargetType;
+    private TypeDescription.Generic genericSourceType, genericTargetType;
 
     public ArgumentBinderTest() {
         super(Argument.class);
@@ -42,10 +41,10 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         super.setUp();
         when(genericSourceType.asErasure()).thenReturn(sourceType);
         when(sourceType.asGenericType()).thenReturn(genericSourceType);
-        when(genericSourceType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(genericSourceType);
+        when(genericSourceType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(genericSourceType);
         when(genericTargetType.asErasure()).thenReturn(targetType);
         when(targetType.asGenericType()).thenReturn(genericTargetType);
-        when(genericTargetType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(targetType);
+        when(genericTargetType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(targetType);
     }
 
     @Override

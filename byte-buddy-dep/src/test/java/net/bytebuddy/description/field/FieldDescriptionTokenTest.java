@@ -1,7 +1,7 @@
 package net.bytebuddy.description.field;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -26,7 +26,7 @@ public class FieldDescriptionTokenTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private GenericTypeDescription first, second;
+    private TypeDescription.Generic first, second;
 
     @Mock
     private AnnotationDescription firstAnnotation, secondAnnotation;
@@ -35,11 +35,11 @@ public class FieldDescriptionTokenTest {
     public void testFieldNameEqualityHashCode() throws Exception {
         assertThat(new FieldDescription.Token(FOO,
                         MODIFIERS,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class))).hashCode(),
                 is(new FieldDescription.Token(FOO,
                         MODIFIERS * 2,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class))).hashCode()));
     }
 
@@ -47,11 +47,11 @@ public class FieldDescriptionTokenTest {
     public void testFieldNameInequalityHashCode() throws Exception {
         assertThat(new FieldDescription.Token(FOO,
                         MODIFIERS,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class))).hashCode(),
                 not(new FieldDescription.Token(BAR,
                         MODIFIERS * 2,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class))).hashCode()));
     }
 
@@ -59,11 +59,11 @@ public class FieldDescriptionTokenTest {
     public void testFieldNameEquality() throws Exception {
         assertThat(new FieldDescription.Token(FOO,
                         MODIFIERS,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class))),
                 is(new FieldDescription.Token(FOO,
                         MODIFIERS * 2,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class)))));
     }
 
@@ -71,11 +71,11 @@ public class FieldDescriptionTokenTest {
     public void testFieldNameInequality() throws Exception {
         assertThat(new FieldDescription.Token(FOO,
                         MODIFIERS,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class))),
                 not(new FieldDescription.Token(BAR,
                         MODIFIERS * 2,
-                        mock(GenericTypeDescription.class),
+                        mock(TypeDescription.Generic.class),
                         Collections.singletonList(mock(AnnotationDescription.class)))));
     }
 

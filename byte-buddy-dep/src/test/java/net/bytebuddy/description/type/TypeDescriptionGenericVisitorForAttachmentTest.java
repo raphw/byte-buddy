@@ -1,7 +1,5 @@
-package net.bytebuddy.description.type.generic;
+package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -12,16 +10,16 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class GenericTypeDescriptionVisitorForAttachmentTest {
+public class TypeDescriptionGenericVisitorForAttachmentTest {
 
     private static final String FOO = "foo";
 
     @Test
     public void testAttachment() throws Exception {
-        GenericTypeDescription original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
-        GenericTypeDescription detached = original.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
+        TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
+        TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
         TypeDescription target = new TypeDescription.ForLoadedType(Bar.class);
-        GenericTypeDescription attached = detached.accept(new GenericTypeDescription.Visitor.Substitutor.ForAttachment(target.asGenericType(), target));
+        TypeDescription.Generic attached = detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(target.asGenericType(), target));
         assertThat(attached.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(attached.asErasure(), sameInstance(target));
         assertThat(attached.getParameters().size(), is(4));
@@ -36,7 +34,7 @@ public class GenericTypeDescriptionVisitorForAttachmentTest {
         assertThat(attached.getParameters().get(3).asErasure().represents(List.class), is(true));
         assertThat(attached.getParameters().get(3).getParameters().size(), is(1));
         assertThat(attached.getParameters().get(3).getParameters().getOnly(), is(target.getTypeVariables().filter(named("S")).getOnly()));
-        assertThat(attached.getOwnerType(), notNullValue(GenericTypeDescription.class));
+        assertThat(attached.getOwnerType(), notNullValue(TypeDescription.Generic.class));
         assertThat(attached.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(attached.getOwnerType().getParameters().size(), is(1));
         assertThat(attached.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
@@ -46,7 +44,7 @@ public class GenericTypeDescriptionVisitorForAttachmentTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForAttachment.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.class).apply();
     }
 
     @SuppressWarnings("unused")

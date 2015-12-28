@@ -1,6 +1,5 @@
-package net.bytebuddy.description.type.generic;
+package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -11,14 +10,14 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class GenericTypeDescriptionVisitorForDetachmentTest {
+public class TypeDescriptionGenericVisitorForDetachmentTest {
 
     private static final String FOO = "foo";
 
     @Test
     public void testDetachment() throws Exception {
-        GenericTypeDescription original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
-        GenericTypeDescription detached = original.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
+        TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
+        TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
         assertThat(detached, not(sameInstance(original)));
         assertThat(detached.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(detached.asErasure(), is(TargetType.DESCRIPTION));
@@ -41,7 +40,7 @@ public class GenericTypeDescriptionVisitorForDetachmentTest {
         assertThat(detached.getParameters().get(3).getParameters().getOnly().getUpperBounds().size(), is(1));
         assertThat(detached.getParameters().get(3).getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(detached.getParameters().get(3).getParameters().getOnly().getUpperBounds().getOnly().asErasure().represents(CharSequence.class), is(true));
-        assertThat(detached.getOwnerType(), notNullValue(GenericTypeDescription.class));
+        assertThat(detached.getOwnerType(), notNullValue(TypeDescription.Generic.class));
         assertThat(detached.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(detached.getOwnerType().getParameters().size(), is(1));
         assertThat(detached.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE_DETACHED));
@@ -51,14 +50,14 @@ public class GenericTypeDescriptionVisitorForDetachmentTest {
 
     @Test(expected = IllegalStateException.class)
     public void testDetachedNoSource() throws Exception {
-        GenericTypeDescription original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
-        GenericTypeDescription detached = original.accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
+        TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
+        TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
         detached.getParameters().get(0).getVariableSource();
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(GenericTypeDescription.Visitor.Substitutor.ForDetachment.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.class).applyBasic();
     }
 
     @SuppressWarnings("unused")

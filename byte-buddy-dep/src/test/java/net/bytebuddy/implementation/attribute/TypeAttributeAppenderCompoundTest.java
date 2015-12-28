@@ -15,10 +15,10 @@ public class TypeAttributeAppenderCompoundTest extends AbstractTypeAttributeAppe
     @Test
     public void testApplication() throws Exception {
         TypeAttributeAppender typeAttributeAppender = new TypeAttributeAppender.Compound(first, second);
-        typeAttributeAppender.apply(classVisitor, typeDescription, targetType);
-        verify(first).apply(classVisitor, typeDescription, targetType);
+        typeAttributeAppender.apply(classVisitor, rawTypeDescription, targetType);
+        verify(first).apply(classVisitor, rawTypeDescription, targetType);
         verifyNoMoreInteractions(first);
-        verify(second).apply(classVisitor, typeDescription, targetType);
+        verify(second).apply(classVisitor, rawTypeDescription, targetType);
         verifyNoMoreInteractions(second);
     }
 

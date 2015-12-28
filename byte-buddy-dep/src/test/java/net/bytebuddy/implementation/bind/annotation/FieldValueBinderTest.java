@@ -4,7 +4,6 @@ import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -26,7 +25,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     private FieldDescription.InDefinedShape fieldDescription;
 
     @Mock
-    private GenericTypeDescription fieldType, targetType;
+    private TypeDescription.Generic fieldType, targetType;
 
     @Mock
     private TypeDescription rawFieldType;

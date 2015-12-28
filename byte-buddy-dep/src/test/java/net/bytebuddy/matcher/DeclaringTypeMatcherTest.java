@@ -2,7 +2,6 @@ package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.DeclaredByType;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -14,13 +13,13 @@ import static org.mockito.Mockito.*;
 public class DeclaringTypeMatcherTest extends AbstractElementMatcherTest<DeclaringTypeMatcher<?>> {
 
     @Mock
-    private ElementMatcher<? super GenericTypeDescription> typeMatcher;
+    private ElementMatcher<? super TypeDescription.Generic> typeMatcher;
 
     @Mock
     private DeclaredByType declaredByType;
 
     @Mock
-    private GenericTypeDescription typeDescription;
+    private TypeDescription.Generic typeDescription;
 
     @SuppressWarnings("unchecked")
     public DeclaringTypeMatcherTest() {

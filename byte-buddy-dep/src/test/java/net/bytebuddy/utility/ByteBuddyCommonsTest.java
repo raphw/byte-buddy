@@ -7,7 +7,6 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -90,25 +89,25 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsThrowableThrowsExceptionForWildcard() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
-        isThrowable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
+        isThrowable(typeDescription);
     }
 
     @Test
     public void testIsThrowableForExceptionVariable() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
-        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Throwable.class));
-        assertThat(isThrowable(genericTypeDescription), sameInstance(genericTypeDescription));
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Throwable.class));
+        assertThat(isThrowable(typeDescription), sameInstance(typeDescription));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsThrowableThrowsExceptionForExceptionVariableOfNonThrowableType() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
-        when(genericTypeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
-        isThrowable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
+        isThrowable(typeDescription);
     }
 
     @Test
@@ -164,39 +163,39 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testTypeVaribaleTypeIsExtendableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
-        isExtendable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        isExtendable(typeDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testWildcardTypeIsExtendableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
-        isExtendable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
+        isExtendable(typeDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGenericArrayTypeIsExtendableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
-        isExtendable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
+        isExtendable(typeDescription);
     }
 
     @Test
     public void testParameterizedTypeIsExtendable() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
-        assertThat(isExtendable(genericTypeDescription), sameInstance(genericTypeDescription));
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
+        when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
+        assertThat(isExtendable(typeDescription), sameInstance(typeDescription));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testParameterizedTypeWithIllegalErasureIsExtendableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asErasure()).thenReturn(TypeDescription.STRING);
-        isExtendable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
+        when(typeDescription.asErasure()).thenReturn(TypeDescription.STRING);
+        isExtendable(typeDescription);
     }
 
     @Test
@@ -222,39 +221,39 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testTypeVaribaleTypeIsImplementableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
-        isImplementable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        isImplementable(typeDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testWildcardTypeIsImplementableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
-        isImplementable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
+        isImplementable(typeDescription);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGenericArrayTypeIsImplementableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
-        isImplementable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
+        isImplementable(typeDescription);
     }
 
     @Test
     public void testParameterizedTypeIsImplementable() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Runnable.class));
-        assertThat(isImplementable(genericTypeDescription), sameInstance(genericTypeDescription));
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
+        when(typeDescription.asErasure()).thenReturn(new TypeDescription.ForLoadedType(Runnable.class));
+        assertThat(isImplementable(typeDescription), sameInstance(typeDescription));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testParameterizedTypeWithIllegalErasureIsImplementableThrowsException() throws Exception {
-        GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
-        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
-        when(genericTypeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
-        isImplementable(genericTypeDescription);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
+        when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
+        isImplementable(typeDescription);
     }
 
     @Test
@@ -270,58 +269,58 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testIsActualTypeOrVoidForRawType() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         assertThat(isActualTypeOrVoid(typeDescription), sameInstance(typeDescription));
     }
 
     @Test
     public void testIsActualTypeOrVoidForGenericArray() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
         assertThat(isActualTypeOrVoid(typeDescription), sameInstance(typeDescription));
     }
 
     @Test
     public void testIsActualTypeOrVoidForTypeVariable() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         assertThat(isActualTypeOrVoid(typeDescription), sameInstance(typeDescription));
     }
 
     @Test
     public void testIsActualTypeOrVoidForParameterizedType() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
         assertThat(isActualTypeOrVoid(typeDescription), sameInstance(typeDescription));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsActualTypeOrVoidForWildcardThrowsException() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
         isActualTypeOrVoid(typeDescription);
     }
 
     @Test
     public void testCollectionIsActualTypeOrVoid() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(typeDescription.asErasure()).thenReturn(TypeDescription.VOID);
-        Collection<GenericTypeDescription> typeDescriptions = Collections.singleton(typeDescription);
+        Collection<TypeDescription.Generic> typeDescriptions = Collections.singleton(typeDescription);
         assertThat(isActualTypeOrVoid(typeDescriptions), sameInstance(typeDescriptions));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testCollectionIsActualTypeOrVoidThrowsException() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
         isActualTypeOrVoid(Collections.singleton(typeDescription));
     }
 
     @Test
     public void testIsActualTypeForRawType() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
@@ -334,7 +333,7 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testIsActualTypeForGenericArray() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.GENERIC_ARRAY);
         when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
@@ -342,7 +341,7 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testIsActualTypeForTypeVariable() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
@@ -350,7 +349,7 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testIsActualTypeForParameterizedType() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.PARAMETERIZED);
         when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
         assertThat(isActualType(typeDescription), sameInstance(typeDescription));
@@ -358,7 +357,7 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIsActualTypeForWildcardThrowsException() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
         when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
         isActualType(typeDescription);
@@ -366,10 +365,10 @@ public class ByteBuddyCommonsTest {
 
     @Test
     public void testCollectionIsActualType() throws Exception {
-        GenericTypeDescription typeDescription = mock(GenericTypeDescription.class);
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
         when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(typeDescription.asErasure()).thenReturn(TypeDescription.OBJECT);
-        Collection<GenericTypeDescription> typeDescriptions = Collections.singleton(typeDescription);
+        Collection<TypeDescription.Generic> typeDescriptions = Collections.singleton(typeDescription);
         assertThat(isActualType(typeDescriptions), sameInstance(typeDescriptions));
     }
 
@@ -448,7 +447,7 @@ public class ByteBuddyCommonsTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testJoinUniqueRawWithConflictingDuplicate() throws Exception {
-        GenericTypeDescription first = mock(GenericTypeDescription.class), second = mock(GenericTypeDescription.class);
+        TypeDescription.Generic first = mock(TypeDescription.Generic.class), second = mock(TypeDescription.Generic.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(first.asErasure()).thenReturn(typeDescription);
         when(second.asErasure()).thenReturn(typeDescription);

@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -33,7 +32,7 @@ public class MethodInvocationGenericTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private GenericTypeDescription methodReturnType, declaredReturnType;
+    private TypeDescription.Generic methodReturnType, declaredReturnType;
 
     @Mock
     private TypeDescription declaredErasure, declaringType, targetType, otherType;

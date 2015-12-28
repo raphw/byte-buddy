@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.objectweb.asm.ClassVisitor;
 
 import java.util.Arrays;
@@ -21,7 +20,7 @@ public interface TypeAttributeAppender {
      * @param targetType       The target type of the instrumentation, i.e. the super class type for a super class creation
      *                         or the type being redefined.
      */
-    void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType);
+    void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, TypeDescription.Generic targetType);
 
     /**
      * A type attribute appender that does not append any attributes.
@@ -34,7 +33,7 @@ public interface TypeAttributeAppender {
         INSTANCE;
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, TypeDescription.Generic targetType) {
             /* do nothing */
         }
 
@@ -66,7 +65,7 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, TypeDescription.Generic targetType) {
             if (!instrumentedType.getSuperType().equals(targetType)) {
                 return; // Takes into account that types can be renamed. This check is more reliable.
             }
@@ -129,7 +128,7 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, TypeDescription.Generic targetType) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
             for (AnnotationDescription annotation : this.typeDescription.getDeclaredAnnotations()) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
@@ -185,7 +184,7 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, TypeDescription.Generic targetType) {
             AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor), valueFilter);
             for (AnnotationDescription annotation : annotations) {
                 annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
@@ -233,7 +232,7 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, GenericTypeDescription targetType) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, TypeDescription.Generic targetType) {
             for (TypeAttributeAppender typeAttributeAppender : this.typeAttributeAppender) {
                 typeAttributeAppender.apply(classVisitor, instrumentedType, targetType);
             }

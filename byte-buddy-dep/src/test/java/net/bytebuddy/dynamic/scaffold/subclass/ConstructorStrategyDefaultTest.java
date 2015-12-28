@@ -3,7 +3,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
@@ -40,7 +40,7 @@ public class ConstructorStrategyDefaultTest {
     private InstrumentedType instrumentedType;
 
     @Mock
-    private GenericTypeDescription superType;
+    private TypeDescription.Generic superType;
 
     @Mock
     private MethodList<?> methodList, filteredMethodList;

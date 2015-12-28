@@ -9,8 +9,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -219,17 +217,17 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * A list of type variables of the instrumented type.
          */
-        private final List<? extends GenericTypeDescription> typeVariables;
+        private final List<? extends Generic> typeVariables;
 
         /**
          * The generic super type of the instrumented type.
          */
-        private final GenericTypeDescription superType;
+        private final Generic superType;
 
         /**
          * A list of interfaces of the instrumented type.
          */
-        private final List<? extends GenericTypeDescription> interfaceTypes;
+        private final List<? extends Generic> interfaceTypes;
 
         /**
          * A list of field tokens describing the fields of the instrumented type.
@@ -307,9 +305,9 @@ public interface InstrumentedType extends TypeDescription {
          */
         public Default(String name,
                        int modifiers,
-                       List<? extends GenericTypeDescription> typeVariables,
-                       GenericTypeDescription superType,
-                       List<? extends GenericTypeDescription> interfaceTypes,
+                       List<? extends Generic> typeVariables,
+                       Generic superType,
+                       List<? extends Generic> interfaceTypes,
                        List<? extends FieldDescription.Token> fieldTokens,
                        List<? extends MethodDescription.Token> methodTokens,
                        List<? extends AnnotationDescription> annotationDescriptions,
@@ -357,9 +355,9 @@ public interface InstrumentedType extends TypeDescription {
          */
         public Default(String name,
                        int modifiers,
-                       List<? extends GenericTypeDescription> typeVariables,
-                       GenericTypeDescription superType,
-                       List<? extends GenericTypeDescription> interfaceTypes,
+                       List<? extends Generic> typeVariables,
+                       Generic superType,
+                       List<? extends Generic> interfaceTypes,
                        List<? extends FieldDescription.Token> fieldTokens,
                        List<? extends MethodDescription.Token> methodTokens,
                        List<? extends AnnotationDescription> annotationDescriptions,
@@ -506,15 +504,15 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
+        public Generic getSuperType() {
             return superType == null
-                    ? GenericTypeDescription.UNDEFINED
-                    : superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+                    ? TypeDescription.Generic.UNDEFINED
+                    : superType.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
-            return GenericTypeList.ForDetachedTypes.attach(this, interfaceTypes);
+        public TypeList.Generic getInterfaces() {
+            return TypeList.Generic.ForDetachedTypes.attach(this, interfaceTypes);
         }
 
         @Override
@@ -528,8 +526,8 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public GenericTypeList getTypeVariables() {
-            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+        public TypeList.Generic getTypeVariables() {
+            return TypeList.Generic.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
         }
 
         @Override

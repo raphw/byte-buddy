@@ -1,6 +1,6 @@
 package net.bytebuddy.description;
 
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,7 +22,7 @@ public class ByteCodeElementTokenListTest {
     private ByteCodeElement.Token<?> original, transformed;
 
     @Mock
-    private GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+    private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
     @Test
     @SuppressWarnings("unchecked")

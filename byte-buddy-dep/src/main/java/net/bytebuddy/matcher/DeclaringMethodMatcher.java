@@ -3,7 +3,6 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
 /**
  * An element matcher that checks if a type description declares methods of a given property.

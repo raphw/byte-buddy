@@ -15,8 +15,6 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -224,7 +222,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches the matched parameter's generic type.
      */
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasGenericType(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasGenericType(ElementMatcher<? super TypeDescription.Generic> matcher) {
         return new MethodParameterTypeMatcher<T>(nonNull(matcher));
     }
 
@@ -318,7 +316,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> anyOf(Type... value) {
-        return anyOf(new GenericTypeList.ForLoadedTypes(nonNull(value)));
+        return anyOf(new TypeList.Generic.ForLoadedTypes(nonNull(value)));
     }
 
     /**
@@ -406,7 +404,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> noneOf(Type... value) {
-        return noneOf(new GenericTypeList.ForLoadedTypes(nonNull(value)));
+        return noneOf(new TypeList.Generic.ForLoadedTypes(nonNull(value)));
     }
 
     /**
@@ -487,7 +485,7 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches a generic type's raw type against the provided non-generic type.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> rawType(Class<?> type) {
+    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(Class<?> type) {
         return rawType(is(nonNull(type)));
     }
 
@@ -498,7 +496,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that matches a generic type's raw type against the provided non-generic type.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> rawType(TypeDescription typeDescription) {
+    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(TypeDescription typeDescription) {
         return rawType(is(nonNull(typeDescription)));
     }
 
@@ -510,7 +508,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A type matcher for a generic type that matches the matched type's raw type against the given type description matcher.
      */
-    public static <T extends GenericTypeDescription> ElementMatcher.Junction<T> rawType(ElementMatcher<? super TypeDescription> matcher) {
+    public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(ElementMatcher<? super TypeDescription> matcher) {
         return new RawTypeMatcher<T>(nonNull(matcher));
     }
 
@@ -521,7 +519,7 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided non-generic types.
      */
-    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(Class<?>... type) {
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(Class<?>... type) {
         return rawTypes(new TypeList.ForLoadedTypes(type));
     }
 
@@ -532,7 +530,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided non-generic types.
      */
-    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(TypeDescription... typeDescription) {
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(TypeDescription... typeDescription) {
         return rawTypes(Arrays.asList(typeDescription));
     }
 
@@ -543,7 +541,7 @@ public final class ElementMatchers {
      * @param <T>              The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided non-generic types.
      */
-    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(
             Iterable<? extends TypeDescription> typeDescriptions) {
         List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription typeDescription : typeDescriptions) {
@@ -559,7 +557,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches an iteration of generic types' raw types against the provided matcher.
      */
-    public static <T extends Iterable<? extends GenericTypeDescription>> ElementMatcher.Junction<T> rawTypes(
+    public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(
             ElementMatcher<? super Iterable<? extends TypeDescription>> matcher) {
         return new CollectionRawTypeMatcher<T>(matcher);
     }
@@ -751,24 +749,24 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a {@link ByteCodeElement} for being declared by a given {@link GenericTypeDescription}.
+     * Matches a {@link ByteCodeElement} for being declared by a given {@link TypeDescription.Generic}.
      *
      * @param type The type that is expected to declare the matched byte code element.
      * @param <T>  The type of the matched object.
      * @return A matcher for byte code elements being declared by the given {@code type}.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(GenericTypeDescription type) {
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(TypeDescription.Generic type) {
         return isDeclaredByGeneric(is(nonNull(type)));
     }
 
     /**
-     * Matches a {@link ByteCodeElement} for being declared by a {@link GenericTypeDescription} that is matched by the given matcher.
+     * Matches a {@link ByteCodeElement} for being declared by a {@link TypeDescription.Generic} that is matched by the given matcher.
      *
      * @param matcher A matcher for the declaring type of the matched byte code element as long as it is not {@code null}.
      * @param <T>     The type of the matched object.
      * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
      */
-    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(ElementMatcher<? super TypeDescription.Generic> matcher) {
         return new DeclaringTypeMatcher<T>(nonNull(matcher));
     }
 
@@ -1001,7 +999,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return An element matcher that matches a given return type for a method description.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(GenericTypeDescription typeDescription) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(TypeDescription.Generic typeDescription) {
         return returnsGeneric(is(nonNull(typeDescription)));
     }
 
@@ -1045,7 +1043,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return An element matcher that matches a given return type against another {@code matcher}.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(ElementMatcher<? super TypeDescription.Generic> matcher) {
         return new MethodReturnTypeMatcher<T>(nonNull(matcher));
     }
 
@@ -1057,7 +1055,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(Type... type) {
-        return takesGenericArguments(new GenericTypeList.ForLoadedTypes(nonNull(type)));
+        return takesGenericArguments(new TypeList.Generic.ForLoadedTypes(nonNull(type)));
     }
 
     /**
@@ -1079,11 +1077,11 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(List<? extends TypeDefinition> typeDefinitions) {
-        List<ElementMatcher<? super GenericTypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super GenericTypeDescription>>();
+        List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription.Generic>>();
         for (TypeDefinition typeDefinition : typeDefinitions) {
             typeMatchers.add(is(nonNull(typeDefinition)));
         }
-        return takesGenericArguments(new CollectionOneToOneMatcher<GenericTypeDescription>(typeMatchers));
+        return takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(typeMatchers));
     }
 
     /**
@@ -1095,7 +1093,7 @@ public final class ElementMatchers {
      * parameter's type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(
-            ElementMatcher<? super Iterable<? extends GenericTypeDescription>> matchers) {
+            ElementMatcher<? super Iterable<? extends TypeDescription.Generic>> matchers) {
         return new MethodParametersMatcher<T>(new MethodParameterTypesMatcher<ParameterList<?>>(nonNull(matchers)));
     }
 
@@ -1129,11 +1127,11 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's raw parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> typeDescriptions) {
-        List<ElementMatcher<? super GenericTypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super GenericTypeDescription>>();
+        List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription.Generic>>();
         for (TypeDescription typeDescription : typeDescriptions) {
             typeMatchers.add(rawType(nonNull(typeDescription)));
         }
-        return takesGenericArguments(new CollectionOneToOneMatcher<GenericTypeDescription>(typeMatchers));
+        return takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(typeMatchers));
     }
 
     /**
@@ -1183,7 +1181,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(TypeDescription exceptionType) {
         return exceptionType.isAssignableTo(RuntimeException.class) || exceptionType.isAssignableTo(Error.class)
                 ? new BooleanMatcher<T>(true)
-                : ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<GenericTypeDescription>(rawType(isSuperTypeOf(exceptionType))));
+                : ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(rawType(isSuperTypeOf(exceptionType))));
     }
 
     /**
@@ -1208,9 +1206,9 @@ public final class ElementMatchers {
      * @param <T>           The type of the matched object.
      * @return A matcher that matches any method that exactly matches the provided generic exception.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(GenericTypeDescription exceptionType) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(TypeDescription.Generic exceptionType) {
         return !exceptionType.getSort().isWildcard() && exceptionType.asErasure().isAssignableTo(Throwable.class)
-                ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<GenericTypeDescription>(is(exceptionType)))
+                ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(is(exceptionType)))
                 : new BooleanMatcher<T>(false);
     }
 
@@ -1234,7 +1232,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresException(TypeDescription exceptionType) {
         return exceptionType.isAssignableTo(Throwable.class)
-                ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<GenericTypeDescription>(rawType(exceptionType)))
+                ? ElementMatchers.<T>declaresGenericException(new CollectionItemMatcher<TypeDescription.Generic>(rawType(exceptionType)))
                 : new BooleanMatcher<T>(false);
     }
 
@@ -1246,7 +1244,7 @@ public final class ElementMatchers {
      * @return A matcher that applies the provided matcher to a method's generic exception types.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(
-            ElementMatcher<? super Iterable<? extends GenericTypeDescription>> exceptionMatcher) {
+            ElementMatcher<? super Iterable<? extends TypeDescription.Generic>> exceptionMatcher) {
         return new MethodExceptionTypeMatcher<T>(nonNull(exceptionMatcher));
     }
 
@@ -1408,7 +1406,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that matches a setter method with the specified argument type.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(GenericTypeDescription typeDescription) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(TypeDescription.Generic typeDescription) {
         return isSetter(is(nonNull(typeDescription)));
     }
 
@@ -1419,8 +1417,8 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a setter method with an argument type that matches the supplied matcher.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super GenericTypeDescription> matcher) {
-        return isSetter().and(takesGenericArguments(new CollectionOneToOneMatcher<GenericTypeDescription>(Collections.singletonList(nonNull(matcher)))));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        return isSetter().and(takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(Collections.singletonList(nonNull(matcher)))));
     }
 
     /**
@@ -1452,7 +1450,7 @@ public final class ElementMatchers {
      * @param <T>             The type of the matched object.
      * @return A matcher that matches a getter method with the given type.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(GenericTypeDescription typeDescription) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(TypeDescription.Generic typeDescription) {
         return isGetter(is(nonNull(typeDescription)));
     }
 
@@ -1463,7 +1461,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher that matches a getter method with a return type that matches the supplied matcher.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
         return isGetter().and(returnsGeneric(nonNull(matcher)));
     }
 
@@ -1638,7 +1636,7 @@ public final class ElementMatchers {
      * @param <T>       The type of the matched object.
      * @return A matcher matching the provided field type.
      */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> genericFieldType(GenericTypeDescription fieldType) {
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> genericFieldType(TypeDescription.Generic fieldType) {
         return genericFieldType(is(nonNull(fieldType)));
     }
 
@@ -1649,7 +1647,7 @@ public final class ElementMatchers {
      * @param <T>     The type of the matched object.
      * @return A matcher matching the provided field type.
      */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> genericFieldType(ElementMatcher<? super GenericTypeDescription> matcher) {
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> genericFieldType(ElementMatcher<? super TypeDescription.Generic> matcher) {
         return new FieldTypeMatcher<T>(nonNull(matcher));
     }
 

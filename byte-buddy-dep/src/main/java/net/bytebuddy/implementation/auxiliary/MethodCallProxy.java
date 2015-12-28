@@ -10,7 +10,6 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -198,20 +197,20 @@ public class MethodCallProxy implements AuxiliaryType {
             MethodDescription callMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Callable.class),
                     "call",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
-                    Collections.<GenericTypeDescription>emptyList(),
-                    GenericTypeDescription.OBJECT,
+                    Collections.<TypeDescription.Generic>emptyList(),
+                    TypeDescription.Generic.OBJECT,
                     Collections.<ParameterDescription.Token>emptyList(),
-                    Collections.singletonList(new GenericTypeDescription.ForNonGenericType.OfLoadedType(Exception.class)),
+                    Collections.singletonList(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Exception.class)),
                     Collections.<AnnotationDescription>emptyList(),
                     MethodDescription.NO_DEFAULT_VALUE);
             nodes.put(callMethod.asToken(), new MethodGraph.Node.Simple(callMethod));
             MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
                     "run",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
-                    Collections.<GenericTypeDescription>emptyList(),
-                    GenericTypeDescription.VOID,
+                    Collections.<TypeDescription.Generic>emptyList(),
+                    TypeDescription.Generic.VOID,
                     Collections.<ParameterDescription.Token>emptyList(),
-                    Collections.<GenericTypeDescription>emptyList(),
+                    Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
                     MethodDescription.NO_DEFAULT_VALUE);
             nodes.put(runMethod.asToken(), new MethodGraph.Node.Simple(runMethod));

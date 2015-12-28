@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -33,7 +32,7 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
     private TypeDescription leftType, rightType, superType;
 
     @Mock
-    private GenericTypeDescription genericSuperType;
+    private TypeDescription.Generic genericSuperType;
 
     private TypeWriter.Default.FrameComputingClassWriter frameComputingClassWriter;
 

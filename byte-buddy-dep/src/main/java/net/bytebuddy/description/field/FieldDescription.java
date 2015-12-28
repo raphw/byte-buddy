@@ -6,7 +6,6 @@ import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.signature.SignatureWriter;
 
@@ -36,12 +35,12 @@ public interface FieldDescription extends ByteCodeElement,
      *
      * @return The type of the described field.
      */
-    GenericTypeDescription getType();
+    TypeDescription.Generic getType();
 
     interface InGenericShape extends FieldDescription {
 
         @Override
-        GenericTypeDescription getDeclaringType();
+        TypeDescription.Generic getDeclaringType();
     }
 
     /**
@@ -91,11 +90,11 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public String getGenericSignature() {
-            GenericTypeDescription fieldType = getType();
+            TypeDescription.Generic fieldType = getType();
             try {
                 return fieldType.getSort().isNonGeneric()
                         ? NON_GENERIC_SIGNATURE
-                        : fieldType.accept(new GenericTypeDescription.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
+                        : fieldType.accept(new TypeDescription.Generic.Visitor.ForSignatureVisitor(new SignatureWriter())).toString();
             } catch (GenericSignatureFormatError ignored) {
                 return NON_GENERIC_SIGNATURE;
             }
@@ -119,7 +118,7 @@ public interface FieldDescription extends ByteCodeElement,
         public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
             return new FieldDescription.Token(getName(),
                     getModifiers(),
-                    getType().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
+                    getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
                     getDeclaredAnnotations());
         }
 
@@ -178,8 +177,8 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public GenericTypeDescription getType() {
-            return new GenericTypeDescription.LazyProjection.OfLoadedFieldType(field);
+        public TypeDescription.Generic getType() {
+            return new TypeDescription.Generic.LazyProjection.OfLoadedFieldType(field);
         }
 
         @Override
@@ -232,7 +231,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * The type of the field.
          */
-        private final GenericTypeDescription fieldType;
+        private final TypeDescription.Generic fieldType;
 
         /**
          * The annotations of this field.
@@ -265,7 +264,7 @@ public interface FieldDescription extends ByteCodeElement,
         public Latent(TypeDescription declaringType,
                       String fieldName,
                       int modifiers,
-                      GenericTypeDescription fieldType,
+                      TypeDescription.Generic fieldType,
                       List<? extends AnnotationDescription> declaredAnnotations) {
             this.declaringType = declaringType;
             this.fieldName = fieldName;
@@ -275,8 +274,8 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public GenericTypeDescription getType() {
-            return fieldType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+        public TypeDescription.Generic getType() {
+            return fieldType.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
@@ -308,7 +307,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * The declaring type of the field.
          */
-        private final GenericTypeDescription declaringType;
+        private final TypeDescription.Generic declaringType;
 
         /**
          * The represented field.
@@ -318,7 +317,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * A visitor that is applied to the field type.
          */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a field description with a substituted field type.
@@ -327,16 +326,16 @@ public interface FieldDescription extends ByteCodeElement,
          * @param fieldDescription The represented field.
          * @param visitor          A visitor that is applied to the field type.
          */
-        public TypeSubstituting(GenericTypeDescription declaringType,
+        public TypeSubstituting(TypeDescription.Generic declaringType,
                                 FieldDescription fieldDescription,
-                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             this.declaringType = declaringType;
             this.fieldDescription = fieldDescription;
             this.visitor = visitor;
         }
 
         @Override
-        public GenericTypeDescription getType() {
+        public TypeDescription.Generic getType() {
             return fieldDescription.getType().accept(visitor);
         }
 
@@ -346,7 +345,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public GenericTypeDescription getDeclaringType() {
+        public TypeDescription.Generic getDeclaringType() {
             return declaringType;
         }
 
@@ -385,7 +384,7 @@ public interface FieldDescription extends ByteCodeElement,
         /**
          * The type of the represented field.
          */
-        private final GenericTypeDescription type;
+        private final TypeDescription.Generic type;
 
         /**
          * The annotations of the represented field.
@@ -399,7 +398,7 @@ public interface FieldDescription extends ByteCodeElement,
          * @param modifiers The modifiers of the represented field.
          * @param type      The type of the represented field.
          */
-        public Token(String name, int modifiers, GenericTypeDescription type) {
+        public Token(String name, int modifiers, TypeDescription.Generic type) {
             this(name, modifiers, type, Collections.<AnnotationDescription>emptyList());
         }
 
@@ -411,7 +410,7 @@ public interface FieldDescription extends ByteCodeElement,
          * @param type        The type of the represented field.
          * @param annotations The annotations of the represented field.
          */
-        public Token(String name, int modifiers, GenericTypeDescription type, List<? extends AnnotationDescription> annotations) {
+        public Token(String name, int modifiers, TypeDescription.Generic type, List<? extends AnnotationDescription> annotations) {
             this.name = name;
             this.modifiers = modifiers;
             this.type = type;
@@ -432,7 +431,7 @@ public interface FieldDescription extends ByteCodeElement,
          *
          * @return The type of the represented field.
          */
-        public GenericTypeDescription getType() {
+        public TypeDescription.Generic getType() {
             return type;
         }
 
@@ -455,7 +454,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public Token accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+        public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             return new Token(getName(),
                     getModifiers(),
                     getType().accept(visitor),

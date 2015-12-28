@@ -4,7 +4,6 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -908,13 +907,13 @@ public class MethodGraphCompilerDefaultTest {
     public void testOrphanedBridge() throws Exception {
         MethodDescription.Token bridgeMethod = new MethodDescription.Token("foo",
                 Opcodes.ACC_BRIDGE,
-                GenericTypeDescription.VOID,
-                Collections.<GenericTypeDescription>emptyList());
+                TypeDescription.Generic.VOID,
+                Collections.<TypeDescription.Generic>emptyList());
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
-                Collections.<GenericTypeDescription>emptyList(),
-                GenericTypeDescription.OBJECT,
-                Collections.<GenericTypeDescription>emptyList(),
+                Collections.<TypeDescription.Generic>emptyList(),
+                TypeDescription.Generic.OBJECT,
+                Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.singletonList(bridgeMethod),
                 Collections.<AnnotationDescription>emptyList(),

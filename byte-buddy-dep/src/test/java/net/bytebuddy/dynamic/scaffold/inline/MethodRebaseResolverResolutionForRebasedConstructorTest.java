@@ -4,8 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -40,19 +39,10 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     private StackManipulation stackManipulation;
 
     @Mock
-    private GenericTypeDescription genericTypeDescription;
+    private TypeDescription.Generic typeDescription, parameterType, placeholderType, returnType;
 
     @Mock
-    private TypeDescription typeDescription, returnType, otherPlaceHolderType, rawPlaceholderType;
-
-    @Mock
-    private GenericTypeDescription parameterType, placeholderType;
-
-    @Mock
-    private TypeDescription rawParameterType;
-
-    @Mock
-    private GenericTypeDescription genericReturnType;
+    private TypeDescription rawTypeDescription, rawParameterType, rawReturnType, otherPlaceHolderType, rawPlaceholderType;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -63,10 +53,10 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
         when(methodDescription.isConstructor()).thenReturn(true);
-        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
+        when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
+        when(methodDescription.getReturnType()).thenReturn(returnType);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.asErasure()).thenReturn(rawPlaceholderType);
@@ -76,24 +66,24 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(rawParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(parameterType.asErasure()).thenReturn(rawParameterType);
-        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
+        when(parameterType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(parameterType);
         when(rawParameterType.asGenericType()).thenReturn(parameterType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
-        when(typeDescription.getInternalName()).thenReturn(BAR);
+        when(rawTypeDescription.getInternalName()).thenReturn(BAR);
         when(rawPlaceholderType.getDescriptor()).thenReturn(BAZ);
         when(otherPlaceHolderType.getDescriptor()).thenReturn(FOO);
-        when(genericReturnType.asErasure()).thenReturn(returnType);
+        when(returnType.asErasure()).thenReturn(rawReturnType);
     }
 
     @Test
     public void testPreservation() throws Exception {
         MethodRebaseResolver.Resolution resolution = MethodRebaseResolver.Resolution.ForRebasedConstructor.of(methodDescription, rawPlaceholderType);
         assertThat(resolution.isRebased(), is(true));
-        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
+        assertThat(resolution.getResolvedMethod().getDeclaringType(), is(rawTypeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
-        assertThat(resolution.getResolvedMethod().getReturnType(), is(GenericTypeDescription.VOID));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
                 .ForTypes(resolution.getResolvedMethod(), Arrays.asList(parameterType, placeholderType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
@@ -111,9 +101,9 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
             @Override
             public void apply(MethodDescription mock) {
                 when(mock.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
-                when(mock.getExceptionTypes()).thenReturn(new GenericTypeList.Empty());
+                when(mock.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
                 when(mock.getDeclaringType()).thenReturn(mock(TypeDescription.class));
-                GenericTypeDescription returnType = mock(GenericTypeDescription.class);
+                TypeDescription.Generic returnType = mock(TypeDescription.Generic.class);
                 TypeDescription rawReturnType = mock(TypeDescription.class);
                 when(returnType.asErasure()).thenReturn(rawReturnType);
                 when(mock.getReturnType()).thenReturn(returnType);

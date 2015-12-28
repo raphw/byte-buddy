@@ -3,7 +3,6 @@ package net.bytebuddy.pool;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
@@ -33,7 +32,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         when(typeDescription.getDeclaredMethods())
                 .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)));
         when(methodDescription.getSourceCodeName()).thenReturn(FOO);
-        GenericTypeDescription returnType = mock(GenericTypeDescription.class);
+        TypeDescription.Generic returnType = mock(TypeDescription.Generic.class);
         TypeDescription rawReturnType = mock(TypeDescription.class);
         when(returnType.asErasure()).thenReturn(rawReturnType);
         when(methodDescription.getReturnType()).thenReturn(returnType);

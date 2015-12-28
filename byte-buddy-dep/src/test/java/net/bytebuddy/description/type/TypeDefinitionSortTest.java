@@ -19,6 +19,7 @@ public class TypeDefinitionSortTest {
                 {TypeDefinition.Sort.NON_GENERIC, true, false, false, false, false},
                 {TypeDefinition.Sort.PARAMETERIZED, false, true, false, false, false},
                 {TypeDefinition.Sort.VARIABLE, false, false, true, false, false},
+                {TypeDefinition.Sort.VARIABLE_DETACHED, false, false, true, false, false},
                 {TypeDefinition.Sort.VARIABLE_SYMBOLIC, false, false, true, false, false},
                 {TypeDefinition.Sort.GENERIC_ARRAY, false, false, false, true, false},
                 {TypeDefinition.Sort.WILDCARD, false, false, false, false, true}

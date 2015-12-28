@@ -7,8 +7,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
@@ -373,7 +372,7 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
+                public TypeDescription.Generic getReturnType() {
                     return methodDescription.getReturnType().asRawType();
                 }
 
@@ -383,7 +382,7 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
+                public TypeList.Generic getExceptionTypes() {
                     return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
@@ -393,8 +392,8 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -510,8 +509,8 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return GenericTypeDescription.VOID;
+                public TypeDescription.Generic getReturnType() {
+                    return TypeDescription.Generic.VOID;
                 }
 
                 @Override
@@ -520,7 +519,7 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
+                public TypeList.Generic getExceptionTypes() {
                     return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
@@ -530,8 +529,8 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override

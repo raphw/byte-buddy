@@ -2,7 +2,6 @@ package net.bytebuddy;
 
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.utility.ByteBuddyCommons;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
@@ -41,14 +40,14 @@ public interface NamingStrategy {
          *
          * @return A description of the super class of the type to be named.
          */
-        GenericTypeDescription getSuperClass();
+        TypeDescription.Generic getSuperClass();
 
         /**
          * Returns a collection of descriptions of this unnamed type's directly implemented interfaces.
          *
          * @return A collection of implemented interfaces.
          */
-        Collection<GenericTypeDescription> getDeclaredInterfaces();
+        Collection<TypeDescription.Generic> getDeclaredInterfaces();
 
         /**
          * Returns the visibility of this unnamed type.
@@ -93,12 +92,12 @@ public interface NamingStrategy {
             /**
              * The unnamed type's super class.
              */
-            private final GenericTypeDescription superClass;
+            private final TypeDescription.Generic superClass;
 
             /**
              * The unnamed type's interfaces.
              */
-            private final List<? extends GenericTypeDescription> interfaces;
+            private final List<? extends TypeDescription.Generic> interfaces;
 
             /**
              * The unnamed type's modifiers.
@@ -118,8 +117,8 @@ public interface NamingStrategy {
              * @param modifiers        The unnamed type's modifiers.
              * @param classFileVersion The class file version of the unnamed type.
              */
-            public Default(GenericTypeDescription superClass,
-                           List<? extends GenericTypeDescription> interfaces,
+            public Default(TypeDescription.Generic superClass,
+                           List<? extends TypeDescription.Generic> interfaces,
                            int modifiers,
                            ClassFileVersion classFileVersion) {
                 this.superClass = superClass;
@@ -129,13 +128,13 @@ public interface NamingStrategy {
             }
 
             @Override
-            public GenericTypeDescription getSuperClass() {
+            public TypeDescription.Generic getSuperClass() {
                 return superClass;
             }
 
             @Override
-            public List<GenericTypeDescription> getDeclaredInterfaces() {
-                return new ArrayList<GenericTypeDescription>(interfaces);
+            public List<TypeDescription.Generic> getDeclaredInterfaces() {
+                return new ArrayList<TypeDescription.Generic>(interfaces);
             }
 
             @Override

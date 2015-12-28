@@ -6,8 +6,6 @@ import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
@@ -51,7 +49,7 @@ public abstract class AbstractImplementationTest {
                 new NamingStrategy.SuffixingRandom(SUFFIX),
                 new AuxiliaryType.NamingStrategy.SuffixingRandom(SUFFIX),
                 Implementation.Context.Default.Factory.INSTANCE,
-                new GenericTypeList.ForLoadedTypes(Arrays.asList(interfaces)),
+                new TypeList.Generic.ForLoadedTypes(Arrays.asList(interfaces)),
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isSynthetic(),
@@ -61,7 +59,7 @@ public abstract class AbstractImplementationTest {
                 MethodGraph.Compiler.DEFAULT,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                new GenericTypeDescription.ForNonGenericType.OfLoadedType(target),
+                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(target),
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .invokable(targetMethods).intercept(implementation)
                 .make()

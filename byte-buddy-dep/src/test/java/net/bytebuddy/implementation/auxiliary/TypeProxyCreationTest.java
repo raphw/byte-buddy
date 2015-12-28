@@ -8,8 +8,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -76,7 +75,7 @@ public class TypeProxyCreationTest {
         when(proxyMethod.getDeclaringType()).thenReturn(foo);
         when(proxyMethod.getInternalName()).thenReturn(FOO);
         when(proxyMethod.getDescriptor()).thenReturn(FOO);
-        when(proxyMethod.getReturnType()).thenReturn(GenericTypeDescription.OBJECT);
+        when(proxyMethod.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
         when(proxyMethod.asDefined()).thenReturn(proxyMethod);
     }
 
@@ -94,7 +93,7 @@ public class TypeProxyCreationTest {
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperType().asErasure(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
+        assertThat(dynamicType.getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
@@ -125,7 +124,7 @@ public class TypeProxyCreationTest {
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperType().asErasure(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
+        assertThat(dynamicType.getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));
@@ -156,7 +155,7 @@ public class TypeProxyCreationTest {
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperType().asErasure(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedTypes(Serializable.class)));
+        assertThat(dynamicType.getInterfaces(), is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(Serializable.class)));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(true));
@@ -187,7 +186,7 @@ public class TypeProxyCreationTest {
                 .getTypeDescription();
         assertThat(dynamicType.getModifiers(), is(modifiers));
         assertThat(dynamicType.getSuperType().asErasure(), is(foo));
-        assertThat(dynamicType.getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
+        assertThat(dynamicType.getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
         assertThat(dynamicType.getName(), is(BAR));
         assertThat(dynamicType.getDeclaredMethods().size(), is(2));
         assertThat(dynamicType.isAssignableTo(Serializable.class), is(false));

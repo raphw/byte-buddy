@@ -2,7 +2,6 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -220,7 +219,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         /**
          * The methods' declaring type.
          */
-        private final GenericTypeDescription declaringType;
+        private final TypeDescription.Generic declaringType;
 
         /**
          * The list of method descriptions to represent.
@@ -230,7 +229,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         /**
          * The visitor to apply to each method description before returning it.
          */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a new type substituting method list.
@@ -239,9 +238,9 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          * @param methodDescriptions The list of method descriptions to represent.
          * @param visitor            The visitor to apply to each method description before returning it.
          */
-        public TypeSubstituting(GenericTypeDescription declaringType,
+        public TypeSubstituting(TypeDescription.Generic declaringType,
                                 List<? extends MethodDescription> methodDescriptions,
-                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             this.declaringType = declaringType;
             this.methodDescriptions = methodDescriptions;
             this.visitor = visitor;

@@ -1,7 +1,6 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -59,6 +58,6 @@ public class MethodDescriptionLatentTypeInitializerTest {
 
     @Test
     public void testReturnType() throws Exception {
-        assertThat(typeInitializer.getReturnType(), is(GenericTypeDescription.VOID));
+        assertThat(typeInitializer.getReturnType(), is(TypeDescription.Generic.VOID));
     }
 }

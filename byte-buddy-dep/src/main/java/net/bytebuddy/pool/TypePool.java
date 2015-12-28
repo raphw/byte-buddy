@@ -1,6 +1,7 @@
 package net.bytebuddy.pool;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -14,9 +15,6 @@ import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.description.type.generic.TypeVariableSource;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.utility.PropertyDispatcher;
@@ -3394,12 +3392,12 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription getSuperType() {
+                public Generic getSuperType() {
                     return resolve().getSuperType();
                 }
 
                 @Override
-                public GenericTypeList getInterfaces() {
+                public TypeList.Generic getInterfaces() {
                     return resolve().getInterfaces();
                 }
 
@@ -3459,7 +3457,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
+                public TypeList.Generic getTypeVariables() {
                     return resolve().getTypeVariables();
                 }
 
@@ -3608,14 +3606,14 @@ public interface TypePool {
         }
 
         @Override
-        public GenericTypeDescription getSuperType() {
+        public Generic getSuperType() {
             return superTypeDescriptor == null || isInterface()
-                    ? GenericTypeDescription.UNDEFINED
+                    ? TypeDescription.Generic.UNDEFINED
                     : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, this);
         }
 
         @Override
-        public GenericTypeList getInterfaces() {
+        public TypeList.Generic getInterfaces() {
             return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, this);
         }
 
@@ -3691,7 +3689,7 @@ public interface TypePool {
         }
 
         @Override
-        public GenericTypeList getTypeVariables() {
+        public TypeList.Generic getTypeVariables() {
             return signatureResolution.resolveTypeVariables(typePool, this);
         }
 
@@ -3951,7 +3949,7 @@ public interface TypePool {
              * @param typeVariableSource The type variable source.
              * @return A description of the represented generic type.
              */
-            GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource);
+            Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource);
 
             /**
              * A generic type token that represents a primitive type.
@@ -4006,7 +4004,7 @@ public interface TypePool {
                 /**
                  * A description of this primitive type token.
                  */
-                private final GenericTypeDescription typeDescription;
+                private final Generic typeDescription;
 
                 /**
                  * Creates a new primitive type token.
@@ -4014,7 +4012,7 @@ public interface TypePool {
                  * @param type The loaded type representing this primitive.
                  */
                 ForPrimitiveType(Class<?> type) {
-                    typeDescription = new GenericTypeDescription.ForNonGenericType.OfLoadedType(type);
+                    typeDescription = new Generic.ForNonGenericType.OfLoadedType(type);
                 }
 
                 /**
@@ -4054,7 +4052,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return typeDescription;
                 }
 
@@ -4080,8 +4078,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return GenericTypeDescription.ForWildcardType.Latent.unbounded();
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    return TypeDescription.Generic.ForWildcardType.Latent.unbounded();
                 }
 
                 @Override
@@ -4102,7 +4100,7 @@ public interface TypePool {
                  * @param typeVariableSource The type variable source to use for resolving type variables.
                  * @return A list describing the resolved generic types.
                  */
-                GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource);
+                TypeList.Generic resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource);
 
                 /**
                  * A resolution of a type's, method's or field's generic types if all of the represented element's are raw.
@@ -4115,38 +4113,38 @@ public interface TypePool {
                     INSTANCE;
 
                     @Override
-                    public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
+                    public Generic resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
                         return TokenizedGenericType.toErasure(typePool, fieldTypeDescriptor).asGenericType();
                     }
 
                     @Override
-                    public GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
+                    public Generic resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
                         return TokenizedGenericType.toErasure(typePool, returnTypeDescriptor).asGenericType();
                     }
 
                     @Override
-                    public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                    public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
                         return new LazyTypeList.Generic(typePool, parameterTypeDescriptors);
                     }
 
                     @Override
-                    public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                    public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
                         return new LazyTypeList.Generic(typePool, exceptionTypeDescriptors);
                     }
 
                     @Override
-                    public GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
+                    public Generic resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
                         return TokenizedGenericType.toErasure(typePool, superTypeDescriptor).asGenericType();
                     }
 
                     @Override
-                    public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
+                    public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
                         return new LazyTypeList.Generic(typePool, interfaceTypeDescriptors);
                     }
 
                     @Override
-                    public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
-                        return new GenericTypeList.Empty();
+                    public TypeList.Generic resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        return new TypeList.Generic.Empty();
                     }
 
                     @Override
@@ -4166,37 +4164,37 @@ public interface TypePool {
                     INSTANCE;
 
                     @Override
-                    public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
+                    public Generic resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
                         return new TokenizedGenericType.Malformed(typePool, fieldTypeDescriptor);
                     }
 
                     @Override
-                    public GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
+                    public Generic resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
                         return new TokenizedGenericType.Malformed(typePool, returnTypeDescriptor);
                     }
 
                     @Override
-                    public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                    public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
                         return new TokenizedGenericType.Malformed.TokenList(typePool, parameterTypeDescriptors);
                     }
 
                     @Override
-                    public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                    public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
                         return new TokenizedGenericType.Malformed.TokenList(typePool, exceptionTypeDescriptors);
                     }
 
                     @Override
-                    public GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
+                    public Generic resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
                         return new TokenizedGenericType.Malformed(typePool, superTypeDescriptor);
                     }
 
                     @Override
-                    public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
+                    public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
                         return new TokenizedGenericType.Malformed.TokenList(typePool, interfaceTypeDescriptors);
                     }
 
                     @Override
-                    public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    public TypeList.Generic resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
                         throw new GenericSignatureFormatError();
                     }
 
@@ -4219,7 +4217,7 @@ public interface TypePool {
                      * @param definingType        The type that defines this super type.
                      * @return A description of this type's generic super type.
                      */
-                    GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType);
+                    Generic resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType);
 
                     /**
                      * Resolves the generic interface types of the represented type.
@@ -4229,7 +4227,7 @@ public interface TypePool {
                      * @param definingType             The type that defines these interface type.
                      * @return A description of this type's generic interface types.
                      */
-                    GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType);
+                    TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType);
 
                     /**
                      * An implementation of a tokenized resolution of generic types of a {@link TypeDescription}.
@@ -4267,19 +4265,19 @@ public interface TypePool {
                         }
 
                         @Override
-                        public GenericTypeDescription resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
+                        public Generic resolveSuperType(String superTypeDescriptor, TypePool typePool, TypeDescription definingType) {
                             return new TokenizedGenericType(typePool, superTypeToken, superTypeDescriptor, definingType);
                         }
 
                         @Override
-                        public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
+                        public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
                             return interfaceTypeDescriptors.size() == interfaceTypeTokens.size()
                                     ? new TokenizedGenericType.TokenList(typePool, interfaceTypeTokens, interfaceTypeDescriptors, definingType)
                                     : Raw.INSTANCE.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, definingType);
                         }
 
                         @Override
-                        public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        public TypeList.Generic resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
                             return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource);
                         }
 
@@ -4325,7 +4323,7 @@ public interface TypePool {
                      * @param definingMethod       The method that defines this return type.
                      * @return A description of this type's generic return type.
                      */
-                    GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod);
+                    Generic resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod);
 
                     /**
                      * Resolves the generic parameter types of the represented method.
@@ -4335,7 +4333,7 @@ public interface TypePool {
                      * @param definingMethod           The method that defines these parameter types.
                      * @return A description of this type's generic interface types.
                      */
-                    GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod);
+                    TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod);
 
                     /**
                      * Resolves the generic parameter types of the represented method.
@@ -4345,7 +4343,7 @@ public interface TypePool {
                      * @param definingMethod           The method that defines these exception types.
                      * @return A description of this type's generic interface types.
                      */
-                    GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod);
+                    TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod);
 
                     /**
                      * An implementation of a tokenized resolution of generic types of a {@link MethodDescription}.
@@ -4391,19 +4389,19 @@ public interface TypePool {
                         }
 
                         @Override
-                        public GenericTypeDescription resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
+                        public Generic resolveReturnType(String returnTypeDescriptor, TypePool typePool, MethodDescription definingMethod) {
                             return new TokenizedGenericType(typePool, returnTypeToken, returnTypeDescriptor, definingMethod);
                         }
 
                         @Override
-                        public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                        public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
                             return parameterTypeDescriptors.size() == parameterTypeTokens.size()
                                     ? new TokenizedGenericType.TokenList(typePool, parameterTypeTokens, parameterTypeDescriptors, definingMethod)
                                     : Raw.INSTANCE.resolveParameterTypes(parameterTypeDescriptors, typePool, definingMethod);
                         }
 
                         @Override
-                        public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
+                        public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
                             // Generic signatures of methods are optional.
                             return exceptionTypeDescriptors.size() == exceptionTypeTokens.size()
                                     ? new TokenizedGenericType.TokenList(typePool, exceptionTypeTokens, exceptionTypeDescriptors, definingMethod)
@@ -4411,7 +4409,7 @@ public interface TypePool {
                         }
 
                         @Override
-                        public GenericTypeList resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
+                        public TypeList.Generic resolveTypeVariables(TypePool typePool, TypeVariableSource typeVariableSource) {
                             return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource);
                         }
 
@@ -4460,7 +4458,7 @@ public interface TypePool {
                      * @param definingField       The field that defines this type.
                      * @return A description of this field's type.
                      */
-                    GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField);
+                    Generic resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField);
 
                     /**
                      * An implementation of a tokenized resolution of the generic type of a {@link FieldDescription}.
@@ -4482,7 +4480,7 @@ public interface TypePool {
                         }
 
                         @Override
-                        public GenericTypeDescription resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
+                        public Generic resolveFieldType(String fieldTypeDescriptor, TypePool typePool, FieldDescription definingField) {
                             return new TokenizedGenericType(typePool, fieldTypeToken, fieldTypeDescriptor, definingField.getDeclaringType().asErasure());
                         }
 
@@ -4532,7 +4530,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return typePool.describe(name).resolve().asGenericType();
                 }
 
@@ -4579,8 +4577,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    GenericTypeDescription typeVariable = typeVariableSource.findVariable(symbol);
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    Generic typeVariable = typeVariableSource.findVariable(symbol);
                     if (typeVariable == null) {
                         throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + typeVariableSource);
                     } else {
@@ -4637,7 +4635,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                         return new LazyTypeVariable(typePool, typeVariableSource);
                     }
 
@@ -4664,7 +4662,7 @@ public interface TypePool {
                     /**
                      * A type description that represents a type variable with bounds that are resolved lazily.
                      */
-                    protected class LazyTypeVariable extends GenericTypeDescription.ForTypeVariable {
+                    protected class LazyTypeVariable extends Generic.ForTypeVariable {
 
                         /**
                          * The type pool to use for locating type descriptions.
@@ -4688,12 +4686,12 @@ public interface TypePool {
                         }
 
                         @Override
-                        public GenericTypeList getUpperBounds() {
-                            List<GenericTypeDescription> genericTypeDescriptions = new ArrayList<GenericTypeDescription>(bounds.size());
+                        public TypeList.Generic getUpperBounds() {
+                            List<Generic> boundTypes = new ArrayList<Generic>(bounds.size());
                             for (GenericTypeToken bound : bounds) {
-                                genericTypeDescriptions.add(bound.toGenericType(typePool, typeVariableSource));
+                                boundTypes.add(bound.toGenericType(typePool, typeVariableSource));
                             }
-                            return new GenericTypeList.Explicit(genericTypeDescriptions);
+                            return new TypeList.Generic.Explicit(boundTypes);
                         }
 
                         @Override
@@ -4734,8 +4732,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return GenericTypeDescription.ForGenericArray.Latent.of(componentTypeToken.toGenericType(typePool, typeVariableSource), 1);
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    return TypeDescription.Generic.ForGenericArray.Latent.of(componentTypeToken.toGenericType(typePool, typeVariableSource), 1);
                 }
 
                 @Override
@@ -4782,8 +4780,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return GenericTypeDescription.ForWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool, typeVariableSource));
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    return TypeDescription.Generic.ForWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool, typeVariableSource));
                 }
 
                 @Override
@@ -4830,8 +4828,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return GenericTypeDescription.ForWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool, typeVariableSource));
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    return TypeDescription.Generic.ForWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool, typeVariableSource));
                 }
 
                 @Override
@@ -4885,7 +4883,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                     return new LazyParameterizedType(typePool, typeVariableSource);
                 }
 
@@ -4948,7 +4946,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericTypeDescription toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
+                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
                         return new LazyParameterizedType(typePool, typeVariableSource);
                     }
 
@@ -4977,7 +4975,7 @@ public interface TypePool {
                     /**
                      * A lazy description of a parameterized type with an owner type.
                      */
-                    protected class LazyParameterizedType extends GenericTypeDescription.ForParameterizedType {
+                    protected class LazyParameterizedType extends Generic.ForParameterizedType {
 
                         /**
                          * The type pool to be used for locating non-generic type descriptions.
@@ -5006,16 +5004,16 @@ public interface TypePool {
                         }
 
                         @Override
-                        public GenericTypeList getParameters() {
-                            List<GenericTypeDescription> genericTypeDescriptions = new ArrayList<GenericTypeDescription>(parameters.size());
+                        public TypeList.Generic getParameters() {
+                            List<Generic> parameterTypes = new ArrayList<Generic>(parameters.size());
                             for (GenericTypeToken parameter : parameters) {
-                                genericTypeDescriptions.add(parameter.toGenericType(typePool, typeVariableSource));
+                                parameterTypes.add(parameter.toGenericType(typePool, typeVariableSource));
                             }
-                            return new GenericTypeList.Explicit(genericTypeDescriptions);
+                            return new TypeList.Generic.Explicit(parameterTypes);
                         }
 
                         @Override
-                        public GenericTypeDescription getOwnerType() {
+                        public Generic getOwnerType() {
                             return ownerType.toGenericType(typePool, typeVariableSource);
                         }
                     }
@@ -5024,7 +5022,7 @@ public interface TypePool {
                 /**
                  * A generic type description that represents a parameterized type <b>without</b> an enclosing generic owner type.
                  */
-                protected class LazyParameterizedType extends GenericTypeDescription.ForParameterizedType {
+                protected class LazyParameterizedType extends Generic.ForParameterizedType {
 
                     /**
                      * The type pool that is used for locating a generic type.
@@ -5053,16 +5051,16 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericTypeList getParameters() {
-                        List<GenericTypeDescription> genericTypeDescriptions = new ArrayList<GenericTypeDescription>(parameters.size());
+                    public TypeList.Generic getParameters() {
+                        List<Generic> parameterTypes = new ArrayList<Generic>(parameters.size());
                         for (GenericTypeToken parameter : parameters) {
-                            genericTypeDescriptions.add(parameter.toGenericType(typePool, typeVariableSource));
+                            parameterTypes.add(parameter.toGenericType(typePool, typeVariableSource));
                         }
-                        return new GenericTypeList.Explicit(genericTypeDescriptions);
+                        return new TypeList.Generic.Explicit(parameterTypes);
                     }
 
                     @Override
-                    public GenericTypeDescription getOwnerType() {
+                    public Generic getOwnerType() {
                         TypeDescription ownerType = typePool.describe(name).resolve().getEnclosingType();
                         return ownerType == null
                                 ? UNDEFINED
@@ -5843,7 +5841,7 @@ public interface TypePool {
                 return stackSize;
             }
 
-            protected static class Generic extends GenericTypeList.AbstractBase {
+            protected static class Generic extends TypeList.Generic.AbstractBase {
 
                 /**
                  * The type pool to use for locating types.
@@ -5861,7 +5859,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription get(int index) {
+                public TypeDescription.Generic get(int index) {
                     return TokenizedGenericType.toErasure(typePool, descriptors.get(index)).asGenericType();
                 }
 
@@ -5876,7 +5874,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeList asRawTypes() {
+                public TypeList.Generic asRawTypes() {
                     return this;
                 }
 
@@ -5894,7 +5892,7 @@ public interface TypePool {
         /**
          * A representation of a generic type that is described by a {@link GenericTypeToken}.
          */
-        private static class TokenizedGenericType extends GenericTypeDescription.LazyProjection {
+        private static class TokenizedGenericType extends Generic.LazyProjection {
 
             /**
              * The type pool to use for locating referenced types.
@@ -5954,7 +5952,7 @@ public interface TypePool {
             }
 
             @Override
-            protected GenericTypeDescription resolve() {
+            protected Generic resolve() {
                 return genericTypeToken.toGenericType(typePool, typeVariableSource);
             }
 
@@ -5966,7 +5964,7 @@ public interface TypePool {
             /**
              * A tokenized list of generic types.
              */
-            protected static class TokenList extends GenericTypeList.AbstractBase {
+            protected static class TokenList extends TypeList.Generic.AbstractBase {
 
                 /**
                  * The type pool to use for locating types.
@@ -6007,7 +6005,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription get(int index) {
+                public Generic get(int index) {
                     return new TokenizedGenericType(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), typeVariableSource);
                 }
 
@@ -6025,7 +6023,7 @@ public interface TypePool {
             /**
              * A list of tokenized type variables.
              */
-            protected static class TypeVariableList extends GenericTypeList.AbstractBase {
+            protected static class TypeVariableList extends TypeList.Generic.AbstractBase {
 
                 /**
                  * The type pool to use for locating types.
@@ -6056,7 +6054,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription get(int index) {
+                public Generic get(int index) {
                     return typeVariables.get(index).toGenericType(typePool, typeVariableSource);
                 }
 
@@ -6069,7 +6067,7 @@ public interface TypePool {
             /**
              * A lazy description of a non-well-defined described generic type.
              */
-            protected static class Malformed extends GenericTypeDescription.LazyProjection {
+            protected static class Malformed extends Generic.LazyProjection {
 
                 /**
                  * The type pool to use for locating types.
@@ -6093,7 +6091,7 @@ public interface TypePool {
                 }
 
                 @Override
-                protected GenericTypeDescription resolve() {
+                protected Generic resolve() {
                     throw new GenericSignatureFormatError();
                 }
 
@@ -6105,7 +6103,7 @@ public interface TypePool {
                 /**
                  * A tokenized list of non-well-defined generic types.
                  */
-                protected static class TokenList extends GenericTypeList.AbstractBase {
+                protected static class TokenList extends TypeList.Generic.AbstractBase {
 
                     /**
                      * The type pool to use for locating types.
@@ -6129,7 +6127,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public GenericTypeDescription get(int index) {
+                    public Generic get(int index) {
                         return new Malformed(typePool, rawTypeDescriptors.get(index));
                     }
 
@@ -6202,7 +6200,7 @@ public interface TypePool {
             }
 
             @Override
-            public GenericTypeDescription getType() {
+            public Generic getType() {
                 return signatureResolution.resolveFieldType(fieldTypeDescriptor, typePool, this);
             }
 
@@ -6364,12 +6362,12 @@ public interface TypePool {
             }
 
             @Override
-            public GenericTypeDescription getReturnType() {
+            public Generic getReturnType() {
                 return signatureResolution.resolveReturnType(returnTypeDescriptor, typePool, this);
             }
 
             @Override
-            public GenericTypeList getExceptionTypes() {
+            public TypeList.Generic getExceptionTypes() {
                 return signatureResolution.resolveExceptionTypes(exceptionTypeDescriptors, typePool, this);
             }
 
@@ -6399,7 +6397,7 @@ public interface TypePool {
             }
 
             @Override
-            public GenericTypeList getTypeVariables() {
+            public TypeList.Generic getTypeVariables() {
                 return signatureResolution.resolveTypeVariables(typePool, this);
             }
 
@@ -6436,7 +6434,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeList asTypeList() {
+                public TypeList.Generic asTypeList() {
                     return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, LazyMethodDescription.this);
                 }
             }
@@ -6495,7 +6493,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public GenericTypeDescription getType() {
+                public Generic getType() {
                     return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, LazyMethodDescription.this).get(index);
                 }
 

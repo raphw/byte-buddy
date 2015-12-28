@@ -6,7 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.TypeProxy;
@@ -259,7 +258,7 @@ public @interface Super {
              * @param parameterType    The type of the target parameter.
              * @return The proxy type.
              */
-            TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType);
+            TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType);
 
             /**
              * A type locator that yields the instrumented type.
@@ -272,7 +271,7 @@ public @interface Super {
                 INSTANCE;
 
                 @Override
-                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                public TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType) {
                     return instrumentedType;
                 }
 
@@ -293,7 +292,7 @@ public @interface Super {
                 INSTANCE;
 
                 @Override
-                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                public TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType) {
                     TypeDescription erasure = parameterType.asErasure();
                     return erasure.equals(instrumentedType)
                             ? instrumentedType
@@ -344,7 +343,7 @@ public @interface Super {
                 }
 
                 @Override
-                public TypeDescription resolve(TypeDescription instrumentedType, GenericTypeDescription parameterType) {
+                public TypeDescription resolve(TypeDescription instrumentedType, TypeDescription.Generic parameterType) {
                     if (!typeDescription.isAssignableTo(parameterType.asErasure())) {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);
                     }

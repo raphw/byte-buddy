@@ -1,6 +1,5 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Test;
 
 import static org.hamcrest.CoreMatchers.is;

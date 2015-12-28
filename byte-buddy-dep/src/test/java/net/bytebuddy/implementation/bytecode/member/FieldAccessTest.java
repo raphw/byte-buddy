@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -48,7 +47,7 @@ public class FieldAccessTest {
     private TypeDescription declaringType, fieldType;
 
     @Mock
-    private GenericTypeDescription genericFieldType;
+    private TypeDescription.Generic genericFieldType;
 
     @Mock
     private MethodVisitor methodVisitor;

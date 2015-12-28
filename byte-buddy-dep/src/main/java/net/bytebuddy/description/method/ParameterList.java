@@ -3,8 +3,7 @@ package net.bytebuddy.description.method;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -30,7 +29,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      *
      * @return A list of types representing the parameters of this list.
      */
-    GenericTypeList asTypeList();
+    TypeList.Generic asTypeList();
 
     /**
      * Transforms the list of parameter descriptions into a list of detached tokens.
@@ -94,12 +93,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public GenericTypeList asTypeList() {
-            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(size());
+        public TypeList.Generic asTypeList() {
+            List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(size());
             for (ParameterDescription parameterDescription : this) {
                 types.add(parameterDescription.getType());
             }
-            return new GenericTypeList.Explicit(types);
+            return new TypeList.Generic.Explicit(types);
         }
 
         @Override
@@ -188,12 +187,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public GenericTypeList asTypeList() {
-            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameter.length);
+        public TypeList.Generic asTypeList() {
+            List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameter.length);
             for (Object aParameter : parameter) {
-                types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter(aParameter));
+                types.add(new TypeDescription.Generic.LazyProjection.OfLoadedParameter(aParameter));
             }
-            return new GenericTypeList.Explicit(types);
+            return new TypeList.Generic.Explicit(types);
         }
 
         /**
@@ -349,12 +348,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             }
 
             @Override
-            public GenericTypeList asTypeList() {
-                List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
+            public TypeList.Generic asTypeList() {
+                List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index]));
+                    types.add(new TypeDescription.Generic.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index]));
                 }
-                return new GenericTypeList.Explicit(types);
+                return new TypeList.Generic.Explicit(types);
             }
         }
 
@@ -401,12 +400,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             }
 
             @Override
-            public GenericTypeList asTypeList() {
-                List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(parameterType.length);
+            public TypeList.Generic asTypeList() {
+                List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new GenericTypeDescription.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index]));
+                    types.add(new TypeDescription.Generic.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index]));
                 }
-                return new GenericTypeList.Explicit(types);
+                return new TypeList.Generic.Explicit(types);
             }
         }
     }
@@ -543,7 +542,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * The visitor to apply to the parameter types before returning them.
          */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a new type substituting parameter list.
@@ -554,7 +553,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public TypeSubstituting(MethodDescription.InGenericShape declaringMethod,
                                 List<? extends ParameterDescription> parameterDescriptions,
-                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             this.declaringMethod = declaringMethod;
             this.parameterDescriptions = parameterDescriptions;
             this.visitor = visitor;
@@ -582,8 +581,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public GenericTypeList asTypeList() {
-            return new GenericTypeList.Empty();
+        public TypeList.Generic asTypeList() {
+            return new TypeList.Generic.Empty();
         }
 
         @Override

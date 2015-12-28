@@ -4,7 +4,6 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -42,7 +41,7 @@ public class Forwarding implements Implementation {
     /**
      * The type of the field.
      */
-    protected final GenericTypeDescription fieldType;
+    protected final TypeDescription.Generic fieldType;
 
     /**
      * A handler for preparing the instrumented type and the field invocation operation.
@@ -56,7 +55,7 @@ public class Forwarding implements Implementation {
      * @param fieldType          The type of the field.
      * @param preparationHandler A handler for preparing the instrumented type and the field invocation operation.
      */
-    protected Forwarding(String fieldName, GenericTypeDescription fieldType, PreparationHandler preparationHandler) {
+    protected Forwarding(String fieldName, TypeDescription.Generic fieldType, PreparationHandler preparationHandler) {
         this.fieldName = fieldName;
         this.fieldType = fieldType;
         this.preparationHandler = preparationHandler;
@@ -83,7 +82,7 @@ public class Forwarding implements Implementation {
      */
     public static Implementation to(Object delegate, String fieldName) {
         return new Forwarding(isValidIdentifier(fieldName),
-                new GenericTypeDescription.ForNonGenericType.OfLoadedType(nonNull(delegate).getClass()),
+                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(nonNull(delegate).getClass()),
                 new PreparationHandler.ForStaticInstance(delegate));
     }
 
@@ -200,7 +199,7 @@ public class Forwarding implements Implementation {
          * @param fieldType        The type of the field.
          * @return The prepared instrumented type.
          */
-        InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, GenericTypeDescription fieldType);
+        InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType);
 
         /**
          * Creates a stack manipulation for loading the field owner onto the operand stack.
@@ -220,7 +219,7 @@ public class Forwarding implements Implementation {
             INSTANCE;
 
             @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, GenericTypeDescription fieldType) {
+            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
                 if (instrumentedType.isInterface()) {
                     throw new IllegalStateException("Cannot define instance field '" + fieldName + "' for " + instrumentedType);
                 }
@@ -249,7 +248,7 @@ public class Forwarding implements Implementation {
             INSTANCE;
 
             @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, GenericTypeDescription fieldType) {
+            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
                 return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType));
             }
 
@@ -284,7 +283,7 @@ public class Forwarding implements Implementation {
             }
 
             @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, GenericTypeDescription fieldType) {
+            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
