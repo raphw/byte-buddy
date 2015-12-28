@@ -35,8 +35,8 @@ public class ArgumentTypeResolverReferenceTest extends AbstractArgumentTypeResol
         when(dominantTargetType.isAssignableTo(weakTargetType)).thenReturn(true);
         when(weakTargetParameter.getType()).thenReturn(genericWeakTargetType);
         when(dominantTargetParameter.getType()).thenReturn(genericDominantTargetType);
-        when(genericWeakTargetType.asErasure()).thenReturn(weakTargetType); // TODO
-        when(genericDominantTargetType.asErasure()).thenReturn(dominantTargetType); // TODO
+        when(genericWeakTargetType.asErasure()).thenReturn(weakTargetType);
+        when(genericDominantTargetType.asErasure()).thenReturn(dominantTargetType);
     }
 
     @Test

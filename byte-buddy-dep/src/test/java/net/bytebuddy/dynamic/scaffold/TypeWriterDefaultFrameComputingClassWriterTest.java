@@ -44,7 +44,7 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
         when(typePool.describe(BAR.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(rightType));
         when(leftType.getInternalName()).thenReturn(QUX);
         when(rightType.getInternalName()).thenReturn(BAZ);
-        when(leftType.getSuperType()).thenReturn(genericSuperType); // TODO: Refactoring
+        when(leftType.getSuperType()).thenReturn(genericSuperType);
         when(genericSuperType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(FOOBAR);
     }

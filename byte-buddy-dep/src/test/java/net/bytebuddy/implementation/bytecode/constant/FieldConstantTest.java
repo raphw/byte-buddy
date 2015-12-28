@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bytecode.constant;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -36,6 +37,9 @@ public class FieldConstantTest {
     private TypeDescription declaringType, cacheDeclaringType, cacheFieldType;
 
     @Mock
+    private GenericTypeDescription genericCacheFieldType;
+
+    @Mock
     private MethodVisitor methodVisitor;
 
     @Mock
@@ -53,8 +57,9 @@ public class FieldConstantTest {
         when(cacheField.isStatic()).thenReturn(true);
         when(cacheDeclaringType.getInternalName()).thenReturn(BAZ);
         when(cacheField.getName()).thenReturn(FOO + BAR);
-        when(cacheField.getType()).thenReturn(cacheFieldType);
-        when(cacheFieldType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(cacheField.getType()).thenReturn(genericCacheFieldType);
+        when(genericCacheFieldType.asErasure()).thenReturn(cacheFieldType);
+        when(genericCacheFieldType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(cacheField.getInternalName()).thenReturn(FOO + BAR);
         when(cacheField.getDescriptor()).thenReturn(QUX + BAZ);
     }

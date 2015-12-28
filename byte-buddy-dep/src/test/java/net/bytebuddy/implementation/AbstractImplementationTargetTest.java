@@ -75,12 +75,12 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultMethodDeclaringType.isInterface()).thenReturn(true);
         when(defaultMethodDeclaringType.asErasure()).thenReturn(defaultMethodDeclaringType);
         when(defaultMethodDeclaringType.getInternalName()).thenReturn(BAZBAR);
-        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
-        when(genericReturnType.asGenericType()).thenReturn(genericReturnType); // TODO
-        when(returnType.asGenericType()).thenReturn(genericReturnType); // TODO
-        when(genericInstrumentedType.asErasure()).thenReturn(instrumentedType); // TODO
-        when(genericInstrumentedType.asGenericType()).thenReturn(genericInstrumentedType); // TODO
-        when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType); // TODO
+        when(genericReturnType.asErasure()).thenReturn(returnType);
+        when(genericReturnType.asGenericType()).thenReturn(genericReturnType);
+        when(returnType.asGenericType()).thenReturn(genericReturnType);
+        when(genericInstrumentedType.asErasure()).thenReturn(instrumentedType);
+        when(genericInstrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
+        when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
         implementationTarget = makeImplementationTarget();
     }
 

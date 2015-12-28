@@ -32,7 +32,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     public void setUp() throws Exception {
         super.setUp();
         when(stackManipulation.isValid()).thenReturn(true);
-        when(genericParameterType.asErasure()).thenReturn(parameterType); // TODO
+        when(genericParameterType.asErasure()).thenReturn(parameterType);
     }
 
     @Override

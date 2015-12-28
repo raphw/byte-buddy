@@ -45,7 +45,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         super.setUp();
         when(firstSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
+        when(genericTargetType.asErasure()).thenReturn(targetType);
     }
 
     @Override
@@ -152,7 +152,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(0);
         GenericTypeDescription targetType = mock(GenericTypeDescription.class);
         TypeDescription rawTargetType = mock(TypeDescription.class);
-        when(targetType.asErasure()).thenReturn(rawTargetType); // TODO
+        when(targetType.asErasure()).thenReturn(rawTargetType);
         when(targetType.isArray()).thenReturn(false);
         when(target.getType()).thenReturn(targetType);
         AllArguments.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);

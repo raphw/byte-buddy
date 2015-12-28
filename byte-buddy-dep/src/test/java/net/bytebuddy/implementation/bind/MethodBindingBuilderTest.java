@@ -67,7 +67,7 @@ public class MethodBindingBuilderTest {
         when(methodDescription.getInternalName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(methodDescription.getStackSize()).thenReturn(0);
-        when(methodDescription.getReturnType()).thenReturn(returnType); // TODO
+        when(methodDescription.getReturnType()).thenReturn(returnType);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(legalStackManipulation.isValid()).thenReturn(true);
         when(illegalStackManipulation.isValid()).thenReturn(false);

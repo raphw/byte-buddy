@@ -71,7 +71,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
     public void testIllegalType() throws Exception {
         TypeDescription targetType = mock(TypeDescription.class);
         GenericTypeDescription genericTargetType = mock(GenericTypeDescription.class);
-        when(genericTargetType.asErasure()).thenReturn(targetType); // TODO
+        when(genericTargetType.asErasure()).thenReturn(targetType);
         when(target.getType()).thenReturn(genericTargetType);
         new FieldProxy.Binder(getterMethod, setterMethod).bind(annotationDescription,
                 source,

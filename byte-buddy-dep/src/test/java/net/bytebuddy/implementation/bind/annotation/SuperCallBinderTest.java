@@ -37,7 +37,7 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(genericTargetParameterType);
-        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType); // TODO
+        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType);
         when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
         when(source.asToken()).thenReturn(sourceToken);
     }

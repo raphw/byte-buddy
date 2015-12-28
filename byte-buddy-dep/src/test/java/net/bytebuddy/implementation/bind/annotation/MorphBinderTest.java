@@ -51,7 +51,7 @@ public class MorphBinderTest extends AbstractAnnotationBinderTest<Morph> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(genericMorphType.asErasure()).thenReturn(morphType); // TODO
+        when(genericMorphType.asErasure()).thenReturn(morphType);
         when(defaultType.asErasure()).thenReturn(defaultType);
         when(source.asToken()).thenReturn(sourceToken);
     }

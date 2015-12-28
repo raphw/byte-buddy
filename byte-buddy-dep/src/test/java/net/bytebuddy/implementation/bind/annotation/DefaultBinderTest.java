@@ -38,7 +38,7 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     public void setUp() throws Exception {
         super.setUp();
         when(target.getType()).thenReturn(genericTypeDescription);
-        when(genericTypeDescription.asErasure()).thenReturn(targetType); // TODO
+        when(genericTypeDescription.asErasure()).thenReturn(targetType);
         when(instrumentedType.getInterfaces()).thenReturn(interfaces);
         when(interfaces.asErasures()).thenReturn(rawInterfaces);
     }

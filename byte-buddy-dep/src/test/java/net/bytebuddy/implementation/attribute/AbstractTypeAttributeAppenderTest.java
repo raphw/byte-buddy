@@ -27,6 +27,6 @@ public abstract class AbstractTypeAttributeAppenderTest extends AbstractAttribut
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(typeDescription.asGenericType()).thenReturn(genericTypeDescription); // TODO
+        when(typeDescription.asGenericType()).thenReturn(genericTypeDescription);
     }
 }

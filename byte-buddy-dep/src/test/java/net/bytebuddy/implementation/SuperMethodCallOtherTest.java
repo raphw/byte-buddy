@@ -80,8 +80,8 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     public void setUp() throws Exception {
         when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
         when(methodDescription.asToken()).thenReturn(methodToken);
-        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
-        when(genericSuperType.asErasure()).thenReturn(superType); // TODO
+        when(genericReturnType.asErasure()).thenReturn(returnType);
+        when(genericSuperType.asErasure()).thenReturn(superType);
     }
 
     @Test

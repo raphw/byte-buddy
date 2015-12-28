@@ -89,7 +89,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(genericParameterType)));
-        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
+        when(genericReturnType.asErasure()).thenReturn(returnType);
         when(genericReturnType.asRawType()).thenReturn(genericReturnType);
         when(genericReturnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(genericReturnType);
         when(genericParameterType.asErasure()).thenReturn(parameterType);

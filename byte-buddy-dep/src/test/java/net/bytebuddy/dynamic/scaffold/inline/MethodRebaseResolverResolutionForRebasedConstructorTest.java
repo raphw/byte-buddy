@@ -71,19 +71,19 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.asErasure()).thenReturn(rawPlaceholderType);
         when(placeholderType.asGenericType()).thenReturn(placeholderType);
-        when(rawPlaceholderType.asGenericType()).thenReturn(placeholderType); // TODO
+        when(rawPlaceholderType.asGenericType()).thenReturn(placeholderType);
         when(parameterType.asGenericType()).thenReturn(parameterType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(rawParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(parameterType.asErasure()).thenReturn(rawParameterType);
         when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
-        when(rawParameterType.asGenericType()).thenReturn(parameterType); // TODO
+        when(rawParameterType.asGenericType()).thenReturn(parameterType);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
         when(typeDescription.getInternalName()).thenReturn(BAR);
         when(rawPlaceholderType.getDescriptor()).thenReturn(BAZ);
         when(otherPlaceHolderType.getDescriptor()).thenReturn(FOO);
-        when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
+        when(genericReturnType.asErasure()).thenReturn(returnType);
     }
 
     @Test

@@ -75,7 +75,7 @@ public class MethodInvocationTest {
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.getStackSize()).thenReturn(ARGUMENT_STACK_SIZE);
         when(declaringType.getInternalName()).thenReturn(FOO);
-        when(otherType.asErasure()).thenReturn(rawOtherType); // TODO
+        when(otherType.asErasure()).thenReturn(rawOtherType);
         when(rawOtherType.getInternalName()).thenReturn(BAZ);
         when(methodDescription.getInternalName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
