@@ -1559,7 +1559,7 @@ public class InvokeDynamic implements Implementation.Composable {
                  * @return A corresponding argument provider.
                  */
                 public static ArgumentProvider of(Object value) {
-                    return new ForStaticField(value, new TypeDescription.Generic.ForNonGenericType.OfLoadedType(value.getClass()));
+                    return new ForStaticField(value, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass()));
                 }
 
                 @Override

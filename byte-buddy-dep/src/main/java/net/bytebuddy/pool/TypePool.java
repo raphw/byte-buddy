@@ -3097,7 +3097,7 @@ public interface TypePool {
         }
 
         /**
-         * A class file locator that loads classes and describes the loaded classes as a {@link net.bytebuddy.description.type.TypeDescription.ForLoadedType}
+         * A class file locator that loads classes and describes the loaded classes as a {@link TypeDescription.ForLoadedType}
          * if a type cannot be located as its class file.
          */
         public static class ClassLoading extends Default {
@@ -4012,7 +4012,7 @@ public interface TypePool {
                  * @param type The loaded type representing this primitive.
                  */
                 ForPrimitiveType(Class<?> type) {
-                    typeDescription = new Generic.ForNonGenericType.OfLoadedType(type);
+                    typeDescription = new Generic.OfNonGenericType.ForLoadedType(type);
                 }
 
                 /**
@@ -4079,7 +4079,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return TypeDescription.Generic.ForWildcardType.Latent.unbounded();
+                    return Generic.OfWildcardType.Latent.unbounded();
                 }
 
                 @Override
@@ -4662,7 +4662,7 @@ public interface TypePool {
                     /**
                      * A type description that represents a type variable with bounds that are resolved lazily.
                      */
-                    protected class LazyTypeVariable extends Generic.ForTypeVariable {
+                    protected class LazyTypeVariable extends Generic.OfTypeVariable {
 
                         /**
                          * The type pool to use for locating type descriptions.
@@ -4733,7 +4733,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return TypeDescription.Generic.ForGenericArray.Latent.of(componentTypeToken.toGenericType(typePool, typeVariableSource), 1);
+                    return Generic.OfGenericArray.Latent.of(componentTypeToken.toGenericType(typePool, typeVariableSource), 1);
                 }
 
                 @Override
@@ -4781,7 +4781,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return TypeDescription.Generic.ForWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool, typeVariableSource));
+                    return Generic.OfWildcardType.Latent.boundedBelow(baseType.toGenericType(typePool, typeVariableSource));
                 }
 
                 @Override
@@ -4829,7 +4829,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource) {
-                    return TypeDescription.Generic.ForWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool, typeVariableSource));
+                    return Generic.OfWildcardType.Latent.boundedAbove(baseType.toGenericType(typePool, typeVariableSource));
                 }
 
                 @Override
@@ -4975,7 +4975,7 @@ public interface TypePool {
                     /**
                      * A lazy description of a parameterized type with an owner type.
                      */
-                    protected class LazyParameterizedType extends Generic.ForParameterizedType {
+                    protected class LazyParameterizedType extends Generic.OfParameterizedType {
 
                         /**
                          * The type pool to be used for locating non-generic type descriptions.
@@ -5022,7 +5022,7 @@ public interface TypePool {
                 /**
                  * A generic type description that represents a parameterized type <b>without</b> an enclosing generic owner type.
                  */
-                protected class LazyParameterizedType extends Generic.ForParameterizedType {
+                protected class LazyParameterizedType extends Generic.OfParameterizedType {
 
                     /**
                      * The type pool that is used for locating a generic type.

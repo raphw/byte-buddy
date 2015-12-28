@@ -16,12 +16,12 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
 
     @Override
     protected TypeDescription.Generic describe(Field field) {
-        return TypeDescription.Generic.ForGenericArray.Latent.of(TypeDefinition.Sort.describe(field.getGenericType()), 0);
+        return TypeDescription.Generic.OfGenericArray.Latent.of(TypeDefinition.Sort.describe(field.getGenericType()), 0);
     }
 
     @Override
     protected TypeDescription.Generic describe(Method method) {
-        return TypeDescription.Generic.ForGenericArray.Latent.of(TypeDefinition.Sort.describe(method.getGenericReturnType()), 0);
+        return TypeDescription.Generic.OfGenericArray.Latent.of(TypeDefinition.Sort.describe(method.getGenericReturnType()), 0);
     }
 
     @Test(expected = IllegalArgumentException.class)

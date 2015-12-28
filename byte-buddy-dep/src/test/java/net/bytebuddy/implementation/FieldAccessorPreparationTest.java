@@ -36,7 +36,7 @@ public class FieldAccessorPreparationTest {
     @Test
     public void testPreparationDefineField() throws Exception {
         assertThat(FieldAccessor.ofField(FOO).defineAs(TYPE).prepare(instrumentedType), is(instrumentedType));
-        verify(instrumentedType).withField(new FieldDescription.Token(FOO, NO_MODIFIERS, new TypeDescription.Generic.ForNonGenericType.OfLoadedType(TYPE)));
+        verify(instrumentedType).withField(new FieldDescription.Token(FOO, NO_MODIFIERS, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(TYPE)));
         verify(instrumentedType).isInterface();
         verifyNoMoreInteractions(instrumentedType);
     }

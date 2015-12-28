@@ -838,7 +838,7 @@ public class MethodDelegation implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_STATIC | Opcodes.ACC_PUBLIC,
-                                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(delegate.getClass())))
+                                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(delegate.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, delegate));
             }
 

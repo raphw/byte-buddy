@@ -138,15 +138,15 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
          */
         public static TypeDescription.Generic describe(Type type) {
             if (type instanceof Class<?>) {
-                return new TypeDescription.Generic.ForNonGenericType.OfLoadedType((Class<?>) type);
+                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType((Class<?>) type);
             } else if (type instanceof GenericArrayType) {
-                return new TypeDescription.Generic.ForGenericArray.OfLoadedType((GenericArrayType) type);
+                return new TypeDescription.Generic.OfGenericArray.ForLoadedType((GenericArrayType) type);
             } else if (type instanceof ParameterizedType) {
-                return new TypeDescription.Generic.ForParameterizedType.OfLoadedType((ParameterizedType) type);
+                return new TypeDescription.Generic.OfParameterizedType.ForLoadedType((ParameterizedType) type);
             } else if (type instanceof TypeVariable) {
-                return new TypeDescription.Generic.ForTypeVariable.OfLoadedType((TypeVariable<?>) type);
+                return new TypeDescription.Generic.OfTypeVariable.ForLoadedType((TypeVariable<?>) type);
             } else if (type instanceof WildcardType) {
-                return new TypeDescription.Generic.ForWildcardType.OfLoadedType((WildcardType) type);
+                return new TypeDescription.Generic.OfWildcardType.ForLoadedType((WildcardType) type);
             } else {
                 throw new IllegalArgumentException("Unknown type: " + type);
             }

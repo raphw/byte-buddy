@@ -49,7 +49,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     /**
      * A type description of the {@link InvocationHandler}.
      */
-    private static final TypeDescription.Generic INVOCATION_HANDLER_TYPE = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(InvocationHandler.class);
+    private static final TypeDescription.Generic INVOCATION_HANDLER_TYPE = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(InvocationHandler.class);
 
     /**
      * The name of the field for storing an invocation handler.

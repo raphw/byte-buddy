@@ -37,7 +37,7 @@ public class JavaTypeTest {
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_FINAL));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getSuperType(), is(TypeDescription.Generic.OBJECT));
         assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().size(), is(1));
-        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Serializable.class)), is(true));
+        assertThat(JavaType.METHOD_TYPE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)), is(true));
     }
 
     @Test
@@ -62,8 +62,8 @@ public class JavaTypeTest {
         assertThat(JavaType.EXECUTABLE.getTypeStub().getModifiers(), is(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getSuperType(), is((TypeDefinition) new TypeDescription.ForLoadedType(AccessibleObject.class)));
         assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().size(), is(2));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Member.class)), is(true));
-        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(GenericDeclaration.class)), is(true));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Member.class)), is(true));
+        assertThat(JavaType.EXECUTABLE.getTypeStub().getInterfaces().contains(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(GenericDeclaration.class)), is(true));
     }
 
     @Test

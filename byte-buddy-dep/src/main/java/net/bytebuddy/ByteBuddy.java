@@ -470,7 +470,7 @@ public class ByteBuddy {
                 namingStrategy.create(),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Annotation.class)),
+                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Annotation.class)),
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.ANNOTATION.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
@@ -505,7 +505,7 @@ public class ByteBuddy {
         if (unique(nonNull(values)).isEmpty()) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
-        TypeDescription.Generic enumType = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Enum.class);
+        TypeDescription.Generic enumType = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Enum.class);
         return new SubclassDynamicTypeBuilder<Enum<?>>(classFileVersion,
                 nonNull(namingStrategy.subclass(enumType.asErasure())),
                 auxiliaryTypeNamingStrategy,
@@ -2133,7 +2133,7 @@ public class ByteBuddy {
             return instrumentedType
                     .withField(new FieldDescription.Token(ENUM_VALUES,
                             ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
-                            TypeDescription.Generic.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)))
+                            TypeDescription.Generic.OfGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)))
                     .withInitializer(new InitializationAppender(values));
         }
 

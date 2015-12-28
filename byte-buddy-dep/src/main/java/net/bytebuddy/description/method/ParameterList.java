@@ -190,7 +190,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         public TypeList.Generic asTypeList() {
             List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameter.length);
             for (Object aParameter : parameter) {
-                types.add(new TypeDescription.Generic.LazyProjection.OfLoadedParameter(aParameter));
+                types.add(new TypeDescription.Generic.LazyProjection.ForLoadedParameter(aParameter));
             }
             return new TypeList.Generic.Explicit(types);
         }
@@ -351,7 +351,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             public TypeList.Generic asTypeList() {
                 List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new TypeDescription.Generic.LazyProjection.OfLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index]));
+                    types.add(new TypeDescription.Generic.LazyProjection.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index]));
                 }
                 return new TypeList.Generic.Explicit(types);
             }
@@ -403,7 +403,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             public TypeList.Generic asTypeList() {
                 List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameterType.length);
                 for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new TypeDescription.Generic.LazyProjection.OfLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index]));
+                    types.add(new TypeDescription.Generic.LazyProjection.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index]));
                 }
                 return new TypeList.Generic.Explicit(types);
             }

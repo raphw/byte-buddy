@@ -44,7 +44,7 @@ public class InstrumentedTypeTest {
                 Opcodes.ACC_PUBLIC,
                 Collections.<TypeDescription.Generic>emptyList(),
                 TypeDescription.Generic.OBJECT,
-                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Serializable.class)),
+                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
@@ -89,7 +89,7 @@ public class InstrumentedTypeTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC,
-                TypeDescription.Generic.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)));
+                TypeDescription.Generic.OfGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1)));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -170,8 +170,8 @@ public class InstrumentedTypeTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                TypeDescription.Generic.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1),
-                Collections.singletonList(TypeDescription.Generic.ForGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1))));
+                TypeDescription.Generic.OfGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1),
+                Collections.singletonList(TypeDescription.Generic.OfGenericArray.Latent.of(TargetType.GENERIC_DESCRIPTION, 1))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asErasure().isArray(), is(true));
@@ -316,8 +316,8 @@ public class InstrumentedTypeTest {
     @Test
     public void testSuperType() {
         assertThat(makePlainInstrumentedType().getSuperType(), is(TypeDescription.Generic.OBJECT));
-        assertThat(makePlainInstrumentedType().getSuperType(), not((TypeDescription.Generic) new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Integer.class)));
-        assertThat(makePlainInstrumentedType().getSuperType(), not((TypeDescription.Generic) new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Serializable.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), not((TypeDescription.Generic) new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Integer.class)));
+        assertThat(makePlainInstrumentedType().getSuperType(), not((TypeDescription.Generic) new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)));
     }
 
     @Test

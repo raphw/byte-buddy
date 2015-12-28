@@ -188,7 +188,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testDefaultValueMethod() throws Exception {
-        when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(String.class));
+        when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,
@@ -210,7 +210,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test
     public void testDefaultValueMethodHeadOnly() throws Exception {
-        when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(String.class));
+        when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
@@ -245,7 +245,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testDefaultValueMethodWithParameters() throws Exception {
         when(parameterDescription.hasModifiers()).thenReturn(true);
         when(parameterDescription.isNamed()).thenReturn(true);
-        when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(String.class));
+        when(methodDescription.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class));
         when(methodDescription.isDefaultValue(FOO)).thenReturn(true);
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.WithAnnotationDefaultValue(methodDescription,
                 FOO,

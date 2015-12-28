@@ -448,7 +448,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  * @return A list of attached type variables.
                  */
                 public static Generic attach(TypeDescription typeDescription, List<? extends TypeDescription.Generic> detachedTypes) {
-                    return new ForDetachedTypes.OfTypeVariable(typeDescription, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
+                    return new OfTypeVariable(typeDescription, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
                 }
 
                 /**
@@ -459,7 +459,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                  * @return A list of attached type variables.
                  */
                 public static Generic attach(MethodDescription methodDescription, List<? extends TypeDescription.Generic> detachedTypes) {
-                    return new ForDetachedTypes.OfTypeVariable(methodDescription, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
+                    return new OfTypeVariable(methodDescription, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
                 }
 
                 @Override
@@ -475,7 +475,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 /**
                  * A lazy type variable.
                  */
-                protected static class LazyTypeVariable extends TypeDescription.Generic.ForTypeVariable {
+                protected static class LazyTypeVariable extends TypeDescription.Generic.OfTypeVariable {
 
                     /**
                      * The represented symbol of the represented type variable.

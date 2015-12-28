@@ -803,7 +803,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeDescription.Generic getReturnType() {
-            return new TypeDescription.Generic.LazyProjection.OfLoadedReturnType(method);
+            return new TypeDescription.Generic.LazyProjection.ForLoadedReturnType(method);
         }
 
         @Override
@@ -1216,7 +1216,7 @@ public interface MethodDescription extends TypeVariableSource,
                     parameters.add(parameter.accept(this));
                 }
                 TypeDescription.Generic ownerType = parameterizedType.getOwnerType();
-                return new TypeDescription.Generic.ForParameterizedType.Latent(parameterizedType.asErasure(),
+                return new TypeDescription.Generic.OfParameterizedType.Latent(parameterizedType.asErasure(),
                         parameters,
                         ownerType == null
                                 ? TypeDescription.Generic.UNDEFINED
@@ -1268,7 +1268,7 @@ public interface MethodDescription extends TypeVariableSource,
             /**
              * A retained type variable that is declared by the method.
              */
-            protected class RetainedVariable extends TypeDescription.Generic.ForTypeVariable {
+            protected class RetainedVariable extends TypeDescription.Generic.OfTypeVariable {
 
                 /**
                  * The type variable this retained variable represents.

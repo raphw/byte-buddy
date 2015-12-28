@@ -407,7 +407,7 @@ public abstract class FixedValue implements Implementation {
             super(assigner, typing);
             this.fieldName = fieldName;
             this.fixedValue = fixedValue;
-            fieldType = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(fixedValue.getClass());
+            fieldType = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(fixedValue.getClass());
         }
 
         @Override

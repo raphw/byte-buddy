@@ -13,7 +13,7 @@ public final class TargetType {
      */
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
 
-    public static final TypeDescription.Generic GENERIC_DESCRIPTION = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(TargetType.class);
+    public static final TypeDescription.Generic GENERIC_DESCRIPTION = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(TargetType.class);
 
     /**
      * An unusable constructor to avoid instance creation.

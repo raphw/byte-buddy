@@ -59,7 +59,7 @@ public abstract class AbstractImplementationTest {
                 MethodGraph.Compiler.DEFAULT,
                 FieldAttributeAppender.NoOp.INSTANCE,
                 MethodAttributeAppender.NoOp.INSTANCE,
-                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(target),
+                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(target),
                 ConstructorStrategy.Default.IMITATE_SUPER_TYPE)
                 .invokable(targetMethods).intercept(implementation)
                 .make()

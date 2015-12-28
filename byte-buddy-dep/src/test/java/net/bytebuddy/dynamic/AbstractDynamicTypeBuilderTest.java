@@ -434,7 +434,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                     TypeDescription.Generic.OBJECT,
                     Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT,
                             Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, QUX).make()))),
-                    Collections.singletonList(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(Exception.class)),
+                    Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make()),
                     MethodDescription.NO_DEFAULT_VALUE));
         }

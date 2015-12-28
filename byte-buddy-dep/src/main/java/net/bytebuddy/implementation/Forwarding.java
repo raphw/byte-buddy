@@ -82,7 +82,7 @@ public class Forwarding implements Implementation {
      */
     public static Implementation to(Object delegate, String fieldName) {
         return new Forwarding(isValidIdentifier(fieldName),
-                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(nonNull(delegate).getClass()),
+                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(nonNull(delegate).getClass()),
                 new PreparationHandler.ForStaticInstance(delegate));
     }
 

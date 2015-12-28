@@ -733,7 +733,7 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(target.getClass())))
+                                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(target.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
             }
 
@@ -1115,7 +1115,7 @@ public class MethodCall implements Implementation.Composable {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName,
                                 Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                                new TypeDescription.Generic.ForNonGenericType.OfLoadedType(value.getClass())))
+                                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass())))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, value));
             }
 
@@ -2242,7 +2242,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForStaticField(nonNull(target)),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(new TypeDescription.Generic.ForNonGenericType.OfLoadedType(target.getClass())),
+                    new MethodInvoker.ForVirtualInvocation(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(target.getClass())),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);

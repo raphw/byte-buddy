@@ -32,7 +32,7 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
     public EmptyBinderTest(Class<?> type, int opcode) {
         super(Empty.class);
-        typeDescription = new TypeDescription.Generic.ForNonGenericType.OfLoadedType(type);
+        typeDescription = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(type);
         this.opcode = opcode;
     }
 

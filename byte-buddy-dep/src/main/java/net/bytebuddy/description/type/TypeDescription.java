@@ -286,12 +286,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         /**
          * A representation of the {@link Object} type.
          */
-        Generic OBJECT = new ForNonGenericType.OfLoadedType(Object.class);
+        Generic OBJECT = new OfNonGenericType.ForLoadedType(Object.class);
 
         /**
          * A representation of the {@code void} non-type.
          */
-        Generic VOID = new ForNonGenericType.OfLoadedType(void.class);
+        Generic VOID = new OfNonGenericType.ForLoadedType(void.class);
 
         Generic UNDEFINED = null;
 
@@ -545,7 +545,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
                 }
 
                 @Override
@@ -553,8 +553,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     // Wildcards which are used within parameterized types are taken care of by the calling method.
                     TypeList.Generic lowerBounds = wildcard.getLowerBounds();
                     return lowerBounds.isEmpty()
-                            ? ForWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
-                            : ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+                            ? OfWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
+                            : OfWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
                 }
 
                 @Override
@@ -567,7 +567,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         parameters.add(parameter.accept(this));
                     }
                     Generic ownerType = parameterizedType.getOwnerType();
-                    return new ForParameterizedType.Latent(parameterizedType.asErasure(),
+                    return new OfParameterizedType.Latent(parameterizedType.asErasure(),
                             parameters,
                             ownerType == null
                                     ? UNDEFINED
@@ -581,7 +581,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    return new ForNonGenericType.Latent(typeDescription.asErasure());
+                    return new OfNonGenericType.Latent(typeDescription.asErasure());
                 }
 
                 @Override
@@ -805,7 +805,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     for (Generic parameter : parameterizedType.getParameters()) {
                         parameters.add(parameter.accept(this));
                     }
-                    return new ForParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
+                    return new OfParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
                             parameters,
                             ownerType == null
                                     ? UNDEFINED
@@ -814,15 +814,15 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return ForGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
                 }
 
                 @Override
                 public Generic onWildcard(Generic wildcard) {
                     TypeList.Generic lowerBounds = wildcard.getLowerBounds();
                     return lowerBounds.isEmpty()
-                            ? ForWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
-                            : ForWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+                            ? OfWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
+                            : OfWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
                 }
 
                 @Override
@@ -832,7 +832,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         typeDescription = typeDescription.getComponentType();
                         arity++;
                     }
-                    return ForGenericArray.Latent.of(onSimpleType(typeDescription), arity);
+                    return OfGenericArray.Latent.of(onSimpleType(typeDescription), arity);
                 }
 
                 /**
@@ -1014,7 +1014,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * A description of a detached type variable.
                      */
-                    protected static class DetachedTypeVariable extends ForTypeVariable.InDetachedForm {
+                    protected static class DetachedTypeVariable extends OfTypeVariable.InDetachedForm {
 
                         /**
                          * The symbol of this variable.
@@ -1166,7 +1166,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          * All fields, methods, interfaces and the super type that are returned from this instance represent appropriately erased types.
          * </p>
          */
-        abstract class ForNonGenericType extends AbstractBase {
+        abstract class OfNonGenericType extends AbstractBase {
 
             @Override
             public Generic getSuperType() {
@@ -1196,7 +1196,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 TypeDescription ownerType = asErasure().getDeclaringType();
                 return ownerType == null
                         ? UNDEFINED
-                        : new ForNonGenericType.Latent(ownerType);
+                        : new OfNonGenericType.Latent(ownerType);
             }
 
             @Override
@@ -1234,7 +1234,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 TypeDescription componentType = asErasure().getComponentType();
                 return componentType == null
                         ? UNDEFINED
-                        : new ForNonGenericType.Latent(componentType);
+                        : new OfNonGenericType.Latent(componentType);
             }
 
             @Override
@@ -1296,7 +1296,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * Represents a non-generic type for a loaded {@link Class}.
              */
-            public static class OfLoadedType extends ForNonGenericType {
+            public static class ForLoadedType extends OfNonGenericType {
 
                 /**
                  * The type that this instance represents.
@@ -1308,20 +1308,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param type The represented type.
                  */
-                public OfLoadedType(Class<?> type) {
+                public ForLoadedType(Class<?> type) {
                     this.type = type;
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new ForLoadedType(type);
+                    return new TypeDescription.ForLoadedType(type);
                 }
             }
 
             /**
              * Represents a non-generic type for a loaded {@link TypeDescription}.
              */
-            public static class Latent extends ForNonGenericType {
+            public static class Latent extends OfNonGenericType {
 
                 /**
                  * The represented non-generic type.
@@ -1348,7 +1348,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          * A base implementation of a generic type description that represents a potentially generic array. Instances represent a non-generic type
          * if the given component type is non-generic.
          */
-        abstract class ForGenericArray extends AbstractBase {
+        abstract class OfGenericArray extends AbstractBase {
 
             @Override
             public Sort getSort() {
@@ -1481,7 +1481,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A description of a loaded generic array type.
              */
-            public static class OfLoadedType extends ForGenericArray {
+            public static class ForLoadedType extends OfGenericArray {
 
                 /**
                  * The loaded generic array type.
@@ -1493,7 +1493,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param genericArrayType The loaded generic array type.
                  */
-                public OfLoadedType(GenericArrayType genericArrayType) {
+                public ForLoadedType(GenericArrayType genericArrayType) {
                     this.genericArrayType = genericArrayType;
                 }
 
@@ -1506,7 +1506,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A latent implementation of a generic array type.
              */
-            public static class Latent extends ForGenericArray {
+            public static class Latent extends OfGenericArray {
 
                 /**
                  * The component type of the generic array.
@@ -1561,7 +1561,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         /**
          * A base implementation of a generic type description that represents a wildcard type.
          */
-        abstract class ForWildcardType extends AbstractBase {
+        abstract class OfWildcardType extends AbstractBase {
 
             /**
              * The source code representation of a wildcard.
@@ -1703,7 +1703,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * Description of a loaded wildcard.
              */
-            public static class OfLoadedType extends ForWildcardType {
+            public static class ForLoadedType extends OfWildcardType {
 
                 /**
                  * The represented loaded wildcard type.
@@ -1715,7 +1715,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param wildcardType The represented loaded wildcard type.
                  */
-                public OfLoadedType(WildcardType wildcardType) {
+                public ForLoadedType(WildcardType wildcardType) {
                     this.wildcardType = wildcardType;
                 }
 
@@ -1733,7 +1733,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A latent description of a wildcard type.
              */
-            public static class Latent extends ForWildcardType {
+            public static class Latent extends OfWildcardType {
 
                 /**
                  * The wildcard's upper bounds.
@@ -1800,7 +1800,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         /**
          * A base implementation of a generic type description that represents a parameterized type.
          */
-        abstract class ForParameterizedType extends AbstractBase {
+        abstract class OfParameterizedType extends AbstractBase {
 
             @Override
             public Sort getSort() {
@@ -1950,7 +1950,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * Description of a loaded parameterized type.
              */
-            public static class OfLoadedType extends ForParameterizedType {
+            public static class ForLoadedType extends OfParameterizedType {
 
                 /**
                  * The represented parameterized type.
@@ -1962,7 +1962,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param parameterizedType The represented parameterized type.
                  */
-                public OfLoadedType(ParameterizedType parameterizedType) {
+                public ForLoadedType(ParameterizedType parameterizedType) {
                     this.parameterizedType = parameterizedType;
                 }
 
@@ -1981,14 +1981,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new ForLoadedType((Class<?>) parameterizedType.getRawType());
+                    return new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType());
                 }
             }
 
             /**
              * A latent description of a parameterized type.
              */
-            public static class Latent extends ForParameterizedType {
+            public static class Latent extends OfParameterizedType {
 
                 /**
                  * The raw type of the described parameterized type.
@@ -2038,7 +2038,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         /**
          * A base implementation of a generic type description that represents a type variable.
          */
-        abstract class ForTypeVariable extends AbstractBase {
+        abstract class OfTypeVariable extends AbstractBase {
 
             @Override
             public Sort getSort() {
@@ -2155,7 +2155,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * An abstract implementation of a description of a type variable in detached form.
              */
-            public abstract static class InDetachedForm extends ForTypeVariable {
+            public abstract static class InDetachedForm extends OfTypeVariable {
 
                 @Override
                 public Sort getSort() {
@@ -2185,7 +2185,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * Description of a loaded type variable.
              */
-            public static class OfLoadedType extends ForTypeVariable {
+            public static class ForLoadedType extends OfTypeVariable {
 
                 /**
                  * The represented type variable.
@@ -2197,7 +2197,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param typeVariable The represented type variable.
                  */
-                public OfLoadedType(TypeVariable<?> typeVariable) {
+                public ForLoadedType(TypeVariable<?> typeVariable) {
                     this.typeVariable = typeVariable;
                 }
 
@@ -2205,7 +2205,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeVariableSource getVariableSource() {
                     GenericDeclaration genericDeclaration = typeVariable.getGenericDeclaration();
                     if (genericDeclaration instanceof Class) {
-                        return new ForLoadedType((Class<?>) genericDeclaration);
+                        return new TypeDescription.ForLoadedType((Class<?>) genericDeclaration);
                     } else if (genericDeclaration instanceof Method) {
                         return new MethodDescription.ForLoadedMethod((Method) genericDeclaration);
                     } else if (genericDeclaration instanceof Constructor) {
@@ -2359,7 +2359,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A lazy projection of a generic super type.
              */
-            public static class OfLoadedSuperType extends LazyProjection {
+            public static class ForLoadedSuperType extends LazyProjection {
 
                 /**
                  * The type of which the super class is represented.
@@ -2371,7 +2371,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param type The type of which the super class is represented.
                  */
-                public OfLoadedSuperType(Class<?> type) {
+                public ForLoadedSuperType(Class<?> type) {
                     this.type = type;
                 }
 
@@ -2395,7 +2395,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A lazy projection of a field's type.
              */
-            public static class OfLoadedFieldType extends LazyProjection {
+            public static class ForLoadedFieldType extends LazyProjection {
 
                 /**
                  * The field of which the type is represented.
@@ -2407,7 +2407,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param field The field of which the type is represented.
                  */
-                public OfLoadedFieldType(Field field) {
+                public ForLoadedFieldType(Field field) {
                     this.field = field;
                 }
 
@@ -2425,7 +2425,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A lazy projection of a method's generic return type.
              */
-            public static class OfLoadedReturnType extends LazyProjection {
+            public static class ForLoadedReturnType extends LazyProjection {
 
                 /**
                  * The method which defines the return type.
@@ -2437,7 +2437,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param method The method which defines the return type.
                  */
-                public OfLoadedReturnType(Method method) {
+                public ForLoadedReturnType(Method method) {
                     this.method = method;
                 }
 
@@ -2455,25 +2455,25 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A lazy projection of a loaded parameter.
              */
-            public static class OfLoadedParameter extends LazyProjection {
+            public static class ForLoadedParameter extends LazyProjection {
 
                 /**
                  * A dispatcher for introspecting a parameter's type.
                  */
-                private static final OfLoadedParameter.Dispatcher DISPATCHER;
+                private static final ForLoadedParameter.Dispatcher DISPATCHER;
 
                 /*
                  * Looks up Java 7+ specific methods if possible.
                  */
                 static {
-                    OfLoadedParameter.Dispatcher dispatcher;
+                    ForLoadedParameter.Dispatcher dispatcher;
                     try {
                         Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                        dispatcher = new OfLoadedParameter.Dispatcher.ForModernVm(parameterType.getDeclaredMethod("getType"), parameterType.getDeclaredMethod("getParameterizedType"));
+                        dispatcher = new ForLoadedParameter.Dispatcher.ForModernVm(parameterType.getDeclaredMethod("getType"), parameterType.getDeclaredMethod("getParameterizedType"));
                     } catch (RuntimeException exception) {
                         throw exception;
                     } catch (Exception ignored) {
-                        dispatcher = OfLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE;
+                        dispatcher = ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE;
                     }
                     DISPATCHER = dispatcher;
                 }
@@ -2488,7 +2488,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param parameter The represented parameter.
                  */
-                public OfLoadedParameter(Object parameter) {
+                public ForLoadedParameter(Object parameter) {
                     this.parameter = parameter;
                 }
 
@@ -2526,7 +2526,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * A dispatcher for a modern VM that supports the {@code java.lang.reflect.Parameter} API for Java 8+.
                      */
-                    class ForModernVm implements OfLoadedParameter.Dispatcher {
+                    class ForModernVm implements ForLoadedParameter.Dispatcher {
 
                         /**
                          * A reference to {@code java.lang.reflect.Parameter#getType}.
@@ -2599,7 +2599,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * A dispatcher for a VM that does not support the {@code java.lang.reflect.Parameter} API that throws an exception
                      * for any property.
                      */
-                    enum ForLegacyVm implements OfLoadedParameter.Dispatcher {
+                    enum ForLegacyVm implements ForLoadedParameter.Dispatcher {
 
                         /**
                          * The singleton instance.
@@ -2737,7 +2737,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             if (targetType.isArray()) {
                 return sourceType.isArray()
                         ? isAssignable(sourceType.getComponentType(), targetType.getComponentType())
-                        : sourceType.represents(Object.class) || TypeDescription.ARRAY_INTERFACES.contains(sourceType);
+                        : sourceType.represents(Object.class) || ARRAY_INTERFACES.contains(sourceType.asGenericType());
             }
             // (2) Interfaces do not extend the Object type but are assignable to the Object type.
             if (sourceType.represents(Object.class)) {
@@ -2787,7 +2787,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public Generic asGenericType() {
-            return new Generic.ForNonGenericType.Latent(this);
+            return new Generic.OfNonGenericType.Latent(this);
         }
 
         @Override
@@ -3159,7 +3159,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             Class<?> componentType = type.getComponentType();
             return componentType == null
                     ? TypeDescription.UNDEFINED
-                    : new TypeDescription.ForLoadedType(componentType);
+                    : new ForLoadedType(componentType);
         }
 
         @Override
@@ -3181,7 +3181,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         public Generic getSuperType() {
             return type.getSuperclass() == null
                     ? TypeDescription.Generic.UNDEFINED
-                    : new Generic.LazyProjection.OfLoadedSuperType(type);
+                    : new Generic.LazyProjection.ForLoadedSuperType(type);
         }
 
         @Override
@@ -3196,7 +3196,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             Class<?> declaringType = type.getDeclaringClass();
             return declaringType == null
                     ? TypeDescription.UNDEFINED
-                    : new TypeDescription.ForLoadedType(declaringType);
+                    : new ForLoadedType(declaringType);
         }
 
         @Override
@@ -3217,7 +3217,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             Class<?> enclosingType = type.getEnclosingClass();
             return enclosingType == null
                     ? TypeDescription.UNDEFINED
-                    : new TypeDescription.ForLoadedType(enclosingType);
+                    : new ForLoadedType(enclosingType);
         }
 
         @Override

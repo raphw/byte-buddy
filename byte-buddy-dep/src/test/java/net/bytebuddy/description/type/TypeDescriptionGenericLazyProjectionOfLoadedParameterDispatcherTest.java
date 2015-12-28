@@ -13,24 +13,24 @@ public class TypeDescriptionGenericLazyProjectionOfLoadedParameterDispatcherTest
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmGetType() throws Exception {
-        TypeDescription.Generic.LazyProjection.OfLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getType(mock(Object.class));
+        TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getType(mock(Object.class));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmGetParameterizedType() throws Exception {
-        TypeDescription.Generic.LazyProjection.OfLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getParameterizedType(mock(Object.class));
+        TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getParameterizedType(mock(Object.class));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.LazyProjection.OfLoadedParameter.Dispatcher.ForModernVm.class)
+        ObjectPropertyAssertion.of(TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForModernVm.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {
                     @Override
                     public Method create() {
                         return methods.next();
                     }
                 }).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.LazyProjection.OfLoadedParameter.Dispatcher.ForLegacyVm.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForLegacyVm.class).apply();
     }
 }
