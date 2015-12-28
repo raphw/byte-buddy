@@ -1,7 +1,5 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -65,17 +63,6 @@ public class TypeDefinitionTest {
         assertThat(result.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(result.getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(result.getComponentType().getComponentType(), is(componentType));
-    }
-
-    @Test
-    public void testSortIdentification() throws Exception {
-        assertThat(TypeDefinition.Sort.NON_GENERIC.isNonGeneric(), is(true));
-        assertThat(TypeDefinition.Sort.WILDCARD.isWildcard(), is(true));
-        assertThat(TypeDefinition.Sort.PARAMETERIZED.isParameterized(), is(true));
-        assertThat(TypeDefinition.Sort.VARIABLE_DETACHED.isDetachedTypeVariable(), is(true));
-        assertThat(TypeDefinition.Sort.VARIABLE.isTypeVariable(), is(true));
-        assertThat(TypeDefinition.Sort.VARIABLE_SYMBOLIC.isSymbolicTypeVariable(), is(true));
-        assertThat(TypeDefinition.Sort.GENERIC_ARRAY.isGenericArray(), is(true));
     }
 
     @Test
