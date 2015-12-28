@@ -59,6 +59,7 @@ public abstract class AbstractImplementationTargetTest {
         when(invokableMethod.getDeclaringType()).thenReturn(methodDeclaringType);
         when(invokableMethod.getReturnType()).thenReturn(genericReturnType);
         when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(genericReturnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(returnType.asErasure()).thenReturn(returnType);
         when(invokableMethod.getInternalName()).thenReturn(FOO);
         when(invokableMethod.getDescriptor()).thenReturn(QUX);
@@ -75,6 +76,10 @@ public abstract class AbstractImplementationTargetTest {
         when(defaultMethodDeclaringType.asErasure()).thenReturn(defaultMethodDeclaringType);
         when(defaultMethodDeclaringType.getInternalName()).thenReturn(BAZBAR);
         when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
+        when(genericReturnType.asGenericType()).thenReturn(genericReturnType); // TODO
+        when(returnType.asGenericType()).thenReturn(genericReturnType); // TODO
+        when(genericInstrumentedType.asErasure()).thenReturn(instrumentedType); // TODO
+        when(genericInstrumentedType.asGenericType()).thenReturn(genericInstrumentedType); // TODO
         when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType); // TODO
         implementationTarget = makeImplementationTarget();
     }

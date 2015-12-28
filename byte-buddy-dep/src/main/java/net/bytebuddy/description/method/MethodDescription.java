@@ -245,7 +245,7 @@ public interface MethodDescription extends TypeVariableSource,
         GenericTypeDescription getDeclaringType();
 
         @Override
-        ParameterList<? extends ParameterDescription.InGenericShape> getParameters();
+        ParameterList<ParameterDescription.InGenericShape> getParameters();
     }
 
     /**
@@ -1160,7 +1160,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public ParameterList<? extends ParameterDescription.InGenericShape> getParameters() {
+        public ParameterList<ParameterDescription.InGenericShape> getParameters() {
             return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), new VariableRetainingDelegator());
         }
 

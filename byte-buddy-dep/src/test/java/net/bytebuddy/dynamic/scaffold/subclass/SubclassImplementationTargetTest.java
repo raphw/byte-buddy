@@ -4,7 +4,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -36,7 +35,10 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private TypeDescription rawSuperType;
 
     @Mock
-    private MethodDescription.InDefinedShape superTypeConstructor;
+    private MethodDescription.InGenericShape superTypeConstructor;
+
+    @Mock
+    private MethodDescription.InDefinedShape definedSuperTypeConstructor;
 
     @Mock
     private MethodDescription.Token superConstructorToken;
@@ -48,18 +50,24 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.asErasure()).thenReturn(rawSuperType);
+        when(superType.asGenericType()).thenReturn(superType);
+        when(rawSuperType.asGenericType()).thenReturn(superType);
+        when(rawSuperType.asErasure()).thenReturn(rawSuperType);
         when(rawSuperType.getInternalName()).thenReturn(BAR);
-        when(rawSuperType.getDeclaredMethods())
-                .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(superTypeConstructor)));
+        when(superType.getDeclaredMethods())
+                .thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(Collections.singletonList(superTypeConstructor)));
+        when(superTypeConstructor.asDefined()).thenReturn(definedSuperTypeConstructor);
+        when(definedSuperTypeConstructor.getReturnType()).thenReturn(GenericTypeDescription.VOID);
+        when(definedSuperTypeConstructor.getDeclaringType()).thenReturn(rawSuperType);
+        when(definedSuperTypeConstructor.isConstructor()).thenReturn(true);
         when(superTypeConstructor.isVisibleTo(instrumentedType)).thenReturn(true);
         when(superTypeConstructor.asToken()).thenReturn(superConstructorToken);
-        when(superTypeConstructor.getInternalName()).thenReturn(QUX);
-        when(superTypeConstructor.getDescriptor()).thenReturn(BAZ);
-        when(superTypeConstructor.asDefined()).thenReturn(superTypeConstructor);
+        when(definedSuperTypeConstructor.getInternalName()).thenReturn(QUX);
+        when(definedSuperTypeConstructor.getDescriptor()).thenReturn(BAZ);
         when(superTypeConstructor.isConstructor()).thenReturn(true);
-        when(superTypeConstructor.getDeclaringType()).thenReturn(rawSuperType);
+        when(superTypeConstructor.getDeclaringType()).thenReturn(superType);
         when(superTypeConstructor.getReturnType()).thenReturn(GenericTypeDescription.VOID);
-        when(superTypeConstructor.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+        when(superTypeConstructor.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
         when(invokableToken.getInternalName()).thenReturn(FOO);
         when(superConstructorToken.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         super.setUp();
@@ -97,7 +105,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @Test
     public void testSuperConstructorIsInvokable() throws Exception {
         when(invokableMethod.isConstructor()).thenReturn(true);
-        when(superTypeConstructor.isSpecializableFor(rawSuperType)).thenReturn(true);
+        when(definedSuperTypeConstructor.isSpecializableFor(rawSuperType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superConstructorToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superTypeConstructor));

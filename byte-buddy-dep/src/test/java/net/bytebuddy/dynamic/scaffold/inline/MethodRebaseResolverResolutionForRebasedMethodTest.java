@@ -67,7 +67,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     private TypeDescription typeDescription, returnType, parameterType;
 
     @Mock
-    private GenericTypeDescription genericReturnType;
+    private GenericTypeDescription genericReturnType, genericParameterType;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -88,9 +88,15 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(genericParameterType)));
         when(genericReturnType.asErasure()).thenReturn(returnType); // TODO
-        when(parameterType.asErasure()).thenReturn(parameterType);
+        when(genericReturnType.asRawType()).thenReturn(genericReturnType);
+        when(genericReturnType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(genericReturnType);
+        when(genericParameterType.asErasure()).thenReturn(parameterType);
+        when(genericParameterType.asGenericType()).thenReturn(genericParameterType);
+        when(parameterType.asGenericType()).thenReturn(genericParameterType);
+        when(genericParameterType.asRawType()).thenReturn(genericParameterType);
+        when(genericParameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(genericParameterType);
     }
 
     @Test
@@ -100,9 +106,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.getResolvedMethod().getDeclaringType(), is(typeDescription));
         assertThat(resolution.getResolvedMethod().getInternalName(), is(QUX));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(rebasedMethodModifiers));
-        assertThat(resolution.getResolvedMethod().getReturnType(), is((GenericTypeDescription) returnType));
-        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(resolution.getResolvedMethod(),
-                Collections.singletonList(parameterType))));
+        assertThat(resolution.getResolvedMethod().getReturnType(), is(genericReturnType));
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
+                .ForTypes(resolution.getResolvedMethod(), Collections.singletonList(parameterType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));

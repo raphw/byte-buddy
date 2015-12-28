@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -161,7 +162,10 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
             public TypeDescription create() {
                 TypeDescription typeDescription = mock(TypeDescription.class);
                 when(typeDescription.asErasure()).thenReturn(typeDescription);
-                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(typeDescription));
+                GenericTypeDescription genericTypeDescription = mock(GenericTypeDescription.class);
+                when(genericTypeDescription.asGenericType()).thenReturn(genericTypeDescription);
+                when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
+                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(genericTypeDescription));
                 when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
                 when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
                 return typeDescription;

@@ -39,7 +39,7 @@ public class SubclassImplementationTargetFactoryTest {
     public void setUp() throws Exception {
         when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
         when(genericSuperType.asErasure()).thenReturn(superType); // TODO
-        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(genericSuperType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
         factory = new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE);
     }
 

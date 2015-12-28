@@ -31,6 +31,9 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     private TypeDescription typeDescription, otherType;
 
     @Mock
+    private GenericTypeDescription genericTypeDescription, genericOtherType;
+
+    @Mock
     private ElementMatcher<? super MethodDescription> ignoredMethods;
 
     private LatentMethodMatcher latentMethodMatcher;
@@ -38,10 +41,18 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     @Before
     public void setUp() throws Exception {
         latentMethodMatcher = new SubclassDynamicTypeBuilder.InstrumentableMatcher(ignoredMethods);
+        when(typeDescription.asGenericType()).thenReturn(genericTypeDescription);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
-        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
+        when(genericTypeDescription.asGenericType()).thenReturn(genericTypeDescription);
+        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
+        when(genericTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(otherType.asGenericType()).thenReturn(genericOtherType);
         when(otherType.asErasure()).thenReturn(otherType);
-        when(otherType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(genericOtherType.asErasure()).thenReturn(otherType);
+        when(genericOtherType.asGenericType()).thenReturn(genericOtherType);
+        when(genericOtherType.asErasure()).thenReturn(otherType);
+        when(genericOtherType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
     }
 
     @Test

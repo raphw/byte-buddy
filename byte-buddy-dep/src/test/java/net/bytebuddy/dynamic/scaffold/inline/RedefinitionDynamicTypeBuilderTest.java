@@ -6,6 +6,7 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -133,8 +134,10 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
             @Override
             public TypeDescription create() {
                 TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.asErasure()).thenReturn(typeDescription);
-                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(typeDescription));
+                GenericTypeDescription generictypeDescription = mock(GenericTypeDescription.class);
+                when(generictypeDescription.asErasure()).thenReturn(typeDescription);
+                when(generictypeDescription.asGenericType()).thenReturn(generictypeDescription);
+                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(generictypeDescription));
                 when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
                 when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
                 return typeDescription;

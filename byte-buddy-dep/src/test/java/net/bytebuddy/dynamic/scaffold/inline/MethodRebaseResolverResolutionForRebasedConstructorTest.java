@@ -67,12 +67,16 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
         when(methodDescription.getReturnType()).thenReturn(genericReturnType);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.asErasure()).thenReturn(rawPlaceholderType);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
+        when(placeholderType.asGenericType()).thenReturn(placeholderType);
+        when(rawPlaceholderType.asGenericType()).thenReturn(placeholderType); // TODO
         when(parameterType.asGenericType()).thenReturn(parameterType);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
+        when(rawParameterType.getStackSize()).thenReturn(StackSize.ZERO);
         when(parameterType.asErasure()).thenReturn(rawParameterType);
+        when(parameterType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(parameterType);
         when(rawParameterType.asGenericType()).thenReturn(parameterType); // TODO
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.getDescriptor()).thenReturn(QUX);
@@ -90,8 +94,8 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getInternalName(), is(MethodDescription.CONSTRUCTOR_INTERNAL_NAME));
         assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(GenericTypeDescription.VOID));
-        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(resolution.getResolvedMethod(),
-                Arrays.asList(parameterType, placeholderType))));
+        assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
+                .ForTypes(resolution.getResolvedMethod(), Arrays.asList(parameterType, placeholderType))));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));

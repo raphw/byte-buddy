@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -167,13 +168,17 @@ public class DefaultMethodCallTest extends AbstractImplementationTest {
             }
         }).apply();
         final TypeDescription removalType = mock(TypeDescription.class);
-        when(removalType.asErasure()).thenReturn(removalType);
+        final GenericTypeDescription genericRemovalType = mock(GenericTypeDescription.class);
+        when(genericRemovalType.asGenericType()).thenReturn(genericRemovalType);
+        when(genericRemovalType.asErasure()).thenReturn(removalType);
         ObjectPropertyAssertion.of(DefaultMethodCall.Appender.class).refine(new ObjectPropertyAssertion.Refinement<Implementation.Target>() {
             @Override
             public void apply(Implementation.Target mock) {
                 TypeDescription typeDescription = mock(TypeDescription.class), otherType = mock(TypeDescription.class);
-                when(otherType.asErasure()).thenReturn(otherType);
-                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(removalType, otherType));
+                GenericTypeDescription otherGenericType = mock(GenericTypeDescription.class);
+                when(otherGenericType.asErasure()).thenReturn(otherType);
+                when(otherGenericType.asGenericType()).thenReturn(otherGenericType);
+                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(genericRemovalType, otherGenericType));
                 when(mock.getInstrumentedType()).thenReturn(typeDescription);
             }
         }).create(new ObjectPropertyAssertion.Creator<List<?>>() {
