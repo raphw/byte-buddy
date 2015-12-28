@@ -1,6 +1,6 @@
 package net.bytebuddy.pool;
 
-import net.bytebuddy.description.type.AbstractGenericTypeListTest;
+import net.bytebuddy.description.type.AbstractTypeListGenericTest;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -12,7 +12,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 
-public class TypePoolGenericTypeListTest extends AbstractGenericTypeListTest<Type> {
+public class TypePoolGenericTypeListTest extends AbstractTypeListGenericTest<Type> {
 
     private TypePool typePool;
 

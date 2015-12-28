@@ -2,7 +2,7 @@ package net.bytebuddy.description.type;
 
 import java.util.List;
 
-public class TypeListGenericExplicitTest extends AbstractGenericTypeListTest<TypeDescription.Generic> {
+public class TypeListGenericExplicitTest extends AbstractTypeListGenericTest<TypeDescription.Generic> {
 
     @Override
     protected TypeDescription.Generic getFirst() throws Exception {

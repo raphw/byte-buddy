@@ -3,7 +3,7 @@ package net.bytebuddy.description.type;
 import java.lang.reflect.Type;
 import java.util.List;
 
-public class TypeListGenericForLoadedTypesTest extends AbstractGenericTypeListTest<Type> {
+public class TypeListGenericForLoadedTypesTest extends AbstractTypeListGenericTest<Type> {
 
     @Override
     protected Type getFirst() throws Exception {
