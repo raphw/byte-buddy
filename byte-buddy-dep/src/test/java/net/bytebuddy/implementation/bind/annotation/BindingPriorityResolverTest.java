@@ -16,7 +16,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class BindingPriorityResolverTest {
+public class BindingPriorityResolverTest extends AbstractAnnotationTest<BindingPriority> {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -32,6 +32,10 @@ public class BindingPriorityResolverTest {
 
     @Mock
     private BindingPriority highPriority, lowPriority;
+
+    public BindingPriorityResolverTest() {
+        super(BindingPriority.class);
+    }
 
     @Before
     public void setUp() throws Exception {

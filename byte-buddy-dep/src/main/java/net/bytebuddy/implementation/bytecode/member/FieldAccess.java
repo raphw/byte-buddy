@@ -65,7 +65,9 @@ public enum FieldAccess {
      * @return A stack manipulation for reading the enumeration.
      */
     public static StackManipulation forEnumeration(EnumerationDescription enumerationDescription) {
-        FieldList<?> fieldList = enumerationDescription.getEnumerationType().getDeclaredFields().filter(named(enumerationDescription.getValue()));
+        FieldList<FieldDescription.InDefinedShape> fieldList = enumerationDescription.getEnumerationType()
+                .getDeclaredFields()
+                .filter(named(enumerationDescription.getValue()));
         return fieldList.size() != 1 || !fieldList.getOnly().isStatic() || !fieldList.getOnly().isPublic() || !fieldList.getOnly().isEnum()
                 ? StackManipulation.Illegal.INSTANCE
                 : STATIC.new AccessDispatcher(fieldList.getOnly()).getter();
@@ -201,14 +203,14 @@ public enum FieldAccess {
         /**
          * A description of the accessed field.
          */
-        private final FieldDescription fieldDescription;
+        private final FieldDescription.InDefinedShape fieldDescription;
 
         /**
          * Creates a new access dispatcher.
          *
          * @param fieldDescription A description of the accessed field.
          */
-        protected AccessDispatcher(FieldDescription fieldDescription) {
+        protected AccessDispatcher(FieldDescription.InDefinedShape fieldDescription) {
             this.fieldDescription = fieldDescription;
         }
 
@@ -264,7 +266,7 @@ public enum FieldAccess {
             @Override
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 methodVisitor.visitFieldInsn(getOpcode(),
-                        fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                        fieldDescription.getDeclaringType().getInternalName(),
                         fieldDescription.getInternalName(),
                         fieldDescription.getDescriptor());
                 return resolveSize(fieldDescription.getType().getStackSize());

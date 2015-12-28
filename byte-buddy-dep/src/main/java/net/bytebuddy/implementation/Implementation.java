@@ -415,7 +415,7 @@ public interface Implementation {
          *                   that is put onto the operand stack by this method's returned stack manipulation.
          * @return A description of a field that was defined on the instrumented type which contains the given value.
          */
-        FieldDescription cache(StackManipulation fieldValue, TypeDescription fieldType);
+        FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType);
 
         /**
          * Represents an extractable view of an {@link Implementation.Context} which
@@ -569,7 +569,7 @@ public interface Implementation {
             }
 
             @Override
-            public FieldDescription cache(StackManipulation fieldValue, TypeDescription fieldType) {
+            public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
                 throw new IllegalStateException("Field values caching was disabled: " + fieldType);
             }
 
@@ -688,7 +688,7 @@ public interface Implementation {
             /**
              * A map of already registered field caches to their field representation.
              */
-            private final Map<FieldCacheEntry, FieldDescription> registeredFieldCacheEntries;
+            private final Map<FieldCacheEntry, FieldDescription.InDefinedShape> registeredFieldCacheEntries;
 
             /**
              * A random suffix to append to the names of accessor methods.
@@ -727,7 +727,7 @@ public interface Implementation {
                 registeredSetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
                 accessorMethods = new LinkedList<TypeWriter.MethodPool.Record>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
-                registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription>();
+                registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
                 fieldCacheCanAppendEntries = true;
                 prohibitTypeInitiailzer = false;
@@ -787,9 +787,9 @@ public interface Implementation {
             }
 
             @Override
-            public FieldDescription cache(StackManipulation fieldValue, TypeDescription fieldType) {
+            public FieldDescription.InDefinedShape cache(StackManipulation fieldValue, TypeDescription fieldType) {
                 FieldCacheEntry fieldCacheEntry = new FieldCacheEntry(fieldValue, fieldType);
-                FieldDescription fieldCache = registeredFieldCacheEntries.get(fieldCacheEntry);
+                FieldDescription.InDefinedShape fieldCache = registeredFieldCacheEntries.get(fieldCacheEntry);
                 if (fieldCache != null) {
                     return fieldCache;
                 }
@@ -805,7 +805,7 @@ public interface Implementation {
             public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
                 fieldCacheCanAppendEntries = false;
                 InstrumentedType.TypeInitializer typeInitializer = this.typeInitializer;
-                for (Map.Entry<FieldCacheEntry, FieldDescription> entry : registeredFieldCacheEntries.entrySet()) {
+                for (Map.Entry<FieldCacheEntry, FieldDescription.InDefinedShape> entry : registeredFieldCacheEntries.entrySet()) {
                     classVisitor.visitField(entry.getValue().getModifiers(),
                             entry.getValue().getInternalName(),
                             entry.getValue().getDescriptor(),

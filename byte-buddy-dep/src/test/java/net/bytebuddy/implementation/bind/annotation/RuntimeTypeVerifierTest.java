@@ -19,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
-public class RuntimeTypeVerifierTest {
+public class RuntimeTypeVerifierTest extends AbstractAnnotationTest<RuntimeType> {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -29,6 +29,10 @@ public class RuntimeTypeVerifierTest {
 
     @Mock
     private RuntimeType runtimeType;
+
+    public RuntimeTypeVerifierTest() {
+        super(RuntimeType.class);
+    }
 
     @Before
     public void setUp() throws Exception {
