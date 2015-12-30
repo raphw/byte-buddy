@@ -11,9 +11,7 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Implementations represent a list of type descriptions.
@@ -189,6 +187,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
         Generic asRawTypes();
 
+        Map<String, Generic> asSymbols(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
+
         /**
          * Transforms the generic types by applying the supplied visitor to each of them.
          *
@@ -221,6 +221,15 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                     visited.add(typeDescription.accept(visitor));
                 }
                 return new Explicit(visited);
+            }
+
+            @Override
+            public Map<String, Generic> asSymbols(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                Map<String, Generic> symbols = new LinkedHashMap<String, Generic>();
+                for (TypeDescription.Generic typeVariable : this) {
+                    symbols.put(typeVariable.getSymbol(), typeVariable.getUpperBounds().accept(visitor));
+                }
+                return symbols;
             }
 
             @Override
@@ -362,6 +371,10 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return new ForDetachedTypes(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
             }
 
+            public static Generic attach(TypeDescription typeDescription, Map<String, ? extends TypeList.Generic> detachedTypeVariables) {
+                return new OfTypeVariables(typeDescription, detachedTypeVariables, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
+            }
+
             /**
              * Creates a list of types that are attached to the provided field.
              *
@@ -382,6 +395,10 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
              */
             public static Generic attach(MethodDescription methodDescription, List<? extends TypeDescription.Generic> detachedTypes) {
                 return new ForDetachedTypes(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(methodDescription));
+            }
+
+            public static Generic attach(MethodDescription methodDescription, Map<String, ? extends TypeList.Generic> detachedTypeVariables) {
+                return new OfTypeVariables(methodDescription, detachedTypeVariables, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(methodDescription));
             }
 
             /**
@@ -405,133 +422,67 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return detachedTypes.size();
             }
 
-            /**
-             * A list of type variables that are attached on reception.
-             */
-            public static class OfTypeVariable extends Generic.AbstractBase {
+            protected static class OfTypeVariables extends Generic.AbstractBase {
 
-                /**
-                 * The type variable source of the represented type variables.
-                 */
                 private final TypeVariableSource typeVariableSource;
 
-                /**
-                 * The visitor to use for attaching the represented types.
-                 */
+                private final List<Map.Entry<String, ? extends Generic>> typeVariables;
+
                 private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
-                /**
-                 * A list of detached types that are attached on reception.
-                 */
-                private final List<? extends TypeDescription.Generic> detachedTypes;
+                public OfTypeVariables(TypeVariableSource typeVariableSource,
+                                       Map<String, ? extends Generic> typeVariables,
+                                       TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                    this(typeVariableSource, new ArrayList<Map.Entry<String, ? extends Generic>>(typeVariables.entrySet()), visitor);
+                }
 
-                /**
-                 * Creates a new list of attached type variables.
-                 *
-                 * @param typeVariableSource The type variable source of the represented type variables.
-                 * @param visitor            The visitor to use for attaching the represented types.
-                 * @param detachedTypes      A list of detached types that are attached on reception.
-                 */
-                protected OfTypeVariable(TypeVariableSource typeVariableSource,
-                                         TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor,
-                                         List<? extends TypeDescription.Generic> detachedTypes) {
+                public OfTypeVariables(TypeVariableSource typeVariableSource,
+                                       List<Map.Entry<String, ? extends Generic>> typeVariables,
+                                       TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                     this.typeVariableSource = typeVariableSource;
+                    this.typeVariables = typeVariables;
                     this.visitor = visitor;
-                    this.detachedTypes = detachedTypes;
-                }
-
-                /**
-                 * Creates a list of detached type variables that are attached on reception.
-                 *
-                 * @param typeDescription The type of which the type variables are defined.
-                 * @param detachedTypes   The detached type variable bounds this list represents.
-                 * @return A list of attached type variables.
-                 */
-                public static Generic attach(TypeDescription typeDescription, List<? extends TypeDescription.Generic> detachedTypes) {
-                    return new OfTypeVariable(typeDescription, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription), detachedTypes);
-                }
-
-                /**
-                 * Creates a list of detached type variables that are attached on reception.
-                 *
-                 * @param methodDescription The method by which the type variables are defined.
-                 * @param detachedTypes     The detached type variable bounds this list represents.
-                 * @return A list of attached type variables.
-                 */
-                public static Generic attach(MethodDescription methodDescription, List<? extends TypeDescription.Generic> detachedTypes) {
-                    return new OfTypeVariable(methodDescription, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(methodDescription), detachedTypes);
                 }
 
                 @Override
                 public TypeDescription.Generic get(int index) {
-                    return ForDetachedTypes.OfTypeVariable.LazyTypeVariable.of(detachedTypes.get(index), typeVariableSource, visitor);
+                    return new DetachedTypeVariable(typeVariableSource, typeVariables.get(index), visitor);
                 }
 
                 @Override
                 public int size() {
-                    return detachedTypes.size();
+                    return typeVariables.size();
                 }
 
-                /**
-                 * A lazy type variable.
-                 */
-                protected static class LazyTypeVariable extends TypeDescription.Generic.OfTypeVariable {
+                protected static class DetachedTypeVariable extends TypeDescription.Generic.OfTypeVariable {
 
-                    /**
-                     * The represented symbol of the represented type variable.
-                     */
-                    private final String symbol;
-
-                    /**
-                     * The type variable source of this type variable.
-                     */
                     private final TypeVariableSource typeVariableSource;
 
-                    /**
-                     * The visitor to use for attaching the represented type variable bounds.
-                     */
-                    private final Visitor<? extends TypeDescription.Generic> visitor;
+                    private final String symbol;
 
-                    /**
-                     * The detached bounds of this type variable.
-                     */
-                    private final List<? extends TypeDescription.Generic> detachedBounds;
+                    private final Generic upperBounds;
 
-                    /**
-                     * Creates a new lazy type variable.
-                     *
-                     * @param symbol             The represented symbol of the represented type variable.
-                     * @param typeVariableSource The type variable source of this type variable.
-                     * @param detachedBounds     The detached bounds of this type variable.
-                     * @param visitor            The visitor to use for attaching the represented type variable bounds.
-                     */
-                    protected LazyTypeVariable(String symbol,
-                                               TypeVariableSource typeVariableSource,
-                                               List<? extends TypeDescription.Generic> detachedBounds,
-                                               Visitor<? extends TypeDescription.Generic> visitor) {
-                        this.symbol = symbol;
-                        this.typeVariableSource = typeVariableSource;
-                        this.visitor = visitor;
-                        this.detachedBounds = detachedBounds;
+                    private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
+
+                    protected DetachedTypeVariable(TypeVariableSource typeVariableSource,
+                                                Map.Entry<String, ? extends Generic> typeVariable,
+                                                Visitor<? extends TypeDescription.Generic> visitor) {
+                        this(typeVariableSource, typeVariable.getKey(), typeVariable.getValue(), visitor);
                     }
 
-                    /**
-                     * Creates a lazy type variable representation.
-                     *
-                     * @param detachedVariable   The detached variable to represent.
-                     * @param typeVariableSource The type variable source of the type variable.
-                     * @param visitor            The visitor to be used for attaching the type variable's bounds.
-                     * @return A representation of the type variable with attached bounds.
-                     */
-                    public static TypeDescription.Generic of(TypeDescription.Generic detachedVariable,
-                                                             TypeVariableSource typeVariableSource,
-                                                             Visitor<? extends TypeDescription.Generic> visitor) {
-                        return new ForDetachedTypes.OfTypeVariable.LazyTypeVariable(detachedVariable.getSymbol(), typeVariableSource, detachedVariable.getUpperBounds(), visitor);
+                    protected DetachedTypeVariable(TypeVariableSource typeVariableSource,
+                                                String symbol,
+                                                Generic upperBounds,
+                                                Visitor<? extends TypeDescription.Generic> visitor) {
+                        this.typeVariableSource = typeVariableSource;
+                        this.symbol = symbol;
+                        this.upperBounds = upperBounds;
+                        this.visitor = visitor;
                     }
 
                     @Override
                     public Generic getUpperBounds() {
-                        return new ForDetachedTypes(detachedBounds, visitor);
+                        return upperBounds.accept(visitor);
                     }
 
                     @Override
@@ -802,6 +753,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             @Override
             public Generic accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                 return new Generic.Empty();
+            }
+
+            @Override
+            public Map<String, Generic> asSymbols(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                return Collections.emptyMap();
             }
 
             @Override

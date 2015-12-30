@@ -10,6 +10,7 @@ import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
@@ -430,7 +431,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withMethod(new MethodDescription.Token(FOO,
                     MODIFIERS,
-                    Collections.<TypeDescription.Generic>emptyList(),
+                    Collections.<String, TypeList.Generic>emptyMap(),
                     TypeDescription.Generic.OBJECT,
                     Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT,
                             Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, QUX).make()))),

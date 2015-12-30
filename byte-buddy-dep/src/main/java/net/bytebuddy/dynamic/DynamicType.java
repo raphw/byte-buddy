@@ -1709,7 +1709,7 @@ public interface DynamicType {
                                                                          ModifierContributor.ForMethod... modifier) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(name,
                         ModifierContributor.Resolver.of(modifier).resolve(),
-                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<String, TypeList.Generic>emptyMap(),
                         returnType.asGenericType(),
                         new ParameterDescription.Token.TypeList(parameterTypes),
                         Collections.<TypeDescription.Generic>emptyList(),
@@ -1751,7 +1751,7 @@ public interface DynamicType {
                                                                          int modifiers) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(name,
                         modifiers,
-                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<String, TypeList.Generic>emptyMap(),
                         returnType.asGenericType(),
                         new ParameterDescription.Token.TypeList(parameterTypes),
                         Collections.<TypeDescription.Generic>emptyList(),
@@ -1788,7 +1788,7 @@ public interface DynamicType {
             public ExceptionDeclarableMethodInterception<S> defineConstructor(List<? extends TypeDefinition> parameterTypes, int modifiers) {
                 return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
                         modifiers,
-                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<String, TypeList.Generic>emptyMap(),
                         TypeDescription.Generic.VOID,
                         new ParameterDescription.Token.TypeList(parameterTypes),
                         Collections.<TypeDescription.Generic>emptyList(),
@@ -2524,7 +2524,7 @@ public interface DynamicType {
                 public MatchedMethodInterception<S> throwing(Collection<? extends TypeDescription> exceptionTypes) {
                     return materialize(new MethodDescription.Token(token.getName(),
                             token.getModifiers(),
-                            Collections.<TypeDescription.Generic>emptyList(),
+                            Collections.<String, TypeList.Generic>emptyMap(),
                             token.getReturnType(),
                             token.getParameterTokens(),
                             new TypeList.Generic.Explicit(toList(exceptionTypes)),

@@ -28,8 +28,9 @@ public class TypeDescriptionGenericVisitorForAttachmentTest {
         assertThat(attached.getParameters().get(0), is(target.getTypeVariables().filter(named("T")).getOnly()));
         assertThat(attached.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(attached.getParameters().get(1).asErasure().represents(String.class), is(true));
-        assertThat(attached.getParameters().get(2).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(attached.getParameters().get(2).asErasure().represents(Object.class), is(true));
+        assertThat(attached.getParameters().get(2).getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(attached.getParameters().get(2).getSymbol(), is("U"));
+        assertThat(attached.getParameters().get(2), is(target.getTypeVariables().filter(named("U")).getOnly()));
         assertThat(attached.getParameters().get(3).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(attached.getParameters().get(3).asErasure().represents(List.class), is(true));
         assertThat(attached.getParameters().get(3).getParameters().size(), is(1));
@@ -40,6 +41,13 @@ public class TypeDescriptionGenericVisitorForAttachmentTest {
         assertThat(attached.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(attached.getOwnerType().getParameters().getOnly().getSymbol(), is("T"));
         assertThat(attached.getOwnerType().getParameters().getOnly(), is(target.getTypeVariables().filter(named("T")).getOnly()));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIllegalAttachment() throws Exception {
+        TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
+        TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
+        detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(TypeDescription.Generic.OBJECT, TypeDescription.OBJECT));
     }
 
     @Test
@@ -57,7 +65,7 @@ public class TypeDescriptionGenericVisitorForAttachmentTest {
     }
 
     @SuppressWarnings("unused")
-    public abstract static class Bar<A, T, S, V extends Number> {
+    public abstract static class Bar<U, T, S, V extends Number> {
         /* empty */
     }
 }

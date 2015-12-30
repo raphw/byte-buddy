@@ -7,6 +7,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
@@ -214,7 +215,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                 modifiers,
                                 classFileVersion)),
                                 modifiers,
-                                Collections.<TypeDescription.Generic>emptyList(),
+                                Collections.<String, TypeList.Generic>emptyMap(),
                                 superType,
                                 interfaceTypes,
                                 fieldTokens,

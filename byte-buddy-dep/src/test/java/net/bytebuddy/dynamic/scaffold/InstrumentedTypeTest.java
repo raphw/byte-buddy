@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -42,7 +43,7 @@ public class InstrumentedTypeTest {
     protected static InstrumentedType makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
                 Opcodes.ACC_PUBLIC,
-                Collections.<TypeDescription.Generic>emptyList(),
+                Collections.<String, TypeList.Generic>emptyMap(),
                 TypeDescription.Generic.OBJECT,
                 Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)),
                 Collections.<FieldDescription.Token>emptyList(),

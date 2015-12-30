@@ -498,7 +498,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onWildcard(Generic wildcard) {
-                    throw new IllegalArgumentException("Cannot erase a wildcard type");
+                    throw new IllegalArgumentException("Cannot erase a wildcard type: " + wildcard);
                 }
 
                 @Override
@@ -565,10 +565,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                     Generic ownerType = parameterizedType.getOwnerType();
                     return new OfParameterizedType.Latent(parameterizedType.asErasure(),
-                            parameters,
                             ownerType == null
                                     ? UNDEFINED
-                                    : ownerType.accept(this));
+                                    : ownerType.accept(this),
+                            parameters);
                 }
 
                 @Override
@@ -803,10 +803,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         parameters.add(parameter.accept(this));
                     }
                     return new OfParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
-                            parameters,
                             ownerType == null
                                     ? UNDEFINED
-                                    : ownerType.accept(this));
+                                    : ownerType.accept(this),
+                            parameters);
                 }
 
                 @Override
@@ -908,11 +908,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
-                    public Generic onTypeVariable(Generic genericTypeDescription) {
-                        Generic typeVariable = typeVariableSource.findVariable(genericTypeDescription.getSymbol());
-                        return typeVariable == null
-                                ? genericTypeDescription.asRawType()
-                                : typeVariable;
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        Generic attachedVariable = typeVariableSource.findVariable(typeVariable.getSymbol());
+                        if (attachedVariable == null) {
+                            throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
+                        } else {
+                            return attachedVariable;
+                        }
                     }
 
                     @Override
@@ -1932,14 +1934,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final TypeDescription rawType;
 
                 /**
-                 * The parameters of this parameterized type.
-                 */
-                private final List<? extends Generic> parameters;
-
-                /**
                  * This parameterized type's owner type or {@code null} if no owner type exists.
                  */
                 private final Generic ownerType;
+
+                /**
+                 * The parameters of this parameterized type.
+                 */
+                private final List<? extends Generic> parameters;
 
                 /**
                  * Creates a description of a latent parameterized type.
@@ -1948,10 +1950,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param parameters The parameters of this parameterized type.
                  * @param ownerType  This parameterized type's owner type or {@code null} if no owner type exists.
                  */
-                public Latent(TypeDescription rawType, List<? extends Generic> parameters, Generic ownerType) {
+                public Latent(TypeDescription rawType, Generic ownerType, List<? extends Generic> parameters) {
                     this.rawType = rawType;
-                    this.parameters = parameters;
                     this.ownerType = ownerType;
+                    this.parameters = parameters;
                 }
 
                 @Override
@@ -1960,13 +1962,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public TypeList.Generic getParameters() {
-                    return new TypeList.Generic.Explicit(parameters);
+                public Generic getOwnerType() {
+                    return ownerType;
                 }
 
                 @Override
-                public Generic getOwnerType() {
-                    return ownerType;
+                public TypeList.Generic getParameters() {
+                    return new TypeList.Generic.Explicit(parameters);
                 }
             }
         }
@@ -2748,6 +2750,101 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         return new ForLoadedType(erasure);
                     }
                 }
+            }
+        }
+
+        class Builder {
+
+            private static final java.lang.reflect.Type UNDEFINED = null;
+
+            private final Generic typeDescription;
+
+            protected Builder(Generic typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            public static Builder rawType(Class<?> type) {
+                return rawType(new ForLoadedType(type));
+            }
+
+            public static Builder rawType(TypeDescription typeDescription) {
+                return new Builder(typeDescription.asGenericType());
+            }
+
+            public static Generic unboundWildcard() {
+                return OfWildcardType.Latent.unbounded();
+            }
+
+            public static Generic typeVariable(String symbol) {
+                return new OfTypeVariable.Symbolic(symbol);
+            }
+
+            public static Builder parameterizedType(Class<?> rawType, java.lang.reflect.Type... parameter) {
+                return parameterizedType(rawType, Arrays.asList(parameter));
+            }
+
+            public static Builder parameterizedType(Class<?> rawType, List<? extends java.lang.reflect.Type> parameters) {
+                return parameterizedType(rawType, UNDEFINED, parameters);
+            }
+
+            public static Builder parameterizedType(Class<?> rawType, java.lang.reflect.Type ownerType, List<? extends java.lang.reflect.Type> parameters) {
+                return parameterizedType(new ForLoadedType(rawType),
+                        ownerType == null
+                                ? null
+                                : Sort.describe(ownerType),
+                        new TypeList.Generic.ForLoadedTypes(parameters));
+            }
+
+            public static Builder parameterizedType(TypeDescription rawType, TypeDefinition... parameter) {
+                return parameterizedType(rawType, Arrays.asList(parameter));
+            }
+
+            public static Builder parameterizedType(TypeDescription rawType, List<? extends TypeDefinition> parameters) {
+                return parameterizedType(rawType, Generic.UNDEFINED, parameters);
+            }
+
+            public static Builder parameterizedType(TypeDescription rawType, Generic ownerType, List<? extends TypeDefinition> parameters) {
+                return new Builder(new OfParameterizedType.Latent(rawType, ownerType, new TypeList.Generic.Explicit(parameters)));
+            }
+
+            public Generic asWildcardUpperBound() {
+                return OfWildcardType.Latent.boundedAbove(typeDescription);
+            }
+
+            public Generic asWildcardLowerBound() {
+                return OfWildcardType.Latent.boundedBelow(typeDescription);
+            }
+
+            public Builder asArray() {
+                return asArray(1);
+            }
+
+            public Builder asArray(int arity) {
+                return new Builder(OfGenericArray.Latent.of(typeDescription, arity));
+            }
+
+            public Generic asType() {
+                return typeDescription;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Builder builder = (Builder) other;
+                return typeDescription.equals(builder.typeDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypeDescription.Generic.Builder{" +
+                        "typeDescription=" + typeDescription +
+                        '}';
             }
         }
     }

@@ -22,10 +22,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -572,7 +569,7 @@ public interface MethodDescription extends TypeVariableSource,
             TypeDescription.Generic.Visitor<TypeDescription.Generic> visitor = new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(targetTypeMatcher);
             return new Token(getInternalName(),
                     getModifiers(),
-                    getTypeVariables().accept(visitor),
+                    getTypeVariables().asSymbols(visitor),
                     getReturnType().accept(visitor),
                     getParameters().asTokenList(targetTypeMatcher),
                     getExceptionTypes().accept(visitor),
@@ -922,10 +919,7 @@ public interface MethodDescription extends TypeVariableSource,
          */
         private final int modifiers;
 
-        /**
-         * The type variables of the described method.
-         */
-        private final List<? extends TypeDescription.Generic> typeVariables;
+        Map<String, ? extends TypeList.Generic> typeVariables;
 
         /**
          * The return type of this method.
@@ -986,7 +980,7 @@ public interface MethodDescription extends TypeVariableSource,
         public Latent(TypeDescription declaringType,
                       String internalName,
                       int modifiers,
-                      List<? extends TypeDescription.Generic> typeVariables,
+                      Map<String, ? extends TypeList.Generic> typeVariables,
                       TypeDescription.Generic returnType,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends TypeDescription.Generic> exceptionTypes,
@@ -1005,7 +999,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return TypeList.Generic.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+            return TypeList.Generic.ForDetachedTypes.attach(this, typeVariables);
         }
 
         @Override
@@ -1224,10 +1218,10 @@ public interface MethodDescription extends TypeVariableSource,
                 }
                 TypeDescription.Generic ownerType = parameterizedType.getOwnerType();
                 return new TypeDescription.Generic.OfParameterizedType.Latent(parameterizedType.asErasure(),
-                        parameters,
                         ownerType == null
                                 ? TypeDescription.Generic.UNDEFINED
-                                : ownerType.accept(this));
+                                : ownerType.accept(this),
+                        parameters);
             }
 
             @Override
@@ -1321,10 +1315,7 @@ public interface MethodDescription extends TypeVariableSource,
          */
         private final int modifiers;
 
-        /**
-         * The type variables of the the represented method.
-         */
-        private final List<TypeDescription.Generic> typeVariables;
+        private final Map<String, ? extends TypeList.Generic> typeVariables;
 
         /**
          * The return type of the represented method.
@@ -1362,7 +1353,7 @@ public interface MethodDescription extends TypeVariableSource,
         public Token(String name, int modifiers, TypeDescription.Generic returnType, List<? extends TypeDescription.Generic> parameterTypes) {
             this(name,
                     modifiers,
-                    Collections.<TypeDescription.Generic>emptyList(),
+                    Collections.<String, TypeList.Generic>emptyMap(),
                     returnType,
                     new ParameterDescription.Token.TypeList(parameterTypes),
                     Collections.<TypeDescription.Generic>emptyList(),
@@ -1384,7 +1375,7 @@ public interface MethodDescription extends TypeVariableSource,
          */
         public Token(String name,
                      int modifiers,
-                     List<TypeDescription.Generic> typeVariables,
+                     Map<String, ? extends TypeList.Generic> typeVariables,
                      TypeDescription.Generic returnType,
                      List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends TypeDescription.Generic> exceptionTypes,
@@ -1418,13 +1409,8 @@ public interface MethodDescription extends TypeVariableSource,
             return modifiers;
         }
 
-        /**
-         * Returns the type variables of the the represented method.
-         *
-         * @return The type variables of the the represented method.
-         */
-        public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.Explicit(typeVariables);
+        public Map<String, TypeList.Generic> getTypeVariables() {
+            return new LinkedHashMap<String, TypeList.Generic>(typeVariables);
         }
 
         /**
@@ -1474,9 +1460,13 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+            Map<String, TypeList.Generic> typeVariables = new HashMap<String, TypeList.Generic>();
+            for (Map.Entry<String, ? extends TypeList.Generic> typeVariable : getTypeVariables().entrySet()) {
+                typeVariables.put(typeVariable.getKey(), typeVariable.getValue().accept(visitor));
+            }
             return new Token(getName(),
                     getModifiers(),
-                    getTypeVariables().accept(visitor),
+                    typeVariables,
                     getReturnType().accept(visitor),
                     getParameterTokens().accept(visitor),
                     getExceptionTypes().accept(visitor),

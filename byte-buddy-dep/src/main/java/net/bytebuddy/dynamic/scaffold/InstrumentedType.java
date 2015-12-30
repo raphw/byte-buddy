@@ -18,6 +18,7 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
@@ -213,10 +214,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         private final int modifiers;
 
-        /**
-         * A list of type variables of the instrumented type.
-         */
-        private final List<? extends Generic> typeVariables;
+        private final Map<String, ? extends TypeList.Generic> typeVariables;
 
         /**
          * The generic super type of the instrumented type.
@@ -304,7 +302,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         public Default(String name,
                        int modifiers,
-                       List<? extends Generic> typeVariables,
+                       Map<String, ? extends TypeList.Generic> typeVariables,
                        Generic superType,
                        List<? extends Generic> interfaceTypes,
                        List<? extends FieldDescription.Token> fieldTokens,
@@ -354,7 +352,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         public Default(String name,
                        int modifiers,
-                       List<? extends Generic> typeVariables,
+                       Map<String, ? extends TypeList.Generic> typeVariables,
                        Generic superType,
                        List<? extends Generic> interfaceTypes,
                        List<? extends FieldDescription.Token> fieldTokens,
@@ -526,7 +524,7 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return TypeList.Generic.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+            return TypeList.Generic.ForDetachedTypes.attach(this, typeVariables);
         }
 
         @Override

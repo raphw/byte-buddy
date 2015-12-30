@@ -10,6 +10,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -197,7 +198,7 @@ public class MethodCallProxy implements AuxiliaryType {
             MethodDescription callMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Callable.class),
                     "call",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
-                    Collections.<TypeDescription.Generic>emptyList(),
+                    Collections.<String, TypeList.Generic>emptyMap(),
                     TypeDescription.Generic.OBJECT,
                     Collections.<ParameterDescription.Token>emptyList(),
                     Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
@@ -207,7 +208,7 @@ public class MethodCallProxy implements AuxiliaryType {
             MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
                     "run",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
-                    Collections.<TypeDescription.Generic>emptyList(),
+                    Collections.<String, TypeList.Generic>emptyMap(),
                     TypeDescription.Generic.VOID,
                     Collections.<ParameterDescription.Token>emptyList(),
                     Collections.<TypeDescription.Generic>emptyList(),

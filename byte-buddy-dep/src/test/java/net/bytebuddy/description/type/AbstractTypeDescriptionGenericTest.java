@@ -62,7 +62,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.hashCode(),
                 is(TypeDefinition.Sort.describe(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType()).hashCode()));
         assertThat(typeDescription, is(TypeDefinition.Sort.describe(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType())));
-        assertThat(typeDescription, CoreMatchers.not(TypeDefinition.Sort.describe(GenericArrayType.class.getDeclaredField(FOO).getType())));
+        assertThat(typeDescription, CoreMatchers.not(TypeDefinition.Sort.describe(SimpleGenericArrayType.class.getDeclaredField(FOO).getType())));
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
         assertThat(typeDescription.getParameters().size(), is(1));
@@ -439,7 +439,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test
     public void testGenericArrayType() throws Exception {
-        TypeDescription.Generic typeDescription = describe(GenericArrayType.class.getDeclaredField(FOO));
+        TypeDescription.Generic typeDescription = describe(SimpleGenericArrayType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getDeclaredFields().size(), is(0));
@@ -448,25 +448,25 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getOwnerType(), nullValue(TypeDescription.Generic.class));
         assertThat(typeDescription.getSuperType(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
-        assertThat(typeDescription.getSourceCodeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(typeDescription.getTypeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
-        assertThat(typeDescription.toString(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getSourceCodeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getTypeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.toString(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.hashCode(),
-                is(TypeDefinition.Sort.describe(GenericArrayType.class.getDeclaredField(FOO).getGenericType()).hashCode()));
-        assertThat(typeDescription, is(TypeDefinition.Sort.describe(GenericArrayType.class.getDeclaredField(FOO).getGenericType())));
-        assertThat(typeDescription, CoreMatchers.not(TypeDefinition.Sort.describe(GenericArrayType.class.getDeclaredField(FOO).getType())));
+                is(TypeDefinition.Sort.describe(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType()).hashCode()));
+        assertThat(typeDescription, is(TypeDefinition.Sort.describe(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType())));
+        assertThat(typeDescription, CoreMatchers.not(TypeDefinition.Sort.describe(SimpleGenericArrayType.class.getDeclaredField(FOO).getType())));
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
         assertThat(typeDescription.getComponentType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getComponentType().getParameters().size(), is(1));
         assertThat(typeDescription.getComponentType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(typeDescription.getComponentType().getParameters().getOnly().asErasure().represents(String.class), is(true));
-        assertThat(typeDescription.getTypeName(), is(GenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
+        assertThat(typeDescription.getTypeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
     }
 
     @Test
     public void testGenericArrayTypeIterator() throws Exception {
-        TypeDescription.Generic typeDescription = describe(GenericArrayType.class.getDeclaredField(FOO));
+        TypeDescription.Generic typeDescription = describe(SimpleGenericArrayType.class.getDeclaredField(FOO));
         Iterator<TypeDefinition> iterator = typeDescription.iterator();
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
@@ -477,22 +477,22 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoVariableSource() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getVariableSource();
+        describe(SimpleGenericArrayType.class.getDeclaredField(FOO)).getVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoSymbol() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getSymbol();
+        describe(SimpleGenericArrayType.class.getDeclaredField(FOO)).getSymbol();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoUpperBounds() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getUpperBounds();
+        describe(SimpleGenericArrayType.class.getDeclaredField(FOO)).getUpperBounds();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoLowerBounds() throws Exception {
-        describe(GenericArrayType.class.getDeclaredField(FOO)).getLowerBounds();
+        describe(SimpleGenericArrayType.class.getDeclaredField(FOO)).getLowerBounds();
     }
 
     @Test
@@ -1213,7 +1213,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @SuppressWarnings("unused")
-    public static class GenericArrayType {
+    public static class SimpleGenericArrayType {
 
         List<String>[] foo;
     }

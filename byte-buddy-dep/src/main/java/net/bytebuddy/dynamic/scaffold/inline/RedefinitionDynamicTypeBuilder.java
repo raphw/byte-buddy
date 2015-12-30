@@ -207,7 +207,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy
                         .name(new NamingStrategy.UnnamedType.Default(originalType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        originalType.getTypeVariables().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(is(originalType))),
+                        originalType.getTypeVariables().asSymbols(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(is(originalType))),
                         originalType.getSuperType(),
                         interfaceTypes,
                         fieldTokens,

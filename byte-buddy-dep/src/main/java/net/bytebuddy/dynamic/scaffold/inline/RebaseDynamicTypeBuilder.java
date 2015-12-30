@@ -220,7 +220,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy
                         .UnnamedType.Default(originalType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
                         modifiers,
-                        originalType.getTypeVariables().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(is(originalType))),
+                        originalType.getTypeVariables().asSymbols(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(is(originalType))),
                         originalType.getSuperType(),
                         interfaceTypes,
                         fieldTokens,
