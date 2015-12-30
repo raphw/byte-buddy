@@ -1,7 +1,7 @@
 package net.bytebuddy.description.modifier;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.Collection;
 
 /**
  * An element that describes a type modifier as described in the
@@ -70,14 +70,18 @@ public interface ModifierContributor {
 
     class Resolver<T extends ModifierContributor> {
 
-        private final List<T> modifierContributors;
+        private final Collection<? extends T> modifierContributors;
 
-        protected Resolver(List<T> modifierContributors) {
+        protected Resolver(Collection<? extends T> modifierContributors) {
             this.modifierContributors = modifierContributors;
         }
 
         public static <S extends ModifierContributor> Resolver<S> of(S... modifierContributor) {
-            return new Resolver<S>(Arrays.asList(modifierContributor));
+            return of(Arrays.asList(modifierContributor));
+        }
+
+        public static <S extends ModifierContributor> Resolver<S> of(Collection<? extends S> modifierContributors) {
+            return new Resolver<S>(modifierContributors);
         }
 
         public int resolve() {
@@ -86,6 +90,24 @@ public interface ModifierContributor {
                 modifiers = (modifiers & ~modifierContributor.getRange()) | modifierContributor.getMask();
             }
             return modifiers;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && modifierContributors.equals(((Resolver<?>) other).modifierContributors);
+        }
+
+        @Override
+        public int hashCode() {
+            return modifierContributors.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "ModifierContributor.Resolver{" +
+                    "modifierContributors=" + modifierContributors +
+                    '}';
         }
     }
 }
