@@ -146,6 +146,18 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
         assertThat(method.invoke(instance), is((Object) FOO));
     }
 
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testInheritedDefaultMethod() throws Exception {
+        DynamicType.Loaded<?> loaded = implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
+                SuperMethodCall.INSTANCE,
+                getClass().getClassLoader(),
+                isMethod().and(not(isDeclaredBy(Object.class))));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        Method method = loaded.getLoaded().getDeclaredMethod(FOO);
+        Object instance = loaded.getLoaded().newInstance();
+        assertThat(method.invoke(instance), is((Object) FOO));
+    }
 
     @Test(expected = IllegalStateException.class)
     @JavaVersionRule.Enforce(8)
@@ -155,16 +167,6 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
                 getClass().getClassLoader(),
                 not(isDeclaredBy(Object.class)),
                 Class.forName(SINGLE_DEFAULT_METHOD), Class.forName(CONFLICTING_INTERFACE));
-    }
-
-
-    @Test(expected = IllegalStateException.class)
-    @JavaVersionRule.Enforce(8)
-    public void testNonDeclaredDefaultMethodThrowsException() throws Exception {
-        implement(Class.forName(SINGLE_DEFAULT_METHOD_CLASS),
-                SuperMethodCall.INSTANCE,
-                getClass().getClassLoader(),
-                isMethod().and(not(isDeclaredBy(Object.class))));
     }
 
     @Test

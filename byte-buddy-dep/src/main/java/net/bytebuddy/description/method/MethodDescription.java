@@ -404,7 +404,7 @@ public interface MethodDescription extends TypeVariableSource,
         public boolean isSpecializableFor(TypeDescription targetType) {
             if (isStatic()) { // Static private methods are never specializable, check static property first
                 return false;
-            } else if (isPrivate() || isConstructor() || isDefaultMethod()) {
+            } else if (isPrivate() || isConstructor()) {
                 return getDeclaringType().equals(targetType);
             } else {
                 return !isAbstract() && getDeclaringType().asErasure().isAssignableFrom(targetType);
