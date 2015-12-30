@@ -13,6 +13,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
@@ -20,8 +21,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.
@@ -515,7 +514,7 @@ public interface MethodRebaseResolver {
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, join(methodDescription.getParameters().asTypeList().asErasures(), placeholderType));
+                    return new ParameterList.Explicit.ForTypes(this, CompoundList.of(methodDescription.getParameters().asTypeList().asErasures(), placeholderType));
                 }
 
                 @Override

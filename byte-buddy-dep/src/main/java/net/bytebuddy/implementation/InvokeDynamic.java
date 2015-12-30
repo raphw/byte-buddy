@@ -19,6 +19,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
@@ -32,8 +33,6 @@ import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * An implementation that applies a
@@ -112,7 +111,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Method method, Object... rawArgument) {
-        return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), rawArgument);
+        return bootstrap(new MethodDescription.ForLoadedMethod(method), rawArgument);
     }
 
     /**
@@ -132,7 +131,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Method method, List<?> rawArguments) {
-        return bootstrap(new MethodDescription.ForLoadedMethod(nonNull(method)), rawArguments);
+        return bootstrap(new MethodDescription.ForLoadedMethod(method), rawArguments);
     }
 
     /**
@@ -151,7 +150,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Constructor<?> constructor, Object... rawArgument) {
-        return bootstrap(new MethodDescription.ForLoadedConstructor(nonNull(constructor)), rawArgument);
+        return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), rawArgument);
     }
 
     /**
@@ -170,7 +169,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * instrumented method are passed to the bootstrapped method unless explicit parameters are specified.
      */
     public static WithImplicitTarget bootstrap(Constructor<?> constructor, List<?> rawArguments) {
-        return bootstrap(new MethodDescription.ForLoadedConstructor(nonNull(constructor)), rawArguments);
+        return bootstrap(new MethodDescription.ForLoadedConstructor(constructor), rawArguments);
     }
 
     /**
@@ -413,7 +412,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withValue(Object... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (Object aValue : value) {
-            argumentProviders.add(InvocationProvider.ArgumentProvider.ConstantPoolWrapper.of(nonNull(aValue)));
+            argumentProviders.add(InvocationProvider.ArgumentProvider.ConstantPoolWrapper.of(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -439,7 +438,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 terminationHandler,
                 assigner,
                 typing,
-                nonNull(value));
+                value);
     }
 
     /**
@@ -453,7 +452,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withReference(Object... value) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(value.length);
         for (Object aValue : value) {
-            argumentProviders.add(InvocationProvider.ArgumentProvider.ForStaticField.of(nonNull(aValue)));
+            argumentProviders.add(InvocationProvider.ArgumentProvider.ForStaticField.of(aValue));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -474,7 +473,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withType(TypeDescription... typeDescription) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
         for (TypeDescription aTypeDescription : typeDescription) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForClassConstant(nonNull(aTypeDescription)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForClassConstant(aTypeDescription));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -495,7 +494,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withEnumeration(EnumerationDescription... enumerationDescription) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(enumerationDescription.length);
         for (EnumerationDescription anEnumerationDescription : enumerationDescription) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForEnumerationValue(nonNull(anEnumerationDescription)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForEnumerationValue(anEnumerationDescription));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -516,7 +515,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withInstance(JavaInstance... javaInstance) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(javaInstance.length);
         for (JavaInstance aJavaInstance : javaInstance) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForJavaInstance(nonNull(aJavaInstance)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForJavaInstance(aJavaInstance));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -533,7 +532,7 @@ public class InvokeDynamic implements Implementation.Composable {
      * @return This invoke dynamic implementation where the bootstrapped method is passed the specified arguments.
      */
     public InvokeDynamic withNullValue(Class<?>... type) {
-        return withNullValue(new TypeList.ForLoadedTypes(nonNull(type)).toArray(new TypeDescription[type.length]));
+        return withNullValue(new TypeList.ForLoadedTypes(type).toArray(new TypeDescription[type.length]));
     }
 
     /**
@@ -621,7 +620,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withThis(TypeDescription... typeDescription) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(typeDescription.length);
         for (TypeDescription aTypeDescription : typeDescription) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForThisInstance(nonNull(aTypeDescription)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForThisInstance(aTypeDescription));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -685,7 +684,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withInstanceField(String fieldName, TypeDefinition fieldType) {
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
-                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForInstanceField(nonNull(fieldName), fieldType.asGenericType())),
+                invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForInstanceField(fieldName, fieldType.asGenericType())),
                 terminationHandler,
                 assigner,
                 typing);
@@ -701,7 +700,7 @@ public class InvokeDynamic implements Implementation.Composable {
     public InvokeDynamic withField(String... fieldName) {
         List<InvocationProvider.ArgumentProvider> argumentProviders = new ArrayList<InvocationProvider.ArgumentProvider>(fieldName.length);
         for (String aFieldName : fieldName) {
-            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForExistingField(nonNull(aFieldName)));
+            argumentProviders.add(new InvocationProvider.ArgumentProvider.ForExistingField(aFieldName));
         }
         return new InvokeDynamic(bootstrapMethod,
                 handleArguments,
@@ -724,7 +723,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 handleArguments,
                 invocationProvider,
                 terminationHandler,
-                nonNull(assigner),
+                assigner,
                 typing);
     }
 
@@ -736,7 +735,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 TerminationHandler.ForChainedInvocation.INSTANCE,
                 assigner,
                 typing),
-                nonNull(implementation));
+                implementation);
     }
 
     @Override
@@ -1042,7 +1041,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 public List<TypeDescription> getParameterTypes() {
                     return methodDescription.isStatic()
                             ? methodDescription.getParameters().asTypeList().asErasures()
-                            : new TypeList.Explicit(join(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures()));
+                            : CompoundList.of(methodDescription.getDeclaringType().asErasure(), methodDescription.getParameters().asTypeList().asErasures());
                 }
 
                 @Override
@@ -1109,7 +1108,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     return new Resolved.Simple(MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
                             instrumentedMethod.isStatic()
                                     ? instrumentedMethod.getParameters().asTypeList().asErasures()
-                                    : join(instrumentedMethod.getDeclaringType().asErasure(), instrumentedMethod.getParameters().asTypeList().asErasures()));
+                                    : CompoundList.of(instrumentedMethod.getDeclaringType().asErasure(), instrumentedMethod.getParameters().asTypeList().asErasures()));
                 }
 
                 @Override
@@ -2698,14 +2697,14 @@ public class InvokeDynamic implements Implementation.Composable {
             public InvocationProvider appendArguments(List<ArgumentProvider> argumentProviders) {
                 return new Default(nameProvider,
                         returnTypeProvider,
-                        join(this.argumentProviders, argumentProviders));
+                        CompoundList.of(this.argumentProviders, argumentProviders));
             }
 
             @Override
             public InvocationProvider appendArgument(ArgumentProvider argumentProvider) {
                 return new Default(nameProvider,
                         returnTypeProvider,
-                        join(this.argumentProviders, argumentProvider));
+                        CompoundList.of(this.argumentProviders, argumentProvider));
             }
 
             @Override
@@ -3133,8 +3132,8 @@ public class InvokeDynamic implements Implementation.Composable {
                     handleArguments,
                     invocationProvider,
                     terminationHandler,
-                    nonNull(assigner),
-                    nonNull(typing));
+                    assigner,
+                    typing);
         }
 
         @Override
@@ -3190,7 +3189,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * return type.
          */
         public InvokeDynamic.WithImplicitArguments invoke(Class<?> returnType) {
-            return invoke(new TypeDescription.ForLoadedType(nonNull(returnType)));
+            return invoke(new TypeDescription.ForLoadedType(returnType));
         }
 
         /**
@@ -3204,7 +3203,7 @@ public class InvokeDynamic implements Implementation.Composable {
         public InvokeDynamic.WithImplicitArguments invoke(TypeDescription returnType) {
             return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
+                    invocationProvider.withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(returnType)),
                     terminationHandler,
                     assigner,
                     typing);
@@ -3219,7 +3218,7 @@ public class InvokeDynamic implements Implementation.Composable {
         public InvokeDynamic.WithImplicitArguments invoke(String methodName) {
             return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName))),
+                    invocationProvider.withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(methodName)),
                     terminationHandler,
                     assigner,
                     typing);
@@ -3236,7 +3235,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * return type while being passed the given method name.
          */
         public InvokeDynamic.WithImplicitArguments invoke(String methodName, Class<?> returnType) {
-            return invoke(methodName, new TypeDescription.ForLoadedType(nonNull(returnType)));
+            return invoke(methodName, new TypeDescription.ForLoadedType(returnType));
         }
 
         /**
@@ -3253,8 +3252,8 @@ public class InvokeDynamic implements Implementation.Composable {
             return new WithImplicitArguments(bootstrapMethod,
                     handleArguments,
                     invocationProvider
-                            .withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(nonNull(methodName)))
-                            .withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(nonNull(returnType))),
+                            .withNameProvider(new InvocationProvider.NameProvider.ForExplicitName(methodName))
+                            .withReturnTypeProvider(new InvocationProvider.ReturnTypeProvider.ForExplicitType(returnType)),
                     terminationHandler,
                     assigner,
                     typing);
@@ -3320,7 +3319,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * appended to the arguments of the bootstrapped method.
          */
         public InvokeDynamic as(java.lang.reflect.Type type) {
-            return as(TypeDefinition.Sort.describe(nonNull(type)));
+            return as(TypeDefinition.Sort.describe(type));
         }
 
         /**
@@ -3429,7 +3428,7 @@ public class InvokeDynamic implements Implementation.Composable {
          * appended to the arguments of the bootstrapped method.
          */
         public InvokeDynamic as(Class<?> type) {
-            return as(new TypeDescription.ForLoadedType(nonNull(type)));
+            return as(new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -3442,7 +3441,7 @@ public class InvokeDynamic implements Implementation.Composable {
         public InvokeDynamic as(TypeDescription typeDescription) {
             return new InvokeDynamic(bootstrapMethod,
                     handleArguments,
-                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter(index, nonNull(typeDescription))),
+                    invocationProvider.appendArgument(new InvocationProvider.ArgumentProvider.ForExplicitTypedMethodParameter(index, typeDescription)),
                     terminationHandler,
                     assigner,
                     typing);

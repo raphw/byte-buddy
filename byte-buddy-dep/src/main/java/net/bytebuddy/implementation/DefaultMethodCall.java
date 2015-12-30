@@ -12,8 +12,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
-
 /**
  * This {@link Implementation} invokes a default method for the methods it instruments.
  * A default method is potentially ambiguous if a method of identical signature is defined in several interfaces.
@@ -46,7 +44,7 @@ public class DefaultMethodCall implements Implementation {
      *                              be called.
      */
     protected DefaultMethodCall(List<TypeDescription> prioritizedInterfaces) {
-        this.prioritizedInterfaces = isImplementable(prioritizedInterfaces);
+        this.prioritizedInterfaces = prioritizedInterfaces;
     }
 
     /**
@@ -61,7 +59,7 @@ public class DefaultMethodCall implements Implementation {
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(Class<?>... prioritizedInterface) {
-        return prioritize(new TypeList.ForLoadedTypes(nonNull(prioritizedInterface)));
+        return prioritize(new TypeList.ForLoadedTypes(prioritizedInterface));
     }
 
     /**
@@ -71,12 +69,16 @@ public class DefaultMethodCall implements Implementation {
      * any remaining interface is searched for a suitable default method. If no or more than one method defines a
      * suitable default method, an exception is thrown.
      *
-     * @param prioritizedInterface A list of prioritized default method interfaces in their prioritization order.
+     * @param prioritizedInterfaces A list of prioritized default method interfaces in their prioritization order.
      * @return An implementation which calls an instrumented method's compatible default method that considers the given
      * interfaces to be prioritized in their order.
      */
-    public static Implementation prioritize(Iterable<? extends Class<?>> prioritizedInterface) {
-        return prioritize(new TypeList.ForLoadedTypes(toList(prioritizedInterface)));
+    public static Implementation prioritize(Iterable<? extends Class<?>> prioritizedInterfaces) {
+        List<Class<?>> list = new ArrayList<Class<?>>();
+        for (Class<?> prioritizedInterface : prioritizedInterfaces) {
+            list.add(prioritizedInterface);
+        }
+        return prioritize(new TypeList.ForLoadedTypes(list));
     }
 
     /**
@@ -91,7 +93,7 @@ public class DefaultMethodCall implements Implementation {
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(TypeDescription... prioritizedInterface) {
-        return prioritize(Arrays.asList(nonNull(prioritizedInterface)));
+        return prioritize(Arrays.asList(prioritizedInterface));
     }
 
     /**
@@ -106,7 +108,7 @@ public class DefaultMethodCall implements Implementation {
      * interfaces to be prioritized in their order.
      */
     public static Implementation prioritize(Collection<? extends TypeDescription> prioritizedInterfaces) {
-        return new DefaultMethodCall(new ArrayList<TypeDescription>(nonNull(prioritizedInterfaces)));
+        return new DefaultMethodCall(new ArrayList<TypeDescription>(prioritizedInterfaces));
     }
 
     /**

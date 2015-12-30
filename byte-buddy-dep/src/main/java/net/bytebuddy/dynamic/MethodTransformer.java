@@ -12,8 +12,6 @@ import net.bytebuddy.description.type.TypeList;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-
 /**
  * A method transformer allows to transform a method prior to its definition. This way, previously defined methods
  * can be substituted by a different method description. It is the responsibility of the method transformer that
@@ -78,7 +76,7 @@ public interface MethodTransformer {
          * @return A method transformer where each method's modifiers are adapted to the given modifiers.
          */
         public static MethodTransformer withModifiers(ModifierContributor.ForMethod... modifierTransformer) {
-            return new Simple(new Transformer.ForModifierTransformation(Arrays.asList(nonNull(modifierTransformer))));
+            return new Simple(new Transformer.ForModifierTransformation(Arrays.asList(modifierTransformer)));
         }
 
         @Override

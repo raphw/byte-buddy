@@ -33,7 +33,6 @@ import java.lang.annotation.*;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This annotation instructs Byte Buddy to inject a proxy class that calls a method's super method with
@@ -131,7 +130,7 @@ public @interface Morph {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(Class<?> type) {
-            return install(new TypeDescription.ForLoadedType(nonNull(type)));
+            return install(new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -145,7 +144,7 @@ public @interface Morph {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(TypeDescription typeDescription) {
-            return new Binder(onlyMethod(nonNull(typeDescription)));
+            return new Binder(onlyMethod(typeDescription));
         }
 
         /**

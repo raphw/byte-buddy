@@ -13,12 +13,11 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Collections;
 import java.util.List;
-
-import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
@@ -396,7 +395,7 @@ public interface InstrumentedType extends TypeDescription {
                     typeVariables,
                     superType,
                     interfaceTypes,
-                    joinUnique(fieldTokens, fieldToken),
+                    CompoundList.of(fieldTokens, fieldToken),
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
@@ -411,7 +410,7 @@ public interface InstrumentedType extends TypeDescription {
                     superType,
                     interfaceTypes,
                     fieldTokens,
-                    joinUnique(methodTokens, methodToken),
+                    CompoundList.of(methodTokens, methodToken),
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer);

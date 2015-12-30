@@ -17,11 +17,11 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.CompoundList;
 
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
 
 /**
  * A dynamic type builder that redefines a given type, i.e. it replaces any redefined method with another implementation.
@@ -80,7 +80,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 InstrumentedType.TypeInitializer.None.INSTANCE,
-                joinUniqueRaw(interfaceTypes, originalType.getInterfaces()),
+                CompoundList.of(interfaceTypes, originalType.getInterfaces()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,

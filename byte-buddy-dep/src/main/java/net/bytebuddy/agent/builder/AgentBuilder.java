@@ -37,7 +37,6 @@ import java.security.ProtectionDomain;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * <p>
@@ -1969,7 +1968,7 @@ public interface AgentBuilder {
          * @param byteBuddy The Byte Buddy instance to be used.
          */
         public Default(ByteBuddy byteBuddy) {
-            this(nonNull(byteBuddy),
+            this(byteBuddy,
                     BinaryLocator.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     Listener.NoOp.INSTANCE,
@@ -2019,7 +2018,7 @@ public interface AgentBuilder {
 
         @Override
         public Identified type(RawMatcher matcher) {
-            return new Matched(nonNull(matcher), Transformer.NoOp.INSTANCE);
+            return new Matched(matcher, Transformer.NoOp.INSTANCE);
         }
 
         @Override
@@ -2029,12 +2028,12 @@ public interface AgentBuilder {
 
         @Override
         public Identified type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-            return type(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
+            return type(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
         }
 
         @Override
         public AgentBuilder withByteBuddy(ByteBuddy byteBuddy) {
-            return new Default(nonNull(byteBuddy),
+            return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
                     listener,
@@ -2051,7 +2050,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
-                    new Listener.Compound(this.listener, nonNull(listener)),
+                    new Listener.Compound(this.listener, listener),
                     nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
@@ -2064,7 +2063,7 @@ public interface AgentBuilder {
         public AgentBuilder withTypeStrategy(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    nonNull(typeStrategy),
+                    typeStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -2077,7 +2076,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
             return new Default(byteBuddy,
-                    nonNull(binaryLocator),
+                    binaryLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -2139,7 +2138,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
-                    nonNull(redefinitionStrategy),
+                    redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     transformation);
         }
@@ -2152,7 +2151,7 @@ public interface AgentBuilder {
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
-                    nonNull(initializationStrategy),
+                    initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     transformation);
@@ -2168,7 +2167,7 @@ public interface AgentBuilder {
                     accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
-                    new BootstrapInjectionStrategy.Enabled(nonNull(folder), nonNull(instrumentation)),
+                    new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     transformation);
         }
 
@@ -3170,7 +3169,7 @@ public interface AgentBuilder {
 
             @Override
             public Identified.Extendable transform(Transformer transformer) {
-                return new Matched(rawMatcher, new Transformer.Compound(this.transformer, nonNull(transformer)));
+                return new Matched(rawMatcher, new Transformer.Compound(this.transformer, transformer));
             }
 
             @Override

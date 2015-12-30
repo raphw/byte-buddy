@@ -28,6 +28,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
 import java.io.*;
@@ -41,7 +42,6 @@ import java.util.jar.*;
 import java.util.logging.Logger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * A dynamic type that is created at runtime, usually as the result of applying a
@@ -1193,6 +1193,14 @@ public interface DynamicType {
          */
         abstract class AbstractBase<S> implements Builder<S> {
 
+            protected static <Z> List<Z> toList(Iterable<Z> iterable) {
+                List<Z> list = new ArrayList<Z>();
+                for (Z z : iterable) {
+                    list.add(z);
+                }
+                return list;
+            }
+
             /**
              * The class file version specified for this builder.
              */
@@ -1343,7 +1351,7 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Type... interfaceType) {
-                return implement(new TypeList.Generic.ForLoadedTypes(nonNull(interfaceType)));
+                return implement(new TypeList.Generic.ForLoadedTypes(interfaceType));
             }
 
             @Override
@@ -1358,7 +1366,7 @@ public interface DynamicType {
 
             @Override
             public OptionalMatchedMethodInterception<S> implement(Collection<? extends TypeDefinition> interfaceTypes) {
-                return new DefaultOptionalMatchedMethodInterception(new TypeList.Generic.Explicit(toList(isImplementable(interfaceTypes))));
+                return new DefaultOptionalMatchedMethodInterception(new TypeList.Generic.Explicit(toList(interfaceTypes)));
             }
 
             @Override
@@ -1373,7 +1381,7 @@ public interface DynamicType {
                                                                          ModifierContributor.ForMethod... modifier) {
                 return defineMethod(name,
                         TypeDefinition.Sort.describe(returnType),
-                        new TypeList.Generic.ForLoadedTypes(nonNull(parameterTypes)),
+                        new TypeList.Generic.ForLoadedTypes(parameterTypes),
                         modifier);
             }
 
@@ -1385,7 +1393,7 @@ public interface DynamicType {
 
             @Override
             public Builder<S> classFileVersion(ClassFileVersion classFileVersion) {
-                return materialize(nonNull(classFileVersion),
+                return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
@@ -1407,7 +1415,7 @@ public interface DynamicType {
             @Override
             public Builder<S> name(String name) {
                 return materialize(classFileVersion,
-                        new NamingStrategy.Fixed(isValidTypeName(name)),
+                        new NamingStrategy.Fixed(name),
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
@@ -1428,7 +1436,7 @@ public interface DynamicType {
             @Override
             public Builder<S> name(NamingStrategy namingStrategy) {
                 return materialize(classFileVersion,
-                        nonNull(namingStrategy),
+                        namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
@@ -1450,7 +1458,7 @@ public interface DynamicType {
             public Builder<S> name(AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy) {
                 return materialize(classFileVersion,
                         namingStrategy,
-                        nonNull(auxiliaryTypeNamingStrategy),
+                        auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
                         typeInitializer,
                         interfaceTypes,
@@ -1472,7 +1480,7 @@ public interface DynamicType {
                 return materialize(classFileVersion,
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
-                        nonNull(implementationContextFactory),
+                        implementationContextFactory,
                         typeInitializer,
                         interfaceTypes,
                         modifiers,
@@ -1494,7 +1502,7 @@ public interface DynamicType {
                         namingStrategy,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
-                        typeInitializer.expandWith(nonNull(byteCodeAppender)),
+                        typeInitializer.expandWith(byteCodeAppender),
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
@@ -1517,7 +1525,7 @@ public interface DynamicType {
                         implementationContextFactory,
                         typeInitializer,
                         interfaceTypes,
-                        resolveModifierContributors(TYPE_MODIFIER_MASK, nonNull(modifier)),
+                        ModifierContributor.Resolver.of(modifier).resolve(),
                         attributeAppender,
                         ignoredMethods,
                         classVisitorWrapper,
@@ -1561,7 +1569,7 @@ public interface DynamicType {
                         interfaceTypes,
                         modifiers,
                         attributeAppender,
-                        new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, nonNull(ignoredMethods)),
+                        new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods),
                         classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
@@ -1581,7 +1589,7 @@ public interface DynamicType {
                         typeInitializer,
                         interfaceTypes,
                         modifiers,
-                        new TypeAttributeAppender.Compound(this.attributeAppender, nonNull(attributeAppender)),
+                        new TypeAttributeAppender.Compound(this.attributeAppender, attributeAppender),
                         ignoredMethods,
                         classVisitorWrapper,
                         fieldRegistry,
@@ -1595,7 +1603,7 @@ public interface DynamicType {
 
             @Override
             public Builder<S> annotateType(Annotation... annotation) {
-                return annotateType((new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                return annotateType((new AnnotationList.ForLoadedAnnotation(annotation)));
             }
 
             @Override
@@ -1605,12 +1613,12 @@ public interface DynamicType {
 
             @Override
             public Builder<S> annotateType(AnnotationDescription... annotation) {
-                return annotateType(new AnnotationList.Explicit(Arrays.asList(nonNull(annotation))));
+                return annotateType(new AnnotationList.Explicit(Arrays.asList(annotation)));
             }
 
             @Override
             public Builder<S> annotateType(Collection<? extends AnnotationDescription> annotations) {
-                return attribute(new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations)),
+                return attribute(new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations),
                         AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
             }
 
@@ -1625,7 +1633,7 @@ public interface DynamicType {
                         modifiers,
                         attributeAppender,
                         ignoredMethods,
-                        new ClassVisitorWrapper.Compound(nonNull(classVisitorWrapper), this.classVisitorWrapper),
+                        new ClassVisitorWrapper.Compound(classVisitorWrapper, this.classVisitorWrapper),
                         fieldRegistry,
                         methodRegistry,
                         methodGraphCompiler,
@@ -1649,7 +1657,7 @@ public interface DynamicType {
                         classVisitorWrapper,
                         fieldRegistry,
                         methodRegistry,
-                        nonNull(methodGraphCompiler),
+                        methodGraphCompiler,
                         defaultFieldAttributeAppenderFactory,
                         defaultMethodAttributeAppenderFactory,
                         fieldTokens,
@@ -1662,7 +1670,7 @@ public interface DynamicType {
                                                    ModifierContributor.ForField... modifier) {
                 return defineField(name,
                         fieldType,
-                        resolveModifierContributors(FIELD_MODIFIER_MASK, nonNull(modifier)));
+                        ModifierContributor.Resolver.of(modifier).resolve());
             }
 
             @Override
@@ -1670,7 +1678,7 @@ public interface DynamicType {
                                                    Type fieldType,
                                                    int modifiers) {
                 return defineField(name,
-                        TypeDefinition.Sort.describe(nonNull(fieldType)),
+                        TypeDefinition.Sort.describe(fieldType),
                         modifiers);
             }
 
@@ -1678,9 +1686,9 @@ public interface DynamicType {
             public FieldValueTarget<S> defineField(String name,
                                                    TypeDefinition fieldType,
                                                    int modifiers) {
-                return new DefaultFieldValueTarget(new FieldDescription.Token(isValidIdentifier(name),
+                return new DefaultFieldValueTarget(new FieldDescription.Token(name,
                         modifiers,
-                        isActualType(fieldType).asGenericType(),
+                        fieldType.asGenericType(),
                         Collections.<AnnotationDescription>emptyList()), defaultFieldAttributeAppenderFactory);
             }
 
@@ -1699,11 +1707,11 @@ public interface DynamicType {
                                                                          TypeDefinition returnType,
                                                                          List<? extends TypeDefinition> parameterTypes,
                                                                          ModifierContributor.ForMethod... modifier) {
-                return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(isValidIdentifier(name),
-                        resolveModifierContributors(METHOD_MODIFIER_MASK, nonNull(modifier)),
+                return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(name,
+                        ModifierContributor.Resolver.of(modifier).resolve(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         returnType.asGenericType(),
-                        new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
+                        new ParameterDescription.Token.TypeList(parameterTypes),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
@@ -1731,8 +1739,8 @@ public interface DynamicType {
                                                                          List<? extends Type> parameterTypes,
                                                                          int modifiers) {
                 return defineMethod(name,
-                        TypeDefinition.Sort.describe(nonNull(returnType)),
-                        new TypeList.Generic.ForLoadedTypes(nonNull(parameterTypes)),
+                        TypeDefinition.Sort.describe(returnType),
+                        new TypeList.Generic.ForLoadedTypes(parameterTypes),
                         modifiers);
             }
 
@@ -1741,11 +1749,11 @@ public interface DynamicType {
                                                                          TypeDefinition returnType,
                                                                          List<? extends TypeDefinition> parameterTypes,
                                                                          int modifiers) {
-                return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(isValidIdentifier(name),
+                return new DefaultExceptionDeclarableMethodInterception(new MethodDescription.Token(name,
                         modifiers,
                         Collections.<TypeDescription.Generic>emptyList(),
                         returnType.asGenericType(),
-                        new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
+                        new ParameterDescription.Token.TypeList(parameterTypes),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
@@ -1754,7 +1762,7 @@ public interface DynamicType {
             @Override
             public ExceptionDeclarableMethodInterception<S> defineConstructor(List<? extends TypeDefinition> parameterTypes,
                                                                               ModifierContributor.ForMethod... modifier) {
-                return defineConstructor(parameterTypes, resolveModifierContributors(METHOD_MODIFIER_MASK & ~Opcodes.ACC_STATIC, nonNull(modifier)));
+                return defineConstructor(parameterTypes, ModifierContributor.Resolver.of(modifier).resolve());
             }
 
             @Override
@@ -1782,7 +1790,7 @@ public interface DynamicType {
                         modifiers,
                         Collections.<TypeDescription.Generic>emptyList(),
                         TypeDescription.Generic.VOID,
-                        new ParameterDescription.Token.TypeList(isActualType(parameterTypes)),
+                        new ParameterDescription.Token.TypeList(parameterTypes),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         null));
@@ -1797,22 +1805,22 @@ public interface DynamicType {
 
             @Override
             public MatchedMethodInterception<S> method(ElementMatcher<? super MethodDescription> methodMatcher) {
-                return invokable(isMethod().and(nonNull(methodMatcher)));
+                return invokable(isMethod().and(methodMatcher));
             }
 
             @Override
             public MatchedMethodInterception<S> constructor(ElementMatcher<? super MethodDescription> methodMatcher) {
-                return invokable(isConstructor().and(nonNull(methodMatcher)));
+                return invokable(isConstructor().and(methodMatcher));
             }
 
             @Override
             public MatchedMethodInterception<S> invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-                return invokable(new LatentMethodMatcher.Resolved(nonNull(methodMatcher)));
+                return invokable(new LatentMethodMatcher.Resolved(methodMatcher));
             }
 
             @Override
             public MatchedMethodInterception<S> invokable(LatentMethodMatcher methodMatcher) {
-                return new DefaultMatchedMethodInterception(nonNull(methodMatcher), methodTokens);
+                return new DefaultMatchedMethodInterception(methodMatcher, methodTokens);
             }
 
             /**
@@ -2227,7 +2235,7 @@ public interface DynamicType {
                             methodGraphCompiler,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
-                            join(fieldTokens, fieldToken),
+                            CompoundList.of(fieldTokens, fieldToken),
                             methodTokens);
                 }
 
@@ -2291,13 +2299,12 @@ public interface DynamicType {
                 @Override
                 public FieldAnnotationTarget<S> attribute(FieldAttributeAppender.Factory attributeAppenderFactory) {
                     return new DefaultFieldValueTarget(fieldToken,
-                            new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory,
-                                    nonNull(attributeAppenderFactory)));
+                            new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory,attributeAppenderFactory));
                 }
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Annotation... annotation) {
-                    return annotateField((new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                    return annotateField((new AnnotationList.ForLoadedAnnotation(annotation)));
                 }
 
                 @Override
@@ -2307,12 +2314,12 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(AnnotationDescription... annotation) {
-                    return annotateField(Arrays.asList(nonNull(annotation)));
+                    return annotateField(Arrays.asList(annotation));
                 }
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new FieldAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(nonNull(annotations)),
+                    return attribute(new FieldAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations),
                             AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
                 }
 
@@ -2396,9 +2403,9 @@ public interface DynamicType {
                 public MethodAnnotationTarget<S> intercept(Implementation implementation, MethodTransformer methodTransformer) {
                     return new DefaultMethodAnnotationTarget(methodMatcher,
                             methodTokens,
-                            new MethodRegistry.Handler.ForImplementation(nonNull(implementation)),
+                            new MethodRegistry.Handler.ForImplementation(implementation),
                             defaultMethodAttributeAppenderFactory,
-                            nonNull(methodTransformer));
+                            methodTransformer);
                 }
 
                 @Override
@@ -2412,7 +2419,7 @@ public interface DynamicType {
                             methodTokens,
                             MethodRegistry.Handler.ForAbstractMethod.INSTANCE,
                             defaultMethodAttributeAppenderFactory,
-                            nonNull(methodTransformer));
+                            methodTransformer);
                 }
 
                 @Override
@@ -2422,8 +2429,8 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, MethodTransformer methodTransformer) {
-                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(nonNull(value),
-                            new TypeDescription.ForLoadedType(nonNull(type))), nonNull(methodTransformer));
+                    return withDefaultValue(AnnotationDescription.ForLoadedAnnotation.describe(value,
+                            new TypeDescription.ForLoadedType(type)), methodTransformer);
                 }
 
                 @Override
@@ -2437,7 +2444,7 @@ public interface DynamicType {
                             methodTokens,
                             MethodRegistry.Handler.ForAnnotationValue.of(value),
                             MethodAttributeAppender.NoOp.INSTANCE,
-                            nonNull(methodTransformer));
+                            methodTransformer);
                 }
 
                 @Override
@@ -2500,7 +2507,7 @@ public interface DynamicType {
 
                 @Override
                 public MatchedMethodInterception<S> throwing(Class<?>... exceptionType) {
-                    return throwing(new TypeList.ForLoadedTypes(nonNull(exceptionType)));
+                    return throwing(new TypeList.ForLoadedTypes(exceptionType));
                 }
 
                 @Override
@@ -2510,7 +2517,7 @@ public interface DynamicType {
 
                 @Override
                 public MatchedMethodInterception<S> throwing(TypeDescription... exceptionType) {
-                    return throwing(Arrays.asList(nonNull(exceptionType)));
+                    return throwing(Arrays.asList(exceptionType));
                 }
 
                 @Override
@@ -2520,7 +2527,7 @@ public interface DynamicType {
                             Collections.<TypeDescription.Generic>emptyList(),
                             methodToken.getReturnType(),
                             methodToken.getParameterTokens(),
-                            unique(isThrowable(new TypeList.Generic.Explicit(toList(exceptionTypes)))),
+                            new TypeList.Generic.Explicit(toList(exceptionTypes)),
                             Collections.<AnnotationDescription>emptyList(),
                             null));
                 }
@@ -2572,7 +2579,7 @@ public interface DynamicType {
                  * @return A subclass matched method interception that represents the materialized method.
                  */
                 private DefaultMatchedMethodInterception materialize(MethodDescription.Token methodToken) {
-                    return new DefaultMatchedMethodInterception(new LatentMethodMatcher.ForToken(methodToken), join(methodTokens, methodToken));
+                    return new DefaultMatchedMethodInterception(new LatentMethodMatcher.ForToken(methodToken), CompoundList.of(methodTokens, methodToken));
                 }
 
                 @Override
@@ -2685,14 +2692,13 @@ public interface DynamicType {
                     return new DefaultMethodAnnotationTarget(methodMatcher,
                             methodTokens,
                             handler,
-                            new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory,
-                                    nonNull(attributeAppenderFactory)),
+                            new MethodAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory),
                             methodTransformer);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Annotation... annotation) {
-                    return annotateMethod((new AnnotationList.ForLoadedAnnotation(nonNull(annotation))));
+                    return annotateMethod((new AnnotationList.ForLoadedAnnotation(annotation)));
                 }
 
                 @Override
@@ -2702,18 +2708,18 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(AnnotationDescription... annotation) {
-                    return annotateMethod(Arrays.asList(nonNull(annotation)));
+                    return annotateMethod(Arrays.asList(annotation));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation((nonNull(new ArrayList<AnnotationDescription>(annotations))),
+                    return attribute(new MethodAttributeAppender.ForAnnotation((new ArrayList<AnnotationDescription>(annotations)),
                             AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Annotation... annotation) {
-                    return annotateParameter(parameterIndex, new AnnotationList.ForLoadedAnnotation(nonNull(annotation)));
+                    return annotateParameter(parameterIndex, new AnnotationList.ForLoadedAnnotation(annotation));
                 }
 
                 @Override
@@ -2723,12 +2729,12 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, AnnotationDescription... annotation) {
-                    return annotateParameter(parameterIndex, Arrays.asList(nonNull(annotation)));
+                    return annotateParameter(parameterIndex, Arrays.asList(annotation));
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, nonNull(new ArrayList<AnnotationDescription>(annotations)),
+                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new ArrayList<AnnotationDescription>(annotations),
                             AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
                 }
 
@@ -2845,7 +2851,7 @@ public interface DynamicType {
                             auxiliaryTypeNamingStrategy,
                             implementationContextFactory,
                             typeInitializer,
-                            joinUniqueRaw(interfaceTypes, additionalInterfaceTypes),
+                            CompoundList.of(interfaceTypes, additionalInterfaceTypes),
                             modifiers,
                             attributeAppender,
                             ignoredMethods,
@@ -3291,7 +3297,7 @@ public interface DynamicType {
 
             @Override
             public DynamicType.Unloaded<T> include(List<? extends DynamicType> dynamicType) {
-                return new Default.Unloaded<T>(typeDescription, binaryRepresentation, loadedTypeInitializer, join(auxiliaryTypes, dynamicType));
+                return new Default.Unloaded<T>(typeDescription, binaryRepresentation, loadedTypeInitializer, CompoundList.of(auxiliaryTypes, dynamicType));
             }
 
             @Override

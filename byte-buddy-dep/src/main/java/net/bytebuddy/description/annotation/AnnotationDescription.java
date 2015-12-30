@@ -14,7 +14,6 @@ import java.security.AccessController;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * An annotation description describes {@link java.lang.annotation.Annotation} meta data of a class without this class
@@ -1789,7 +1788,7 @@ public interface AnnotationDescription {
          * @return A builder for creating an annotation of the given type.
          */
         public static Builder forType(Class<? extends Annotation> annotationType) {
-            return forType(new TypeDescription.ForLoadedType(nonNull(annotationType)));
+            return forType(new TypeDescription.ForLoadedType(annotationType));
         }
 
         /**
@@ -1813,7 +1812,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional, given property.
          */
         public Builder define(String property, AnnotationValue<?, ?> value) {
-            MethodList<?> methodDescriptions = annotationType.getDeclaredMethods().filter(named(nonNull(property)));
+            MethodList<?> methodDescriptions = annotationType.getDeclaredMethods().filter(named(property));
             if (methodDescriptions.isEmpty()) {
                 throw new IllegalArgumentException(annotationType + " does not define a property named " + property);
             } else if (!methodDescriptions.getOnly().getReturnType().asErasure().isAnnotationValue(value.resolve())) {
@@ -1821,7 +1820,7 @@ public interface AnnotationDescription {
             }
             Map<String, AnnotationValue<?, ?>> annotationValues = new HashMap<String, AnnotationValue<?, ?>>();
             annotationValues.putAll(this.annotationValues);
-            if (annotationValues.put(methodDescriptions.getOnly().getName(), nonNull(value)) != null) {
+            if (annotationValues.put(methodDescriptions.getOnly().getName(), value) != null) {
                 throw new IllegalArgumentException("Property already defined: " + property);
             }
             return new Builder(annotationType, annotationValues);
@@ -1835,7 +1834,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional enumeration property.
          */
         public Builder define(String property, Enum<?> value) {
-            return define(property, new EnumerationDescription.ForLoadedEnumeration(nonNull(value)));
+            return define(property, new EnumerationDescription.ForLoadedEnumeration(value));
         }
 
         /**
@@ -1847,7 +1846,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional enumeration property.
          */
         public Builder define(String property, TypeDescription enumerationType, String value) {
-            return define(property, new EnumerationDescription.Latent(nonNull(enumerationType), nonNull(value)));
+            return define(property, new EnumerationDescription.Latent(enumerationType, value));
         }
 
         /**
@@ -1859,7 +1858,7 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         public Builder define(String property, EnumerationDescription value) {
-            return define(property, AnnotationValue.ForEnumeration.<Enum>of(nonNull(value)));
+            return define(property, AnnotationValue.ForEnumeration.<Enum>of(value));
         }
 
         /**
@@ -1870,7 +1869,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional annotation property.
          */
         public Builder define(String property, Annotation annotation) {
-            return define(property, new ForLoadedAnnotation<Annotation>(nonNull(annotation)));
+            return define(property, new ForLoadedAnnotation<Annotation>(annotation));
         }
 
         /**
@@ -1881,7 +1880,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional annotation property.
          */
         public Builder define(String property, AnnotationDescription annotationDescription) {
-            return define(property, new AnnotationValue.ForAnnotation<Annotation>(nonNull(annotationDescription)));
+            return define(property, new AnnotationValue.ForAnnotation<Annotation>(annotationDescription));
         }
 
         /**
@@ -1892,7 +1891,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional class property.
          */
         public Builder define(String property, Class<?> type) {
-            return define(property, new TypeDescription.ForLoadedType(nonNull(type)));
+            return define(property, new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -1920,9 +1919,9 @@ public interface AnnotationDescription {
             EnumerationDescription[] enumerationDescription = new EnumerationDescription[value.length];
             int index = 0;
             for (T aValue : value) {
-                enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(nonNull(aValue));
+                enumerationDescription[index++] = new EnumerationDescription.ForLoadedEnumeration(aValue);
             }
-            return defineEnumerationArray(property, new TypeDescription.ForLoadedType(nonNull(enumerationType)), enumerationDescription);
+            return defineEnumerationArray(property, new TypeDescription.ForLoadedType(enumerationType), enumerationDescription);
         }
 
         /**
@@ -1939,7 +1938,7 @@ public interface AnnotationDescription {
             }
             EnumerationDescription[] enumerationDescription = new EnumerationDescription[value.length];
             for (int i = 0; i < value.length; i++) {
-                enumerationDescription[i] = new EnumerationDescription.Latent(nonNull(enumerationType), nonNull(value[i]));
+                enumerationDescription[i] = new EnumerationDescription.Latent(enumerationType, value[i]);
             }
             return defineEnumerationArray(property, enumerationType, enumerationDescription);
         }
@@ -1954,7 +1953,7 @@ public interface AnnotationDescription {
          */
         @SuppressWarnings("unchecked")
         public Builder defineEnumerationArray(String property, TypeDescription enumerationType, EnumerationDescription... value) {
-            return define(property, AnnotationValue.ForComplexArray.<Enum>of(enumerationType, nonNull(value)));
+            return define(property, AnnotationValue.ForComplexArray.<Enum>of(enumerationType, value));
         }
 
         /**
@@ -1968,8 +1967,8 @@ public interface AnnotationDescription {
          */
         public <T extends Annotation> Builder defineAnnotationArray(String property, Class<T> annotationType, T... annotation) {
             return defineAnnotationArray(property,
-                    new TypeDescription.ForLoadedType(nonNull(annotationType)),
-                    new AnnotationList.ForLoadedAnnotation(nonNull(annotation)).toArray(new AnnotationDescription[annotation.length]));
+                    new TypeDescription.ForLoadedType(annotationType),
+                    new AnnotationList.ForLoadedAnnotation(annotation).toArray(new AnnotationDescription[annotation.length]));
         }
 
         /**
@@ -1981,7 +1980,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional annotation property.
          */
         public Builder defineAnnotationArray(String property, TypeDescription annotationType, AnnotationDescription... annotationDescription) {
-            return define(property, AnnotationValue.ForComplexArray.of(annotationType, nonNull(annotationDescription)));
+            return define(property, AnnotationValue.ForComplexArray.of(annotationType, annotationDescription));
         }
 
         /**
@@ -1992,7 +1991,7 @@ public interface AnnotationDescription {
          * @return A builder with the additional type array property.
          */
         public Builder defineTypeArray(String property, Class<?>... type) {
-            return defineTypeArray(property, new TypeList.ForLoadedTypes(nonNull(type)).toArray(new TypeDescription[type.length]));
+            return defineTypeArray(property, new TypeList.ForLoadedTypes(type).toArray(new TypeDescription[type.length]));
         }
 
         /**

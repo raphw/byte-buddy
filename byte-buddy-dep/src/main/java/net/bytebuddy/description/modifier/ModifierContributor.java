@@ -1,5 +1,8 @@
 package net.bytebuddy.description.modifier;
 
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * An element that describes a type modifier as described in the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
@@ -63,5 +66,26 @@ public interface ModifierContributor {
      */
     interface ForParameter extends ModifierContributor {
         /* marker interface */
+    }
+
+    class Resolver<T extends ModifierContributor> {
+
+        private final List<T> modifierContributors;
+
+        protected Resolver(List<T> modifierContributors) {
+            this.modifierContributors = modifierContributors;
+        }
+
+        public static <S extends ModifierContributor> Resolver<S> of(S... modifierContributor) {
+            return new Resolver<S>(Arrays.asList(modifierContributor));
+        }
+
+        public int resolve() {
+            int modifiers = EMPTY_MASK;
+            for (T modifierContributor : modifierContributors) {
+                modifiers = (modifiers & ~modifierContributor.getRange()) | modifierContributor.getMask();
+            }
+            return modifiers;
+        }
     }
 }

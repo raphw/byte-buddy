@@ -16,8 +16,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This implementation returns a fixed value for a method. Other than the
@@ -190,7 +188,7 @@ public abstract class FixedValue implements Implementation {
         if (fixedValue == null) {
             throw new IllegalArgumentException("The fixed value must not be null");
         }
-        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
+        return new ForStaticField(fieldName, fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
     }
 
     /**
@@ -311,7 +309,7 @@ public abstract class FixedValue implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), nonNull(typing));
+            return new ForPoolValue(valueLoadInstruction, loadedType, assigner, typing);
         }
 
         @Override
@@ -412,7 +410,7 @@ public abstract class FixedValue implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), typing);
+            return new ForStaticField(fieldName, fixedValue, assigner, typing);
         }
 
         @Override

@@ -10,8 +10,6 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.filterUnique;
-
 /**
  * <p>
  * This {@link java.lang.ClassLoader} is capable of loading classes from multiple parents. This class loader
@@ -231,7 +229,15 @@ public class MultipleParentClassLoader extends ClassLoader {
          * @return A new builder instance with the additional class loaders.
          */
         public Builder append(List<? extends ClassLoader> classLoaders) {
-            return new Builder(filterUnique(this.classLoaders, classLoaders));
+            List<ClassLoader> filtered = new ArrayList<ClassLoader>(this.classLoaders.size() + classLoaders.size());
+            Set<ClassLoader> registered = new HashSet<ClassLoader>(this.classLoaders);
+            filtered.addAll(this.classLoaders);
+            for (ClassLoader classLoader : classLoaders) {
+                if (registered.add(classLoader)) {
+                    filtered.add(classLoader);
+                }
+            }
+            return new Builder(filtered);
         }
 
         /**

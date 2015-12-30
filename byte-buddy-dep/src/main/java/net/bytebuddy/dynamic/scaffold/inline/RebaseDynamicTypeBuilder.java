@@ -17,11 +17,11 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.CompoundList;
 
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
 
 /**
  * A dynamic type builder that rebases a given type, i.e. it behaves like if a subclass was defined where any methods
@@ -88,7 +88,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 InstrumentedType.TypeInitializer.None.INSTANCE,
-                joinUniqueRaw(interfaceTypes, originalType.getInterfaces()),
+                CompoundList.of(interfaceTypes, originalType.getInterfaces()),
                 modifiers,
                 attributeAppender,
                 ignoredMethods,

@@ -27,6 +27,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.Remapper;
@@ -36,8 +37,6 @@ import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
 import java.util.*;
-
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * A type writer is a utility for writing an actual class file using the ASM library.
@@ -1479,7 +1478,7 @@ public interface TypeWriter<T> {
             return new DynamicType.Default.Unloaded<S>(instrumentedType,
                     create(implementationContext),
                     loadedTypeInitializer,
-                    join(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()));
+                    CompoundList.of(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()));
         }
 
         @Override

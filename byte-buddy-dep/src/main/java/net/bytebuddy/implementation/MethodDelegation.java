@@ -18,6 +18,7 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -26,7 +27,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This implementation delegates an method call to another method which can either be {@code static} by providing
@@ -225,7 +225,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation to the given {@code static} methods.
      */
     public static MethodDelegation to(Class<?> type) {
-        return to(new TypeDescription.ForLoadedType(nonNull(type)));
+        return to(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -266,7 +266,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate) {
-        return to(nonNull(delegate), MethodGraph.Compiler.DEFAULT);
+        return to(delegate, MethodGraph.Compiler.DEFAULT);
     }
 
     /**
@@ -351,7 +351,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation to the given instance methods.
      */
     public static MethodDelegation to(Object delegate, Type type) {
-        return to(nonNull(delegate), type, MethodGraph.Compiler.DEFAULT);
+        return to(delegate, type, MethodGraph.Compiler.DEFAULT);
     }
 
     /**
@@ -425,7 +425,7 @@ public class MethodDelegation implements Implementation.Composable {
         if (!typeDescription.asErasure().isInstance(delegate)) {
             throw new IllegalArgumentException(delegate + " is not an instance of " + type);
         }
-        return new MethodDelegation(new ImplementationDelegate.ForStaticField(nonNull(delegate), isValidIdentifier(fieldName)),
+        return new MethodDelegation(new ImplementationDelegate.ForStaticField(delegate, fieldName),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
@@ -455,7 +455,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(Class<?> type, String fieldName) {
-        return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName);
+        return toInstanceField(new TypeDescription.ForLoadedType(type), fieldName);
     }
 
     /**
@@ -479,7 +479,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(TypeDescription typeDescription, String fieldName) {
-        return toInstanceField(nonNull(typeDescription), isValidIdentifier(fieldName), MethodGraph.Compiler.DEFAULT);
+        return toInstanceField(typeDescription, fieldName, MethodGraph.Compiler.DEFAULT);
     }
 
     /**
@@ -504,7 +504,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(Class<?> type, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-        return toInstanceField(new TypeDescription.ForLoadedType(nonNull(type)), fieldName, methodGraphCompiler);
+        return toInstanceField(new TypeDescription.ForLoadedType(type), fieldName, methodGraphCompiler);
     }
 
     /**
@@ -529,7 +529,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation that intercepts method calls by delegating to method calls on the given instance.
      */
     public static MethodDelegation toInstanceField(TypeDefinition typeDefinition, String fieldName, MethodGraph.Compiler methodGraphCompiler) {
-        return new MethodDelegation(new ImplementationDelegate.ForInstanceField(typeDefinition.asGenericType(), isValidIdentifier(fieldName)),
+        return new MethodDelegation(new ImplementationDelegate.ForInstanceField(typeDefinition.asGenericType(), fieldName),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
@@ -546,7 +546,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return An implementation that creates instances of the given type as its result.
      */
     public static MethodDelegation toConstructor(Class<?> type) {
-        return toConstructor(new TypeDescription.ForLoadedType(nonNull(type)));
+        return toConstructor(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -557,7 +557,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return An implementation that creates instances of the given type as its result.
      */
     public static MethodDelegation toConstructor(TypeDescription typeDescription) {
-        return new MethodDelegation(new ImplementationDelegate.ForConstruction(nonNull(typeDescription)),
+        return new MethodDelegation(new ImplementationDelegate.ForConstruction(typeDescription),
                 TargetMethodAnnotationDrivenBinder.ParameterBinder.DEFAULTS,
                 Argument.NextUnboundAsDefaultsProvider.INSTANCE,
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Returning.INSTANCE,
@@ -574,7 +574,7 @@ public class MethodDelegation implements Implementation.Composable {
      */
     public MethodDelegation appendParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?> parameterBinder) {
         return new MethodDelegation(implementationDelegate,
-                join(parameterBinders, nonNull(parameterBinder)),
+                CompoundList.of(parameterBinders, parameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
@@ -590,7 +590,7 @@ public class MethodDelegation implements Implementation.Composable {
      */
     public MethodDelegation defineParameterBinder(TargetMethodAnnotationDrivenBinder.ParameterBinder<?>... parameterBinder) {
         return new MethodDelegation(implementationDelegate,
-                Arrays.asList(nonNull(parameterBinder)),
+                Arrays.asList(parameterBinder),
                 defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
@@ -607,7 +607,7 @@ public class MethodDelegation implements Implementation.Composable {
     public MethodDelegation withDefaultsProvider(TargetMethodAnnotationDrivenBinder.DefaultsProvider defaultsProvider) {
         return new MethodDelegation(implementationDelegate,
                 parameterBinders,
-                nonNull(defaultsProvider),
+                defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
                 assigner,
@@ -621,7 +621,7 @@ public class MethodDelegation implements Implementation.Composable {
      * @return A method delegation implementation that makes use of the given ambiguity resolver.
      */
     public MethodDelegation appendAmbiguityResolver(MethodDelegationBinder.AmbiguityResolver ambiguityResolver) {
-        return defineAmbiguityResolver(new MethodDelegationBinder.AmbiguityResolver.Chain(this.ambiguityResolver, nonNull(ambiguityResolver)));
+        return defineAmbiguityResolver(new MethodDelegationBinder.AmbiguityResolver.Chain(this.ambiguityResolver, ambiguityResolver));
     }
 
     /**
@@ -635,7 +635,7 @@ public class MethodDelegation implements Implementation.Composable {
                 parameterBinders,
                 defaultsProvider,
                 terminationHandler,
-                new MethodDelegationBinder.AmbiguityResolver.Chain(nonNull(ambiguityResolver)),
+                new MethodDelegationBinder.AmbiguityResolver.Chain(ambiguityResolver),
                 assigner,
                 methodContainer);
     }
@@ -652,7 +652,7 @@ public class MethodDelegation implements Implementation.Composable {
                 defaultsProvider,
                 terminationHandler,
                 ambiguityResolver,
-                nonNull(assigner),
+                assigner,
                 methodContainer);
     }
 
@@ -680,7 +680,7 @@ public class MethodDelegation implements Implementation.Composable {
                 TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.INSTANCE,
                 ambiguityResolver,
                 assigner,
-                methodContainer), nonNull(implementation));
+                methodContainer), implementation);
     }
 
     @Override

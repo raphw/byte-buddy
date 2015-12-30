@@ -2,7 +2,6 @@ package net.bytebuddy;
 
 import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.utility.ByteBuddyCommons;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.Opcodes;
 
@@ -139,7 +138,7 @@ public interface NamingStrategy {
 
             @Override
             public Visibility getVisibility() {
-                switch (modifiers & ByteBuddyCommons.VISIBILITY_MODIFIER_MASK) {
+                switch (modifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE)) {
                     case Opcodes.ACC_PUBLIC:
                         return Visibility.PUBLIC;
                     case Opcodes.ACC_PROTECTED:

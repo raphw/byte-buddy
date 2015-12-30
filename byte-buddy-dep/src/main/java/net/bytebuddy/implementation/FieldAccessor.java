@@ -14,14 +14,12 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
-import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.Type;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * Defines a method to access a given field by following the Java bean conventions for getters and setters:
@@ -63,7 +61,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor for a field of a given name.
      */
     public static FieldDefinable ofField(String name) {
-        return new ForNamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, isValidIdentifier(name));
+        return new ForNamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, name);
     }
 
     /**
@@ -84,7 +82,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor using the given field name extractor.
      */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
-        return new ForUnnamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, nonNull(fieldNameExtractor));
+        return new ForUnnamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, fieldNameExtractor);
     }
 
     /**
@@ -587,12 +585,12 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForUnnamedField(assigner, typing, fieldNameExtractor, nonNull(fieldLocatorFactory));
+            return new ForUnnamedField(assigner, typing, fieldNameExtractor, fieldLocatorFactory);
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(nonNull(type)));
+            return in(new TypeDescription.ForLoadedType(type));
         }
 
         @Override
@@ -604,7 +602,7 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForUnnamedField(nonNull(assigner), typing, fieldNameExtractor, fieldLocatorFactory);
+            return new ForUnnamedField(assigner, typing, fieldNameExtractor, fieldLocatorFactory);
         }
 
         @Override
@@ -711,7 +709,7 @@ public abstract class FieldAccessor implements Implementation {
             return new ForNamedField(assigner,
                     typing,
                     fieldName,
-                    PreparationHandler.FieldDefiner.of(fieldName, isActualType(typeDefinition).asGenericType(), nonNull(modifier)),
+                    PreparationHandler.FieldDefiner.of(fieldName, typeDefinition.asGenericType(), modifier),
                     FieldLocator.ForInstrumentedType.INSTANCE);
         }
 
@@ -721,12 +719,12 @@ public abstract class FieldAccessor implements Implementation {
                     typing,
                     fieldName,
                     preparationHandler,
-                    nonNull(fieldLocatorFactory));
+                    fieldLocatorFactory);
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(nonNull(type)));
+            return in(new TypeDescription.ForLoadedType(type));
         }
 
         @Override
@@ -738,8 +736,8 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForNamedField(nonNull(assigner),
-                    nonNull(typing),
+            return new ForNamedField(assigner,
+                    typing,
                     fieldName,
                     preparationHandler,
                     fieldLocatorFactory);
@@ -867,7 +865,7 @@ public abstract class FieldAccessor implements Implementation {
                  * @return A corresponding preparation handler.
                  */
                 public static PreparationHandler of(String name, TypeDescription.Generic typeDescription, ModifierContributor.ForField... contributor) {
-                    return new FieldDefiner(name, typeDescription, resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor));
+                    return new FieldDefiner(name, typeDescription, ModifierContributor.Resolver.of(contributor).resolve());
                 }
 
                 @Override

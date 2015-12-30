@@ -34,7 +34,6 @@ import java.lang.annotation.*;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * Using this annotation it is possible to access fields by getter and setter types. Before this annotation can be
@@ -150,7 +149,7 @@ public @interface FieldProxy {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(Class<?> getterType, Class<?> setterType) {
-            return install(new TypeDescription.ForLoadedType(nonNull(getterType)), new TypeDescription.ForLoadedType(nonNull(setterType)));
+            return install(new TypeDescription.ForLoadedType(getterType), new TypeDescription.ForLoadedType(setterType));
         }
 
         /**
@@ -170,13 +169,13 @@ public @interface FieldProxy {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(TypeDescription getterType, TypeDescription setterType) {
-            MethodDescription getterMethod = onlyMethod(nonNull(getterType));
+            MethodDescription getterMethod = onlyMethod(getterType);
             if (!getterMethod.getReturnType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(getterMethod + " must take a single Object-typed parameter");
             } else if (getterMethod.getParameters().size() != 0) {
                 throw new IllegalArgumentException(getterMethod + " must not declare parameters");
             }
-            MethodDescription setterMethod = onlyMethod(nonNull(setterType));
+            MethodDescription setterMethod = onlyMethod(setterType);
             if (!setterMethod.getReturnType().asErasure().represents(void.class)) {
                 throw new IllegalArgumentException(setterMethod + " must return void");
             } else if (setterMethod.getParameters().size() != 1 || !setterMethod.getParameters().get(0).getType().asErasure().represents(Object.class)) {

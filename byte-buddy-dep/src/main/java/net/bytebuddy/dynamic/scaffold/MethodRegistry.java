@@ -11,11 +11,11 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.utility.CompoundList;
 
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * A method registry is responsible for storing information on how a method is intercepted.
@@ -462,7 +462,7 @@ public interface MethodRegistry {
                                       Handler handler,
                                       MethodAttributeAppender.Factory attributeAppenderFactory,
                                       MethodTransformer methodTransformer) {
-            return new Default(join(new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer), entries));
+            return new Default(CompoundList.of(new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer), entries));
         }
 
         @Override
@@ -470,7 +470,7 @@ public interface MethodRegistry {
                                      Handler handler,
                                      MethodAttributeAppender.Factory attributeAppenderFactory,
                                      MethodTransformer methodTransformer) {
-            return new Default(join(entries, new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer)));
+            return new Default(CompoundList.of(entries, new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer)));
         }
 
         @Override
@@ -517,7 +517,7 @@ public interface MethodRegistry {
                     implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription));
                 }
             }
-            for (MethodDescription methodDescription : join(instrumentedType.getDeclaredMethods().filter(not(isVirtual()).and(relevanceMatcher)),
+            for (MethodDescription methodDescription : CompoundList.of(instrumentedType.getDeclaredMethods().filter(not(isVirtual()).and(relevanceMatcher)),
                     new MethodDescription.Latent.TypeInitializer(instrumentedType))) {
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {

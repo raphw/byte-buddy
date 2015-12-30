@@ -17,7 +17,6 @@ import org.objectweb.asm.Opcodes;
 import java.lang.reflect.Type;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This implementation forwards method invocations to another instance. For this, the intercepted method must be
@@ -81,8 +80,8 @@ public class Forwarding implements Implementation {
      * @return A corresponding implementation.
      */
     public static Implementation to(Object delegate, String fieldName) {
-        return new Forwarding(isValidIdentifier(fieldName),
-                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(nonNull(delegate).getClass()),
+        return new Forwarding(fieldName,
+                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(delegate.getClass()),
                 new PreparationHandler.ForStaticInstance(delegate));
     }
 
@@ -95,7 +94,7 @@ public class Forwarding implements Implementation {
      * @return A corresponding implementation.
      */
     public static Implementation toStaticField(String fieldName, Type fieldType) {
-        return toStaticField(fieldName, TypeDefinition.Sort.describe(nonNull(fieldType)));
+        return toStaticField(fieldName, TypeDefinition.Sort.describe(fieldType));
     }
 
     /**
@@ -107,9 +106,7 @@ public class Forwarding implements Implementation {
      * @return A corresponding implementation.
      */
     public static Implementation toStaticField(String fieldName, TypeDefinition fieldType) {
-        return new Forwarding(isValidIdentifier(fieldName),
-                isActualType(fieldType).asGenericType(),
-                PreparationHandler.ForStaticField.INSTANCE);
+        return new Forwarding(fieldName, fieldType.asGenericType(), PreparationHandler.ForStaticField.INSTANCE);
     }
 
     /**
@@ -121,7 +118,7 @@ public class Forwarding implements Implementation {
      * @return A corresponding implementation.
      */
     public static Implementation toInstanceField(String fieldName, Type fieldType) {
-        return toInstanceField(fieldName, TypeDefinition.Sort.describe(nonNull(fieldType)));
+        return toInstanceField(fieldName, TypeDefinition.Sort.describe(fieldType));
     }
 
     /**
@@ -133,9 +130,7 @@ public class Forwarding implements Implementation {
      * @return A corresponding implementation.
      */
     public static Implementation toInstanceField(String fieldName, TypeDefinition fieldType) {
-        return new Forwarding(isValidIdentifier(fieldName),
-                isActualType(fieldType).asGenericType(),
-                PreparationHandler.ForInstanceField.INSTANCE);
+        return new Forwarding(fieldName, fieldType.asGenericType(), PreparationHandler.ForInstanceField.INSTANCE);
     }
 
     @Override

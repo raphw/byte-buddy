@@ -9,8 +9,6 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-
 /**
  * This implementation will create a new method which simply calls its super method. If no such method is defined,
  * an exception will be thrown. Constructors are considered to have a super method if the direct super class defines
@@ -40,7 +38,7 @@ public enum SuperMethodCall implements Implementation.Composable {
 
     @Override
     public Implementation andThen(Implementation implementation) {
-        return new Compound(WithoutReturn.INSTANCE, nonNull(implementation));
+        return new Compound(WithoutReturn.INSTANCE, implementation);
     }
 
     @Override

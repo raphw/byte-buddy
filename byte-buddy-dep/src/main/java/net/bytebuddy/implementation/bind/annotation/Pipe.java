@@ -35,7 +35,6 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * A target method parameter that is annotated with this annotation allows to forward an intercepted method
@@ -130,7 +129,7 @@ public @interface Pipe {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(Class<?> type) {
-            return install(new TypeDescription.ForLoadedType(nonNull(type)));
+            return install(new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -144,7 +143,7 @@ public @interface Pipe {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(TypeDescription typeDescription) {
-            return new Binder(onlyMethod(nonNull(typeDescription)));
+            return new Binder(onlyMethod(typeDescription));
         }
 
         /**

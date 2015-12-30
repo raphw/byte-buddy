@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * An adapter for adapting an {@link java.lang.reflect.InvocationHandler}. The adapter allows the invocation handler
@@ -102,7 +100,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForStaticDelegation(isValidIdentifier(fieldName), NO_CACHING, Assigner.DEFAULT, nonNull(invocationHandler));
+        return new ForStaticDelegation(fieldName, NO_CACHING, Assigner.DEFAULT, invocationHandler);
     }
 
     /**
@@ -115,7 +113,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to an instance field of the given name.
      */
     public static InvocationHandlerAdapter toInstanceField(String fieldName) {
-        return new ForInstanceDelegation(isValidIdentifier(fieldName), NO_CACHING, Assigner.DEFAULT);
+        return new ForInstanceDelegation(fieldName, NO_CACHING, Assigner.DEFAULT);
     }
 
     /**
@@ -250,7 +248,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
-            return new ForStaticDelegation(fieldName, cacheMethods, nonNull(assigner), invocationHandler);
+            return new ForStaticDelegation(fieldName, cacheMethods, assigner, invocationHandler);
         }
 
         @Override
@@ -371,7 +369,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
-            return new ForInstanceDelegation(fieldName, cacheMethods, nonNull(assigner));
+            return new ForInstanceDelegation(fieldName, cacheMethods, assigner);
         }
 
         @Override

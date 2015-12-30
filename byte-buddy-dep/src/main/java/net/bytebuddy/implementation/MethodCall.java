@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import net.bytebuddy.utility.RandomString;
@@ -32,7 +33,6 @@ import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This {@link Implementation} allows the invocation of a specified method while
@@ -133,7 +133,7 @@ public class MethodCall implements Implementation.Composable {
      * @return A method call implementation that invokes the given method without providing any arguments.
      */
     public static WithoutSpecifiedTarget invoke(Method method) {
-        return invoke(new MethodDescription.ForLoadedMethod(nonNull(method)));
+        return invoke(new MethodDescription.ForLoadedMethod(method));
     }
 
     /**
@@ -143,7 +143,7 @@ public class MethodCall implements Implementation.Composable {
      * @return A method call implementation that invokes the given constructor without providing any arguments.
      */
     public static WithoutSpecifiedTarget invoke(Constructor<?> constructor) {
-        return invoke(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
+        return invoke(new MethodDescription.ForLoadedConstructor(constructor));
     }
 
     /**
@@ -155,7 +155,7 @@ public class MethodCall implements Implementation.Composable {
      * @return A method call implementation that invokes the given method without providing any arguments.
      */
     public static WithoutSpecifiedTarget invoke(MethodDescription methodDescription) {
-        return invoke(new MethodLocator.ForExplicitMethod(nonNull(methodDescription)));
+        return invoke(new MethodLocator.ForExplicitMethod(methodDescription));
     }
 
     /**
@@ -167,7 +167,7 @@ public class MethodCall implements Implementation.Composable {
      * to be invoked.
      */
     public static WithoutSpecifiedTarget invoke(MethodLocator methodLocator) {
-        return new WithoutSpecifiedTarget(nonNull(methodLocator));
+        return new WithoutSpecifiedTarget(methodLocator);
     }
 
     /**
@@ -198,7 +198,7 @@ public class MethodCall implements Implementation.Composable {
      * @return A method call that invokes the given constructor without providing any arguments.
      */
     public static MethodCall construct(Constructor<?> constructor) {
-        return construct(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
+        return construct(new MethodDescription.ForLoadedConstructor(constructor));
     }
 
     /**
@@ -245,7 +245,7 @@ public class MethodCall implements Implementation.Composable {
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(this.argumentLoaders, argumentLoaders),
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -262,11 +262,11 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(TypeDescription... typeDescription) {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(typeDescription.length);
         for (TypeDescription aTypeDescription : typeDescription) {
-            argumentLoaders.add(new ArgumentLoader.ForClassConstant(nonNull(aTypeDescription)));
+            argumentLoaders.add(new ArgumentLoader.ForClassConstant(aTypeDescription));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(this.argumentLoaders, argumentLoaders),
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -283,11 +283,11 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(EnumerationDescription... enumerationDescription) {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(enumerationDescription.length);
         for (EnumerationDescription anEnumerationDescription : enumerationDescription) {
-            argumentLoaders.add(new ArgumentLoader.ForEnumerationValue(nonNull(anEnumerationDescription)));
+            argumentLoaders.add(new ArgumentLoader.ForEnumerationValue(anEnumerationDescription));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(this.argumentLoaders, argumentLoaders),
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -304,11 +304,11 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall with(JavaInstance... javaInstance) {
         List<ArgumentLoader> argumentLoaders = new ArrayList<ArgumentLoader>(javaInstance.length);
         for (JavaInstance aJavaInstance : javaInstance) {
-            argumentLoaders.add(new ArgumentLoader.ForJavaInstance(nonNull(aJavaInstance)));
+            argumentLoaders.add(new ArgumentLoader.ForJavaInstance(aJavaInstance));
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(this.argumentLoaders, argumentLoaders),
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -332,7 +332,7 @@ public class MethodCall implements Implementation.Composable {
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(this.argumentLoaders, argumentLoaders),
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -357,7 +357,7 @@ public class MethodCall implements Implementation.Composable {
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(this.argumentLoaders, argumentLoaders),
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -373,7 +373,7 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall withThis() {
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(argumentLoaders, ArgumentLoader.ForThisReference.INSTANCE),
+                CompoundList.of(argumentLoaders, ArgumentLoader.ForThisReference.INSTANCE),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -389,7 +389,7 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall withOwnType() {
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(argumentLoaders, ArgumentLoader.ForOwnType.INSTANCE),
+                CompoundList.of(argumentLoaders, ArgumentLoader.ForOwnType.INSTANCE),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -419,7 +419,7 @@ public class MethodCall implements Implementation.Composable {
     public MethodCall withInstanceField(TypeDefinition typeDefinition, String name) {
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(argumentLoaders, new ArgumentLoader.ForInstanceField(typeDefinition.asGenericType(), nonNull(name))),
+                CompoundList.of(argumentLoaders, new ArgumentLoader.ForInstanceField(typeDefinition.asGenericType(), name)),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -440,7 +440,7 @@ public class MethodCall implements Implementation.Composable {
         }
         return new MethodCall(methodLocator,
                 targetHandler,
-                join(this.argumentLoaders, argumentLoaders),
+                CompoundList.of(this.argumentLoaders, argumentLoaders),
                 methodInvoker,
                 terminationHandler,
                 assigner,
@@ -464,8 +464,8 @@ public class MethodCall implements Implementation.Composable {
                 argumentLoaders,
                 methodInvoker,
                 terminationHandler,
-                nonNull(assigner),
-                nonNull(typing));
+                assigner,
+                typing);
     }
 
     @Override
@@ -476,7 +476,7 @@ public class MethodCall implements Implementation.Composable {
                 methodInvoker,
                 TerminationHandler.ForChainedInvocation.INSTANCE,
                 assigner,
-                typing), nonNull(implementation));
+                typing), implementation);
     }
 
     @Override
@@ -2240,7 +2240,7 @@ public class MethodCall implements Implementation.Composable {
          */
         public MethodCall on(Object target) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForStaticField(nonNull(target)),
+                    new TargetHandler.ForStaticField(target),
                     argumentLoaders,
                     new MethodInvoker.ForVirtualInvocation(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(target.getClass())),
                     TerminationHandler.ForMethodReturn.INSTANCE,
@@ -2257,7 +2257,7 @@ public class MethodCall implements Implementation.Composable {
          * @return A method call that invokes the given method on an instance that is read from an instance field.
          */
         public MethodCall onInstanceField(Type type, String fieldName) {
-            return onInstanceField(TypeDefinition.Sort.describe(type), nonNull(fieldName));
+            return onInstanceField(TypeDefinition.Sort.describe(type), fieldName);
         }
 
         /**
@@ -2270,7 +2270,7 @@ public class MethodCall implements Implementation.Composable {
          */
         public MethodCall onInstanceField(TypeDescription.Generic typeDescription, String fieldName) {
             return new MethodCall(methodLocator,
-                    new TargetHandler.ForInstanceField(nonNull(fieldName), isActualType(typeDescription)),
+                    new TargetHandler.ForInstanceField(fieldName, typeDescription),
                     argumentLoaders,
                     new MethodInvoker.ForVirtualInvocation(typeDescription),
                     TerminationHandler.ForMethodReturn.INSTANCE,

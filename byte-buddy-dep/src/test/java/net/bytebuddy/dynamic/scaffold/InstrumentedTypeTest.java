@@ -100,19 +100,6 @@ public class InstrumentedTypeTest {
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
     }
 
-    @Test(expected = IllegalArgumentException.class)
-    @SuppressWarnings("unchecked")
-    public void testWithFieldDouble() throws Exception {
-        TypeDescription.Generic fieldType = mock(TypeDescription.Generic.class);
-        when(fieldType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(fieldType);
-        TypeDescription rawFieldType = mock(TypeDescription.class);
-        when(fieldType.asErasure()).thenReturn(rawFieldType);
-        when(rawFieldType.getName()).thenReturn(FOO);
-        makePlainInstrumentedType()
-                .withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType))
-                .withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, fieldType));
-    }
-
     @Test
     @SuppressWarnings("unchecked")
     public void testWithMethod() throws Exception {
@@ -183,19 +170,6 @@ public class InstrumentedTypeTest {
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
         assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
-    }
-
-    @Test(expected = IllegalArgumentException.class)
-    @SuppressWarnings("unchecked")
-    public void testWithMethodDouble() throws Exception {
-        TypeDescription.Generic returnType = mock(TypeDescription.Generic.class);
-        when(returnType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(returnType);
-        TypeDescription rawReturnType = mock(TypeDescription.class);
-        when(returnType.asErasure()).thenReturn(rawReturnType);
-        when(rawReturnType.getName()).thenReturn(FOO);
-        makePlainInstrumentedType()
-                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<TypeDescription.Generic>emptyList()))
-                .withMethod(new MethodDescription.Token(BAR, Opcodes.ACC_PUBLIC, returnType, Collections.<TypeDescription.Generic>emptyList()));
     }
 
     @Test

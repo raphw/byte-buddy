@@ -14,6 +14,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.JavaType;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -26,7 +27,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
@@ -2588,7 +2588,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.LazyProjection.OfLoadedParameter.Dispatcher.ForModernVm{" +
+                            return "TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForModernVm{" +
                                     "getType=" + getType +
                                     ", getParameterizedType=" + getParameterizedType +
                                     '}';
@@ -2618,7 +2618,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.LazyProjection.OfLoadedParameter.Dispatcher.ForLegacyVm." + name();
+                            return "TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForLegacyVm." + name();
                         }
                     }
                 }
@@ -2933,7 +2933,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 for (AnnotationDescription annotationDescription : declaredAnnotations) {
                     annotationTypes.add(annotationDescription.getAnnotationType());
                 }
-                return new AnnotationList.Explicit(join(declaredAnnotations, getSuperType().asErasure().getInheritedAnnotations().inherited(annotationTypes)));
+                return new AnnotationList.Explicit(CompoundList.of(declaredAnnotations, getSuperType().asErasure().getInheritedAnnotations().inherited(annotationTypes)));
             }
         }
 

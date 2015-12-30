@@ -16,8 +16,6 @@ import java.util.*;
 import java.util.jar.JarFile;
 import java.util.zip.ZipEntry;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-
 /**
  * Locates a class file or its byte array representation when it is given its type description.
  */
@@ -480,7 +478,7 @@ public interface ClassFileLocator {
                 throw new IllegalArgumentException(instrumentation + " does not support retransformation");
             }
             this.instrumentation = instrumentation;
-            this.classLoadingDelegate = nonNull(classLoadingDelegate);
+            this.classLoadingDelegate = classLoadingDelegate;
         }
 
         /**

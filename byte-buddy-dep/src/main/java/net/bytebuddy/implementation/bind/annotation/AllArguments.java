@@ -10,12 +10,11 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.CompoundList;
 
 import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * Parameters that are annotated with this annotation will be assigned a collection (or an array) containing
@@ -140,7 +139,7 @@ public @interface AllArguments {
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
             for (TypeDescription sourceParameter : includeThis
-                    ? join(implementationTarget.getInstrumentedType(), source.getParameters().asTypeList().asErasures())
+                    ? CompoundList.of(implementationTarget.getInstrumentedType(), source.getParameters().asTypeList().asErasures())
                     : source.getParameters().asTypeList().asErasures()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.of(sourceParameter).loadOffset(offset),

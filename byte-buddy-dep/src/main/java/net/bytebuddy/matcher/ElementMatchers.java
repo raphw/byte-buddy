@@ -26,8 +26,6 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-
 /**
  * A utility class that contains a human-readable language for creating {@link net.bytebuddy.matcher.ElementMatcher}s.
  */
@@ -78,7 +76,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given field.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> is(Field field) {
-        return definedField(is(new FieldDescription.ForLoadedField(nonNull(field))));
+        return definedField(is(new FieldDescription.ForLoadedField(field)));
     }
 
     /**
@@ -89,7 +87,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a matched field's defined shape.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> definedField(ElementMatcher<? super FieldDescription.InDefinedShape> matcher) {
-        return new DefinedShapeMatcher<T, FieldDescription.InDefinedShape>(nonNull(matcher));
+        return new DefinedShapeMatcher<T, FieldDescription.InDefinedShape>(matcher);
     }
 
     /**
@@ -100,7 +98,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any field that is represented by the provided field description.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token fieldToken) {
-        return fieldRepresentedBy(is(nonNull(fieldToken)));
+        return fieldRepresentedBy(is(fieldToken));
     }
 
     /**
@@ -111,7 +109,7 @@ public final class ElementMatchers {
      * @return A matcher that applies the given matcher to the matched field's token.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldRepresentedBy(ElementMatcher<? super FieldDescription.Token> matcher) {
-        return new TokenMatcher<T, FieldDescription.Token>(nonNull(matcher));
+        return new TokenMatcher<T, FieldDescription.Token>(matcher);
     }
 
     /**
@@ -122,7 +120,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Method method) {
-        return definedMethod(is(new MethodDescription.ForLoadedMethod(nonNull(method))));
+        return definedMethod(is(new MethodDescription.ForLoadedMethod(method)));
     }
 
     /**
@@ -133,7 +131,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given constructor.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> is(Constructor<?> constructor) {
-        return definedMethod(is(new MethodDescription.ForLoadedConstructor(nonNull(constructor))));
+        return definedMethod(is(new MethodDescription.ForLoadedConstructor(constructor)));
     }
 
     /**
@@ -144,7 +142,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a matched method's defined shape.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> definedMethod(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(nonNull(matcher));
+        return new DefinedShapeMatcher<T, MethodDescription.InDefinedShape>(matcher);
     }
 
     /**
@@ -155,7 +153,7 @@ public final class ElementMatchers {
      * @return A matcher that applies the given matcher to the matched method's token.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> methodRepresentedBy(ElementMatcher<? super MethodDescription.Token> matcher) {
-        return new TokenMatcher<T, MethodDescription.Token>(nonNull(matcher));
+        return new TokenMatcher<T, MethodDescription.Token>(matcher);
     }
 
     /**
@@ -166,7 +164,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any method that is represented by the provided method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token methodToken) {
-        return methodRepresentedBy(is(nonNull(methodToken)));
+        return methodRepresentedBy(is(methodToken));
     }
 
     /**
@@ -178,7 +176,7 @@ public final class ElementMatchers {
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> definedParameter(
             ElementMatcher<? super ParameterDescription.InDefinedShape> matcher) {
-        return new DefinedShapeMatcher<T, ParameterDescription.InDefinedShape>(nonNull(matcher));
+        return new DefinedShapeMatcher<T, ParameterDescription.InDefinedShape>(matcher);
     }
 
     /**
@@ -190,7 +188,7 @@ public final class ElementMatchers {
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> parameterRepresentedBy(
             ElementMatcher<? super ParameterDescription.Token> matcher) {
-        return new TokenMatcher<T, ParameterDescription.Token>(nonNull(matcher));
+        return new TokenMatcher<T, ParameterDescription.Token>(matcher);
     }
 
     /**
@@ -201,7 +199,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any parameter that is represented by the provided parameter description.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> representedBy(ParameterDescription.Token parameterToken) {
-        return parameterRepresentedBy(is(nonNull(parameterToken)));
+        return parameterRepresentedBy(is(parameterToken));
     }
 
     /**
@@ -212,7 +210,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a parameter's type by the given matcher.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasType(ElementMatcher<? super TypeDescription> matcher) {
-        return hasGenericType(rawType(nonNull(matcher)));
+        return hasGenericType(rawType(matcher));
     }
 
     /**
@@ -223,7 +221,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the matched parameter's generic type.
      */
     public static <T extends ParameterDescription> ElementMatcher.Junction<T> hasGenericType(ElementMatcher<? super TypeDescription.Generic> matcher) {
-        return new MethodParameterTypeMatcher<T>(nonNull(matcher));
+        return new MethodParameterTypeMatcher<T>(matcher);
     }
 
     /**
@@ -234,7 +232,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given type.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> is(Type type) {
-        return is(TypeDefinition.Sort.describe(nonNull(type)));
+        return is(TypeDefinition.Sort.describe(type));
     }
 
     /**
@@ -245,7 +243,7 @@ public final class ElementMatchers {
      * @return An element matcher that exactly matches the given annotation.
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> is(Annotation annotation) {
-        return is(AnnotationDescription.ForLoadedAnnotation.of(nonNull(annotation)));
+        return is(AnnotationDescription.ForLoadedAnnotation.of(annotation));
     }
 
     /**
@@ -256,7 +254,7 @@ public final class ElementMatchers {
      * @return An inverted version of the given {@code matcher}.
      */
     public static <T> ElementMatcher.Junction<T> not(ElementMatcher<? super T> matcher) {
-        return new NegatingMatcher<T>(nonNull(matcher));
+        return new NegatingMatcher<T>(matcher);
     }
 
     /**
@@ -288,7 +286,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T> ElementMatcher.Junction<T> anyOf(Object... value) {
-        return anyOf(Arrays.asList(nonNull(value)));
+        return anyOf(Arrays.asList(value));
     }
 
     /**
@@ -316,7 +314,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> anyOf(Type... value) {
-        return anyOf(new TypeList.Generic.ForLoadedTypes(nonNull(value)));
+        return anyOf(new TypeList.Generic.ForLoadedTypes(value));
     }
 
     /**
@@ -328,7 +326,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Constructor<?>... value) {
-        return definedMethod(anyOf(new MethodList.ForLoadedType(nonNull(value), new Method[0])));
+        return definedMethod(anyOf(new MethodList.ForLoadedType(value, new Method[0])));
     }
 
     /**
@@ -340,7 +338,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> anyOf(Method... value) {
-        return definedMethod(anyOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value))));
+        return definedMethod(anyOf(new MethodList.ForLoadedType(new Constructor<?>[0], value)));
     }
 
     /**
@@ -352,7 +350,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> anyOf(Field... value) {
-        return definedField(anyOf(new FieldList.ForLoadedField(nonNull(value))));
+        return definedField(anyOf(new FieldList.ForLoadedField(value)));
     }
 
     /**
@@ -364,7 +362,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> anyOf(Annotation... value) {
-        return anyOf(new AnnotationList.ForLoadedAnnotation(nonNull(value)));
+        return anyOf(new AnnotationList.ForLoadedAnnotation(value));
     }
 
     /**
@@ -404,7 +402,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> noneOf(Type... value) {
-        return noneOf(new TypeList.Generic.ForLoadedTypes(nonNull(value)));
+        return noneOf(new TypeList.Generic.ForLoadedTypes(value));
     }
 
     /**
@@ -416,7 +414,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Constructor<?>... value) {
-        return definedMethod(noneOf(new MethodList.ForLoadedType(nonNull(value), new Method[0])));
+        return definedMethod(noneOf(new MethodList.ForLoadedType(value, new Method[0])));
     }
 
     /**
@@ -428,7 +426,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> noneOf(Method... value) {
-        return definedMethod(noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], nonNull(value))));
+        return definedMethod(noneOf(new MethodList.ForLoadedType(new Constructor<?>[0], value)));
     }
 
     /**
@@ -440,7 +438,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> noneOf(Field... value) {
-        return definedField(noneOf(new FieldList.ForLoadedField(nonNull(value))));
+        return definedField(noneOf(new FieldList.ForLoadedField(value)));
     }
 
     /**
@@ -452,7 +450,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> noneOf(Annotation... value) {
-        return noneOf(new AnnotationList.ForLoadedAnnotation(nonNull(value)));
+        return noneOf(new AnnotationList.ForLoadedAnnotation(value));
     }
 
     /**
@@ -486,7 +484,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a generic type's raw type against the provided non-generic type.
      */
     public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(Class<?> type) {
-        return rawType(is(nonNull(type)));
+        return rawType(is(type));
     }
 
     /**
@@ -497,7 +495,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a generic type's raw type against the provided non-generic type.
      */
     public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(TypeDescription typeDescription) {
-        return rawType(is(nonNull(typeDescription)));
+        return rawType(is(typeDescription));
     }
 
     /**
@@ -509,7 +507,7 @@ public final class ElementMatchers {
      * @return A type matcher for a generic type that matches the matched type's raw type against the given type description matcher.
      */
     public static <T extends TypeDescription.Generic> ElementMatcher.Junction<T> rawType(ElementMatcher<? super TypeDescription> matcher) {
-        return new RawTypeMatcher<T>(nonNull(matcher));
+        return new RawTypeMatcher<T>(matcher);
     }
 
     /**
@@ -545,7 +543,7 @@ public final class ElementMatchers {
             Iterable<? extends TypeDescription> typeDescriptions) {
         List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription typeDescription : typeDescriptions) {
-            typeMatchers.add(is(nonNull(typeDescription)));
+            typeMatchers.add(is(typeDescription));
         }
         return rawTypes(new CollectionOneToOneMatcher<TypeDescription>(typeMatchers));
     }
@@ -570,7 +568,7 @@ public final class ElementMatchers {
      * @return A matcher that matches type variables with the given name.
      */
     public static <T extends TypeDefinition> ElementMatcher<T> isVariable(String symbol) {
-        return isVariable(named(nonNull(symbol)));
+        return isVariable(named(symbol));
     }
 
     /**
@@ -594,7 +592,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's exact name.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> named(String name) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(name), StringMatcher.Mode.EQUALS_FULLY));
+        return new NameMatcher<T>(new StringMatcher(name, StringMatcher.Mode.EQUALS_FULLY));
     }
 
     /**
@@ -606,7 +604,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> namedIgnoreCase(String name) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(name), StringMatcher.Mode.EQUALS_FULLY_IGNORE_CASE));
+        return new NameMatcher<T>(new StringMatcher(name, StringMatcher.Mode.EQUALS_FULLY_IGNORE_CASE));
     }
 
     /**
@@ -617,7 +615,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name's prefix.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> nameStartsWith(String prefix) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(prefix), StringMatcher.Mode.STARTS_WITH));
+        return new NameMatcher<T>(new StringMatcher(prefix, StringMatcher.Mode.STARTS_WITH));
     }
 
     /**
@@ -629,7 +627,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name's prefix.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> nameStartsWithIgnoreCase(String prefix) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(prefix), StringMatcher.Mode.STARTS_WITH_IGNORE_CASE));
+        return new NameMatcher<T>(new StringMatcher(prefix, StringMatcher.Mode.STARTS_WITH_IGNORE_CASE));
     }
 
     /**
@@ -640,7 +638,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name's suffix.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> nameEndsWith(String suffix) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(suffix), StringMatcher.Mode.ENDS_WITH));
+        return new NameMatcher<T>(new StringMatcher(suffix, StringMatcher.Mode.ENDS_WITH));
     }
 
     /**
@@ -652,7 +650,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name's suffix.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> nameEndsWithIgnoreCase(String suffix) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(suffix), StringMatcher.Mode.ENDS_WITH_IGNORE_CASE));
+        return new NameMatcher<T>(new StringMatcher(suffix, StringMatcher.Mode.ENDS_WITH_IGNORE_CASE));
     }
 
     /**
@@ -663,7 +661,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name's infix.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> nameContains(String infix) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(infix), StringMatcher.Mode.CONTAINS));
+        return new NameMatcher<T>(new StringMatcher(infix, StringMatcher.Mode.CONTAINS));
     }
 
     /**
@@ -675,7 +673,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name's infix.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> nameContainsIgnoreCase(String infix) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(infix), StringMatcher.Mode.CONTAINS_IGNORE_CASE));
+        return new NameMatcher<T>(new StringMatcher(infix, StringMatcher.Mode.CONTAINS_IGNORE_CASE));
     }
 
     /**
@@ -686,7 +684,7 @@ public final class ElementMatchers {
      * @return An element matcher for a named element's name's against the given regular expression.
      */
     public static <T extends NamedElement> ElementMatcher.Junction<T> nameMatches(String regex) {
-        return new NameMatcher<T>(new StringMatcher(nonNull(regex), StringMatcher.Mode.MATCHES));
+        return new NameMatcher<T>(new StringMatcher(regex, StringMatcher.Mode.MATCHES));
     }
 
     /**
@@ -697,7 +695,7 @@ public final class ElementMatchers {
      * @return A matcher for the given {@code descriptor}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> hasDescriptor(String descriptor) {
-        return new DescriptorMatcher<T>(new StringMatcher(nonNull(descriptor), StringMatcher.Mode.EQUALS_FULLY));
+        return new DescriptorMatcher<T>(new StringMatcher(descriptor, StringMatcher.Mode.EQUALS_FULLY));
     }
 
     /**
@@ -709,7 +707,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by the given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(Class<?> type) {
-        return isDeclaredBy(new TypeDescription.ForLoadedType(nonNull(type)));
+        return isDeclaredBy(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -721,7 +719,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by the given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(TypeDescription type) {
-        return isDeclaredBy(is(nonNull(type)));
+        return isDeclaredBy(is(type));
     }
 
     /**
@@ -734,7 +732,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredBy(ElementMatcher<? super TypeDescription> matcher) {
-        return isDeclaredByGeneric(rawType(nonNull(matcher)));
+        return isDeclaredByGeneric(rawType(matcher));
     }
 
     /**
@@ -745,7 +743,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by the given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(Type type) {
-        return isDeclaredByGeneric(TypeDefinition.Sort.describe(nonNull(type)));
+        return isDeclaredByGeneric(TypeDefinition.Sort.describe(type));
     }
 
     /**
@@ -756,7 +754,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by the given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(TypeDescription.Generic type) {
-        return isDeclaredByGeneric(is(nonNull(type)));
+        return isDeclaredByGeneric(is(type));
     }
 
     /**
@@ -767,7 +765,7 @@ public final class ElementMatchers {
      * @return A matcher for byte code elements being declared by a type matched by the given {@code matcher}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isDeclaredByGeneric(ElementMatcher<? super TypeDescription.Generic> matcher) {
-        return new DeclaringTypeMatcher<T>(nonNull(matcher));
+        return new DeclaringTypeMatcher<T>(matcher);
     }
 
     /**
@@ -778,7 +776,7 @@ public final class ElementMatchers {
      * @return A matcher for a byte code element to be visible to a given {@code type}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isVisibleTo(Class<?> type) {
-        return isVisibleTo(new TypeDescription.ForLoadedType(nonNull(type)));
+        return isVisibleTo(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -790,7 +788,7 @@ public final class ElementMatchers {
      * @return A matcher for a byte code element to be visible to a given {@code typeDescription}.
      */
     public static <T extends ByteCodeElement> ElementMatcher.Junction<T> isVisibleTo(TypeDescription typeDescription) {
-        return new VisibilityMatcher<T>(nonNull(typeDescription));
+        return new VisibilityMatcher<T>(typeDescription);
     }
 
     /**
@@ -813,7 +811,7 @@ public final class ElementMatchers {
      * @return A matcher that validates that an annotated element is annotated with an annotation of {@code type}.
      */
     public static <T extends AnnotatedCodeElement> ElementMatcher.Junction<T> isAnnotatedWith(Class<? extends Annotation> type) {
-        return isAnnotatedWith(new TypeDescription.ForLoadedType(nonNull(type)));
+        return isAnnotatedWith(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -842,7 +840,7 @@ public final class ElementMatchers {
      * that matches the given {@code matcher}.
      */
     public static <T extends AnnotatedCodeElement> ElementMatcher.Junction<T> isAnnotatedWith(ElementMatcher<? super TypeDescription> matcher) {
-        return declaresAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
+        return declaresAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(matcher));
     }
 
     /**
@@ -857,7 +855,7 @@ public final class ElementMatchers {
      * the given {@code matcher}.
      */
     public static <T extends AnnotatedCodeElement> ElementMatcher.Junction<T> declaresAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
-        return new DeclaringAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(matcher)));
+        return new DeclaringAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(matcher));
     }
 
     /**
@@ -988,7 +986,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given generic return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(Type type) {
-        return returnsGeneric(TypeDefinition.Sort.describe(nonNull(type)));
+        return returnsGeneric(TypeDefinition.Sort.describe(type));
     }
 
     /**
@@ -1000,7 +998,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(TypeDescription.Generic typeDescription) {
-        return returnsGeneric(is(nonNull(typeDescription)));
+        return returnsGeneric(is(typeDescription));
     }
 
     /**
@@ -1011,7 +1009,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(Class<?> type) {
-        return returnsGeneric(rawType(nonNull(type)));
+        return returnsGeneric(rawType(type));
     }
 
     /**
@@ -1022,7 +1020,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given return type for a method description.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(TypeDescription typeDescription) {
-        return returns(is(nonNull(typeDescription)));
+        return returns(is(typeDescription));
     }
 
     /**
@@ -1033,7 +1031,7 @@ public final class ElementMatchers {
      * @return A matcher that matches the matched method's return type's erasure.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returns(ElementMatcher<? super TypeDescription> matcher) {
-        return returnsGeneric(rawType(nonNull(matcher)));
+        return returnsGeneric(rawType(matcher));
     }
 
     /**
@@ -1044,7 +1042,7 @@ public final class ElementMatchers {
      * @return An element matcher that matches a given return type against another {@code matcher}.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> returnsGeneric(ElementMatcher<? super TypeDescription.Generic> matcher) {
-        return new MethodReturnTypeMatcher<T>(nonNull(matcher));
+        return new MethodReturnTypeMatcher<T>(matcher);
     }
 
     /**
@@ -1055,7 +1053,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(Type... type) {
-        return takesGenericArguments(new TypeList.Generic.ForLoadedTypes(nonNull(type)));
+        return takesGenericArguments(new TypeList.Generic.ForLoadedTypes(type));
     }
 
     /**
@@ -1066,7 +1064,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(TypeDefinition... typeDefinition) {
-        return takesGenericArguments((Arrays.asList(nonNull(typeDefinition))));
+        return takesGenericArguments((Arrays.asList(typeDefinition)));
     }
 
     /**
@@ -1079,7 +1077,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(List<? extends TypeDefinition> typeDefinitions) {
         List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription.Generic>>();
         for (TypeDefinition typeDefinition : typeDefinitions) {
-            typeMatchers.add(is(nonNull(typeDefinition)));
+            typeMatchers.add(is(typeDefinition));
         }
         return takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(typeMatchers));
     }
@@ -1094,7 +1092,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(
             ElementMatcher<? super Iterable<? extends TypeDescription.Generic>> matchers) {
-        return new MethodParametersMatcher<T>(new MethodParameterTypesMatcher<ParameterList<?>>(nonNull(matchers)));
+        return new MethodParametersMatcher<T>(new MethodParameterTypesMatcher<ParameterList<?>>(matchers));
     }
 
     /**
@@ -1105,7 +1103,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's raw parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Class<?>... type) {
-        return takesGenericArguments(rawTypes(nonNull(type)));
+        return takesGenericArguments(rawTypes(type));
     }
 
     /**
@@ -1116,7 +1114,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's raw parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(TypeDescription... typeDescription) {
-        return takesGenericArguments(rawTypes(nonNull(typeDescription)));
+        return takesGenericArguments(rawTypes(typeDescription));
     }
 
     /**
@@ -1129,7 +1127,7 @@ public final class ElementMatchers {
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> typeDescriptions) {
         List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription.Generic>>();
         for (TypeDescription typeDescription : typeDescriptions) {
-            typeMatchers.add(rawType(nonNull(typeDescription)));
+            typeMatchers.add(rawType(typeDescription));
         }
         return takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(typeMatchers));
     }
@@ -1155,7 +1153,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> hasParameters(
             ElementMatcher<? super Iterable<? extends ParameterDescription>> matcher) {
-        return new MethodParametersMatcher<T>(nonNull(matcher));
+        return new MethodParametersMatcher<T>(matcher);
     }
 
     /**
@@ -1167,7 +1165,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a method description by its declaration of throwing a checked exception.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> canThrow(Class<? extends Throwable> exceptionType) {
-        return canThrow(new TypeDescription.ForLoadedType(nonNull(exceptionType)));
+        return canThrow(new TypeDescription.ForLoadedType(exceptionType));
     }
 
     /**
@@ -1245,7 +1243,7 @@ public final class ElementMatchers {
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> declaresGenericException(
             ElementMatcher<? super Iterable<? extends TypeDescription.Generic>> exceptionMatcher) {
-        return new MethodExceptionTypeMatcher<T>(nonNull(exceptionMatcher));
+        return new MethodExceptionTypeMatcher<T>(exceptionMatcher);
     }
 
     /**
@@ -1396,7 +1394,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any setter method.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(Type type) {
-        return isSetter(TypeDefinition.Sort.describe(nonNull(type)));
+        return isSetter(TypeDefinition.Sort.describe(type));
     }
 
     /**
@@ -1407,7 +1405,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a setter method with the specified argument type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(TypeDescription.Generic typeDescription) {
-        return isSetter(is(nonNull(typeDescription)));
+        return isSetter(is(typeDescription));
     }
 
     /**
@@ -1418,7 +1416,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a setter method with an argument type that matches the supplied matcher.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isSetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
-        return isSetter().and(takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(Collections.singletonList(nonNull(matcher)))));
+        return isSetter().and(takesGenericArguments(new CollectionOneToOneMatcher<TypeDescription.Generic>(Collections.singletonList(matcher))));
     }
 
     /**
@@ -1440,7 +1438,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a getter method with the given type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(Type type) {
-        return isGetter(TypeDefinition.Sort.describe(nonNull(type)));
+        return isGetter(TypeDefinition.Sort.describe(type));
     }
 
     /**
@@ -1451,7 +1449,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a getter method with the given type.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(TypeDescription.Generic typeDescription) {
-        return isGetter(is(nonNull(typeDescription)));
+        return isGetter(is(typeDescription));
     }
 
     /**
@@ -1462,7 +1460,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a getter method with a return type that matches the supplied matcher.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> isGetter(ElementMatcher<? super TypeDescription.Generic> matcher) {
-        return isGetter().and(returnsGeneric(nonNull(matcher)));
+        return isGetter().and(returnsGeneric(matcher));
     }
 
     /**
@@ -1490,7 +1488,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type description that represents a sub type of the given type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(Class<?> type) {
-        return isSubTypeOf(new TypeDescription.ForLoadedType(nonNull(type)));
+        return isSubTypeOf(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -1501,7 +1499,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type description that represents a sub type of the given type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSubTypeOf(TypeDescription typeDescription) {
-        return new SubTypeMatcher<T>(nonNull(typeDescription));
+        return new SubTypeMatcher<T>(typeDescription);
     }
 
     /**
@@ -1512,7 +1510,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type description that represents a super type of the given type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(Class<?> type) {
-        return isSuperTypeOf(new TypeDescription.ForLoadedType(nonNull(type)));
+        return isSuperTypeOf(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -1523,7 +1521,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type description that represents a super type of the given type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> isSuperTypeOf(TypeDescription typeDescription) {
-        return new SuperTypeMatcher<T>(nonNull(typeDescription));
+        return new SuperTypeMatcher<T>(typeDescription);
     }
 
     /**
@@ -1535,7 +1533,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any inherited annotation by their type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(Class<?> type) {
-        return inheritsAnnotation(new TypeDescription.ForLoadedType(nonNull(type)));
+        return inheritsAnnotation(new TypeDescription.ForLoadedType(type));
     }
 
     /**
@@ -1547,7 +1545,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any inherited annotation by their type.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(TypeDescription typeDescription) {
-        return inheritsAnnotation(is(nonNull(typeDescription)));
+        return inheritsAnnotation(is(typeDescription));
     }
 
     /**
@@ -1559,7 +1557,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any inherited annotation by a given matcher.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> inheritsAnnotation(ElementMatcher<? super TypeDescription> matcher) {
-        return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(nonNull(matcher)));
+        return hasAnnotation(new AnnotationTypeMatcher<AnnotationDescription>(matcher));
     }
 
     /**
@@ -1571,7 +1569,7 @@ public final class ElementMatchers {
      * @return A matcher that matches a list of inherited annotation by a given matcher.
      */
     public static <T extends TypeDescription> ElementMatcher.Junction<T> hasAnnotation(ElementMatcher<? super AnnotationDescription> matcher) {
-        return new InheritedAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(nonNull(matcher)));
+        return new InheritedAnnotationMatcher<T>(new CollectionItemMatcher<AnnotationDescription>(matcher));
     }
 
     /**
@@ -1582,7 +1580,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared field.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> declaresField(ElementMatcher<? super FieldDescription> fieldMatcher) {
-        return new DeclaringFieldMatcher<T>(new CollectionItemMatcher<FieldDescription>(nonNull(fieldMatcher)));
+        return new DeclaringFieldMatcher<T>(new CollectionItemMatcher<FieldDescription>(fieldMatcher));
     }
 
     /**
@@ -1593,7 +1591,7 @@ public final class ElementMatchers {
      * @return A matcher that matches any type where another matcher is matched positively on at least on declared methods.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> declaresMethod(ElementMatcher<? super MethodDescription> methodMatcher) {
-        return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(nonNull(methodMatcher)));
+        return new DeclaringMethodMatcher<T>(new CollectionItemMatcher<MethodDescription>(methodMatcher));
     }
 
     /**
@@ -1604,7 +1602,7 @@ public final class ElementMatchers {
      * @return A matcher that matches generic types of the given sort.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> ofSort(TypeDefinition.Sort sort) {
-        return ofSort(is(nonNull(sort)));
+        return ofSort(is(sort));
     }
 
     /**
@@ -1615,7 +1613,7 @@ public final class ElementMatchers {
      * @return A matcher that matches generic types of the given sort.
      */
     public static <T extends TypeDefinition> ElementMatcher.Junction<T> ofSort(ElementMatcher<? super TypeDefinition.Sort> matcher) {
-        return new TypeSortMatcher<T>(nonNull(matcher));
+        return new TypeSortMatcher<T>(matcher);
     }
 
     /**
@@ -1637,7 +1635,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> genericFieldType(TypeDescription.Generic fieldType) {
-        return genericFieldType(is(nonNull(fieldType)));
+        return genericFieldType(is(fieldType));
     }
 
     /**
@@ -1648,7 +1646,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> genericFieldType(ElementMatcher<? super TypeDescription.Generic> matcher) {
-        return new FieldTypeMatcher<T>(nonNull(matcher));
+        return new FieldTypeMatcher<T>(matcher);
     }
 
     /**
@@ -1659,7 +1657,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(Class<?> fieldType) {
-        return fieldType(new TypeDescription.ForLoadedType(nonNull(fieldType)));
+        return fieldType(new TypeDescription.ForLoadedType(fieldType));
     }
 
     /**
@@ -1670,7 +1668,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(TypeDescription fieldType) {
-        return fieldType(is(nonNull(fieldType)));
+        return fieldType(is(fieldType));
     }
 
     /**
@@ -1681,7 +1679,7 @@ public final class ElementMatchers {
      * @return A matcher matching the provided field type.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldType(ElementMatcher<? super TypeDescription> matcher) {
-        return genericFieldType(rawType(nonNull(matcher)));
+        return genericFieldType(rawType(matcher));
     }
 
     /**
@@ -1739,7 +1737,7 @@ public final class ElementMatchers {
      * @return A matcher that matches all class loaders in the hierarchy of the matched class loader.
      */
     public static <T extends ClassLoader> ElementMatcher<T> hasChild(ElementMatcher<? super ClassLoader> matcher) {
-        return new ClassLoaderHierarchyMatcher<T>(nonNull(matcher));
+        return new ClassLoaderHierarchyMatcher<T>(matcher);
     }
 
     /**
