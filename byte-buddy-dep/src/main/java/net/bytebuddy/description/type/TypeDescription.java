@@ -2804,6 +2804,19 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             public static Builder parameterizedType(TypeDescription rawType, Generic ownerType, List<? extends TypeDefinition> parameters) {
+                TypeDescription declaringType = rawType.getDeclaringType();
+                if (ownerType == null && declaringType != null && rawType.isStatic()) {
+                    ownerType = declaringType.asGenericType();
+                }
+                if (ownerType == null && declaringType != null && !rawType.isStatic()) {
+                    throw new IllegalArgumentException(rawType + " requires an owner type");
+                } else if (ownerType != null && !ownerType.asErasure().equals(declaringType)) {
+                    throw new IllegalArgumentException(ownerType + " does not represent required owner for " + rawType);
+                } else if (ownerType != null && (rawType.isStatic() ^ ownerType.getSort().isNonGeneric())) {
+                    throw new IllegalArgumentException(ownerType + " does not define the correct parameters for owning " + rawType);
+                } else if (rawType.getTypeVariables().size() != parameters.size()) {
+                    throw new IllegalArgumentException(parameters + " does not contain number of required parameters for " + rawType);
+                }
                 return new Builder(new OfParameterizedType.Latent(rawType, ownerType, new TypeList.Generic.Explicit(parameters)));
             }
 
