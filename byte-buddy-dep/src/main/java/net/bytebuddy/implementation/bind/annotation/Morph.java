@@ -191,7 +191,7 @@ public @interface Morph {
             Implementation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
             if (typeDescription.represents(void.class) && !annotation.getValue(DEFAULT_METHOD, Boolean.class)) {
-                specialMethodInvocation = implementationTarget.invokeSuper(source.asToken());
+                specialMethodInvocation = implementationTarget.invokeSuper(source.asSignatureToken());
             } else {
                 specialMethodInvocation = (typeDescription.represents(void.class)
                         ? DefaultMethodLocator.Implicit.INSTANCE
@@ -257,7 +257,7 @@ public @interface Morph {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                             }
-                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asToken());
+                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asSignatureToken());
                         }
                     }
                     return specialMethodInvocation != null
@@ -297,7 +297,7 @@ public @interface Morph {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(typeDescription, source.asToken());
+                    return implementationTarget.invokeDefault(typeDescription, source.asSignatureToken());
                 }
 
                 @Override

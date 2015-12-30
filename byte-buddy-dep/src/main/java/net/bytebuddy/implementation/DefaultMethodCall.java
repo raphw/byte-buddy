@@ -223,7 +223,7 @@ public class DefaultMethodCall implements Implementation {
          * given method.
          */
         private StackManipulation locateDefault(MethodDescription methodDescription) {
-            MethodDescription.Token methodToken = methodDescription.asToken();
+            MethodDescription.SignatureToken methodToken = methodDescription.asSignatureToken();
             SpecialMethodInvocation specialMethodInvocation = SpecialMethodInvocation.Illegal.INSTANCE;
             for (TypeDescription typeDescription : prioritizedInterfaces) {
                 specialMethodInvocation = implementationTarget.invokeDefault(typeDescription, methodToken);

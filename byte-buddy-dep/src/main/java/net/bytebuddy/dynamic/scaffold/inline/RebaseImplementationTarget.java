@@ -27,7 +27,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     /**
      * A mapping of the instrumented type's declared methods by each method's token.
      */
-    private final Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebaseableMethods;
+    private final Map<MethodDescription.SignatureToken, MethodRebaseResolver.Resolution> rebaseableMethods;
 
     /**
      * Creates a rebase implementation target.
@@ -38,7 +38,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      */
     protected RebaseImplementationTarget(TypeDescription instrumentedType,
                                          MethodGraph.Linked methodGraph,
-                                         Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebasements) {
+                                         Map<MethodDescription.SignatureToken, MethodRebaseResolver.Resolution> rebasements) {
         super(instrumentedType, methodGraph);
         this.rebaseableMethods = rebasements;
     }
@@ -56,18 +56,18 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
                                               MethodGraph.Linked methodGraph,
                                               MethodList<MethodDescription.InDefinedShape> rebaseableMethods,
                                               MethodRebaseResolver methodRebaseResolver) {
-        Map<MethodDescription.Token, MethodRebaseResolver.Resolution> rebasements = new HashMap<MethodDescription.Token, MethodRebaseResolver.Resolution>();
+        Map<MethodDescription.SignatureToken, MethodRebaseResolver.Resolution> rebasements = new HashMap<MethodDescription.SignatureToken, MethodRebaseResolver.Resolution>();
         for (MethodDescription.InDefinedShape methodDescription : rebaseableMethods) {
-            rebasements.put(methodDescription.asToken(), methodRebaseResolver.resolve(methodDescription));
+            rebasements.put(methodDescription.asSignatureToken(), methodRebaseResolver.resolve(methodDescription));
         }
         return new RebaseImplementationTarget(instrumentedType, methodGraph, rebasements);
     }
 
     @Override
-    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
-        MethodRebaseResolver.Resolution resolution = rebaseableMethods.get(methodToken);
+    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token) {
+        MethodRebaseResolver.Resolution resolution = rebaseableMethods.get(token);
         return resolution == null
-                ? invokeSuper(methodGraph.getSuperGraph().locate(methodToken))
+                ? invokeSuper(methodGraph.getSuperGraph().locate(token))
                 : invokeSuper(resolution);
     }
 

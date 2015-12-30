@@ -360,10 +360,6 @@ public interface FieldDescription extends ByteCodeElement,
         }
     }
 
-    /**
-     * A token that represents a field's shape. A field token is equal to another token when the other field
-     * tokens's name is equal to this token.
-     */
     class Token implements ByteCodeElement.Token<Token> {
 
         /**
@@ -457,24 +453,23 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public boolean isIdenticalTo(Token token) {
-            return getName().equals(token.getName())
-                    && getModifiers() == token.getModifiers()
-                    && getType().equals(token.getType())
-                    && getAnnotations().equals(token.getAnnotations());
-        }
-
-        @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (!(other instanceof Token)) return false;
+            if (other == null || getClass() != other.getClass()) return false;
             Token token = (Token) other;
-            return getName().equals(token.getName());
+            return modifiers == token.modifiers
+                    && name.equals(token.name)
+                    && type.equals(token.type)
+                    && annotations.equals(token.annotations);
         }
 
         @Override
         public int hashCode() {
-            return getName().hashCode();
+            int result = name.hashCode();
+            result = 31 * result + modifiers;
+            result = 31 * result + type.hashCode();
+            result = 31 * result + annotations.hashCode();
+            return result;
         }
 
         @Override

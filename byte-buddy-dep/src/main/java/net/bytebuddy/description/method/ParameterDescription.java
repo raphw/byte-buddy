@@ -1031,29 +1031,23 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public boolean isIdenticalTo(Token token) {
-            return getType().equals(token.getType())
-                    && getAnnotations().equals(token.getAnnotations())
-                    && ((getName() == null && token.getName() == null)
-                    || (getName() != null && token.getName() != null && (getName().equals(token.getName()))))
-                    && ((getModifiers() == null && token.getModifiers() == null)
-                    || (getModifiers() != null && token.getModifiers() != null && (getModifiers().equals(token.getModifiers()))));
-        }
-
-        @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (!(other instanceof Token)) return false;
-            String name = getName();
-            return name != null && name.equals(((Token) other).getName());
-
+            if (other == null || getClass() != other.getClass()) return false;
+            Token token = (Token) other;
+            return typeDescription.equals(token.typeDescription)
+                    && annotationDescriptions.equals(token.annotationDescriptions)
+                    && (name != null ? name.equals(token.name) : token.name == null)
+                    && (modifiers != null ? modifiers.equals(token.modifiers) : token.modifiers == null);
         }
 
         @Override
         public int hashCode() {
-            return name != null
-                    ? name.hashCode()
-                    : super.hashCode();
+            int result = typeDescription.hashCode();
+            result = 31 * result + annotationDescriptions.hashCode();
+            result = 31 * result + (name != null ? name.hashCode() : 0);
+            result = 31 * result + (modifiers != null ? modifiers.hashCode() : 0);
+            return result;
         }
 
         @Override
@@ -1061,7 +1055,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             return "ParameterDescription.Token{" +
                     "typeDescription=" + typeDescription +
                     ", annotationDescriptions=" + annotationDescriptions +
-                    ", name='" + name + '\'' +
+                    ", name=" + (name == null ? null : "'" + name + '\'') +
                     ", modifiers=" + modifiers +
                     '}';
         }

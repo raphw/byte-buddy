@@ -110,10 +110,10 @@ public interface MethodTransformer {
             /**
              * Transforms a method token.
              *
-             * @param methodToken The original method's token.
+             * @param token The original method's token.
              * @return The transformed method token.
              */
-            MethodDescription.Token transform(MethodDescription.Token methodToken);
+            MethodDescription.Token transform(MethodDescription.Token token);
 
             /**
              * A transformation for a modifier transformation.
@@ -135,19 +135,19 @@ public interface MethodTransformer {
                 }
 
                 @Override
-                public MethodDescription.Token transform(MethodDescription.Token methodToken) {
-                    int modifiers = methodToken.getModifiers();
+                public MethodDescription.Token transform(MethodDescription.Token token) {
+                    int modifiers = token.getModifiers();
                     for (ModifierContributor.ForMethod modifierContributor : modifierContributors) {
                         modifiers = (modifiers & ~modifierContributor.getRange()) | modifierContributor.getMask();
                     }
-                    return new MethodDescription.Token(methodToken.getInternalName(),
+                    return new MethodDescription.Token(token.getName(),
                             modifiers,
-                            methodToken.getTypeVariables(),
-                            methodToken.getReturnType(),
-                            methodToken.getParameterTokens(),
-                            methodToken.getExceptionTypes(),
-                            methodToken.getAnnotations(),
-                            methodToken.getDefaultValue());
+                            token.getTypeVariables(),
+                            token.getReturnType(),
+                            token.getParameterTokens(),
+                            token.getExceptionTypes(),
+                            token.getAnnotations(),
+                            token.getDefaultValue());
                 }
 
                 @Override
@@ -183,7 +183,7 @@ public interface MethodTransformer {
             /**
              * The method representing the transformed method.
              */
-            private final MethodDescription.Token methodToken;
+            private final MethodDescription.Token token;
 
             /**
              * The defined shape of the transformed method.
@@ -194,25 +194,25 @@ public interface MethodTransformer {
              * Creates a new transformed method.
              *
              * @param declaringType The method's declaring type.
-             * @param methodToken   The method representing the transformed method.
+             * @param token   The method representing the transformed method.
              * @param definedShape  The defined shape of the transformed method.
              */
             protected TransformedMethod(TypeDefinition declaringType,
-                                        MethodDescription.Token methodToken,
+                                        MethodDescription.Token token,
                                         MethodDescription.InDefinedShape definedShape) {
                 this.declaringType = declaringType;
-                this.methodToken = methodToken;
+                this.token = token;
                 this.definedShape = definedShape;
             }
 
             @Override
             public TypeList.Generic getTypeVariables() {
-                return TypeList.Generic.ForDetachedTypes.OfTypeVariable.attach(this, methodToken.getTypeVariables());
+                return TypeList.Generic.ForDetachedTypes.OfTypeVariable.attach(this, token.getTypeVariables());
             }
 
             @Override
             public TypeDescription.Generic getReturnType() {
-                return methodToken.getReturnType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
+                return token.getReturnType().accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
             }
 
             @Override
@@ -222,17 +222,17 @@ public interface MethodTransformer {
 
             @Override
             public TypeList.Generic getExceptionTypes() {
-                return TypeList.Generic.ForDetachedTypes.attach(this, methodToken.getExceptionTypes());
+                return TypeList.Generic.ForDetachedTypes.attach(this, token.getExceptionTypes());
             }
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return methodToken.getAnnotations();
+                return token.getAnnotations();
             }
 
             @Override
             public String getInternalName() {
-                return methodToken.getInternalName();
+                return token.getName();
             }
 
             @Override
@@ -242,12 +242,12 @@ public interface MethodTransformer {
 
             @Override
             public int getModifiers() {
-                return methodToken.getModifiers();
+                return token.getModifiers();
             }
 
             @Override
             public Object getDefaultValue() {
-                return methodToken.getDefaultValue();
+                return token.getDefaultValue();
             }
 
             @Override
@@ -262,12 +262,12 @@ public interface MethodTransformer {
 
                 @Override
                 public ParameterDescription get(int index) {
-                    return new TransformedParameter(index, methodToken.getParameterTokens().get(index));
+                    return new TransformedParameter(index, token.getParameterTokens().get(index));
                 }
 
                 @Override
                 public int size() {
-                    return methodToken.getParameterTokens().size();
+                    return token.getParameterTokens().size();
                 }
             }
 

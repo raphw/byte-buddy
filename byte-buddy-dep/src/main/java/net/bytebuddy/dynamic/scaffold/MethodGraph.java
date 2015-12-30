@@ -22,10 +22,10 @@ public interface MethodGraph {
     /**
      * Locates a node in this graph which represents the provided method token.
      *
-     * @param methodToken A method token that represents the method to be located.
+     * @param token A method token that represents the method to be located.
      * @return The node representing the given token.
      */
-    Node locate(MethodDescription.Token methodToken);
+    Node locate(MethodDescription.SignatureToken token);
 
     /**
      * Lists all nodes of this method graph.
@@ -45,7 +45,7 @@ public interface MethodGraph {
         INSTANCE;
 
         @Override
-        public Node locate(MethodDescription.Token methodToken) {
+        public Node locate(MethodDescription.SignatureToken token) {
             return Node.Unresolved.INSTANCE;
         }
 
@@ -148,8 +148,8 @@ public interface MethodGraph {
             }
 
             @Override
-            public Node locate(MethodDescription.Token methodToken) {
-                return methodGraph.locate(methodToken);
+            public Node locate(MethodDescription.SignatureToken token) {
+                return methodGraph.locate(token);
             }
 
             @Override
@@ -754,7 +754,7 @@ public interface MethodGraph {
 
                     @Override
                     public MethodDescription merge(MethodDescription left, MethodDescription right) {
-                        if (left.asToken().isIdenticalTo(right.asToken())) {
+                        if (left.asToken().equals(right.asToken())) {
                             return left;
                         } else {
                             throw new IllegalArgumentException("Discovered conflicting methods: " + left + " and " + right);
@@ -985,11 +985,11 @@ public interface MethodGraph {
                     /**
                      * Creates a new detached key of the given method token.
                      *
-                     * @param methodToken The method token to represent as a key.
+                     * @param token The method token to represent as a key.
                      * @return A detached key representing the given method token..
                      */
-                    protected static Detached of(MethodDescription.Token methodToken) {
-                        return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken.asTypeToken()));
+                    protected static Detached of(MethodDescription.SignatureToken token) {
+                        return new Detached(token.getName(), Collections.singleton(token.asTypeToken()));
                     }
 
                     @Override
@@ -1663,8 +1663,8 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(Detached.of(methodToken));
+                        public Node locate(MethodDescription.SignatureToken token) {
+                            Node node = entries.get(Detached.of(token));
                             return node == null
                                     ? Node.Unresolved.INSTANCE
                                     : node;
@@ -1754,14 +1754,14 @@ public interface MethodGraph {
         /**
          * The nodes represented by this method graph.
          */
-        private final LinkedHashMap<MethodDescription.Token, Node> nodes;
+        private final LinkedHashMap<MethodDescription.SignatureToken, Node> nodes;
 
         /**
          * Creates a new simple method graph.
          *
          * @param nodes The nodes represented by this method graph.
          */
-        public Simple(LinkedHashMap<MethodDescription.Token, Node> nodes) {
+        public Simple(LinkedHashMap<MethodDescription.SignatureToken, Node> nodes) {
             this.nodes = nodes;
         }
 
@@ -1772,16 +1772,16 @@ public interface MethodGraph {
          * @return A method graph that represents all of the provided methods as simple nodes.
          */
         public static MethodGraph of(List<? extends MethodDescription> methodDescriptions) {
-            LinkedHashMap<MethodDescription.Token, Node> nodes = new LinkedHashMap<MethodDescription.Token, Node>();
+            LinkedHashMap<MethodDescription.SignatureToken, Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, Node>();
             for (MethodDescription methodDescription : methodDescriptions) {
-                nodes.put(methodDescription.asToken(), new Node.Simple(methodDescription));
+                nodes.put(methodDescription.asSignatureToken(), new Node.Simple(methodDescription));
             }
             return new Simple(nodes);
         }
 
         @Override
-        public Node locate(MethodDescription.Token methodToken) {
-            Node node = nodes.get(methodToken);
+        public Node locate(MethodDescription.SignatureToken token) {
+            Node node = nodes.get(token);
             return node == null
                     ? Node.Unresolved.INSTANCE
                     : node;

@@ -36,7 +36,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private MethodDescription.InDefinedShape rebasedMethod;
 
     @Mock
-    private MethodDescription.Token rebasedToken;
+    private MethodDescription.SignatureToken rebasedToken;
 
     @Mock
     private MethodRebaseResolver.Resolution resolution;
@@ -50,7 +50,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Override
     @Before
     public void setUp() throws Exception {
-        when(methodGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
+        when(methodGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
         when(genericSuperType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(BAR);
@@ -60,7 +60,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(rebasedMethod.getReturnType()).thenReturn(genericReturnType);
         when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(rebasedMethod.asToken()).thenReturn(rebasedToken);
+        when(rebasedMethod.asSignatureToken()).thenReturn(rebasedToken);
         when(methodRebaseResolver.resolve(rebasedMethod)).thenReturn(resolution);
         super.setUp();
     }

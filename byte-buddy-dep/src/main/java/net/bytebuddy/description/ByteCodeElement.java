@@ -85,20 +85,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         S asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
     }
 
-    /**
-     * Representation of a tokenized, detached byte code element.
-     *
-     * @param <T> The actual token type.
-     */
     interface Token<T extends Token<T>> {
-
-        /**
-         * Checks if this token is fully identical to the provided token.
-         *
-         * @param token The token to compare this token with.
-         * @return {@code true} if this token is identical to the given token.
-         */
-        boolean isIdenticalTo(T token);
 
         /**
          * Transforms the types represented by this token by applying the given visitor to them.

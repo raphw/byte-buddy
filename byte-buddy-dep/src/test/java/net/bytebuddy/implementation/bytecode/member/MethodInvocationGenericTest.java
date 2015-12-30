@@ -38,7 +38,7 @@ public class MethodInvocationGenericTest {
     private TypeDescription declaredErasure, declaringType, targetType, otherType;
 
     @Mock
-    private MethodDescription.Token methodToken;
+    private MethodDescription.SignatureToken token;
 
     @Before
     public void setUp() throws Exception {
@@ -48,7 +48,7 @@ public class MethodInvocationGenericTest {
         when(declaredReturnType.asErasure()).thenReturn(declaredErasure);
         when(declaredMethod.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.asErasure()).thenReturn(declaringType);
-        when(declaredMethod.asToken()).thenReturn(methodToken);
+        when(declaredMethod.asSignatureToken()).thenReturn(token);
         when(declaredMethod.isSpecializableFor(targetType)).thenReturn(true);
     }
 

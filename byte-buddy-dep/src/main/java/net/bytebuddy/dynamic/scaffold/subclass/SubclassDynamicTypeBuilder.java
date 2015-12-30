@@ -244,8 +244,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         if (instrumentedType.isInterface()) {
             return instrumentedType;
         }
-        for (MethodDescription.Token methodToken : constructorStrategy.extractConstructors(instrumentedType)) {
-            instrumentedType = instrumentedType.withMethod(methodToken);
+        for (MethodDescription.Token token : constructorStrategy.extractConstructors(instrumentedType)) {
+            instrumentedType = instrumentedType.withMethod(token);
         }
         return instrumentedType;
     }

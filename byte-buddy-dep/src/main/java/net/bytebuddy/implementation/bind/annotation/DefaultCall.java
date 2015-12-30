@@ -150,7 +150,7 @@ public @interface DefaultCall {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                             }
-                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asToken());
+                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asSignatureToken());
                         }
                     }
                     return specialMethodInvocation != null
@@ -190,7 +190,7 @@ public @interface DefaultCall {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(typeDescription, source.asToken());
+                    return implementationTarget.invokeDefault(typeDescription, source.asSignatureToken());
                 }
 
                 @Override

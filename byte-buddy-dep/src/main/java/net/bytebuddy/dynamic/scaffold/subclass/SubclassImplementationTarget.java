@@ -21,7 +21,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * The constructor of the super type, mapped by the constructor's method token.
      */
-    protected final Map<MethodDescription.Token, MethodDescription> superConstructors;
+    protected final Map<MethodDescription.SignatureToken, MethodDescription> superConstructors;
 
     /**
      * The origin type identifier to use.
@@ -41,28 +41,28 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         MethodList<?> superConstructors = superType == null
                 ? new MethodList.Empty<MethodDescription.InGenericShape>()
                 : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
-        this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>();
+        this.superConstructors = new HashMap<MethodDescription.SignatureToken, MethodDescription>();
         for (MethodDescription superConstructor : superConstructors) {
-            this.superConstructors.put(superConstructor.asToken(), superConstructor);
+            this.superConstructors.put(superConstructor.asSignatureToken(), superConstructor);
         }
         this.originTypeResolver = originTypeResolver;
     }
 
     @Override
-    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
-        return methodToken.getInternalName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
-                ? invokeConstructor(methodToken)
-                : invokeMethod(methodToken);
+    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token) {
+        return token.getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                ? invokeConstructor(token)
+                : invokeMethod(token);
     }
 
     /**
      * Resolves a special method invocation for a constructor invocation.
      *
-     * @param methodToken A token describing the constructor to be invoked.
+     * @param token A token describing the constructor to be invoked.
      * @return A special method invocation for a constructor representing the given method token, if available.
      */
-    private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.Token methodToken) {
-        MethodDescription methodDescription = superConstructors.get(methodToken);
+    private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.SignatureToken token) {
+        MethodDescription methodDescription = superConstructors.get(token);
         return methodDescription == null
                 ? Implementation.SpecialMethodInvocation.Illegal.INSTANCE
                 : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asErasure());
@@ -71,11 +71,11 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * Resolves a special method invocation for a non-constructor invocation.
      *
-     * @param methodToken A token describing the method to be invoked.
+     * @param token A token describing the method to be invoked.
      * @return A special method invocation for a method representing the given method token, if available.
      */
-    private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.Token methodToken) {
-        MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(methodToken);
+    private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.SignatureToken token) {
+        MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(token);
         return methodNode.getSort().isUnique()
                 ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;

@@ -70,7 +70,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private MethodDescription.Token methodToken;
+    private MethodDescription.SignatureToken token;
 
     @Mock
     private MethodList superTypeMethods;
@@ -78,7 +78,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Before
     public void setUp() throws Exception {
         when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
-        when(methodDescription.asToken()).thenReturn(methodToken);
+        when(methodDescription.asSignatureToken()).thenReturn(token);
         when(genericReturnType.asErasure()).thenReturn(returnType);
         when(genericSuperType.asErasure()).thenReturn(superType);
     }
@@ -96,7 +96,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
-        when(implementationTarget.invokeDominant(methodToken)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
+        when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
 
@@ -110,7 +110,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
-        when(implementationTarget.invokeDominant(methodToken)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
+        when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
 
@@ -125,7 +125,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
-        when(implementationTarget.invokeDominant(methodToken)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
+        when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
 

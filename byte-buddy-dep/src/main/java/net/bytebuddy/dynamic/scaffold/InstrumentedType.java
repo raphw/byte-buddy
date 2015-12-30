@@ -28,18 +28,18 @@ public interface InstrumentedType extends TypeDescription {
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param fieldToken A token that represents the field's shape. This token must represent types in their detached state.
+     * @param token A token that represents the field's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
-    InstrumentedType withField(FieldDescription.Token fieldToken);
+    InstrumentedType withField(FieldDescription.Token token);
 
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param methodToken A token that represents the method's shape. This token must represent types in their detached state.
+     * @param token A token that represents the method's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
-    InstrumentedType withMethod(MethodDescription.Token methodToken);
+    InstrumentedType withMethod(MethodDescription.Token token);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -389,13 +389,13 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withField(FieldDescription.Token fieldToken) {
+        public InstrumentedType withField(FieldDescription.Token token) {
             return new Default(this.name,
                     this.modifiers,
                     typeVariables,
                     superType,
                     interfaceTypes,
-                    CompoundList.of(fieldTokens, fieldToken),
+                    CompoundList.of(fieldTokens, token),
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
@@ -403,14 +403,14 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withMethod(MethodDescription.Token methodToken) {
+        public InstrumentedType withMethod(MethodDescription.Token token) {
             return new Default(name,
                     this.modifiers,
                     typeVariables,
                     superType,
                     interfaceTypes,
                     fieldTokens,
-                    CompoundList.of(methodTokens, methodToken),
+                    CompoundList.of(methodTokens, token),
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer);

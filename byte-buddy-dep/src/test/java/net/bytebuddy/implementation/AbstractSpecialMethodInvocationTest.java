@@ -24,7 +24,7 @@ public abstract class AbstractSpecialMethodInvocationTest {
     private MethodDescription methodDescription, otherMethod;
 
     @Mock
-    private MethodDescription.Token methodToken, otherToken;
+    private MethodDescription.SignatureToken token, otherToken;
 
     @Mock
     private TypeDescription typeDescription, otherType;
@@ -34,8 +34,8 @@ public abstract class AbstractSpecialMethodInvocationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.asToken()).thenReturn(methodToken);
-        when(otherMethod.asToken()).thenReturn(otherToken);
+        when(methodDescription.asSignatureToken()).thenReturn(token);
+        when(otherMethod.asSignatureToken()).thenReturn(otherToken);
     }
 
     protected abstract Implementation.SpecialMethodInvocation make(MethodDescription methodDescription, TypeDescription typeDescription);

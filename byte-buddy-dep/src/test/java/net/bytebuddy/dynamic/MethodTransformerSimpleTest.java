@@ -77,7 +77,7 @@ public class MethodTransformerSimpleTest {
         when(methodDescription.asToken()).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);
-        when(methodToken.getInternalName()).thenReturn(FOO);
+        when(methodToken.getName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
         when(methodToken.getTypeVariables()).thenReturn(new TypeList.Generic.Explicit(typeVariable));
@@ -112,7 +112,11 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getExceptionTypes().size(), is(1));
         assertThat(transformed.getExceptionTypes().getOnly(), is(exceptionType));
         assertThat(transformed.getParameters().size(), is(1));
-        assertThat(transformed.getParameters().getOnly().asToken(), is(parameterToken));
+        assertThat(transformed.getParameters().getOnly().getType(), is(parameterType));
+        assertThat(transformed.getParameters().getOnly().getName(), is(BAR));
+        assertThat(transformed.getParameters().getOnly().getModifiers(), is(MODIFIERS * 2));
+        assertThat(transformed.getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(transformed.getParameters().getOnly().getDeclaredAnnotations().getOnly(), is(parameterAnnotation));
         assertThat(transformed.getParameters().getOnly().asDefined(), is(definedParameter));
         assertThat(transformed.getParameters().getOnly().getDeclaringMethod(), is(transformed));
         assertThat(transformed.asDefined(), is(definedMethod));
@@ -122,7 +126,7 @@ public class MethodTransformerSimpleTest {
     public void testModifierTransformation() throws Exception {
         MethodDescription.Token transformed = new MethodTransformer.Simple.Transformer.ForModifierTransformation(Collections.singletonList(modifierContributor))
                 .transform(methodToken);
-        assertThat(transformed.getInternalName(), is(FOO));
+        assertThat(transformed.getName(), is(FOO));
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));
         assertThat(transformed.getReturnType(), is(returnType));
         assertThat(transformed.getTypeVariables().size(), is(1));

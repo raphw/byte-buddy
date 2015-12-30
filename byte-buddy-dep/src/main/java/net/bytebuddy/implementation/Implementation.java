@@ -154,7 +154,7 @@ public interface Implementation {
 
             @Override
             public int hashCode() {
-                return 31 * getMethodDescription().asToken().hashCode() + getTypeDescription().hashCode();
+                return 31 * getMethodDescription().asSignatureToken().hashCode() + getTypeDescription().hashCode();
             }
 
             @Override
@@ -162,7 +162,7 @@ public interface Implementation {
                 if (this == other) return true;
                 if (!(other instanceof SpecialMethodInvocation)) return false;
                 SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
-                return getMethodDescription().asToken().equals(specialMethodInvocation.getMethodDescription().asToken())
+                return getMethodDescription().asSignatureToken().equals(specialMethodInvocation.getMethodDescription().asSignatureToken())
                         && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
             }
         }
@@ -270,31 +270,31 @@ public interface Implementation {
         /**
          * Creates a special method invocation for invoking the super method of the given method.
          *
-         * @param methodToken A token of the method that is to be invoked as a super method.
+         * @param token A token of the method that is to be invoked as a super method.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken);
+        SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token);
 
         /**
          * Creates a special method invocation for invoking a default method.
          *
          * @param targetType  The interface on which the default method is to be invoked.
-         * @param methodToken A token that uniquely describes the method to invoke.
+         * @param token A token that uniquely describes the method to invoke.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken);
+        SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token);
 
         /**
          * Invokes a dominant method, i.e. if the method token can be invoked as a super method invocation, this invocation is considered dominant.
          * Alternatively, a method invocation is attempted on an interface type as a default method invocation only if this invocation is not ambiguous
          * for several interfaces.
          *
-         * @param methodToken The method token representing the method to be invoked.
+         * @param token The method token representing the method to be invoked.
          * @return A special method invocation for a method representing the method token.
          */
-        SpecialMethodInvocation invokeDominant(MethodDescription.Token methodToken);
+        SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token);
 
         /**
          * A factory for creating an {@link Implementation.Target}.
@@ -343,23 +343,23 @@ public interface Implementation {
             }
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken) {
-                MethodGraph.Node node = methodGraph.getInterfaceGraph(targetType).locate(methodToken);
+            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token) {
+                MethodGraph.Node node = methodGraph.getInterfaceGraph(targetType).locate(token);
                 return node.getSort().isUnique()
                         ? SpecialMethodInvocation.Simple.of(node.getRepresentative(), targetType)
                         : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
 
             @Override
-            public SpecialMethodInvocation invokeDominant(MethodDescription.Token methodToken) {
-                SpecialMethodInvocation specialMethodInvocation = invokeSuper(methodToken);
+            public SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token) {
+                SpecialMethodInvocation specialMethodInvocation = invokeSuper(token);
                 if (!specialMethodInvocation.isValid()) {
                     Iterator<TypeDescription> iterator = instrumentedType.getInterfaces().asErasures().iterator();
                     while (!specialMethodInvocation.isValid() && iterator.hasNext()) {
-                        specialMethodInvocation = invokeDefault(iterator.next(), methodToken);
+                        specialMethodInvocation = invokeDefault(iterator.next(), token);
                     }
                     while (iterator.hasNext()) {
-                        if (invokeDefault(iterator.next(), methodToken).isValid()) {
+                        if (invokeDefault(iterator.next(), token).isValid()) {
                             return SpecialMethodInvocation.Illegal.INSTANCE;
                         }
                     }

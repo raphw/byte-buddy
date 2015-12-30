@@ -32,13 +32,11 @@ public class MethodGraphCompilerDefaultMergerStrictTest {
 
     @Test
     public void testIdentical() throws Exception {
-        when(leftToken.isIdenticalTo(rightToken)).thenReturn(true);
-        assertThat(MethodGraph.Compiler.Default.Merger.Strict.INSTANCE.merge(left, right), is(left));
+        assertThat(MethodGraph.Compiler.Default.Merger.Strict.INSTANCE.merge(left, left), is(left));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonIdentical() throws Exception {
-        when(leftToken.isIdenticalTo(rightToken)).thenReturn(false);
         MethodGraph.Compiler.Default.Merger.Strict.INSTANCE.merge(left, right);
     }
 

@@ -24,11 +24,11 @@ public class MethodGraphSimpleTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private MethodDescription.Token methodToken;
+    private MethodDescription.SignatureToken token;
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.asToken()).thenReturn(methodToken);
+        when(methodDescription.asSignatureToken()).thenReturn(token);
     }
 
     @Test
@@ -39,7 +39,7 @@ public class MethodGraphSimpleTest {
 
     @Test
     public void testNodeLocation() throws Exception {
-        assertThat(MethodGraph.Simple.of(Collections.singletonList(methodDescription)).locate(methodToken),
+        assertThat(MethodGraph.Simple.of(Collections.singletonList(methodDescription)).locate(token),
                 is((MethodGraph.Node) new MethodGraph.Node.Simple(methodDescription)));
     }
 

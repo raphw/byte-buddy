@@ -93,12 +93,12 @@ public final class ElementMatchers {
     /**
      * Validates if a method is represented by the provided field token.
      *
-     * @param fieldToken The field token to match a method against.
-     * @param <T>        The type of the matched object.
+     * @param token The field token to match a method against.
+     * @param <T>   The type of the matched object.
      * @return A matcher that matches any field that is represented by the provided field description.
      */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token fieldToken) {
-        return fieldRepresentedBy(is(fieldToken));
+    public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token token) {
+        return fieldRepresentedBy(is(token));
     }
 
     /**
@@ -159,12 +159,12 @@ public final class ElementMatchers {
     /**
      * Validates if a method is represented by the provided method token.
      *
-     * @param methodToken The method token to match a method against.
-     * @param <T>         The type of the matched object.
+     * @param token The method token to match a method against.
+     * @param <T>   The type of the matched object.
      * @return A matcher that matches any method that is represented by the provided method description.
      */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token methodToken) {
-        return methodRepresentedBy(is(methodToken));
+    public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token token) {
+        return methodRepresentedBy(is(token));
     }
 
     /**
@@ -194,12 +194,12 @@ public final class ElementMatchers {
     /**
      * Validates if a method is represented by the provided method token.
      *
-     * @param parameterToken The parameter token to match a method against.
-     * @param <T>            The type of the matched object.
+     * @param token The parameter token to match a method against.
+     * @param <T>   The type of the matched object.
      * @return A matcher that matches any parameter that is represented by the provided parameter description.
      */
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> representedBy(ParameterDescription.Token parameterToken) {
-        return parameterRepresentedBy(is(parameterToken));
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> representedBy(ParameterDescription.Token token) {
+        return parameterRepresentedBy(is(token));
     }
 
     /**
@@ -1060,7 +1060,7 @@ public final class ElementMatchers {
      * Matches a method description that takes the provided generic arguments.
      *
      * @param typeDefinition The arguments to match against the matched method.
-     * @param <T>             The type of the matched object.
+     * @param <T>            The type of the matched object.
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(TypeDefinition... typeDefinition) {
@@ -1071,7 +1071,7 @@ public final class ElementMatchers {
      * Matches a method description that takes the provided generic arguments.
      *
      * @param typeDefinitions The arguments to match against the matched method.
-     * @param <T>              The type of the matched object.
+     * @param <T>             The type of the matched object.
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(List<? extends TypeDefinition> typeDefinitions) {

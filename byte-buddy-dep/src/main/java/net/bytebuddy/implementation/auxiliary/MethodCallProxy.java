@@ -193,7 +193,7 @@ public class MethodCallProxy implements AuxiliaryType {
          * Creates the precomputed method graph.
          */
         PrecomputedMethodGraph() {
-            LinkedHashMap<MethodDescription.Token, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.Token, MethodGraph.Node>();
+            LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node>();
             MethodDescription callMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Callable.class),
                     "call",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
@@ -203,7 +203,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.<AnnotationDescription>emptyList(),
                     MethodDescription.NO_DEFAULT_VALUE);
-            nodes.put(callMethod.asToken(), new MethodGraph.Node.Simple(callMethod));
+            nodes.put(callMethod.asSignatureToken(), new MethodGraph.Node.Simple(callMethod));
             MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
                     "run",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
@@ -213,7 +213,7 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
                     MethodDescription.NO_DEFAULT_VALUE);
-            nodes.put(runMethod.asToken(), new MethodGraph.Node.Simple(runMethod));
+            nodes.put(runMethod.asSignatureToken(), new MethodGraph.Node.Simple(runMethod));
             MethodGraph methodGraph = new MethodGraph.Simple(nodes);
             this.methodGraph = new MethodGraph.Linked.Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());
         }

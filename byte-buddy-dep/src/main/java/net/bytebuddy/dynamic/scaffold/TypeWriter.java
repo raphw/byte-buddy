@@ -766,7 +766,7 @@ public interface TypeWriter<T> {
                      * @return A record describing the visibility bridge.
                      */
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
-                        return new OfVisibilityBridge(VisibilityBridge.of(instrumentedType, bridgeTarget),
+                        return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
                                 bridgeTarget,
                                 instrumentedType.getSuperType().asErasure(),
                                 attributeAppender);
@@ -849,31 +849,11 @@ public interface TypeWriter<T> {
                          */
                         private final TypeDescription instrumentedType;
 
-                        /**
-                         * A token describing the bridge's raw target.
-                         */
-                        private final MethodDescription.Token bridgeTarget;
+                        private final MethodDescription bridgeTarget;
 
-                        /**
-                         * Creates a new visibility bridge method.
-                         *
-                         * @param instrumentedType The instrumented type.
-                         * @param bridgeTarget     A token describing the bridge's target.
-                         */
-                        protected VisibilityBridge(TypeDescription instrumentedType, Token bridgeTarget) {
+                        protected VisibilityBridge(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
                             this.instrumentedType = instrumentedType;
                             this.bridgeTarget = bridgeTarget;
-                        }
-
-                        /**
-                         * Creates a visibility bridge.
-                         *
-                         * @param instrumentedType The instrumented type.
-                         * @param bridgeTarget     The target method of the visibility bridge.
-                         * @return A method description of the visibility bridge.
-                         */
-                        protected static MethodDescription of(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
-                            return new VisibilityBridge(instrumentedType, bridgeTarget.asToken().accept(TypeDescription.Generic.Visitor.TypeErasing.INSTANCE));
                         }
 
                         @Override
@@ -883,17 +863,17 @@ public interface TypeWriter<T> {
 
                         @Override
                         public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                            return new ParameterList.ForTokens(this, bridgeTarget.getParameterTokens());
+                            return new ParameterList.Explicit.ForTypes(this, bridgeTarget.getParameters().asTypeList().asRawTypes());
                         }
 
                         @Override
                         public TypeDescription.Generic getReturnType() {
-                            return bridgeTarget.getReturnType();
+                            return bridgeTarget.getReturnType().asRawType();
                         }
 
                         @Override
                         public TypeList.Generic getExceptionTypes() {
-                            return bridgeTarget.getExceptionTypes();
+                            return bridgeTarget.getExceptionTypes().asRawTypes();
                         }
 
                         @Override
@@ -908,7 +888,7 @@ public interface TypeWriter<T> {
 
                         @Override
                         public AnnotationList getDeclaredAnnotations() {
-                            return bridgeTarget.getAnnotations();
+                            return bridgeTarget.getDeclaredAnnotations();
                         }
 
                         @Override
@@ -918,7 +898,7 @@ public interface TypeWriter<T> {
 
                         @Override
                         public String getInternalName() {
-                            return bridgeTarget.getInternalName();
+                            return bridgeTarget.getName();
                         }
                     }
                 }

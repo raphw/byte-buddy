@@ -2093,7 +2093,7 @@ public class MethodCall implements Implementation.Composable {
                 } else if (!methodDescription.isInvokableOn(implementationTarget.getOriginType().asErasure())) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " as super method of " + implementationTarget.getInstrumentedType());
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDominant(methodDescription.asToken());
+                StackManipulation stackManipulation = implementationTarget.invokeDominant(methodDescription.asSignatureToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " as a super method");
                 }
@@ -2121,7 +2121,7 @@ public class MethodCall implements Implementation.Composable {
                 if (!methodDescription.isInvokableOn(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " as default method of " + implementationTarget.getInstrumentedType());
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asErasure(), methodDescription.asToken());
+                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asErasure(), methodDescription.asSignatureToken());
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getInstrumentedType());
                 }

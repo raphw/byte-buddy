@@ -40,12 +40,12 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private MethodDescription.InDefinedShape definedSuperTypeConstructor;
 
     @Mock
-    private MethodDescription.Token superConstructorToken;
+    private MethodDescription.SignatureToken superConstructorToken;
 
     @Override
     @Before
     public void setUp() throws Exception {
-        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
+        when(superGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.asErasure()).thenReturn(rawSuperType);
@@ -60,15 +60,15 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(definedSuperTypeConstructor.getDeclaringType()).thenReturn(rawSuperType);
         when(definedSuperTypeConstructor.isConstructor()).thenReturn(true);
         when(superTypeConstructor.isVisibleTo(instrumentedType)).thenReturn(true);
-        when(superTypeConstructor.asToken()).thenReturn(superConstructorToken);
+        when(superTypeConstructor.asSignatureToken()).thenReturn(superConstructorToken);
         when(definedSuperTypeConstructor.getInternalName()).thenReturn(QUX);
         when(definedSuperTypeConstructor.getDescriptor()).thenReturn(BAZ);
         when(superTypeConstructor.isConstructor()).thenReturn(true);
         when(superTypeConstructor.getDeclaringType()).thenReturn(superType);
         when(superTypeConstructor.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(superTypeConstructor.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
-        when(invokableToken.getInternalName()).thenReturn(FOO);
-        when(superConstructorToken.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
+        when(invokableToken.getName()).thenReturn(FOO);
+        when(superConstructorToken.getName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         super.setUp();
     }
 

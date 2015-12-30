@@ -230,6 +230,8 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isDefaultValue(Object value);
 
+    SignatureToken asSignatureToken();
+
     /**
      * Returns a type token that represents this method's raw return and parameter types.
      *
@@ -576,6 +578,11 @@ public interface MethodDescription extends TypeVariableSource,
                     getExceptionTypes().accept(visitor),
                     getDeclaredAnnotations(),
                     getDefaultValue());
+        }
+
+        @Override
+        public SignatureToken asSignatureToken() {
+            return new SignatureToken(getInternalName(), getReturnType().asErasure(), getParameters().asTypeList().asErasures());
         }
 
         @Override
@@ -953,7 +960,7 @@ public interface MethodDescription extends TypeVariableSource,
          */
         public Latent(TypeDescription declaringType, Token token) {
             this(declaringType,
-                    token.getInternalName(),
+                    token.getName(),
                     token.getModifiers(),
                     token.getTypeVariables(),
                     token.getReturnType(),
@@ -1302,16 +1309,12 @@ public interface MethodDescription extends TypeVariableSource,
         }
     }
 
-    /**
-     * A token that represents a method's shape. A method token is equal to another token when the name, the raw return type
-     * and the raw parameter types are equal to those of another method token.
-     */
     class Token implements ByteCodeElement.Token<Token> {
 
         /**
          * The internal name of the represented method.
          */
-        private final String internalName;
+        private final String name;
 
         /**
          * The modifiers of the represented method.
@@ -1351,13 +1354,13 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Creates a new method token with simple values.
          *
-         * @param internalName   The internal name of the represented method.
+         * @param name   The internal name of the represented method.
          * @param modifiers      The modifiers of the represented method.
          * @param returnType     The return type of the represented method.
          * @param parameterTypes The parameter types of this method.
          */
-        public Token(String internalName, int modifiers, TypeDescription.Generic returnType, List<? extends TypeDescription.Generic> parameterTypes) {
-            this(internalName,
+        public Token(String name, int modifiers, TypeDescription.Generic returnType, List<? extends TypeDescription.Generic> parameterTypes) {
+            this(name,
                     modifiers,
                     Collections.<TypeDescription.Generic>emptyList(),
                     returnType,
@@ -1370,7 +1373,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Creates a new token for a method description.
          *
-         * @param internalName    The internal name of the represented method.
+         * @param name    The internal name of the represented method.
          * @param modifiers       The modifiers of the represented method.
          * @param typeVariables   The type variables of the the represented method.
          * @param returnType      The return type of the represented method.
@@ -1379,7 +1382,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @param annotations     The annotations of the represented method.
          * @param defaultValue    The default value of the represented method or {@code null} if no such value exists.
          */
-        public Token(String internalName,
+        public Token(String name,
                      int modifiers,
                      List<TypeDescription.Generic> typeVariables,
                      TypeDescription.Generic returnType,
@@ -1387,7 +1390,7 @@ public interface MethodDescription extends TypeVariableSource,
                      List<? extends TypeDescription.Generic> exceptionTypes,
                      List<? extends AnnotationDescription> annotations,
                      Object defaultValue) {
-            this.internalName = internalName;
+            this.name = name;
             this.modifiers = modifiers;
             this.typeVariables = typeVariables;
             this.returnType = returnType;
@@ -1402,8 +1405,8 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return The internal name of the represented method.
          */
-        public String getInternalName() {
-            return internalName;
+        public String getName() {
+            return name;
         }
 
         /**
@@ -1469,22 +1472,9 @@ public interface MethodDescription extends TypeVariableSource,
             return defaultValue;
         }
 
-        /**
-         * Transforms this method token into a type token.
-         *
-         * @return A type token representing the type's of this method token.
-         */
-        public TypeToken asTypeToken() {
-            List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>(getParameterTokens().size());
-            for (ParameterDescription.Token parameterToken : getParameterTokens()) {
-                parameterTypes.add(parameterToken.getType().asErasure());
-            }
-            return new TypeToken(getReturnType().asErasure(), parameterTypes);
-        }
-
         @Override
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-            return new Token(getInternalName(),
+            return new Token(getName(),
                     getModifiers(),
                     getTypeVariables().accept(visitor),
                     getReturnType().accept(visitor),
@@ -1495,47 +1485,37 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public boolean isIdenticalTo(Token token) {
-            return getInternalName().equals(token.getInternalName())
-                    && getModifiers() == token.getModifiers()
-                    && getTypeVariables().equals(token.getTypeVariables())
-                    && getReturnType().equals(token.getReturnType())
-                    && getParameterTokens().equals(token.getParameterTokens())
-                    && getExceptionTypes().equals(token.getExceptionTypes())
-                    && getAnnotations().equals(token.getAnnotations())
-                    && ((getDefaultValue() == null && token.getDefaultValue() == null)
-                    || (getDefaultValue() != null && token.getDefaultValue() != null && (getDefaultValue().equals(token.getDefaultValue()))));
-        }
-
-        @Override
         public boolean equals(Object other) {
             if (this == other) return true;
-            if (!(other instanceof Token)) return false;
+            if (other == null || getClass() != other.getClass()) return false;
             Token token = (Token) other;
-            if (!getInternalName().equals(token.getInternalName())) return false;
-            if (!getReturnType().asErasure().equals(token.getReturnType().asErasure())) return false;
-            List<ParameterDescription.Token> tokens = getParameterTokens(), otherTokens = token.getParameterTokens();
-            if (tokens.size() != otherTokens.size()) return false;
-            for (int index = 0; index < tokens.size(); index++) {
-                if (!tokens.get(index).getType().asErasure().equals(otherTokens.get(index).getType().asErasure())) return false;
-            }
-            return true;
+            return modifiers == token.modifiers
+                    && name.equals(token.name)
+                    && typeVariables.equals(token.typeVariables)
+                    && returnType.equals(token.returnType)
+                    && parameterTokens.equals(token.parameterTokens)
+                    && exceptionTypes.equals(token.exceptionTypes)
+                    && annotations.equals(token.annotations)
+                    && (defaultValue != null ? defaultValue.equals(token.defaultValue) : token.defaultValue == null);
         }
 
         @Override
         public int hashCode() {
-            int result = getInternalName().hashCode();
-            result = 31 * result + getReturnType().asErasure().hashCode();
-            for (ParameterDescription.Token parameterToken : getParameterTokens()) {
-                result = 31 * result + parameterToken.getType().asErasure().hashCode();
-            }
+            int result = name.hashCode();
+            result = 31 * result + modifiers;
+            result = 31 * result + typeVariables.hashCode();
+            result = 31 * result + returnType.hashCode();
+            result = 31 * result + parameterTokens.hashCode();
+            result = 31 * result + exceptionTypes.hashCode();
+            result = 31 * result + annotations.hashCode();
+            result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
             return result;
         }
 
         @Override
         public String toString() {
             return "MethodDescription.Token{" +
-                    "internalName='" + internalName + '\'' +
+                    "name='" + name + '\'' +
                     ", modifiers=" + modifiers +
                     ", typeVariables=" + typeVariables +
                     ", returnType=" + returnType +
@@ -1543,6 +1523,86 @@ public interface MethodDescription extends TypeVariableSource,
                     ", exceptionTypes=" + exceptionTypes +
                     ", annotations=" + annotations +
                     ", defaultValue=" + defaultValue +
+                    '}';
+        }
+    }
+
+    class SignatureToken {
+
+        private final String name;
+
+        /**
+         * The represented method's raw return type.
+         */
+        private final TypeDescription returnType;
+
+        /**
+         * The represented method's raw parameter types.
+         */
+        private final List<? extends TypeDescription> parameterTypes;
+
+        /**
+         * Creates a new type token.
+         *
+         * @param returnType     The represented method's raw return type.
+         * @param parameterTypes The represented method's raw parameter types.
+         */
+        public SignatureToken(String name, TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
+            this.name = name;
+            this.returnType = returnType;
+            this.parameterTypes = parameterTypes;
+        }
+
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns this token's return type.
+         *
+         * @return This token's return type.
+         */
+        public TypeDescription getReturnType() {
+            return returnType;
+        }
+
+        /**
+         * Returns this token's parameter types.
+         *
+         * @return This token's parameter types.
+         */
+        public List<TypeDescription> getParameterTypes() {
+            return new ArrayList<TypeDescription>(parameterTypes);
+        }
+
+        public TypeToken asTypeToken() {
+            return new TypeToken(returnType, parameterTypes);
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            SignatureToken signatureToken = (SignatureToken) other;
+            return name.equals(signatureToken.name)
+                    && returnType.equals(signatureToken.returnType)
+                    && parameterTypes.equals(signatureToken.parameterTypes);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + returnType.hashCode();
+            result = 31 * result + parameterTypes.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "MethodDescription.SignatureToken{" +
+                    "name='" + name + "'" +
+                    ", returnType=" + returnType +
+                    ", parameterTypes=" + parameterTypes +
                     '}';
         }
     }

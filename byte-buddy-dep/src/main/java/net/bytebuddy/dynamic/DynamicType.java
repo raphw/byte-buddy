@@ -2178,7 +2178,7 @@ public interface DynamicType {
                 /**
                  * A token representing the field that was recently defined.
                  */
-                private final FieldDescription.Token fieldToken;
+                private final FieldDescription.Token token;
 
                 /**
                  * The attribute appender factory that was defined for this field token.
@@ -2195,25 +2195,25 @@ public interface DynamicType {
                 /**
                  * Creates a new subclass field annotation target for a field without a default value.
                  *
-                 * @param fieldToken               A token representing the field that was recently defined.
+                 * @param token               A token representing the field that was recently defined.
                  * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
                  */
-                private DefaultFieldValueTarget(FieldDescription.Token fieldToken,
+                private DefaultFieldValueTarget(FieldDescription.Token token,
                                                 FieldAttributeAppender.Factory attributeAppenderFactory) {
-                    this(fieldToken, attributeAppenderFactory, null);
+                    this(token, attributeAppenderFactory, null);
                 }
 
                 /**
                  * Creates a new subclass field annotation target.
                  *
-                 * @param fieldToken               A token representing the field that was recently defined.
+                 * @param token               A token representing the field that was recently defined.
                  * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
                  * @param defaultValue             The default value to define for the recently defined field.
                  */
-                private DefaultFieldValueTarget(FieldDescription.Token fieldToken,
+                private DefaultFieldValueTarget(FieldDescription.Token token,
                                                 FieldAttributeAppender.Factory attributeAppenderFactory,
                                                 Object defaultValue) {
-                    this.fieldToken = fieldToken;
+                    this.token = token;
                     this.attributeAppenderFactory = attributeAppenderFactory;
                     this.defaultValue = defaultValue;
                 }
@@ -2230,12 +2230,12 @@ public interface DynamicType {
                             attributeAppender,
                             ignoredMethods,
                             classVisitorWrapper,
-                            fieldRegistry.include(fieldToken, attributeAppenderFactory, defaultValue),
+                            fieldRegistry.include(token, attributeAppenderFactory, defaultValue),
                             methodRegistry,
                             methodGraphCompiler,
                             defaultFieldAttributeAppenderFactory,
                             defaultMethodAttributeAppenderFactory,
-                            CompoundList.of(fieldTokens, fieldToken),
+                            CompoundList.of(fieldTokens, token),
                             methodTokens);
                 }
 
@@ -2246,7 +2246,7 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> value(int value) {
-                    return makeFieldAnnotationTarget(NumericRangeValidator.of(fieldToken.getType().asErasure()).validate(value));
+                    return makeFieldAnnotationTarget(NumericRangeValidator.of(token.getType().asErasure()).validate(value));
                 }
 
                 @Override
@@ -2277,7 +2277,7 @@ public interface DynamicType {
                  * @return The given default value.
                  */
                 private Object isValid(Object defaultValue, Class<?> legalType) {
-                    if (!fieldToken.getType().represents(legalType)) {
+                    if (!token.getType().represents(legalType)) {
                         throw new IllegalStateException(defaultValue + " is not of the required type " + legalType);
                     }
                     return defaultValue;
@@ -2290,15 +2290,15 @@ public interface DynamicType {
                  * @return The resulting field annotation target.
                  */
                 private FieldAnnotationTarget<S> makeFieldAnnotationTarget(Object defaultValue) {
-                    if ((fieldToken.getModifiers() & Opcodes.ACC_STATIC) == 0) {
+                    if ((token.getModifiers() & Opcodes.ACC_STATIC) == 0) {
                         throw new IllegalStateException("Default field values can only be set for static fields");
                     }
-                    return new DefaultFieldValueTarget(fieldToken, attributeAppenderFactory, defaultValue);
+                    return new DefaultFieldValueTarget(token, attributeAppenderFactory, defaultValue);
                 }
 
                 @Override
                 public FieldAnnotationTarget<S> attribute(FieldAttributeAppender.Factory attributeAppenderFactory) {
-                    return new DefaultFieldValueTarget(fieldToken,
+                    return new DefaultFieldValueTarget(token,
                             new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory,attributeAppenderFactory));
                 }
 
@@ -2333,13 +2333,13 @@ public interface DynamicType {
                             && !(defaultValue != null ?
                             !defaultValue.equals(that.defaultValue) :
                             that.defaultValue != null)
-                            && fieldToken.equals(that.fieldToken)
+                            && token.equals(that.token)
                             && AbstractBase.this.equals(that.getDynamicTypeBuilder());
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = fieldToken.hashCode();
+                    int result = token.hashCode();
                     result = 31 * result + attributeAppenderFactory.hashCode();
                     result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                     result = 31 * result + AbstractBase.this.hashCode();
@@ -2350,7 +2350,7 @@ public interface DynamicType {
                 public String toString() {
                     return "DynamicType.Builder.AbstractBase.DefaultFieldValueTarget{" +
                             "base=" + AbstractBase.this +
-                            ", fieldToken=" + fieldToken +
+                            ", token=" + token +
                             ", attributeAppenderFactory=" + attributeAppenderFactory +
                             ", defaultValue=" + defaultValue +
                             '}';
@@ -2494,15 +2494,15 @@ public interface DynamicType {
                 /**
                  * The method token for which exceptions can be defined additionally.
                  */
-                private final MethodDescription.Token methodToken;
+                private final MethodDescription.Token token;
 
                 /**
                  * Creates a new subclass exception declarable method interception.
                  *
-                 * @param methodToken The method token to define on the currently constructed method.
+                 * @param token The method token to define on the currently constructed method.
                  */
-                private DefaultExceptionDeclarableMethodInterception(MethodDescription.Token methodToken) {
-                    this.methodToken = methodToken;
+                private DefaultExceptionDeclarableMethodInterception(MethodDescription.Token token) {
+                    this.token = token;
                 }
 
                 @Override
@@ -2522,11 +2522,11 @@ public interface DynamicType {
 
                 @Override
                 public MatchedMethodInterception<S> throwing(Collection<? extends TypeDescription> exceptionTypes) {
-                    return materialize(new MethodDescription.Token(methodToken.getInternalName(),
-                            methodToken.getModifiers(),
+                    return materialize(new MethodDescription.Token(token.getName(),
+                            token.getModifiers(),
                             Collections.<TypeDescription.Generic>emptyList(),
-                            methodToken.getReturnType(),
-                            methodToken.getParameterTokens(),
+                            token.getReturnType(),
+                            token.getParameterTokens(),
                             new TypeList.Generic.Explicit(toList(exceptionTypes)),
                             Collections.<AnnotationDescription>emptyList(),
                             null));
@@ -2534,73 +2534,73 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation) {
-                    return materialize(methodToken).intercept(implementation);
+                    return materialize(token).intercept(implementation);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> intercept(Implementation implementation, MethodTransformer methodTransformer) {
-                    return materialize(methodToken).intercept(implementation, methodTransformer);
+                    return materialize(token).intercept(implementation, methodTransformer);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode() {
-                    return materialize(methodToken).withoutCode();
+                    return materialize(token).withoutCode();
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withoutCode(MethodTransformer methodTransformer) {
-                    return materialize(methodToken).withoutCode(methodTransformer);
+                    return materialize(token).withoutCode(methodTransformer);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type) {
-                    return materialize(methodToken).withDefaultValue(value, type);
+                    return materialize(token).withDefaultValue(value, type);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, Class<?> type, MethodTransformer methodTransformer) {
-                    return materialize(methodToken).withDefaultValue(value, type, methodTransformer);
+                    return materialize(token).withDefaultValue(value, type, methodTransformer);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value) {
-                    return materialize(methodToken).withDefaultValue(value);
+                    return materialize(token).withDefaultValue(value);
                 }
 
                 @Override
                 public MethodAnnotationTarget<S> withDefaultValue(Object value, MethodTransformer methodTransformer) {
-                    return materialize(methodToken).withDefaultValue(value, methodTransformer);
+                    return materialize(token).withDefaultValue(value, methodTransformer);
                 }
 
                 /**
                  * Materializes the given method definition and returns an instance for defining an implementation.
                  *
-                 * @param methodToken The method token to define on the currently constructed type.
+                 * @param token The method token to define on the currently constructed type.
                  * @return A subclass matched method interception that represents the materialized method.
                  */
-                private DefaultMatchedMethodInterception materialize(MethodDescription.Token methodToken) {
-                    return new DefaultMatchedMethodInterception(new LatentMethodMatcher.ForToken(methodToken), CompoundList.of(methodTokens, methodToken));
+                private DefaultMatchedMethodInterception materialize(MethodDescription.Token token) {
+                    return new DefaultMatchedMethodInterception(new LatentMethodMatcher.ForToken(token), CompoundList.of(methodTokens, token));
                 }
 
                 @Override
                 @SuppressWarnings("unchecked")
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && methodToken.equals(((DefaultExceptionDeclarableMethodInterception) other).methodToken)
+                            && token.equals(((DefaultExceptionDeclarableMethodInterception) other).token)
                             && AbstractBase.this
                             .equals(((DefaultExceptionDeclarableMethodInterception) other).getDynamicTypeBuilder());
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * AbstractBase.this.hashCode() + methodToken.hashCode();
+                    return 31 * AbstractBase.this.hashCode() + token.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "DynamicType.Builder.AbstractBase.DefaultExceptionDeclarableMethodInterception{" +
                             "base=" + AbstractBase.this +
-                            ", methodToken=" + methodToken +
+                            ", token=" + token +
                             '}';
                 }
 

@@ -13,7 +13,7 @@ public class MethodGraphEmptyTest {
 
     @Test
     public void testNode() throws Exception {
-        assertThat(MethodGraph.Empty.INSTANCE.locate(mock(MethodDescription.Token.class)).getSort(), is(MethodGraph.Node.Sort.UNRESOLVED));
+        assertThat(MethodGraph.Empty.INSTANCE.locate(mock(MethodDescription.SignatureToken.class)).getSort(), is(MethodGraph.Node.Sort.UNRESOLVED));
     }
 
     @Test
