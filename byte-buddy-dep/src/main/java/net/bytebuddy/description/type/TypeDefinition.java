@@ -121,11 +121,6 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
         VARIABLE,
 
         /**
-         * Represents a type variable that is not attached to a {@link TypeVariableSource} but defines type bounds.
-         */
-        VARIABLE_DETACHED,
-
-        /**
          * Represents a type variable that is merely symbolic and is not attached to a {@link TypeVariableSource} and does not defined bounds.
          */
         VARIABLE_SYMBOLIC;
@@ -194,7 +189,7 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
          * @return {@code true} if this type sort represents an attached type variable.
          */
         public boolean isTypeVariable() {
-            return this == VARIABLE || this == VARIABLE_DETACHED || this == VARIABLE_SYMBOLIC;
+            return this == VARIABLE || this == VARIABLE_SYMBOLIC;
         }
 
         @Override

@@ -303,8 +303,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          * type is defined, the bound is implicitly {@link Object}.
          * </p>
          * <p>
-         * Only non-symbolic type variables ({@link net.bytebuddy.description.type.TypeDefinition.Sort#VARIABLE},
-         * {@link net.bytebuddy.description.type.TypeDefinition.Sort#VARIABLE_DETACHED}) and wildcard types
+         * Only non-symbolic type variables ({@link net.bytebuddy.description.type.TypeDefinition.Sort#VARIABLE}, and wildcard types
          * ({@link net.bytebuddy.description.type.TypeDefinition.Sort#WILDCARD}) have well-defined upper bounds. For other
          * types, an {@link IllegalStateException} is thrown.
          * </p>
@@ -369,9 +368,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         /**
          * Returns the symbol of this type variable. A symbol is only well-defined for type variables
-         * ({@link Sort#VARIABLE},
-         * {@link Sort#VARIABLE_DETACHED},
-         * {@link Sort#VARIABLE_SYMBOLIC}). For other types, this method
+         * ({@link Sort#VARIABLE}, {@link Sort#VARIABLE_SYMBOLIC}). For other types, this method
          * throws an {@link IllegalStateException}.
          *
          * @return This type's type variable symbol.
@@ -381,8 +378,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         @Override
         Generic getComponentType();
 
+        @Override
         FieldList<FieldDescription.InGenericShape> getDeclaredFields();
 
+        @Override
         MethodList<MethodDescription.InGenericShape> getDeclaredMethods();
 
         /**
@@ -426,9 +425,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             T onParameterizedType(Generic parameterizedType);
 
             /**
-             * Visits a type variable ({@link Sort#VARIABLE},
-             * {@link Sort#VARIABLE_DETACHED},
-             * {@link Sort#VARIABLE_SYMBOLIC}).
+             * Visits a type variable ({@link Sort#VARIABLE}, {@link Sort#VARIABLE_SYMBOLIC}).
              *
              * @param typeVariable The generic array type.
              * @return The visitor's return value.
@@ -963,26 +960,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     private final ElementMatcher<? super TypeDescription> typeMatcher;
 
                     /**
-                     * A cache of detached type variables in order to resolve recursive types.
-                     */
-                    private final Map<String, Generic> detachedVariables;
-
-                    /**
                      * Creates a visitor for detaching a type.
                      *
                      * @param typeMatcher A type matcher for identifying the declaring type.
                      */
                     public ForDetachment(ElementMatcher<? super TypeDescription> typeMatcher) {
                         this.typeMatcher = typeMatcher;
-                        detachedVariables = new HashMap<String, Generic>();
                     }
 
                     @Override
-                    public Generic onTypeVariable(Generic genericTypeDescription) {
-                        Generic typeVariable = detachedVariables.get(genericTypeDescription.getSymbol());
-                        return typeVariable == null
-                                ? new ForDetachment.DetachedTypeVariable(genericTypeDescription.getSymbol(), genericTypeDescription.getUpperBounds(), this)
-                                : typeVariable;
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol());
                     }
 
                     @Override
@@ -992,65 +980,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 : typeDescription;
                     }
 
-                    /**
-                     * Registers a generic type variable that was not yet visited. This addresses the possibility of defining recursive type variables.
-                     * When this method is called, the provided type variable is not yet fully constructed and must not be used.
-                     *
-                     * @param symbol       The type variable's symbol.
-                     * @param typeVariable A description of the generic type variable.
-                     */
-                    protected void register(String symbol, Generic typeVariable) {
-                        detachedVariables.put(symbol, typeVariable);
-                    }
-
                     @Override
                     public String toString() {
                         return "TypeDescription.Generic.Visitor.Substitutor.ForDetachment{" +
                                 "typeMatcher=" + typeMatcher +
-                                ", detachedVariables=" + detachedVariables +
                                 '}';
-                    }
-
-                    /**
-                     * A description of a detached type variable.
-                     */
-                    protected static class DetachedTypeVariable extends OfTypeVariable.InDetachedForm {
-
-                        /**
-                         * The symbol of this variable.
-                         */
-                        private final String symbol;
-
-                        /**
-                         * The bounds of the type variable.
-                         */
-                        private final List<Generic> bounds;
-
-                        /**
-                         * Creates a description of a detached type variable.
-                         *
-                         * @param symbol  The symbol of this variable.
-                         * @param bounds  The bounds of the type variable.
-                         * @param visitor The visitor to apply to the bounds.
-                         */
-                        protected DetachedTypeVariable(String symbol, List<Generic> bounds, ForDetachment visitor) {
-                            this.symbol = symbol;
-                            visitor.register(symbol, this);
-                            this.bounds = new ArrayList<Generic>(bounds.size());
-                            for (Generic bound : bounds) {
-                                this.bounds.add(bound.accept(visitor));
-                            }
-                        }
-
-                        @Override
-                        public TypeList.Generic getUpperBounds() {
-                            return new TypeList.Generic.Explicit(bounds);
-                        }
-
-                        @Override
-                        public String getSymbol() {
-                            return symbol;
-                        }
                     }
                 }
 
@@ -1100,9 +1034,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
                         Generic substitution = bindings.get(typeVariable);
-                        return substitution == null
-                                ? typeVariable.asRawType() // Fallback: Never happens for well-defined generic types.
-                                : substitution;
+                        if (substitution == null) {
+                            throw new IllegalStateException("Unknown type variable: " + typeVariable);
+                        } else {
+                            return substitution;
+                        }
                     }
 
                     @Override
@@ -2152,33 +2088,135 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 return getSymbol();
             }
 
-            /**
-             * An abstract implementation of a description of a type variable in detached form.
-             */
-            public abstract static class InDetachedForm extends OfTypeVariable {
+            public static class Symbolic extends AbstractBase {
+
+                private final String symbol;
+
+                public Symbolic(String symbol) {
+                    this.symbol = symbol;
+                }
 
                 @Override
                 public Sort getSort() {
-                    return Sort.VARIABLE_DETACHED;
+                    return Sort.VARIABLE_SYMBOLIC;
+                }
+
+                @Override
+                public String getSymbol() {
+                    return symbol;
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    throw new IllegalStateException("A symbolic type variable does not imply an erasure: " + this);
+                }
+
+                @Override
+                public TypeList.Generic getUpperBounds() {
+                    throw new IllegalStateException("A symbolic type variable does not imply an upper type bound: " + this);
                 }
 
                 @Override
                 public TypeVariableSource getVariableSource() {
-                    throw new IllegalStateException("A detached type variable does not imply a source: " + this);
+                    throw new IllegalStateException("A symbolic type variable does not imply a variable source: " + this);
                 }
 
                 @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (!(other instanceof Generic)) return false;
-                    Generic typeVariable = (Generic) other;
-                    return typeVariable.getSort().isTypeVariable()
-                            && getSymbol().equals(typeVariable.getSymbol());
+                public Generic getSuperType() {
+                    throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
+                }
+
+                @Override
+                public TypeList.Generic getInterfaces() {
+                    throw new IllegalStateException("A symbolic type variable does not imply an interface type definition: " + this);
+                }
+
+                @Override
+                public FieldList<FieldDescription.InGenericShape> getDeclaredFields() {
+                    throw new IllegalStateException("A symbolic type variable does not imply field definitions: " + this);
+                }
+
+                @Override
+                public MethodList<MethodDescription.InGenericShape> getDeclaredMethods() {
+                    throw new IllegalStateException("A symbolic type variable does not imply method definitions: " + this);
+                }
+
+                @Override
+                public Generic getComponentType() {
+                    throw new IllegalStateException("A symbolic type variable does not imply a component type: " + this);
+                }
+
+                @Override
+                public TypeList.Generic getParameters() {
+                    throw new IllegalStateException("A symbolic type variable does not imply type parameters: " + this);
+                }
+
+                @Override
+                public TypeList.Generic getLowerBounds() {
+                    throw new IllegalStateException("A symbolic type variable does not imply lower bounds: " + this);
+                }
+
+                @Override
+                public Generic getOwnerType() {
+                    throw new IllegalStateException("A symbolic type variable does not imply an owner type: " + this);
+                }
+
+                @Override
+                public String getTypeName() {
+                    return toString();
+                }
+
+                @Override
+                public String getSourceCodeName() {
+                    return getSymbol();
+                }
+
+                @Override
+                public <T> T accept(Visitor<T> visitor) {
+                    return visitor.onTypeVariable(this);
+                }
+
+                @Override
+                public StackSize getStackSize() {
+                    return StackSize.SINGLE;
+                }
+
+                @Override
+                public boolean isArray() {
+                    return false;
+                }
+
+                @Override
+                public boolean isPrimitive() {
+                    return false;
+                }
+
+                @Override
+                public boolean represents(java.lang.reflect.Type type) {
+                    return equals(Sort.describe(type));
+                }
+
+                @Override
+                public Iterator<TypeDefinition> iterator() {
+                    throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
                 }
 
                 @Override
                 public int hashCode() {
-                    return getSymbol().hashCode();
+                    return symbol.hashCode();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (!(other instanceof Generic)) return false;
+                    Generic typeDescription = (Generic) other;
+                    return typeDescription.getSort().isTypeVariable()
+                            && getSymbol().equals(typeDescription.getSymbol());
+                }
+
+                @Override
+                public String toString() {
+                    return getSymbol();
                 }
             }
 

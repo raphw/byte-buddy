@@ -579,9 +579,7 @@ public final class ElementMatchers {
      * @return A matcher that matches type variables with the given name.
      */
     public static <T extends TypeDefinition> ElementMatcher<T> isVariable(ElementMatcher<? super NamedElement> matcher) {
-        return new TypeSortMatcher<T>(anyOf(TypeDefinition.Sort.VARIABLE,
-                TypeDefinition.Sort.VARIABLE_DETACHED,
-                TypeDefinition.Sort.VARIABLE_SYMBOLIC)).and(matcher);
+        return new TypeSortMatcher<T>(anyOf(TypeDefinition.Sort.VARIABLE, TypeDefinition.Sort.VARIABLE_SYMBOLIC)).and(matcher);
     }
 
     /**
