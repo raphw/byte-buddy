@@ -1464,6 +1464,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public abstract static class InconsistentGenerics<T extends Exception> implements Callable<T> {
 
         InconsistentGenerics(T t) throws T {
