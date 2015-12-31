@@ -440,7 +440,10 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
             @Override
             protected GenericTypeDescription resolve() {
-                return GenericTypeDescription.Sort.describe(type.getGenericInterfaces()[index]);
+                Type[] type = this.type.getGenericInterfaces();
+                return index < type.length
+                        ? GenericTypeDescription.Sort.describe(type[index])
+                        : asErasure();
             }
 
             @Override
@@ -519,7 +522,10 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
             @Override
             protected GenericTypeDescription resolve() {
-                return GenericTypeDescription.Sort.describe(constructor.getGenericExceptionTypes()[index]);
+                Type[] type = constructor.getGenericExceptionTypes();
+                return index < type.length
+                        ? GenericTypeDescription.Sort.describe(type[index])
+                        : asErasure();
             }
 
             @Override
@@ -598,7 +604,10 @@ public interface GenericTypeList extends FilterableList<GenericTypeDescription, 
 
             @Override
             protected GenericTypeDescription resolve() {
-                return GenericTypeDescription.Sort.describe(method.getGenericExceptionTypes()[index]);
+                Type[] type = method.getGenericExceptionTypes();
+                return index < type.length
+                        ? GenericTypeDescription.Sort.describe(type[index])
+                        : asErasure();
             }
 
             @Override

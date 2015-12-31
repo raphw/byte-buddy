@@ -4282,9 +4282,7 @@ public interface TypePool {
 
                         @Override
                         public GenericTypeList resolveInterfaceTypes(List<String> interfaceTypeDescriptors, TypePool typePool, TypeDescription definingType) {
-                            return interfaceTypeDescriptors.size() == interfaceTypeTokens.size()
-                                    ? new TokenizedGenericType.TokenList(typePool, interfaceTypeTokens, interfaceTypeDescriptors, definingType)
-                                    : Raw.INSTANCE.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, definingType);
+                            return new TokenizedGenericType.TokenList(typePool, interfaceTypeTokens, interfaceTypeDescriptors, definingType);
                         }
 
                         @Override
@@ -4406,17 +4404,15 @@ public interface TypePool {
 
                         @Override
                         public GenericTypeList resolveParameterTypes(List<String> parameterTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                            return parameterTypeDescriptors.size() == parameterTypeTokens.size()
-                                    ? new TokenizedGenericType.TokenList(typePool, parameterTypeTokens, parameterTypeDescriptors, definingMethod)
-                                    : Raw.INSTANCE.resolveParameterTypes(parameterTypeDescriptors, typePool, definingMethod);
+                            return new TokenizedGenericType.TokenList(typePool, parameterTypeTokens, parameterTypeDescriptors, definingMethod);
                         }
 
                         @Override
                         public GenericTypeList resolveExceptionTypes(List<String> exceptionTypeDescriptors, TypePool typePool, MethodDescription definingMethod) {
-                            // Generic signatures of methods are optional.
-                            return exceptionTypeDescriptors.size() == exceptionTypeTokens.size()
-                                    ? new TokenizedGenericType.TokenList(typePool, exceptionTypeTokens, exceptionTypeDescriptors, definingMethod)
-                                    : Raw.INSTANCE.resolveExceptionTypes(exceptionTypeDescriptors, typePool, definingMethod);
+                            // Generic signatures of methods are optional for generic methods with only non-generic exceptions.
+                            return exceptionTypeTokens.isEmpty()
+                                    ? Raw.INSTANCE.resolveExceptionTypes(exceptionTypeDescriptors, typePool, definingMethod)
+                                    : new TokenizedGenericType.TokenList(typePool, exceptionTypeTokens, exceptionTypeDescriptors, definingMethod);
                         }
 
                         @Override
@@ -5993,7 +5989,9 @@ public interface TypePool {
 
                 @Override
                 public GenericTypeDescription get(int index) {
-                    return new TokenizedGenericType(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), typeVariableSource);
+                    return index < genericTypeTokens.size()
+                            ? new TokenizedGenericType(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), typeVariableSource)
+                            : TokenizedGenericType.toErasure(typePool, rawTypeDescriptors.get(index));
                 }
 
                 @Override
