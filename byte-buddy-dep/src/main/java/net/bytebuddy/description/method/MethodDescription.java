@@ -1342,6 +1342,14 @@ public interface MethodDescription extends TypeVariableSource,
          */
         private final Object defaultValue;
 
+        public Token(int modifiers) {
+            this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME, modifiers, TypeDescription.Generic.VOID);
+        }
+
+        public Token(String name, int modifiers, TypeDescription.Generic returnType) {
+            this(name, modifiers, returnType, Collections.<TypeDescription.Generic>emptyList());
+        }
+
         /**
          * Creates a new method token with simple values.
          *

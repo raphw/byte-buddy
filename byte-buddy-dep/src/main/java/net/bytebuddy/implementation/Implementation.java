@@ -44,20 +44,7 @@ import java.util.*;
  * and {@link Object#hashCode()} if it wants to avoid to be used twice within the creation of a dynamic type. For two
  * equal implementations only one will be applied on the creation of a dynamic type.
  */
-public interface Implementation {
-
-    /**
-     * During the preparation phase of an implementation, implementations are eligible to adding fields or methods
-     * to the currently instrumented type. All methods that are added by this implementation are required to be
-     * implemented by the {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender} that is emitted
-     * on the call to
-     * {@link Implementation#appender(Implementation.Target)}
-     * call. On this method call, loaded type initializers can also be added to the instrumented type.
-     *
-     * @param instrumentedType The instrumented type that is the basis of the ongoing instrumentation.
-     * @return The instrumented type with any applied changes, if any.
-     */
-    InstrumentedType prepare(InstrumentedType instrumentedType);
+public interface Implementation extends InstrumentedType.Prepareable {
 
     /**
      * Creates a byte code appender that determines the implementation of the instrumented type's methods.

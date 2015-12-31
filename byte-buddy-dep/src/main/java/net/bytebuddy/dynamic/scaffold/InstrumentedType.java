@@ -17,6 +17,7 @@ import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -41,6 +42,14 @@ public interface InstrumentedType extends TypeDescription {
      * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
     InstrumentedType withMethod(MethodDescription.Token token);
+
+    InstrumentedType withModifiers(int modifiers);
+
+    InstrumentedType withInterfaces(List<? extends Generic> interfaceTypes);
+
+    InstrumentedType withTypeVariable(String symbol, Generic bound);
+
+    InstrumentedType withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -199,10 +208,44 @@ public interface InstrumentedType extends TypeDescription {
         }
     }
 
+    interface WithFlexibleName extends InstrumentedType {
+
+        @Override
+        WithFlexibleName withField(FieldDescription.Token token);
+
+        @Override
+        WithFlexibleName withMethod(MethodDescription.Token token);
+
+        @Override
+        WithFlexibleName withModifiers(int modifiers);
+
+        @Override
+        WithFlexibleName withInterfaces(List<? extends Generic> interfaceTypes);
+
+        @Override
+        WithFlexibleName withTypeVariable(String symbol, Generic bound);
+
+        @Override
+        WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
+
+        @Override
+        WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer);
+
+        @Override
+        WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender);
+
+        WithFlexibleName withName(String name);
+    }
+
+    interface Prepareable {
+
+        InstrumentedType prepare(InstrumentedType instrumentedType);
+    }
+
     /**
      * A default implementation of an instrumented type.
      */
-    class Default extends AbstractBase.OfSimpleType implements InstrumentedType {
+    class Default extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
 
         /**
          * The binary name of the instrumented type.
@@ -387,9 +430,9 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withField(FieldDescription.Token token) {
+        public WithFlexibleName withField(FieldDescription.Token token) {
             return new Default(this.name,
-                    this.modifiers,
+                    modifiers,
                     typeVariables,
                     superType,
                     interfaceTypes,
@@ -401,9 +444,9 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withMethod(MethodDescription.Token token) {
+        public WithFlexibleName withMethod(MethodDescription.Token token) {
             return new Default(name,
-                    this.modifiers,
+                    modifiers,
                     typeVariables,
                     superType,
                     interfaceTypes,
@@ -415,7 +458,79 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
+        public WithFlexibleName withModifiers(int modifiers) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
+        }
+
+        @Override
+        public WithFlexibleName withInterfaces(List<? extends Generic> interfaceTypes) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    CompoundList.of(this.interfaceTypes, interfaceTypes),
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
+        }
+
+        @Override
+        public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    CompoundList.of(this.annotationDescriptions, annotationDescriptions),
+                    typeInitializer,
+                    loadedTypeInitializer);
+        }
+
+        @Override
+        public WithFlexibleName withTypeVariable(String symbol, Generic bound) {
+            Map<String, TypeList.Generic> typeVariables = new LinkedHashMap<String, TypeList.Generic>(this.typeVariables);
+            typeVariables.put(symbol, new TypeList.Generic.Explicit(bound));
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
+        }
+
+        @Override
+        public WithFlexibleName withName(String name) {
+            return new Default(name,
+                    modifiers,
+                    typeVariables,
+                    superType,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer);
+        }
+
+        @Override
+        public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Default(name,
                     modifiers,
                     typeVariables,
@@ -429,7 +544,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public InstrumentedType withInitializer(ByteCodeAppender byteCodeAppender) {
+        public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
             return new Default(name,
                     modifiers,
                     typeVariables,
@@ -503,8 +618,8 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public Generic getSuperType() {
             return superType == null
-                    ? TypeDescription.Generic.UNDEFINED
-                    : superType.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
+                    ? Generic.UNDEFINED
+                    : superType.accept(Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override

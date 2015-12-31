@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.ClassVisitorWrapper;
 import net.bytebuddy.asm.FieldVisitorWrapper;
 import net.bytebuddy.asm.MethodVisitorWrapper;
@@ -15,13 +14,16 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.annotation.Annotation;
@@ -31,12 +33,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 import java.util.*;
 
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.isMethod;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public interface Builder<T> {
-
-    Builder<T> classFileVersion(ClassFileVersion classFileVersion);
 
     Builder<T> visit(ClassVisitorWrapper classVisitorWrapper);
 
@@ -76,6 +75,8 @@ public interface Builder<T> {
 
     Builder<T> initializer(ByteCodeAppender byteCodeAppender);
 
+    Builder<T> initializer(LoadedTypeInitializer loadedTypeInitializer);
+
     Builder<T> typeVariable(String symbol);
 
     Builder<T> typeVariable(String symbol, Type bound);
@@ -98,7 +99,7 @@ public interface Builder<T> {
 
     FieldDefinition.Valuable<T> field(ElementMatcher<? super FieldDescription> matcher);
 
-    Builder<T> ignore(ElementMatcher<? super MethodDescription> matcher);
+    Builder<T> ignore(ElementMatcher<? super MethodDescription> ignored);
 
     MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor);
 
@@ -129,6 +130,8 @@ public interface Builder<T> {
     MethodDefinition.ImplementationDefinition<T> constructor(ElementMatcher<? super MethodDescription> matcher);
 
     MethodDefinition.ImplementationDefinition<T> invokable(ElementMatcher<? super MethodDescription> matcher);
+
+    MethodDefinition.ImplementationDefinition<T> invokable(LatentMethodMatcher matcher);
 
     DynamicType.Unloaded<T> make();
 
@@ -164,35 +167,79 @@ public interface Builder<T> {
 
                 @Override
                 public FieldDefinition<U> value(boolean value) {
-                    return value(value, boolean.class);
+                    return defaultValue(value ? 1 : 0);
                 }
 
                 @Override
                 public FieldDefinition<U> value(int value) {
-                    return value(value, int.class);
+                    return defaultValue(value);
                 }
 
                 @Override
                 public FieldDefinition<U> value(long value) {
-                    return value(value, long.class);
+                    return defaultValue(value);
                 }
 
                 @Override
                 public FieldDefinition<U> value(float value) {
-                    return value(value, float.class);
+                    return defaultValue(value);
                 }
 
                 @Override
                 public FieldDefinition<U> value(double value) {
-                    return value(value, double.class);
+                    return defaultValue(value);
                 }
 
                 @Override
                 public FieldDefinition<U> value(String value) {
-                    return value(value, String.class);
+                    return defaultValue(value);
                 }
 
-                protected abstract FieldDefinition<U> value(Object value, Class<?> type);
+                protected abstract FieldDefinition<U> defaultValue(Object defaultValue);
+
+                protected abstract static class Adapter<V> extends Valuable.AbstractBase<V> {
+
+                    protected final FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
+
+                    protected final Transformer<FieldDescription> transformer;
+
+                    protected final Object defaultValue;
+
+                    protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                      Transformer<FieldDescription> transformer,
+                                      Object defaultValue) {
+                        this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
+                        this.transformer = transformer;
+                        this.defaultValue = defaultValue;
+                    }
+
+                    @Override
+                    public FieldDefinition<V> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory) {
+                        return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), transformer, defaultValue);
+                    }
+
+                    @Override
+                    public FieldDefinition<V> transform(Transformer<FieldDescription> transformer) {
+                        return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
+                    }
+
+                    @Override
+                    protected FieldDefinition<V> defaultValue(Object defaultValue) {
+                        return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
+                    }
+
+                    @Override
+                    public FieldDefinition<V> annotateField(Collection<? extends AnnotationDescription> annotations) {
+                        return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, new FieldDescription.Token(token.getName(),
+                                token.getModifiers(),
+                                token.getType(),
+                                CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
+                    }
+
+                    protected abstract FieldDefinition<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                                      Transformer<FieldDescription> transformer,
+                                                                      Object defaultValue);
+                }
             }
         }
 
@@ -237,6 +284,29 @@ public interface Builder<T> {
 
         MethodDefinition<S> transform(Transformer<MethodDescription> transformer);
 
+        interface ImplementationDefinition<U> {
+
+            MethodDefinition<U> implement(Implementation implementation);
+
+            MethodDefinition<U> withoutCode();
+
+            MethodDefinition<U> defaultValue(Object value);
+
+            MethodDefinition<U> defaultValue(Object value, Class<?> type);
+
+            interface Optional<V> extends ImplementationDefinition<V>, Builder<V> {
+                /* union type */
+            }
+
+            abstract class AbstractBase<V> implements ImplementationDefinition<V> {
+
+                @Override
+                public MethodDefinition<V> defaultValue(Object value, Class<?> type) {
+                    return defaultValue(AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(type)));
+                }
+            }
+        }
+
         interface TypeVariableDefinition<U> extends ImplementationDefinition<U> {
 
             TypeVariableDefinition<U> typeVariable(String symbol);
@@ -249,7 +319,7 @@ public interface Builder<T> {
 
             TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
 
-            abstract class AbstractBase<V> implements TypeVariableDefinition<V> {
+            abstract class AbstractBase<V> extends ImplementationDefinition.AbstractBase<V> implements TypeVariableDefinition<V> {
 
                 @Override
                 public TypeVariableDefinition<V> typeVariable(String symbol) {
@@ -342,6 +412,46 @@ public interface Builder<T> {
                     public Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
                         return annotateParameter(Arrays.asList(annotation));
                     }
+
+                    protected abstract static class Adapter<X> extends Annotatable.AbstractBase<X> {
+
+                        @Override
+                        public Annotatable<X> withParameter(TypeDefinition type, String name, int modifiers) {
+                            return materialize().withParameter(type, name, modifiers);
+                        }
+
+                        @Override
+                        public MethodDefinition.ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
+                            return materialize().throwing(types);
+                        }
+
+                        @Override
+                        public MethodDefinition.TypeVariableDefinition<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                            return materialize().typeVariable(symbol, bounds);
+                        }
+
+                        @Override
+                        public MethodDefinition<X> implement(Implementation implementation) {
+                            return materialize().implement(implementation);
+                        }
+
+                        @Override
+                        public MethodDefinition<X> withoutCode() {
+                            return materialize().withoutCode();
+                        }
+
+                        @Override
+                        public MethodDefinition<X> defaultValue(Object value) {
+                            return materialize().defaultValue(value);
+                        }
+
+                        @Override
+                        public MethodDefinition<X> defaultValue(Object value, Class<?> type) {
+                            return materialize().defaultValue(value, type);
+                        }
+
+                        protected abstract MethodDefinition.ParameterDefinition<X> materialize();
+                    }
                 }
             }
 
@@ -376,6 +486,46 @@ public interface Builder<T> {
                         @Override
                         public Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
                             return annotateParameter(Arrays.asList(annotation));
+                        }
+
+                        protected abstract static class Adapter<X> extends Annotatable.AbstractBase<X> {
+
+                            @Override
+                            public Annotatable<X> withParameter(TypeDefinition type) {
+                                return materialize().withParameter(type);
+                            }
+
+                            @Override
+                            public MethodDefinition.ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
+                                return materialize().throwing(types);
+                            }
+
+                            @Override
+                            public MethodDefinition.TypeVariableDefinition<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                                return materialize().typeVariable(symbol, bounds);
+                            }
+
+                            @Override
+                            public MethodDefinition<X> implement(Implementation implementation) {
+                                return materialize().implement(implementation);
+                            }
+
+                            @Override
+                            public MethodDefinition<X> withoutCode() {
+                                return materialize().withoutCode();
+                            }
+
+                            @Override
+                            public MethodDefinition<X> defaultValue(Object value) {
+                                return materialize().defaultValue(value);
+                            }
+
+                            @Override
+                            public MethodDefinition<X> defaultValue(Object value, Class<?> type) {
+                                return materialize().defaultValue(value, type);
+                            }
+
+                            protected abstract MethodDefinition.ParameterDefinition.Simple<X> materialize();
                         }
                     }
                 }
@@ -458,21 +608,6 @@ public interface Builder<T> {
                 public Annotatable<V> withParameter(TypeDefinition type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors) {
                     return withParameter(type, name, ModifierContributor.Resolver.of(modifierContributors).resolve());
                 }
-            }
-        }
-
-        interface ImplementationDefinition<U> {
-
-            MethodDefinition<U> implement(Implementation implementation);
-
-            MethodDefinition<U> withoutCode();
-
-            MethodDefinition<U> defaultValue(Object value);
-
-            MethodDefinition<U> defaultValue(Object value, Class<?> type);
-
-            interface Optional<U> extends ImplementationDefinition<U>, Builder<U> {
-                /* union type */
             }
         }
 
@@ -680,6 +815,11 @@ public interface Builder<T> {
             return invokable(isConstructor().and(matcher));
         }
 
+        @Override
+        public MethodDefinition.ImplementationDefinition<S> invokable(ElementMatcher<? super MethodDescription> matcher) {
+            return invokable(new LatentMethodMatcher.Resolved(matcher));
+        }
+
         public abstract static class Delegator<U> extends AbstractBase<U> {
 
             protected abstract Builder<U> materialize();
@@ -700,6 +840,11 @@ public interface Builder<T> {
             }
 
             @Override
+            public Builder<U> initializer(LoadedTypeInitializer loadedTypeInitializer) {
+                return materialize().initializer(loadedTypeInitializer);
+            }
+
+            @Override
             public Builder<U> annotateType(Collection<? extends AnnotationDescription> annotations) {
                 return materialize().annotateType(annotations);
             }
@@ -712,11 +857,6 @@ public interface Builder<T> {
             @Override
             public Builder<U> modifiers(int modifiers) {
                 return materialize().modifiers(modifiers);
-            }
-
-            @Override
-            public Builder<U> classFileVersion(ClassFileVersion classFileVersion) {
-                return materialize().classFileVersion(classFileVersion);
             }
 
             @Override
@@ -735,8 +875,8 @@ public interface Builder<T> {
             }
 
             @Override
-            public Builder<U> ignore(ElementMatcher<? super MethodDescription> matcher) {
-                return materialize().ignore(matcher);
+            public Builder<U> ignore(ElementMatcher<? super MethodDescription> ignored) {
+                return materialize().ignore(ignored);
             }
 
             @Override
@@ -765,7 +905,7 @@ public interface Builder<T> {
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition<U> invokable(ElementMatcher<? super MethodDescription> matcher) {
+            public MethodDefinition.ImplementationDefinition<U> invokable(LatentMethodMatcher matcher) {
                 return materialize().invokable(matcher);
             }
 
@@ -777,145 +917,486 @@ public interface Builder<T> {
 
         public abstract static class Adapter<U> extends AbstractBase<U> {
 
-            protected final int modifiers;
-
-            protected final Map<String, TypeList.Generic> typeVariables;
+            protected final InstrumentedType.WithFlexibleName instrumentedType;
 
             protected final FieldRegistry fieldRegistry;
 
             protected final MethodRegistry methodRegistry;
 
+            protected final ElementMatcher<? super MethodDescription> ignored;
+
             protected final TypeAttributeAppender typeAttributeAppender;
 
-            protected final List<AnnotationDescription> annotationDescriptions;
+            protected final ClassVisitorWrapper classVisitorWrapper;
 
-            private final ClassVisitorWrapper classVisitorWrapper;
+            protected final FieldVisitorWrapper fieldVisitorWrapper;
 
-            private final FieldVisitorWrapper fieldVisitorWrapper;
+            protected final MethodVisitorWrapper methodVisitorWrapper;
 
-            private final MethodVisitorWrapper methodVisitorWrapper;
+            protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
+                              FieldRegistry fieldRegistry,
+                              MethodRegistry methodRegistry,
+                              ElementMatcher<? super MethodDescription> ignored,
+                              TypeAttributeAppender typeAttributeAppender,
+                              ClassVisitorWrapper classVisitorWrapper,
+                              FieldVisitorWrapper fieldVisitorWrapper,
+                              MethodVisitorWrapper methodVisitorWrapper) {
+                this.instrumentedType = instrumentedType;
+                this.fieldRegistry = fieldRegistry;
+                this.methodRegistry = methodRegistry;
+                this.ignored = ignored;
+                this.typeAttributeAppender = typeAttributeAppender;
+                this.classVisitorWrapper = classVisitorWrapper;
+                this.fieldVisitorWrapper = fieldVisitorWrapper;
+                this.methodVisitorWrapper = methodVisitorWrapper;
+            }
 
             @Override
             public FieldDefinition.Valuable<U> defineField(String name, TypeDefinition type, int modifiers) {
-                return new FieldDefinitionAdapter<U>();
+                return new FieldDefinitionAdapter(new FieldDescription.Token(name, modifiers, type.asGenericType()));
             }
 
             @Override
             public FieldDefinition.Valuable<U> field(ElementMatcher<? super FieldDescription> matcher) {
-                return null;
+                return new FieldMatchAdapter(matcher);
             }
 
             @Override
             public MethodDefinition.ParameterDefinition.Initial<U> defineMethod(String name, TypeDefinition returnType, int modifiers) {
-                return null;
+                return new MethodDefinitionAdapter(new MethodDescription.Token(name, modifiers, returnType.asGenericType()));
             }
 
             @Override
             public MethodDefinition.ParameterDefinition.Initial<U> defineConstructor(int modifiers) {
-                return null;
+                return new MethodDefinitionAdapter(new MethodDescription.Token(modifiers));
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition<U> invokable(ElementMatcher<? super MethodDescription> matcher) {
-                return null;
+            public MethodDefinition.ImplementationDefinition<U> invokable(LatentMethodMatcher matcher) {
+                return new MethodMatchAdapter(matcher);
             }
 
             @Override
-            public Builder<U> typeVariable(String symbol, TypeDefinition bound) {
-                return null; // TODO
+            public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> types) {
+                return new OptionalMethodMatchAdapter(new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(types)));
+            }
+
+            @Override
+            public Builder<U> ignore(ElementMatcher<? super MethodDescription> ignored) {
+                return materialize(instrumentedType,
+                        fieldRegistry,
+                        methodRegistry,
+                        new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignored, ignored),
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
+            }
+
+            @Override
+            public Builder<U> initializer(ByteCodeAppender byteCodeAppender) {
+                return materialize(instrumentedType.withInitializer(byteCodeAppender),
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
+            }
+
+            @Override
+            public Builder<U> initializer(LoadedTypeInitializer loadedTypeInitializer) {
+                return materialize(instrumentedType.withInitializer(loadedTypeInitializer),
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
+            }
+
+            @Override
+            public Builder<U> name(String name) {
+                return materialize(instrumentedType.withName(name),
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
             }
 
             @Override
             public Builder<U> modifiers(int modifiers) {
-                return null; // TODO
+                return materialize(instrumentedType.withModifiers(modifiers),
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
+            }
+
+            @Override
+            public Builder<U> typeVariable(String symbol, TypeDefinition bound) {
+                return materialize(instrumentedType.withTypeVariable(symbol, bound.asGenericType()),
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
             }
 
             @Override
             public Builder<U> attribute(TypeAttributeAppender typeAttributeAppender) {
-                return null; // TODO
+                return materialize(instrumentedType,
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
             }
 
             @Override
             public Builder<U> annotateType(Collection<? extends AnnotationDescription> annotations) {
-                return null; // TODO
-            }
-
-            @Override
-            public Builder<U> visit(MethodVisitorWrapper methodVisitorWrapper) {
-                return null; // TODO
-            }
-
-            @Override
-            public Builder<U> visit(FieldVisitorWrapper fieldVisitorWrapper) {
-                return null; // TODO
+                return materialize(instrumentedType.withAnnotations(new ArrayList<AnnotationDescription>(annotations)),
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
             }
 
             @Override
             public Builder<U> visit(ClassVisitorWrapper classVisitorWrapper) {
-                return null; // TODO
+                return materialize(instrumentedType,
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        new ClassVisitorWrapper.Compound(this.classVisitorWrapper, classVisitorWrapper),
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper);
             }
 
-            protected static abstract class FieldDefinitionAdapter<V> extends FieldDefinition.Valuable.AbstractBase<V> {
+            @Override
+            public Builder<U> visit(FieldVisitorWrapper fieldVisitorWrapper) {
+                return materialize(instrumentedType,
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper, // TODO: Compound
+                        methodVisitorWrapper);
+            }
 
-                protected final List<AnnotationDescription> annotations;
+            @Override
+            public Builder<U> visit(MethodVisitorWrapper methodVisitorWrapper) {
+                return materialize(instrumentedType,
+                        fieldRegistry,
+                        methodRegistry,
+                        ignored,
+                        typeAttributeAppender,
+                        classVisitorWrapper,
+                        fieldVisitorWrapper,
+                        methodVisitorWrapper); // TODO: Compound
+            }
 
-                protected final FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
+            protected abstract Builder<U> materialize(InstrumentedType instrumentedType,
+                                                      FieldRegistry fieldRegistry,
+                                                      MethodRegistry methodRegistry,
+                                                      ElementMatcher<? super MethodDescription> ignored,
+                                                      TypeAttributeAppender typeAttributeAppender,
+                                                      ClassVisitorWrapper classVisitorWrapper,
+                                                      FieldVisitorWrapper fieldVisitorWrapper,
+                                                      MethodVisitorWrapper methodVisitorWrapper);
 
-                protected final Transformer<FieldDescription> transformer;
+            protected class FieldDefinitionAdapter extends FieldDefinition.Valuable.AbstractBase.Adapter<U> {
 
-                protected final Object value;
+                private final FieldDescription.Token token;
 
-                protected FieldDefinitionAdapter(List<AnnotationDescription> annotations,
-                                                 FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                protected FieldDefinitionAdapter(FieldDescription.Token token) {
+                    this(FieldAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<FieldDescription>make(), FieldDescription.NO_DEFAULT_VALUE, token); // TODO: Field appender
+                }
+
+                protected FieldDefinitionAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                  Transformer<FieldDescription> transformer,
-                                                 Object value) {
-                    this.annotations = annotations;
-                    this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
-                    this.transformer = transformer;
-                    this.value = value;
+                                                 Object defaultValue,
+                                                 FieldDescription.Token token) {
+                    super(fieldAttributeAppenderFactory, transformer, defaultValue);
+                    this.token = token;
                 }
 
                 @Override
-                public FieldDefinition<V> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                    return materialize(CompoundList.of(this.annotations, new ArrayList<AnnotationDescription>(annotations)),
-                            fieldAttributeAppenderFactory,
-                            transformer,
-                            value);
+                public FieldDefinition<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
+                    return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, new FieldDescription.Token(token.getName(),
+                            token.getModifiers(),
+                            token.getType(),
+                            CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
                 }
 
                 @Override
-                public FieldDefinition<V> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory) {
-                    return materialize(annotations,
-                            new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory),
-                            transformer,
-                            value);
+                protected Builder<U> materialize() {
+                    return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withField(token),
+                            fieldRegistry.include(token, fieldAttributeAppenderFactory, defaultValue),
+                            methodRegistry,
+                            ignored,
+                            typeAttributeAppender,
+                            classVisitorWrapper,
+                            fieldVisitorWrapper,
+                            methodVisitorWrapper);
                 }
 
                 @Override
-                public FieldDefinition<V> transform(Transformer<FieldDescription> transformer) {
-                    return materialize(annotations,
-                            fieldAttributeAppenderFactory,
-                            new Transformer.Compound<FieldDescription>(this.transformer, transformer),
-                            value);
+                protected FieldDefinition<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                         Transformer<FieldDescription> transformer,
+                                                         Object defaultValue) {
+                    return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
+                }
+            }
+
+            protected class FieldMatchAdapter extends FieldDefinition.Valuable.AbstractBase.Adapter<U> {
+
+                private final ElementMatcher<? super FieldDescription> matcher;
+
+                protected FieldMatchAdapter(ElementMatcher<? super FieldDescription> matcher) {
+                    this(FieldAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<FieldDescription>make(), FieldDescription.NO_DEFAULT_VALUE, matcher);
+                }
+
+                protected FieldMatchAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                            Transformer<FieldDescription> transformer,
+                                            Object defaultValue,
+                                            ElementMatcher<? super FieldDescription> matcher) {
+                    super(fieldAttributeAppenderFactory, transformer, defaultValue);
+                    this.matcher = matcher;
                 }
 
                 @Override
-                protected FieldDefinition<V> value(Object value, Class<?> type) {
-                    return materialize(annotations,
-                            fieldAttributeAppenderFactory,
-                            transformer,
-                            value);
+                public FieldDefinition<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
+                    return attribute(new FieldAttributeAppender.ForAnnotation(null, null)); // TODO: Appender default?
                 }
 
                 @Override
-                protected Builder<V> materialize() {
-                    return materialize(annotations, fieldAttributeAppenderFactory, transformer, value);
+                protected Builder<U> materialize() {
+                    return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
+                            fieldRegistry.include(null, fieldAttributeAppenderFactory, defaultValue), //TODO: modernize field registry
+                            methodRegistry,
+                            ignored,
+                            typeAttributeAppender,
+                            classVisitorWrapper,
+                            fieldVisitorWrapper,
+                            methodVisitorWrapper);
                 }
 
-                protected abstract FieldDefinition<V> materialize(List<AnnotationDescription> annotations,
-                                                                  FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                                  Transformer<FieldDescription> transformer,
-                                                                  Object value);
+                @Override
+                protected FieldDefinition<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                         Transformer<FieldDescription> transformer,
+                                                         Object defaultValue) {
+                    return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
+                }
+            }
+
+            protected class MethodDefinitionAdapter extends MethodDefinition.ParameterDefinition.Initial.AbstractBase<U> {
+
+                private final MethodDescription.Token token;
+
+                protected MethodDefinitionAdapter(MethodDescription.Token token) {
+                    this.token = token;
+                }
+
+                @Override
+                public MethodDefinition.ParameterDefinition.Annotatable<U> withParameter(TypeDefinition type, String name, int modifiers) {
+                    return new AnnotationAdapter(new ParameterDescription.Token(type.asGenericType(), name, modifiers));
+                }
+
+                @Override
+                public Simple.Annotatable<U> withParameter(TypeDefinition type) {
+                    return new SimpleAnnotationAdapter(new ParameterDescription.Token(type.asGenericType()));
+                }
+
+                @Override
+                public MethodDefinition.ExceptionDefinition<U> throwing(Collection<? extends TypeDefinition> types) {
+                    return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
+                            token.getModifiers(),
+                            token.getTypeVariables(),
+                            token.getReturnType(),
+                            token.getParameterTokens(),
+                            CompoundList.of(token.getExceptionTypes(), new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(types))),
+                            token.getAnnotations(),
+                            token.getDefaultValue()));
+                }
+
+                @Override
+                public MethodDefinition.TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                    Map<String, TypeList.Generic> typeVariables = new LinkedHashMap<String, TypeList.Generic>(token.getTypeVariables());
+                    typeVariables.put(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)));
+                    return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
+                            token.getModifiers(),
+                            typeVariables,
+                            token.getReturnType(),
+                            token.getParameterTokens(),
+                            token.getExceptionTypes(),
+                            token.getAnnotations(),
+                            token.getDefaultValue()));
+                }
+
+                @Override
+                public MethodDefinition<U> implement(Implementation implementation) {
+                    return materialize(new MethodRegistry.Handler.ForImplementation(implementation));
+                }
+
+                @Override
+                public MethodDefinition<U> withoutCode() {
+                    return materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
+                }
+
+                @Override
+                public MethodDefinition<U> defaultValue(Object value) {
+                    return materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
+                }
+
+                protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
+                    return null;
+                }
+
+                protected class AnnotationAdapter extends MethodDefinition.ParameterDefinition.Annotatable.AbstractBase.Adapter<U> {
+
+                    private final ParameterDescription.Token token;
+
+                    protected AnnotationAdapter(ParameterDescription.Token token) {
+                        this.token = token;
+                    }
+
+                    @Override
+                    public Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
+                        return new AnnotationAdapter(new ParameterDescription.Token(token.getType(),
+                                CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
+                                token.getName(),
+                                token.getModifiers()));
+                    }
+
+                    @Override
+                    protected MethodDefinition.ParameterDefinition<U> materialize() {
+                        return new MethodDefinitionAdapter(new MethodDescription.Token(MethodDefinitionAdapter.this.token.getName(),
+                                MethodDefinitionAdapter.this.token.getModifiers(),
+                                MethodDefinitionAdapter.this.token.getTypeVariables(),
+                                MethodDefinitionAdapter.this.token.getReturnType(),
+                                CompoundList.of(MethodDefinitionAdapter.this.token.getParameterTokens(), token),
+                                MethodDefinitionAdapter.this.token.getExceptionTypes(),
+                                MethodDefinitionAdapter.this.token.getAnnotations(),
+                                MethodDefinitionAdapter.this.token.getDefaultValue()));
+                    }
+                }
+
+                protected class SimpleAnnotationAdapter extends MethodDefinition.ParameterDefinition.Simple.Annotatable.AbstractBase.Adapter<U> {
+
+                    private final ParameterDescription.Token token;
+
+                    protected SimpleAnnotationAdapter(ParameterDescription.Token token) {
+                        this.token = token;
+                    }
+
+                    @Override
+                    public Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
+                        return new SimpleAnnotationAdapter(new ParameterDescription.Token(token.getType(),
+                                CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
+                                token.getName(),
+                                token.getModifiers()));
+                    }
+                    @Override
+                    protected MethodDefinition.ParameterDefinition.Simple<U> materialize() {
+                        return new MethodDefinitionAdapter(new MethodDescription.Token(MethodDefinitionAdapter.this.token.getName(),
+                                MethodDefinitionAdapter.this.token.getModifiers(),
+                                MethodDefinitionAdapter.this.token.getTypeVariables(),
+                                MethodDefinitionAdapter.this.token.getReturnType(),
+                                CompoundList.of(MethodDefinitionAdapter.this.token.getParameterTokens(), token),
+                                MethodDefinitionAdapter.this.token.getExceptionTypes(),
+                                MethodDefinitionAdapter.this.token.getAnnotations(),
+                                MethodDefinitionAdapter.this.token.getDefaultValue()));
+                    }
+                }
+            }
+
+            protected class MethodMatchAdapter extends MethodDefinition.ImplementationDefinition.AbstractBase<U> {
+
+                private final LatentMethodMatcher matcher;
+
+                protected MethodMatchAdapter(LatentMethodMatcher matcher) {
+                    this.matcher = matcher;
+                }
+
+                @Override
+                public MethodDefinition<U> implement(Implementation implementation) {
+                    return materialize(new MethodRegistry.Handler.ForImplementation(implementation));
+                }
+
+                @Override
+                public MethodDefinition<U> withoutCode() {
+                    return materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
+                }
+
+                @Override
+                public MethodDefinition<U> defaultValue(Object value) {
+                    return materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
+                }
+
+                protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
+                    return null;
+                }
+            }
+
+            protected class OptionalMethodMatchAdapter extends Builder.AbstractBase.Delegator<U> implements MethodDefinition.ImplementationDefinition.Optional<U> {
+
+                private final List<TypeDescription.Generic> interfaces;
+
+                protected OptionalMethodMatchAdapter(List<TypeDescription.Generic> interfaces) {
+                    this.interfaces = interfaces;
+                }
+
+                @Override
+                protected Builder<U> materialize() {
+                    return Adapter.this.materialize(instrumentedType.withInterfaces(interfaces),
+                            fieldRegistry,
+                            methodRegistry,
+                            ignored,
+                            typeAttributeAppender,
+                            classVisitorWrapper,
+                            fieldVisitorWrapper,
+                            methodVisitorWrapper);
+                }
+
+                // TODO: Inherited interface methods
+
+                @Override
+                public MethodDefinition<U> implement(Implementation implementation) {
+                    return materialize().invokable(isDeclaredByGeneric(anyOf(interfaces))).implement(implementation);
+                }
+
+                @Override
+                public MethodDefinition<U> withoutCode() {
+                    return materialize().invokable(isDeclaredByGeneric(anyOf(interfaces))).withoutCode();
+                }
+
+                @Override
+                public MethodDefinition<U> defaultValue(Object value) {
+                    return materialize().invokable(isDeclaredByGeneric(anyOf(interfaces))).defaultValue(value);
+                }
+
+                @Override
+                public MethodDefinition<U> defaultValue(Object value, Class<?> type) {
+                    return materialize().invokable(isDeclaredByGeneric(anyOf(interfaces))).defaultValue(value, type);
+                }
             }
         }
     }

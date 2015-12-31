@@ -63,15 +63,7 @@ public interface MethodRegistry {
     /**
      * A handler for implementing a method.
      */
-    interface Handler {
-
-        /**
-         * Prepares the instrumented type for this handler.
-         *
-         * @param instrumentedType The instrumented type to prepare.
-         * @return The prepared instrumented type.
-         */
-        InstrumentedType prepare(InstrumentedType instrumentedType);
+    interface Handler extends InstrumentedType.Prepareable {
 
         /**
          * Compiles this handler.

@@ -968,6 +968,10 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             this(typeDescription, annotationDescriptions, NO_NAME, NO_MODIFIERS);
         }
 
+        public Token(TypeDescription.Generic typeDescription, String name, Integer modifiers) {
+            this(typeDescription, Collections.<AnnotationDescription>emptyList(), name, modifiers);
+        }
+
         /**
          * Creates a new parameter token.
          *
