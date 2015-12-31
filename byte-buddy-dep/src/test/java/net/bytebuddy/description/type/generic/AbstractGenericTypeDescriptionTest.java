@@ -1246,6 +1246,7 @@ public abstract class AbstractGenericTypeDescriptionTest {
         List<String>[] foo;
     }
 
+    @SuppressWarnings("unused")
     public static class GenericArrayOfGenericComponentType<T extends String> {
 
         List<T>[] foo;
