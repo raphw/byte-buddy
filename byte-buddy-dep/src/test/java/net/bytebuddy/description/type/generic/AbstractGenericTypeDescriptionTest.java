@@ -8,7 +8,6 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import org.hamcrest.CoreMatchers;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.objectweb.asm.*;
 
@@ -1143,7 +1142,6 @@ public abstract class AbstractGenericTypeDescriptionTest {
     }
 
     @Test
-    @Ignore("Still a problem when using loaded types that rely on java.lang.reflect.Parameters")
     public void testGenericTypeInconsistency() throws Exception {
         GenericTypeDescription typeDescription = describe(GenericDisintegrator.make());
         assertThat(typeDescription.getInterfaces().size(), is(2));

@@ -11,29 +11,21 @@ import static org.mockito.Mockito.mock;
 
 public class ParameterDescriptionForLoadedParameterDispatcherTest {
 
+    private static final int FOO = 42;
+
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmGetName() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getName(mock(Object.class));
+        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getName(mock(Object.class), FOO);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmGetModifiers() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getModifiers(mock(Object.class));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testLegacyVmgetDeclaringExectuable() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getDeclaringExecutable(mock(Object.class));
+        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getModifiers(mock(Object.class), FOO);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLegacyVmIsNamePresent() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.isNamePresent(mock(Object.class));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testLegacyVm() throws Exception {
-        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.getDeclaredAnnotations(mock(Object.class));
+        ParameterDescription.ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE.isNamePresent(mock(Object.class), FOO);
     }
 
     @Test
