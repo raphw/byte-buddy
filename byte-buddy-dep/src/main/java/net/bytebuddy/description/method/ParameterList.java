@@ -116,8 +116,9 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     }
 
     /**
-     * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or
-     * {@link java.lang.reflect.Constructor}.
+     * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or {@link java.lang.reflect.Constructor}.
+     *
+     * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents.
      */
     abstract class ForLoadedExecutable<T> extends AbstractBase<ParameterDescription.InDefinedShape> {
 

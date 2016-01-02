@@ -2418,6 +2418,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
         }
 
+        /**
+         * A lazy projection of the parameter type of a {@link Constructor}.
+         */
         public static class OfConstructorParameter extends LazyProjection {
 
             /**
@@ -2462,6 +2465,9 @@ public interface GenericTypeDescription extends NamedElement, Iterable<GenericTy
             }
         }
 
+        /**
+         * A lazy projection of the parameter type of a {@link Method}.
+         */
         public static class OfMethodParameter extends LazyProjection {
 
             /**

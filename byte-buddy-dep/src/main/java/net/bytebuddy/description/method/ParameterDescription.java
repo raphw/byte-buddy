@@ -185,6 +185,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
     /**
      * Description of a loaded parameter with support for the information exposed by {@code java.lang.reflect.Parameter}.
+     *
+     * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents.
      */
     abstract class ForLoadedParameter<T> extends InDefinedShape.AbstractBase {
 
@@ -366,6 +368,13 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                     }
                 }
 
+                /**
+                 * Returns the {@code java.lang.reflect.Parameter} of an executable at a given index.
+                 *
+                 * @param executable The executable for which a parameter should be read.
+                 * @param index      The index of the parameter.
+                 * @return The parameter for the given index.
+                 */
                 private Object getParameter(Object executable, int index) {
                     try {
                         return Array.get(getParameters.invoke(executable), index);
