@@ -634,6 +634,33 @@ public interface Builder<T> {
             public MethodDefinition<U> annotateParameter(int index, AnnotationDescription... annotation) {
                 return annotateParameter(index, Arrays.asList(annotation));
             }
+
+            protected abstract static class Adapter<V> extends MethodDefinition.AbstractBase<V> {
+
+                protected final MethodRegistry.Handler handler;
+
+                protected final MethodAttributeAppender.Factory methodAttributeAppenderFactory;
+
+                protected final Transformer<MethodDescription> transformer;
+
+                public Adapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
+                    this.handler = handler;
+                    this.methodAttributeAppenderFactory = methodAttributeAppenderFactory;
+                    this.transformer = transformer;
+                }
+
+                @Override
+                public MethodDefinition<V> attribute(MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
+                    return materialize(handler, new MethodAttributeAppender.Factory.Compound(this.methodAttributeAppenderFactory, methodAttributeAppenderFactory), transformer);
+                }
+
+                @Override
+                public MethodDefinition<V> transform(Transformer<MethodDescription> transformer) {
+                    return materialize(handler, methodAttributeAppenderFactory, new Transformer.Compound<MethodDescription>(this.transformer, transformer));
+                }
+
+                protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer);
+            }
         }
     }
 
@@ -1266,7 +1293,7 @@ public interface Builder<T> {
                 }
 
                 protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
-                    return null;
+                    return new AnnotationAdapter(handler);
                 }
 
                 protected class ParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Annotatable.AbstractBase.Adapter<U> {
@@ -1325,6 +1352,65 @@ public interface Builder<T> {
                                 MethodDefinitionAdapter.this.token.getDefaultValue()));
                     }
                 }
+
+                protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
+
+                    protected AnnotationAdapter(MethodRegistry.Handler handler) {
+                        this(handler,
+                                MethodAttributeAppender.NoOp.INSTANCE, // TODO
+                                Transformer.NoOp.<MethodDescription>make());
+                    }
+
+                    protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
+                        super(handler, methodAttributeAppenderFactory, transformer);
+                    }
+
+                    @Override
+                    public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
+                        return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
+                                token.getModifiers(),
+                                token.getTypeVariables(),
+                                token.getReturnType(),
+                                token.getParameterTokens(),
+                                token.getExceptionTypes(),
+                                token.getAnnotations(),
+                                token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                    }
+
+                    @Override
+                    public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
+                        List<ParameterDescription.Token> parameterTokens = new ArrayList<ParameterDescription.Token>(token.getParameterTokens());
+                        parameterTokens.add(index, new ParameterDescription.Token(token.getParameterTokens().get(index).getType(),
+                                CompoundList.of(token.getParameterTokens().get(index).getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
+                                token.getParameterTokens().get(index).getName(),
+                                token.getParameterTokens().get(index).getModifiers()));
+                        return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
+                                token.getModifiers(),
+                                token.getTypeVariables(),
+                                token.getReturnType(),
+                                parameterTokens,
+                                token.getExceptionTypes(),
+                                token.getAnnotations(),
+                                token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                    }
+
+                    @Override
+                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
+                        return new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                    }
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withMethod(token),
+                                fieldRegistry,
+                                methodRegistry.append(new LatentMethodMatcher.ForToken(token), handler, methodAttributeAppenderFactory, null), // TODO
+                                ignored,
+                                typeAttributeAppender,
+                                classVisitorWrapper,
+                                fieldVisitorWrapper,
+                                methodVisitorWrapper);
+                    }
+                }
             }
 
             protected class MethodMatchAdapter extends MethodDefinition.ImplementationDefinition.AbstractBase<U> {
@@ -1351,7 +1437,49 @@ public interface Builder<T> {
                 }
 
                 protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
-                    return null;
+                    return new AnnotationAdapter(handler);
+                }
+
+                protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
+
+                    protected AnnotationAdapter(MethodRegistry.Handler handler) {
+                        this(handler, MethodAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<MethodDescription>make());
+                    }
+
+                    protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
+                        super(handler, methodAttributeAppenderFactory, transformer);
+                    }
+
+                    @Override
+                    public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
+                        return new AnnotationAdapter(handler,
+                                new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForAnnotation(null)),  // TODO
+                                transformer);
+                    }
+
+                    @Override
+                    public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
+                        return new AnnotationAdapter(handler,
+                                new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForAnnotation(index, null)),  // TODO
+                                transformer);
+                    }
+
+                    @Override
+                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
+                        return new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                    }
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
+                                fieldRegistry,
+                                methodRegistry.append(matcher, handler, methodAttributeAppenderFactory, null), // TODO
+                                ignored,
+                                typeAttributeAppender,
+                                classVisitorWrapper,
+                                fieldVisitorWrapper,
+                                methodVisitorWrapper);
+                    }
                 }
             }
 
@@ -1375,7 +1503,7 @@ public interface Builder<T> {
                             methodVisitorWrapper);
                 }
 
-                // TODO: Inherited interface methods
+                // TODO: Inherited interface methods are not matched properly!
 
                 @Override
                 public MethodDefinition<U> implement(Implementation implementation) {
