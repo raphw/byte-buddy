@@ -1209,12 +1209,12 @@ public interface Builder<T> {
 
                 @Override
                 public MethodDefinition.ParameterDefinition.Annotatable<U> withParameter(TypeDefinition type, String name, int modifiers) {
-                    return new AnnotationAdapter(new ParameterDescription.Token(type.asGenericType(), name, modifiers));
+                    return new ParameterAnnotationAdapter(new ParameterDescription.Token(type.asGenericType(), name, modifiers));
                 }
 
                 @Override
                 public Simple.Annotatable<U> withParameter(TypeDefinition type) {
-                    return new SimpleAnnotationAdapter(new ParameterDescription.Token(type.asGenericType()));
+                    return new SimpleParameterAnnotationAdapter(new ParameterDescription.Token(type.asGenericType()));
                 }
 
                 @Override
@@ -1255,24 +1255,31 @@ public interface Builder<T> {
 
                 @Override
                 public MethodDefinition<U> defaultValue(Object value) {
-                    return materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
+                    return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
+                            token.getModifiers(),
+                            token.getTypeVariables(),
+                            token.getReturnType(),
+                            token.getParameterTokens(),
+                            token.getExceptionTypes(),
+                            token.getAnnotations(),
+                            value)).materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
                 }
 
                 protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
                     return null;
                 }
 
-                protected class AnnotationAdapter extends MethodDefinition.ParameterDefinition.Annotatable.AbstractBase.Adapter<U> {
+                protected class ParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Annotatable.AbstractBase.Adapter<U> {
 
                     private final ParameterDescription.Token token;
 
-                    protected AnnotationAdapter(ParameterDescription.Token token) {
+                    protected ParameterAnnotationAdapter(ParameterDescription.Token token) {
                         this.token = token;
                     }
 
                     @Override
                     public Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
-                        return new AnnotationAdapter(new ParameterDescription.Token(token.getType(),
+                        return new ParameterAnnotationAdapter(new ParameterDescription.Token(token.getType(),
                                 CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
                                 token.getName(),
                                 token.getModifiers()));
@@ -1291,17 +1298,17 @@ public interface Builder<T> {
                     }
                 }
 
-                protected class SimpleAnnotationAdapter extends MethodDefinition.ParameterDefinition.Simple.Annotatable.AbstractBase.Adapter<U> {
+                protected class SimpleParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Simple.Annotatable.AbstractBase.Adapter<U> {
 
                     private final ParameterDescription.Token token;
 
-                    protected SimpleAnnotationAdapter(ParameterDescription.Token token) {
+                    protected SimpleParameterAnnotationAdapter(ParameterDescription.Token token) {
                         this.token = token;
                     }
 
                     @Override
                     public Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
-                        return new SimpleAnnotationAdapter(new ParameterDescription.Token(token.getType(),
+                        return new SimpleParameterAnnotationAdapter(new ParameterDescription.Token(token.getType(),
                                 CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
                                 token.getName(),
                                 token.getModifiers()));
