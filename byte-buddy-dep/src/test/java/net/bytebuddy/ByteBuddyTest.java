@@ -137,8 +137,9 @@ public class ByteBuddyTest {
         assertThat(byteBuddy.implementationContextFactory, is(implementationContextFactory));
         assertThat(byteBuddy.classVisitorWrapper, instanceOf(ClassVisitorWrapper.Compound.class));
         ClassVisitor classVisitor = mock(ClassVisitor.class);
-        byteBuddy.classVisitorWrapper.wrap(classVisitor);
-        verify(classVisitorWrapper).wrap(classVisitor);
+        TypeDescription instrumentedType = mock(TypeDescription.class);
+        byteBuddy.classVisitorWrapper.wrap(instrumentedType, classVisitor);
+        verify(classVisitorWrapper).wrap(instrumentedType, classVisitor);
         verifyNoMoreInteractions(classVisitorWrapper);
     }
 

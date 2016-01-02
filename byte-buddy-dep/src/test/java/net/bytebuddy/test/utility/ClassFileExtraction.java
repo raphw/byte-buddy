@@ -1,6 +1,7 @@
 package net.bytebuddy.test.utility;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
@@ -29,7 +30,7 @@ public class ClassFileExtraction {
     public static byte[] extract(Class<?> type, ClassVisitorWrapper classVisitorWrapper) throws IOException {
         ClassReader classReader = new ClassReader(type.getName());
         ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL);
-        classReader.accept(classVisitorWrapper.wrap(classWriter), ASM_MANUAL);
+        classReader.accept(classVisitorWrapper.wrap(new TypeDescription.ForLoadedType(type), classWriter), ASM_MANUAL);
         return classWriter.toByteArray();
     }
 

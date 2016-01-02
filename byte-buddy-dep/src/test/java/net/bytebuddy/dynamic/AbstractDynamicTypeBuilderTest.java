@@ -318,10 +318,10 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testWriterHint() throws Exception {
         ClassVisitorWrapper classVisitorWrapper = mock(ClassVisitorWrapper.class);
-        when(classVisitorWrapper.wrap(any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
+        when(classVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[0]) {
+                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
                     @Override
                     public void visitEnd() {
                         MethodVisitor mv = visitMethod(Opcodes.ACC_PUBLIC, FOO, "()Ljava/lang/String;", null, null);
@@ -343,7 +343,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         verify(classVisitorWrapper).mergeWriter(0);
         verify(classVisitorWrapper, atMost(1)).mergeReader(0);
-        verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
+        verify(classVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class));
         verifyNoMoreInteractions(classVisitorWrapper);
     }
 

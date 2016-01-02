@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.*;
 
 /**
@@ -35,7 +36,7 @@ public enum TypeConstantAdjustment implements ClassVisitorWrapper {
     }
 
     @Override
-    public ClassVisitor wrap(ClassVisitor classVisitor) {
+    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
         return new TypeConstantDissolvingClassVisitor(classVisitor);
     }
 

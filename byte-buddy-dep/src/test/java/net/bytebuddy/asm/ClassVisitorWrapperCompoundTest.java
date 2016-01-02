@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -21,6 +22,9 @@ public class ClassVisitorWrapperCompoundTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
+    private TypeDescription instrumentedType;
+
+    @Mock
     private ClassVisitorWrapper wrapper, prepend, append;
 
     @Mock
@@ -28,9 +32,9 @@ public class ClassVisitorWrapperCompoundTest {
 
     @Before
     public void setUp() throws Exception {
-        when(prepend.wrap(prependVisitor)).thenReturn(wrapperVisitor);
-        when(wrapper.wrap(wrapperVisitor)).thenReturn(appendVisitor);
-        when(append.wrap(appendVisitor)).thenReturn(resultVisitor);
+        when(prepend.wrap(instrumentedType, prependVisitor)).thenReturn(wrapperVisitor);
+        when(wrapper.wrap(instrumentedType, wrapperVisitor)).thenReturn(appendVisitor);
+        when(append.wrap(instrumentedType, appendVisitor)).thenReturn(resultVisitor);
         when(prepend.mergeReader(FOO)).thenReturn(BAR);
         when(wrapper.mergeReader(BAR)).thenReturn(QUX);
         when(append.mergeReader(QUX)).thenReturn(BAZ);
@@ -42,12 +46,12 @@ public class ClassVisitorWrapperCompoundTest {
     @Test
     public void testWrapperChain() throws Exception {
         ClassVisitorWrapper.Compound compound = new ClassVisitorWrapper.Compound(prepend, wrapper, append);
-        assertThat(compound.wrap(prependVisitor), is(resultVisitor));
-        verify(prepend).wrap(prependVisitor);
+        assertThat(compound.wrap(instrumentedType, prependVisitor), is(resultVisitor));
+        verify(prepend).wrap(instrumentedType, prependVisitor);
         verifyNoMoreInteractions(prepend);
-        verify(wrapper).wrap(wrapperVisitor);
+        verify(wrapper).wrap(instrumentedType, wrapperVisitor);
         verifyNoMoreInteractions(wrapper);
-        verify(append).wrap(appendVisitor);
+        verify(append).wrap(instrumentedType, appendVisitor);
         verifyNoMoreInteractions(append);
     }
 

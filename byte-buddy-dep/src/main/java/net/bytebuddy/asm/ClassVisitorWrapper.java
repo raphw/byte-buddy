@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 
 import java.util.Arrays;
@@ -39,7 +40,7 @@ public interface ClassVisitorWrapper {
      *                     {@link net.bytebuddy.dynamic.DynamicType} is written to.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
      */
-    ClassVisitor wrap(ClassVisitor classVisitor);
+    ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor);
 
     /**
      * A class visitor wrapper that does not apply any changes.
@@ -62,7 +63,7 @@ public interface ClassVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
             return classVisitor;
         }
 
@@ -94,7 +95,7 @@ public interface ClassVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
             return classVisitor;
         }
 
@@ -173,9 +174,9 @@ public interface ClassVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
             for (ClassVisitorWrapper classVisitorWrapper : classVisitorWrappers) {
-                classVisitor = classVisitorWrapper.wrap(classVisitor);
+                classVisitor = classVisitorWrapper.wrap(instrumentedType, classVisitor);
             }
             return classVisitor;
         }

@@ -1,6 +1,7 @@
 package net.bytebuddy.test.utility;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
@@ -42,7 +43,7 @@ public class DebuggingWrapper implements ClassVisitorWrapper {
     }
 
     @Override
-    public ClassVisitor wrap(ClassVisitor classVisitor) {
+    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
         return new TraceClassVisitor(classVisitor, printer, printWriter);
     }
 }

@@ -2520,7 +2520,9 @@ public interface TypeWriter<T> {
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
                 ClassWriter classWriter = FrameComputingClassWriter.of(classReader, classVisitorWrapper.mergeWriter(ASM_NO_FLAGS), classFileLocator);
-                classReader.accept(writeTo(classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter)), implementationContext), classVisitorWrapper.mergeReader(ASM_NO_FLAGS));
+                classReader.accept(writeTo(classVisitorWrapper.wrap(instrumentedType,
+                        new ValidatingClassVisitor(classWriter)),
+                        implementationContext), classVisitorWrapper.mergeReader(ASM_NO_FLAGS));
                 return classWriter.toByteArray();
             }
 
@@ -3154,7 +3156,7 @@ public interface TypeWriter<T> {
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
                 ClassWriter classWriter = new ClassWriter(classVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
-                ClassVisitor classVisitor = classVisitorWrapper.wrap(new ValidatingClassVisitor(classWriter));
+                ClassVisitor classVisitor = classVisitorWrapper.wrap(instrumentedType, new ValidatingClassVisitor(classWriter));
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),

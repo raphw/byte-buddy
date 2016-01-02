@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.loading;
 
 import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
@@ -215,7 +216,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         }
 
         @Override
-        public ClassVisitor wrap(ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
             return new RemappingClassAdapter(classVisitor, new SimpleRemapper(oldName, newName));
         }
     }
