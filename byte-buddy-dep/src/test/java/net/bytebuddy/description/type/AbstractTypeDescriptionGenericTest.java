@@ -4,17 +4,25 @@ import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
 import org.junit.Test;
+import org.objectweb.asm.*;
 
+import java.io.IOException;
+import java.io.Serializable;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.security.AccessController;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
@@ -1155,6 +1163,52 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 new MethodDescription.ForLoadedMethod(MemberVariable.class.getDeclaredMethod(BAZ, Object.class)).getParameters().getOnly()));
     }
 
+    @Test
+    public void testGenericTypeInconsistency() throws Exception {
+        TypeDescription.Generic typeDescription = describe(GenericDisintegrator.make());
+        assertThat(typeDescription.getInterfaces().size(), is(2));
+        assertThat(typeDescription.getInterfaces().get(0).getSort(), is(TypeDescription.Generic.Sort.PARAMETERIZED));
+        assertThat(typeDescription.getInterfaces().get(0).asErasure().represents(Callable.class), is(true));
+        assertThat(typeDescription.getInterfaces().get(1).getSort(), is(TypeDescription.Generic.Sort.NON_GENERIC));
+        assertThat(typeDescription.getInterfaces().get(1).represents(Serializable.class), is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().size(), is(2));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().get(0).getType().getSort(),
+                is(TypeDescription.Generic.Sort.VARIABLE));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().get(0).getType().asErasure().represents(Exception.class),
+                is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().get(1).getType().getSort(),
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().get(1).getType().represents(Void.class),
+                is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().size(), is(2));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().get(0).getSort(),
+                is(TypeDescription.Generic.Sort.VARIABLE));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().get(0).asErasure().represents(Exception.class),
+                is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().get(1).getSort(),
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
+        assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().get(1).represents(RuntimeException.class),
+                is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().size(), is(2));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().get(0).getType().getSort(),
+                is(TypeDescription.Generic.Sort.VARIABLE));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().get(0).getType().asErasure().represents(Exception.class),
+                is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().get(1).getType().getSort(),
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().get(1).getType().represents(Void.class),
+                is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().size(), is(2));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(0).getSort(),
+                is(TypeDescription.Generic.Sort.VARIABLE));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(0).asErasure().represents(Exception.class),
+                is(true));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(1).getSort(),
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
+        assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(1).represents(RuntimeException.class),
+                is(true));
+    }
+
     @SuppressWarnings("unused")
     public interface Foo {
         /* empty */
@@ -1434,6 +1488,66 @@ public abstract class AbstractTypeDescriptionGenericTest {
         @SuppressWarnings("unchecked")
         public static class Raw extends MemberVariable {
             /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public abstract static class InconsistentGenerics<T extends Exception> implements Callable<T> {
+
+        InconsistentGenerics(T t) throws T {
+            /* empty */
+        }
+
+        abstract void foo(T t) throws T;
+
+        private InconsistentGenerics<T> foo;
+    }
+
+    public static class GenericDisintegrator extends ClassVisitor {
+
+        public static Field make() throws IOException, ClassNotFoundException, NoSuchFieldException {
+            ClassReader classReader = new ClassReader(InconsistentGenerics.class.getName());
+            ClassWriter classWriter = new ClassWriter(classReader, ClassWriter.COMPUTE_MAXS);
+            classReader.accept(new GenericDisintegrator(classWriter), 0);
+            return new ByteArrayClassLoader(null,
+                    Collections.singletonMap(InconsistentGenerics.class.getName(), classWriter.toByteArray()),
+                    null,
+                    AccessController.getContext(),
+                    ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                    PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(InconsistentGenerics.class.getName()).getDeclaredField(FOO);
+        }
+
+        public GenericDisintegrator(ClassVisitor classVisitor) {
+            super(Opcodes.ASM5, classVisitor);
+        }
+
+        @Override
+        public void visit(int version, int modifiers, String name, String signature, String superName, String[] interfaces) {
+            super.visit(version,
+                    modifiers,
+                    name,
+                    signature,
+                    superName,
+                    new String[]{Callable.class.getName().replace('.', '/'), Serializable.class.getName().replace('.', '/')});
+        }
+
+        @Override
+        public void visitOuterClass(String owner, String name, String desc) {
+            /* do nothing */
+        }
+
+        @Override
+        public void visitInnerClass(String name, String outerName, String innerName, int access) {
+            /* do nothing */
+        }
+
+        @Override
+        public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
+            return super.visitMethod(access,
+                    name,
+                    "(L" + Exception.class.getName().replace('.', '/') + ";L" + Void.class.getName().replace('.', '/') + ";)V",
+                    signature,
+                    new String[]{Exception.class.getName().replace('.', '/'), RuntimeException.class.getName().replace('.', '/')});
         }
     }
 }

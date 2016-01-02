@@ -228,14 +228,6 @@ public interface Builder<T> {
                         return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
                     }
 
-                    @Override
-                    public FieldDefinition<V> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                        return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, new FieldDescription.Token(token.getName(),
-                                token.getModifiers(),
-                                token.getType(),
-                                CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
-                    }
-
                     protected abstract FieldDefinition<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                                       Transformer<FieldDescription> transformer,
                                                                       Object defaultValue);

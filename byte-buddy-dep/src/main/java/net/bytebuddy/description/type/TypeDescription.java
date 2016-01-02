@@ -2493,262 +2493,96 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             /**
-             * A lazy projection of a loaded parameter.
+             * A lazy projection of the parameter type of a {@link Constructor}.
              */
-            public static class ForLoadedParameter extends LazyProjection {
+            public static class OfConstructorParameter extends LazyProjection {
 
                 /**
-                 * A dispatcher for introspecting a parameter's type.
+                 * The constructor of which a parameter type is represented.
                  */
-                private static final ForLoadedParameter.Dispatcher DISPATCHER;
-
-                /*
-                 * Looks up Java 7+ specific methods if possible.
-                 */
-                static {
-                    ForLoadedParameter.Dispatcher dispatcher;
-                    try {
-                        Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                        dispatcher = new ForLoadedParameter.Dispatcher.ForModernVm(parameterType.getDeclaredMethod("getType"), parameterType.getDeclaredMethod("getParameterizedType"));
-                    } catch (RuntimeException exception) {
-                        throw exception;
-                    } catch (Exception ignored) {
-                        dispatcher = ForLoadedParameter.Dispatcher.ForLegacyVm.INSTANCE;
-                    }
-                    DISPATCHER = dispatcher;
-                }
+                private final Constructor<?> constructor;
 
                 /**
-                 * The represented parameter.
+                 * The parameter's index.
                  */
-                private final Object parameter;
+                private final int index;
 
                 /**
-                 * Creates a lazy projection of a loaded parameter's type.
+                 * The erasure of the parameter type.
+                 */
+                private final Class<?> erasure;
+
+                /**
+                 * Creates a lazy projection of a constructor's parameter.
                  *
-                 * @param parameter The represented parameter.
+                 * @param constructor The constructor of which a parameter type is represented.
+                 * @param index       The parameter's index.
+                 * @param erasure     The erasure of the parameter type.
                  */
-                public ForLoadedParameter(Object parameter) {
-                    this.parameter = parameter;
+                public OfConstructorParameter(Constructor<?> constructor, int index, Class<?> erasure) {
+                    this.constructor = constructor;
+                    this.index = index;
+                    this.erasure = erasure;
                 }
 
                 @Override
                 protected Generic resolve() {
-                    return Sort.describe(DISPATCHER.getParameterizedType(parameter));
+                    java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
+                    return index < type.length
+                            ? Sort.describe(type[index])
+                            : new OfNonGenericType.ForLoadedType(erasure);
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new ForLoadedType(DISPATCHER.getType(parameter));
+                    return new TypeDescription.ForLoadedType(erasure);
                 }
+            }
+
+            /**
+             * A lazy projection of the parameter type of a {@link Method}.
+             */
+            public static class OfMethodParameter extends LazyProjection {
 
                 /**
-                 * A dispatcher for introspecting a method's types.
+                 * The method of which a parameter type is represented.
                  */
-                protected interface Dispatcher {
-
-                    /**
-                     * Returns a parameter's parameterized type.
-                     *
-                     * @param parameter The parameter to extract the paramaterized type of.
-                     * @return The parameter's generic type.
-                     */
-                    java.lang.reflect.Type getParameterizedType(Object parameter);
-
-                    /**
-                     * Returns the parameter's type.
-                     *
-                     * @param parameter The parameter to extract the non-generic type of.
-                     * @return The parameter's non-generic type.
-                     */
-                    Class<?> getType(Object parameter);
-
-                    /**
-                     * A dispatcher for a modern VM that supports the {@code java.lang.reflect.Parameter} API for Java 8+.
-                     */
-                    class ForModernVm implements ForLoadedParameter.Dispatcher {
-
-                        /**
-                         * A reference to {@code java.lang.reflect.Parameter#getType}.
-                         */
-                        private final Method getType;
-
-                        /**
-                         * A reference to {@code java.lang.reflect.Parameter#getParameterizedType}.
-                         */
-                        private final Method getParameterizedType;
-
-                        /**
-                         * Creates a new dispatcher.
-                         *
-                         * @param getType              A reference to {@code java.lang.reflect.Parameter#getType}.
-                         * @param getParameterizedType A reference to {@code java.lang.reflect.Parameter#getParameterizedType}.
-                         */
-                        protected ForModernVm(Method getType, Method getParameterizedType) {
-                            this.getType = getType;
-                            this.getParameterizedType = getParameterizedType;
-                        }
-
-                        @Override
-                        public java.lang.reflect.Type getParameterizedType(Object parameter) {
-                            try {
-                                return (java.lang.reflect.Type) getParameterizedType.invoke(parameter);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getParameterizedType", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getParameterizedType", exception.getCause());
-                            }
-                        }
-
-                        @Override
-                        public Class<?> getType(Object parameter) {
-                            try {
-                                return (Class<?>) getType.invoke(parameter);
-                            } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getType", exception);
-                            } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getType", exception.getCause());
-                            }
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            ForModernVm legal = (ForModernVm) other;
-                            return getType.equals(legal.getType) && getParameterizedType.equals(legal.getParameterizedType);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = getType.hashCode();
-                            result = 31 * result + getParameterizedType.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForModernVm{" +
-                                    "getType=" + getType +
-                                    ", getParameterizedType=" + getParameterizedType +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A dispatcher for a VM that does not support the {@code java.lang.reflect.Parameter} API that throws an exception
-                     * for any property.
-                     */
-                    enum ForLegacyVm implements ForLoadedParameter.Dispatcher {
-
-                        /**
-                         * The singleton instance.
-                         */
-                        INSTANCE;
-
-                        @Override
-                        public java.lang.reflect.Type getParameterizedType(Object parameter) {
-                            throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
-                        }
-
-                        @Override
-                        public Class<?> getType(Object parameter) {
-                            throw new IllegalStateException("Unsupported type for current JVM: java,lang.Parameter");
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.LazyProjection.ForLoadedParameter.Dispatcher.ForLegacyVm." + name();
-                        }
-                    }
-                }
+                private final Method method;
 
                 /**
-                 * Represents a constructor's parameter on a JVM that does not know the {@code java.lang.reflect.Parameter} type.
+                 * The parameter's index.
                  */
-                public static class OfLegacyVmConstructor extends LazyProjection {
-
-                    /**
-                     * The constructor of which a parameter type is represented.
-                     */
-                    private final Constructor<?> constructor;
-
-                    /**
-                     * The parameter's index.
-                     */
-                    private final int index;
-
-                    /**
-                     * The erasure of the parameter type.
-                     */
-                    private final Class<?> erasure;
-
-                    /**
-                     * Creates a lazy projection of a constructor's parameter.
-                     *
-                     * @param constructor The constructor of which a parameter type is represented.
-                     * @param index       The parameter's index.
-                     * @param erasure     The erasure of the parameter type.
-                     */
-                    public OfLegacyVmConstructor(Constructor<?> constructor, int index, Class<?> erasure) {
-                        this.constructor = constructor;
-                        this.index = index;
-                        this.erasure = erasure;
-                    }
-
-                    @Override
-                    protected Generic resolve() {
-                        return Sort.describe(constructor.getGenericParameterTypes()[index]);
-                    }
-
-                    @Override
-                    public TypeDescription asErasure() {
-                        return new ForLoadedType(erasure);
-                    }
-                }
+                private final int index;
 
                 /**
-                 * Represents a method's parameter on a JVM that does not know the {@code java.lang.reflect.Parameter} type.
+                 * The erasure of the parameter type.
                  */
-                public static class OfLegacyVmMethod extends LazyProjection {
+                private final Class<?> erasure;
 
-                    /**
-                     * The method of which a parameter type is represented.
-                     */
-                    private final Method method;
+                /**
+                 * Creates a lazy projection of a constructor's parameter.
+                 *
+                 * @param method  The method of which a parameter type is represented.
+                 * @param index   The parameter's index.
+                 * @param erasure The erasure of the parameter's type.
+                 */
+                public OfMethodParameter(Method method, int index, Class<?> erasure) {
+                    this.method = method;
+                    this.index = index;
+                    this.erasure = erasure;
+                }
 
-                    /**
-                     * The parameter's index.
-                     */
-                    private final int index;
+                @Override
+                protected Generic resolve() {
+                    java.lang.reflect.Type[] type = method.getGenericParameterTypes();
+                    return index < type.length
+                            ? Sort.describe(type[index])
+                            : new OfNonGenericType.ForLoadedType(erasure);
+                }
 
-                    /**
-                     * The erasure of the parameter type.
-                     */
-                    private final Class<?> erasure;
-
-                    /**
-                     * Creates a lazy projection of a constructor's parameter.
-                     *
-                     * @param method  The method of which a parameter type is represented.
-                     * @param index   The parameter's index.
-                     * @param erasure The erasure of the parameter's type.
-                     */
-                    public OfLegacyVmMethod(Method method, int index, Class<?> erasure) {
-                        this.method = method;
-                        this.index = index;
-                        this.erasure = erasure;
-                    }
-
-                    @Override
-                    protected Generic resolve() {
-                        return Sort.describe(method.getGenericParameterTypes()[index]);
-                    }
-
-                    @Override
-                    public TypeDescription asErasure() {
-                        return new ForLoadedType(erasure);
-                    }
+                @Override
+                public TypeDescription asErasure() {
+                    return new TypeDescription.ForLoadedType(erasure);
                 }
             }
         }

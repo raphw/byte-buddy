@@ -117,23 +117,24 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     }
 
     /**
-     * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or
-     * {@link java.lang.reflect.Constructor}.
+     * Represents a list of parameters for an executable, i.e. a {@link java.lang.reflect.Method} or {@link java.lang.reflect.Constructor}.
+     *
+     * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents.
      */
-    class ForLoadedExecutable extends AbstractBase<ParameterDescription.InDefinedShape> {
+    abstract class ForLoadedExecutable<T> extends AbstractBase<ParameterDescription.InDefinedShape> {
 
         /**
-         * A dispatcher for creating parameter lists depending on the features of the currently running Java virtual machine.
+         * The dispatcher used creating parameter list instances and for accessing {@code java.lang.reflect.Executable} instances.
          */
         private static final Dispatcher DISPATCHER;
 
         /*
-         * Creates a dispatcher for the currently running JVM.
+         * Creates a dispatcher for a loaded parameter if the type is available for the running JVM.
          */
         static {
             Dispatcher dispatcher;
             try {
-                dispatcher = new Dispatcher.ForModernVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameters"));
+                dispatcher = new Dispatcher.ForModernVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception ignored) {
@@ -143,143 +144,75 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         /**
-         * An array of the represented {@code java.lang.reflect.Parameter} instances.
+         * The executable for which a parameter list is represented.
          */
-        private final Object[] parameter;
+        protected final T executable;
 
         /**
-         * Creates a list representing a method's or a constructor's parameters.
+         * Creates a new description for a loaded executable.
          *
-         * @param parameter The {@code java.lang.reflect.Parameter}-typed parameters to represent.
+         * @param executable The executable for which a parameter list is represented.
          */
-        protected ForLoadedExecutable(Object[] parameter) {
-            this.parameter = parameter;
+        protected ForLoadedExecutable(T executable) {
+            this.executable = executable;
         }
 
         /**
-         * Creates a parameter list for a loaded method.
+         * Creates a new list that describes the parameters of the given {@link Constructor}.
          *
-         * @param method The method to represent.
-         * @return A list of parameters for this method.
-         */
-        public static ParameterList<ParameterDescription.InDefinedShape> of(Method method) {
-            return DISPATCHER.getParameters(method);
-        }
-
-        /**
-         * Creates a parameter list for a loaded constructor.
-         *
-         * @param constructor The constructor to represent.
-         * @return A list of parameters for this constructor.
+         * @param constructor The constructor for which the parameters should be described.
+         * @return A list describing the constructor's parameters.
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor) {
-            return DISPATCHER.getParameters(constructor);
+            return DISPATCHER.describe(constructor);
         }
 
-        @Override
-        public ParameterDescription.InDefinedShape get(int index) {
-            return new ParameterDescription.ForLoadedParameter(parameter[index], index);
+        /**
+         * Creates a new list that describes the parameters of the given {@link Method}.
+         *
+         * @param method The method for which the parameters should be described.
+         * @return A list describing the method's parameters.
+         */
+        public static ParameterList<ParameterDescription.InDefinedShape> of(Method method) {
+            return DISPATCHER.describe(method);
         }
 
         @Override
         public int size() {
-            return parameter.length;
-        }
-
-        @Override
-        public TypeList.Generic asTypeList() {
-            List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameter.length);
-            for (Object aParameter : parameter) {
-                types.add(new TypeDescription.Generic.LazyProjection.ForLoadedParameter(aParameter));
-            }
-            return new TypeList.Generic.Explicit(types);
+            return DISPATCHER.getParameterCount(executable);
         }
 
         /**
-         * A dispatcher for creating parameter lists depending on the features of the currently running JVM.
+         * A dispatcher for creating descriptions of parameter lists and for evaluating the size of an {@code java.lang.reflect.Executable}'s parameters.
          */
         protected interface Dispatcher {
 
             /**
-             * Returns a list of descriptions of the provided method.
+             * Returns the amount of parameters of a given executable..
              *
-             * @param method The loaded method for which to describe the parameters.
-             * @return A description of the method's parameters.
+             * @param executable The executable for which the amount of parameters should be found.
+             * @return The amount of parameters of the given executable.
              */
-            ParameterList<ParameterDescription.InDefinedShape> getParameters(Method method);
+            int getParameterCount(Object executable);
 
             /**
-             * Returns a list of descriptions of the provided constructor.
+             * Describes a {@link Constructor}'s parameters of the given VM.
              *
-             * @param constructor The loaded constructor for which to describe the parameters.
-             * @return A description of the constructor's parameters.
+             * @param constructor The constructor for which the parameters should be described.
+             * @return A list describing the constructor's parameters.
              */
-            ParameterList<ParameterDescription.InDefinedShape> getParameters(Constructor<?> constructor);
+            ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor);
 
             /**
-             * A dispatcher for virtual machines that are aware of the {@code java.lang.reflect.Executable} type that was added in Java version 8.
+             * Describes a {@link Method}'s parameters of the given VM.
+             *
+             * @param method The method for which the parameters should be described.
+             * @return A list describing the method's parameters.
              */
-            class ForModernVm implements Dispatcher {
-
-                /**
-                 * The {@code java.lang.reflect.Executable#getParameters} method.
-                 */
-                private final Method getParameters;
-
-                /**
-                 * Creates a dispatcher for modern VMs.
-                 *
-                 * @param getParameters The {@code java.lang.reflect.Executable#getParameters} method.
-                 */
-                protected ForModernVm(Method getParameters) {
-                    this.getParameters = getParameters;
-                }
-
-                @Override
-                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Method method) {
-                    try {
-                        return new ForLoadedExecutable((Object[]) getParameters.invoke(method));
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalStateException();
-                    } catch (InvocationTargetException e) {
-                        throw new IllegalStateException();
-                    }
-                }
-
-                @Override
-                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Constructor<?> constructor) {
-                    try {
-                        return new ForLoadedExecutable((Object[]) getParameters.invoke(constructor));
-                    } catch (IllegalAccessException e) {
-                        throw new IllegalStateException();
-                    } catch (InvocationTargetException e) {
-                        throw new IllegalStateException();
-                    }
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForModernVm that = (ForModernVm) other;
-                    return getParameters.equals(that.getParameters);
-                }
-
-                @Override
-                public int hashCode() {
-                    return getParameters.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForModernVm{" +
-                            "getParameters=" + getParameters +
-                            '}';
-                }
-            }
+            ParameterList<ParameterDescription.InDefinedShape> describe(Method method);
 
             /**
-             * A dispatcher for virtual machines that are <b>not</b> aware of the {@code java.lang.reflect.Executable} type that was added in Java version 8.
+             * A dispatcher for a legacy VM that does not support the {@code java.lang.reflect.Parameter} type.
              */
             enum ForLegacyVm implements Dispatcher {
 
@@ -289,13 +222,18 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 INSTANCE;
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Method method) {
-                    return new OfLegacyVmMethod(method);
+                public int getParameterCount(Object executable) {
+                    throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Executable");
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> getParameters(Constructor<?> constructor) {
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
                     return new OfLegacyVmConstructor(constructor);
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
+                    return new OfLegacyVmMethod(method);
                 }
 
                 @Override
@@ -303,57 +241,104 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                     return "ParameterList.ForLoadedExecutable.Dispatcher.ForLegacyVm." + name();
                 }
             }
+
+            /**
+             * A dispatcher for a legacy VM that does support the {@code java.lang.reflect.Parameter} type.
+             */
+            class ForModernVm implements Dispatcher {
+
+                /**
+                 * The {@code java.lang.reflect.Executable#getParameterCount()} method.
+                 */
+                private final Method getParameterCount;
+
+                /**
+                 * Creates a new dispatcher for a modern VM.
+                 *
+                 * @param getParameterCount The {@code java.lang.reflect.Executable#getParameterCount()} method.
+                 */
+                protected ForModernVm(Method getParameterCount) {
+                    this.getParameterCount = getParameterCount;
+                }
+
+                @Override
+                public int getParameterCount(Object executable) {
+                    try {
+                        return (Integer) getParameterCount.invoke(executable);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.Parameter#getModifiers", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.Parameter#getModifiers", exception.getCause());
+                    }
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
+                    return new OfConstructor(constructor);
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
+                    return new OfMethod(method);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && getParameterCount.equals(((ForModernVm) other).getParameterCount);
+                }
+
+                @Override
+                public int hashCode() {
+                    return getParameterCount.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForModernVm{" +
+                            "getParameterCount=" + getParameterCount +
+                            '}';
+                }
+            }
         }
 
         /**
-         * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
-         * type is not available.
+         * Describes the list of {@link Constructor} parameters on a modern VM.
          */
-        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
+        protected static class OfConstructor extends ForLoadedExecutable<Constructor<?>> {
 
             /**
-             * The represented method.
-             */
-            private final Method method;
-
-            /**
-             * An array of this method's parameter types.
-             */
-            private final Class<?>[] parameterType;
-
-            /**
-             * An array of all parameter annotations of the represented method.
-             */
-            private final Annotation[][] parameterAnnotation;
-
-            /**
-             * Creates a legacy representation of a method's parameters.
+             * Creates a new description of the parameters of a constructor.
              *
-             * @param method The method to represent.
+             * @param constructor The constructor that is represented by this instance.
              */
-            protected OfLegacyVmMethod(Method method) {
-                this.method = method;
-                this.parameterType = method.getParameterTypes();
-                this.parameterAnnotation = method.getParameterAnnotations();
+            protected OfConstructor(Constructor<?> constructor) {
+                super(constructor);
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
+                return new ParameterDescription.ForLoadedParameter.OfConstructor(executable, index);
+            }
+        }
+
+        /**
+         * Describes the list of {@link Method} parameters on a modern VM.
+         */
+        protected static class OfMethod extends ForLoadedExecutable<Method> {
+
+            /**
+             * Creates a new description of the parameters of a method.
+             *
+             * @param method The method that is represented by this instance.
+             */
+            protected OfMethod(Method method) {
+                super(method);
             }
 
             @Override
-            public int size() {
-                return parameterType.length;
-            }
-
-            @Override
-            public TypeList.Generic asTypeList() {
-                List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameterType.length);
-                for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new TypeDescription.Generic.LazyProjection.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index]));
-                }
-                return new TypeList.Generic.Explicit(types);
+            public ParameterDescription.InDefinedShape get(int index) {
+                return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index);
             }
         }
 
@@ -398,14 +383,48 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             public int size() {
                 return parameterType.length;
             }
+        }
+
+        /**
+         * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
+         * type is not available.
+         */
+        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
+
+            /**
+             * The represented method.
+             */
+            private final Method method;
+
+            /**
+             * An array of this method's parameter types.
+             */
+            private final Class<?>[] parameterType;
+
+            /**
+             * An array of all parameter annotations of the represented method.
+             */
+            private final Annotation[][] parameterAnnotation;
+
+            /**
+             * Creates a legacy representation of a method's parameters.
+             *
+             * @param method The method to represent.
+             */
+            protected OfLegacyVmMethod(Method method) {
+                this.method = method;
+                this.parameterType = method.getParameterTypes();
+                this.parameterAnnotation = method.getParameterAnnotations();
+            }
 
             @Override
-            public TypeList.Generic asTypeList() {
-                List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(parameterType.length);
-                for (int index = 0; index < parameterType.length; index++) {
-                    types.add(new TypeDescription.Generic.LazyProjection.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index]));
-                }
-                return new TypeList.Generic.Explicit(types);
+            public ParameterDescription.InDefinedShape get(int index) {
+                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
+            }
+
+            @Override
+            public int size() {
+                return parameterType.length;
             }
         }
     }

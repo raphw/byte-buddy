@@ -465,15 +465,15 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                     private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
                     protected DetachedTypeVariable(TypeVariableSource typeVariableSource,
-                                                Map.Entry<String, ? extends Generic> typeVariable,
-                                                Visitor<? extends TypeDescription.Generic> visitor) {
+                                                   Map.Entry<String, ? extends Generic> typeVariable,
+                                                   Visitor<? extends TypeDescription.Generic> visitor) {
                         this(typeVariableSource, typeVariable.getKey(), typeVariable.getValue(), visitor);
                     }
 
                     protected DetachedTypeVariable(TypeVariableSource typeVariableSource,
-                                                String symbol,
-                                                Generic upperBounds,
-                                                Visitor<? extends TypeDescription.Generic> visitor) {
+                                                   String symbol,
+                                                   Generic upperBounds,
+                                                   Visitor<? extends TypeDescription.Generic> visitor) {
                         this.typeVariableSource = typeVariableSource;
                         this.symbol = symbol;
                         this.upperBounds = upperBounds;
@@ -567,7 +567,10 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 protected TypeDescription.Generic resolve() {
-                    return Sort.describe(type.getGenericInterfaces()[index]);
+                    java.lang.reflect.Type[] type = this.type.getGenericInterfaces();
+                    return index < type.length
+                            ? Sort.describe(type[index])
+                            : asRawType();
                 }
 
                 @Override
@@ -646,7 +649,10 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 protected TypeDescription.Generic resolve() {
-                    return Sort.describe(constructor.getGenericExceptionTypes()[index]);
+                    java.lang.reflect.Type[] type = constructor.getGenericExceptionTypes();
+                    return index < type.length
+                            ? Sort.describe(type[index])
+                            : asRawType();
                 }
 
                 @Override
@@ -725,7 +731,10 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 protected TypeDescription.Generic resolve() {
-                    return Sort.describe(method.getGenericExceptionTypes()[index]);
+                    java.lang.reflect.Type[] type = method.getGenericExceptionTypes();
+                    return index < type.length
+                            ? Sort.describe(type[index])
+                            : asRawType();
                 }
 
                 @Override
