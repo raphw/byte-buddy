@@ -12,6 +12,7 @@ import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
@@ -233,7 +234,8 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 attributeAppender,
                 classFileVersion,
                 classFileLocator,
-                originalType).make();
+                originalType,
+                AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS).make();
     }
 
     @Override

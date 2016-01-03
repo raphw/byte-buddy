@@ -12,6 +12,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
@@ -255,7 +256,8 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 classFileVersion,
                 classFileLocator,
                 originalType,
-                methodRebaseResolver).make();
+                methodRebaseResolver,
+                AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS).make();
     }
 
     @Override

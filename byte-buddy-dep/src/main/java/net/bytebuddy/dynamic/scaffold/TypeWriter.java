@@ -90,9 +90,9 @@ public interface TypeWriter<T> {
              *
              * @param classVisitor The class visitor to which this entry is to be written to.
              */
-            void apply(ClassVisitor classVisitor);
+            void apply(ClassVisitor classVisitor, AnnotationAppender.ValueFilter.Factory valueFilterFactory);
 
-            void apply(FieldVisitor fieldVisitor);
+            void apply(FieldVisitor fieldVisitor, AnnotationAppender.ValueFilter.Factory valueFilterFactory);
 
             /**
              * A record for a simple field without a default value where all of the field's declared annotations are appended.
@@ -129,19 +129,19 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void apply(ClassVisitor classVisitor) {
+                public void apply(ClassVisitor classVisitor, AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
                             FieldDescription.NO_DEFAULT_VALUE);
-                    getFieldAppender().apply(fieldVisitor, fieldDescription);
+                    getFieldAppender().apply(fieldVisitor, fieldDescription, valueFilterFactory.on(fieldDescription));
                     fieldVisitor.visitEnd();
                 }
 
                 @Override
-                public void apply(FieldVisitor fieldVisitor) {
-                    getFieldAppender().apply(fieldVisitor, fieldDescription);
+                public void apply(FieldVisitor fieldVisitor, AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                    getFieldAppender().apply(fieldVisitor, fieldDescription, valueFilterFactory.on(fieldDescription));
                 }
 
                 @Override
@@ -214,19 +214,19 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void apply(ClassVisitor classVisitor) {
+                public void apply(ClassVisitor classVisitor, AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                     FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
                             resolveDefault(FieldDescription.NO_DEFAULT_VALUE));
-                    attributeAppender.apply(fieldVisitor, fieldDescription);
+                    attributeAppender.apply(fieldVisitor, fieldDescription, valueFilterFactory.on(fieldDescription));
                     fieldVisitor.visitEnd();
                 }
 
                 @Override
-                public void apply(FieldVisitor fieldVisitor) {
-                    attributeAppender.apply(fieldVisitor, fieldDescription);
+                public void apply(FieldVisitor fieldVisitor, AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                    attributeAppender.apply(fieldVisitor, fieldDescription, valueFilterFactory.on(fieldDescription));
                 }
 
                 @Override
@@ -308,7 +308,7 @@ public interface TypeWriter<T> {
              * @param classVisitor          The class visitor to which this entry should be applied.
              * @param implementationContext The implementation context to which this entry should be applied.
              */
-            void apply(ClassVisitor classVisitor, Implementation.Context implementationContext);
+            void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, AnnotationAppender.ValueFilter.Factory valueFilterFactory);
 
             /**
              * Applies the head of this entry. Applying an entry is only possible if a method is defined, i.e. the sort of this entry is not
@@ -325,7 +325,7 @@ public interface TypeWriter<T> {
              * @param methodVisitor         The method visitor to which this entry should be applied.
              * @param implementationContext The implementation context to which this entry should be applied.
              */
-            void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext);
+            void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationAppender.ValueFilter.Factory valueFilterFactory);
 
             /**
              * The sort of an entry.
@@ -403,12 +403,16 @@ public interface TypeWriter<T> {
                 INSTANCE;
 
                 @Override
-                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
+                public void apply(ClassVisitor classVisitor,
+                                  Implementation.Context implementationContext,
+                                  AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                     /* do nothing */
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
+                public void applyBody(MethodVisitor methodVisitor,
+                                      Implementation.Context implementationContext,
+                                      AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                     throw new IllegalStateException("Cannot apply headless implementation for method that should be skipped");
                 }
 
@@ -444,7 +448,9 @@ public interface TypeWriter<T> {
             abstract class ForDefinedMethod implements Record {
 
                 @Override
-                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
+                public void apply(ClassVisitor classVisitor,
+                                  Implementation.Context implementationContext,
+                                  AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                     MethodVisitor methodVisitor = classVisitor.visitMethod(getMethod().getAdjustedModifiers(getSort().isImplemented()),
                             getMethod().getInternalName(),
                             getMethod().getDescriptor(),
@@ -457,7 +463,7 @@ public interface TypeWriter<T> {
                         }
                     }
                     applyHead(methodVisitor);
-                    applyBody(methodVisitor, implementationContext);
+                    applyBody(methodVisitor, implementationContext, valueFilterFactory);
                     methodVisitor.visitEnd();
                 }
 
@@ -520,8 +526,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        methodAttributeAppender.apply(methodVisitor, methodDescription);
+                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                        methodAttributeAppender.apply(methodVisitor, methodDescription, valueFilterFactory.on(methodDescription));
                         methodVisitor.visitCode();
                         ByteCodeAppender.Size size = byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
@@ -602,8 +608,10 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        methodAttributeAppender.apply(methodVisitor, methodDescription);
+                    public void applyBody(MethodVisitor methodVisitor,
+                                          Implementation.Context implementationContext,
+                                          AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                        methodAttributeAppender.apply(methodVisitor, methodDescription, valueFilterFactory.on(methodDescription));
                     }
 
                     @Override
@@ -695,8 +703,10 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        methodAttributeAppender.apply(methodVisitor, methodDescription);
+                    public void applyBody(MethodVisitor methodVisitor,
+                                          Implementation.Context implementationContext,
+                                          AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                        methodAttributeAppender.apply(methodVisitor, methodDescription, valueFilterFactory.on(methodDescription));
                     }
 
                     @Override
@@ -811,8 +821,10 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                        attributeAppender.apply(methodVisitor, visibilityBridge);
+                    public void applyBody(MethodVisitor methodVisitor,
+                                          Implementation.Context implementationContext,
+                                          AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                        attributeAppender.apply(methodVisitor, visibilityBridge, valueFilterFactory.on(visibilityBridge));
                         methodVisitor.visitCode();
                         ByteCodeAppender.Size size = apply(methodVisitor, implementationContext, visibilityBridge);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
@@ -924,8 +936,8 @@ public interface TypeWriter<T> {
 
             /**
              * A wrapper that appends accessor bridges for a method's implementation. The bridges are only added if
-             * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context)} is invoked such
-             * that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place.
+             * {@link net.bytebuddy.dynamic.scaffold.TypeWriter.MethodPool.Record#apply(ClassVisitor, Implementation.Context, AnnotationAppender.ValueFilter.Factory)}
+             * is invoked such that bridges are not appended for methods that are rebased or redefined as such types already have bridge methods in place.
              */
             class AccessBridgeWrapper implements Record {
 
@@ -1011,8 +1023,10 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
-                    delegate.apply(classVisitor, implementationContext);
+                public void apply(ClassVisitor classVisitor,
+                                  Implementation.Context implementationContext,
+                                  AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                    delegate.apply(classVisitor, implementationContext, valueFilterFactory);
                     for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
                         MethodDescription.InDefinedShape bridgeMethod = new AccessorBridge(bridgeTarget, bridgeType, instrumentedType);
                         MethodDescription.InDefinedShape bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
@@ -1021,7 +1035,7 @@ public interface TypeWriter<T> {
                                 bridgeMethod.getDescriptor(),
                                 MethodDescription.NON_GENERIC_SIGNATURE,
                                 bridgeMethod.getExceptionTypes().asErasures().toInternalNames());
-                        attributeAppender.apply(methodVisitor, bridgeMethod);
+                        attributeAppender.apply(methodVisitor, bridgeMethod, valueFilterFactory.on(instrumentedType));
                         methodVisitor.visitCode();
                         ByteCodeAppender.Size size = new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(bridgeMethod).asBridgeOf(bridgeTarget).prependThisReference(),
@@ -1039,8 +1053,10 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-                    delegate.applyBody(methodVisitor, implementationContext);
+                public void applyBody(MethodVisitor methodVisitor,
+                                      Implementation.Context implementationContext,
+                                      AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                    delegate.applyBody(methodVisitor, implementationContext, valueFilterFactory);
                 }
 
                 @Override
@@ -1302,6 +1318,8 @@ public interface TypeWriter<T> {
          */
         protected final MethodList<?> instrumentedMethods;
 
+        protected final AnnotationAppender.ValueFilter.Factory valueFilterFactory;
+
         /**
          * Creates a new default type writer.
          *
@@ -1329,7 +1347,8 @@ public interface TypeWriter<T> {
                           TypeAttributeAppender attributeAppender,
                           FieldPool fieldPool,
                           MethodPool methodPool,
-                          MethodList<?> instrumentedMethods) {
+                          MethodList<?> instrumentedMethods,
+                          AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
             this.instrumentedType = instrumentedType;
             this.loadedTypeInitializer = loadedTypeInitializer;
             this.typeInitializer = typeInitializer;
@@ -1342,6 +1361,7 @@ public interface TypeWriter<T> {
             this.fieldPool = fieldPool;
             this.methodPool = methodPool;
             this.instrumentedMethods = instrumentedMethods;
+            this.valueFilterFactory = valueFilterFactory;
         }
 
         /**
@@ -1363,7 +1383,8 @@ public interface TypeWriter<T> {
                                                     Implementation.Context.Factory implementationContextFactory,
                                                     ClassVisitorWrapper classVisitorWrapper,
                                                     TypeAttributeAppender attributeAppender,
-                                                    ClassFileVersion classFileVersion) {
+                                                    ClassFileVersion classFileVersion,
+                                                    AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
             return new ForCreation<U>(methodRegistry.getInstrumentedType(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
@@ -1375,7 +1396,8 @@ public interface TypeWriter<T> {
                     attributeAppender,
                     fieldPool,
                     methodRegistry,
-                    methodRegistry.getInstrumentedMethods());
+                    methodRegistry.getInstrumentedMethods(),
+                    valueFilterFactory);
         }
 
         /**
@@ -1403,7 +1425,8 @@ public interface TypeWriter<T> {
                                                     ClassFileVersion classFileVersion,
                                                     ClassFileLocator classFileLocator,
                                                     TypeDescription originalType,
-                                                    MethodRebaseResolver methodRebaseResolver) {
+                                                    MethodRebaseResolver methodRebaseResolver,
+                                                    AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
@@ -1418,7 +1441,8 @@ public interface TypeWriter<T> {
                     methodRegistry.getInstrumentedMethods(),
                     classFileLocator,
                     originalType,
-                    methodRebaseResolver);
+                    methodRebaseResolver,
+                    valueFilterFactory);
         }
 
         /**
@@ -1444,7 +1468,8 @@ public interface TypeWriter<T> {
                                                         TypeAttributeAppender attributeAppender,
                                                         ClassFileVersion classFileVersion,
                                                         ClassFileLocator classFileLocator,
-                                                        TypeDescription originalType) {
+                                                        TypeDescription originalType,
+                                                        AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
                     methodRegistry.getLoadedTypeInitializer(),
                     methodRegistry.getTypeInitializer(),
@@ -1459,7 +1484,8 @@ public interface TypeWriter<T> {
                     methodRegistry.getInstrumentedMethods(),
                     classFileLocator,
                     originalType,
-                    MethodRebaseResolver.Disabled.INSTANCE);
+                    MethodRebaseResolver.Disabled.INSTANCE,
+                    valueFilterFactory);
         }
 
         @Override
@@ -2487,7 +2513,8 @@ public interface TypeWriter<T> {
                                   MethodList instrumentedMethods,
                                   ClassFileLocator classFileLocator,
                                   TypeDescription originalType,
-                                  MethodRebaseResolver methodRebaseResolver) {
+                                  MethodRebaseResolver methodRebaseResolver,
+                                  AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                 super(instrumentedType,
                         loadedTypeInitializer,
                         typeInitializer,
@@ -2499,7 +2526,8 @@ public interface TypeWriter<T> {
                         attributeAppender,
                         fieldPool,
                         methodPool,
-                        instrumentedMethods);
+                        instrumentedMethods,
+                        valueFilterFactory);
                 this.classFileLocator = classFileLocator;
                 this.originalType = originalType;
                 this.methodRebaseResolver = methodRebaseResolver;
@@ -2833,7 +2861,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    attributeAppender.apply(this, instrumentedType);
+                    attributeAppender.apply(this, instrumentedType, valueFilterFactory.on(instrumentedType));
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
@@ -2925,12 +2953,12 @@ public interface TypeWriter<T> {
                 @Override
                 public void visitEnd() {
                     for (FieldDescription fieldDescription : declaredFields.values()) {
-                        fieldPool.target(fieldDescription).apply(cv);
+                        fieldPool.target(fieldDescription).apply(cv, valueFilterFactory);
                     }
                     for (MethodDescription methodDescription : declarableMethods.values()) {
-                        methodPool.target(methodDescription).apply(cv, implementationContext);
+                        methodPool.target(methodDescription).apply(cv, implementationContext, valueFilterFactory);
                     }
-                    implementationContext.drain(cv, methodPool, injectedCode);
+                    implementationContext.drain(cv, methodPool, injectedCode, valueFilterFactory);
                     super.visitEnd();
                 }
 
@@ -2990,7 +3018,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitCode() {
-                        record.applyBody(actualMethodVisitor, implementationContext);
+                        record.applyBody(actualMethodVisitor, implementationContext, valueFilterFactory);
                         actualMethodVisitor.visitEnd();
                         mv = resolution.isRebased()
                                 ? cv.visitMethod(resolution.getResolvedMethod().getModifiers(),
@@ -3029,7 +3057,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitEnd() {
-                        record.apply(fv);
+                        record.apply(fv, valueFilterFactory);
                         super.visitEnd();
                     }
                 }
@@ -3075,7 +3103,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public void visitEnd() {
-                        record.applyBody(actualMethodVisitor, implementationContext);
+                        record.applyBody(actualMethodVisitor, implementationContext, valueFilterFactory);
                         actualMethodVisitor.visitEnd();
                     }
 
@@ -3173,7 +3201,8 @@ public interface TypeWriter<T> {
                                   TypeAttributeAppender attributeAppender,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
-                                  MethodList instrumentedMethods) {
+                                  MethodList instrumentedMethods,
+                                  AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                 super(instrumentedType,
                         loadedTypeInitializer,
                         typeInitializer,
@@ -3185,7 +3214,8 @@ public interface TypeWriter<T> {
                         attributeAppender,
                         fieldPool,
                         methodPool,
-                        instrumentedMethods);
+                        instrumentedMethods,
+                        valueFilterFactory);
             }
 
             @Override
@@ -3200,14 +3230,14 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperType().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
-                attributeAppender.apply(classVisitor, instrumentedType);
+                attributeAppender.apply(classVisitor, instrumentedType, valueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
-                    fieldPool.target(fieldDescription).apply(classVisitor);
+                    fieldPool.target(fieldDescription).apply(classVisitor, valueFilterFactory);
                 }
                 for (MethodDescription methodDescription : instrumentedMethods) {
-                    methodPool.target(methodDescription).apply(classVisitor, implementationContext);
+                    methodPool.target(methodDescription).apply(classVisitor, implementationContext, valueFilterFactory);
                 }
-                implementationContext.drain(classVisitor, methodPool, Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE);
+                implementationContext.drain(classVisitor, methodPool, Implementation.Context.ExtractableView.InjectedCode.None.INSTANCE, valueFilterFactory);
                 classVisitor.visitEnd();
                 return classWriter.toByteArray();
             }
