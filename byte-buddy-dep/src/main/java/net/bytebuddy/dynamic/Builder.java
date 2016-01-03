@@ -41,11 +41,11 @@ public interface Builder<T> {
 
     Builder<T> visit(FieldVisitorWrapper fieldVisitorWrapper);
 
-    Builder<T> visit(ElementMatcher<? extends FieldDescription> matcher, FieldVisitorWrapper fieldVisitorWrapper);
+    Builder<T> visit(ElementMatcher<? super FieldDescription> matcher, FieldVisitorWrapper fieldVisitorWrapper);
 
     Builder<T> visit(MethodVisitorWrapper methodVisitorWrapper);
 
-    Builder<T> visit(ElementMatcher<? extends MethodDescription> matcher, MethodVisitorWrapper methodVisitorWrapper);
+    Builder<T> visit(ElementMatcher<? super MethodDescription> matcher, MethodVisitorWrapper methodVisitorWrapper);
 
     Builder<T> name(String name);
 
@@ -667,13 +667,13 @@ public interface Builder<T> {
     abstract class AbstractBase<S> implements Builder<S> {
 
         @Override
-        public Builder<S> visit(ElementMatcher<? extends FieldDescription> matcher, FieldVisitorWrapper fieldVisitorWrapper) {
-            return null; // TODO
+        public Builder<S> visit(ElementMatcher<? super FieldDescription> matcher, FieldVisitorWrapper fieldVisitorWrapper) {
+            return visit(new FieldVisitorWrapper.Matching(matcher, fieldVisitorWrapper));
         }
 
         @Override
-        public Builder<S> visit(ElementMatcher<? extends MethodDescription> matcher, MethodVisitorWrapper methodVisitorWrapper) {
-            return null; // TODO
+        public Builder<S> visit(ElementMatcher<? super MethodDescription> matcher, MethodVisitorWrapper methodVisitorWrapper) {
+            return visit(new MethodVisitorWrapper.Matching(matcher, methodVisitorWrapper));
         }
 
         @Override
