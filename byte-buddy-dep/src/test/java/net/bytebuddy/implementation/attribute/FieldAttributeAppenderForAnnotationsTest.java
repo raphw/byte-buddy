@@ -9,20 +9,18 @@ import java.lang.annotation.Annotation;
 
 import static org.mockito.Mockito.*;
 
-public class FieldAttributeAppenderForAnnotationTest extends AbstractFieldAttributeAppenderTest {
+public class FieldAttributeAppenderForAnnotationsTest extends AbstractFieldAttributeAppenderTest {
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()), valueFilter)
-                .apply(fieldVisitor, fieldDescription);
+        new FieldAttributeAppender.ForAnnotations(valueFilter, new AnnotationList.ForLoadedAnnotation(new Qux.Instance())).apply(fieldVisitor, fieldDescription);
         verifyZeroInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
     }
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()), valueFilter)
-                .apply(fieldVisitor, fieldDescription);
+        new FieldAttributeAppender.ForAnnotations(valueFilter, new AnnotationList.ForLoadedAnnotation(new Baz.Instance())).apply(fieldVisitor, fieldDescription);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
@@ -30,8 +28,7 @@ public class FieldAttributeAppenderForAnnotationTest extends AbstractFieldAttrib
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new FieldAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()), valueFilter)
-                .apply(fieldVisitor, fieldDescription);
+        new FieldAttributeAppender.ForAnnotations(valueFilter, new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance())).apply(fieldVisitor, fieldDescription);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
@@ -39,7 +36,7 @@ public class FieldAttributeAppenderForAnnotationTest extends AbstractFieldAttrib
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldAttributeAppender.ForAnnotation.class).generate(new ObjectPropertyAssertion.Generator<Annotation>() {
+        ObjectPropertyAssertion.of(FieldAttributeAppender.ForAnnotations.class).generate(new ObjectPropertyAssertion.Generator<Annotation>() {
             @Override
             public Class<? extends Annotation> generate() {
                 return SimpleAnnotation.class;

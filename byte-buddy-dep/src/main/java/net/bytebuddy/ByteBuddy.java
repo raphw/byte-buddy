@@ -944,7 +944,7 @@ public class ByteBuddy {
                 classVisitorWrapper,
                 methodRegistry,
                 modifiers,
-                new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations), AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
+                new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations), AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS),
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory);
@@ -1525,7 +1525,7 @@ public class ByteBuddy {
          */
         public MethodAnnotationTarget annotateMethod(Collection<? extends AnnotationDescription> annotations) {
             return attribute(new MethodAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations),
-                    AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
+                    AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
         }
 
         /**
@@ -1568,7 +1568,7 @@ public class ByteBuddy {
          */
         public MethodAnnotationTarget annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
             return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new ArrayList<AnnotationDescription>(annotations),
-                    AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
+                    AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
         }
 
         @Override

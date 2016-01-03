@@ -98,7 +98,7 @@ public interface MethodTransformer {
         @Override
         public String toString() {
             return "MethodTransformer.Simple{" +
-                    "transformer=" + tokenTransformer +
+                    "tokenTransformer=" + tokenTransformer +
                     '}';
         }
 
@@ -159,7 +159,7 @@ public interface MethodTransformer {
 
                 @Override
                 public String toString() {
-                    return "MethodTransformer.Simple.Transformer.ForModifierTransformation{" +
+                    return "MethodTransformer.Simple.TokenTransformer.ForModifierTransformation{" +
                             "modifierContributors=" + modifierContributors +
                             '}';
                 }

@@ -621,7 +621,7 @@ public interface MethodRegistry {
              */
             protected Prepared.Entry asSupplementaryEntry(MethodDescription methodDescription) {
                 return new Prepared.Entry(handler,
-                        new MethodAttributeAppender.ForMethod(methodDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
+                        new MethodAttributeAppender.ForMethod(methodDescription, AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS),
                         methodDescription,
                         Collections.<MethodDescription.TypeToken>emptySet());
             }
@@ -851,7 +851,7 @@ public interface MethodRegistry {
                  */
                 protected static Entry forVisibilityBridge(MethodDescription bridgeTarget) {
                     return new Entry(Handler.ForVisibilityBridge.INSTANCE,
-                            new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE),
+                            new MethodAttributeAppender.ForMethod(bridgeTarget, AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS),
                             bridgeTarget,
                             Collections.<MethodDescription.TypeToken>emptySet());
                 }

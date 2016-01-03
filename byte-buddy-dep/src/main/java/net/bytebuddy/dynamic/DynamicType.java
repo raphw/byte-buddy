@@ -1619,7 +1619,7 @@ public interface DynamicType {
             @Override
             public Builder<S> annotateType(Collection<? extends AnnotationDescription> annotations) {
                 return attribute(new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations),
-                        AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
+                        AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
             }
 
             @Override
@@ -2319,8 +2319,7 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new FieldAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations),
-                            AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
+                    return attribute(new FieldAttributeAppender.ForAnnotations(AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS, new ArrayList<AnnotationDescription>(annotations)));
                 }
 
                 @Override
@@ -2714,7 +2713,7 @@ public interface DynamicType {
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
                     return attribute(new MethodAttributeAppender.ForAnnotation((new ArrayList<AnnotationDescription>(annotations)),
-                            AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
+                            AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
                 }
 
                 @Override
@@ -2735,7 +2734,7 @@ public interface DynamicType {
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
                     return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new ArrayList<AnnotationDescription>(annotations),
-                            AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE));
+                            AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
                 }
 
                 @Override

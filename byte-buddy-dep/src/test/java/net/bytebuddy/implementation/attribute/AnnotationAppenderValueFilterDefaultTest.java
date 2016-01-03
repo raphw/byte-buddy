@@ -12,8 +12,10 @@ import org.mockito.Mock;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-public class AnnotationAppenderValueFilterSkipDefaultsTest {
+public class AnnotationAppenderValueFilterDefaultTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -25,18 +27,27 @@ public class AnnotationAppenderValueFilterSkipDefaultsTest {
     private MethodDescription.InDefinedShape methodDescription;
 
     @Test
-    public void testFilteringNoDefault() throws Exception {
-        assertThat(AnnotationAppender.ValueFilter.SkipDefaults.INSTANCE.isRelevant(annotationDescription, methodDescription), is(true));
+    public void testAppendsDefaults() throws Exception {
+        AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
+        assertThat(AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(true));
+        verifyZeroInteractions(annotationDescription);
+        verifyZeroInteractions(methodDescription);
+    }
+
+    @Test
+    public void testSkipDefaultsNoDefault() throws Exception {
+        assertThat(AnnotationAppender.ValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(true));
         verifyZeroInteractions(annotationDescription);
         verify(methodDescription).getDefaultValue();
         verifyNoMoreInteractions(methodDescription);
     }
 
     @Test
-    public void testFilteringNoEquality() throws Exception {
+    public void testSkipDefaultsNoEquality() throws Exception {
         when(methodDescription.getDefaultValue()).thenReturn(new Object());
         when(annotationDescription.getValue(methodDescription)).thenReturn(new Object());
-        assertThat(AnnotationAppender.ValueFilter.SkipDefaults.INSTANCE.isRelevant(annotationDescription, methodDescription), is(true));
+        assertThat(AnnotationAppender.ValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(true));
         verify(annotationDescription).getValue(methodDescription);
         verifyNoMoreInteractions(annotationDescription);
         verify(methodDescription).getDefaultValue();
@@ -44,11 +55,11 @@ public class AnnotationAppenderValueFilterSkipDefaultsTest {
     }
 
     @Test
-    public void testFilteringEquality() throws Exception {
+    public void testSkipDefaultsEquality() throws Exception {
         Object value = new Object();
         when(methodDescription.getDefaultValue()).thenReturn(value);
         when(annotationDescription.getValue(methodDescription)).thenReturn(value);
-        assertThat(AnnotationAppender.ValueFilter.SkipDefaults.INSTANCE.isRelevant(annotationDescription, methodDescription), is(false));
+        assertThat(AnnotationAppender.ValueFilter.Default.SKIP_DEFAULTS.isRelevant(annotationDescription, methodDescription), is(false));
         verify(annotationDescription).getValue(methodDescription);
         verifyNoMoreInteractions(annotationDescription);
         verify(methodDescription).getDefaultValue();
@@ -57,6 +68,6 @@ public class AnnotationAppenderValueFilterSkipDefaultsTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(AnnotationAppender.ValueFilter.SkipDefaults.class).apply();
+        ObjectPropertyAssertion.of(AnnotationAppender.Default.class).apply();
     }
 }

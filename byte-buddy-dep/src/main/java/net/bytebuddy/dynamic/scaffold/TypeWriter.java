@@ -104,13 +104,16 @@ public interface TypeWriter<T> {
                  */
                 private final FieldDescription fieldDescription;
 
+                private final AnnotationAppender.ValueFilter valueFilter;
+
                 /**
                  * Creates a new record for a simple field.
                  *
                  * @param fieldDescription The described field.
                  */
-                public ForSimpleField(FieldDescription fieldDescription) {
+                public ForSimpleField(FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
                     this.fieldDescription = fieldDescription;
+                    this.valueFilter = valueFilter;
                 }
 
                 @Override
@@ -120,7 +123,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public FieldAttributeAppender getFieldAppender() {
-                    return new FieldAttributeAppender.ForField(fieldDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE);
+                    return new FieldAttributeAppender.ForInstrumentedField(valueFilter);
                 }
 
                 @Override
@@ -141,7 +144,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(FieldVisitor fieldVisitor) {
-                    /* do nothing */
+                    getFieldAppender().apply(fieldVisitor, fieldDescription);
                 }
 
                 @Override
@@ -149,18 +152,20 @@ public interface TypeWriter<T> {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     ForSimpleField that = (ForSimpleField) other;
-                    return fieldDescription.equals(that.fieldDescription);
+                    return fieldDescription.equals(that.fieldDescription)
+                    && valueFilter.equals(that.valueFilter);
                 }
 
                 @Override
                 public int hashCode() {
-                    return fieldDescription.hashCode();
+                    return 31 * fieldDescription.hashCode() + valueFilter.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "TypeWriter.FieldPool.Record.ForSimpleField{" +
                             "fieldDescription=" + fieldDescription +
+                            ", valueFilter=" + valueFilter +
                             '}';
                 }
             }

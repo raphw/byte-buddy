@@ -327,49 +327,26 @@ public interface AnnotationAppender {
          */
         boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription);
 
-        /**
-         * A value filter that skips all annotation values that represent the default value of the annotation. Note that it is not possible
-         * at runtime to determine if a value is actually representing the default value of an annotation or only has the same value as the
-         * default value. Therefore, this value filter skips any value that equals an annotation property's default value even if it was
-         * explicitly defined.
-         */
-        enum SkipDefaults implements ValueFilter {
+        enum Default implements ValueFilter {
 
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
+            SKIP_DEFAULTS {
+                @Override
+                public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
+                    Object defaultValue = methodDescription.getDefaultValue();
+                    return defaultValue == null || !defaultValue.equals(annotationDescription.getValue(methodDescription));
+                }
+            },
 
-            @Override
-            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
-                Object defaultValue = methodDescription.getDefaultValue();
-                return defaultValue == null || !defaultValue.equals(annotationDescription.getValue(methodDescription));
-            }
+            APPEND_DEFAULTS {
+                @Override
+                public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
+                    return true;
+                }
+            };
 
             @Override
             public String toString() {
-                return "AnnotationAppender.ValueFilter.SkipDefaults." + name();
-            }
-        }
-
-        /**
-         * A value filter that does not skip any values.
-         */
-        enum AppendDefaults implements ValueFilter {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
-                return true;
-            }
-
-            @Override
-            public String toString() {
-                return "AnnotationAppender.ValueFilter.AppendDefaults." + name();
+                return "AnnotationAppender.ValueFilter.Default." + name();
             }
         }
     }
@@ -427,7 +404,7 @@ public interface AnnotationAppender {
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
             if (valueType.isAnnotation()) {
-                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, ValueFilter.AppendDefaults.INSTANCE);
+                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, ValueFilter.Default.APPEND_DEFAULTS);
             } else if (valueType.isEnum()) {
                 annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((EnumerationDescription) value).getValue());
             } else if (valueType.isAssignableFrom(Class.class)) {

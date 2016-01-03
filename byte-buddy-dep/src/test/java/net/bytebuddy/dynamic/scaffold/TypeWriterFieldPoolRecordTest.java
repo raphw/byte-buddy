@@ -14,6 +14,8 @@ import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 
+import java.util.Collections;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -22,13 +24,16 @@ public class TypeWriterFieldPoolRecordTest {
 
     private static final int MODIFIER = 42;
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
     private FieldAttributeAppender fieldAttributeAppender;
+
+    @Mock
+    private AnnotationAppender.ValueFilter valueFilter;
 
     @Mock
     private ClassVisitor classVisitor;
@@ -74,7 +79,7 @@ public class TypeWriterFieldPoolRecordTest {
     @Test
     public void testSimpleFieldEntryWritesField() throws Exception {
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription, valueFilter); // TODO: Annotations
         record.apply(classVisitor);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
         verifyNoMoreInteractions(classVisitor);
@@ -84,9 +89,8 @@ public class TypeWriterFieldPoolRecordTest {
 
     @Test
     public void testSimpleFieldEntryProperties() throws Exception {
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(fieldDescription,
-                AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription, valueFilter);
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForInstrumentedField(valueFilter)));
         assertThat(record.resolveDefault(defaultValue), is(defaultValue));
     }
 

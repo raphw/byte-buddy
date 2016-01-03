@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
@@ -40,14 +41,11 @@ public interface FieldRegistry {
          */
         enum NoOp implements Compiled {
 
-            /**
-             * The singleton instance.
-             */
             INSTANCE;
 
             @Override
             public Record target(FieldDescription fieldDescription) {
-                return new Record.ForSimpleField(fieldDescription);
+                return new Record.ForSimpleField(fieldDescription, AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS); // TODO
             }
 
             @Override
@@ -176,7 +174,7 @@ public interface FieldRegistry {
             @Override
             public int hashCode() {
                 int result = matcher.hashCode();
-                result = 31 * attributeAppenderFactory.hashCode();
+                result = 31 * result + attributeAppenderFactory.hashCode();
                 result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                 return result;
             }
@@ -209,7 +207,7 @@ public interface FieldRegistry {
                         return entry.bind(fieldDescription);
                     }
                 }
-                return new Record.ForSimpleField(fieldDescription);
+                return new Record.ForSimpleField(fieldDescription, AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS); // TODO
             }
 
             @Override
