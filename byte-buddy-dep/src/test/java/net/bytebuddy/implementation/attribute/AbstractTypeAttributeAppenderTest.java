@@ -14,18 +14,12 @@ public abstract class AbstractTypeAttributeAppenderTest extends AbstractAttribut
     protected ClassVisitor classVisitor;
 
     @Mock
-    protected TypeDescription rawTypeDescription;
-
-    @Mock
     protected TypeDescription.Generic typeDescription;
-
-    @Mock
-    protected TypeDescription.Generic targetType;
 
     @Override
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(rawTypeDescription.asGenericType()).thenReturn(typeDescription);
+        when(instrumentedType.asGenericType()).thenReturn(typeDescription);
     }
 }

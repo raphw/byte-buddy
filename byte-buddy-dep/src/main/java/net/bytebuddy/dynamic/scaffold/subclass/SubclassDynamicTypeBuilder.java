@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -51,7 +51,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   An ASM class visitors to apply to the writing process.
+     * @param asmVisitorWrapper                   An ASM class visitors to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
      * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -71,7 +71,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       int modifiers,
                                       TypeAttributeAppender attributeAppender,
                                       ElementMatcher<? super MethodDescription> ignoredMethods,
-                                      ClassVisitorWrapper classVisitorWrapper,
+                                      AsmVisitorWrapper asmVisitorWrapper,
                                       FieldRegistry fieldRegistry,
                                       MethodRegistry methodRegistry,
                                       MethodGraph.Compiler methodGraphCompiler,
@@ -88,7 +88,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -112,7 +112,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   An ASM class visitor to apply to the writing process.
+     * @param asmVisitorWrapper                   An ASM class visitor to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
      * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -137,7 +137,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          int modifiers,
                                          TypeAttributeAppender attributeAppender,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
-                                         ClassVisitorWrapper classVisitorWrapper,
+                                         AsmVisitorWrapper asmVisitorWrapper,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
                                          MethodGraph.Compiler methodGraphCompiler,
@@ -156,7 +156,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -178,7 +178,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                 ClassVisitorWrapper classVisitorWrapper,
+                                                 AsmVisitorWrapper asmVisitorWrapper,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
                                                  MethodGraph.Compiler methodGraphCompiler,
@@ -195,7 +195,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -231,7 +231,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 attributeAppender,
                 classFileVersion,
                 AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS).make();
@@ -278,7 +278,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", modifiers=" + modifiers +
                 ", attributeAppender=" + attributeAppender +
                 ", ignoredMethods=" + ignoredMethods +
-                ", classVisitorWrapper=" + classVisitorWrapper +
+                ", classVisitorWrapper=" + asmVisitorWrapper +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
                 ", methodGraphCompiler=" + methodGraphCompiler +

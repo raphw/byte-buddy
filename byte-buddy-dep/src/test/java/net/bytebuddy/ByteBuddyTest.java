@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -40,7 +40,7 @@ public class ByteBuddyTest {
     private ClassFileVersion classFileVersion;
 
     @Mock
-    private ClassVisitorWrapper classVisitorWrapper;
+    private AsmVisitorWrapper asmVisitorWrapper;
 
     @Mock
     private FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
@@ -90,7 +90,7 @@ public class ByteBuddyTest {
                 .method(methodMatcher).intercept(implementation)
                 .withAttribute(typeAttributeAppender)
                 .withClassFileVersion(classFileVersion)
-                .withClassVisitor(classVisitorWrapper)
+                .withClassVisitor(asmVisitorWrapper)
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
@@ -107,7 +107,7 @@ public class ByteBuddyTest {
         assertProperties(new ByteBuddy()
                 .withAttribute(typeAttributeAppender)
                 .withClassFileVersion(classFileVersion)
-                .withClassVisitor(classVisitorWrapper)
+                .withClassVisitor(asmVisitorWrapper)
                 .withDefaultFieldAttributeAppender(fieldAttributeAppenderFactory)
                 .withDefaultMethodAttributeAppender(methodAttributeAppenderFactory)
                 .withIgnoredMethods(methodMatcher)
@@ -135,12 +135,12 @@ public class ByteBuddyTest {
         assertThat(byteBuddy.namingStrategy, is(namingStrategy));
         assertThat(byteBuddy.auxiliaryTypeNamingStrategy, is(auxiliaryTypeNamingStrategy));
         assertThat(byteBuddy.implementationContextFactory, is(implementationContextFactory));
-        assertThat(byteBuddy.classVisitorWrapper, instanceOf(ClassVisitorWrapper.Compound.class));
+        assertThat(byteBuddy.asmVisitorWrapper, instanceOf(AsmVisitorWrapper.Compound.class));
         ClassVisitor classVisitor = mock(ClassVisitor.class);
         TypeDescription instrumentedType = mock(TypeDescription.class);
-        byteBuddy.classVisitorWrapper.wrap(instrumentedType, classVisitor);
-        verify(classVisitorWrapper).wrap(instrumentedType, classVisitor);
-        verifyNoMoreInteractions(classVisitorWrapper);
+        byteBuddy.asmVisitorWrapper.wrap(instrumentedType, classVisitor);
+        verify(asmVisitorWrapper).wrap(instrumentedType, classVisitor);
+        verifyNoMoreInteractions(asmVisitorWrapper);
     }
 
     @Test

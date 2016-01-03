@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -49,7 +49,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   A ASM class visitor to apply to the writing process.
+     * @param asmVisitorWrapper                   A ASM class visitor to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
      * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -68,7 +68,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           int modifiers,
                                           TypeAttributeAppender attributeAppender,
                                           ElementMatcher<? super MethodDescription> ignoredMethods,
-                                          ClassVisitorWrapper classVisitorWrapper,
+                                          AsmVisitorWrapper asmVisitorWrapper,
                                           FieldRegistry fieldRegistry,
                                           MethodRegistry methodRegistry,
                                           MethodGraph.Compiler methodGraphCompiler,
@@ -85,7 +85,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -109,7 +109,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param modifiers                             The modifiers to be represented by the dynamic type.
      * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
      * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   A ASM class visitor to apply to the writing process.
+     * @param asmVisitorWrapper                   A ASM class visitor to apply to the writing process.
      * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
      * @param methodRegistry                        The method registry to apply to the dynamic type creation.
      * @param methodGraphCompiler                   The method graph compiler to be used.
@@ -133,7 +133,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              int modifiers,
                                              TypeAttributeAppender attributeAppender,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
-                                             ClassVisitorWrapper classVisitorWrapper,
+                                             AsmVisitorWrapper asmVisitorWrapper,
                                              FieldRegistry fieldRegistry,
                                              MethodRegistry methodRegistry,
                                              MethodGraph.Compiler methodGraphCompiler,
@@ -152,7 +152,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -174,7 +174,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  int modifiers,
                                                  TypeAttributeAppender attributeAppender,
                                                  ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                 ClassVisitorWrapper classVisitorWrapper,
+                                                 AsmVisitorWrapper asmVisitorWrapper,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
                                                  MethodGraph.Compiler methodGraphCompiler,
@@ -191,7 +191,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 modifiers,
                 attributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 fieldRegistry,
                 methodRegistry,
                 methodGraphCompiler,
@@ -230,7 +230,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 attributeAppender,
                 classFileVersion,
                 classFileLocator,
@@ -263,7 +263,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 ", modifiers=" + modifiers +
                 ", attributeAppender=" + attributeAppender +
                 ", ignoredMethods=" + ignoredMethods +
-                ", classVisitorWrapper=" + classVisitorWrapper +
+                ", classVisitorWrapper=" + asmVisitorWrapper +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
                 ", methodGraphCompiler=" + methodGraphCompiler +

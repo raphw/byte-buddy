@@ -1,7 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.modifier.MethodManifestation;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
@@ -355,8 +355,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Test
     public void testReaderHint() throws Exception {
-        ClassVisitorWrapper classVisitorWrapper = mock(ClassVisitorWrapper.class);
-        when(classVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
+        AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
+        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
@@ -367,18 +367,18 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 };
             }
         });
-        when(classVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
-        when(classVisitorWrapper.mergeReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
+        when(asmVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        when(asmVisitorWrapper.mergeReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
         Class<?> type = create(StackMapFrames.class)
-                .classVisitor(classVisitorWrapper)
+                .classVisitor(asmVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
-        verify(classVisitorWrapper).mergeWriter(0);
-        verify(classVisitorWrapper).mergeReader(0);
-        verify(classVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class));
-        verifyNoMoreInteractions(classVisitorWrapper);
+        verify(asmVisitorWrapper).mergeWriter(0);
+        verify(asmVisitorWrapper).mergeReader(0);
+        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class));
+        verifyNoMoreInteractions(asmVisitorWrapper);
     }
 
     @Test(expected = IllegalStateException.class)

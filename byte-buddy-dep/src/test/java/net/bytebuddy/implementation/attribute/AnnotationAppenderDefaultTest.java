@@ -55,7 +55,7 @@ public class AnnotationAppenderDefaultTest {
 
     @Before
     public void setUp() throws Exception {
-        annotationAppender = new AnnotationAppender.Default(target, valueFilter);
+        annotationAppender = new AnnotationAppender.Default(target);
     }
 
     @Test
@@ -117,7 +117,7 @@ public class AnnotationAppenderDefaultTest {
         when(target.visit(any(String.class), anyBoolean())).thenReturn(annotationVisitor);
         AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotationDescription);
-        annotationAppender.append(annotationDescription, annotationVisibility);
+        annotationAppender.append(annotationDescription, annotationVisibility, valueFilter);
         switch (annotationVisibility) {
             case RUNTIME:
             case CLASS_FILE:
@@ -158,7 +158,7 @@ public class AnnotationAppenderDefaultTest {
         when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
         AnnotationVisitor annotationVisitor = mock(AnnotationVisitor.class);
         when(target.visit(anyString(), anyBoolean())).thenReturn(annotationVisitor);
-        annotationAppender.append(annotationDescription, AnnotationAppender.AnnotationVisibility.RUNTIME);
+        annotationAppender.append(annotationDescription, AnnotationAppender.AnnotationVisibility.RUNTIME, valueFilter);
         verify(valueFilter).isRelevant(annotationDescription, methodDescription);
         verifyNoMoreInteractions(valueFilter);
         verify(annotationVisitor).visitEnd();

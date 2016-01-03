@@ -13,36 +13,34 @@ public class TypeAttributeAppenderExplicitTest extends AbstractTypeAttributeAppe
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        new TypeAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()), valueFilter)
-                .apply(classVisitor, rawTypeDescription, targetType);
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
+                .apply(classVisitor, instrumentedType, valueFilter);
         verifyZeroInteractions(classVisitor);
-        verifyZeroInteractions(rawTypeDescription);
-        verifyZeroInteractions(targetType);
+        verifyZeroInteractions(instrumentedType);
     }
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new TypeAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()), valueFilter)
-                .apply(classVisitor, rawTypeDescription, targetType);
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+                .apply(classVisitor, instrumentedType, valueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
-        verifyNoMoreInteractions(classVisitor);
-        verifyZeroInteractions(rawTypeDescription);
-        verifyZeroInteractions(targetType);
+        verifyZeroInteractions(classVisitor);
+        verifyZeroInteractions(instrumentedType);
     }
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new TypeAttributeAppender.ForAnnotation(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()), valueFilter)
-                .apply(classVisitor, rawTypeDescription, targetType);
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
+                .apply(classVisitor, instrumentedType, valueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(classVisitor);
-        verifyZeroInteractions(rawTypeDescription);
-        verifyZeroInteractions(targetType);
+        verifyZeroInteractions(classVisitor);
+        verifyZeroInteractions(instrumentedType);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeAttributeAppender.ForAnnotation.class).generate(new ObjectPropertyAssertion.Generator<Annotation>() {
+        ObjectPropertyAssertion.of(TypeAttributeAppender.Explicit.class).generate(new ObjectPropertyAssertion.Generator<Annotation>() {
             @Override
             public Class<? extends Annotation> generate() {
                 return SimpleAnnotation.class;

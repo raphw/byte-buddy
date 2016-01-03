@@ -11,30 +11,17 @@ import static org.mockito.Mockito.*;
 public class FieldAttributeAppenderCompoundTest extends AbstractFieldAttributeAppenderTest {
 
     @Mock
-    private FieldAttributeAppender.Factory firstFactory, secondFactory;
-
-    @Mock
     private FieldAttributeAppender first, second;
-
-    @Mock
-    private TypeDescription instrumentedType;
-
-    @Override
-    @Before
-    public void setUp() throws Exception {
-        super.setUp();
-        when(firstFactory.make(instrumentedType)).thenReturn(first);
-        when(secondFactory.make(instrumentedType)).thenReturn(second);
-    }
 
     @Test
     public void testApplication() throws Exception {
-        FieldAttributeAppender fieldAttributeAppender = new FieldAttributeAppender.Factory.Compound(firstFactory, secondFactory).make(instrumentedType);
-        fieldAttributeAppender.apply(fieldVisitor, fieldDescription);
-        verify(first).apply(fieldVisitor, fieldDescription);
+        FieldAttributeAppender fieldAttributeAppender = new FieldAttributeAppender.Compound(first, second);
+        fieldAttributeAppender.apply(fieldVisitor, fieldDescription, valueFilter);
+        verify(first).apply(fieldVisitor, fieldDescription, valueFilter);
         verifyNoMoreInteractions(first);
-        verify(second).apply(fieldVisitor, fieldDescription);
+        verify(second).apply(fieldVisitor, fieldDescription, valueFilter);
         verifyNoMoreInteractions(second);
+        verifyZeroInteractions(instrumentedType);
     }
 
     @Test

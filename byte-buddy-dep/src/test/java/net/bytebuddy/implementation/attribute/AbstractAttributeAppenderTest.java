@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -19,6 +20,9 @@ public abstract class AbstractAttributeAppenderTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
+
+    @Mock
+    protected TypeDescription instrumentedType;
 
     @Mock
     protected AnnotationAppender.ValueFilter valueFilter;

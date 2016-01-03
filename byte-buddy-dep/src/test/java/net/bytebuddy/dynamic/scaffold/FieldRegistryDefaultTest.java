@@ -57,7 +57,7 @@ public class FieldRegistryDefaultTest {
                 .compile(instrumentedType)
                 .target(unknownField);
         assertThat(record.resolveDefault(defaultValue), is(defaultValue));
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForInstrumentedField(AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS)));
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
     }
 
     @Test
@@ -68,7 +68,7 @@ public class FieldRegistryDefaultTest {
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
         assertThat(fieldPool.target(knownField).resolveDefault(otherDefaultValue), is(defaultValue));
         assertThat(fieldPool.target(unknownField).resolveDefault(otherDefaultValue), is(otherDefaultValue));
-        assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForInstrumentedField(AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS)));
+        assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
     }
 
     @Test

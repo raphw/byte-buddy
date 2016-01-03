@@ -34,7 +34,7 @@ public class FieldRegistryCompiledNoOpTest {
     @Test
     public void testReturnsFieldAttributeAppender() throws Exception {
         TypeWriter.FieldPool.Record record = FieldRegistry.Compiled.NoOp.INSTANCE.target(fieldDescription);
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForInstrumentedField(AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS)));
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
     }
 
     @Test

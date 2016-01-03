@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic.loading;
 
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -196,7 +196,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         /* empty */
     }
 
-    private static class RenamingWrapper implements ClassVisitorWrapper {
+    private static class RenamingWrapper implements AsmVisitorWrapper {
 
         private final String oldName, newName;
 

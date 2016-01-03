@@ -8,11 +8,10 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 public class TypeAttributeAppenderNoOpTest extends AbstractTypeAttributeAppenderTest {
 
     @Test
-    public void testNoOp() throws Exception {
-        TypeAttributeAppender.NoOp.INSTANCE.apply(classVisitor, rawTypeDescription, targetType);
+    public void testApplication() throws Exception {
+        TypeAttributeAppender.NoOp.INSTANCE.apply(classVisitor, instrumentedType, valueFilter);
         verifyZeroInteractions(classVisitor);
-        verifyZeroInteractions(rawTypeDescription);
-        verifyZeroInteractions(targetType);
+        verifyZeroInteractions(instrumentedType);
     }
 
     @Test

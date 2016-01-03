@@ -2,7 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -53,7 +53,7 @@ public abstract class AbstractImplementationTest {
                 Opcodes.ACC_PUBLIC,
                 TypeAttributeAppender.NoOp.INSTANCE,
                 isSynthetic(),
-                new ClassVisitorWrapper.Compound(),
+                new AsmVisitorWrapper.Compound(),
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
                 MethodGraph.Compiler.DEFAULT,

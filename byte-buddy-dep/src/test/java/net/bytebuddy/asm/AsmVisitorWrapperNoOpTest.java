@@ -10,29 +10,29 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class ClassVisitorWrapperNoOpTest {
+public class AsmVisitorWrapperNoOpTest {
 
     private static final int FOO = 42;
 
     @Test
     public void testWrapperChain() throws Exception {
         ClassVisitor classVisitor = mock(ClassVisitor.class);
-        assertThat(ClassVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class), classVisitor), is(classVisitor));
+        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class), classVisitor), is(classVisitor));
         verifyZeroInteractions(classVisitor);
     }
 
     @Test
     public void testReaderFlags() throws Exception {
-        assertThat(ClassVisitorWrapper.NoOp.INSTANCE.mergeReader(FOO), is(FOO));
+        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.mergeReader(FOO), is(FOO));
     }
 
     @Test
     public void testWriterFlags() throws Exception {
-        assertThat(ClassVisitorWrapper.NoOp.INSTANCE.mergeWriter(FOO), is(FOO));
+        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.mergeWriter(FOO), is(FOO));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassVisitorWrapper.NoOp.class).apply();
+        ObjectPropertyAssertion.of(AsmVisitorWrapper.NoOp.class).apply();
     }
 }

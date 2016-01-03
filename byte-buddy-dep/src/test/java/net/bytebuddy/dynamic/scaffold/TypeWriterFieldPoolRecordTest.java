@@ -36,6 +36,9 @@ public class TypeWriterFieldPoolRecordTest {
     private AnnotationAppender.ValueFilter valueFilter;
 
     @Mock
+    private AnnotationAppender.ValueFilter.Factory valueFilterFactory;
+
+    @Mock
     private ClassVisitor classVisitor;
 
     @Mock
@@ -55,6 +58,7 @@ public class TypeWriterFieldPoolRecordTest {
         when(fieldDescription.getGenericSignature()).thenReturn(QUX);
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, defaultValue)).thenReturn(fieldVisitor);
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, null)).thenReturn(fieldVisitor);
+        when(valueFilterFactory.on(fieldDescription)).thenReturn(valueFilter);
     }
 
     @Test
@@ -67,9 +71,9 @@ public class TypeWriterFieldPoolRecordTest {
     @Test
     public void testRichFieldEntryWritesField() throws Exception {
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, defaultValue, fieldDescription);
-        record.apply(classVisitor);
+        record.apply(classVisitor, valueFilterFactory);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, defaultValue);
-        verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription);
+        verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription, valueFilter);
         verifyNoMoreInteractions(fieldAttributeAppender);
         verifyNoMoreInteractions(classVisitor);
         verify(fieldVisitor).visitEnd();
@@ -79,8 +83,8 @@ public class TypeWriterFieldPoolRecordTest {
     @Test
     public void testSimpleFieldEntryWritesField() throws Exception {
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription, valueFilter); // TODO: Annotations
-        record.apply(classVisitor);
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription); /// TODO: Annotation
+        record.apply(classVisitor, valueFilterFactory);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
         verifyNoMoreInteractions(classVisitor);
         verify(fieldVisitor).visitEnd();
@@ -89,8 +93,8 @@ public class TypeWriterFieldPoolRecordTest {
 
     @Test
     public void testSimpleFieldEntryProperties() throws Exception {
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription, valueFilter);
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForInstrumentedField(valueFilter)));
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
+        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
         assertThat(record.resolveDefault(defaultValue), is(defaultValue));
     }
 

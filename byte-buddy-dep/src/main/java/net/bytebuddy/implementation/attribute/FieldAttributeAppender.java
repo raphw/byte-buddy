@@ -5,6 +5,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.FieldVisitor;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -70,42 +71,39 @@ public interface FieldAttributeAppender {
             /**
              * The factories that this compound factory represents in their application order.
              */
-            private final Factory[] factory;
+            private final List<? extends Factory> factories;
 
-            /**
-             * Creates a new compound field attribute appender factory.
-             *
-             * @param factory The factories that are to be combined by this compound factory in the order of their
-             *                application.
-             */
             public Compound(Factory... factory) {
-                this.factory = factory;
+                this(Arrays.asList(factory));
+            }
+
+            public Compound(List<? extends Factory> factories) {
+                this.factories = factories;
             }
 
             @Override
             public FieldAttributeAppender make(TypeDescription typeDescription) {
-                FieldAttributeAppender[] fieldAttributeAppender = new FieldAttributeAppender[factory.length];
-                int index = 0;
-                for (Factory factory : this.factory) {
-                    fieldAttributeAppender[index++] = factory.make(typeDescription);
+                List<FieldAttributeAppender> fieldAttributeAppenders = new ArrayList<FieldAttributeAppender>(factories.size());
+                for (Factory factory : factories) {
+                    fieldAttributeAppenders.add(factory.make(typeDescription));
                 }
-                return new FieldAttributeAppender.Compound(fieldAttributeAppender);
+                return new FieldAttributeAppender.Compound(fieldAttributeAppenders);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(factory, ((Compound) other).factory);
+                        && factories.equals(((Compound) other).factories);
             }
 
             @Override
             public int hashCode() {
-                return Arrays.hashCode(factory);
+                return factories.hashCode();
             }
 
             @Override
             public String toString() {
-                return "FieldAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
+                return "FieldAttributeAppender.Factory.Compound{factories=" + factories + '}';
             }
         }
     }

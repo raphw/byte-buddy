@@ -158,14 +158,14 @@ public interface MethodAttributeAppender {
     class Explicit implements MethodAttributeAppender, Factory {
 
         /**
-         * the annotations this method attribute appender is writing to its target.
-         */
-        private final List<? extends AnnotationDescription> annotations;
-
-        /**
          * The target to which the annotations are written to.
          */
         private final Target target;
+
+        /**
+         * the annotations this method attribute appender is writing to its target.
+         */
+        private final List<? extends AnnotationDescription> annotations;
 
         /**
          * Creates a new appender for appending an annotation to a method.
@@ -174,7 +174,7 @@ public interface MethodAttributeAppender {
          * @param annotations    The annotations that should be written.
          */
         public Explicit(int parameterIndex, List<? extends AnnotationDescription> annotations) {
-            this(annotations, new Target.OnMethodParameter(parameterIndex));
+            this(new Target.OnMethodParameter(parameterIndex), annotations);
         }
 
         /**
@@ -183,14 +183,13 @@ public interface MethodAttributeAppender {
          * @param annotations The annotations that should be written.
          */
         public Explicit(List<? extends AnnotationDescription> annotations) {
-            this(annotations, Target.OnMethod.INSTANCE);
+            this(Target.OnMethod.INSTANCE, annotations);
         }
 
-        protected Explicit(List<? extends AnnotationDescription> annotations, Target target) {
-            this.annotations = annotations;
+        protected Explicit(Target target, List<? extends AnnotationDescription> annotations) {
             this.target = target;
+            this.annotations = annotations;
         }
-
 
         public static Factory of(MethodDescription methodDescription) {
             ParameterList<?> parameters = methodDescription.getParameters();
@@ -229,7 +228,7 @@ public interface MethodAttributeAppender {
 
         @Override
         public String toString() {
-            return "MethodAttributeAppender.ForAnnotation{" +
+            return "MethodAttributeAppender.Explicit{" +
                     "annotations=" + annotations +
                     ", target=" + target +
                     '}';
@@ -268,7 +267,7 @@ public interface MethodAttributeAppender {
 
                 @Override
                 public String toString() {
-                    return "MethodAttributeAppender.ForAnnotation.Target.OnMethod." + name();
+                    return "MethodAttributeAppender.Explicit.Target.OnMethod." + name();
                 }
             }
 
@@ -312,7 +311,7 @@ public interface MethodAttributeAppender {
 
                 @Override
                 public String toString() {
-                    return "MethodAttributeAppender.ForAnnotation.Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
+                    return "MethodAttributeAppender.Explicit.Target.OnMethodParameter{parameterIndex=" + parameterIndex + '}';
                 }
             }
         }

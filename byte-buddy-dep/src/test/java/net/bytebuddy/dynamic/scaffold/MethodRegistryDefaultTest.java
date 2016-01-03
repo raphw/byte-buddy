@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -311,6 +312,8 @@ public class MethodRegistryDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testVisibilityBridgeIfNotMatchedAndVisible() throws Exception {
+        when(instrumentedMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(false);
         when(secondFilter.matches(instrumentedMethod)).thenReturn(false);

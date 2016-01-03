@@ -6,6 +6,7 @@ import org.mockito.Mock;
 
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class TypeAttributeAppenderCompoundTest extends AbstractTypeAttributeAppenderTest {
 
@@ -15,11 +16,12 @@ public class TypeAttributeAppenderCompoundTest extends AbstractTypeAttributeAppe
     @Test
     public void testApplication() throws Exception {
         TypeAttributeAppender typeAttributeAppender = new TypeAttributeAppender.Compound(first, second);
-        typeAttributeAppender.apply(classVisitor, rawTypeDescription, targetType);
-        verify(first).apply(classVisitor, rawTypeDescription, targetType);
+        typeAttributeAppender.apply(classVisitor, instrumentedType, valueFilter);
+        verify(first).apply(classVisitor, instrumentedType, valueFilter);
         verifyNoMoreInteractions(first);
-        verify(second).apply(classVisitor, rawTypeDescription, targetType);
+        verify(second).apply(classVisitor, instrumentedType, valueFilter);
         verifyNoMoreInteractions(second);
+        verifyZeroInteractions(instrumentedType);
     }
 
     @Test

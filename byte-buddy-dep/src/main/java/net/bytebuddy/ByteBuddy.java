@@ -1,6 +1,6 @@
 package net.bytebuddy;
 
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
@@ -25,7 +25,6 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
@@ -109,7 +108,7 @@ public class ByteBuddy {
     /**
      * The class visitor wrapper for the current configuration.
      */
-    protected final ClassVisitorWrapper classVisitorWrapper;
+    protected final AsmVisitorWrapper asmVisitorWrapper;
 
     /**
      * The method registry for the current configuration.
@@ -163,7 +162,7 @@ public class ByteBuddy {
                 Implementation.Context.Default.Factory.INSTANCE,
                 new TypeList.Generic.Empty(),
                 isSynthetic().or(isDefaultFinalizer()),
-                ClassVisitorWrapper.NoOp.INSTANCE,
+                AsmVisitorWrapper.NoOp.INSTANCE,
                 new MethodRegistry.Default(),
                 new Definable.Undefined<Integer>(),
                 TypeAttributeAppender.NoOp.INSTANCE,
@@ -183,7 +182,7 @@ public class ByteBuddy {
      *                                              by any dynamically created type.
      * @param ignoredMethods                        The methods to always be ignored.
      *                                              process.
-     * @param classVisitorWrapper                   The class visitor wrapper to be applied to any implementation process.
+     * @param asmVisitorWrapper                   The class visitor wrapper to be applied to any implementation process.
      * @param methodRegistry                        The currently valid method registry.
      * @param modifiers                             The modifiers to define for any implementation process.
      * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
@@ -199,7 +198,7 @@ public class ByteBuddy {
                         Implementation.Context.Factory implementationContextFactory,
                         List<TypeDescription.Generic> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
-                        ClassVisitorWrapper classVisitorWrapper,
+                        AsmVisitorWrapper asmVisitorWrapper,
                         MethodRegistry methodRegistry,
                         Definable<Integer> modifiers,
                         TypeAttributeAppender typeAttributeAppender,
@@ -212,7 +211,7 @@ public class ByteBuddy {
         this.implementationContextFactory = implementationContextFactory;
         this.interfaceTypes = interfaceTypes;
         this.ignoredMethods = ignoredMethods;
-        this.classVisitorWrapper = classVisitorWrapper;
+        this.asmVisitorWrapper = asmVisitorWrapper;
         this.methodRegistry = methodRegistry;
         this.modifiers = modifiers;
         this.typeAttributeAppender = typeAttributeAppender;
@@ -309,7 +308,7 @@ public class ByteBuddy {
                 modifiers.resolve(superType.asErasure().getModifiers() & ~TypeManifestation.ANNOTATION.getMask()),
                 typeAttributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 new FieldRegistry.Default(),
                 methodRegistry,
                 methodGraphCompiler,
@@ -401,7 +400,7 @@ public class ByteBuddy {
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.INTERFACE.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 new FieldRegistry.Default(),
                 methodRegistry,
                 methodGraphCompiler,
@@ -427,7 +426,7 @@ public class ByteBuddy {
                 PackageDescription.PACKAGE_MODIFIERS,
                 typeAttributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 new FieldRegistry.Default(),
                 methodRegistry,
                 methodGraphCompiler,
@@ -476,7 +475,7 @@ public class ByteBuddy {
                 modifiers.resolve(Opcodes.ACC_PUBLIC) | TypeManifestation.ANNOTATION.getMask(),
                 typeAttributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 new FieldRegistry.Default(),
                 methodRegistry,
                 methodGraphCompiler,
@@ -516,7 +515,7 @@ public class ByteBuddy {
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.FINAL, EnumerationState.ENUMERATION).resolve(),
                 typeAttributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 new FieldRegistry.Default(),
                 methodRegistry,
                 methodGraphCompiler,
@@ -607,7 +606,7 @@ public class ByteBuddy {
                 modifiers.resolve(typeDescription.getModifiers()),
                 typeAttributeAppender,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 new FieldRegistry.Default(),
                 methodRegistry,
                 methodGraphCompiler,
@@ -735,7 +734,7 @@ public class ByteBuddy {
                 modifiers.resolve(typeDescription.getModifiers()),
                 TypeAttributeAppender.NoOp.INSTANCE,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 new FieldRegistry.Default(),
                 methodRegistry,
                 methodGraphCompiler,
@@ -759,7 +758,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -781,7 +780,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -813,7 +812,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -835,7 +834,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -858,7 +857,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 new Definable.Defined<Integer>(ModifierContributor.Resolver.of(modifierContributor).resolve()),
                 typeAttributeAppender,
@@ -881,7 +880,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -941,7 +940,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 new TypeAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations)),
@@ -997,7 +996,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 CompoundList.of(interfaceTypes, new TypeList.Generic.Explicit(toList(typeDefinitions))),
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -1025,7 +1024,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -1038,17 +1037,17 @@ public class ByteBuddy {
      * Defines a new class visitor to be appended to the current collection of {@link org.objectweb.asm.ClassVisitor}s
      * that are to be applied onto any creation process of a dynamic type.
      *
-     * @param classVisitorWrapper The class visitor wrapper to ba appended to the current chain of class visitor wrappers.
+     * @param asmVisitorWrapper The class visitor wrapper to ba appended to the current chain of class visitor wrappers.
      * @return The same configuration with the given class visitor wrapper to be applied onto any creation process of a dynamic type.
      */
-    public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
+    public ByteBuddy withClassVisitor(AsmVisitorWrapper asmVisitorWrapper) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                new ClassVisitorWrapper.Compound(classVisitorWrapper, this.classVisitorWrapper),
+                new AsmVisitorWrapper.Compound(asmVisitorWrapper, this.asmVisitorWrapper),
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -1070,7 +1069,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -1095,7 +1094,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -1120,7 +1119,7 @@ public class ByteBuddy {
                 implementationContextFactory,
                 interfaceTypes,
                 ignoredMethods,
-                classVisitorWrapper,
+                asmVisitorWrapper,
                 methodRegistry,
                 modifiers,
                 typeAttributeAppender,
@@ -1177,7 +1176,7 @@ public class ByteBuddy {
             return false;
         ByteBuddy byteBuddy = (ByteBuddy) other;
         return classFileVersion.equals(byteBuddy.classFileVersion)
-                && classVisitorWrapper.equals(byteBuddy.classVisitorWrapper)
+                && asmVisitorWrapper.equals(byteBuddy.asmVisitorWrapper)
                 && defaultFieldAttributeAppenderFactory.equals(byteBuddy.defaultFieldAttributeAppenderFactory)
                 && defaultMethodAttributeAppenderFactory.equals(byteBuddy.defaultMethodAttributeAppenderFactory)
                 && ignoredMethods.equals(byteBuddy.ignoredMethods)
@@ -1199,7 +1198,7 @@ public class ByteBuddy {
         result = 31 * result + implementationContextFactory.hashCode();
         result = 31 * result + interfaceTypes.hashCode();
         result = 31 * result + ignoredMethods.hashCode();
-        result = 31 * result + classVisitorWrapper.hashCode();
+        result = 31 * result + asmVisitorWrapper.hashCode();
         result = 31 * result + methodRegistry.hashCode();
         result = 31 * result + modifiers.hashCode();
         result = 31 * result + methodGraphCompiler.hashCode();
@@ -1218,7 +1217,7 @@ public class ByteBuddy {
                 ", implementationContextFactory=" + implementationContextFactory +
                 ", interfaceTypes=" + interfaceTypes +
                 ", ignoredMethods=" + ignoredMethods +
-                ", classVisitorWrapper=" + classVisitorWrapper +
+                ", asmVisitorWrapper=" + asmVisitorWrapper +
                 ", methodRegistry=" + methodRegistry +
                 ", modifiers=" + modifiers +
                 ", methodGraphCompiler=" + methodGraphCompiler +
@@ -1416,7 +1415,7 @@ public class ByteBuddy {
          *                                              by any dynamically created type.
          * @param ignoredMethods                        The methods to always be ignored.
          *                                              process.
-         * @param classVisitorWrapper                   The class visitor wrapper to be applied to any implementation process.
+         * @param asmVisitorWrapper                   The class visitor wrapper to be applied to any implementation process.
          * @param methodRegistry                        The currently valid method registry.
          * @param modifiers                             The modifiers to define for any implementation process.
          * @param typeAttributeAppender                 The type attribute appender to apply to any implementation process.
@@ -1436,7 +1435,7 @@ public class ByteBuddy {
                                          Implementation.Context.Factory implementationContextFactory,
                                          List<TypeDescription.Generic> interfaceTypes,
                                          ElementMatcher<? super MethodDescription> ignoredMethods,
-                                         ClassVisitorWrapper classVisitorWrapper,
+                                         AsmVisitorWrapper asmVisitorWrapper,
                                          MethodRegistry methodRegistry,
                                          Definable<Integer> modifiers,
                                          TypeAttributeAppender typeAttributeAppender,
@@ -1453,7 +1452,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry,
                     modifiers,
                     typeAttributeAppender,
@@ -1481,7 +1480,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry,
                     modifiers,
                     typeAttributeAppender,
@@ -1577,7 +1576,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry.prepend(methodMatcher, handler, attributeAppenderFactory, methodTransformer),
                     modifiers,
                     typeAttributeAppender,
@@ -1621,7 +1620,7 @@ public class ByteBuddy {
                     ", implementationContextFactory=" + implementationContextFactory +
                     ", interfaceTypes=" + interfaceTypes +
                     ", ignoredMethods=" + ignoredMethods +
-                    ", classVisitorWrapper=" + classVisitorWrapper +
+                    ", asmVisitorWrapper=" + asmVisitorWrapper +
                     ", methodRegistry=" + methodRegistry +
                     ", modifiers=" + modifiers +
                     ", methodGraphCompiler=" + methodGraphCompiler +
@@ -1657,7 +1656,7 @@ public class ByteBuddy {
          *                                              by any dynamically created type.
          * @param ignoredMethods                        The methods to always be ignored.
          *                                              process.
-         * @param classVisitorWrapper                   The class visitor wrapper to be applied to any implementation
+         * @param asmVisitorWrapper                   The class visitor wrapper to be applied to any implementation
          *                                              process.
          * @param methodRegistry                        The currently valid method registry.
          * @param modifiers                             The modifiers to define for any implementation process.
@@ -1675,7 +1674,7 @@ public class ByteBuddy {
                                              Implementation.Context.Factory implementationContextFactory,
                                              List<TypeDescription.Generic> interfaceTypes,
                                              ElementMatcher<? super MethodDescription> ignoredMethods,
-                                             ClassVisitorWrapper classVisitorWrapper,
+                                             AsmVisitorWrapper asmVisitorWrapper,
                                              MethodRegistry methodRegistry,
                                              Definable<Integer> modifiers,
                                              TypeAttributeAppender typeAttributeAppender,
@@ -1689,7 +1688,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry,
                     modifiers,
                     typeAttributeAppender,
@@ -1739,7 +1738,7 @@ public class ByteBuddy {
                     ", implementationContextFactory=" + implementationContextFactory +
                     ", interfaceTypes=" + interfaceTypes +
                     ", ignoredMethods=" + ignoredMethods +
-                    ", classVisitorWrapper=" + classVisitorWrapper +
+                    ", asmVisitorWrapper=" + asmVisitorWrapper +
                     ", methodRegistry=" + methodRegistry +
                     ", modifiers=" + modifiers +
                     ", methodGraphCompiler=" + methodGraphCompiler +
@@ -1768,7 +1767,7 @@ public class ByteBuddy {
          *                                              implemented by any dynamically created type.
          * @param ignoredMethods                        The methods to always be ignored.
          *                                              implementation process.
-         * @param classVisitorWrapper                   The class visitor wrapper to be applied to any implementation process.
+         * @param asmVisitorWrapper                   The class visitor wrapper to be applied to any implementation process.
          * @param methodRegistry                        The currently valid method registry.
          * @param modifiers                             The modifiers to define for any implementation process.
          * @param typeAttributeAppender                 The type attribute appender to apply to any implementation
@@ -1785,7 +1784,7 @@ public class ByteBuddy {
                         Implementation.Context.Factory implementationContextFactory,
                         List<TypeDescription.Generic> interfaceTypes,
                         ElementMatcher<? super MethodDescription> ignoredMethods,
-                        ClassVisitorWrapper classVisitorWrapper,
+                        AsmVisitorWrapper asmVisitorWrapper,
                         MethodRegistry methodRegistry,
                         Definable<Integer> modifiers,
                         TypeAttributeAppender typeAttributeAppender,
@@ -1798,7 +1797,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry,
                     modifiers,
                     typeAttributeAppender,
@@ -1962,8 +1961,8 @@ public class ByteBuddy {
         }
 
         @Override
-        public ByteBuddy withClassVisitor(ClassVisitorWrapper classVisitorWrapper) {
-            return materialize().withClassVisitor(classVisitorWrapper);
+        public ByteBuddy withClassVisitor(AsmVisitorWrapper asmVisitorWrapper) {
+            return materialize().withClassVisitor(asmVisitorWrapper);
         }
 
         @Override
@@ -2308,7 +2307,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry,
                     modifiers,
                     typeAttributeAppender,
@@ -2329,7 +2328,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry,
                     modifiers,
                     typeAttributeAppender,
@@ -2355,7 +2354,7 @@ public class ByteBuddy {
                     implementationContextFactory,
                     interfaceTypes,
                     ignoredMethods,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     methodRegistry,
                     modifiers,
                     typeAttributeAppender,

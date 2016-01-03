@@ -5,6 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
+import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
@@ -56,7 +57,10 @@ public class ImplementationContextDefaultOtherTest {
         TypeWriter.MethodPool.Record record = mock(TypeWriter.MethodPool.Record.class);
         when(record.getSort()).thenReturn(TypeWriter.MethodPool.Record.Sort.DEFINED);
         when(methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType))).thenReturn(record);
-        implementationContext.drain(mock(ClassVisitor.class), methodPool, mock(Implementation.Context.ExtractableView.InjectedCode.class));
+        implementationContext.drain(mock(ClassVisitor.class),
+                methodPool,
+                mock(Implementation.Context.ExtractableView.InjectedCode.class),
+                mock(AnnotationAppender.ValueFilter.Factory.class));
     }
 
     @Test

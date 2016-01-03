@@ -18,7 +18,7 @@ import org.objectweb.asm.*;
  * or {@link ClassReader}, i.e. does not set any flags.
  * </p>
  */
-public enum TypeConstantAdjustment implements ClassVisitorWrapper {
+public enum TypeConstantAdjustment implements AsmVisitorWrapper {
 
     /**
      * The singleton instance.

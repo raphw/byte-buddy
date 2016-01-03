@@ -1,6 +1,6 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -317,8 +317,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testWriterHint() throws Exception {
-        ClassVisitorWrapper classVisitorWrapper = mock(ClassVisitorWrapper.class);
-        when(classVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
+        AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
+        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
                 return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
@@ -334,17 +334,17 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 };
             }
         });
-        when(classVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        when(asmVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
         Class<?> type = createPlain()
-                .classVisitor(classVisitorWrapper)
+                .classVisitor(asmVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-        verify(classVisitorWrapper).mergeWriter(0);
-        verify(classVisitorWrapper, atMost(1)).mergeReader(0);
-        verify(classVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class));
-        verifyNoMoreInteractions(classVisitorWrapper);
+        verify(asmVisitorWrapper).mergeWriter(0);
+        verify(asmVisitorWrapper, atMost(1)).mergeReader(0);
+        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class));
+        verifyNoMoreInteractions(asmVisitorWrapper);
     }
 
     @Test

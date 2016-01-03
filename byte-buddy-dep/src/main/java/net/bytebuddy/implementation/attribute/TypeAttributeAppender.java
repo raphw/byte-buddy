@@ -53,7 +53,7 @@ public interface TypeAttributeAppender {
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationAppender.ValueFilter valueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-            for (AnnotationDescription annotation : instrumentedType.asErasure().getDeclaredAnnotations()) {
+            for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
                 appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
             }
         }

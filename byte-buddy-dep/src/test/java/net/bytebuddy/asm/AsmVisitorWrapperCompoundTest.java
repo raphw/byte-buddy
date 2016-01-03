@@ -14,7 +14,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class ClassVisitorWrapperCompoundTest {
+public class AsmVisitorWrapperCompoundTest {
 
     private static final int FOO = 1, BAR = 2, QUX = 3, BAZ = 4;
 
@@ -25,7 +25,7 @@ public class ClassVisitorWrapperCompoundTest {
     private TypeDescription instrumentedType;
 
     @Mock
-    private ClassVisitorWrapper wrapper, prepend, append;
+    private AsmVisitorWrapper wrapper, prepend, append;
 
     @Mock
     private ClassVisitor wrapperVisitor, prependVisitor, appendVisitor, resultVisitor;
@@ -45,7 +45,7 @@ public class ClassVisitorWrapperCompoundTest {
 
     @Test
     public void testWrapperChain() throws Exception {
-        ClassVisitorWrapper.Compound compound = new ClassVisitorWrapper.Compound(prepend, wrapper, append);
+        AsmVisitorWrapper.Compound compound = new AsmVisitorWrapper.Compound(prepend, wrapper, append);
         assertThat(compound.wrap(instrumentedType, prependVisitor), is(resultVisitor));
         verify(prepend).wrap(instrumentedType, prependVisitor);
         verifyNoMoreInteractions(prepend);
@@ -57,7 +57,7 @@ public class ClassVisitorWrapperCompoundTest {
 
     @Test
     public void testReaderFlags() throws Exception {
-        ClassVisitorWrapper.Compound compound = new ClassVisitorWrapper.Compound(prepend, wrapper, append);
+        AsmVisitorWrapper.Compound compound = new AsmVisitorWrapper.Compound(prepend, wrapper, append);
         assertThat(compound.mergeReader(FOO), is(BAZ));
         verify(prepend).mergeReader(FOO);
         verifyNoMoreInteractions(prepend);
@@ -69,7 +69,7 @@ public class ClassVisitorWrapperCompoundTest {
 
     @Test
     public void testWriterFlags() throws Exception {
-        ClassVisitorWrapper.Compound compound = new ClassVisitorWrapper.Compound(prepend, wrapper, append);
+        AsmVisitorWrapper.Compound compound = new AsmVisitorWrapper.Compound(prepend, wrapper, append);
         assertThat(compound.mergeWriter(FOO), is(BAZ));
         verify(prepend).mergeWriter(FOO);
         verifyNoMoreInteractions(prepend);
@@ -81,6 +81,6 @@ public class ClassVisitorWrapperCompoundTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ClassVisitorWrapper.Compound.class).apply();
+        ObjectPropertyAssertion.of(AsmVisitorWrapper.Compound.class).apply();
     }
 }

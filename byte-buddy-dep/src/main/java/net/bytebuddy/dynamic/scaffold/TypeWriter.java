@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -1296,7 +1296,7 @@ public interface TypeWriter<T> {
         /**
          * A class visitor wrapper to apply during instrumentation.
          */
-        protected final ClassVisitorWrapper classVisitorWrapper;
+        protected final AsmVisitorWrapper asmVisitorWrapper;
 
         /**
          * The type attribute appender to apply.
@@ -1330,7 +1330,7 @@ public interface TypeWriter<T> {
          * @param classFileVersion             The class file version of the written type.
          * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
          * @param implementationContextFactory The implementation context factory to use.
-         * @param classVisitorWrapper          A class visitor wrapper to apply during instrumentation.
+         * @param asmVisitorWrapper          A class visitor wrapper to apply during instrumentation.
          * @param attributeAppender            The type attribute appender to apply.
          * @param fieldPool                    The field pool to be used for instrumenting fields.
          * @param methodPool                   The method pool to be used for instrumenting methods.
@@ -1343,7 +1343,7 @@ public interface TypeWriter<T> {
                           ClassFileVersion classFileVersion,
                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                           Implementation.Context.Factory implementationContextFactory,
-                          ClassVisitorWrapper classVisitorWrapper,
+                          AsmVisitorWrapper asmVisitorWrapper,
                           TypeAttributeAppender attributeAppender,
                           FieldPool fieldPool,
                           MethodPool methodPool,
@@ -1356,7 +1356,7 @@ public interface TypeWriter<T> {
             this.classFileVersion = classFileVersion;
             this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
             this.implementationContextFactory = implementationContextFactory;
-            this.classVisitorWrapper = classVisitorWrapper;
+            this.asmVisitorWrapper = asmVisitorWrapper;
             this.attributeAppender = attributeAppender;
             this.fieldPool = fieldPool;
             this.methodPool = methodPool;
@@ -1371,7 +1371,7 @@ public interface TypeWriter<T> {
          * @param fieldPool                    The field pool to use.
          * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
          * @param implementationContextFactory The implementation context factory to use.
-         * @param classVisitorWrapper          The class visitor wrapper to apply when creating the type.
+         * @param asmVisitorWrapper          The class visitor wrapper to apply when creating the type.
          * @param attributeAppender            The attribute appender to use.
          * @param classFileVersion             The class file version of the created type.
          * @param <U>                          The best known loaded type for the dynamically created type.
@@ -1381,7 +1381,7 @@ public interface TypeWriter<T> {
                                                     FieldPool fieldPool,
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                     Implementation.Context.Factory implementationContextFactory,
-                                                    ClassVisitorWrapper classVisitorWrapper,
+                                                    AsmVisitorWrapper asmVisitorWrapper,
                                                     TypeAttributeAppender attributeAppender,
                                                     ClassFileVersion classFileVersion,
                                                     AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
@@ -1392,7 +1392,7 @@ public interface TypeWriter<T> {
                     classFileVersion,
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     attributeAppender,
                     fieldPool,
                     methodRegistry,
@@ -1407,7 +1407,7 @@ public interface TypeWriter<T> {
          * @param fieldPool                    The field pool to use.
          * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
          * @param implementationContextFactory The implementation context factory to use.
-         * @param classVisitorWrapper          The class visitor wrapper to apply when creating the type.
+         * @param asmVisitorWrapper          The class visitor wrapper to apply when creating the type.
          * @param attributeAppender            The attribute appender to use.
          * @param classFileVersion             The minimum class file version of the created type.
          * @param classFileLocator             The class file locator to use.
@@ -1420,7 +1420,7 @@ public interface TypeWriter<T> {
                                                     FieldPool fieldPool,
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                     Implementation.Context.Factory implementationContextFactory,
-                                                    ClassVisitorWrapper classVisitorWrapper,
+                                                    AsmVisitorWrapper asmVisitorWrapper,
                                                     TypeAttributeAppender attributeAppender,
                                                     ClassFileVersion classFileVersion,
                                                     ClassFileLocator classFileLocator,
@@ -1434,7 +1434,7 @@ public interface TypeWriter<T> {
                     classFileVersion,
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     attributeAppender,
                     fieldPool,
                     methodRegistry,
@@ -1452,7 +1452,7 @@ public interface TypeWriter<T> {
          * @param fieldPool                    The field pool to use.
          * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
          * @param implementationContextFactory The implementation context factory to use.
-         * @param classVisitorWrapper          The class visitor wrapper to apply when creating the type.
+         * @param asmVisitorWrapper          The class visitor wrapper to apply when creating the type.
          * @param attributeAppender            The attribute appender to use.
          * @param classFileVersion             The minimum class file version of the created type.
          * @param classFileLocator             The class file locator to use.
@@ -1464,7 +1464,7 @@ public interface TypeWriter<T> {
                                                         FieldPool fieldPool,
                                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                         Implementation.Context.Factory implementationContextFactory,
-                                                        ClassVisitorWrapper classVisitorWrapper,
+                                                        AsmVisitorWrapper asmVisitorWrapper,
                                                         TypeAttributeAppender attributeAppender,
                                                         ClassFileVersion classFileVersion,
                                                         ClassFileLocator classFileLocator,
@@ -1477,7 +1477,7 @@ public interface TypeWriter<T> {
                     classFileVersion,
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
-                    classVisitorWrapper,
+                    asmVisitorWrapper,
                     attributeAppender,
                     fieldPool,
                     methodRegistry,
@@ -1512,11 +1512,12 @@ public interface TypeWriter<T> {
                     && classFileVersion.equals(aDefault.classFileVersion)
                     && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
                     && implementationContextFactory.equals(aDefault.implementationContextFactory)
-                    && classVisitorWrapper.equals(aDefault.classVisitorWrapper)
+                    && asmVisitorWrapper.equals(aDefault.asmVisitorWrapper)
                     && attributeAppender.equals(aDefault.attributeAppender)
                     && fieldPool.equals(aDefault.fieldPool)
                     && methodPool.equals(aDefault.methodPool)
-                    && instrumentedMethods.equals(aDefault.instrumentedMethods);
+                    && instrumentedMethods.equals(aDefault.instrumentedMethods)
+                    && valueFilterFactory.equals(aDefault.valueFilterFactory);
         }
 
         @Override
@@ -1528,11 +1529,12 @@ public interface TypeWriter<T> {
             result = 31 * result + classFileVersion.hashCode();
             result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
             result = 31 * result + implementationContextFactory.hashCode();
-            result = 31 * result + classVisitorWrapper.hashCode();
+            result = 31 * result + asmVisitorWrapper.hashCode();
             result = 31 * result + attributeAppender.hashCode();
             result = 31 * result + fieldPool.hashCode();
             result = 31 * result + methodPool.hashCode();
             result = 31 * result + instrumentedMethods.hashCode();
+            result = 31 * result + valueFilterFactory.hashCode();
             return result;
         }
 
@@ -2490,7 +2492,7 @@ public interface TypeWriter<T> {
              * @param classFileVersion             The class file version of the written type.
              * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
              * @param implementationContextFactory The implementation context factory to use.
-             * @param classVisitorWrapper          A class visitor wrapper to apply during instrumentation.
+             * @param asmVisitorWrapper          A class visitor wrapper to apply during instrumentation.
              * @param attributeAppender            The type attribute appender to apply.
              * @param fieldPool                    The field pool to be used for instrumenting fields.
              * @param methodPool                   The method pool to be used for instrumenting methods.
@@ -2506,7 +2508,7 @@ public interface TypeWriter<T> {
                                   ClassFileVersion classFileVersion,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                   Implementation.Context.Factory implementationContextFactory,
-                                  ClassVisitorWrapper classVisitorWrapper,
+                                  AsmVisitorWrapper asmVisitorWrapper,
                                   TypeAttributeAppender attributeAppender,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
@@ -2522,7 +2524,7 @@ public interface TypeWriter<T> {
                         classFileVersion,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
-                        classVisitorWrapper,
+                        asmVisitorWrapper,
                         attributeAppender,
                         fieldPool,
                         methodPool,
@@ -2555,10 +2557,10 @@ public interface TypeWriter<T> {
              */
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
-                ClassWriter classWriter = FrameComputingClassWriter.of(classReader, classVisitorWrapper.mergeWriter(ASM_NO_FLAGS), classFileLocator);
-                classReader.accept(writeTo(classVisitorWrapper.wrap(instrumentedType,
+                ClassWriter classWriter = FrameComputingClassWriter.of(classReader, asmVisitorWrapper.mergeWriter(ASM_NO_FLAGS), classFileLocator);
+                classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
                         new ValidatingClassVisitor(classWriter)),
-                        implementationContext), classVisitorWrapper.mergeReader(ASM_NO_FLAGS));
+                        implementationContext), asmVisitorWrapper.mergeReader(ASM_NO_FLAGS));
                 return classWriter.toByteArray();
             }
 
@@ -2604,7 +2606,7 @@ public interface TypeWriter<T> {
                         ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
                         ", classFileVersion=" + classFileVersion +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                        ", classVisitorWrapper=" + classVisitorWrapper +
+                        ", asmVisitorWrapper=" + asmVisitorWrapper +
                         ", attributeAppender=" + attributeAppender +
                         ", fieldPool=" + fieldPool +
                         ", methodPool=" + methodPool +
@@ -2612,6 +2614,7 @@ public interface TypeWriter<T> {
                         ", classFileLocator=" + classFileLocator +
                         ", originalType=" + originalType +
                         ", methodRebaseResolver=" + methodRebaseResolver +
+                        ", valueFilterFactory=" + valueFilterFactory +
                         '}';
             }
 
@@ -3184,7 +3187,7 @@ public interface TypeWriter<T> {
              * @param classFileVersion             The class file version of the written type.
              * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
              * @param implementationContextFactory The implementation context factory to use.
-             * @param classVisitorWrapper          A class visitor wrapper to apply during instrumentation.
+             * @param asmVisitorWrapper          A class visitor wrapper to apply during instrumentation.
              * @param attributeAppender            The type attribute appender to apply.
              * @param fieldPool                    The field pool to be used for instrumenting fields.
              * @param methodPool                   The method pool to be used for instrumenting methods.
@@ -3197,7 +3200,7 @@ public interface TypeWriter<T> {
                                   ClassFileVersion classFileVersion,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                   Implementation.Context.Factory implementationContextFactory,
-                                  ClassVisitorWrapper classVisitorWrapper,
+                                  AsmVisitorWrapper asmVisitorWrapper,
                                   TypeAttributeAppender attributeAppender,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
@@ -3210,7 +3213,7 @@ public interface TypeWriter<T> {
                         classFileVersion,
                         auxiliaryTypeNamingStrategy,
                         implementationContextFactory,
-                        classVisitorWrapper,
+                        asmVisitorWrapper,
                         attributeAppender,
                         fieldPool,
                         methodPool,
@@ -3220,8 +3223,8 @@ public interface TypeWriter<T> {
 
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
-                ClassWriter classWriter = new ClassWriter(classVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
-                ClassVisitor classVisitor = classVisitorWrapper.wrap(instrumentedType, new ValidatingClassVisitor(classWriter));
+                ClassWriter classWriter = new ClassWriter(asmVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
+                ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType, new ValidatingClassVisitor(classWriter));
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
@@ -3252,11 +3255,12 @@ public interface TypeWriter<T> {
                         ", classFileVersion=" + classFileVersion +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", implementationContextFactory=" + implementationContextFactory +
-                        ", classVisitorWrapper=" + classVisitorWrapper +
+                        ", asmVisitorWrapper=" + asmVisitorWrapper +
                         ", attributeAppender=" + attributeAppender +
                         ", fieldPool=" + fieldPool +
                         ", methodPool=" + methodPool +
                         ", instrumentedMethods=" + instrumentedMethods +
+                        ", valueFilterFactory=" + valueFilterFactory +
                         "}";
             }
         }
