@@ -83,19 +83,19 @@ public interface Builder<T> {
 
     Builder<T> typeVariable(String symbol, TypeDefinition bound);
 
-    FieldDefinition.Valuable<T> defineField(String name, Type type, ModifierContributor.ForField... modifierContributor);
+    FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, ModifierContributor.ForField... modifierContributor);
 
-    FieldDefinition.Valuable<T> defineField(String name, Type type, Collection<? extends ModifierContributor.ForField> modifierContributors);
+    FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, Collection<? extends ModifierContributor.ForField> modifierContributors);
 
-    FieldDefinition.Valuable<T> defineField(String name, Type type, int modifiers);
+    FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, int modifiers);
 
-    FieldDefinition.Valuable<T> defineField(String name, TypeDefinition type, ModifierContributor.ForField... modifierContributor);
+    FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, ModifierContributor.ForField... modifierContributor);
 
-    FieldDefinition.Valuable<T> defineField(String name, TypeDefinition type, Collection<? extends ModifierContributor.ForField> modifierContributors);
+    FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, Collection<? extends ModifierContributor.ForField> modifierContributors);
 
-    FieldDefinition.Valuable<T> defineField(String name, TypeDefinition type, int modifiers);
+    FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, int modifiers);
 
-    FieldDefinition.Valuable<T> define(Field field);
+    FieldDefinition.Optional.Valuable<T> define(Field field);
 
     FieldDefinition.Valuable<T> field(ElementMatcher<? super FieldDescription> matcher);
 
@@ -135,121 +135,127 @@ public interface Builder<T> {
 
     DynamicType.Unloaded<T> make();
 
-    interface FieldDefinition<S> extends Builder<S> {
+    interface FieldDefinition<S> {
 
-        FieldDefinition<S> annotateField(Annotation... annotation);
+        FieldDefinition.Optional<S> annotateField(Annotation... annotation);
 
-        FieldDefinition<S> annotateField(List<? extends Annotation> annotations);
+        FieldDefinition.Optional<S> annotateField(List<? extends Annotation> annotations);
 
-        FieldDefinition<S> annotateField(AnnotationDescription... annotation);
+        FieldDefinition.Optional<S> annotateField(AnnotationDescription... annotation);
 
-        FieldDefinition<S> annotateField(Collection<? extends AnnotationDescription> annotations);
+        FieldDefinition.Optional<S> annotateField(Collection<? extends AnnotationDescription> annotations);
 
-        FieldDefinition<S> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory);
+        FieldDefinition.Optional<S> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory);
 
-        FieldDefinition<S> transform(Transformer<FieldDescription> transformer);
+        FieldDefinition.Optional<S> transform(Transformer<FieldDescription> transformer);
 
         interface Valuable<U> extends FieldDefinition<U> {
 
-            FieldDefinition<U> value(boolean value);
+            FieldDefinition.Optional<U> value(boolean value);
 
-            FieldDefinition<U> value(int value);
+            FieldDefinition.Optional<U> value(int value);
 
-            FieldDefinition<U> value(long value);
+            FieldDefinition.Optional<U> value(long value);
 
-            FieldDefinition<U> value(float value);
+            FieldDefinition.Optional<U> value(float value);
 
-            FieldDefinition<U> value(double value);
+            FieldDefinition.Optional<U> value(double value);
 
-            FieldDefinition<U> value(String value);
-
-            abstract class AbstractBase<U> extends FieldDefinition.AbstractBase<U> implements Valuable<U> {
-
-                @Override
-                public FieldDefinition<U> value(boolean value) {
-                    return defaultValue(value ? 1 : 0);
-                }
-
-                @Override
-                public FieldDefinition<U> value(int value) {
-                    return defaultValue(value);
-                }
-
-                @Override
-                public FieldDefinition<U> value(long value) {
-                    return defaultValue(value);
-                }
-
-                @Override
-                public FieldDefinition<U> value(float value) {
-                    return defaultValue(value);
-                }
-
-                @Override
-                public FieldDefinition<U> value(double value) {
-                    return defaultValue(value);
-                }
-
-                @Override
-                public FieldDefinition<U> value(String value) {
-                    return defaultValue(value);
-                }
-
-                protected abstract FieldDefinition<U> defaultValue(Object defaultValue);
-
-                protected abstract static class Adapter<V> extends Valuable.AbstractBase<V> {
-
-                    protected final FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
-
-                    protected final Transformer<FieldDescription> transformer;
-
-                    protected final Object defaultValue;
-
-                    protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                      Transformer<FieldDescription> transformer,
-                                      Object defaultValue) {
-                        this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
-                        this.transformer = transformer;
-                        this.defaultValue = defaultValue;
-                    }
-
-                    @Override
-                    public FieldDefinition<V> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory) {
-                        return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), transformer, defaultValue);
-                    }
-
-                    @Override
-                    public FieldDefinition<V> transform(Transformer<FieldDescription> transformer) {
-                        return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
-                    }
-
-                    @Override
-                    protected FieldDefinition<V> defaultValue(Object defaultValue) {
-                        return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
-                    }
-
-                    protected abstract FieldDefinition<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                                      Transformer<FieldDescription> transformer,
-                                                                      Object defaultValue);
-                }
-            }
+            FieldDefinition.Optional<U> value(String value);
         }
 
-        abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements FieldDefinition<U> {
+        interface Optional<U> extends FieldDefinition<U>, Builder<U> {
 
-            @Override
-            public FieldDefinition<U> annotateField(Annotation... annotation) {
-                return annotateField(Arrays.asList(annotation));
+            interface Valuable<V> extends FieldDefinition.Valuable<V>, Optional<V> {
+
+                abstract class AbstractBase<U> extends Optional.AbstractBase<U> implements Optional.Valuable<U> {
+
+                    @Override
+                    public FieldDefinition.Optional<U> value(boolean value) {
+                        return defaultValue(value ? 1 : 0);
+                    }
+
+                    @Override
+                    public FieldDefinition.Optional<U> value(int value) {
+                        return defaultValue(value);
+                    }
+
+                    @Override
+                    public FieldDefinition.Optional<U> value(long value) {
+                        return defaultValue(value);
+                    }
+
+                    @Override
+                    public FieldDefinition.Optional<U> value(float value) {
+                        return defaultValue(value);
+                    }
+
+                    @Override
+                    public FieldDefinition.Optional<U> value(double value) {
+                        return defaultValue(value);
+                    }
+
+                    @Override
+                    public FieldDefinition.Optional<U> value(String value) {
+                        return defaultValue(value);
+                    }
+
+                    protected abstract FieldDefinition.Optional<U> defaultValue(Object defaultValue);
+
+                    protected abstract static class Adapter<V> extends Optional.Valuable.AbstractBase<V> {
+
+                        protected final FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
+
+                        protected final Transformer<FieldDescription> transformer;
+
+                        protected final Object defaultValue;
+
+                        protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                          Transformer<FieldDescription> transformer,
+                                          Object defaultValue) {
+                            this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
+                            this.transformer = transformer;
+                            this.defaultValue = defaultValue;
+                        }
+
+                        @Override
+                        public FieldDefinition.Optional<V> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory) {
+                            return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), transformer, defaultValue);
+                        }
+
+                        @Override
+                        public FieldDefinition.Optional<V> transform(Transformer<FieldDescription> transformer) {
+                            return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
+                        }
+
+                        @Override
+                        protected FieldDefinition.Optional<V> defaultValue(Object defaultValue) {
+                            return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
+                        }
+
+                        protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                                                   Transformer<FieldDescription> transformer,
+                                                                                   Object defaultValue);
+                    }
+                }
             }
 
-            @Override
-            public FieldDefinition<U> annotateField(List<? extends Annotation> annotations) {
-                return annotateField(new AnnotationList.ForLoadedAnnotation(annotations));
-            }
+            abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements FieldDefinition.Optional<U> {
 
-            @Override
-            public FieldDefinition<U> annotateField(AnnotationDescription... annotation) {
-                return annotateField(Arrays.asList(annotation));
+                @Override
+                public FieldDefinition.Optional<U> annotateField(Annotation... annotation) {
+                    return annotateField(Arrays.asList(annotation));
+                }
+
+                @Override
+                public FieldDefinition.Optional<U> annotateField(List<? extends Annotation> annotations) {
+                    return annotateField(new AnnotationList.ForLoadedAnnotation(annotations));
+                }
+
+                @Override
+                public FieldDefinition.Optional<U> annotateField(AnnotationDescription... annotation) {
+                    return annotateField(Arrays.asList(annotation));
+                }
             }
         }
     }
@@ -727,32 +733,32 @@ public interface Builder<T> {
         }
 
         @Override
-        public FieldDefinition.Valuable<S> defineField(String name, Type type, ModifierContributor.ForField... modifierContributor) {
+        public FieldDefinition.Optional.Valuable<S> defineField(String name, Type type, ModifierContributor.ForField... modifierContributor) {
             return defineField(name, type, Arrays.asList(modifierContributor));
         }
 
         @Override
-        public FieldDefinition.Valuable<S> defineField(String name, Type type, Collection<? extends ModifierContributor.ForField> modifierContributors) {
+        public FieldDefinition.Optional.Valuable<S> defineField(String name, Type type, Collection<? extends ModifierContributor.ForField> modifierContributors) {
             return defineField(name, type, ModifierContributor.Resolver.of(modifierContributors).resolve());
         }
 
         @Override
-        public FieldDefinition.Valuable<S> defineField(String name, Type type, int modifiers) {
+        public FieldDefinition.Optional.Valuable<S> defineField(String name, Type type, int modifiers) {
             return defineField(name, TypeDefinition.Sort.describe(type), modifiers);
         }
 
         @Override
-        public FieldDefinition.Valuable<S> defineField(String name, TypeDefinition type, ModifierContributor.ForField... modifierContributor) {
+        public FieldDefinition.Optional.Valuable<S> defineField(String name, TypeDefinition type, ModifierContributor.ForField... modifierContributor) {
             return defineField(name, type, Arrays.asList(modifierContributor));
         }
 
         @Override
-        public FieldDefinition.Valuable<S> defineField(String name, TypeDefinition type, Collection<? extends ModifierContributor.ForField> modifierContributors) {
+        public FieldDefinition.Optional.Valuable<S> defineField(String name, TypeDefinition type, Collection<? extends ModifierContributor.ForField> modifierContributors) {
             return defineField(name, type, ModifierContributor.Resolver.of(modifierContributors).resolve());
         }
 
         @Override
-        public FieldDefinition.Valuable<S> define(Field field) {
+        public FieldDefinition.Optional.Valuable<S> define(Field field) {
             return defineField(field.getName(), field.getGenericType(), field.getModifiers());
         }
 
@@ -904,7 +910,7 @@ public interface Builder<T> {
             }
 
             @Override
-            public FieldDefinition.Valuable<U> defineField(String name, TypeDefinition type, int modifiers) {
+            public FieldDefinition.Optional.Valuable<U> defineField(String name, TypeDefinition type, int modifiers) {
                 return materialize().defineField(name, type, modifiers);
             }
 
@@ -971,7 +977,7 @@ public interface Builder<T> {
             }
 
             @Override
-            public FieldDefinition.Valuable<U> defineField(String name, TypeDefinition type, int modifiers) {
+            public FieldDefinition.Optional.Valuable<U> defineField(String name, TypeDefinition type, int modifiers) {
                 return new FieldDefinitionAdapter(new FieldDescription.Token(name, modifiers, type.asGenericType()));
             }
 
@@ -1141,7 +1147,7 @@ public interface Builder<T> {
                                                       FieldVisitorWrapper fieldVisitorWrapper,
                                                       MethodVisitorWrapper methodVisitorWrapper);
 
-            protected class FieldDefinitionAdapter extends FieldDefinition.Valuable.AbstractBase.Adapter<U> {
+            protected class FieldDefinitionAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
                 private final FieldDescription.Token token;
 
@@ -1158,7 +1164,7 @@ public interface Builder<T> {
                 }
 
                 @Override
-                public FieldDefinition<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
+                public Optional<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
                     return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, new FieldDescription.Token(token.getName(),
                             token.getModifiers(),
                             token.getType(),
@@ -1178,14 +1184,14 @@ public interface Builder<T> {
                 }
 
                 @Override
-                protected FieldDefinition<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                         Transformer<FieldDescription> transformer,
-                                                         Object defaultValue) {
+                protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                                  Transformer<FieldDescription> transformer,
+                                                                  Object defaultValue) {
                     return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
                 }
             }
 
-            protected class FieldMatchAdapter extends FieldDefinition.Valuable.AbstractBase.Adapter<U> {
+            protected class FieldMatchAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
                 private final ElementMatcher<? super FieldDescription> matcher;
 
@@ -1202,7 +1208,7 @@ public interface Builder<T> {
                 }
 
                 @Override
-                public FieldDefinition<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
+                public Optional<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
                     return attribute(new FieldAttributeAppender.ForAnnotation(null, null)); // TODO: Appender default?
                 }
 
@@ -1219,9 +1225,9 @@ public interface Builder<T> {
                 }
 
                 @Override
-                protected FieldDefinition<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                         Transformer<FieldDescription> transformer,
-                                                         Object defaultValue) {
+                protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
+                                                                  Transformer<FieldDescription> transformer,
+                                                                  Object defaultValue) {
                     return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
                 }
             }
@@ -1340,6 +1346,7 @@ public interface Builder<T> {
                                 token.getName(),
                                 token.getModifiers()));
                     }
+
                     @Override
                     protected MethodDefinition.ParameterDefinition.Simple<U> materialize() {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(MethodDefinitionAdapter.this.token.getName(),
