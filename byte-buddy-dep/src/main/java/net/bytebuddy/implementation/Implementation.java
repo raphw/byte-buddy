@@ -1270,7 +1270,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public MethodDescription getImplementedMethod() {
+                public MethodDescription getMethod() {
                     return methodDescription;
                 }
 
@@ -1287,7 +1287,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public void applyBody(MethodVisitor methodVisitor, Context implementationContext) {
                     methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, implementationContext, getImplementedMethod());
+                    Size size = apply(methodVisitor, implementationContext, getMethod());
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 }
 

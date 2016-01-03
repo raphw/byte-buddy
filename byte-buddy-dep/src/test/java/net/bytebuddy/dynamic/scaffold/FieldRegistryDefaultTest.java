@@ -36,7 +36,7 @@ public class FieldRegistryDefaultTest {
     private FieldDescription.Token knownFieldToken;
 
     @Mock
-    private Object defaultValue;
+    private Object defaultValue, otherDefaultValue;
 
     @Before
     public void setUp() throws Exception {
@@ -49,7 +49,7 @@ public class FieldRegistryDefaultTest {
         TypeWriter.FieldPool.Record record = new FieldRegistry.Default()
                 .compile(instrumentedType)
                 .target(unknownField);
-        assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(record.resolveDefault(defaultValue), is(defaultValue));
         assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(unknownField,
                 AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
     }
@@ -60,8 +60,8 @@ public class FieldRegistryDefaultTest {
                 .include(knownFieldToken, distinctFactory, defaultValue)
                 .compile(instrumentedType);
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
-        assertThat(fieldPool.target(knownField).getDefaultValue(), is(defaultValue));
-        assertThat(fieldPool.target(unknownField).getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(fieldPool.target(knownField).resolveDefault(otherDefaultValue), is(defaultValue));
+        assertThat(fieldPool.target(unknownField).resolveDefault(otherDefaultValue), is(otherDefaultValue));
         assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(unknownField,
                 AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
     }

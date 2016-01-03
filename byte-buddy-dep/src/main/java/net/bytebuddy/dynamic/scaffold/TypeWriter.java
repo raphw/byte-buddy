@@ -74,6 +74,8 @@ public interface TypeWriter<T> {
          */
         interface Record {
 
+            FieldDescription getField();
+
             /**
              * Returns the field attribute appender for a given field.
              *
@@ -81,13 +83,7 @@ public interface TypeWriter<T> {
              */
             FieldAttributeAppender getFieldAppender();
 
-            /**
-             * Returns the default value for the field that is represented by this entry. This value might be
-             * {@code null} if no such value is set.
-             *
-             * @return The default value for the field that is represented by this entry.
-             */
-            Object getDefaultValue();
+            Object resolveDefault(Object defaultValue);
 
             /**
              * Writes this entry to a given class visitor.
@@ -95,6 +91,8 @@ public interface TypeWriter<T> {
              * @param classVisitor The class visitor to which this entry is to be written to.
              */
             void apply(ClassVisitor classVisitor);
+
+            void apply(FieldVisitor fieldVisitor);
 
             /**
              * A record for a simple field without a default value where all of the field's declared annotations are appended.
@@ -116,13 +114,18 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public FieldDescription getField() {
+                    return fieldDescription;
+                }
+
+                @Override
                 public FieldAttributeAppender getFieldAppender() {
                     return new FieldAttributeAppender.ForField(fieldDescription, AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE);
                 }
 
                 @Override
-                public Object getDefaultValue() {
-                    return FieldDescription.NO_DEFAULT_VALUE;
+                public Object resolveDefault(Object defaultValue) {
+                    return defaultValue;
                 }
 
                 @Override
@@ -134,6 +137,11 @@ public interface TypeWriter<T> {
                             FieldDescription.NO_DEFAULT_VALUE);
                     getFieldAppender().apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();
+                }
+
+                @Override
+                public void apply(FieldVisitor fieldVisitor) {
+                    /* do nothing */
                 }
 
                 @Override
@@ -191,13 +199,18 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public FieldDescription getField() {
+                    return fieldDescription;
+                }
+
+                @Override
                 public FieldAttributeAppender getFieldAppender() {
                     return attributeAppender;
                 }
 
                 @Override
-                public Object getDefaultValue() {
-                    return defaultValue;
+                public Object resolveDefault(Object defaultValue) {
+                    return this.defaultValue;
                 }
 
                 @Override
@@ -206,9 +219,14 @@ public interface TypeWriter<T> {
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
-                            getDefaultValue());
+                            resolveDefault(FieldDescription.NO_DEFAULT_VALUE));
                     attributeAppender.apply(fieldVisitor, fieldDescription);
                     fieldVisitor.visitEnd();
+                }
+
+                @Override
+                public void apply(FieldVisitor fieldVisitor) {
+                    attributeAppender.apply(fieldVisitor, fieldDescription);
                 }
 
                 @Override
@@ -274,7 +292,7 @@ public interface TypeWriter<T> {
              *
              * @return The implemented method.
              */
-            MethodDescription getImplementedMethod();
+            MethodDescription getMethod();
 
             /**
              * Prepends the given method appender to this entry.
@@ -400,7 +418,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public MethodDescription getImplementedMethod() {
+                public MethodDescription getMethod() {
                     throw new IllegalStateException("A method that is not defined cannot be extracted");
                 }
 
@@ -427,12 +445,12 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(getImplementedMethod().getAdjustedModifiers(getSort().isImplemented()),
-                            getImplementedMethod().getInternalName(),
-                            getImplementedMethod().getDescriptor(),
-                            getImplementedMethod().getGenericSignature(),
-                            getImplementedMethod().getExceptionTypes().asErasures().toInternalNames());
-                    ParameterList<?> parameterList = getImplementedMethod().getParameters();
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(getMethod().getAdjustedModifiers(getSort().isImplemented()),
+                            getMethod().getInternalName(),
+                            getMethod().getDescriptor(),
+                            getMethod().getGenericSignature(),
+                            getMethod().getExceptionTypes().asErasures().toInternalNames());
+                    ParameterList<?> parameterList = getMethod().getParameters();
                     if (parameterList.hasExplicitMetaData()) {
                         for (ParameterDescription parameterDescription : parameterList) {
                             methodVisitor.visitParameter(parameterDescription.getName(), parameterDescription.getModifiers());
@@ -487,7 +505,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public MethodDescription getImplementedMethod() {
+                    public MethodDescription getMethod() {
                         return methodDescription;
                     }
 
@@ -569,7 +587,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public MethodDescription getImplementedMethod() {
+                    public MethodDescription getMethod() {
                         return methodDescription;
                     }
 
@@ -654,7 +672,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public MethodDescription getImplementedMethod() {
+                    public MethodDescription getMethod() {
                         return methodDescription;
                     }
 
@@ -773,7 +791,7 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public MethodDescription getImplementedMethod() {
+                    public MethodDescription getMethod() {
                         return visibilityBridge;
                     }
 
@@ -983,7 +1001,7 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
-                public MethodDescription getImplementedMethod() {
+                public MethodDescription getMethod() {
                     return bridgeTarget;
                 }
 
@@ -2835,8 +2853,19 @@ public interface TypeWriter<T> {
                                                String descriptor,
                                                String genericSignature,
                                                Object defaultValue) {
-                    declaredFields.remove(internalName); // Ignore in favor of the class file definition.
-                    return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
+                    FieldDescription fieldDescription = declaredFields.remove(internalName);
+                    return fieldDescription == null
+                            ? super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue)
+                            : redefine(fieldDescription, defaultValue);
+                }
+
+                protected FieldVisitor redefine(FieldDescription fieldDescription, Object defaultValue) {
+                    FieldPool.Record record = fieldPool.target(fieldDescription);
+                    return new AttributeObtainingFieldVisitor(super.visitField(fieldDescription.getModifiers(),
+                            fieldDescription.getInternalName(),
+                            fieldDescription.getDescriptor(),
+                            fieldDescription.getGenericSignature(),
+                            record.resolveDefault(defaultValue)), record);
                 }
 
                 @Override
@@ -2882,7 +2911,7 @@ public interface TypeWriter<T> {
                                 methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().asErasures().toInternalNames());
                     }
-                    MethodDescription implementedMethod = record.getImplementedMethod();
+                    MethodDescription implementedMethod = record.getMethod();
                     MethodVisitor methodVisitor = super.visitMethod(implementedMethod.getAdjustedModifiers(record.getSort().isImplemented()),
                             implementedMethod.getInternalName(),
                             implementedMethod.getDescriptor(),
@@ -2986,6 +3015,22 @@ public interface TypeWriter<T> {
                                 ", entry=" + record +
                                 ", resolution=" + resolution +
                                 '}';
+                    }
+                }
+
+                protected class AttributeObtainingFieldVisitor extends FieldVisitor {
+
+                    private final FieldPool.Record record;
+
+                    public AttributeObtainingFieldVisitor(FieldVisitor fieldVisitor, FieldPool.Record record) {
+                        super(Opcodes.ASM5, fieldVisitor);
+                        this.record = record;
+                    }
+
+                    @Override
+                    public void visitEnd() {
+                        record.apply(fv);
+                        super.visitEnd();
                     }
                 }
 

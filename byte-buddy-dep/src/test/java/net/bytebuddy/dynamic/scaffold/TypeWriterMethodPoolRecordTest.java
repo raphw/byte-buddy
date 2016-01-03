@@ -110,7 +110,7 @@ public class TypeWriterMethodPoolRecordTest {
 
     @Test(expected = IllegalStateException.class)
     public void testSkippedMethodCannotGetImplementedMethod() throws Exception {
-        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.getImplementedMethod();
+        TypeWriter.MethodPool.Record.ForNonDefinedMethod.INSTANCE.getMethod();
     }
 
     @Test(expected = IllegalStateException.class)

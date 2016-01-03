@@ -12,6 +12,7 @@ import org.mockito.Mock;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class FieldRegistryCompiledNoOpTest {
 
@@ -21,10 +22,13 @@ public class FieldRegistryCompiledNoOpTest {
     @Mock
     private FieldDescription fieldDescription;
 
+    @Mock
+    private Object defaultValue;
+
     @Test
     public void testReturnsNullDefaultValue() throws Exception {
         TypeWriter.FieldPool.Record record = FieldRegistry.Compiled.NoOp.INSTANCE.target(fieldDescription);
-        assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(record.resolveDefault(defaultValue), is(defaultValue));
     }
 
     @Test

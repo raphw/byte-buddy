@@ -162,6 +162,8 @@ public interface Builder<T> {
             FieldDefinition.Optional<U> value(double value);
 
             FieldDefinition.Optional<U> value(String value);
+
+            FieldDefinition.Optional<U> withoutValue();
         }
 
         interface Optional<U> extends FieldDefinition<U>, Builder<U> {
@@ -231,6 +233,11 @@ public interface Builder<T> {
                         @Override
                         protected FieldDefinition.Optional<V> defaultValue(Object defaultValue) {
                             return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
+                        }
+
+                        @Override
+                        public Optional<V> withoutValue() {
+                            return materialize(fieldAttributeAppenderFactory, transformer, FieldDescription.NO_DEFAULT_VALUE);
                         }
 
                         protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
@@ -1185,8 +1192,8 @@ public interface Builder<T> {
 
                 @Override
                 protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                                  Transformer<FieldDescription> transformer,
-                                                                  Object defaultValue) {
+                                                  Transformer<FieldDescription> transformer,
+                                                  Object defaultValue) {
                     return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
                 }
             }
@@ -1226,8 +1233,8 @@ public interface Builder<T> {
 
                 @Override
                 protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                                  Transformer<FieldDescription> transformer,
-                                                                  Object defaultValue) {
+                                                  Transformer<FieldDescription> transformer,
+                                                  Object defaultValue) {
                     return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
                 }
             }

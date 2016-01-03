@@ -24,8 +24,6 @@ public class TypeWriterFieldPoolRecordTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
-    private static final Object DEFAULT_VALUE = new Object();
-
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
@@ -41,28 +39,31 @@ public class TypeWriterFieldPoolRecordTest {
     @Mock
     private FieldDescription fieldDescription;
 
+    @Mock
+    private Object defaultValue;
+
     @Before
     public void setUp() throws Exception {
         when(fieldDescription.getModifiers()).thenReturn(MODIFIER);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getDescriptor()).thenReturn(BAR);
         when(fieldDescription.getGenericSignature()).thenReturn(QUX);
-        when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, DEFAULT_VALUE)).thenReturn(fieldVisitor);
+        when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, defaultValue)).thenReturn(fieldVisitor);
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, null)).thenReturn(fieldVisitor);
     }
 
     @Test
     public void testRichFieldEntryProperties() throws Exception {
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, defaultValue, fieldDescription);
         assertThat(record.getFieldAppender(), is(fieldAttributeAppender));
-        assertThat(record.getDefaultValue(), is(DEFAULT_VALUE));
+        assertThat(record.resolveDefault(FieldDescription.NO_DEFAULT_VALUE), is(defaultValue));
     }
 
     @Test
     public void testRichFieldEntryWritesField() throws Exception {
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, DEFAULT_VALUE, fieldDescription);
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, defaultValue, fieldDescription);
         record.apply(classVisitor);
-        verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, DEFAULT_VALUE);
+        verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, defaultValue);
         verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription);
         verifyNoMoreInteractions(fieldAttributeAppender);
         verifyNoMoreInteractions(classVisitor);
@@ -86,7 +87,7 @@ public class TypeWriterFieldPoolRecordTest {
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
         assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(fieldDescription,
                 AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
-        assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
+        assertThat(record.resolveDefault(defaultValue), is(defaultValue));
     }
 
     @Test
