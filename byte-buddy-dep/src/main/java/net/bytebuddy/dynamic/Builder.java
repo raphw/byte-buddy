@@ -962,7 +962,7 @@ public interface Builder<T> {
 
             protected final MethodVisitorWrapper methodVisitorWrapper;
 
-            protected final AnnotationAppender.ValueFilter valueFilter;
+            protected final AnnotationAppender.ValueFilter.Factory valueFilterFactory;
 
             protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
                               FieldRegistry fieldRegistry,
@@ -972,7 +972,7 @@ public interface Builder<T> {
                               ClassVisitorWrapper classVisitorWrapper,
                               FieldVisitorWrapper fieldVisitorWrapper,
                               MethodVisitorWrapper methodVisitorWrapper,
-                              AnnotationAppender.ValueFilter valueFilter) {
+                              AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
                 this.instrumentedType = instrumentedType;
                 this.fieldRegistry = fieldRegistry;
                 this.methodRegistry = methodRegistry;
@@ -981,7 +981,7 @@ public interface Builder<T> {
                 this.classVisitorWrapper = classVisitorWrapper;
                 this.fieldVisitorWrapper = fieldVisitorWrapper;
                 this.methodVisitorWrapper = methodVisitorWrapper;
-                this.valueFilter = valueFilter;
+                this.valueFilterFactory = valueFilterFactory;
             }
 
             @Override
@@ -1024,7 +1024,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1037,7 +1037,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1050,7 +1050,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1063,7 +1063,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1076,7 +1076,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1089,7 +1089,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1102,7 +1102,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1115,7 +1115,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1128,7 +1128,7 @@ public interface Builder<T> {
                         new ClassVisitorWrapper.Compound(this.classVisitorWrapper, classVisitorWrapper),
                         fieldVisitorWrapper,
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1141,7 +1141,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         new FieldVisitorWrapper.Compound(this.fieldVisitorWrapper, fieldVisitorWrapper),
                         methodVisitorWrapper,
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             @Override
@@ -1154,7 +1154,7 @@ public interface Builder<T> {
                         classVisitorWrapper,
                         fieldVisitorWrapper,
                         new MethodVisitorWrapper.Compound(this.methodVisitorWrapper, methodVisitorWrapper),
-                        valueFilter);
+                        valueFilterFactory);
             }
 
             protected abstract Builder<U> materialize(InstrumentedType instrumentedType,
@@ -1165,14 +1165,14 @@ public interface Builder<T> {
                                                       ClassVisitorWrapper classVisitorWrapper,
                                                       FieldVisitorWrapper fieldVisitorWrapper,
                                                       MethodVisitorWrapper methodVisitorWrapper,
-                                                      AnnotationAppender.ValueFilter valueFilter);
+                                                      AnnotationAppender.ValueFilter.Factory valueFilterFactory);
 
             protected class FieldDefinitionAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
                 private final FieldDescription.Token token;
 
                 protected FieldDefinitionAdapter(FieldDescription.Token token) {
-                    this(FieldAttributeAppender.NoOp.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, token); // TODO: Field appender
+                    this(FieldAttributeAppender.ForInstrumentedField.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, token);
                 }
 
                 protected FieldDefinitionAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
@@ -1201,7 +1201,7 @@ public interface Builder<T> {
                             classVisitorWrapper,
                             fieldVisitorWrapper,
                             methodVisitorWrapper,
-                            valueFilter);
+                            valueFilterFactory);
                 }
 
                 @Override
@@ -1230,7 +1230,7 @@ public interface Builder<T> {
 
                 @Override
                 public Optional<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new FieldAttributeAppender.ForAnnotations(valueFilter, new ArrayList<AnnotationDescription>(annotations)));
+                    return attribute(new FieldAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations)));
                 }
 
                 @Override
@@ -1243,7 +1243,7 @@ public interface Builder<T> {
                             classVisitorWrapper,
                             fieldVisitorWrapper,
                             methodVisitorWrapper,
-                            valueFilter);
+                            valueFilterFactory);
                 }
 
                 @Override
@@ -1383,9 +1383,7 @@ public interface Builder<T> {
                 protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
 
                     protected AnnotationAdapter(MethodRegistry.Handler handler) {
-                        this(handler,
-                                MethodAttributeAppender.NoOp.INSTANCE, // TODO
-                                MethodTransformer.NoOp.INSTANCE);
+                        this(handler, MethodAttributeAppender.ForInstrumentedMethod.INSTANCE, MethodTransformer.NoOp.INSTANCE);
                     }
 
                     protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
@@ -1430,13 +1428,13 @@ public interface Builder<T> {
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withMethod(token),
                                 fieldRegistry,
-                                methodRegistry.append(new LatentMatcher.ForMethodToken(token), handler, methodAttributeAppenderFactory, null), // TODO
+                                methodRegistry.append(new LatentMatcher.ForMethodToken(token), handler, methodAttributeAppenderFactory, methodTransformer),
                                 ignored,
                                 typeAttributeAppender,
                                 classVisitorWrapper,
                                 fieldVisitorWrapper,
                                 methodVisitorWrapper,
-                                valueFilter);
+                                valueFilterFactory);
                     }
                 }
             }
@@ -1481,14 +1479,14 @@ public interface Builder<T> {
                     @Override
                     public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
                         return new AnnotationAdapter(handler,
-                                new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForAnnotation(null)),  // TODO
+                                new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations))),
                                 methodTransformer);
                     }
 
                     @Override
                     public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
                         return new AnnotationAdapter(handler,
-                                new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForAnnotation(index, null)),  // TODO
+                                new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.Explicit(index, new ArrayList<AnnotationDescription>(annotations))),
                                 methodTransformer);
                     }
 
@@ -1501,13 +1499,13 @@ public interface Builder<T> {
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
                                 fieldRegistry,
-                                methodRegistry.append(matcher, handler, methodAttributeAppenderFactory, null), // TODO
+                                methodRegistry.append(matcher, handler, methodAttributeAppenderFactory, methodTransformer),
                                 ignored,
                                 typeAttributeAppender,
                                 classVisitorWrapper,
                                 fieldVisitorWrapper,
                                 methodVisitorWrapper,
-                                valueFilter);
+                                valueFilterFactory);
                     }
                 }
             }
@@ -1530,7 +1528,7 @@ public interface Builder<T> {
                             classVisitorWrapper,
                             fieldVisitorWrapper,
                             methodVisitorWrapper,
-                            valueFilter);
+                            valueFilterFactory);
                 }
 
                 // TODO: Inherited interface methods are not matched properly!

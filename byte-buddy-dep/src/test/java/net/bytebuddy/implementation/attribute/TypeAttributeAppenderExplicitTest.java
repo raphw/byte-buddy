@@ -9,7 +9,7 @@ import java.lang.annotation.Annotation;
 
 import static org.mockito.Mockito.*;
 
-public class TypeAttributeAppenderForAnnotationTest extends AbstractTypeAttributeAppenderTest {
+public class TypeAttributeAppenderExplicitTest extends AbstractTypeAttributeAppenderTest {
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {

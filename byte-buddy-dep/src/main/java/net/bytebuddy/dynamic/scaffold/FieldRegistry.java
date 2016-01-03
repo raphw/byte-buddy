@@ -45,7 +45,7 @@ public interface FieldRegistry {
 
             @Override
             public Record target(FieldDescription fieldDescription) {
-                return new Record.ForSimpleField(fieldDescription, AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS); // TODO
+                return new Record.ForSimpleField(fieldDescription);
             }
 
             @Override
@@ -207,7 +207,7 @@ public interface FieldRegistry {
                         return entry.bind(fieldDescription);
                     }
                 }
-                return new Record.ForSimpleField(fieldDescription, AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS); // TODO
+                return new Record.ForSimpleField(fieldDescription);
             }
 
             @Override
@@ -285,7 +285,7 @@ public interface FieldRegistry {
                 @Override
                 public int hashCode() {
                     int result = matcher.hashCode();
-                    result = 31 * attributeAppender.hashCode();
+                    result = 31 * result + attributeAppender.hashCode();
                     result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                     return result;
                 }

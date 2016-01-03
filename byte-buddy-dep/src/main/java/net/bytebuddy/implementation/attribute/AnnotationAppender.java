@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.*;
@@ -28,7 +29,7 @@ public interface AnnotationAppender {
      * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
      * the specified target.
      */
-    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility);
+    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, ValueFilter valueFilter);
 
     /**
      * Determines if an annotation should be written to a specified target and if the annotation should be marked
@@ -327,7 +328,16 @@ public interface AnnotationAppender {
          */
         boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription);
 
-        enum Default implements ValueFilter {
+        interface Factory {
+
+            ValueFilter on(TypeDescription instrumentedType);
+
+            ValueFilter on(FieldDescription fieldDescription);
+
+            ValueFilter on(MethodDescription methodDescription);
+        }
+
+        enum Default implements ValueFilter, Factory {
 
             SKIP_DEFAULTS {
                 @Override
@@ -343,6 +353,21 @@ public interface AnnotationAppender {
                     return true;
                 }
             };
+
+            @Override
+            public ValueFilter on(TypeDescription instrumentedType) {
+                return this;
+            }
+
+            @Override
+            public ValueFilter on(FieldDescription fieldDescription) {
+                return this;
+            }
+
+            @Override
+            public ValueFilter on(MethodDescription methodDescription) {
+                return this;
+            }
 
             @Override
             public String toString() {
@@ -363,19 +388,12 @@ public interface AnnotationAppender {
         private final Target target;
 
         /**
-         * The value filter to apply for discovering which values of an annotation should be written.
-         */
-        private final ValueFilter valueFilter;
-
-        /**
          * Creates a default annotation appender.
          *
          * @param target      The target to which annotations are written to.
-         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public Default(Target target, ValueFilter valueFilter) {
+        public Default(Target target) {
             this.target = target;
-            this.valueFilter = valueFilter;
         }
 
         /**
@@ -423,9 +441,9 @@ public interface AnnotationAppender {
         }
 
         @Override
-        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility) {
+        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, ValueFilter valueFilter) {
             if (!annotationVisibility.isSuppressed()) {
-                doAppend(annotation, annotationVisibility.isVisible());
+                doAppend(annotation, annotationVisibility.isVisible(), valueFilter);
             }
             return this;
         }
@@ -436,25 +454,24 @@ public interface AnnotationAppender {
          * @param annotation The annotation to be written.
          * @param visible    {@code true} if this annotation should be treated as visible at runtime.
          */
-        private void doAppend(AnnotationDescription annotation, boolean visible) {
+        private void doAppend(AnnotationDescription annotation, boolean visible, ValueFilter valueFilter) {
             handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, valueFilter);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && target.equals(((Default) other).target)
-                    && valueFilter.equals(((Default) other).valueFilter);
+                    && target.equals(((Default) other).target);
         }
 
         @Override
         public int hashCode() {
-            return target.hashCode() + 31 * valueFilter.hashCode();
+            return target.hashCode();
         }
 
         @Override
         public String toString() {
-            return "AnnotationAppender.Default{target=" + target + ", valueFilter=" + valueFilter + '}';
+            return "AnnotationAppender.Default{target=" + target + '}';
         }
     }
 }

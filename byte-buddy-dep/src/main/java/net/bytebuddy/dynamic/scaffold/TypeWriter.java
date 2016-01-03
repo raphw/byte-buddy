@@ -104,16 +104,13 @@ public interface TypeWriter<T> {
                  */
                 private final FieldDescription fieldDescription;
 
-                private final AnnotationAppender.ValueFilter valueFilter;
-
                 /**
                  * Creates a new record for a simple field.
                  *
                  * @param fieldDescription The described field.
                  */
-                public ForSimpleField(FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
+                public ForSimpleField(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
-                    this.valueFilter = valueFilter;
                 }
 
                 @Override
@@ -123,7 +120,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public FieldAttributeAppender getFieldAppender() {
-                    return new FieldAttributeAppender.ForInstrumentedField(valueFilter);
+                    return FieldAttributeAppender.ForInstrumentedField.INSTANCE;
                 }
 
                 @Override
@@ -149,23 +146,19 @@ public interface TypeWriter<T> {
 
                 @Override
                 public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ForSimpleField that = (ForSimpleField) other;
-                    return fieldDescription.equals(that.fieldDescription)
-                    && valueFilter.equals(that.valueFilter);
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && fieldDescription.equals(((ForSimpleField) other).fieldDescription);
                 }
 
                 @Override
                 public int hashCode() {
-                    return 31 * fieldDescription.hashCode() + valueFilter.hashCode();
+                    return fieldDescription.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "TypeWriter.FieldPool.Record.ForSimpleField{" +
                             "fieldDescription=" + fieldDescription +
-                            ", valueFilter=" + valueFilter +
                             '}';
                 }
             }
@@ -2840,7 +2833,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    attributeAppender.apply(this, instrumentedType, originalType.asGenericType());
+                    attributeAppender.apply(this, instrumentedType);
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
@@ -3207,7 +3200,7 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperType().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
-                attributeAppender.apply(classVisitor, instrumentedType, instrumentedType.getSuperType());
+                attributeAppender.apply(classVisitor, instrumentedType);
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor);
                 }

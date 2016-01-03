@@ -20,7 +20,6 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
@@ -377,10 +376,10 @@ public interface DynamicType {
         /**
          * Defines a new field for this type.
          *
-         * @param name                 The name of the method.
+         * @param name      The name of the method.
          * @param fieldType The type of this field where the current type can be represented by
-         *                             {@link net.bytebuddy.dynamic.TargetType}.
-         * @param modifier             The modifiers for this method.
+         *                  {@link net.bytebuddy.dynamic.TargetType}.
+         * @param modifier  The modifiers for this method.
          * @return An interception delegate that exclusively matches the new method.
          */
         FieldValueTarget<T> defineField(String name, TypeDefinition fieldType, ModifierContributor.ForField... modifier);
@@ -399,10 +398,10 @@ public interface DynamicType {
         /**
          * Defines a new field for this type.
          *
-         * @param name                 The name of the method.
+         * @param name      The name of the method.
          * @param fieldType The type of this field where the current type can be represented by
-         *                             {@link net.bytebuddy.dynamic.TargetType}.
-         * @param modifiers            The modifiers for this method.
+         *                  {@link net.bytebuddy.dynamic.TargetType}.
+         * @param modifiers The modifiers for this method.
          * @return An interception delegate that exclusively matches the new method.
          */
         FieldValueTarget<T> defineField(String name, TypeDefinition fieldType, int modifiers);
@@ -1618,8 +1617,7 @@ public interface DynamicType {
 
             @Override
             public Builder<S> annotateType(Collection<? extends AnnotationDescription> annotations) {
-                return attribute(new TypeAttributeAppender.ForAnnotation(new ArrayList<AnnotationDescription>(annotations),
-                        AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
+                return attribute(new TypeAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations)));
             }
 
             @Override
@@ -2195,7 +2193,7 @@ public interface DynamicType {
                 /**
                  * Creates a new subclass field annotation target for a field without a default value.
                  *
-                 * @param token               A token representing the field that was recently defined.
+                 * @param token                    A token representing the field that was recently defined.
                  * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
                  */
                 private DefaultFieldValueTarget(FieldDescription.Token token,
@@ -2206,7 +2204,7 @@ public interface DynamicType {
                 /**
                  * Creates a new subclass field annotation target.
                  *
-                 * @param token               A token representing the field that was recently defined.
+                 * @param token                    A token representing the field that was recently defined.
                  * @param attributeAppenderFactory The attribute appender factory that was defined for this field token.
                  * @param defaultValue             The default value to define for the recently defined field.
                  */
@@ -2299,7 +2297,7 @@ public interface DynamicType {
                 @Override
                 public FieldAnnotationTarget<S> attribute(FieldAttributeAppender.Factory attributeAppenderFactory) {
                     return new DefaultFieldValueTarget(token,
-                            new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory,attributeAppenderFactory));
+                            new FieldAttributeAppender.Factory.Compound(this.attributeAppenderFactory, attributeAppenderFactory));
                 }
 
                 @Override
@@ -2319,7 +2317,7 @@ public interface DynamicType {
 
                 @Override
                 public FieldAnnotationTarget<S> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new FieldAttributeAppender.ForAnnotations(AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS, new ArrayList<AnnotationDescription>(annotations)));
+                    return attribute(new FieldAttributeAppender.Explicit(new ArrayList<AnnotationDescription>(annotations)));
                 }
 
                 @Override
@@ -2712,8 +2710,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation((new ArrayList<AnnotationDescription>(annotations)),
-                            AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
+                    return attribute(new MethodAttributeAppender.Explicit((new ArrayList<AnnotationDescription>(annotations))));
                 }
 
                 @Override
@@ -2733,8 +2730,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodAnnotationTarget<S> annotateParameter(int parameterIndex, Collection<? extends AnnotationDescription> annotations) {
-                    return attribute(new MethodAttributeAppender.ForAnnotation(parameterIndex, new ArrayList<AnnotationDescription>(annotations),
-                            AnnotationAppender.ValueFilter.Default.APPEND_DEFAULTS));
+                    return attribute(new MethodAttributeAppender.Explicit(parameterIndex, new ArrayList<AnnotationDescription>(annotations)));
                 }
 
                 @Override
