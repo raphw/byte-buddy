@@ -2228,7 +2228,7 @@ public interface DynamicType {
                             attributeAppender,
                             ignoredMethods,
                             asmVisitorWrapper,
-                            fieldRegistry.include(new LatentMatcher.ForFieldToken(token), attributeAppenderFactory, defaultValue),
+                            fieldRegistry.include(new LatentMatcher.ForFieldToken(token), attributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
                             methodRegistry,
                             methodGraphCompiler,
                             defaultFieldAttributeAppenderFactory,

@@ -1110,7 +1110,7 @@ public interface Builder<T> {
                 @Override
                 protected Builder<U> materialize() {
                     return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withField(token),
-                            fieldRegistry.include(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue),
+                            fieldRegistry.include(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
                             methodRegistry,
                             ignored,
                             typeAttributeAppender,
@@ -1150,7 +1150,7 @@ public interface Builder<T> {
                 @Override
                 protected Builder<U> materialize() {
                     return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
-                            fieldRegistry.include(matcher, fieldAttributeAppenderFactory, defaultValue),
+                            fieldRegistry.include(matcher, fieldAttributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
                             methodRegistry,
                             ignored,
                             typeAttributeAppender,

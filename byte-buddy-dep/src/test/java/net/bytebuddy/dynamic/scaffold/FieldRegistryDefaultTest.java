@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.dynamic.FieldTransformer;
 import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -32,7 +33,7 @@ public class FieldRegistryDefaultTest {
     private FieldAttributeAppender distinct;
 
     @Mock
-    private FieldDescription knownField, unknownField;
+    private FieldDescription knownField, unknownField, instrumentedField;
 
     @Mock
     private LatentMatcher<FieldDescription> latentMatcher;
@@ -43,12 +44,16 @@ public class FieldRegistryDefaultTest {
     @Mock
     private Object defaultValue, otherDefaultValue;
 
+    @Mock
+    private FieldTransformer fieldTransformer;
+
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(distinctFactory.make(instrumentedType)).thenReturn(distinct);
         when(latentMatcher.resolve(instrumentedType)).thenReturn((ElementMatcher) matcher);
         when(matcher.matches(knownField)).thenReturn(true);
+        when(fieldTransformer.transform(instrumentedType, knownField)).thenReturn(instrumentedField);
     }
 
     @Test
@@ -63,10 +68,12 @@ public class FieldRegistryDefaultTest {
     @Test
     public void testKnownFieldRegistered() throws Exception {
         TypeWriter.FieldPool fieldPool = new FieldRegistry.Default()
-                .include(latentMatcher, distinctFactory, defaultValue)
+                .include(latentMatcher, distinctFactory, defaultValue, fieldTransformer)
                 .compile(instrumentedType);
+        assertThat(fieldPool.target(knownField).getField(), is(instrumentedField));
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
         assertThat(fieldPool.target(knownField).resolveDefault(otherDefaultValue), is(defaultValue));
+        assertThat(fieldPool.target(unknownField).getField(), is(unknownField));
         assertThat(fieldPool.target(unknownField).resolveDefault(otherDefaultValue), is(otherDefaultValue));
         assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
     }

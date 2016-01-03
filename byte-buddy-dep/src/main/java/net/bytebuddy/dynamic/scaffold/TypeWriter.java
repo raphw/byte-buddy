@@ -2892,10 +2892,11 @@ public interface TypeWriter<T> {
 
                 protected FieldVisitor redefine(FieldDescription fieldDescription, Object defaultValue) {
                     FieldPool.Record record = fieldPool.target(fieldDescription);
-                    return new AttributeObtainingFieldVisitor(super.visitField(fieldDescription.getModifiers(),
-                            fieldDescription.getInternalName(),
-                            fieldDescription.getDescriptor(),
-                            fieldDescription.getGenericSignature(),
+                    FieldDescription instrumentedField = record.getField();
+                    return new AttributeObtainingFieldVisitor(super.visitField(instrumentedField.getModifiers(),
+                            instrumentedField.getInternalName(),
+                            instrumentedField.getDescriptor(),
+                            instrumentedField.getGenericSignature(),
                             record.resolveDefault(defaultValue)), record);
                 }
 
