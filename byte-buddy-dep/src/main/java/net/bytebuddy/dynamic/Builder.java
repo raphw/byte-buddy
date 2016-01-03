@@ -162,8 +162,6 @@ public interface Builder<T> {
             FieldDefinition.Optional<U> value(double value);
 
             FieldDefinition.Optional<U> value(String value);
-
-            FieldDefinition.Optional<U> withoutValue();
         }
 
         interface Optional<U> extends FieldDefinition<U>, Builder<U> {
@@ -212,9 +210,7 @@ public interface Builder<T> {
 
                         protected final Object defaultValue;
 
-                        protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                          Transformer<FieldDescription> transformer,
-                                          Object defaultValue) {
+                        protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, Transformer<FieldDescription> transformer, Object defaultValue) {
                             this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
                             this.transformer = transformer;
                             this.defaultValue = defaultValue;
@@ -235,14 +231,7 @@ public interface Builder<T> {
                             return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
                         }
 
-                        @Override
-                        public Optional<V> withoutValue() {
-                            return materialize(fieldAttributeAppenderFactory, transformer, FieldDescription.NO_DEFAULT_VALUE);
-                        }
-
-                        protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                                                   Transformer<FieldDescription> transformer,
-                                                                                   Object defaultValue);
+                        protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, Transformer<FieldDescription> transformer, Object defaultValue);
                     }
                 }
             }

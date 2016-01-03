@@ -210,7 +210,9 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Object resolveDefault(Object defaultValue) {
-                    return this.defaultValue;
+                    return this.defaultValue == null
+                            ? defaultValue
+                            : this.defaultValue;
                 }
 
                 @Override
