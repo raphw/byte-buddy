@@ -149,7 +149,7 @@ public interface Builder<T> {
 
         FieldDefinition.Optional<S> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory);
 
-        FieldDefinition.Optional<S> transform(Transformer<FieldDescription> transformer);
+        FieldDefinition.Optional<S> transform(FieldTransformer fieldTransformer);
 
         interface Valuable<U> extends FieldDefinition<U> {
 
@@ -208,32 +208,32 @@ public interface Builder<T> {
 
                         protected final FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
 
-                        protected final Transformer<FieldDescription> transformer;
+                        protected final FieldTransformer fieldTransformer;
 
                         protected final Object defaultValue;
 
-                        protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, Transformer<FieldDescription> transformer, Object defaultValue) {
+                        protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue) {
                             this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
-                            this.transformer = transformer;
+                            this.fieldTransformer = fieldTransformer;
                             this.defaultValue = defaultValue;
                         }
 
                         @Override
                         public FieldDefinition.Optional<V> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory) {
-                            return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), transformer, defaultValue);
+                            return materialize(new FieldAttributeAppender.Factory.Compound(this.fieldAttributeAppenderFactory, fieldAttributeAppenderFactory), fieldTransformer, defaultValue);
                         }
 
                         @Override
-                        public FieldDefinition.Optional<V> transform(Transformer<FieldDescription> transformer) {
-                            return materialize(fieldAttributeAppenderFactory, new Transformer.Compound<FieldDescription>(this.transformer, transformer), defaultValue);
+                        public FieldDefinition.Optional<V> transform(FieldTransformer fieldTransformer) {
+                            return materialize(fieldAttributeAppenderFactory, new FieldTransformer.Compound(this.fieldTransformer, fieldTransformer), defaultValue);
                         }
 
                         @Override
                         protected FieldDefinition.Optional<V> defaultValue(Object defaultValue) {
-                            return materialize(fieldAttributeAppenderFactory, transformer, defaultValue);
+                            return materialize(fieldAttributeAppenderFactory, fieldTransformer, defaultValue);
                         }
 
-                        protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, Transformer<FieldDescription> transformer, Object defaultValue);
+                        protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue);
                     }
                 }
             }
@@ -278,7 +278,7 @@ public interface Builder<T> {
 
         MethodDefinition<S> attribute(MethodAttributeAppender.Factory methodAttributeAppenderFactory);
 
-        MethodDefinition<S> transform(Transformer<MethodDescription> transformer);
+        MethodDefinition<S> transform(MethodTransformer methodTransformer);
 
         interface ImplementationDefinition<U> {
 
@@ -645,25 +645,25 @@ public interface Builder<T> {
 
                 protected final MethodAttributeAppender.Factory methodAttributeAppenderFactory;
 
-                protected final Transformer<MethodDescription> transformer;
+                protected final MethodTransformer methodTransformer;
 
-                public Adapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
+                public Adapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
                     this.handler = handler;
                     this.methodAttributeAppenderFactory = methodAttributeAppenderFactory;
-                    this.transformer = transformer;
+                    this.methodTransformer = methodTransformer;
                 }
 
                 @Override
                 public MethodDefinition<V> attribute(MethodAttributeAppender.Factory methodAttributeAppenderFactory) {
-                    return materialize(handler, new MethodAttributeAppender.Factory.Compound(this.methodAttributeAppenderFactory, methodAttributeAppenderFactory), transformer);
+                    return materialize(handler, new MethodAttributeAppender.Factory.Compound(this.methodAttributeAppenderFactory, methodAttributeAppenderFactory), methodTransformer);
                 }
 
                 @Override
-                public MethodDefinition<V> transform(Transformer<MethodDescription> transformer) {
-                    return materialize(handler, methodAttributeAppenderFactory, new Transformer.Compound<MethodDescription>(this.transformer, transformer));
+                public MethodDefinition<V> transform(MethodTransformer methodTransformer) {
+                    return materialize(handler, methodAttributeAppenderFactory, new MethodTransformer.Compound(this.methodTransformer, methodTransformer));
                 }
 
-                protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer);
+                protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer);
             }
         }
     }
@@ -1155,20 +1155,20 @@ public interface Builder<T> {
                 private final FieldDescription.Token token;
 
                 protected FieldDefinitionAdapter(FieldDescription.Token token) {
-                    this(FieldAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<FieldDescription>make(), FieldDescription.NO_DEFAULT_VALUE, token); // TODO: Field appender
+                    this(FieldAttributeAppender.NoOp.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, token); // TODO: Field appender
                 }
 
                 protected FieldDefinitionAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                 Transformer<FieldDescription> transformer,
+                                                 FieldTransformer fieldTransformer,
                                                  Object defaultValue,
                                                  FieldDescription.Token token) {
-                    super(fieldAttributeAppenderFactory, transformer, defaultValue);
+                    super(fieldAttributeAppenderFactory, fieldTransformer, defaultValue);
                     this.token = token;
                 }
 
                 @Override
                 public Optional<U> annotateField(Collection<? extends AnnotationDescription> annotations) {
-                    return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, new FieldDescription.Token(token.getName(),
+                    return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, new FieldDescription.Token(token.getName(),
                             token.getModifiers(),
                             token.getType(),
                             CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
@@ -1188,9 +1188,9 @@ public interface Builder<T> {
 
                 @Override
                 protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                  Transformer<FieldDescription> transformer,
+                                                  FieldTransformer fieldTransformer,
                                                   Object defaultValue) {
-                    return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, token);
+                    return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, token);
                 }
             }
 
@@ -1199,14 +1199,14 @@ public interface Builder<T> {
                 private final LatentMatcher<? super FieldDescription> matcher;
 
                 protected FieldMatchAdapter(LatentMatcher<? super FieldDescription> matcher) {
-                    this(FieldAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<FieldDescription>make(), FieldDescription.NO_DEFAULT_VALUE, matcher);
+                    this(FieldAttributeAppender.NoOp.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, matcher);
                 }
 
                 protected FieldMatchAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                            Transformer<FieldDescription> transformer,
+                                            FieldTransformer fieldTransformer,
                                             Object defaultValue,
                                             LatentMatcher<? super FieldDescription> matcher) {
-                    super(fieldAttributeAppenderFactory, transformer, defaultValue);
+                    super(fieldAttributeAppenderFactory, fieldTransformer, defaultValue);
                     this.matcher = matcher;
                 }
 
@@ -1228,10 +1228,8 @@ public interface Builder<T> {
                 }
 
                 @Override
-                protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
-                                                  Transformer<FieldDescription> transformer,
-                                                  Object defaultValue) {
-                    return new FieldMatchAdapter(fieldAttributeAppenderFactory, transformer, defaultValue, matcher);
+                protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue) {
+                    return new FieldMatchAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, matcher);
                 }
             }
 
@@ -1368,11 +1366,11 @@ public interface Builder<T> {
                     protected AnnotationAdapter(MethodRegistry.Handler handler) {
                         this(handler,
                                 MethodAttributeAppender.NoOp.INSTANCE, // TODO
-                                Transformer.NoOp.<MethodDescription>make());
+                                MethodTransformer.NoOp.INSTANCE);
                     }
 
-                    protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
-                        super(handler, methodAttributeAppenderFactory, transformer);
+                    protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
+                        super(handler, methodAttributeAppenderFactory, methodTransformer);
                     }
 
                     @Override
@@ -1384,7 +1382,7 @@ public interface Builder<T> {
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),
                                 token.getAnnotations(),
-                                token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                                token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                     }
 
                     @Override
@@ -1401,12 +1399,12 @@ public interface Builder<T> {
                                 parameterTokens,
                                 token.getExceptionTypes(),
                                 token.getAnnotations(),
-                                token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                                token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                     }
 
                     @Override
-                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
-                        return new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
+                        return new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                     }
 
                     @Override
@@ -1453,30 +1451,30 @@ public interface Builder<T> {
                 protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
 
                     protected AnnotationAdapter(MethodRegistry.Handler handler) {
-                        this(handler, MethodAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<MethodDescription>make());
+                        this(handler, MethodAttributeAppender.NoOp.INSTANCE, MethodTransformer.NoOp.INSTANCE);
                     }
 
-                    protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
-                        super(handler, methodAttributeAppenderFactory, transformer);
+                    protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
+                        super(handler, methodAttributeAppenderFactory, methodTransformer);
                     }
 
                     @Override
                     public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
                         return new AnnotationAdapter(handler,
                                 new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForAnnotation(null)),  // TODO
-                                transformer);
+                                methodTransformer);
                     }
 
                     @Override
                     public MethodDefinition<U> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations) {
                         return new AnnotationAdapter(handler,
                                 new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForAnnotation(index, null)),  // TODO
-                                transformer);
+                                methodTransformer);
                     }
 
                     @Override
-                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, Transformer<MethodDescription> transformer) {
-                        return new AnnotationAdapter(handler, methodAttributeAppenderFactory, transformer);
+                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
+                        return new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                     }
 
                     @Override

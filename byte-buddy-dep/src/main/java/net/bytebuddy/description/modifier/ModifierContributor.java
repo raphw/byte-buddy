@@ -85,7 +85,10 @@ public interface ModifierContributor {
         }
 
         public int resolve() {
-            int modifiers = EMPTY_MASK;
+            return resolve(EMPTY_MASK);
+        }
+
+        public int resolve(int modifiers) {
             for (T modifierContributor : modifierContributors) {
                 modifiers = (modifiers & ~modifierContributor.getRange()) | modifierContributor.getMask();
             }

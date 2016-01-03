@@ -38,7 +38,7 @@ public class MethodTransformerSimpleTest {
     private TypeDescription instrumentedType, rawDeclaringType, rawReturnType, rawParameterType;
 
     @Mock
-    private MethodTransformer.Simple.Transformer transformer;
+    private MethodTransformer.Simple.TokenTransformer tokenTransformer;
 
     @Mock
     private MethodDescription methodDescription;
@@ -101,8 +101,8 @@ public class MethodTransformerSimpleTest {
 
     @Test
     public void testSimpleTransformation() throws Exception {
-        when(transformer.transform(methodToken)).thenReturn(methodToken);
-        MethodDescription transformed = new MethodTransformer.Simple(transformer).transform(instrumentedType, methodDescription);
+        when(tokenTransformer.transform(methodToken)).thenReturn(methodToken);
+        MethodDescription transformed = new MethodTransformer.Simple(tokenTransformer).transform(instrumentedType, methodDescription);
         assertThat(transformed.getDeclaringType(), is((TypeDefinition) declaringType));
         assertThat(transformed.getInternalName(), is(FOO));
         assertThat(transformed.getModifiers(), is(MODIFIERS));
@@ -124,7 +124,7 @@ public class MethodTransformerSimpleTest {
 
     @Test
     public void testModifierTransformation() throws Exception {
-        MethodDescription.Token transformed = new MethodTransformer.Simple.Transformer.ForModifierTransformation(Collections.singletonList(modifierContributor))
+        MethodDescription.Token transformed = new MethodTransformer.Simple.TokenTransformer.ForModifierTransformation(Collections.singletonList(modifierContributor))
                 .transform(methodToken);
         assertThat(transformed.getName(), is(FOO));
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));
@@ -141,6 +141,6 @@ public class MethodTransformerSimpleTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodTransformer.Simple.class).apply();
-        ObjectPropertyAssertion.of(MethodTransformer.Simple.Transformer.ForModifierTransformation.class).apply();
+        ObjectPropertyAssertion.of(MethodTransformer.Simple.TokenTransformer.ForModifierTransformation.class).apply();
     }
 }
