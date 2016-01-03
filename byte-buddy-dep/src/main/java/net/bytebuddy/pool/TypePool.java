@@ -44,8 +44,7 @@ public interface TypePool {
      * @param name The name of the type to describe. The name is to be written as when calling {@link Object#toString()}
      *             on a loaded {@link java.lang.Class}.
      * @return A resolution of the type to describe. If the type to be described was found, the returned
-     * {@link net.bytebuddy.pool.TypePool.Resolution} represents this type. Otherwise, an illegal resolution is
-     * returned.
+     * {@link net.bytebuddy.pool.TypePool.Resolution} represents this type. Otherwise, an illegal resolution is returned.
      */
     Resolution describe(String name);
 
@@ -929,11 +928,6 @@ public interface TypePool {
         private static final MethodVisitor IGNORE_METHOD = null;
 
         /**
-         * The ASM version that is applied when reading class files.
-         */
-        private static final int ASM_API_VERSION = Opcodes.ASM5;
-
-        /**
          * The locator to query for finding binary data of a type.
          */
         protected final ClassFileLocator classFileLocator;
@@ -1271,7 +1265,7 @@ public interface TypePool {
                  * Creates a new rejecting signature visitor.
                  */
                 public RejectingSignatureVisitor() {
-                    super(ASM_API_VERSION);
+                    super(Opcodes.ASM5);
                 }
 
                 @Override
@@ -1715,7 +1709,7 @@ public interface TypePool {
                     /**
                      * The separator that indicates an inner type.
                      */
-                    private static final char INNER_CLASS_SEPERATOR = '$';
+                    private static final char INNER_CLASS_SEPARATOR = '$';
 
                     /**
                      * The internal name of the type.
@@ -1752,7 +1746,7 @@ public interface TypePool {
 
                     @Override
                     public String getName() {
-                        return outerTypeToken.getName() + INNER_CLASS_SEPERATOR + internalName.replace('/', '.');
+                        return outerTypeToken.getName() + INNER_CLASS_SEPARATOR + internalName.replace('/', '.');
                     }
 
                     @Override
@@ -1874,7 +1868,7 @@ public interface TypePool {
                     private final List<LazyTypeDescription.GenericTypeToken> interfaceTypeTokens;
 
                     /**
-                     * The super type's generic siagnature.
+                     * The super type's generic signature.
                      */
                     private LazyTypeDescription.GenericTypeToken superTypeToken;
 
@@ -2315,7 +2309,7 @@ public interface TypePool {
              * Creates a new type extractor.
              */
             protected TypeExtractor() {
-                super(ASM_API_VERSION);
+                super(Opcodes.ASM5);
                 annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
                 fieldTokens = new LinkedList<LazyTypeDescription.FieldToken>();
                 methodTokens = new LinkedList<LazyTypeDescription.MethodToken>();
@@ -2489,7 +2483,7 @@ public interface TypePool {
                  */
                 protected AnnotationExtractor(AnnotationRegistrant annotationRegistrant,
                                               ComponentTypeLocator componentTypeLocator) {
-                    super(ASM_API_VERSION);
+                    super(Opcodes.ASM5);
                     this.annotationRegistrant = annotationRegistrant;
                     this.componentTypeLocator = componentTypeLocator;
                 }
@@ -2684,7 +2678,7 @@ public interface TypePool {
                                          String internalName,
                                          String descriptor,
                                          String genericSignature) {
-                    super(ASM_API_VERSION);
+                    super(Opcodes.ASM5);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
                     this.descriptor = descriptor;
@@ -2845,7 +2839,7 @@ public interface TypePool {
                                           String descriptor,
                                           String genericSignature,
                                           String[] exceptionName) {
-                    super(ASM_API_VERSION);
+                    super(Opcodes.ASM5);
                     this.modifiers = modifiers;
                     this.internalName = internalName;
                     this.descriptor = descriptor;
@@ -3120,7 +3114,7 @@ public interface TypePool {
             }
 
             /**
-             * Returns a class loading type pool that does not attempt to parse a class file but immediatly falls back to loading one.
+             * Returns a class loading type pool that does not attempt to parse a class file but immediately falls back to loading one.
              *
              * @param classLoader The class loader to query.
              * @return An appropriate type pool.
@@ -3204,7 +3198,7 @@ public interface TypePool {
             }
 
             /**
-             * Creates a new precomputed type pool with the {@link Object} type being precomuted.
+             * Creates a new precomputed type pool with the {@link Object} type being precomputed.
              *
              * @param cacheProvider    The cache provider to be used.
              * @param classFileLocator The class file locator to be used.
@@ -3943,7 +3937,7 @@ public interface TypePool {
             TypeDefinition.Sort getSort();
 
             /**
-             * Transforms this token into a generic type reprsentation.
+             * Transforms this token into a generic type representation.
              *
              * @param typePool           The type pool to be used for locating non-generic type descriptions.
              * @param typeVariableSource The type variable source.

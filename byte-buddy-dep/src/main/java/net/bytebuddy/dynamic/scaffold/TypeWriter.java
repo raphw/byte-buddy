@@ -269,7 +269,7 @@ public interface TypeWriter<T> {
             Sort getSort();
 
             /**
-             * Returns the method that is implemented where the returned method ressembles a potential transformation. An implemented
+             * Returns the method that is implemented where the returned method resembles a potential transformation. An implemented
              * method is only defined if a method is not {@link Record.Sort#SKIPPED}.
              *
              * @return The implemented method.
@@ -958,7 +958,7 @@ public interface TypeWriter<T> {
                 }
 
                 /**
-                 * Wrapps the given record in an accessor bridge wrapper if necessary.
+                 * Wraps the given record in an accessor bridge wrapper if necessary.
                  *
                  * @param delegate          The delegate for implementing the bridge's target.
                  * @param instrumentedType  The instrumented type that defines the bridge methods and the bridge target.
@@ -1223,11 +1223,6 @@ public interface TypeWriter<T> {
          * A flag for ASM not to automatically compute any information such as operand stack sizes and stack map frames.
          */
         protected static final int ASM_NO_FLAGS = 0;
-
-        /**
-         * The ASM API version to use.
-         */
-        protected static final int ASM_API_VERSION = Opcodes.ASM5;
 
         /**
          * The instrumented type that is to be written.
@@ -1531,7 +1526,7 @@ public interface TypeWriter<T> {
              * @param classVisitor The class visitor to which any calls are delegated to.
              */
             protected ValidatingClassVisitor(ClassVisitor classVisitor) {
-                super(ASM_API_VERSION, classVisitor);
+                super(Opcodes.ASM5, classVisitor);
             }
 
             @Override
@@ -1682,12 +1677,12 @@ public interface TypeWriter<T> {
                 enum ForClass implements Constraint {
 
                     /**
-                     * Represents the constrainsts of a non-abstract class.
+                     * Represents the constraints of a non-abstract class.
                      */
                     MANIFEST(true),
 
                     /**
-                     * Represents the constrainsts of an abstract class.
+                     * Represents the constraints of an abstract class.
                      */
                     ABSTRACT(false);
 
@@ -2263,7 +2258,7 @@ public interface TypeWriter<T> {
                  * @param fieldVisitor The field visitor to which any calls are delegated to.
                  */
                 protected ValidatingFieldVisitor(FieldVisitor fieldVisitor) {
-                    super(ASM_API_VERSION, fieldVisitor);
+                    super(Opcodes.ASM5, fieldVisitor);
                 }
 
                 @Override
@@ -2297,7 +2292,7 @@ public interface TypeWriter<T> {
                  * @param name          The name of the method being visited.
                  */
                 protected ValidatingMethodVisitor(MethodVisitor methodVisitor, String name) {
-                    super(ASM_API_VERSION, methodVisitor);
+                    super(Opcodes.ASM5, methodVisitor);
                     this.name = name;
                 }
 
@@ -2417,11 +2412,6 @@ public interface TypeWriter<T> {
             private static final TypeDescription NO_SUPER_CLASS = null;
 
             /**
-             * Indicates that a method should be retained.
-             */
-            private static final MethodDescription RETAIN_METHOD = null;
-
-            /**
              * Indicates that a method should be ignored.
              */
             private static final MethodVisitor IGNORE_METHOD = null;
@@ -2447,7 +2437,7 @@ public interface TypeWriter<T> {
             private final MethodRebaseResolver methodRebaseResolver;
 
             /**
-             * Creates a new type writer for inling a type into an existing type description.
+             * Creates a new type writer for inlining a type into an existing type description.
              *
              * @param instrumentedType             The instrumented type that is to be written.
              * @param loadedTypeInitializer        The loaded type initializer of the instrumented type.
@@ -2672,7 +2662,7 @@ public interface TypeWriter<T> {
                  * @param remapper     The remapper to use for renaming the instrumented type.
                  */
                 protected FramePreservingRemapper(ClassVisitor classVisitor, Remapper remapper) {
-                    super(ASM_API_VERSION, classVisitor, remapper);
+                    super(Opcodes.ASM5, classVisitor, remapper);
                 }
 
                 /**
@@ -2719,7 +2709,7 @@ public interface TypeWriter<T> {
                      * @param remapper      The remapper to use for renaming the instrumented type.
                      */
                     public FramePreservingMethodRemapper(int modifiers, String descriptor, MethodVisitor methodVisitor, Remapper remapper) {
-                        super(ASM_API_VERSION, modifiers, descriptor, methodVisitor, remapper);
+                        super(Opcodes.ASM5, modifiers, descriptor, methodVisitor, remapper);
                     }
 
                     @Override
@@ -2796,7 +2786,7 @@ public interface TypeWriter<T> {
                  * @param implementationContext The implementation context to use for implementing the class file.
                  */
                 protected RedefinitionClassVisitor(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
-                    super(ASM_API_VERSION, classVisitor);
+                    super(Opcodes.ASM5, classVisitor);
                     this.implementationContext = implementationContext;
                     List<? extends FieldDescription> fieldDescriptions = instrumentedType.getDeclaredFields();
                     declaredFields = new HashMap<String, FieldDescription>();
@@ -2869,7 +2859,7 @@ public interface TypeWriter<T> {
                         }
                     }
                     MethodDescription methodDescription = declarableMethods.remove(internalName + descriptor);
-                    return methodDescription == RETAIN_METHOD
+                    return methodDescription == null
                             ? super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionTypeInternalName)
                             : redefine(methodDescription, (modifiers & Opcodes.ACC_ABSTRACT) != 0);
                 }
@@ -2957,7 +2947,7 @@ public interface TypeWriter<T> {
                     protected CodePreservingMethodVisitor(MethodVisitor actualMethodVisitor,
                                                           MethodPool.Record record,
                                                           MethodRebaseResolver.Resolution resolution) {
-                        super(ASM_API_VERSION, actualMethodVisitor);
+                        super(Opcodes.ASM5, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.record = record;
                         this.resolution = resolution;
@@ -3022,7 +3012,7 @@ public interface TypeWriter<T> {
                      * @param record              The method pool entry to apply.
                      */
                     protected AttributeObtainingMethodVisitor(MethodVisitor actualMethodVisitor, MethodPool.Record record) {
-                        super(ASM_API_VERSION, actualMethodVisitor);
+                        super(Opcodes.ASM5, actualMethodVisitor);
                         this.actualMethodVisitor = actualMethodVisitor;
                         this.record = record;
                         record.applyHead(actualMethodVisitor);
