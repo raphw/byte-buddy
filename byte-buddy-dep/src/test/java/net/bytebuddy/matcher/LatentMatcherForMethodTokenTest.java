@@ -16,7 +16,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
-public class LatentMethodMatcherForTokenTest {
+public class LatentMatcherForMethodTokenTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -39,17 +39,17 @@ public class LatentMethodMatcherForTokenTest {
     @Test
     public void testMatch() throws Exception {
         when(methodDescription.asToken()).thenReturn(methodToken);
-        assertThat(new LatentMethodMatcher.ForToken(methodToken).resolve(instrumentedType).matches(methodDescription), is(true));
+        assertThat(new LatentMatcher.ForMethodToken(methodToken).resolve(instrumentedType).matches(methodDescription), is(true));
     }
 
     @Test
     public void testNoMatch() throws Exception {
         when(methodDescription.asToken()).thenReturn(otherToken);
-        assertThat(new LatentMethodMatcher.ForToken(methodToken).resolve(instrumentedType).matches(methodDescription), is(false));
+        assertThat(new LatentMatcher.ForMethodToken(methodToken).resolve(instrumentedType).matches(methodDescription), is(false));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LatentMethodMatcher.ForToken.class).apply();
+        ObjectPropertyAssertion.of(LatentMatcher.ForMethodToken.class).apply();
     }
 }

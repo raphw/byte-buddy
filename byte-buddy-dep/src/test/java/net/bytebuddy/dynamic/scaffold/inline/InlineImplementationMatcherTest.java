@@ -4,7 +4,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -35,11 +35,11 @@ public class InlineImplementationMatcherTest {
     @Mock
     private ElementMatcher<? super MethodDescription> ignoredMethods, predefinedMethods;
 
-    private LatentMethodMatcher latentMethodMatcher;
+    private LatentMatcher<MethodDescription> matcher;
 
     @Before
     public void setUp() throws Exception {
-        latentMethodMatcher = new InliningImplementationMatcher(ignoredMethods, predefinedMethods);
+        matcher = new InliningImplementationMatcher(ignoredMethods, predefinedMethods);
         when(rawTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(rawTypeDescription.asGenericType()).thenReturn(typeDescription);
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
@@ -56,7 +56,7 @@ public class InlineImplementationMatcherTest {
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
-        assertThat(latentMethodMatcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test
@@ -66,7 +66,7 @@ public class InlineImplementationMatcherTest {
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
-        assertThat(latentMethodMatcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
     }
 
     @Test
@@ -76,7 +76,7 @@ public class InlineImplementationMatcherTest {
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
-        assertThat(latentMethodMatcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test
@@ -86,7 +86,7 @@ public class InlineImplementationMatcherTest {
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
-        assertThat(latentMethodMatcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test
@@ -96,7 +96,7 @@ public class InlineImplementationMatcherTest {
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(predefinedMethods.matches(methodDescription)).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
-        assertThat(latentMethodMatcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
     }
 
     @Test
@@ -106,7 +106,7 @@ public class InlineImplementationMatcherTest {
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
         when(predefinedMethods.matches(methodDescription)).thenReturn(false);
         when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
-        assertThat(latentMethodMatcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
     }
 
     @Test

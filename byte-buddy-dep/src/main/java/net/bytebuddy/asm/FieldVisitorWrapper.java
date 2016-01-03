@@ -5,6 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.FieldVisitor;
 
+import java.util.Arrays;
 import java.util.List;
 
 public interface FieldVisitorWrapper {
@@ -43,6 +44,10 @@ public interface FieldVisitorWrapper {
     class Compound implements FieldVisitorWrapper {
 
         private final List<? extends FieldVisitorWrapper> fieldVisitorWrappers;
+
+        public Compound(FieldVisitorWrapper... fieldVisitorWrapper) {
+            this(Arrays.asList(fieldVisitorWrapper));
+        }
 
         public Compound(List<? extends FieldVisitorWrapper> fieldVisitorWrappers) {
             this.fieldVisitorWrappers = fieldVisitorWrappers;

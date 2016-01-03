@@ -4,14 +4,14 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.ElementMatchers;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
  * A latent method matcher that identifies methods to instrument when redefining or rebasing a type.
  */
-public class InliningImplementationMatcher implements LatentMethodMatcher {
+public class InliningImplementationMatcher implements LatentMatcher<MethodDescription> {
 
     /**
      * A method matcher that matches any ignored method.
@@ -44,7 +44,7 @@ public class InliningImplementationMatcher implements LatentMethodMatcher {
      * @param originalType   The original type of the instrumentation before adding any user methods.
      * @return A latent method matcher that identifies any method to instrument for a rebasement or redefinition.
      */
-    protected static LatentMethodMatcher of(ElementMatcher<? super MethodDescription> ignoredMethods, TypeDescription originalType) {
+    protected static LatentMatcher<MethodDescription> of(ElementMatcher<? super MethodDescription> ignoredMethods, TypeDescription originalType) {
         ElementMatcher.Junction<MethodDescription> predefinedMethodSignatures = none();
         for (MethodDescription methodDescription : originalType.getDeclaredMethods()) {
             ElementMatcher.Junction<MethodDescription> signature = methodDescription.isConstructor()

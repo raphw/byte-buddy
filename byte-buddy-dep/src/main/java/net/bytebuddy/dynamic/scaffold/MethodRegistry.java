@@ -10,7 +10,7 @@ import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.utility.CompoundList;
 
 import java.util.*;
@@ -31,7 +31,7 @@ public interface MethodRegistry {
      * @param methodTransformer        The method transformer to be applied to implemented methods.
      * @return A mutated version of this method registry.
      */
-    MethodRegistry prepend(LatentMethodMatcher methodMatcher,
+    MethodRegistry prepend(LatentMatcher<? super MethodDescription> methodMatcher,
                            Handler handler,
                            MethodAttributeAppender.Factory attributeAppenderFactory,
                            MethodTransformer methodTransformer);
@@ -45,7 +45,7 @@ public interface MethodRegistry {
      * @param methodTransformer        The method transformer to be applied to implemented methods.
      * @return A mutated version of this method registry.
      */
-    MethodRegistry append(LatentMethodMatcher methodMatcher,
+    MethodRegistry append(LatentMatcher<? super MethodDescription> methodMatcher,
                           Handler handler,
                           MethodAttributeAppender.Factory attributeAppenderFactory,
                           MethodTransformer methodTransformer);
@@ -58,7 +58,7 @@ public interface MethodRegistry {
      * @param methodFilter        A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
-    Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMethodMatcher methodFilter);
+    Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMatcher<? super MethodDescription> methodFilter);
 
     /**
      * A handler for implementing a method.
@@ -450,25 +450,25 @@ public interface MethodRegistry {
         }
 
         @Override
-        public MethodRegistry prepend(LatentMethodMatcher methodMatcher,
+        public MethodRegistry prepend(LatentMatcher<? super MethodDescription> matcher,
                                       Handler handler,
                                       MethodAttributeAppender.Factory attributeAppenderFactory,
                                       MethodTransformer methodTransformer) {
-            return new Default(CompoundList.of(new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer), entries));
+            return new Default(CompoundList.of(new Entry(matcher, handler, attributeAppenderFactory, methodTransformer), entries));
         }
 
         @Override
-        public MethodRegistry append(LatentMethodMatcher methodMatcher,
+        public MethodRegistry append(LatentMatcher<? super MethodDescription> matcher,
                                      Handler handler,
                                      MethodAttributeAppender.Factory attributeAppenderFactory,
                                      MethodTransformer methodTransformer) {
-            return new Default(CompoundList.of(entries, new Entry(methodMatcher, handler, attributeAppenderFactory, methodTransformer)));
+            return new Default(CompoundList.of(entries, new Entry(matcher, handler, attributeAppenderFactory, methodTransformer)));
         }
 
         @Override
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodGraph.Compiler methodGraphCompiler,
-                                               LatentMethodMatcher methodFilter) {
+                                               LatentMatcher<? super MethodDescription> methodFilter) {
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
             Set<Handler> handlers = new HashSet<Handler>();
             MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
@@ -548,12 +548,12 @@ public interface MethodRegistry {
         /**
          * An entry of a default method registry.
          */
-        protected static class Entry implements LatentMethodMatcher {
+        protected static class Entry implements LatentMatcher<MethodDescription> {
 
             /**
              * The latent method matcher that this entry represents.
              */
-            private final LatentMethodMatcher methodMatcher;
+            private final LatentMatcher<? super MethodDescription> matcher;
 
             /**
              * The handler to apply to all matched entries.
@@ -573,16 +573,16 @@ public interface MethodRegistry {
             /**
              * Creates a new entry.
              *
-             * @param methodMatcher            The latent method matcher that this entry represents.
+             * @param matcher                  The latent method matcher that this entry represents.
              * @param handler                  The handler to apply to all matched entries.
              * @param attributeAppenderFactory A method attribute appender factory to apply to all entries.
              * @param methodTransformer        The method transformer to be applied to implemented methods.
              */
-            protected Entry(LatentMethodMatcher methodMatcher,
+            protected Entry(LatentMatcher<? super MethodDescription> matcher,
                             Handler handler,
                             MethodAttributeAppender.Factory attributeAppenderFactory,
                             MethodTransformer methodTransformer) {
-                this.methodMatcher = methodMatcher;
+                this.matcher = matcher;
                 this.handler = handler;
                 this.attributeAppenderFactory = attributeAppenderFactory;
                 this.methodTransformer = methodTransformer;
@@ -637,7 +637,7 @@ public interface MethodRegistry {
 
             @Override
             public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-                return methodMatcher.resolve(instrumentedType);
+                return matcher.resolve(instrumentedType);
             }
 
             @Override
@@ -645,7 +645,7 @@ public interface MethodRegistry {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 Entry entry = (Entry) other;
-                return methodMatcher.equals(entry.methodMatcher)
+                return matcher.equals(entry.matcher)
                         && handler.equals(entry.handler)
                         && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
                         && methodTransformer.equals(entry.methodTransformer);
@@ -653,7 +653,7 @@ public interface MethodRegistry {
 
             @Override
             public int hashCode() {
-                int result = methodMatcher.hashCode();
+                int result = matcher.hashCode();
                 result = 31 * result + handler.hashCode();
                 result = 31 * result + attributeAppenderFactory.hashCode();
                 result = 31 * result + methodTransformer.hashCode();
@@ -663,7 +663,7 @@ public interface MethodRegistry {
             @Override
             public String toString() {
                 return "MethodRegistry.Default.Entry{" +
-                        "methodMatcher=" + methodMatcher +
+                        "matcher=" + matcher +
                         ", handler=" + handler +
                         ", attributeAppenderFactory=" + attributeAppenderFactory +
                         ", methodTransformer=" + methodTransformer +

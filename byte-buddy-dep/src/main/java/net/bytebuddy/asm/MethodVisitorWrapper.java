@@ -7,6 +7,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
 
+import java.util.Arrays;
 import java.util.List;
 
 public interface MethodVisitorWrapper {
@@ -45,6 +46,10 @@ public interface MethodVisitorWrapper {
     class Compound implements MethodVisitorWrapper {
 
         private final List<? extends MethodVisitorWrapper> methodVisitorWrappers;
+
+        public Compound(MethodVisitorWrapper... methodVisitorWrapper) {
+            this(Arrays.asList(methodVisitorWrapper));
+        }
 
         public Compound(List<? extends MethodVisitorWrapper> methodVisitorWrappers) {
             this.methodVisitorWrappers = methodVisitorWrappers;

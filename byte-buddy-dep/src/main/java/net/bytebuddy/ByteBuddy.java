@@ -43,7 +43,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -1004,7 +1004,7 @@ public class ByteBuddy {
                 methodGraphCompiler,
                 defaultFieldAttributeAppenderFactory,
                 defaultMethodAttributeAppenderFactory,
-                new LatentMethodMatcher.Resolved(isDeclaredBy(anyOf(new TypeList.Generic.Explicit(toList(typeDefinitions)).asErasures()))));
+                new LatentMatcher.Resolved<MethodDescription>(isDeclaredBy(anyOf(new TypeList.Generic.Explicit(toList(typeDefinitions)).asErasures()))));
     }
 
     /**
@@ -1136,7 +1136,7 @@ public class ByteBuddy {
      * @return A matched method interception for the given selection.
      */
     public MatchedMethodInterception invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-        return invokable(new LatentMethodMatcher.Resolved(methodMatcher));
+        return invokable(new LatentMatcher.Resolved<MethodDescription>(methodMatcher));
     }
 
     /**
@@ -1145,7 +1145,7 @@ public class ByteBuddy {
      * @param methodMatcher The latent method matcher representing all byte code methods to intercept.
      * @return A matched method interception for the given selection.
      */
-    public MatchedMethodInterception invokable(LatentMethodMatcher methodMatcher) {
+    public MatchedMethodInterception invokable(LatentMatcher<? super MethodDescription> methodMatcher) {
         return new MatchedMethodInterception(methodMatcher);
     }
 
@@ -1388,7 +1388,7 @@ public class ByteBuddy {
         /**
          * The method matcher representing the current method selection.
          */
-        protected final LatentMethodMatcher methodMatcher;
+        protected final LatentMatcher<? super MethodDescription> methodMatcher;
 
         /**
          * The handler for the entry that is to be registered.
@@ -1443,7 +1443,7 @@ public class ByteBuddy {
                                          MethodGraph.Compiler methodGraphCompiler,
                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                         LatentMethodMatcher methodMatcher,
+                                         LatentMatcher<? super MethodDescription> methodMatcher,
                                          MethodRegistry.Handler handler,
                                          MethodAttributeAppender.Factory attributeAppenderFactory,
                                          MethodTransformer methodTransformer) {
@@ -1646,7 +1646,7 @@ public class ByteBuddy {
         /**
          * The method matcher that defines the selected that is represented by this instance.
          */
-        protected final LatentMethodMatcher methodMatcher;
+        protected final LatentMatcher<? super MethodDescription> methodMatcher;
 
         /**
          * Creates a new optional method interception.
@@ -1684,7 +1684,7 @@ public class ByteBuddy {
                                              MethodGraph.Compiler methodGraphCompiler,
                                              FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
                                              MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                             LatentMethodMatcher methodMatcher) {
+                                             LatentMatcher<? super MethodDescription> methodMatcher) {
             super(classFileVersion,
                     namingStrategy,
                     auxiliaryTypeNamingStrategy,
@@ -2059,7 +2059,7 @@ public class ByteBuddy {
         }
 
         @Override
-        public MatchedMethodInterception invokable(LatentMethodMatcher methodMatcher) {
+        public MatchedMethodInterception invokable(LatentMatcher<? super MethodDescription> methodMatcher) {
             return materialize().invokable(methodMatcher);
         }
 
@@ -2291,14 +2291,14 @@ public class ByteBuddy {
         /**
          * A method matcher that represents the current method selection.
          */
-        protected final LatentMethodMatcher methodMatcher;
+        protected final LatentMatcher<? super MethodDescription> methodMatcher;
 
         /**
          * Creates a new matched method interception.
          *
          * @param methodMatcher The method matcher representing the current method selection.
          */
-        protected MatchedMethodInterception(LatentMethodMatcher methodMatcher) {
+        protected MatchedMethodInterception(LatentMatcher<? super MethodDescription> methodMatcher) {
             this.methodMatcher = methodMatcher;
         }
 

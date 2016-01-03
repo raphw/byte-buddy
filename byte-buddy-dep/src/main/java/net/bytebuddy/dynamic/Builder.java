@@ -24,7 +24,6 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.utility.CompoundList;
 
 import java.lang.annotation.Annotation;
@@ -134,7 +133,7 @@ public interface Builder<T> {
 
     MethodDefinition.ImplementationDefinition<T> invokable(ElementMatcher<? super MethodDescription> matcher);
 
-    MethodDefinition.ImplementationDefinition<T> invokable(LatentMethodMatcher matcher);
+    MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher);
 
     DynamicType.Unloaded<T> make();
 
@@ -846,7 +845,7 @@ public interface Builder<T> {
 
         @Override
         public MethodDefinition.ImplementationDefinition<S> invokable(ElementMatcher<? super MethodDescription> matcher) {
-            return invokable(new LatentMethodMatcher.Resolved(matcher));
+            return invokable(new LatentMatcher.Resolved<MethodDescription>(matcher));
         }
 
         public abstract static class Delegator<U> extends AbstractBase<U> {
@@ -934,7 +933,7 @@ public interface Builder<T> {
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition<U> invokable(LatentMethodMatcher matcher) {
+            public MethodDefinition.ImplementationDefinition<U> invokable(LatentMatcher<? super MethodDescription> matcher) {
                 return materialize().invokable(matcher);
             }
 
@@ -1001,7 +1000,7 @@ public interface Builder<T> {
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition<U> invokable(LatentMethodMatcher matcher) {
+            public MethodDefinition.ImplementationDefinition<U> invokable(LatentMatcher<? super MethodDescription> matcher) {
                 return new MethodMatchAdapter(matcher);
             }
 
@@ -1126,7 +1125,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         classVisitorWrapper,
-                        fieldVisitorWrapper, // TODO: Compound
+                        new FieldVisitorWrapper.Compound(this.fieldVisitorWrapper, fieldVisitorWrapper),
                         methodVisitorWrapper);
             }
 
@@ -1139,7 +1138,7 @@ public interface Builder<T> {
                         typeAttributeAppender,
                         classVisitorWrapper,
                         fieldVisitorWrapper,
-                        methodVisitorWrapper); // TODO: Compound
+                        new MethodVisitorWrapper.Compound(this.methodVisitorWrapper, methodVisitorWrapper));
             }
 
             protected abstract Builder<U> materialize(InstrumentedType instrumentedType,
@@ -1414,7 +1413,7 @@ public interface Builder<T> {
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withMethod(token),
                                 fieldRegistry,
-                                methodRegistry.append(new LatentMethodMatcher.ForToken(token), handler, methodAttributeAppenderFactory, null), // TODO
+                                methodRegistry.append(new LatentMatcher.ForMethodToken(token), handler, methodAttributeAppenderFactory, null), // TODO
                                 ignored,
                                 typeAttributeAppender,
                                 classVisitorWrapper,
@@ -1426,9 +1425,9 @@ public interface Builder<T> {
 
             protected class MethodMatchAdapter extends MethodDefinition.ImplementationDefinition.AbstractBase<U> {
 
-                private final LatentMethodMatcher matcher;
+                private final LatentMatcher<? super MethodDescription> matcher;
 
-                protected MethodMatchAdapter(LatentMethodMatcher matcher) {
+                protected MethodMatchAdapter(LatentMatcher<? super MethodDescription> matcher) {
                     this.matcher = matcher;
                 }
 

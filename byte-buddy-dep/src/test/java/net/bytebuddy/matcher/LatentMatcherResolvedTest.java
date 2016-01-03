@@ -1,6 +1,5 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -13,13 +12,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class LatentMethodMatcherSimpleTest {
+public class LatentMatcherResolvedTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private ElementMatcher<? super MethodDescription> elementMatcher;
+    private ElementMatcher<? super Object> matcher;
 
     @Mock
     private TypeDescription typeDescription;
@@ -27,14 +26,14 @@ public class LatentMethodMatcherSimpleTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testManifestation() throws Exception {
-        LatentMethodMatcher latentMethodMatcher = new LatentMethodMatcher.Resolved(elementMatcher);
-        assertThat(latentMethodMatcher.resolve(typeDescription), is((ElementMatcher) elementMatcher));
-        verifyZeroInteractions(elementMatcher);
+        LatentMatcher<Object> matcher = new LatentMatcher.Resolved<Object>(this.matcher);
+        assertThat(matcher.resolve(typeDescription), is((ElementMatcher) this.matcher));
+        verifyZeroInteractions(this.matcher);
         verifyZeroInteractions(typeDescription);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(LatentMethodMatcher.Resolved.class).apply();
+        ObjectPropertyAssertion.of(LatentMatcher.Resolved.class).apply();
     }
 }

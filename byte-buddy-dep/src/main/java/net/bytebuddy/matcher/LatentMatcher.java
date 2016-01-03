@@ -4,6 +4,9 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
+import java.util.List;
+
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.representedBy;
 
 public interface LatentMatcher<T> {
@@ -36,7 +39,7 @@ public interface LatentMatcher<T> {
 
         @Override
         public String toString() {
-            return "Resolved.Resolved{" +
+            return "LatentMatcher.Resolved{" +
                     "matcher=" + matcher +
                     '}';
         }
@@ -105,6 +108,24 @@ public interface LatentMatcher<T> {
             return "LatentMatcher.ForMethodToken{" +
                     "token=" + token +
                     '}';
+        }
+    }
+
+    class Compound<S> implements LatentMatcher<S> {
+
+        private final List<? extends LatentMatcher<? super S>> matchers;
+
+        public Compound(List<? extends LatentMatcher<? super S>> matchers) {
+            this.matchers = matchers;
+        }
+
+        @Override
+        public ElementMatcher<? super S> resolve(TypeDescription instrumentedType) {
+            ElementMatcher.Junction<? super S> matcher = none();
+            for (LatentMatcher<? super S> latentMatcher : matchers) {
+                matcher = matcher.and(latentMatcher.resolve(instrumentedType));
+            }
+            return matcher;
         }
     }
 

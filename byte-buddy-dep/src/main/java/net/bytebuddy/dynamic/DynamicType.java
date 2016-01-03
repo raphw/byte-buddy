@@ -28,7 +28,6 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
@@ -689,7 +688,7 @@ public interface DynamicType {
          * @param methodMatcher A latent matcher describing the byte code methods to be intercepted by this implementation.
          * @return An interception delegate for byte code methods matching the given method matcher.
          */
-        MatchedMethodInterception<T> invokable(LatentMethodMatcher methodMatcher);
+        MatchedMethodInterception<T> invokable(LatentMatcher<? super MethodDescription> methodMatcher);
 
         /**
          * Creates the dynamic type without loading it.
@@ -1816,11 +1815,11 @@ public interface DynamicType {
 
             @Override
             public MatchedMethodInterception<S> invokable(ElementMatcher<? super MethodDescription> methodMatcher) {
-                return invokable(new LatentMethodMatcher.Resolved(methodMatcher));
+                return invokable(new LatentMatcher.Resolved<MethodDescription>(methodMatcher));
             }
 
             @Override
-            public MatchedMethodInterception<S> invokable(LatentMethodMatcher methodMatcher) {
+            public MatchedMethodInterception<S> invokable(LatentMatcher<? super MethodDescription> methodMatcher) {
                 return new DefaultMatchedMethodInterception(methodMatcher, methodTokens);
             }
 
@@ -2148,7 +2147,7 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MatchedMethodInterception<U> invokable(LatentMethodMatcher methodMatcher) {
+                public MatchedMethodInterception<U> invokable(LatentMatcher<? super MethodDescription> methodMatcher) {
                     return materialize().invokable(methodMatcher);
                 }
 
@@ -2377,7 +2376,7 @@ public interface DynamicType {
                 /**
                  * A matcher for the methods this interception targets.
                  */
-                private final LatentMethodMatcher methodMatcher;
+                private final LatentMatcher<? super MethodDescription> methodMatcher;
 
                 /**
                  * The method tokens this interceptions defines for the dynamically created type.
@@ -2390,7 +2389,7 @@ public interface DynamicType {
                  * @param methodMatcher A matcher for the methods this interception targets.
                  * @param methodTokens  The method tokens this interceptions defines for the dynamically created type.
                  */
-                protected DefaultMatchedMethodInterception(LatentMethodMatcher methodMatcher, List<MethodDescription.Token> methodTokens) {
+                protected DefaultMatchedMethodInterception(LatentMatcher<? super MethodDescription> methodMatcher, List<MethodDescription.Token> methodTokens) {
                     this.methodMatcher = methodMatcher;
                     this.methodTokens = methodTokens;
                 }
@@ -2580,7 +2579,7 @@ public interface DynamicType {
                  * @return A subclass matched method interception that represents the materialized method.
                  */
                 private DefaultMatchedMethodInterception materialize(MethodDescription.Token token) {
-                    return new DefaultMatchedMethodInterception(new LatentMethodMatcher.ForToken(token), CompoundList.of(methodTokens, token));
+                    return new DefaultMatchedMethodInterception(new LatentMatcher.ForMethodToken(token), CompoundList.of(methodTokens, token));
                 }
 
                 @Override
@@ -2624,7 +2623,7 @@ public interface DynamicType {
                 /**
                  * A matcher for the methods this target intercepts.
                  */
-                private final LatentMethodMatcher methodMatcher;
+                private final LatentMatcher<? super MethodDescription> methodMatcher;
 
                 /**
                  * A list of all method tokens that were previously defined.
@@ -2655,7 +2654,7 @@ public interface DynamicType {
                  * @param attributeAppenderFactory The method attribute appender factory to be applied to the matched methods.
                  * @param methodTransformer        The method transformer to apply.
                  */
-                protected DefaultMethodAnnotationTarget(LatentMethodMatcher methodMatcher,
+                protected DefaultMethodAnnotationTarget(LatentMatcher<? super MethodDescription> methodMatcher,
                                                         List<MethodDescription.Token> methodTokens,
                                                         MethodRegistry.Handler handler,
                                                         MethodAttributeAppender.Factory attributeAppenderFactory,

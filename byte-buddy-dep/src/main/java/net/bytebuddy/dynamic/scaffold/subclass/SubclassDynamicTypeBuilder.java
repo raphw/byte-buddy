@@ -17,7 +17,7 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -292,7 +292,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type.
      */
-    protected static class InstrumentableMatcher implements LatentMethodMatcher {
+    protected static class InstrumentableMatcher implements LatentMatcher<MethodDescription> {
 
         /**
          * A matcher for the ignored methods.

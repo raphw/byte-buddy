@@ -7,7 +7,7 @@ import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 
 import java.util.Collections;
 import java.util.List;
@@ -87,7 +87,7 @@ public interface ConstructorStrategy {
 
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
+                return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory,
                         MethodTransformer.NoOp.INSTANCE);
@@ -111,7 +111,7 @@ public interface ConstructorStrategy {
 
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
+                return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory,
                         MethodTransformer.NoOp.INSTANCE);
@@ -134,7 +134,7 @@ public interface ConstructorStrategy {
 
             @Override
             public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
+                return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
                         defaultMethodAttributeAppenderFactory,
                         MethodTransformer.NoOp.INSTANCE);

@@ -11,7 +11,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -33,7 +33,7 @@ public class MethodRegistryDefaultTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private LatentMethodMatcher firstMatcher, secondMatcher, methodFilter;
+    private LatentMatcher<MethodDescription> firstMatcher, secondMatcher, methodFilter;
 
     @Mock
     private MethodRegistry.Handler firstHandler, secondHandler;
