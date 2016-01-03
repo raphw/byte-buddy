@@ -3,10 +3,10 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 /**
  * A field registry represents an extendable collection of fields which are identified by their names that are mapped
@@ -20,15 +20,7 @@ import java.util.Map;
  */
 public interface FieldRegistry {
 
-    /**
-     * Creates a new field registry with the given attribute appender registered for the supplied field matcher.
-     *
-     * @param fieldToken               A token identifying the field for which this entry is valid.
-     * @param attributeAppenderFactory The field attribute appender factory to be registered for this field.
-     * @param defaultValue             The field's default value or {@code null} if no such default value is set.
-     * @return A new field registry that knows about the new field registration.
-     */
-    FieldRegistry include(FieldDescription.Token fieldToken, FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue);
+    FieldRegistry include(LatentMatcher<? super FieldDescription> matcher, FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue);
 
     /**
      * Prepares the field registry for a given instrumented type.
@@ -70,47 +62,35 @@ public interface FieldRegistry {
      */
     class Default implements FieldRegistry {
 
-        /**
-         * Contains all non-prepared field registry entries mapped by the field name. This map should never be mutated.
-         */
-        private final Map<FieldDescription.Token, Entry> entries;
+        private final List<Entry> entries;
 
-        /**
-         * Creates a new field registry without any registered fields.
-         */
         public Default() {
-            entries = Collections.emptyMap();
+            entries = Collections.emptyList();
         }
 
-        /**
-         * Creates a new field registry.
-         *
-         * @param entries The non-prepared entries of this field registry.
-         */
-        private Default(Map<FieldDescription.Token, Entry> entries) {
+        private Default(List<Entry> entries) {
             this.entries = entries;
         }
 
         @Override
-        public FieldRegistry include(FieldDescription.Token fieldToken, FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
-            Map<FieldDescription.Token, Entry> entries = new HashMap<FieldDescription.Token, Entry>(this.entries);
-            if (entries.put(fieldToken, new Entry(attributeAppenderFactory, defaultValue)) != null) {
-                throw new IllegalArgumentException(fieldToken + " is already registered");
-            }
+        public FieldRegistry include(LatentMatcher<? super FieldDescription> matcher, FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
+            List<Entry> entries = new ArrayList<Entry>(this.entries.size() + 1);
+            entries.add(new Entry(matcher, attributeAppenderFactory, defaultValue));
+            entries.addAll(this.entries);
             return new Default(entries);
         }
 
         @Override
         public FieldRegistry.Compiled compile(TypeDescription instrumentedType) {
-            Map<FieldDescription.Token, Compiled.Entry> entries = new HashMap<FieldDescription.Token, Compiled.Entry>();
+            List<Compiled.Entry> entries = new ArrayList<Compiled.Entry>(this.entries.size());
             Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>();
-            for (Map.Entry<FieldDescription.Token, Entry> entry : this.entries.entrySet()) {
-                FieldAttributeAppender attributeAppender = attributeAppenders.get(entry.getValue().getAttributeAppenderFactory());
+            for (Entry entry : this.entries) {
+                FieldAttributeAppender attributeAppender = attributeAppenders.get(entry.getAttributeAppenderFactory());
                 if (attributeAppender == null) {
-                    attributeAppender = entry.getValue().getAttributeAppenderFactory().make(instrumentedType);
-                    attributeAppenders.put(entry.getValue().getAttributeAppenderFactory(), attributeAppender);
+                    attributeAppender = entry.getAttributeAppenderFactory().make(instrumentedType);
+                    attributeAppenders.put(entry.getAttributeAppenderFactory(), attributeAppender);
                 }
-                entries.put(entry.getKey(), new Compiled.Entry(attributeAppender, entry.getValue().getDefaultValue()));
+                entries.add(new Compiled.Entry(entry.resolve(instrumentedType), attributeAppender, entry.getDefaultValue()));
             }
             return new Compiled(entries);
         }
@@ -134,7 +114,9 @@ public interface FieldRegistry {
         /**
          * An entry of the default field registry.
          */
-        protected static class Entry {
+        protected static class Entry implements LatentMatcher<FieldDescription> {
+
+            private final LatentMatcher<? super FieldDescription> matcher;
 
             /**
              * The field attribute appender factory that is represented by this entry.
@@ -152,7 +134,8 @@ public interface FieldRegistry {
              * @param attributeAppenderFactory The field attribute appender factory that is represented by this entry.
              * @param defaultValue             The field's default value for this entry.
              */
-            protected Entry(FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
+            protected Entry(LatentMatcher<? super FieldDescription> matcher, FieldAttributeAppender.Factory attributeAppenderFactory, Object defaultValue) {
+                this.matcher = matcher;
                 this.attributeAppenderFactory = attributeAppenderFactory;
                 this.defaultValue = defaultValue;
             }
@@ -162,7 +145,7 @@ public interface FieldRegistry {
              *
              * @return The field's attribute appender factory.
              */
-            public FieldAttributeAppender.Factory getAttributeAppenderFactory() {
+            protected FieldAttributeAppender.Factory getAttributeAppenderFactory() {
                 return attributeAppenderFactory;
             }
 
@@ -171,8 +154,13 @@ public interface FieldRegistry {
              *
              * @return The default value.
              */
-            public Object getDefaultValue() {
+            protected Object getDefaultValue() {
                 return defaultValue;
+            }
+
+            @Override
+            public ElementMatcher<? super FieldDescription> resolve(TypeDescription instrumentedType) {
+                return matcher.resolve(instrumentedType);
             }
 
             @Override
@@ -180,13 +168,15 @@ public interface FieldRegistry {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 Entry entry = (Entry) other;
-                return attributeAppenderFactory.equals(entry.attributeAppenderFactory)
+                return matcher.equals(entry.matcher)
+                        && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
                         && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null);
             }
 
             @Override
             public int hashCode() {
-                int result = attributeAppenderFactory.hashCode();
+                int result = matcher.hashCode();
+                result = 31 * attributeAppenderFactory.hashCode();
                 result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                 return result;
             }
@@ -194,7 +184,8 @@ public interface FieldRegistry {
             @Override
             public String toString() {
                 return "FieldRegistry.Default.Entry{" +
-                        "attributeAppenderFactory=" + attributeAppenderFactory +
+                        "matcher=" + matcher +
+                        ", attributeAppenderFactory=" + attributeAppenderFactory +
                         ", defaultValue=" + defaultValue +
                         '}';
             }
@@ -205,26 +196,20 @@ public interface FieldRegistry {
          */
         protected static class Compiled implements FieldRegistry.Compiled {
 
-            /**
-             * A map of entries by field names.
-             */
-            private final Map<FieldDescription.Token, Entry> entries;
+            private final List<Entry> entries;
 
-            /**
-             * Creates a new compiled default field registry.
-             *
-             * @param entries A map of entries by field names.
-             */
-            public Compiled(Map<FieldDescription.Token, Entry> entries) {
+            protected Compiled(List<Entry> entries) {
                 this.entries = entries;
             }
 
             @Override
             public Record target(FieldDescription fieldDescription) {
-                Entry entry = entries.get(fieldDescription.asToken());
-                return entry == null
-                        ? new Record.ForSimpleField(fieldDescription)
-                        : entry.bind(fieldDescription);
+                for (Entry entry : entries) {
+                    if (entry.matches(fieldDescription)) {
+                        return entry.bind(fieldDescription);
+                    }
+                }
+                return new Record.ForSimpleField(fieldDescription);
             }
 
             @Override
@@ -248,7 +233,9 @@ public interface FieldRegistry {
             /**
              * An entry of a compiled field registry.
              */
-            protected static class Entry {
+            protected static class Entry implements ElementMatcher<FieldDescription> {
+
+                private final ElementMatcher<? super FieldDescription> matcher;
 
                 /**
                  * The attribute appender to be applied to any bound field.
@@ -266,7 +253,8 @@ public interface FieldRegistry {
                  * @param attributeAppender The attribute appender to be applied to any bound field.
                  * @param defaultValue      The default value to be set for any bound field or {@code null} if no default value should be set.
                  */
-                protected Entry(FieldAttributeAppender attributeAppender, Object defaultValue) {
+                protected Entry(ElementMatcher<? super FieldDescription> matcher, FieldAttributeAppender attributeAppender, Object defaultValue) {
+                    this.matcher = matcher;
                     this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
                 }
@@ -282,17 +270,24 @@ public interface FieldRegistry {
                 }
 
                 @Override
+                public boolean matches(FieldDescription target) {
+                    return matcher.matches(target);
+                }
+
+                @Override
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     Entry entry = (Entry) other;
-                    return attributeAppender.equals(entry.attributeAppender)
+                    return matcher.equals(entry.matcher)
+                            && attributeAppender.equals(entry.attributeAppender)
                             && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = attributeAppender.hashCode();
+                    int result = matcher.hashCode();
+                    result = 31 * attributeAppender.hashCode();
                     result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                     return result;
                 }
@@ -300,7 +295,8 @@ public interface FieldRegistry {
                 @Override
                 public String toString() {
                     return "FieldRegistry.Default.Compiled.Entry{" +
-                            "attributeAppender=" + attributeAppender +
+                            "matcher=" + matcher +
+                            ", attributeAppender=" + attributeAppender +
                             ", defaultValue=" + defaultValue +
                             '}';
                 }

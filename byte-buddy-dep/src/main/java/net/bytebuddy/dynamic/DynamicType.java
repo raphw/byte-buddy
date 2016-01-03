@@ -27,6 +27,7 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
@@ -2230,7 +2231,7 @@ public interface DynamicType {
                             attributeAppender,
                             ignoredMethods,
                             classVisitorWrapper,
-                            fieldRegistry.include(token, attributeAppenderFactory, defaultValue),
+                            fieldRegistry.include(new LatentMatcher.ForFieldToken(token), attributeAppenderFactory, defaultValue),
                             methodRegistry,
                             methodGraphCompiler,
                             defaultFieldAttributeAppenderFactory,

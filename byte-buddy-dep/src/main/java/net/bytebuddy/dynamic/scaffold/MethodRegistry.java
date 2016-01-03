@@ -509,7 +509,8 @@ public interface MethodRegistry {
                     implementations.put(methodDescription, Prepared.Entry.forVisibilityBridge(methodDescription));
                 }
             }
-            for (MethodDescription methodDescription : CompoundList.of(instrumentedType.getDeclaredMethods().filter(not(isVirtual()).and(relevanceMatcher)),
+            for (MethodDescription methodDescription : CompoundList.of(
+                    instrumentedType.getDeclaredMethods().filter(not(isVirtual()).and(relevanceMatcher)),
                     new MethodDescription.Latent.TypeInitializer(instrumentedType))) {
                 for (Entry entry : entries) {
                     if (entry.resolve(instrumentedType).matches(methodDescription)) {

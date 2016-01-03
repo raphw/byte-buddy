@@ -3,6 +3,8 @@ package net.bytebuddy.dynamic.scaffold;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -33,15 +35,20 @@ public class FieldRegistryDefaultTest {
     private FieldDescription knownField, unknownField;
 
     @Mock
-    private FieldDescription.Token knownFieldToken;
+    private LatentMatcher<FieldDescription> latentMatcher;
+
+    @Mock
+    private ElementMatcher<FieldDescription> matcher;
 
     @Mock
     private Object defaultValue, otherDefaultValue;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(distinctFactory.make(instrumentedType)).thenReturn(distinct);
-        when(knownField.asToken()).thenReturn(knownFieldToken);
+        when(latentMatcher.resolve(instrumentedType)).thenReturn((ElementMatcher) matcher);
+        when(matcher.matches(knownField)).thenReturn(true);
     }
 
     @Test
@@ -57,7 +64,7 @@ public class FieldRegistryDefaultTest {
     @Test
     public void testKnownFieldRegistered() throws Exception {
         TypeWriter.FieldPool fieldPool = new FieldRegistry.Default()
-                .include(knownFieldToken, distinctFactory, defaultValue)
+                .include(latentMatcher, distinctFactory, defaultValue)
                 .compile(instrumentedType);
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
         assertThat(fieldPool.target(knownField).resolveDefault(otherDefaultValue), is(defaultValue));

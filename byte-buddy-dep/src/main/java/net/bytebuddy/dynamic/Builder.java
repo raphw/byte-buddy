@@ -23,6 +23,7 @@ import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.matcher.LatentMethodMatcher;
 import net.bytebuddy.utility.CompoundList;
 
@@ -98,6 +99,8 @@ public interface Builder<T> {
     FieldDefinition.Optional.Valuable<T> define(Field field);
 
     FieldDefinition.Valuable<T> field(ElementMatcher<? super FieldDescription> matcher);
+
+    FieldDefinition.Valuable<T> field(LatentMatcher<? super FieldDescription> matcher);
 
     Builder<T> ignore(ElementMatcher<? super MethodDescription> ignored);
 
@@ -759,6 +762,11 @@ public interface Builder<T> {
         }
 
         @Override
+        public FieldDefinition.Valuable<S> field(ElementMatcher<? super FieldDescription> matcher) {
+            return field(new LatentMatcher.Resolved<FieldDescription>(matcher));
+        }
+
+        @Override
         public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor) {
             return defineMethod(name, returnType, Arrays.asList(modifierContributor));
         }
@@ -911,7 +919,7 @@ public interface Builder<T> {
             }
 
             @Override
-            public FieldDefinition.Valuable<U> field(ElementMatcher<? super FieldDescription> matcher) {
+            public FieldDefinition.Valuable<U> field(LatentMatcher<? super FieldDescription> matcher) {
                 return materialize().field(matcher);
             }
 
@@ -978,7 +986,7 @@ public interface Builder<T> {
             }
 
             @Override
-            public FieldDefinition.Valuable<U> field(ElementMatcher<? super FieldDescription> matcher) {
+            public FieldDefinition.Valuable<U> field(LatentMatcher<? super FieldDescription> matcher) {
                 return new FieldMatchAdapter(matcher);
             }
 
@@ -1170,7 +1178,7 @@ public interface Builder<T> {
                 @Override
                 protected Builder<U> materialize() {
                     return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withField(token),
-                            fieldRegistry.include(token, fieldAttributeAppenderFactory, defaultValue),
+                            fieldRegistry.include(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue),
                             methodRegistry,
                             ignored,
                             typeAttributeAppender,
@@ -1189,16 +1197,16 @@ public interface Builder<T> {
 
             protected class FieldMatchAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
-                private final ElementMatcher<? super FieldDescription> matcher;
+                private final LatentMatcher<? super FieldDescription> matcher;
 
-                protected FieldMatchAdapter(ElementMatcher<? super FieldDescription> matcher) {
+                protected FieldMatchAdapter(LatentMatcher<? super FieldDescription> matcher) {
                     this(FieldAttributeAppender.NoOp.INSTANCE, Transformer.NoOp.<FieldDescription>make(), FieldDescription.NO_DEFAULT_VALUE, matcher);
                 }
 
                 protected FieldMatchAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                             Transformer<FieldDescription> transformer,
                                             Object defaultValue,
-                                            ElementMatcher<? super FieldDescription> matcher) {
+                                            LatentMatcher<? super FieldDescription> matcher) {
                     super(fieldAttributeAppenderFactory, transformer, defaultValue);
                     this.matcher = matcher;
                 }
@@ -1211,7 +1219,7 @@ public interface Builder<T> {
                 @Override
                 protected Builder<U> materialize() {
                     return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
-                            fieldRegistry.include(null, fieldAttributeAppenderFactory, defaultValue), //TODO: modernize field registry
+                            fieldRegistry.include(matcher, fieldAttributeAppenderFactory, defaultValue), //TODO: modernize field registry
                             methodRegistry,
                             ignored,
                             typeAttributeAppender,
