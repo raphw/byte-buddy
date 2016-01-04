@@ -155,43 +155,21 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget}.
      */
-    public static class Factory implements Implementation.Target.Factory {
+    public enum Factory implements Implementation.Target.Factory {
 
-        /**
-         * The origin type identifier to use.
-         */
+        SUPER_TYPE(OriginTypeResolver.SUPER_TYPE),
+
+        LEVEL_TYPE(OriginTypeResolver.LEVEL_TYPE);
+
         private final OriginTypeResolver originTypeResolver;
 
-        /**
-         * Creates a factory for creating a subclass implementation target.
-         *
-         * @param originTypeResolver The origin type identifier to use.
-         */
-        public Factory(OriginTypeResolver originTypeResolver) {
+        Factory(OriginTypeResolver originTypeResolver) {
             this.originTypeResolver = originTypeResolver;
         }
 
         @Override
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
             return new SubclassImplementationTarget(instrumentedType, methodGraph, originTypeResolver);
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && originTypeResolver == ((Factory) other).originTypeResolver;
-        }
-
-        @Override
-        public int hashCode() {
-            return originTypeResolver.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "SubclassImplementationTarget.Factory{" +
-                    "originTypeResolver=" + originTypeResolver +
-                    '}';
         }
     }
 }

@@ -22,11 +22,10 @@ public enum TrivialType implements AuxiliaryType {
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
+                .with(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .methodGraphCompiler(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
-                .methodGraphCompiler(MethodGraph.Empty.INSTANCE)
                 .make();
     }
 

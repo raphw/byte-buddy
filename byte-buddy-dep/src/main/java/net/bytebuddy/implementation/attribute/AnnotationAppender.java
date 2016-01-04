@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
-import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.*;
@@ -29,7 +28,7 @@ public interface AnnotationAppender {
      * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
      * the specified target.
      */
-    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, ValueFilter valueFilter);
+    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, AnnotationValueFilter annotationValueFilter);
 
     /**
      * Determines if an annotation should be written to a specified target and if the annotation should be marked
@@ -314,69 +313,6 @@ public interface AnnotationAppender {
     }
 
     /**
-     * A value filter allows to skip values while writing an annotation value such that these missing values are represented
-     * by the annotation type's default value instead.
-     */
-    interface ValueFilter {
-
-        /**
-         * Checks if the given annotation value should be written as the value of the provided annotation property.
-         *
-         * @param annotationDescription The annotation value that is being written.
-         * @param methodDescription     The annotation method of which a value is being written.
-         * @return {@code true} if the value should be written to the annotation.
-         */
-        boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription);
-
-        interface Factory {
-
-            ValueFilter on(TypeDescription instrumentedType);
-
-            ValueFilter on(FieldDescription fieldDescription);
-
-            ValueFilter on(MethodDescription methodDescription);
-        }
-
-        enum Default implements ValueFilter, Factory {
-
-            SKIP_DEFAULTS {
-                @Override
-                public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
-                    Object defaultValue = methodDescription.getDefaultValue();
-                    return defaultValue == null || !defaultValue.equals(annotationDescription.getValue(methodDescription));
-                }
-            },
-
-            APPEND_DEFAULTS {
-                @Override
-                public boolean isRelevant(AnnotationDescription annotationDescription, MethodDescription.InDefinedShape methodDescription) {
-                    return true;
-                }
-            };
-
-            @Override
-            public ValueFilter on(TypeDescription instrumentedType) {
-                return this;
-            }
-
-            @Override
-            public ValueFilter on(FieldDescription fieldDescription) {
-                return this;
-            }
-
-            @Override
-            public ValueFilter on(MethodDescription methodDescription) {
-                return this;
-            }
-
-            @Override
-            public String toString() {
-                return "AnnotationAppender.ValueFilter.Default." + name();
-            }
-        }
-    }
-
-    /**
      * A default implementation for an annotation appender that writes annotations to a given byte consumer
      * represented by an ASM {@link org.objectweb.asm.AnnotationVisitor}.
      */
@@ -401,11 +337,11 @@ public interface AnnotationAppender {
          *
          * @param annotationVisitor The annotation visitor the write process is to be applied on.
          * @param annotation        The annotation to be written.
-         * @param valueFilter       The value filter to apply for discovering which values of an annotation should be written.
+         * @param annotationValueFilter       The value filter to apply for discovering which values of an annotation should be written.
          */
-        private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, ValueFilter valueFilter) {
+        private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, AnnotationValueFilter annotationValueFilter) {
             for (MethodDescription.InDefinedShape methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
-                if (valueFilter.isRelevant(annotation, methodDescription)) {
+                if (annotationValueFilter.isRelevant(annotation, methodDescription)) {
                     apply(annotationVisitor, methodDescription.getReturnType().asErasure(), methodDescription.getName(), annotation.getValue(methodDescription));
                 }
             }
@@ -422,7 +358,7 @@ public interface AnnotationAppender {
          */
         public static void apply(AnnotationVisitor annotationVisitor, TypeDescription valueType, String name, Object value) {
             if (valueType.isAnnotation()) {
-                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, ValueFilter.Default.APPEND_DEFAULTS);
+                handle(annotationVisitor.visitAnnotation(name, valueType.getDescriptor()), (AnnotationDescription) value, AnnotationValueFilter.Default.APPEND_DEFAULTS);
             } else if (valueType.isEnum()) {
                 annotationVisitor.visitEnum(name, valueType.getDescriptor(), ((EnumerationDescription) value).getValue());
             } else if (valueType.isAssignableFrom(Class.class)) {
@@ -441,9 +377,9 @@ public interface AnnotationAppender {
         }
 
         @Override
-        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, ValueFilter valueFilter) {
+        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, AnnotationValueFilter annotationValueFilter) {
             if (!annotationVisibility.isSuppressed()) {
-                doAppend(annotation, annotationVisibility.isVisible(), valueFilter);
+                doAppend(annotation, annotationVisibility.isVisible(), annotationValueFilter);
             }
             return this;
         }
@@ -454,8 +390,8 @@ public interface AnnotationAppender {
          * @param annotation The annotation to be written.
          * @param visible    {@code true} if this annotation should be treated as visible at runtime.
          */
-        private void doAppend(AnnotationDescription annotation, boolean visible, ValueFilter valueFilter) {
-            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, valueFilter);
+        private void doAppend(AnnotationDescription annotation, boolean visible, AnnotationValueFilter annotationValueFilter) {
+            handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, annotationValueFilter);
         }
 
         @Override

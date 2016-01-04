@@ -1195,7 +1195,7 @@ public @interface FieldProxy {
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineConstructor(accessedField.isStatic()
+                        .defineConstructor().withParameters(accessedField.isStatic()
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(instrumentedType))
                         .intercept(accessedField.isStatic()

@@ -16,10 +16,7 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
-import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
-import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
-import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.implementation.attribute.*;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
@@ -928,7 +925,7 @@ public interface Builder<T> {
 
             protected final AsmVisitorWrapper asmVisitorWrapper;
 
-            protected final AnnotationAppender.ValueFilter.Factory valueFilterFactory;
+            protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
             protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
                               FieldRegistry fieldRegistry,
@@ -936,14 +933,14 @@ public interface Builder<T> {
                               ElementMatcher<? super MethodDescription> ignored,
                               TypeAttributeAppender typeAttributeAppender,
                               AsmVisitorWrapper asmVisitorWrapper,
-                              AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 this.instrumentedType = instrumentedType;
                 this.fieldRegistry = fieldRegistry;
                 this.methodRegistry = methodRegistry;
                 this.ignored = ignored;
                 this.typeAttributeAppender = typeAttributeAppender;
                 this.asmVisitorWrapper = asmVisitorWrapper;
-                this.valueFilterFactory = valueFilterFactory;
+                this.annotationValueFilterFactory = annotationValueFilterFactory;
             }
 
             @Override
@@ -984,7 +981,7 @@ public interface Builder<T> {
                         new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignored, ignored),
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -995,7 +992,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -1006,7 +1003,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -1017,7 +1014,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -1028,7 +1025,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -1039,7 +1036,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -1050,7 +1047,7 @@ public interface Builder<T> {
                         ignored,
                         new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -1061,7 +1058,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         asmVisitorWrapper,
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             @Override
@@ -1072,7 +1069,7 @@ public interface Builder<T> {
                         ignored,
                         typeAttributeAppender,
                         new AsmVisitorWrapper.Compound(this.asmVisitorWrapper, asmVisitorWrapper),
-                        valueFilterFactory);
+                        annotationValueFilterFactory);
             }
 
             protected abstract Builder<U> materialize(InstrumentedType instrumentedType,
@@ -1081,7 +1078,7 @@ public interface Builder<T> {
                                                       ElementMatcher<? super MethodDescription> ignored,
                                                       TypeAttributeAppender typeAttributeAppender,
                                                       AsmVisitorWrapper asmVisitorWrapper,
-                                                      AnnotationAppender.ValueFilter.Factory valueFilterFactory);
+                                                      AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             protected class FieldDefinitionAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
@@ -1115,7 +1112,7 @@ public interface Builder<T> {
                             ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            valueFilterFactory);
+                            annotationValueFilterFactory);
                 }
 
                 @Override
@@ -1155,7 +1152,7 @@ public interface Builder<T> {
                             ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            valueFilterFactory);
+                            annotationValueFilterFactory);
                 }
 
                 @Override
@@ -1344,7 +1341,7 @@ public interface Builder<T> {
                                 ignored,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
-                                valueFilterFactory);
+                                annotationValueFilterFactory);
                     }
                 }
             }
@@ -1413,7 +1410,7 @@ public interface Builder<T> {
                                 ignored,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
-                                valueFilterFactory);
+                                annotationValueFilterFactory);
                     }
                 }
             }
@@ -1434,7 +1431,7 @@ public interface Builder<T> {
                             ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            valueFilterFactory);
+                            annotationValueFilterFactory);
                 }
 
                 // TODO: Inherited interface methods are not matched properly!

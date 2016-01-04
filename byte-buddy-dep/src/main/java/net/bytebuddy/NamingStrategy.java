@@ -1,14 +1,7 @@
 package net.bytebuddy;
 
-import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
-import org.objectweb.asm.Opcodes;
-
-import java.lang.reflect.Modifier;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 
 /**
  * A naming strategy for finding a fully qualified name for a Java type.
@@ -18,360 +11,30 @@ import java.util.List;
  */
 public interface NamingStrategy {
 
-    /**
-     * Generates a fully qualified name for a Java type. The resulting should not lie within the {@code java.lang}
-     * package since such types cannot be loaded using a normal class loader. Also, the name should not yet be taken
-     * by another type since this would cause conflicts in the name space. Therefore, it is recommendable to include
-     * a random sequence within the name.
-     *
-     * @param unnamedType An unnamed type that is to be named.
-     * @return A valid identifier for a Java type.
-     */
-    String name(UnnamedType unnamedType);
+    String subclass(TypeDescription.Generic superType);
 
-    /**
-     * An description of a type which is to be named.
-     */
-    interface UnnamedType {
+    String redefine(TypeDescription typeDescription);
 
-        /**
-         * Returns this unnamed type's super class.
-         *
-         * @return A description of the super class of the type to be named.
-         */
-        TypeDescription.Generic getSuperClass();
+    String rebase(TypeDescription typeDescription);
 
-        /**
-         * Returns a collection of descriptions of this unnamed type's directly implemented interfaces.
-         *
-         * @return A collection of implemented interfaces.
-         */
-        Collection<TypeDescription.Generic> getDeclaredInterfaces();
+    abstract class AbstractBase implements NamingStrategy {
 
-        /**
-         * Returns the visibility of this unnamed type.
-         *
-         * @return The visibility of this unnamed type.
-         */
-        Visibility getVisibility();
-
-        /**
-         * Returns the manifestation of this unnamed type.
-         *
-         * @return The manifestation of this unnamed type.
-         */
-        TypeManifestation getTypeManifestation();
-
-        /**
-         * Returns the manifestation of this unnamed type.
-         *
-         * @return The manifestation of this unnamed type.
-         */
-        SyntheticState getSyntheticState();
-
-        /**
-         * Returns the enumeration state of this unnamed type.
-         *
-         * @return The enumeration state of this unnamed type.
-         */
-        EnumerationState getEnumerationState();
-
-        /**
-         * Returns the class file version of this unnamed type.
-         *
-         * @return The class file version of this unnamed type.
-         */
-        ClassFileVersion getClassFileVersion();
-
-        /**
-         * An unnamed type which is to be named by a naming strategy.
-         */
-        class Default implements UnnamedType {
-
-            /**
-             * The unnamed type's super class.
-             */
-            private final TypeDescription.Generic superClass;
-
-            /**
-             * The unnamed type's interfaces.
-             */
-            private final List<? extends TypeDescription.Generic> interfaces;
-
-            /**
-             * The unnamed type's modifiers.
-             */
-            private final int modifiers;
-
-            /**
-             * The class file version of the unnamed type.
-             */
-            private final ClassFileVersion classFileVersion;
-
-            /**
-             * Creates a new unnamed type.
-             *
-             * @param superClass       The unnamed type's super class.
-             * @param interfaces       The unnamed type's interfaces.
-             * @param modifiers        The unnamed type's modifiers.
-             * @param classFileVersion The class file version of the unnamed type.
-             */
-            public Default(TypeDescription.Generic superClass,
-                           List<? extends TypeDescription.Generic> interfaces,
-                           int modifiers,
-                           ClassFileVersion classFileVersion) {
-                this.superClass = superClass;
-                this.interfaces = interfaces;
-                this.modifiers = modifiers;
-                this.classFileVersion = classFileVersion;
-            }
-
-            @Override
-            public TypeDescription.Generic getSuperClass() {
-                return superClass;
-            }
-
-            @Override
-            public List<TypeDescription.Generic> getDeclaredInterfaces() {
-                return new ArrayList<TypeDescription.Generic>(interfaces);
-            }
-
-            @Override
-            public Visibility getVisibility() {
-                switch (modifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE)) {
-                    case Opcodes.ACC_PUBLIC:
-                        return Visibility.PUBLIC;
-                    case Opcodes.ACC_PROTECTED:
-                        return Visibility.PROTECTED;
-                    case Opcodes.ACC_PRIVATE:
-                        return Visibility.PRIVATE;
-                    case ModifierContributor.EMPTY_MASK:
-                        return Visibility.PACKAGE_PRIVATE;
-                    default:
-                        throw new IllegalStateException("Ambiguous modifier: " + modifiers);
-                }
-            }
-
-            @Override
-            public TypeManifestation getTypeManifestation() {
-                if ((modifiers & Modifier.FINAL) != 0) {
-                    return TypeManifestation.FINAL;
-                    // Note: Interfaces are abstract, the interface condition needs to be checked before abstraction.
-                } else if ((modifiers & Opcodes.ACC_INTERFACE) != 0) {
-                    return TypeManifestation.INTERFACE;
-                } else if ((modifiers & Opcodes.ACC_ABSTRACT) != 0) {
-                    return TypeManifestation.ABSTRACT;
-                } else {
-                    return TypeManifestation.PLAIN;
-                }
-            }
-
-            @Override
-            public EnumerationState getEnumerationState() {
-                return EnumerationState.is((modifiers & Opcodes.ACC_ENUM) != 0);
-            }
-
-            @Override
-            public SyntheticState getSyntheticState() {
-                return SyntheticState.is((modifiers & Opcodes.ACC_SYNTHETIC) != 0);
-            }
-
-            @Override
-            public ClassFileVersion getClassFileVersion() {
-                return classFileVersion;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Default aDefault = (Default) other;
-                return modifiers == aDefault.modifiers
-                        && classFileVersion.equals(aDefault.classFileVersion)
-                        && interfaces.equals(aDefault.interfaces)
-                        && superClass.equals(aDefault.superClass);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = superClass.hashCode();
-                result = 31 * result + interfaces.hashCode();
-                result = 31 * result + modifiers;
-                result = 31 * result + classFileVersion.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "NamingStrategy.UnnamedType.Default{" +
-                        "superClass=" + superClass +
-                        ", interfaces=" + interfaces +
-                        ", modifiers=" + modifiers +
-                        ", classFileVersion=" + classFileVersion +
-                        '}';
-            }
-        }
-    }
-
-    /**
-     * An unbound {@link net.bytebuddy.NamingStrategy} where the actual naming strategy is still to be determined
-     * in dependency of whether a type is to be subclasses, redefined or rebased.
-     */
-    interface Unbound {
-
-        /**
-         * Returns a naming strategy for subclassing a type.
-         *
-         * @param typeDescription The type that the user specified to be subclasses.
-         * @return A naming strategy for naming the generated subclass.
-         */
-        NamingStrategy subclass(TypeDescription typeDescription);
-
-        /**
-         * Returns a naming strategy for redefining a type.
-         *
-         * @param typeDescription The type that the user specified to be subclasses.
-         * @return A naming strategy for naming the redefined class.
-         */
-        NamingStrategy redefine(TypeDescription typeDescription);
-
-        /**
-         * Returns a naming strategy for rebasing a type.
-         *
-         * @param typeDescription The type that the user specified to be subclasses.
-         * @return A naming strategy for naming the rebased class.
-         */
-        NamingStrategy rebase(TypeDescription typeDescription);
-
-        /**
-         * Returns a naming strategy for a type without an explicit base.
-         *
-         * @return A naming strategy for a type without an explicit base.
-         */
-        NamingStrategy create();
-
-        /**
-         * A default unbound {@link net.bytebuddy.NamingStrategy} where rebased or redefined classes keep
-         * their original name and where subclasses are named using a {@link net.bytebuddy.NamingStrategy.SuffixingRandom}
-         * strategy.
-         */
-        class Default implements Unbound {
-
-            /**
-             * The type name used for created classes.
-             */
-            public static final String CREATION_NAME = "net.bytebuddy.generated.Type";
-
-            /**
-             * The suffix to apply for generated subclasses.
-             */
-            private final String suffix;
-
-            /**
-             * Creates a default unbound naming strategy.
-             *
-             * @param suffix The suffix to apply for generated subclasses
-             */
-            public Default(String suffix) {
-                this.suffix = suffix;
-            }
-
-            @Override
-            public NamingStrategy subclass(TypeDescription typeDescription) {
-                return new SuffixingRandom(suffix, new SuffixingRandom.BaseNameResolver.ForGivenType(typeDescription));
-            }
-
-            @Override
-            public NamingStrategy redefine(TypeDescription typeDescription) {
-                return new Fixed(typeDescription.getName());
-            }
-
-            @Override
-            public NamingStrategy rebase(TypeDescription typeDescription) {
-                return new Fixed(typeDescription.getName());
-            }
-
-            @Override
-            public NamingStrategy create() {
-                return new SuffixingRandom(suffix, new SuffixingRandom.BaseNameResolver.ForFixedValue(CREATION_NAME));
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && suffix.equals(((Default) other).suffix);
-            }
-
-            @Override
-            public int hashCode() {
-                return suffix.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "NamingStrategy.Unbound.Default{" +
-                        "suffix='" + suffix + '\'' +
-                        '}';
-            }
+        @Override
+        public String subclass(TypeDescription.Generic superType) {
+            return name(superType.asErasure());
         }
 
-        /**
-         * A unified unbound naming strategy which always applies a given naming strategy.
-         */
-        class Unified implements Unbound {
-
-            /**
-             * The unified naming strategy.
-             */
-            private final NamingStrategy namingStrategy;
-
-            /**
-             * Creates a new unified naming strategy.
-             *
-             * @param namingStrategy The unified naming strategy.
-             */
-            public Unified(NamingStrategy namingStrategy) {
-                this.namingStrategy = namingStrategy;
-            }
-
-            @Override
-            public NamingStrategy subclass(TypeDescription typeDescription) {
-                return namingStrategy;
-            }
-
-            @Override
-            public NamingStrategy redefine(TypeDescription typeDescription) {
-                return namingStrategy;
-            }
-
-            @Override
-            public NamingStrategy rebase(TypeDescription typeDescription) {
-                return namingStrategy;
-            }
-
-            @Override
-            public NamingStrategy create() {
-                return namingStrategy;
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && namingStrategy.equals(((Unified) other).namingStrategy);
-            }
-
-            @Override
-            public int hashCode() {
-                return namingStrategy.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "NamingStrategy.Unbound.Unified{" +
-                        "namingStrategy=" + namingStrategy +
-                        '}';
-            }
+        @Override
+        public String redefine(TypeDescription typeDescription) {
+            return name(typeDescription);
         }
+
+        @Override
+        public String rebase(TypeDescription typeDescription) {
+            return name(typeDescription);
+        }
+
+        protected abstract String name(TypeDescription typeDescription);
     }
 
     /**
@@ -386,7 +49,7 @@ public interface NamingStrategy {
      * necessary as it is illegal to define non-bootstrap classes in this name space. The same strategy is applied
      * when subclassing a signed type which is equally illegal.
      */
-    class SuffixingRandom implements NamingStrategy {
+    class SuffixingRandom extends AbstractBase {
 
         /**
          * The default package for defining types that are renamed to not be contained in the
@@ -459,8 +122,8 @@ public interface NamingStrategy {
         }
 
         @Override
-        public String name(UnnamedType unnamedType) {
-            String baseName = baseNameResolver.resolve(unnamedType);
+        protected String name(TypeDescription typeDescription) {
+            String baseName = baseNameResolver.resolve(typeDescription);
             if (baseName.startsWith(JAVA_PACKAGE)) {
                 baseName = javaLangPackagePrefix + "." + baseName;
             }
@@ -500,13 +163,7 @@ public interface NamingStrategy {
          */
         public interface BaseNameResolver {
 
-            /**
-             * Returns the resolved name.
-             *
-             * @param unnamedType The unnamed type which is to be named.
-             * @return The resolved name.
-             */
-            String resolve(UnnamedType unnamedType);
+            String resolve(TypeDescription typeDescription);
 
             /**
              * Uses the unnamed type's super type's name as the resolved name.
@@ -519,8 +176,8 @@ public interface NamingStrategy {
                 INSTANCE;
 
                 @Override
-                public String resolve(UnnamedType unnamedType) {
-                    return unnamedType.getSuperClass().asErasure().getName();
+                public String resolve(TypeDescription typeDescription) {
+                    return typeDescription.getName();
                 }
 
                 @Override
@@ -549,8 +206,8 @@ public interface NamingStrategy {
                 }
 
                 @Override
-                public String resolve(UnnamedType unnamedType) {
-                    return typeDescription.getName();
+                public String resolve(TypeDescription typeDescription) {
+                    return this.typeDescription.getName();
                 }
 
                 @Override
@@ -592,7 +249,7 @@ public interface NamingStrategy {
                 }
 
                 @Override
-                public String resolve(UnnamedType unnamedType) {
+                public String resolve(TypeDescription typeDescription) {
                     return name;
                 }
 
@@ -621,7 +278,7 @@ public interface NamingStrategy {
      * A naming strategy that creates a name by prefixing a given class and its package with another package and
      * by appending a random number to the class's simple name.
      */
-    class PrefixingRandom implements NamingStrategy {
+    class PrefixingRandom extends AbstractBase {
 
         /**
          * The package to prefix.
@@ -644,8 +301,8 @@ public interface NamingStrategy {
         }
 
         @Override
-        public String name(UnnamedType unnamedType) {
-            return String.format("%s.%s$%s", prefix, unnamedType.getSuperClass().asErasure().getName(), randomString.nextString());
+        protected String name(TypeDescription typeDescription) {
+            return String.format("%s.%s$%s", prefix, typeDescription.getName(), randomString.nextString());
         }
 
         @Override
@@ -665,50 +322,6 @@ public interface NamingStrategy {
                     "prefix='" + prefix + '\'' +
                     ", randomString=" + randomString +
                     '}';
-        }
-    }
-
-    /**
-     * A naming strategy that applies a fixed name.
-     * <p>&nbsp;</p>
-     * This strategy should only be used for one shot type generators since they will otherwise create types that
-     * impose naming conflicts.
-     */
-    class Fixed implements NamingStrategy {
-
-        /**
-         * The fixed type name.
-         */
-        private final String name;
-
-        /**
-         * Creates an immutable fixed naming strategy.
-         *
-         * @param name The name for the created type.
-         */
-        public Fixed(String name) {
-            this.name = name;
-        }
-
-        @Override
-        public String name(UnnamedType unnamedType) {
-            return name;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && name.equals(((Fixed) other).name);
-        }
-
-        @Override
-        public int hashCode() {
-            return name.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "NamingStrategy.Fixed{name='" + name + '\'' + '}';
         }
     }
 }

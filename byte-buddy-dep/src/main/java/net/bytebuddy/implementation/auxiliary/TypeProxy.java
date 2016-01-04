@@ -23,7 +23,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -96,15 +95,13 @@ public class TypeProxy implements AuxiliaryType {
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
-                .withIgnoredMethods(ignoreFinalizer ? isFinalizer() : ElementMatchers.<MethodDescription>none())
+                .ignore(ignoreFinalizer ? isFinalizer() : ElementMatchers.<MethodDescription>none())
                 .subclass(proxiedType)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                .method(any())
-                .intercept(new MethodCall(methodAccessorFactory))
-                .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
-                .intercept(SilentConstruction.INSTANCE)
+                .method(any()).intercept(new MethodCall(methodAccessorFactory))
+                .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Ownership.STATIC).intercept(SilentConstruction.INSTANCE)
                 .make();
     }
 

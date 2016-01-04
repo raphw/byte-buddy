@@ -293,6 +293,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          */
         Generic VOID = new OfNonGenericType.ForLoadedType(void.class);
 
+        Generic ANNOTATION = new OfNonGenericType.ForLoadedType(Annotation.class);
+
         Generic UNDEFINED = null;
 
         Generic asRawType();

@@ -13,7 +13,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -435,10 +435,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * @param methodPool   A method pool which is queried for any user code to add to the type initializer.
              * @param injectedCode Potential code that is to be injected into the type initializer.
              */
-            void drain(ClassVisitor classVisitor,
-                       TypeWriter.MethodPool methodPool,
-                       InjectedCode injectedCode,
-                       AnnotationAppender.ValueFilter.Factory valueFilterFactory);
+            void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
              * Prohibits any instrumentation of an instrumented class's type initializer.
@@ -550,7 +547,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public void drain(ClassVisitor classVisitor,
                               TypeWriter.MethodPool methodPool,
                               InjectedCode injectedCode,
-                              AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 if (injectedCode.isDefined() || methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType)).getSort().isDefined()) {
                     throw new IllegalStateException("Type initializer interception is impossible or was disabled for " + instrumentedType);
                 }
@@ -798,7 +795,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             public void drain(ClassVisitor classVisitor,
                               TypeWriter.MethodPool methodPool,
                               InjectedCode injectedCode,
-                              AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 fieldCacheCanAppendEntries = false;
                 InstrumentedType.TypeInitializer typeInitializer = this.typeInitializer;
                 for (Map.Entry<FieldCacheEntry, FieldDescription.InDefinedShape> entry : registeredFieldCacheEntries.entrySet()) {
@@ -822,9 +819,9 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 if (prohibitTypeInitiailzer && initializerRecord.getSort().isDefined()) {
                     throw new IllegalStateException("It is impossible to define a class initializer or cached values for " + instrumentedType);
                 }
-                initializerRecord.apply(classVisitor, this, valueFilterFactory);
+                initializerRecord.apply(classVisitor, this, annotationValueFilterFactory);
                 for (TypeWriter.MethodPool.Record record : accessorMethods) {
-                    record.apply(classVisitor, this, valueFilterFactory);
+                    record.apply(classVisitor, this, annotationValueFilterFactory);
                 }
             }
 
@@ -1295,7 +1292,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Context implementationContext, AnnotationAppender.ValueFilter.Factory valueFilterFactory) {
+                public void applyBody(MethodVisitor methodVisitor, Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     methodVisitor.visitCode();
                     Size size = apply(methodVisitor, implementationContext, getMethod());
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());

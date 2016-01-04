@@ -190,7 +190,7 @@ public interface AgentBuilder {
     /**
      * Disables injection of auxiliary classes into the bootstrap class path.
      *
-     * @return An agent builder with bootstrap class loader class injection disbaled.
+     * @return An agent builder with bootstrap class loader class injection disabled.
      */
     AgentBuilder disableBootstrapInjection();
 
@@ -290,9 +290,8 @@ public interface AgentBuilder {
 
             /**
              * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
-             * supplied {@link TypeDescription} and its
-             * {@link java.lang.ClassLoader} against two matcher in order to decied if an instrumentation should
-             * be conducted.
+             * supplied {@link TypeDescription} and its {@link java.lang.ClassLoader} against two matcher in order
+             * to decided if an instrumentation should be conducted.
              *
              * @param typeMatcher        The type matcher to apply to a
              *                           {@link TypeDescription}.
@@ -374,7 +373,7 @@ public interface AgentBuilder {
             },
 
             /**
-             * A definition handler that performs a redefition for all types.
+             * A definition handler that performs a redefinition for all types.
              */
             REDEFINE {
                 @Override
@@ -841,7 +840,7 @@ public interface AgentBuilder {
             DynamicType.Builder<?> apply(DynamicType.Builder<?> builder);
 
             /**
-             * Registes a dynamic type for initialization and/or begins the initialization process.
+             * Registers a dynamic type for initialization and/or begins the initialization process.
              *
              * @param dynamicType     The dynamic type that is created.
              * @param classLoader     The class loader of the dynamic type.
@@ -901,7 +900,7 @@ public interface AgentBuilder {
         enum SelfInjection implements InitializationStrategy {
 
             /**
-             * A form of self-injection where auxiliary types that are a subtype of the instrumented type are loaded lazyly and
+             * A form of self-injection where auxiliary types that are a subtype of the instrumented type are loaded lazily and
              * any other auxiliary type is loaded eagerly.
              */
             SPLIT {
@@ -969,7 +968,7 @@ public interface AgentBuilder {
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                    return builder.initialize(NexusAccessor.INSTANCE.identifiedBy(identification));
+                    return builder.initializer(NexusAccessor.INSTANCE.identifiedBy(identification));
                 }
 
                 @Override
@@ -1181,7 +1180,7 @@ public interface AgentBuilder {
 
                     @Override
                     public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitiailizer{" +
+                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer{" + // TODO: object properties
                                 "instrumentedType=" + instrumentedType +
                                 ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
                                 ", loadedTypeInitializers=" + loadedTypeInitializers +
@@ -1643,7 +1642,7 @@ public interface AgentBuilder {
              * @param nativeMethodStrategy       The native method strategy to apply.
              * @param accessControlContext       The access control context to use.
              * @param initializationStrategy     The initialization strategy to use.
-             * @param bootstrapInjectionStrategy The bootrstrap injection strategy to use.
+             * @param bootstrapInjectionStrategy The bootstrap injection strategy to use.
              * @throws UnmodifiableClassException If an unmodifiable class is attempted to be modified.
              * @throws ClassNotFoundException     If a class cannot be found while redefining another class.
              */

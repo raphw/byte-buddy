@@ -385,7 +385,7 @@ public @interface Morph {
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineConstructor(specialMethodInvocation.getMethodDescription().isStatic()
+                        .defineConstructor().withParameters(specialMethodInvocation.getMethodDescription().isStatic()
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(instrumentedType))
                         .intercept(specialMethodInvocation.getMethodDescription().isStatic()

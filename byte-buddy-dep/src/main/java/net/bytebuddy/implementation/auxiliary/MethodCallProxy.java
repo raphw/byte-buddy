@@ -29,7 +29,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -134,13 +133,13 @@ public class MethodCallProxy implements AuxiliaryType {
         MethodDescription accessorMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
+                .with(PrecomputedMethodGraph.INSTANCE)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .methodGraphCompiler(PrecomputedMethodGraph.INSTANCE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(Runnable.class, Callable.class).intercept(new MethodCall(accessorMethod, assigner))
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
+                .defineConstructor().withParameters(parameterFields.values())
                 .intercept(ConstructorCall.INSTANCE);
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
             builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);

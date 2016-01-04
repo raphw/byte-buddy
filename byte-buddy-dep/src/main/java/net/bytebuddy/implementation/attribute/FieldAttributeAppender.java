@@ -21,7 +21,7 @@ public interface FieldAttributeAppender {
      *                         are written to.
      * @param fieldDescription The description of the field to which the field visitor belongs to.
      */
-    void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter);
+    void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter);
 
     /**
      * A field attribute appender that does not append any attributes.
@@ -39,7 +39,7 @@ public interface FieldAttributeAppender {
         }
 
         @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
 
@@ -113,10 +113,10 @@ public interface FieldAttributeAppender {
         INSTANCE;
 
         @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
             for (AnnotationDescription annotation : fieldDescription.getDeclaredAnnotations()) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
+                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
             }
         }
 
@@ -152,10 +152,10 @@ public interface FieldAttributeAppender {
         }
 
         @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
             for (AnnotationDescription annotation : annotations) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
+                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
             }
         }
 
@@ -209,9 +209,9 @@ public interface FieldAttributeAppender {
         }
 
         @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             for (FieldAttributeAppender fieldAttributeAppender : fieldAttributeAppenders) {
-                fieldAttributeAppender.apply(fieldVisitor, fieldDescription, valueFilter);
+                fieldAttributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilter);
             }
         }
 

@@ -5,15 +5,18 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.inline.RebaseImplementationTarget;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
@@ -32,31 +35,27 @@ public class SubclassImplementationTargetFactoryTest {
     @Mock
     private TypeDescription.Generic genericSuperType;
 
-    private Implementation.Target.Factory factory;
-
     @Before
     public void setUp() throws Exception {
         when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
         when(genericSuperType.asErasure()).thenReturn(superType);
         when(genericSuperType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
-        factory = new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE);
     }
 
     @Test
-    public void testReturnsSubclassimplementationTarget() throws Exception {
-        assertThat(factory.make(instrumentedType, methodGraph) instanceof SubclassImplementationTarget, is(true));
+    public void testReturnsSubclassImplementationTarget() throws Exception {
+        assertThat(SubclassImplementationTarget.Factory.SUPER_TYPE.make(instrumentedType, methodGraph), instanceOf(SubclassImplementationTarget.class));
+        assertThat(SubclassImplementationTarget.Factory.LEVEL_TYPE.make(instrumentedType, methodGraph), instanceOf(SubclassImplementationTarget.class));
     }
 
     @Test
     public void testOriginTypeSuperType() throws Exception {
-        assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE)
-                .make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) genericSuperType));
+        assertThat(SubclassImplementationTarget.Factory.SUPER_TYPE.make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) genericSuperType));
     }
 
     @Test
     public void testOriginTypeLevelType() throws Exception {
-        assertThat(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE)
-                .make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) instrumentedType));
+        assertThat(SubclassImplementationTarget.Factory.LEVEL_TYPE.make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) instrumentedType));
     }
 
     @Test

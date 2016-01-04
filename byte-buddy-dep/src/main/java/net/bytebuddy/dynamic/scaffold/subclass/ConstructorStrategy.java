@@ -42,7 +42,7 @@ public interface ConstructorStrategy {
      * @return A method registry that is capable of providing byte code for the constructors that were added by
      * this strategy.
      */
-    MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
+    MethodRegistry inject(MethodRegistry methodRegistry);
 
     /**
      * Default implementations of constructor strategies.
@@ -61,7 +61,7 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return methodRegistry;
             }
         },
@@ -86,10 +86,10 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        defaultMethodAttributeAppenderFactory,
+                        MethodAttributeAppender.NoOp.INSTANCE,
                         MethodTransformer.NoOp.INSTANCE);
             }
         },
@@ -110,10 +110,10 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        defaultMethodAttributeAppenderFactory,
+                        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE,
                         MethodTransformer.NoOp.INSTANCE);
             }
         },
@@ -133,10 +133,10 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        defaultMethodAttributeAppenderFactory,
+                        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE,
                         MethodTransformer.NoOp.INSTANCE);
             }
         };

@@ -21,6 +21,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
  * should however be immutable and return new instance when their mutator methods are called.
@@ -257,12 +259,12 @@ public interface InstrumentedType extends TypeDescription {
          */
         private final int modifiers;
 
-        private final Map<String, ? extends TypeList.Generic> typeVariables;
-
         /**
          * The generic super type of the instrumented type.
          */
         private final Generic superType;
+
+        private final Map<String, ? extends TypeList.Generic> typeVariables;
 
         /**
          * A list of interfaces of the instrumented type.
@@ -330,49 +332,6 @@ public interface InstrumentedType extends TypeDescription {
         private final boolean localClass;
 
         /**
-         * Creates a new instrumented type with default values for any properties that only exist for types that are declared within another type.
-         *
-         * @param name                   The binary name of the instrumented type.
-         * @param modifiers              The modifiers of the instrumented type.
-         * @param typeVariables          A list of type variables of the instrumented type.
-         * @param superType              The generic super type of the instrumented type.
-         * @param interfaceTypes         A list of interfaces of the instrumented type.
-         * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
-         * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
-         * @param annotationDescriptions A list of annotations of the annotated type.
-         * @param typeInitializer        The type initializer of the instrumented type.
-         * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
-         */
-        public Default(String name,
-                       int modifiers,
-                       Map<String, ? extends TypeList.Generic> typeVariables,
-                       Generic superType,
-                       List<? extends Generic> interfaceTypes,
-                       List<? extends FieldDescription.Token> fieldTokens,
-                       List<? extends MethodDescription.Token> methodTokens,
-                       List<? extends AnnotationDescription> annotationDescriptions,
-                       TypeInitializer typeInitializer,
-                       LoadedTypeInitializer loadedTypeInitializer) {
-            this(name,
-                    modifiers,
-                    typeVariables,
-                    superType,
-                    interfaceTypes,
-                    fieldTokens,
-                    methodTokens,
-                    annotationDescriptions,
-                    typeInitializer,
-                    loadedTypeInitializer,
-                    null,
-                    null,
-                    null,
-                    Collections.<TypeDescription>emptyList(),
-                    false,
-                    false,
-                    false);
-        }
-
-        /**
          * Creates a new instrumented type.
          *
          * @param name                   The binary name of the instrumented type.
@@ -393,10 +352,10 @@ public interface InstrumentedType extends TypeDescription {
          * @param anonymousClass         {@code true} if this type is a anonymous class.
          * @param localClass             {@code true} if this type is a local class.
          */
-        public Default(String name,
+        protected Default(String name,
                        int modifiers,
-                       Map<String, ? extends TypeList.Generic> typeVariables,
                        Generic superType,
+                       Map<String, ? extends TypeList.Generic> typeVariables,
                        List<? extends Generic> interfaceTypes,
                        List<? extends FieldDescription.Token> fieldTokens,
                        List<? extends MethodDescription.Token> methodTokens,
@@ -429,74 +388,150 @@ public interface InstrumentedType extends TypeDescription {
             this.localClass = localClass;
         }
 
-        @Override
-        public WithFlexibleName withField(FieldDescription.Token token) {
-            return new Default(this.name,
-                    modifiers,
-                    typeVariables,
-                    superType,
-                    interfaceTypes,
-                    CompoundList.of(fieldTokens, token),
-                    methodTokens,
-                    annotationDescriptions,
-                    typeInitializer,
-                    loadedTypeInitializer);
-        }
-
-        @Override
-        public WithFlexibleName withMethod(MethodDescription.Token token) {
+        public static InstrumentedType.WithFlexibleName subclass(String name, int modifiers, Generic superType) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
-                    interfaceTypes,
-                    fieldTokens,
-                    CompoundList.of(methodTokens, token),
-                    annotationDescriptions,
-                    typeInitializer,
-                    loadedTypeInitializer);
+                    Collections.<String, TypeList.Generic>emptyMap(),
+                    Collections.<Generic>emptyList(),
+                    Collections.<FieldDescription.Token>emptyList(),
+                    Collections.<MethodDescription.Token>emptyList(),
+                    Collections.<AnnotationDescription>emptyList(),
+                    TypeInitializer.None.INSTANCE,
+                    LoadedTypeInitializer.NoOp.INSTANCE,
+                    UNDEFINED,
+                    MethodDescription.UNDEFINED,
+                    UNDEFINED,
+                    Collections.<TypeDescription>emptyList(),
+                    false,
+                    false,
+                    false);
+        }
+
+        public static InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription) {
+            Generic.Visitor<TypeDescription.Generic> visitor = new Generic.Visitor.Substitutor.ForDetachment(named(typeDescription.getName()));
+            return new Default(typeDescription.getName(),
+                    typeDescription.getModifiers(),
+                    typeDescription.getSuperType(),
+                    typeDescription.getTypeVariables().asSymbols(visitor),
+                    typeDescription.getInterfaces().accept(visitor),
+                    typeDescription.getDeclaredFields().asTokenList(named(typeDescription.getName())),
+                    typeDescription.getDeclaredMethods().asTokenList(named(typeDescription.getName())),
+                    typeDescription.getDeclaredAnnotations(),
+                    TypeInitializer.None.INSTANCE,
+                    LoadedTypeInitializer.NoOp.INSTANCE,
+                    typeDescription.getDeclaringType(),
+                    typeDescription.getEnclosingMethod(),
+                    typeDescription.getEnclosingType(),
+                    typeDescription.getDeclaredTypes(),
+                    typeDescription.isMemberClass(),
+                    typeDescription.isAnonymousClass(),
+                    typeDescription.isLocalClass());
         }
 
         @Override
         public WithFlexibleName withModifiers(int modifiers) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withField(FieldDescription.Token token) {
+            return new Default(this.name,
+                    modifiers,
+                    superType,
+                    typeVariables,
+                    interfaceTypes,
+                    CompoundList.of(fieldTokens, token),
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withMethod(MethodDescription.Token token) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    CompoundList.of(methodTokens, token),
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
         public WithFlexibleName withInterfaces(List<? extends Generic> interfaceTypes) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
                     CompoundList.of(this.interfaceTypes, interfaceTypes),
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
         public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     CompoundList.of(this.annotationDescriptions, annotationDescriptions),
                     typeInitializer,
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
@@ -505,56 +540,84 @@ public interface InstrumentedType extends TypeDescription {
             typeVariables.put(symbol, new TypeList.Generic.Explicit(bound));
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
         public WithFlexibleName withName(String name) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
         public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
-                    new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
+                    new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer),
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
         public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer.expandWith(byteCodeAppender),
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override

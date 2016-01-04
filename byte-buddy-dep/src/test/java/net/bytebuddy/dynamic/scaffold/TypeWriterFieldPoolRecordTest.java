@@ -36,7 +36,7 @@ public class TypeWriterFieldPoolRecordTest {
     private AnnotationAppender.ValueFilter valueFilter;
 
     @Mock
-    private AnnotationAppender.ValueFilter.Factory valueFilterFactory;
+    private AnnotationAppender.ValueFilter.Factory annotationValueFilterFactory;
 
     @Mock
     private ClassVisitor classVisitor;
@@ -58,7 +58,7 @@ public class TypeWriterFieldPoolRecordTest {
         when(fieldDescription.getGenericSignature()).thenReturn(QUX);
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, defaultValue)).thenReturn(fieldVisitor);
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, null)).thenReturn(fieldVisitor);
-        when(valueFilterFactory.on(fieldDescription)).thenReturn(valueFilter);
+        when(annotationValueFilterFactory.on(fieldDescription)).thenReturn(valueFilter);
     }
 
     @Test
@@ -71,7 +71,7 @@ public class TypeWriterFieldPoolRecordTest {
     @Test
     public void testRichFieldEntryWritesField() throws Exception {
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, defaultValue, fieldDescription);
-        record.apply(classVisitor, valueFilterFactory);
+        record.apply(classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, defaultValue);
         verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription, valueFilter);
         verifyNoMoreInteractions(fieldAttributeAppender);
@@ -84,7 +84,7 @@ public class TypeWriterFieldPoolRecordTest {
     public void testSimpleFieldEntryWritesField() throws Exception {
         when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription); /// TODO: Annotation
-        record.apply(classVisitor, valueFilterFactory);
+        record.apply(classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
         verifyNoMoreInteractions(classVisitor);
         verify(fieldVisitor).visitEnd();

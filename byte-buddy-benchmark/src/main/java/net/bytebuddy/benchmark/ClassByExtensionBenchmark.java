@@ -75,7 +75,7 @@ public class ClassByExtensionBenchmark {
     @Benchmark
     public ExampleClass benchmarkByteBuddyWithAnnotations() throws Exception {
         return new ByteBuddy()
-                .withIgnoredMethods(none())
+                .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(MethodDelegation.to(ByteBuddyInterceptor.class))
                 .make()
@@ -94,7 +94,7 @@ public class ClassByExtensionBenchmark {
     @Benchmark
     public ExampleClass benchmarkByteBuddySpecialized() throws Exception {
         return new ByteBuddy()
-                .withIgnoredMethods(none())
+                .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(SuperMethodCall.INSTANCE)
                 .make()

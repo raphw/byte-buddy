@@ -24,7 +24,7 @@ public interface MethodAttributeAppender {
      * @param methodDescription The description of the method for which the given method visitor creates an
      *                          instrumentation for.
      */
-    void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationAppender.ValueFilter valueFilter);
+    void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter);
 
     /**
      * A method attribute appender that does not append any attributes.
@@ -42,7 +42,7 @@ public interface MethodAttributeAppender {
         }
 
         @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
 
@@ -131,16 +131,16 @@ public interface MethodAttributeAppender {
         }
 
         @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
             for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
-                methodAppender = methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
+                methodAppender = methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
             }
             int index = 0;
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
                 AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
                 for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
-                    parameterAppender = parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
+                    parameterAppender = parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
                 }
             }
         }
@@ -207,10 +207,10 @@ public interface MethodAttributeAppender {
         }
 
         @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
             for (AnnotationDescription annotation : annotations) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
+                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
             }
         }
 
@@ -343,9 +343,9 @@ public interface MethodAttributeAppender {
         }
 
         @Override
-        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             for (MethodAttributeAppender methodAttributeAppender : methodAttributeAppenders) {
-                methodAttributeAppender.apply(methodVisitor, methodDescription, valueFilter);
+                methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
             }
         }
 

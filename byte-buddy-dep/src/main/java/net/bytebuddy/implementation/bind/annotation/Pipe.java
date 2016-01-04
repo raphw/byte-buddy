@@ -30,7 +30,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.Serializable;
 import java.lang.annotation.*;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -299,7 +298,7 @@ public @interface Pipe {
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                         .method(isDeclaredBy(forwardingType))
                         .intercept(new MethodCall(sourceMethod, assigner))
-                        .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
+                        .defineConstructor().withParameters(parameterFields.values())
                         .intercept(ConstructorCall.INSTANCE);
                 for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
                     builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);

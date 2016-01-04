@@ -18,7 +18,7 @@ public interface TypeAttributeAppender {
      * @param classVisitor     The class visitor to which the annotations of this visitor should be written to.
      * @param instrumentedType A description of the instrumented type that is target of the ongoing instrumentation.
      */
-    void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationAppender.ValueFilter valueFilter);
+    void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter);
 
     /**
      * A type attribute appender that does not append any attributes.
@@ -31,7 +31,7 @@ public interface TypeAttributeAppender {
         INSTANCE;
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
 
@@ -51,10 +51,10 @@ public interface TypeAttributeAppender {
         INSTANCE;
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
+                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
             }
         }
 
@@ -79,17 +79,16 @@ public interface TypeAttributeAppender {
          * Creates a new annotation attribute appender for explicit annotation values.
          *
          * @param annotations The annotations to write to the given type.
-         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
         public Explicit(List<? extends AnnotationDescription> annotations) {
             this.annotations = annotations;
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : annotations) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), valueFilter);
+                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
             }
         }
 
@@ -136,9 +135,9 @@ public interface TypeAttributeAppender {
         }
 
         @Override
-        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationAppender.ValueFilter valueFilter) {
+        public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             for (TypeAttributeAppender typeAttributeAppender : typeAttributeAppenders) {
-                typeAttributeAppender.apply(classVisitor, instrumentedType, valueFilter);
+                typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilter);
             }
         }
 
