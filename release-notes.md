@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 14. December 2015: version 0.7.8
+### 4. January 2016: version 0.7.8
 
 - Implemented all type lists of class file-rooted files to fallback to type erasures in case that the length of generic types and raw types does not match. This makes Byte Buddy more robust when dealing with illegally defined class files.
 - Fixed rule on a default method's invokeability.
@@ -10,7 +10,7 @@ Byte Buddy release notes
 
 ### 14. December 2015: version 0.7.7
 
-- Fixed type resolution for anoymously loaded classes by the `ClassReloadingStrategy`.
+- Fixed type resolution for anonymously loaded classes by the `ClassReloadingStrategy`.
 - Added additional `InitiailizationStrategy`s for self-injection where the new default strategy loads types that are independent of the instrumented type before completing the instrumentation. This way, the resolution does not fail for types that are accessed via reflection before initializing the types if a constructor is rebased.
 
 ### 11. December 2015: version 0.7.6
@@ -32,7 +32,7 @@ Byte Buddy release notes
 
 - Added visibility substitution for `@Super` when the instrumented type is instrumented to see changed state on a redefinition.
 - Added patch for modifier information of inner classes on a redefinition.
-- Added fallback for `Nexus` injection to attempt lookup of already loaded class if ressource cannot be located.
+- Added fallback for `Nexus` injection to attempt lookup of already loaded class if resource cannot be located.
 
 ### 26. November 2015: version 0.7.2
 
@@ -70,7 +70,7 @@ Byte Buddy release notes
 
 ### 15. October 2015: version 0.7 (release candidate 5)
 
-- Fixed parser to supress exceptions from generic signatures which are not supposed to be included in the class file if no array type is generic.
+- Fixed parser to suppress exceptions from generic signatures which are not supposed to be included in the class file if no array type is generic.
 - Fixed class validator which did not allow `<clinit>` blocks in interface types.
 - Added restriction to retransformation to not attempt a retransformation at all if no class should be retransformed.
 - Added a factory for creating an `Implementation.Context` that is configurable. This way, it is possible to avoid a rebase of a type initializer which is not always possible.
