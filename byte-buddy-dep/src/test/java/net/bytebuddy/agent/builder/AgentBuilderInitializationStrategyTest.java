@@ -87,7 +87,7 @@ public class AgentBuilderInitializationStrategyTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testPrematureRegistration() throws Exception {
+    public void testMinimalRegistrationIndependentType() throws Exception {
         Annotation eagerAnnotation = mock(AuxiliaryType.Eager.class);
         when(eagerAnnotation.annotationType()).thenReturn((Class) AuxiliaryType.Eager.class);
         TypeDescription independent = mock(TypeDescription.class), dependent = mock(TypeDescription.class);
@@ -108,6 +108,15 @@ public class AgentBuilderInitializationStrategyTest {
         verifyNoMoreInteractions(classInjector);
         verify(loadedTypeInitializer).onLoad(Foo.class);
         verifyNoMoreInteractions(loadedTypeInitializer);
+    }
+
+    @Test
+    public void testMinimalRegistrationDependentType() throws Exception {
+        TypeDescription dependent = mock(TypeDescription.class);
+        when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.singletonMap(dependent, BAZ));
+        AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(dynamicType, classLoader, injectorFactory);
+        verifyZeroInteractions(injectorFactory);
     }
 
     @Test

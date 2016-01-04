@@ -50,7 +50,7 @@ public class MethodRebaseResolverDefaultTest {
     private AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     @Mock
-    private MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+    private MethodNameTransformer methodNameTransformer;
 
     @Before
     public void setUp() throws Exception {

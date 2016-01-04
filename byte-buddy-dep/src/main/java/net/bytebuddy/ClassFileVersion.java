@@ -2,6 +2,9 @@ package net.bytebuddy;
 
 import org.objectweb.asm.Opcodes;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 /**
  * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
@@ -130,7 +133,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return The currently running Java process's class file version.
      */
     public static ClassFileVersion forCurrentJavaVersion() {
-        String versionString = System.getProperty(JAVA_VERSION_PROPERTY);
+        String versionString = AccessController.doPrivileged(VersionPropertyAction.INSTANCE);
         int[] versionIndex = {-1, 0, 0};
         for (int i = 1; i < 3; i++) {
             versionIndex[i] = versionString.indexOf('.', versionIndex[i - 1] + 1);
@@ -208,5 +211,20 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     @Override
     public String toString() {
         return "ClassFileVersion{versionNumber=" + versionNumber + '}';
+    }
+
+    protected enum VersionPropertyAction implements PrivilegedAction<String> {
+
+        INSTANCE;
+
+        @Override
+        public String run() {
+            return System.getProperty(JAVA_VERSION_PROPERTY);
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileVersion.VersionPropertyAction." + name();
+        }
     }
 }

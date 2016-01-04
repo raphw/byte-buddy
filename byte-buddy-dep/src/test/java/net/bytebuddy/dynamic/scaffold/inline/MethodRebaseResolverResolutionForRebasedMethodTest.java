@@ -57,7 +57,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
     private MethodDescription.InDefinedShape methodDescription;
 
     @Mock
-    private MethodRebaseResolver.MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
+    private MethodNameTransformer methodNameTransformer, otherMethodNameTransformer;
 
     @Mock
     private StackManipulation stackManipulation;
@@ -129,9 +129,9 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
                 when(returnType.asErasure()).thenReturn(rawReturnType);
                 when(mock.getReturnType()).thenReturn(returnType);
             }
-        }).refine(new ObjectPropertyAssertion.Refinement<MethodRebaseResolver.MethodNameTransformer>() {
+        }).refine(new ObjectPropertyAssertion.Refinement<MethodNameTransformer>() {
             @Override
-            public void apply(MethodRebaseResolver.MethodNameTransformer mock) {
+            public void apply(MethodNameTransformer mock) {
                 when(mock.transform(any(MethodDescription.class))).thenReturn(FOO + System.identityHashCode(mock));
             }
         }).apply();

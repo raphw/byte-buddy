@@ -8,14 +8,13 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.endsWith;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class MethodRebaseResolverMethodNameTransformerPrefixingTest {
+public class MethodNameTransformerSuffixingTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", BAR = "bar";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -26,13 +25,12 @@ public class MethodRebaseResolverMethodNameTransformerPrefixingTest {
     @Test
     public void testTransformation() throws Exception {
         when(methodDescription.getInternalName()).thenReturn(FOO);
-        String transformed = new MethodRebaseResolver.MethodNameTransformer.Prefixing().transform(methodDescription);
-        assertThat(transformed, not(FOO));
-        assertThat(transformed, endsWith(FOO));
+        String transformed = new MethodNameTransformer.Suffixing(BAR).transform(methodDescription);
+        assertThat(transformed, is(FOO + "$" + BAR));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodRebaseResolver.MethodNameTransformer.Prefixing.class).apply();
+        ObjectPropertyAssertion.of(MethodNameTransformer.Suffixing.class).apply();
     }
 }

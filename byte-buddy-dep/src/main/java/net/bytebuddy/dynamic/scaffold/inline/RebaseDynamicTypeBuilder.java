@@ -24,7 +24,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
 
     private final ClassFileLocator classFileLocator;
 
-    private final MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+    private final MethodNameTransformer methodNameTransformer;
 
     public RebaseDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                     ClassFileVersion classFileVersion,
@@ -36,7 +36,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     ElementMatcher<? super MethodDescription> ignoredMethods,
                                     TypeDescription originalType,
                                     ClassFileLocator classFileLocator,
-                                    MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                    MethodNameTransformer methodNameTransformer) {
         this(instrumentedType,
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
@@ -68,7 +68,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        ElementMatcher<? super MethodDescription> ignoredMethods,
                                        TypeDescription originalType,
                                        ClassFileLocator classFileLocator,
-                                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                       MethodNameTransformer methodNameTransformer) {
         super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,

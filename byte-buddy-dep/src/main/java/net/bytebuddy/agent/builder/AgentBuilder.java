@@ -7,7 +7,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
-import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
+import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -353,7 +353,7 @@ public interface AgentBuilder {
         DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                        ByteBuddy byteBuddy,
                                        ClassFileLocator classFileLocator,
-                                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer);
+                                       MethodNameTransformer methodNameTransformer);
 
         /**
          * Default implementations of type strategies.
@@ -368,7 +368,7 @@ public interface AgentBuilder {
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
-                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                                      MethodNameTransformer methodNameTransformer) {
                     return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
                 }
             },
@@ -381,7 +381,7 @@ public interface AgentBuilder {
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
-                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                                      MethodNameTransformer methodNameTransformer) {
                     return byteBuddy.redefine(typeDescription, classFileLocator);
                 }
             };
@@ -2424,7 +2424,7 @@ public interface AgentBuilder {
              *
              * @return A method name transformer for this strategy.
              */
-            MethodRebaseResolver.MethodNameTransformer resolve();
+            MethodNameTransformer resolve();
 
             /**
              * Returns the method prefix if the strategy is enabled. This method must only be called if this strategy enables prefixing.
@@ -2444,8 +2444,8 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 @Override
-                public MethodRebaseResolver.MethodNameTransformer resolve() {
-                    return MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix();
+                public MethodNameTransformer resolve() {
+                    return MethodNameTransformer.Suffixing.withRandomSuffix();
                 }
 
                 @Override
@@ -2497,8 +2497,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public MethodRebaseResolver.MethodNameTransformer resolve() {
-                    return new MethodRebaseResolver.MethodNameTransformer.Prefixing(prefix);
+                public MethodNameTransformer resolve() {
+                    return new MethodNameTransformer.Prefixing(prefix);
                 }
 
                 @Override
