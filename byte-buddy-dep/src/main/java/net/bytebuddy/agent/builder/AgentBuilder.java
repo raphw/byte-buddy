@@ -1181,7 +1181,7 @@ public interface AgentBuilder {
 
                     @Override
                     public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer{" + // TODO: object properties
+                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer{" +
                                 "instrumentedType=" + instrumentedType +
                                 ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
                                 ", loadedTypeInitializers=" + loadedTypeInitializers +
@@ -1495,21 +1495,18 @@ public interface AgentBuilder {
 
             @Override
             public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
-                TypeDescription instrumentedType = dynamicType.getTypeDescription();
                 Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                 Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                 for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                    if (auxiliaryType.isAssignableTo(instrumentedType)) {
+                    if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.Eager.class)) {
                         independentTypes.remove(auxiliaryType);
                     }
                 }
-                if (!auxiliaryTypes.isEmpty()) {
+                if (!independentTypes.isEmpty()) {
                     ClassInjector classInjector = injectorFactory.resolve();
                     Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                    if (!independentTypes.isEmpty()) {
-                        for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
-                            loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
-                        }
+                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                        loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                     }
                 }
             }

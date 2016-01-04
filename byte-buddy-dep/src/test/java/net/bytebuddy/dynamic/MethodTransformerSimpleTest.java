@@ -56,7 +56,7 @@ public class MethodTransformerSimpleTest {
     private ParameterDescription.InDefinedShape definedParameter;
 
     @Mock
-    private TypeDescription.Generic returnType, typeVariable, parameterType, exceptionType, declaringType;
+    private TypeDescription.Generic returnType, typeVariableBound, parameterType, exceptionType, declaringType;
 
     @Mock
     private AnnotationDescription methodAnnotation, parameterAnnotation;
@@ -68,19 +68,19 @@ public class MethodTransformerSimpleTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(returnType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(returnType);
-        when(typeVariable.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(typeVariable);
+        when(typeVariableBound.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(typeVariableBound);
         when(parameterType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(parameterType);
         when(exceptionType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(exceptionType);
-        when(typeVariable.getSymbol()).thenReturn(QUX);
-        when(typeVariable.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
-        when(typeVariable.asGenericType()).thenReturn(typeVariable);
+        when(typeVariableBound.getSymbol()).thenReturn(QUX);
+        when(typeVariableBound.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(typeVariableBound.asGenericType()).thenReturn(typeVariableBound);
         when(methodDescription.asToken()).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);
         when(methodToken.getName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
-        when(methodToken.getTypeVariables()).thenReturn(Collections.<String, TypeList.Generic>singletonMap(QUX, new TypeList.Generic.Explicit(typeVariable)));
+        when(methodToken.getTypeVariables()).thenReturn(Collections.<String, TypeList.Generic>singletonMap(QUX, new TypeList.Generic.Explicit(typeVariableBound)));
         when(methodToken.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
                 .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(parameterToken));
@@ -131,7 +131,8 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getReturnType(), is(returnType));
         assertThat(transformed.getTypeVariables().size(), is(1));
         assertThat(transformed.getTypeVariables().containsKey(QUX), is(true));
-        assertThat(transformed.getTypeVariables().get(QUX).size(), is(1)); // TODO
+        assertThat(transformed.getTypeVariables().get(QUX).size(), is(1));
+        assertThat(transformed.getTypeVariables().get(QUX).contains(typeVariableBound), is(true));
         assertThat(transformed.getExceptionTypes().size(), is(1));
         assertThat(transformed.getExceptionTypes().getOnly(), is(exceptionType));
         assertThat(transformed.getParameterTokens().size(), is(1));
