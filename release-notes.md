@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 14. December 2015: version 0.7.8
+
+- Implemented all type lists of class file-rooted files to fallback to type erasures in case that the length of generic types and raw types does not match. This makes Byte Buddy more robust when dealing with illegally defined class files.
+- Fixed rule on a default method's invokeability.
+- Extended `MethodCall` implementation to include shortcuts for executing `Runnable` and `Callable` instances.
+- Added `failSafe` matcher that returns `false` for types that throw exceptions during navigation.
+
 ### 14. December 2015: version 0.7.7
 
 - Fixed type resolution for anoymously loaded classes by the `ClassReloadingStrategy`.
