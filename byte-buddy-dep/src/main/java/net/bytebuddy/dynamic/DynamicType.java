@@ -1395,7 +1395,10 @@ public interface DynamicType {
                     @Override
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withField(token),
-                                fieldRegistry.prepend(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
+                                fieldRegistry.prepend(new LatentMatcher.ForFieldToken(token),
+                                        fieldAttributeAppenderFactory,
+                                        defaultValue,
+                                        FieldTransformer.NoOp.INSTANCE),
                                 methodRegistry,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
@@ -1774,7 +1777,10 @@ public interface DynamicType {
                         protected Builder<U> materialize() {
                             return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withMethod(token),
                                     fieldRegistry,
-                                    methodRegistry.prepend(new LatentMatcher.ForMethodToken(token), handler, methodAttributeAppenderFactory, methodTransformer),
+                                    methodRegistry.prepend(new LatentMatcher.ForMethodToken(token),
+                                            handler,
+                                            methodAttributeAppenderFactory,
+                                            methodTransformer),
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
                                     classFileVersion,

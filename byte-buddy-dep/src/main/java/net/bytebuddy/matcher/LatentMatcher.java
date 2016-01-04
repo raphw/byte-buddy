@@ -4,19 +4,44 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
 import static net.bytebuddy.matcher.ElementMatchers.representedBy;
 
+/**
+ * A latent matcher that resolves an {@link ElementMatcher} after supplying the instrumented type.
+ *
+ * @param <T> The type of the matched element.
+ */
 public interface LatentMatcher<T> {
 
+    /**
+     * Resolves the element matcher this instance represents for the instrumented type.
+     *
+     * @param instrumentedType The instrumented type.
+     * @return An {@link ElementMatcher} that represents this matcher's resolved form.
+     */
     ElementMatcher<? super T> resolve(TypeDescription instrumentedType);
 
+    /**
+     * A latent matcher representing an already resolved {@link ElementMatcher}.
+     *
+     * @param <S> The type of the matched element.
+     */
     class Resolved<S> implements LatentMatcher<S> {
 
+        /**
+         * The resolved matcher.
+         */
         private final ElementMatcher<? super S> matcher;
 
+        /**
+         * Creates a new resolved latent matcher.
+         *
+         * @param matcher The resolved matcher.
+         */
         public Resolved(ElementMatcher<? super S> matcher) {
             this.matcher = matcher;
         }
@@ -45,6 +70,9 @@ public interface LatentMatcher<T> {
         }
     }
 
+    /**
+     * A latent matcher representing a field token that is attached to the instrumented type
+     */
     class ForFieldToken implements LatentMatcher<FieldDescription> {
 
         private final FieldDescription.Token token;
@@ -115,6 +143,10 @@ public interface LatentMatcher<T> {
 
         private final List<? extends LatentMatcher<? super S>> matchers;
 
+        public Compound(LatentMatcher<? super S>... matcher) {
+            this(Arrays.asList(matcher));
+        }
+
         public Compound(List<? extends LatentMatcher<? super S>> matchers) {
             this.matchers = matchers;
         }
@@ -127,6 +159,23 @@ public interface LatentMatcher<T> {
             }
             return matcher;
         }
-    }
 
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && matchers.equals(((Compound) other).matchers);
+        }
+
+        @Override
+        public int hashCode() {
+            return matchers.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "LatentMatcher.Compound{" +
+                    "matchers=" + matchers +
+                    '}';
+        }
+    }
 }

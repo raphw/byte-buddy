@@ -81,6 +81,7 @@ public class FieldRegistryDefaultTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldRegistry.Default.class).apply();
         ObjectPropertyAssertion.of(FieldRegistry.Default.Entry.class).apply();
+        ObjectPropertyAssertion.of(FieldRegistry.Default.Compiled.class).apply();
         ObjectPropertyAssertion.of(FieldRegistry.Default.Compiled.Entry.class).apply();
     }
 }

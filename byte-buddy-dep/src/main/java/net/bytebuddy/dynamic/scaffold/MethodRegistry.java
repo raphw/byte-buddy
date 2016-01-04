@@ -6,7 +6,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -25,11 +24,11 @@ public interface MethodRegistry {
     /**
      * Prepends the given method definition to this method registry, i.e. this configuration is applied first.
      *
-     * @param methodMatcher            A matcher to identify all entries that are to be matched.
+     * @param methodMatcher            A matcher to identify any method that this definition concerns.
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
      * @param methodTransformer        The method transformer to be applied to implemented methods.
-     * @return A mutated version of this method registry.
+     * @return An adapted version of this method registry.
      */
     MethodRegistry prepend(LatentMatcher<? super MethodDescription> methodMatcher,
                            Handler handler,
@@ -43,7 +42,7 @@ public interface MethodRegistry {
      * @param handler                  The handler to instrument any matched method.
      * @param attributeAppenderFactory A method attribute appender to apply to any matched method.
      * @param methodTransformer        The method transformer to be applied to implemented methods.
-     * @return A mutated version of this method registry.
+     * @return An adapted version of this method registry.
      */
     MethodRegistry append(LatentMatcher<? super MethodDescription> methodMatcher,
                           Handler handler,

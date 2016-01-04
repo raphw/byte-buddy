@@ -21,8 +21,17 @@ import java.util.*;
  */
 public interface FieldRegistry {
 
+    /**
+     * Prepends the given field definition to this field registry, i.e. this configuration is applied first.
+     *
+     * @param matcher                       The matcher to identify any field that this definition concerns.
+     * @param fieldAttributeAppenderFactory The field attribute appender factory to apply on any matched field.
+     * @param defaultValue                  The default value to write to the field or {@code null} if no default value is to be set for the field.
+     * @param fieldTransformer              The field transformer to apply to any matched field.
+     * @return An adapted version of this method registry.
+     */
     FieldRegistry prepend(LatentMatcher<? super FieldDescription> matcher,
-                          FieldAttributeAppender.Factory attributeAppenderFactory,
+                          FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                           Object defaultValue,
                           FieldTransformer fieldTransformer);
 
@@ -63,23 +72,34 @@ public interface FieldRegistry {
      */
     class Default implements FieldRegistry {
 
+        /**
+         * This registries entries.
+         */
         private final List<Entry> entries;
 
+        /**
+         * Creates a new empty default field registry.
+         */
         public Default() {
-            entries = Collections.emptyList();
+            this(Collections.<Entry>emptyList());
         }
 
+        /**
+         * Creates a new default field registry.
+         *
+         * @param entries The entries of the field registry.
+         */
         private Default(List<Entry> entries) {
             this.entries = entries;
         }
 
         @Override
         public FieldRegistry prepend(LatentMatcher<? super FieldDescription> matcher,
-                                     FieldAttributeAppender.Factory attributeAppenderFactory,
+                                     FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                      Object defaultValue,
                                      FieldTransformer fieldTransformer) {
             List<Entry> entries = new ArrayList<Entry>(this.entries.size() + 1);
-            entries.add(new Entry(matcher, attributeAppenderFactory, defaultValue, fieldTransformer));
+            entries.add(new Entry(matcher, fieldAttributeAppenderFactory, defaultValue, fieldTransformer));
             entries.addAll(this.entries);
             return new Default(entries);
         }
@@ -87,14 +107,14 @@ public interface FieldRegistry {
         @Override
         public FieldRegistry.Compiled compile(TypeDescription instrumentedType) {
             List<Compiled.Entry> entries = new ArrayList<Compiled.Entry>(this.entries.size());
-            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> attributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>();
+            Map<FieldAttributeAppender.Factory, FieldAttributeAppender> fieldAttributeAppenders = new HashMap<FieldAttributeAppender.Factory, FieldAttributeAppender>();
             for (Entry entry : this.entries) {
-                FieldAttributeAppender attributeAppender = attributeAppenders.get(entry.getAttributeAppenderFactory());
-                if (attributeAppender == null) {
-                    attributeAppender = entry.getAttributeAppenderFactory().make(instrumentedType);
-                    attributeAppenders.put(entry.getAttributeAppenderFactory(), attributeAppender);
+                FieldAttributeAppender fieldAttributeAppender = fieldAttributeAppenders.get(entry.getFieldAttributeAppenderFactory());
+                if (fieldAttributeAppender == null) {
+                    fieldAttributeAppender = entry.getFieldAttributeAppenderFactory().make(instrumentedType);
+                    fieldAttributeAppenders.put(entry.getFieldAttributeAppenderFactory(), fieldAttributeAppender);
                 }
-                entries.add(new Compiled.Entry(entry.resolve(instrumentedType), attributeAppender, entry.getDefaultValue(), entry.getTransformer()));
+                entries.add(new Compiled.Entry(entry.resolve(instrumentedType), fieldAttributeAppender, entry.getDefaultValue(), entry.getTransformer()));
             }
             return new Compiled(instrumentedType, entries);
         }
@@ -120,55 +140,68 @@ public interface FieldRegistry {
          */
         protected static class Entry implements LatentMatcher<FieldDescription> {
 
+            /**
+             * The matcher to identify any field that this definition concerns.
+             */
             private final LatentMatcher<? super FieldDescription> matcher;
 
             /**
-             * The field attribute appender factory that is represented by this entry.
+             * The field attribute appender factory to apply on any matched field.
              */
-            private final FieldAttributeAppender.Factory attributeAppenderFactory;
+            private final FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
 
             /**
-             * The field's default value for this entry.
+             * The default value to write to the field or {@code null} if no default value is to be set for the field.
              */
             private final Object defaultValue;
 
+            /**
+             * The field transformer to apply to any matched field.
+             */
             private final FieldTransformer fieldTransformer;
 
             /**
              * Creates a new entry.
              *
-             * @param attributeAppenderFactory The field attribute appender factory that is represented by this entry.
-             * @param defaultValue             The field's default value for this entry.
+             * @param matcher                       The matcher to identify any field that this definition concerns.
+             * @param fieldAttributeAppenderFactory The field attribute appender factory to apply on any matched field.
+             * @param defaultValue                  The default value to write to the field or {@code null} if no default value is to be set for the field.
+             * @param fieldTransformer              The field transformer to apply to any matched field.
              */
             protected Entry(LatentMatcher<? super FieldDescription> matcher,
-                            FieldAttributeAppender.Factory attributeAppenderFactory,
+                            FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                             Object defaultValue,
                             FieldTransformer fieldTransformer) {
                 this.matcher = matcher;
-                this.attributeAppenderFactory = attributeAppenderFactory;
+                this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
                 this.defaultValue = defaultValue;
                 this.fieldTransformer = fieldTransformer;
             }
 
             /**
-             * Returns the field attribute appender factory.
+             * Returns the field attribute appender factory to apply on any matched field.
              *
-             * @return The field's attribute appender factory.
+             * @return The field attribute appender factory to apply on any matched field.
              */
-            protected FieldAttributeAppender.Factory getAttributeAppenderFactory() {
-                return attributeAppenderFactory;
+            protected FieldAttributeAppender.Factory getFieldAttributeAppenderFactory() {
+                return fieldAttributeAppenderFactory;
             }
 
             /**
-             * Returns the default value.
+             * Returns the default value to write to the field or {@code null} if no default value is to be set for the field.
              *
-             * @return The default value.
+             * @return The default value to write to the field or {@code null} if no default value is to be set for the field.
              */
             protected Object getDefaultValue() {
                 return defaultValue;
             }
 
-            public FieldTransformer getTransformer() {
+            /**
+             * Returns the field transformer to apply to any matched field.
+             *
+             * @return The field transformer to apply to any matched field.
+             */
+            protected FieldTransformer getTransformer() {
                 return fieldTransformer;
             }
 
@@ -183,7 +216,7 @@ public interface FieldRegistry {
                 if (other == null || getClass() != other.getClass()) return false;
                 Entry entry = (Entry) other;
                 return matcher.equals(entry.matcher)
-                        && attributeAppenderFactory.equals(entry.attributeAppenderFactory)
+                        && fieldAttributeAppenderFactory.equals(entry.fieldAttributeAppenderFactory)
                         && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null)
                         && fieldTransformer.equals(entry.fieldTransformer);
             }
@@ -191,7 +224,7 @@ public interface FieldRegistry {
             @Override
             public int hashCode() {
                 int result = matcher.hashCode();
-                result = 31 * result + attributeAppenderFactory.hashCode();
+                result = 31 * result + fieldAttributeAppenderFactory.hashCode();
                 result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                 result = 31 * result + fieldTransformer.hashCode();
                 return result;
@@ -201,7 +234,7 @@ public interface FieldRegistry {
             public String toString() {
                 return "FieldRegistry.Default.Entry{" +
                         "matcher=" + matcher +
-                        ", attributeAppenderFactory=" + attributeAppenderFactory +
+                        ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
                         ", defaultValue=" + defaultValue +
                         ", fieldTransformer=" + fieldTransformer +
                         '}';
@@ -213,10 +246,22 @@ public interface FieldRegistry {
          */
         protected static class Compiled implements FieldRegistry.Compiled {
 
+            /**
+             * The instrumented type for which this registry was compiled for.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The entries of this compiled field registry.
+             */
             private final List<Entry> entries;
 
+            /**
+             * Creates a new compiled field registry.
+             *
+             * @param instrumentedType The instrumented type for which this registry was compiled for.
+             * @param entries          The entries of this compiled field registry.
+             */
             protected Compiled(TypeDescription instrumentedType, List<Entry> entries) {
                 this.instrumentedType = instrumentedType;
                 this.entries = entries;
@@ -257,32 +302,40 @@ public interface FieldRegistry {
              */
             protected static class Entry implements ElementMatcher<FieldDescription> {
 
+                /**
+                 * The matcher to identify any field that this definition concerns.
+                 */
                 private final ElementMatcher<? super FieldDescription> matcher;
 
                 /**
-                 * The attribute appender to be applied to any bound field.
+                 * The field attribute appender to apply on any matched field.
                  */
-                private final FieldAttributeAppender attributeAppender;
+                private final FieldAttributeAppender fieldAttributeAppender;
 
                 /**
-                 * The default value to be set for any bound field or {@code null} if no default value should be set.
+                 * The default value to write to the field or {@code null} if no default value is to be set for the field.
                  */
                 private final Object defaultValue;
 
+                /**
+                 * The field transformer to apply to any matched field.
+                 */
                 private final FieldTransformer fieldTransformer;
 
                 /**
                  * Creates a new entry.
                  *
-                 * @param attributeAppender The attribute appender to be applied to any bound field.
-                 * @param defaultValue      The default value to be set for any bound field or {@code null} if no default value should be set.
+                 * @param matcher                The matcher to identify any field that this definition concerns.
+                 * @param fieldAttributeAppender The field attribute appender to apply on any matched field.
+                 * @param defaultValue           The default value to write to the field or {@code null} if no default value is to be set for the field.
+                 * @param fieldTransformer       The field transformer to apply to any matched field.
                  */
                 protected Entry(ElementMatcher<? super FieldDescription> matcher,
-                                FieldAttributeAppender attributeAppender,
+                                FieldAttributeAppender fieldAttributeAppender,
                                 Object defaultValue,
                                 FieldTransformer fieldTransformer) {
                     this.matcher = matcher;
-                    this.attributeAppender = attributeAppender;
+                    this.fieldAttributeAppender = fieldAttributeAppender;
                     this.defaultValue = defaultValue;
                     this.fieldTransformer = fieldTransformer;
                 }
@@ -290,11 +343,12 @@ public interface FieldRegistry {
                 /**
                  * Binds this entry to the provided field description.
                  *
+                 * @param instrumentedType The instrumented type for which this entry applies.
                  * @param fieldDescription The field description to be bound to this entry.
                  * @return A record representing the binding of this entry to the provided field.
                  */
                 protected Record bind(TypeDescription instrumentedType, FieldDescription fieldDescription) {
-                    return new Record.ForExplicitField(attributeAppender, defaultValue, fieldTransformer.transform(instrumentedType, fieldDescription));
+                    return new Record.ForExplicitField(fieldAttributeAppender, defaultValue, fieldTransformer.transform(instrumentedType, fieldDescription));
                 }
 
                 @Override
@@ -308,7 +362,7 @@ public interface FieldRegistry {
                     if (other == null || getClass() != other.getClass()) return false;
                     Entry entry = (Entry) other;
                     return matcher.equals(entry.matcher)
-                            && attributeAppender.equals(entry.attributeAppender)
+                            && fieldAttributeAppender.equals(entry.fieldAttributeAppender)
                             && !(defaultValue != null ? !defaultValue.equals(entry.defaultValue) : entry.defaultValue != null)
                             && fieldTransformer.equals(entry.fieldTransformer);
                 }
@@ -316,7 +370,7 @@ public interface FieldRegistry {
                 @Override
                 public int hashCode() {
                     int result = matcher.hashCode();
-                    result = 31 * result + attributeAppender.hashCode();
+                    result = 31 * result + fieldAttributeAppender.hashCode();
                     result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
                     result = 31 * result + fieldTransformer.hashCode();
                     return result;
@@ -326,7 +380,7 @@ public interface FieldRegistry {
                 public String toString() {
                     return "FieldRegistry.Default.Compiled.Entry{" +
                             "matcher=" + matcher +
-                            ", attributeAppender=" + attributeAppender +
+                            ", fieldAttributeAppender=" + fieldAttributeAppender +
                             ", defaultValue=" + defaultValue +
                             ", fieldTransformer=" + fieldTransformer +
                             '}';
