@@ -7,7 +7,10 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.modifier.FieldManifestation;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.modifier.Ownership;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -16,7 +19,10 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.*;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
@@ -84,6 +90,8 @@ public interface Builder<T> {
     FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, int modifiers);
 
     FieldDefinition.Optional.Valuable<T> define(Field field);
+
+    FieldDefinition.Optional<T> serialVersionUid(long uid);
 
     FieldDefinition.Valuable<T> field(ElementMatcher<? super FieldDescription> matcher);
 
@@ -736,6 +744,11 @@ public interface Builder<T> {
         @Override
         public FieldDefinition.Optional.Valuable<S> define(Field field) {
             return defineField(field.getName(), field.getGenericType(), field.getModifiers());
+        }
+
+        @Override
+        public FieldDefinition.Optional<S> serialVersionUid(long uid) {
+            return defineField("serialVersionUID", long.class, Visibility.PRIVATE, FieldManifestation.FINAL, Ownership.STATIC).value(uid);
         }
 
         @Override
