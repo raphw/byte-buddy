@@ -1915,6 +1915,7 @@ public interface AnnotationDescription {
          * @param <T>             The enumeration type.
          * @return A builder with the additional class property.
          */
+        @SuppressWarnings("unchecked")
         public <T extends Enum<?>> Builder defineEnumerationArray(String property, Class<T> enumerationType, T... value) {
             EnumerationDescription[] enumerationDescription = new EnumerationDescription[value.length];
             int index = 0;
@@ -1965,6 +1966,7 @@ public interface AnnotationDescription {
          * @param <T>            The annotation type.
          * @return A builder with the additional annotation property.
          */
+        @SuppressWarnings("unchecked")
         public <T extends Annotation> Builder defineAnnotationArray(String property, Class<T> annotationType, T... annotation) {
             return defineAnnotationArray(property,
                     new TypeDescription.ForLoadedType(annotationType),

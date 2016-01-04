@@ -76,8 +76,20 @@ public interface ModifierContributor {
             this.modifierContributors = modifierContributors;
         }
 
-        public static <S extends ModifierContributor> Resolver<S> of(S... modifierContributor) {
+        public static Resolver<ForType> of(ForType... modifierContributor) {
             return of(Arrays.asList(modifierContributor));
+        }
+
+        public static Resolver<ForField> of(ForField... modifierContributor) {
+            return of(Arrays.asList(modifierContributor));
+        }
+
+        public static Resolver<ForMethod> of(ForMethod... modifierContributor) {
+            return of(Arrays.asList(modifierContributor));
+        }
+
+        public static Resolver<ForParameter> of(ForParameter... modifierContributor) {
+            return Resolver.of(Arrays.asList(modifierContributor));
         }
 
         public static <S extends ModifierContributor> Resolver<S> of(Collection<? extends S> modifierContributors) {

@@ -34,9 +34,6 @@ public class ConstructorStrategyDefaultTest {
     private MethodRegistry methodRegistry;
 
     @Mock
-    private MethodAttributeAppender.Factory methodAttributeAppenderFactory;
-
-    @Mock
     private InstrumentedType instrumentedType;
 
     @Mock
@@ -77,7 +74,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
-                eq(methodAttributeAppenderFactory),
+                eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
@@ -93,7 +90,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
-                eq(methodAttributeAppenderFactory),
+                eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();
@@ -110,7 +107,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
-                eq(methodAttributeAppenderFactory),
+                eq(MethodAttributeAppender.NoOp.INSTANCE),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperType();

@@ -1740,7 +1740,7 @@ public interface DynamicType {
                                     token.getReturnType(),
                                     token.getParameterTokens(),
                                     token.getExceptionTypes(),
-                                    token.getAnnotations(),
+                                    CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
                                     token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                         }
 
