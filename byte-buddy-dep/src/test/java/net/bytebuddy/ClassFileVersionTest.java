@@ -37,7 +37,13 @@ public class ClassFileVersionTest {
     }
 
     @Test
+    public void testVersionPropertyAction() throws Exception {
+        assertThat(ClassFileVersion.VersionPropertyAction.INSTANCE.run(), is(System.getProperty("java.version")));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileVersion.class).apply();
+        ObjectPropertyAssertion.of(ClassFileVersion.VersionPropertyAction.class).apply();
     }
 }

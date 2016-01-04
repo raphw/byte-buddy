@@ -59,6 +59,18 @@ public class NamingStrategyTest {
     }
 
     @Test
+    public void testSuffixingRandomSubclassConflictingPackageDisabled() throws Exception {
+        when(baseNameResolver.resolve(rawTypeDescription)).thenReturn(JAVA_QUX);
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, baseNameResolver, NamingStrategy.SuffixingRandom.NO_PREFIX);
+        assertThat(namingStrategy.subclass(typeDescription), startsWith(JAVA_QUX + "$" + FOO + "$"));
+        verify(typeDescription).asErasure();
+        verifyNoMoreInteractions(typeDescription);
+        verifyZeroInteractions(rawTypeDescription);
+        verify(baseNameResolver).resolve(rawTypeDescription);
+        verifyNoMoreInteractions(baseNameResolver);
+    }
+
+    @Test
     public void testSuffixingRandomRebase() throws Exception {
         when(rawTypeDescription.getName()).thenReturn(FOO);
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(BAR);

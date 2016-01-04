@@ -4,19 +4,43 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.utility.RandomString;
 
 /**
- * A naming strategy for finding a fully qualified name for a Java type.
- * <p>&nbsp;</p>
- * Note that subclasses that lie within the same package as their superclass have improved access to overriding
- * package-private methods of their super type.
+ * <p>
+ * A naming strategy for determining a fully qualified name for a dynamically created Java type.
+ * </p>
+ * <p>
+ * Note that subclasses that lie within the same package as their superclass can access package-private methods
+ * of super types within the same package.
+ * </p>
  */
 public interface NamingStrategy {
 
+    /**
+     * Determines a new name when creating a new type that subclasses the provided type.
+     *
+     * @param superType The super type of the created type.
+     * @return The name of the dynamic type.
+     */
     String subclass(TypeDescription.Generic superType);
 
+    /**
+     * Determines a name for the dynamic type when redefining the provided type.
+     *
+     * @param typeDescription The type being redefined.
+     * @return The name of the dynamic type.
+     */
     String redefine(TypeDescription typeDescription);
 
+    /**
+     * Determines a name for the dynamic type when rebasing the provided type.
+     *
+     * @param typeDescription The type being redefined.
+     * @return The name of the dynamic type.
+     */
     String rebase(TypeDescription typeDescription);
 
+    /**
+     * An abstract base implementation where the names of redefined and rebased types are retained.
+     */
     abstract class AbstractBase implements NamingStrategy {
 
         @Override
@@ -24,7 +48,13 @@ public interface NamingStrategy {
             return name(superType.asErasure());
         }
 
-        protected abstract String name(TypeDescription typeDescription);
+        /**
+         * Determines a new name when creating a new type that subclasses the provided type.
+         *
+         * @param superType The super type of the created type.
+         * @return The name of the dynamic type.
+         */
+        protected abstract String name(TypeDescription superType);
 
         @Override
         public String redefine(TypeDescription typeDescription) {
@@ -58,8 +88,13 @@ public interface NamingStrategy {
         public static final String BYTE_BUDDY_RENAME_PACKAGE = "net.bytebuddy.renamed";
 
         /**
-         * The package prefix of the {@code java.**} packages for which the definition of non-bootstrap types is
-         * illegal.
+         * Indicates that types of the {@code java.*} package should not be prefixed.
+         */
+        public static final String NO_PREFIX = "";
+
+        /**
+         * The package prefix of the {@code java.*} packages for which the definition of
+         * non-bootstrap types is illegal.
          */
         private static final String JAVA_PACKAGE = "java.";
 
@@ -112,7 +147,8 @@ public interface NamingStrategy {
          * @param suffix                The suffix for the generated class.
          * @param baseNameResolver      The base name resolver that is queried for locating the base name.
          * @param javaLangPackagePrefix The fallback namespace for type's that subclass types within the
-         *                              {@code java.lang} namespace.
+         *                              {@code java.*} namespace. If The prefix is set to the empty string,
+         *                              no prefix is added.
          */
         public SuffixingRandom(String suffix, BaseNameResolver baseNameResolver, String javaLangPackagePrefix) {
             this.suffix = suffix;
@@ -122,9 +158,9 @@ public interface NamingStrategy {
         }
 
         @Override
-        protected String name(TypeDescription typeDescription) {
-            String baseName = baseNameResolver.resolve(typeDescription);
-            if (baseName.startsWith(JAVA_PACKAGE)) {
+        protected String name(TypeDescription superType) {
+            String baseName = baseNameResolver.resolve(superType);
+            if (baseName.startsWith(JAVA_PACKAGE) && !javaLangPackagePrefix.equals("")) {
                 baseName = javaLangPackagePrefix + "." + baseName;
             }
             return String.format("%s$%s$%s", baseName, suffix, randomString.nextString());
@@ -301,8 +337,8 @@ public interface NamingStrategy {
         }
 
         @Override
-        protected String name(TypeDescription typeDescription) {
-            return String.format("%s.%s$%s", prefix, typeDescription.getName(), randomString.nextString());
+        protected String name(TypeDescription superType) {
+            return String.format("%s.%s$%s", prefix, superType.getName(), randomString.nextString());
         }
 
         @Override

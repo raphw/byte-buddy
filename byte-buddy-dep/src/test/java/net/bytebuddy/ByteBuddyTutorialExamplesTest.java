@@ -602,8 +602,8 @@ public class ByteBuddyTutorialExamplesTest {
     private static class GettingStartedNamingStrategy extends NamingStrategy.AbstractBase { // TODO: Update tutorial
 
         @Override
-        protected String name(TypeDescription typeDescription) {
-            return "i.love.ByteBuddy." + typeDescription.getSimpleName();
+        protected String name(TypeDescription superType) {
+            return "i.love.ByteBuddy." + superType.getSimpleName();
         }
     }
 

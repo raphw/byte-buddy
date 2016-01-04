@@ -62,11 +62,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     public static final ClassFileVersion JAVA_V9 = JAVA_V8;
 
     /**
-     * The system property for this JVM's Java version.
-     */
-    private static final String JAVA_VERSION_PROPERTY = "java.version";
-
-    /**
      * The version number that is represented by this class file version instance.
      */
     private final int versionNumber;
@@ -213,9 +208,20 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return "ClassFileVersion{versionNumber=" + versionNumber + '}';
     }
 
+    /**
+     * A privileged action for reading the {@code java.version} property.
+     */
     protected enum VersionPropertyAction implements PrivilegedAction<String> {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
+
+        /**
+         * The system property for this JVM's Java version.
+         */
+        private static final String JAVA_VERSION_PROPERTY = "java.version";
 
         @Override
         public String run() {

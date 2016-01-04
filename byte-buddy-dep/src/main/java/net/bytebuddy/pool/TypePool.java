@@ -5843,6 +5843,12 @@ public interface TypePool {
                  */
                 private final List<String> descriptors;
 
+                /**
+                 * A generic type list only representing raw types.
+                 *
+                 * @param typePool    The type pool to use for locating types.
+                 * @param descriptors A list of type descriptors that this list represents.
+                 */
                 protected Generic(TypePool typePool, List<String> descriptors) {
                     this.typePool = typePool;
                     this.descriptors = descriptors;
