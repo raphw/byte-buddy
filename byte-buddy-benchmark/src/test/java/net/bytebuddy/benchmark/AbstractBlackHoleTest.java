@@ -9,7 +9,6 @@ import org.junit.Before;
 import org.openjdk.jmh.infra.Blackhole;
 
 import java.lang.reflect.Method;
-import java.util.Collections;
 
 /**
  * Unfortunately, the JMH is not very test friendly. Thus, we need to do some tricks to run test cases. Fortunately,
@@ -27,7 +26,7 @@ public abstract class AbstractBlackHoleTest {
         Class<?> blackHoleGenerator = new ByteBuddy()
                 .subclass(Object.class)
                 .name(String.format("C%s$generated", RandomString.make()))
-                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(BLACK_HOLE_METHOD, Blackhole.class, Visibility.PUBLIC)
                 .intercept(MethodDelegation.toConstructor(Blackhole.class))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)

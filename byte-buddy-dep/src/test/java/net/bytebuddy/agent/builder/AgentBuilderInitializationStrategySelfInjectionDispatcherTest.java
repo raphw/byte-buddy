@@ -55,7 +55,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(builder.initialize((any(ByteCodeAppender.class)))).thenReturn((DynamicType.Builder) appendedBuilder);
+        when(builder.initializer((any(ByteCodeAppender.class)))).thenReturn((DynamicType.Builder) appendedBuilder);
         when(injectorFactory.resolve()).thenReturn(classInjector);
         when(dynamicType.getTypeDescription()).thenReturn(instrumented);
         Map<TypeDescription, byte[]> auxiliaryTypes = new HashMap<TypeDescription, byte[]>();
@@ -94,7 +94,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testSplitInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Split(IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initialize(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.INSTANCE.identifiedBy(IDENTIFIER));
+        verify(builder).initializer(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.INSTANCE.identifiedBy(IDENTIFIER));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
@@ -104,7 +104,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testLazyInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Lazy(IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initialize(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.INSTANCE.identifiedBy(IDENTIFIER));
+        verify(builder).initializer(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.INSTANCE.identifiedBy(IDENTIFIER));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }
@@ -114,7 +114,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
     public void testEagerInitialization() throws Exception {
         AgentBuilder.InitializationStrategy.Dispatcher dispatcher = new AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.Eager(IDENTIFIER);
         assertThat(dispatcher.apply(builder), is((DynamicType.Builder) appendedBuilder));
-        verify(builder).initialize(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.INSTANCE.identifiedBy(IDENTIFIER));
+        verify(builder).initializer(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.INSTANCE.identifiedBy(IDENTIFIER));
         verifyNoMoreInteractions(builder);
         verifyZeroInteractions(appendedBuilder);
     }

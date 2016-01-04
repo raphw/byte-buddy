@@ -171,5 +171,10 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         public Implementation.Target make(TypeDescription instrumentedType, MethodGraph.Linked methodGraph) {
             return new SubclassImplementationTarget(instrumentedType, methodGraph, originTypeResolver);
         }
+
+        @Override
+        public String toString() {
+            return "SubclassImplementationTarget.Factory." + name();
+        }
     }
 }

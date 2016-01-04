@@ -22,49 +22,66 @@ public class NamingStrategyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private NamingStrategy.UnnamedType unnamedType;
-
-    @Mock
     private NamingStrategy.SuffixingRandom.BaseNameResolver baseNameResolver;
 
     @Mock
-    private TypeDescription.Generic genericSuperType;
+    private TypeDescription.Generic typeDescription;
 
     @Mock
-    private TypeDescription rawSuperType;
+    private TypeDescription rawTypeDescription;
 
     @Before
     public void setUp() throws Exception {
-        when(genericSuperType.asErasure()).thenReturn(rawSuperType);
+        when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
     }
 
     @Test
-    public void testSuffixingRandomNonConflictingPackage() throws Exception {
-        when(unnamedType.getSuperClass()).thenReturn(genericSuperType);
-        when(rawSuperType.getName()).thenReturn(FOO);
+    public void testSuffixingRandomSubclassNonConflictingPackage() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(BAR);
-        assertThat(namingStrategy.name(unnamedType), startsWith(FOO + "$" + BAR + "$"));
-        verify(unnamedType, atLeast(1)).getSuperClass();
-        verifyNoMoreInteractions(unnamedType);
+        assertThat(namingStrategy.subclass(typeDescription), startsWith(FOO + "$" + BAR + "$"));
+        verify(typeDescription, atLeast(1)).asErasure();
+        verifyNoMoreInteractions(typeDescription);
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
     }
 
     @Test
-    public void testSuffixingRandomConflictingPackage() throws Exception {
-        when(baseNameResolver.resolve(unnamedType)).thenReturn(JAVA_QUX);
+    public void testSuffixingRandomSubclassConflictingPackage() throws Exception {
+        when(baseNameResolver.resolve(rawTypeDescription)).thenReturn(JAVA_QUX);
         NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(FOO, baseNameResolver, BAR);
-        assertThat(namingStrategy.name(unnamedType), startsWith(BAR + "." + JAVA_QUX + "$" + FOO + "$"));
-        verifyZeroInteractions(unnamedType);
-        verify(baseNameResolver).resolve(unnamedType);
+        assertThat(namingStrategy.subclass(typeDescription), startsWith(BAR + "." + JAVA_QUX + "$" + FOO + "$"));
+        verify(typeDescription).asErasure();
+        verifyNoMoreInteractions(typeDescription);
+        verifyZeroInteractions(rawTypeDescription);
+        verify(baseNameResolver).resolve(rawTypeDescription);
         verifyNoMoreInteractions(baseNameResolver);
     }
 
     @Test
+    public void testSuffixingRandomRebase() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(BAR);
+        assertThat(namingStrategy.rebase(rawTypeDescription), is(FOO));
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
+    }
+
+    @Test
+    public void testSuffixingRandomRedefine() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.SuffixingRandom(BAR);
+        assertThat(namingStrategy.redefine(rawTypeDescription), is(FOO));
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
+    }
+
+    @Test
     public void testBaseNameResolvers() throws Exception {
-        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue(FOO).resolve(unnamedType), is(FOO));
-        when(rawSuperType.getName()).thenReturn(FOO);
-        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType(rawSuperType).resolve(unnamedType), is(FOO));
-        when(unnamedType.getSuperClass()).thenReturn(genericSuperType);
-        assertThat(NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType.INSTANCE.resolve(unnamedType), is(FOO));
+        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForFixedValue(FOO).resolve(rawTypeDescription), is(FOO));
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        assertThat(new NamingStrategy.SuffixingRandom.BaseNameResolver.ForGivenType(rawTypeDescription).resolve(rawTypeDescription), is(FOO));
+        assertThat(NamingStrategy.SuffixingRandom.BaseNameResolver.ForUnnamedType.INSTANCE.resolve(rawTypeDescription), is(FOO));
     }
 
     @Test
@@ -76,24 +93,32 @@ public class NamingStrategyTest {
     }
 
     @Test
-    public void testFixed() throws Exception {
-        NamingStrategy namingStrategy = new NamingStrategy.Fixed(FOO);
-        assertThat(namingStrategy.name(unnamedType), is(FOO));
-        verifyZeroInteractions(unnamedType);
-    }
-
-    @Test
-    public void testFixedObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(NamingStrategy.Fixed.class).apply();
-    }
-
-    @Test
     public void testPrefixingRandom() throws Exception {
-        when(unnamedType.getSuperClass()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(rawTypeDescription.getName()).thenReturn(BAR);
         NamingStrategy namingStrategy = new NamingStrategy.PrefixingRandom(FOO);
-        assertThat(namingStrategy.name(unnamedType), startsWith(FOO + "." + Object.class.getName()));
-        verify(unnamedType).getSuperClass();
-        verifyNoMoreInteractions(unnamedType);
+        assertThat(namingStrategy.subclass(typeDescription), startsWith(FOO + "." + BAR));
+        verify(typeDescription).asErasure();
+        verifyNoMoreInteractions(typeDescription);
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
+    }
+
+    @Test
+    public void testPrefixingRandomRebase() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.PrefixingRandom(BAR);
+        assertThat(namingStrategy.rebase(rawTypeDescription), is(FOO));
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
+    }
+
+    @Test
+    public void testPrefixingRandomRedefine() throws Exception {
+        when(rawTypeDescription.getName()).thenReturn(FOO);
+        NamingStrategy namingStrategy = new NamingStrategy.PrefixingRandom(BAR);
+        assertThat(namingStrategy.redefine(rawTypeDescription), is(FOO));
+        verify(rawTypeDescription).getName();
+        verifyNoMoreInteractions(rawTypeDescription);
     }
 
     @Test

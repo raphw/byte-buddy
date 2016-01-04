@@ -6,7 +6,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -79,10 +79,10 @@ public class TypeWriterMethodPoolRecordTest {
     private MethodDescription.TypeToken typeToken;
 
     @Mock
-    private AnnotationAppender.ValueFilter valueFilter;
+    private AnnotationValueFilter valueFilter;
 
     @Mock
-    private AnnotationAppender.ValueFilter.Factory annotationValueFilterFactory;
+    private AnnotationValueFilter.Factory annotationValueFilterFactory;
 
     @Before
     @SuppressWarnings("unchecked")

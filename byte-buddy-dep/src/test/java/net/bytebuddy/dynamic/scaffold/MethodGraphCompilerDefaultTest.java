@@ -911,8 +911,8 @@ public class MethodGraphCompilerDefaultTest {
                 Collections.<TypeDescription>emptyList());
         TypeDescription typeDescription = new InstrumentedType.Default("foo",
                 Opcodes.ACC_PUBLIC,
-                Collections.<String, TypeList.Generic>emptyMap(),
                 TypeDescription.Generic.OBJECT,
+                Collections.<String, TypeList.Generic>emptyMap(),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.singletonList(new MethodDescription.Token("foo",
@@ -921,7 +921,14 @@ public class MethodGraphCompilerDefaultTest {
                         Collections.<TypeDescription.Generic>emptyList())),
                 Collections.<AnnotationDescription>emptyList(),
                 InstrumentedType.TypeInitializer.None.INSTANCE,
-                LoadedTypeInitializer.NoOp.INSTANCE);
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                TypeDescription.UNDEFINED,
+                MethodDescription.UNDEFINED,
+                TypeDescription.UNDEFINED,
+                Collections.<TypeDescription>emptyList(),
+                false,
+                false,
+                false);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1 + TypeDescription.OBJECT.getDeclaredMethods().filter(ElementMatchers.isVirtual()).size()));
         MethodGraph.Node node = methodGraph.locate(bridgeMethod);

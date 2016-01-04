@@ -2,7 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -13,8 +13,6 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
-
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,10 +31,10 @@ public class TypeWriterFieldPoolRecordTest {
     private FieldAttributeAppender fieldAttributeAppender;
 
     @Mock
-    private AnnotationAppender.ValueFilter valueFilter;
+    private AnnotationValueFilter valueFilter;
 
     @Mock
-    private AnnotationAppender.ValueFilter.Factory annotationValueFilterFactory;
+    private AnnotationValueFilter.Factory annotationValueFilterFactory;
 
     @Mock
     private ClassVisitor classVisitor;

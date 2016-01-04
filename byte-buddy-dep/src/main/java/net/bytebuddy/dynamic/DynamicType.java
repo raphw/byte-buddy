@@ -368,6 +368,24 @@ public interface DynamicType {
                             }
 
                             protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue);
+
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (other == null || getClass() != other.getClass()) return false;
+                                Adapter<?> adapter = (Adapter<?>) other;
+                                return fieldAttributeAppenderFactory.equals(adapter.fieldAttributeAppenderFactory)
+                                        && fieldTransformer.equals(adapter.fieldTransformer)
+                                        && (defaultValue != null ? defaultValue.equals(adapter.defaultValue) : adapter.defaultValue == null);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = fieldAttributeAppenderFactory.hashCode();
+                                result = 31 * result + fieldTransformer.hashCode();
+                                result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
+                                return result;
+                            }
                         }
                     }
                 }
@@ -798,6 +816,24 @@ public interface DynamicType {
                     }
 
                     protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer);
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        Adapter<?> adapter = (Adapter<?>) other;
+                        return handler.equals(adapter.handler)
+                                && methodAttributeAppenderFactory.equals(adapter.methodAttributeAppenderFactory)
+                                && methodTransformer.equals(adapter.methodTransformer);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = handler.hashCode();
+                        result = 31 * result + methodAttributeAppenderFactory.hashCode();
+                        result = 31 * result + methodTransformer.hashCode();
+                        return result;
+                    }
                 }
             }
         }
@@ -974,8 +1010,6 @@ public interface DynamicType {
 
             public abstract static class Delegator<U> extends AbstractBase<U> {
 
-                protected abstract Builder<U> materialize();
-
                 @Override
                 public Builder<U> visit(AsmVisitorWrapper asmVisitorWrapper) {
                     return materialize().visit(asmVisitorWrapper);
@@ -1055,6 +1089,8 @@ public interface DynamicType {
                 public DynamicType.Unloaded<U> make() {
                     return materialize().make();
                 }
+
+                protected abstract Builder<U> materialize();
             }
 
             public abstract static class Adapter<U> extends AbstractBase<U> {
@@ -1065,44 +1101,48 @@ public interface DynamicType {
 
                 protected final MethodRegistry methodRegistry;
 
-                protected final ElementMatcher<? super MethodDescription> ignored;
-
                 protected final TypeAttributeAppender typeAttributeAppender;
 
                 protected final AsmVisitorWrapper asmVisitorWrapper;
 
-                protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
-
                 protected final ClassFileVersion classFileVersion;
 
-                protected final MethodGraph.Compiler methodGraphCompiler;
+                protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
+
+                protected final AnnotationRetention annotationRetention;
 
                 protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
                 protected final Implementation.Context.Factory implementationContextFactory;
 
+                protected final MethodGraph.Compiler methodGraphCompiler;
+
+                protected final ElementMatcher<? super MethodDescription> ignoredMethods;
+
                 protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
                                   FieldRegistry fieldRegistry,
                                   MethodRegistry methodRegistry,
-                                  ElementMatcher<? super MethodDescription> ignored,
                                   TypeAttributeAppender typeAttributeAppender,
                                   AsmVisitorWrapper asmVisitorWrapper,
-                                  AnnotationValueFilter.Factory annotationValueFilterFactory,
                                   ClassFileVersion classFileVersion,
-                                  MethodGraph.Compiler methodGraphCompiler,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                  Implementation.Context.Factory implementationContextFactory) {
+                                  AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                  AnnotationRetention annotationRetention,
+                                  Implementation.Context.Factory implementationContextFactory,
+                                  MethodGraph.Compiler methodGraphCompiler,
+                                  ElementMatcher<? super MethodDescription> ignoredMethods) {
                     this.instrumentedType = instrumentedType;
                     this.fieldRegistry = fieldRegistry;
                     this.methodRegistry = methodRegistry;
-                    this.ignored = ignored;
                     this.typeAttributeAppender = typeAttributeAppender;
                     this.asmVisitorWrapper = asmVisitorWrapper;
-                    this.annotationValueFilterFactory = annotationValueFilterFactory;
                     this.classFileVersion = classFileVersion;
-                    this.methodGraphCompiler = methodGraphCompiler;
                     this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
+                    this.annotationValueFilterFactory = annotationValueFilterFactory;
+                    this.annotationRetention = annotationRetention;
                     this.implementationContextFactory = implementationContextFactory;
+                    this.methodGraphCompiler = methodGraphCompiler;
+                    this.ignoredMethods = ignoredMethods;
                 }
 
                 @Override
@@ -1136,18 +1176,19 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> ignore(ElementMatcher<? super MethodDescription> ignored) {
+                public Builder<U> ignore(ElementMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
-                            new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignored, ignored),
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods));
                 }
 
                 @Override
@@ -1155,14 +1196,15 @@ public interface DynamicType {
                     return materialize(instrumentedType.withInitializer(byteCodeAppender),
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 @Override
@@ -1170,14 +1212,15 @@ public interface DynamicType {
                     return materialize(instrumentedType.withInitializer(loadedTypeInitializer),
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 @Override
@@ -1185,14 +1228,15 @@ public interface DynamicType {
                     return materialize(instrumentedType.withName(name),
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 @Override
@@ -1200,14 +1244,15 @@ public interface DynamicType {
                     return materialize(instrumentedType.withModifiers(modifiers),
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 @Override
@@ -1215,14 +1260,15 @@ public interface DynamicType {
                     return materialize(instrumentedType.withTypeVariable(symbol, bound.asGenericType()),
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 @Override
@@ -1230,14 +1276,15 @@ public interface DynamicType {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
-                            new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
+                            typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 @Override
@@ -1245,14 +1292,15 @@ public interface DynamicType {
                     return materialize(instrumentedType.withAnnotations(new ArrayList<AnnotationDescription>(annotations)),
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
                             typeAttributeAppender,
                             asmVisitorWrapper,
-                            annotationValueFilterFactory,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 @Override
@@ -1260,27 +1308,65 @@ public interface DynamicType {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
-                            ignored,
                             typeAttributeAppender,
-                            new AsmVisitorWrapper.Compound(this.asmVisitorWrapper, asmVisitorWrapper),
-                            annotationValueFilterFactory,
+                            asmVisitorWrapper,
                             classFileVersion,
-                            methodGraphCompiler,
                             auxiliaryTypeNamingStrategy,
-                            implementationContextFactory);
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
                 }
 
                 protected abstract Builder<U> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                           FieldRegistry fieldRegistry,
                                                           MethodRegistry methodRegistry,
-                                                          ElementMatcher<? super MethodDescription> ignored,
                                                           TypeAttributeAppender typeAttributeAppender,
                                                           AsmVisitorWrapper asmVisitorWrapper,
-                                                          AnnotationValueFilter.Factory annotationValueFilterFactory,
                                                           ClassFileVersion classFileVersion,
-                                                          MethodGraph.Compiler methodGraphCompiler,
                                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                                          Implementation.Context.Factory implementationContextFactory);
+                                                          AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                          AnnotationRetention annotationRetention,
+                                                          Implementation.Context.Factory implementationContextFactory,
+                                                          MethodGraph.Compiler methodGraphCompiler,
+                                                          ElementMatcher<? super MethodDescription> ignoredMethods);
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Adapter<?> adapter = (Adapter<?>) other;
+                    return instrumentedType.equals(adapter.instrumentedType)
+                            && fieldRegistry.equals(adapter.fieldRegistry)
+                            && methodRegistry.equals(adapter.methodRegistry)
+                            && typeAttributeAppender.equals(adapter.typeAttributeAppender)
+                            && asmVisitorWrapper.equals(adapter.asmVisitorWrapper)
+                            && classFileVersion.equals(adapter.classFileVersion)
+                            && annotationValueFilterFactory.equals(adapter.annotationValueFilterFactory)
+                            && annotationRetention == adapter.annotationRetention
+                            && auxiliaryTypeNamingStrategy.equals(adapter.auxiliaryTypeNamingStrategy)
+                            && implementationContextFactory.equals(adapter.implementationContextFactory)
+                            && methodGraphCompiler.equals(adapter.methodGraphCompiler)
+                            && ignoredMethods.equals(adapter.ignoredMethods);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = instrumentedType.hashCode();
+                    result = 31 * result + fieldRegistry.hashCode();
+                    result = 31 * result + methodRegistry.hashCode();
+                    result = 31 * result + typeAttributeAppender.hashCode();
+                    result = 31 * result + asmVisitorWrapper.hashCode();
+                    result = 31 * result + classFileVersion.hashCode();
+                    result = 31 * result + annotationValueFilterFactory.hashCode();
+                    result = 31 * result + annotationRetention.hashCode();
+                    result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
+                    result = 31 * result + implementationContextFactory.hashCode();
+                    result = 31 * result + methodGraphCompiler.hashCode();
+                    result = 31 * result + ignoredMethods.hashCode();
+                    return result;
+                }
 
                 protected class FieldDefinitionAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
@@ -1309,16 +1395,17 @@ public interface DynamicType {
                     @Override
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withField(token),
-                                fieldRegistry.include(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
+                                fieldRegistry.prepend(new LatentMatcher.ForFieldToken(token), fieldAttributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
                                 methodRegistry,
-                                ignored,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
-                                annotationValueFilterFactory,
                                 classFileVersion,
-                                methodGraphCompiler,
                                 auxiliaryTypeNamingStrategy,
-                                implementationContextFactory);
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                ignoredMethods);
                     }
 
                     @Override
@@ -1326,6 +1413,36 @@ public interface DynamicType {
                                                       FieldTransformer fieldTransformer,
                                                       Object defaultValue) {
                         return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, token);
+                    }
+
+                    private Builder.AbstractBase.Adapter<?> getAdapter() {
+                        return Builder.AbstractBase.Adapter.this;
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && super.equals(other)
+                                && token.equals(((FieldDefinitionAdapter) other).token);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + token.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "DynamicType.Builder.AbstractBase.Adapter.FieldDefinitionAdapter{" +
+                                "adapter=" + getAdapter() +
+                                ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
+                                ", fieldTransformer=" + fieldTransformer +
+                                ", defaultValue=" + defaultValue +
+                                ", token=" + token +
+                                '}';
                     }
                 }
 
@@ -1353,21 +1470,52 @@ public interface DynamicType {
                     @Override
                     protected Builder<U> materialize() {
                         return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
-                                fieldRegistry.include(matcher, fieldAttributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
+                                fieldRegistry.prepend(matcher, fieldAttributeAppenderFactory, defaultValue, FieldTransformer.NoOp.INSTANCE),
                                 methodRegistry,
-                                ignored,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
-                                annotationValueFilterFactory,
                                 classFileVersion,
-                                methodGraphCompiler,
                                 auxiliaryTypeNamingStrategy,
-                                implementationContextFactory);
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                ignoredMethods);
                     }
 
                     @Override
                     protected Optional<U> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue) {
                         return new FieldMatchAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, matcher);
+                    }
+
+                    private Builder.AbstractBase.Adapter<?> getAdapter() {
+                        return Builder.AbstractBase.Adapter.this;
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && super.equals(other)
+                                && matcher.equals(((FieldMatchAdapter) other).matcher);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + matcher.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "DynamicType.Builder.AbstractBase.Adapter.FieldMatchAdapter{" +
+                                "adapter=" + getAdapter() +
+                                ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
+                                ", fieldTransformer=" + fieldTransformer +
+                                ", defaultValue=" + defaultValue +
+                                ", matcher=" + matcher +
+                                '}';
                     }
                 }
 
@@ -1441,6 +1589,31 @@ public interface DynamicType {
                         return new AnnotationAdapter(handler);
                     }
 
+                    private Adapter<?> getAdapter() {
+                        return Adapter.this;
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && token.equals(((MethodDefinitionAdapter) other).token)
+                                && getAdapter().equals(((MethodDefinitionAdapter) other).getAdapter());
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return 31 * getAdapter().hashCode() + token.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter{" +
+                                "adapter=" + getAdapter() +
+                                ", token=" + token +
+                                '}';
+                    }
+
                     protected class ParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Annotatable.AbstractBase.Adapter<U> {
 
                         private final ParameterDescription.Token token;
@@ -1467,6 +1640,31 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getExceptionTypes(),
                                     MethodDefinitionAdapter.this.token.getAnnotations(),
                                     MethodDefinitionAdapter.this.token.getDefaultValue()));
+                        }
+
+                        private MethodDefinitionAdapter getAdapter() {
+                            return MethodDefinitionAdapter.this;
+                        }
+
+                        @Override
+                        @SuppressWarnings("unchecked")
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && token.equals(((ParameterAnnotationAdapter) other).token)
+                                    && getAdapter().equals(((ParameterAnnotationAdapter) other).getAdapter());
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 31 * getAdapter().hashCode() + token.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.ParameterAnnotationAdapter{" +
+                                    "adapter=" + getAdapter() +
+                                    ", token=" + token +
+                                    '}';
                         }
                     }
 
@@ -1496,6 +1694,31 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getExceptionTypes(),
                                     MethodDefinitionAdapter.this.token.getAnnotations(),
                                     MethodDefinitionAdapter.this.token.getDefaultValue()));
+                        }
+
+                        private MethodDefinitionAdapter getAdapter() {
+                            return MethodDefinitionAdapter.this;
+                        }
+
+                        @Override
+                        @SuppressWarnings("unchecked")
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && token.equals(((ParameterAnnotationAdapter) other).token)
+                                    && getAdapter().equals(((ParameterAnnotationAdapter) other).getAdapter());
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 31 * getAdapter().hashCode() + token.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.SimpleParameterAnnotationAdapter{" +
+                                    "adapter=" + getAdapter() +
+                                    ", token=" + token +
+                                    '}';
                         }
                     }
 
@@ -1548,14 +1771,40 @@ public interface DynamicType {
                             return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withMethod(token),
                                     fieldRegistry,
                                     methodRegistry.append(new LatentMatcher.ForMethodToken(token), handler, methodAttributeAppenderFactory, methodTransformer),
-                                    ignored,
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
-                                    annotationValueFilterFactory,
                                     classFileVersion,
-                                    methodGraphCompiler,
                                     auxiliaryTypeNamingStrategy,
-                                    implementationContextFactory);
+                                    annotationValueFilterFactory,
+                                    annotationRetention,
+                                    implementationContextFactory,
+                                    methodGraphCompiler,
+                                    ignoredMethods);
+                        }
+
+                        private MethodDefinitionAdapter getAdapter() {
+                            return MethodDefinitionAdapter.this;
+                        }
+
+                        @Override
+                        @SuppressWarnings("unchecked")
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return super.hashCode() + getAdapter().hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.AnnotationAdapter{" +
+                                    "adapter=" + getAdapter() +
+                                    ", handler=" + handler +
+                                    ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
+                                    ", methodTransformer=" + methodTransformer +
+                                    '}';
                         }
                     }
                 }
@@ -1585,6 +1834,31 @@ public interface DynamicType {
 
                     protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
                         return new AnnotationAdapter(handler);
+                    }
+
+                    private Adapter<?> getAdapter() {
+                        return Adapter.this;
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && matcher.equals(((MethodMatchAdapter) other).matcher)
+                                && getAdapter().equals(((MethodMatchAdapter) other).getAdapter());
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return 31 * getAdapter().hashCode() + matcher.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter{" +
+                                "adapter=" + getAdapter() +
+                                ", matcher=" + matcher +
+                                '}';
                     }
 
                     protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
@@ -1620,15 +1894,41 @@ public interface DynamicType {
                         protected Builder<U> materialize() {
                             return Builder.AbstractBase.Adapter.this.materialize(instrumentedType,
                                     fieldRegistry,
-                                    methodRegistry.append(matcher, handler, methodAttributeAppenderFactory, methodTransformer),
-                                    ignored,
+                                    methodRegistry.prepend(matcher, handler, methodAttributeAppenderFactory, methodTransformer),
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
-                                    annotationValueFilterFactory,
                                     classFileVersion,
-                                    methodGraphCompiler,
                                     auxiliaryTypeNamingStrategy,
-                                    implementationContextFactory);
+                                    annotationValueFilterFactory,
+                                    annotationRetention,
+                                    implementationContextFactory,
+                                    methodGraphCompiler,
+                                    ignoredMethods);
+                        }
+
+                        private MethodMatchAdapter getAdapter() {
+                            return MethodMatchAdapter.this;
+                        }
+
+                        @Override
+                        @SuppressWarnings("unchecked")
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return super.hashCode() + getAdapter().hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.AnnotationAdapter{" +
+                                    "adapter=" + getAdapter() +
+                                    ", handler=" + handler +
+                                    ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
+                                    ", methodTransformer=" + methodTransformer +
+                                    '}';
                         }
                     }
                 }
@@ -1646,14 +1946,15 @@ public interface DynamicType {
                         return Adapter.this.materialize(instrumentedType.withInterfaces(interfaces),
                                 fieldRegistry,
                                 methodRegistry,
-                                ignored,
                                 typeAttributeAppender,
                                 asmVisitorWrapper,
-                                annotationValueFilterFactory,
                                 classFileVersion,
-                                methodGraphCompiler,
                                 auxiliaryTypeNamingStrategy,
-                                implementationContextFactory);
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                ignoredMethods);
                     }
 
                     @Override

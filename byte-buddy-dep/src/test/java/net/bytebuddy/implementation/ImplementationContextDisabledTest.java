@@ -5,7 +5,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -96,7 +96,7 @@ public class ImplementationContextDisabledTest {
         new Implementation.Context.Disabled(instrumentedType).drain(mock(ClassVisitor.class),
                 methodPool,
                 injectedCode,
-                mock(AnnotationAppender.ValueFilter.Factory.class));
+                mock(AnnotationValueFilter.Factory.class));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -105,7 +105,7 @@ public class ImplementationContextDisabledTest {
         new Implementation.Context.Disabled(instrumentedType).drain(mock(ClassVisitor.class),
                 methodPool,
                 injectedCode,
-                mock(AnnotationAppender.ValueFilter.Factory.class));
+                mock(AnnotationValueFilter.Factory.class));
     }
 
     @Test

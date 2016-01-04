@@ -43,14 +43,21 @@ public class InstrumentedTypeTest {
     protected static InstrumentedType makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
                 Opcodes.ACC_PUBLIC,
-                Collections.<String, TypeList.Generic>emptyMap(),
                 TypeDescription.Generic.OBJECT,
+                Collections.<String, TypeList.Generic>emptyMap(),
                 Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
                 InstrumentedType.TypeInitializer.None.INSTANCE,
-                LoadedTypeInitializer.NoOp.INSTANCE);
+                LoadedTypeInitializer.NoOp.INSTANCE,
+                TypeDescription.UNDEFINED,
+                MethodDescription.UNDEFINED,
+                TypeDescription.UNDEFINED,
+                Collections.<TypeDescription>emptyList(),
+                false,
+                false,
+                false);
     }
 
     @Test

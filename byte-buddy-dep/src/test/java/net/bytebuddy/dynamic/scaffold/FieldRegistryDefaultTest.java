@@ -2,7 +2,6 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.dynamic.FieldTransformer;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
@@ -68,7 +67,7 @@ public class FieldRegistryDefaultTest {
     @Test
     public void testKnownFieldRegistered() throws Exception {
         TypeWriter.FieldPool fieldPool = new FieldRegistry.Default()
-                .include(latentMatcher, distinctFactory, defaultValue, fieldTransformer)
+                .prepend(latentMatcher, distinctFactory, defaultValue, fieldTransformer)
                 .compile(instrumentedType);
         assertThat(fieldPool.target(knownField).getField(), is(instrumentedField));
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));

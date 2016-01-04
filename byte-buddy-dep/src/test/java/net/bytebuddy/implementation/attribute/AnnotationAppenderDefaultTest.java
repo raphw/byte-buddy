@@ -49,7 +49,7 @@ public class AnnotationAppenderDefaultTest {
     private AnnotationAppender.Target target;
 
     @Mock
-    private AnnotationAppender.ValueFilter valueFilter;
+    private AnnotationValueFilter valueFilter;
 
     private AnnotationAppender annotationAppender;
 

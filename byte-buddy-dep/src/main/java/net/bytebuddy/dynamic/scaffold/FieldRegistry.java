@@ -21,7 +21,7 @@ import java.util.*;
  */
 public interface FieldRegistry {
 
-    FieldRegistry include(LatentMatcher<? super FieldDescription> matcher,
+    FieldRegistry prepend(LatentMatcher<? super FieldDescription> matcher,
                           FieldAttributeAppender.Factory attributeAppenderFactory,
                           Object defaultValue,
                           FieldTransformer fieldTransformer);
@@ -74,7 +74,7 @@ public interface FieldRegistry {
         }
 
         @Override
-        public FieldRegistry include(LatentMatcher<? super FieldDescription> matcher,
+        public FieldRegistry prepend(LatentMatcher<? super FieldDescription> matcher,
                                      FieldAttributeAppender.Factory attributeAppenderFactory,
                                      Object defaultValue,
                                      FieldTransformer fieldTransformer) {

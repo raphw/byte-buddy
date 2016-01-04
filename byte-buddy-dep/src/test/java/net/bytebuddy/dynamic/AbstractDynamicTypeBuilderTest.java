@@ -98,7 +98,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testMethodDefinition() throws Exception {
         Class<?> type = createPlain()
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .throwing(Exception.class)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
@@ -115,7 +115,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testAbstractMethodDefinition() throws Exception {
         Class<?> type = createPlain()
                 .modifiers(Visibility.PUBLIC, TypeManifestation.ABSTRACT)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .throwing(Exception.class)
                 .withoutCode()
                 .make()
@@ -130,7 +130,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testConstructorDefinition() throws Exception {
         Class<?> type = createPlain()
-                .defineConstructor(Collections.<Class<?>>singletonList(Void.class), Visibility.PUBLIC)
+                .defineConstructor(Visibility.PUBLIC).withParameters(Void.class)
                 .throwing(Exception.class)
                 .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make()
@@ -213,7 +213,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testConstructorInvokingMethod() throws Exception {
         Class<?> type = createPlain()
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
@@ -226,8 +226,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testMethodTransformation() throws Exception {
         Class<?> type = createPlain()
                 .method(named(TO_STRING))
-                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE),
-                        MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .transform(MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -238,7 +238,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testIgnoredMethod() throws Exception {
         Class<?> type = createPlain()
-                .ignoreMethods(named(TO_STRING))
+                .ignore(named(TO_STRING))
                 .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
@@ -249,8 +249,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testIgnoredMethodDoesNotApplyForDefined() throws Exception {
         Class<?> type = createPlain()
-                .ignoreMethods(named(FOO))
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .ignore(named(FOO))
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
@@ -267,7 +267,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
-                .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedField())
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
@@ -292,7 +292,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
-                .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedMethod())
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
@@ -336,7 +336,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         });
         when(asmVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
         Class<?> type = createPlain()
-                .classVisitor(asmVisitorWrapper)
+                .visit(asmVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -351,7 +351,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testExplicitTypeInitializer() throws Exception {
         assertThat(createPlain()
                 .defineField(FOO, String.class, Ownership.STATIC, Visibility.PUBLIC)
-                .initialize(new ByteCodeAppender() {
+                .initializer(new ByteCodeAppender() {
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new Size(new StackManipulation.Compound(

@@ -78,6 +78,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     protected abstract DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator);
 
+    protected abstract DynamicType.Builder<?> createDisabledContext();
+
     @Test
     public void testTypeInitializerRetention() throws Exception {
         Class<?> type = create(Qux.class)
@@ -93,7 +95,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test
     public void testDefaultValue() throws Exception {
         Class<?> dynamicType = create(Baz.class)
-                .method(named(FOO)).withDefaultValue(FOO)
+                .method(named(FOO)).defaultValue(FOO)
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -343,8 +345,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testMethodTransformationExistingMethod() throws Exception {
         Class<?> type = create(Transform.class)
                 .method(named(FOO))
-                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE),
-                        MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .transform(MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -370,7 +372,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         when(asmVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
         when(asmVisitorWrapper.mergeReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
         Class<?> type = create(StackMapFrames.class)
-                .classVisitor(asmVisitorWrapper)
+                .visit(asmVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -383,8 +385,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Test(expected = IllegalStateException.class)
     public void testForbidTypeInitilizerInterception() throws Exception {
-        createPlain()
-                .context(Implementation.Context.Disabled.Factory.INSTANCE)
+        createDisabledContext()
                 .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
                 .make();
     }

@@ -1238,239 +1238,150 @@ public interface TypeWriter<T> {
      */
     abstract class Default<S> implements TypeWriter<S> {
 
-        /**
-         * A flag for ASM not to automatically compute any information such as operand stack sizes and stack map frames.
-         */
-        protected static final int ASM_NO_FLAGS = 0;
+        protected static final int ASM_MANUAL_FLAGS = 0;
 
-        /**
-         * The instrumented type that is to be written.
-         */
         protected final TypeDescription instrumentedType;
 
-        /**
-         * The loaded type initializer of the instrumented type.
-         */
-        protected final LoadedTypeInitializer loadedTypeInitializer;
-
-        /**
-         * The type initializer of the instrumented type.
-         */
-        protected final InstrumentedType.TypeInitializer typeInitializer;
-
-        /**
-         * A list of explicit auxiliary types that are to be added to the created dynamic type.
-         */
-        protected final List<DynamicType> explicitAuxiliaryTypes;
-
-        /**
-         * The class file version of the written type.
-         */
-        protected final ClassFileVersion classFileVersion;
-
-        /**
-         * A naming strategy that is used for naming auxiliary types.
-         */
-        protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
-
-        /**
-         * The implementation context factory to use.
-         */
-        protected final Implementation.Context.Factory implementationContextFactory;
-
-        /**
-         * A class visitor wrapper to apply during instrumentation.
-         */
-        protected final AsmVisitorWrapper asmVisitorWrapper;
-
-        /**
-         * The type attribute appender to apply.
-         */
-        protected final TypeAttributeAppender attributeAppender;
-
-        /**
-         * The field pool to be used for instrumenting fields.
-         */
         protected final FieldPool fieldPool;
 
-        /**
-         * The method pool to be used for instrumenting methods.
-         */
         protected final MethodPool methodPool;
 
-        /**
-         * A list of all instrumented methods.
-         */
+        protected final List<DynamicType> explicitAuxiliaryTypes;
+
         protected final MethodList<?> instrumentedMethods;
+
+        protected final LoadedTypeInitializer loadedTypeInitializer;
+
+        protected final InstrumentedType.TypeInitializer typeInitializer;
+
+        protected final TypeAttributeAppender typeAttributeAppender;
+
+        protected final AsmVisitorWrapper asmVisitorWrapper;
+
+        protected final ClassFileVersion classFileVersion;
 
         protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
-        /**
-         * Creates a new default type writer.
-         *
-         * @param instrumentedType             The instrumented type that is to be written.
-         * @param loadedTypeInitializer        The loaded type initializer of the instrumented type.
-         * @param typeInitializer              The type initializer of the instrumented type.
-         * @param explicitAuxiliaryTypes       A list of explicit auxiliary types that are to be added to the created dynamic type.
-         * @param classFileVersion             The class file version of the written type.
-         * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
-         * @param implementationContextFactory The implementation context factory to use.
-         * @param asmVisitorWrapper          A class visitor wrapper to apply during instrumentation.
-         * @param attributeAppender            The type attribute appender to apply.
-         * @param fieldPool                    The field pool to be used for instrumenting fields.
-         * @param methodPool                   The method pool to be used for instrumenting methods.
-         * @param instrumentedMethods          A list of all instrumented methods.
-         */
+        protected final AnnotationRetention annotationRetention;
+
+        protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
+
+        protected final Implementation.Context.Factory implementationContextFactory;
+
         protected Default(TypeDescription instrumentedType,
-                          LoadedTypeInitializer loadedTypeInitializer,
-                          InstrumentedType.TypeInitializer typeInitializer,
-                          List<DynamicType> explicitAuxiliaryTypes,
-                          ClassFileVersion classFileVersion,
-                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                          Implementation.Context.Factory implementationContextFactory,
-                          AsmVisitorWrapper asmVisitorWrapper,
-                          TypeAttributeAppender attributeAppender,
                           FieldPool fieldPool,
                           MethodPool methodPool,
+                          List<DynamicType> explicitAuxiliaryTypes,
                           MethodList<?> instrumentedMethods,
-                          AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                          LoadedTypeInitializer loadedTypeInitializer,
+                          InstrumentedType.TypeInitializer typeInitializer,
+                          TypeAttributeAppender typeAttributeAppender,
+                          AsmVisitorWrapper asmVisitorWrapper,
+                          ClassFileVersion classFileVersion,
+                          AnnotationValueFilter.Factory annotationValueFilterFactory,
+                          AnnotationRetention annotationRetention,
+                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                          Implementation.Context.Factory implementationContextFactory) {
             this.instrumentedType = instrumentedType;
-            this.loadedTypeInitializer = loadedTypeInitializer;
-            this.typeInitializer = typeInitializer;
-            this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
-            this.classFileVersion = classFileVersion;
-            this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
-            this.implementationContextFactory = implementationContextFactory;
-            this.asmVisitorWrapper = asmVisitorWrapper;
-            this.attributeAppender = attributeAppender;
             this.fieldPool = fieldPool;
             this.methodPool = methodPool;
+            this.explicitAuxiliaryTypes = explicitAuxiliaryTypes;
             this.instrumentedMethods = instrumentedMethods;
+            this.loadedTypeInitializer = loadedTypeInitializer;
+            this.typeInitializer = typeInitializer;
+            this.typeAttributeAppender = typeAttributeAppender;
+            this.asmVisitorWrapper = asmVisitorWrapper;
+            this.classFileVersion = classFileVersion;
+            this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
             this.annotationValueFilterFactory = annotationValueFilterFactory;
+            this.annotationRetention = annotationRetention;
+            this.implementationContextFactory = implementationContextFactory;
         }
 
-        /**
-         * Creates a type writer for creating a new type.
-         *
-         * @param methodRegistry               The method registry to use for creating the type.
-         * @param fieldPool                    The field pool to use.
-         * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
-         * @param implementationContextFactory The implementation context factory to use.
-         * @param asmVisitorWrapper          The class visitor wrapper to apply when creating the type.
-         * @param attributeAppender            The attribute appender to use.
-         * @param classFileVersion             The class file version of the created type.
-         * @param <U>                          The best known loaded type for the dynamically created type.
-         * @return An appropriate type writer.
-         */
         public static <U> TypeWriter<U> forCreation(MethodRegistry.Compiled methodRegistry,
                                                     FieldPool fieldPool,
-                                                    AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                                    Implementation.Context.Factory implementationContextFactory,
+                                                    TypeAttributeAppender typeAttributeAppender,
                                                     AsmVisitorWrapper asmVisitorWrapper,
-                                                    TypeAttributeAppender attributeAppender,
                                                     ClassFileVersion classFileVersion,
-                                                    AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                                                    AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                    AnnotationRetention annotationRetention,
+                                                    AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                    Implementation.Context.Factory implementationContextFactory) {
             return new ForCreation<U>(methodRegistry.getInstrumentedType(),
-                    methodRegistry.getLoadedTypeInitializer(),
-                    methodRegistry.getTypeInitializer(),
-                    Collections.<DynamicType>emptyList(),
-                    classFileVersion,
-                    auxiliaryTypeNamingStrategy,
-                    implementationContextFactory,
-                    asmVisitorWrapper,
-                    attributeAppender,
                     fieldPool,
                     methodRegistry,
+                    Collections.<DynamicType>emptyList(),
                     methodRegistry.getInstrumentedMethods(),
-                    annotationValueFilterFactory);
+                    methodRegistry.getLoadedTypeInitializer(),
+                    methodRegistry.getTypeInitializer(),
+                    typeAttributeAppender,
+                    asmVisitorWrapper,
+                    classFileVersion,
+                    annotationValueFilterFactory,
+                    annotationRetention,
+                    auxiliaryTypeNamingStrategy,
+                    implementationContextFactory);
         }
 
-        /**
-         * Creates a type writer for creating a new type.
-         *
-         * @param methodRegistry               The method registry to use for creating the type.
-         * @param fieldPool                    The field pool to use.
-         * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
-         * @param implementationContextFactory The implementation context factory to use.
-         * @param asmVisitorWrapper          The class visitor wrapper to apply when creating the type.
-         * @param attributeAppender            The attribute appender to use.
-         * @param classFileVersion             The minimum class file version of the created type.
-         * @param classFileLocator             The class file locator to use.
-         * @param methodRebaseResolver         The method rebase resolver to use.
-         * @param originalType                 The original type that is to be rebased.
-         * @param <U>                          The best known loaded type for the dynamically created type.
-         * @return An appropriate type writer.
-         */
         public static <U> TypeWriter<U> forRebasing(MethodRegistry.Compiled methodRegistry,
                                                     FieldPool fieldPool,
+                                                    TypeAttributeAppender typeAttributeAppender,
+                                                    AsmVisitorWrapper asmVisitorWrapper,
+                                                    ClassFileVersion classFileVersion,
+                                                    AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                    AnnotationRetention annotationRetention,
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                     Implementation.Context.Factory implementationContextFactory,
-                                                    AsmVisitorWrapper asmVisitorWrapper,
-                                                    TypeAttributeAppender attributeAppender,
-                                                    ClassFileVersion classFileVersion,
-                                                    ClassFileLocator classFileLocator,
                                                     TypeDescription originalType,
-                                                    MethodRebaseResolver methodRebaseResolver,
-                                                    AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                                                    ClassFileLocator classFileLocator,
+                                                    MethodRebaseResolver methodRebaseResolver) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
-                    methodRegistry.getLoadedTypeInitializer(),
-                    methodRegistry.getTypeInitializer(),
-                    methodRebaseResolver.getAuxiliaryTypes(),
-                    classFileVersion,
-                    auxiliaryTypeNamingStrategy,
-                    implementationContextFactory,
-                    asmVisitorWrapper,
-                    attributeAppender,
                     fieldPool,
                     methodRegistry,
+                    methodRebaseResolver.getAuxiliaryTypes(),
                     methodRegistry.getInstrumentedMethods(),
-                    classFileLocator,
+                    methodRegistry.getLoadedTypeInitializer(),
+                    methodRegistry.getTypeInitializer(),
+                    typeAttributeAppender,
+                    asmVisitorWrapper,
+                    classFileVersion,
+                    annotationValueFilterFactory,
+                    annotationRetention,
+                    auxiliaryTypeNamingStrategy,
+                    implementationContextFactory,
                     originalType,
-                    methodRebaseResolver,
-                    annotationValueFilterFactory);
+                    classFileLocator,
+                    methodRebaseResolver);
         }
 
-        /**
-         * Creates a type writer for creating a new type.
-         *
-         * @param methodRegistry               The method registry to use for creating the type.
-         * @param fieldPool                    The field pool to use.
-         * @param auxiliaryTypeNamingStrategy  A naming strategy for naming auxiliary types.
-         * @param implementationContextFactory The implementation context factory to use.
-         * @param asmVisitorWrapper          The class visitor wrapper to apply when creating the type.
-         * @param attributeAppender            The attribute appender to use.
-         * @param classFileVersion             The minimum class file version of the created type.
-         * @param classFileLocator             The class file locator to use.
-         * @param originalType                 The original type that is to be rebased.
-         * @param <U>                          The best known loaded type for the dynamically created type.
-         * @return An appropriate type writer.
-         */
         public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Compiled methodRegistry,
                                                         FieldPool fieldPool,
+                                                        TypeAttributeAppender typeAttributeAppender,
+                                                        AsmVisitorWrapper asmVisitorWrapper,
+                                                        ClassFileVersion classFileVersion,
+                                                        AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                        AnnotationRetention annotationRetention,
                                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                         Implementation.Context.Factory implementationContextFactory,
-                                                        AsmVisitorWrapper asmVisitorWrapper,
-                                                        TypeAttributeAppender attributeAppender,
-                                                        ClassFileVersion classFileVersion,
-                                                        ClassFileLocator classFileLocator,
                                                         TypeDescription originalType,
-                                                        AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                                                        ClassFileLocator classFileLocator) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
-                    methodRegistry.getLoadedTypeInitializer(),
-                    methodRegistry.getTypeInitializer(),
-                    Collections.<DynamicType>emptyList(),
-                    classFileVersion,
-                    auxiliaryTypeNamingStrategy,
-                    implementationContextFactory,
-                    asmVisitorWrapper,
-                    attributeAppender,
                     fieldPool,
                     methodRegistry,
+                    Collections.<DynamicType>emptyList(),
                     methodRegistry.getInstrumentedMethods(),
-                    classFileLocator,
+                    methodRegistry.getLoadedTypeInitializer(),
+                    methodRegistry.getTypeInitializer(),
+                    typeAttributeAppender,
+                    asmVisitorWrapper,
+                    classFileVersion,
+                    annotationValueFilterFactory,
+                    annotationRetention,
+                    auxiliaryTypeNamingStrategy,
+                    implementationContextFactory,
                     originalType,
-                    MethodRebaseResolver.Disabled.INSTANCE,
-                    annotationValueFilterFactory);
+                    classFileLocator,
+                    MethodRebaseResolver.Disabled.INSTANCE);
         }
 
         @Override
@@ -1485,44 +1396,6 @@ public interface TypeWriter<T> {
                     CompoundList.of(explicitAuxiliaryTypes, implementationContext.getRegisteredAuxiliaryTypes()));
         }
 
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            Default<?> aDefault = (Default<?>) other;
-            return instrumentedType.equals(aDefault.instrumentedType)
-                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
-                    && typeInitializer.equals(aDefault.typeInitializer)
-                    && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
-                    && classFileVersion.equals(aDefault.classFileVersion)
-                    && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
-                    && implementationContextFactory.equals(aDefault.implementationContextFactory)
-                    && asmVisitorWrapper.equals(aDefault.asmVisitorWrapper)
-                    && attributeAppender.equals(aDefault.attributeAppender)
-                    && fieldPool.equals(aDefault.fieldPool)
-                    && methodPool.equals(aDefault.methodPool)
-                    && instrumentedMethods.equals(aDefault.instrumentedMethods)
-                    && annotationValueFilterFactory.equals(aDefault.annotationValueFilterFactory);
-        }
-
-        @Override
-        public int hashCode() {
-            int result = instrumentedType.hashCode();
-            result = 31 * result + loadedTypeInitializer.hashCode();
-            result = 31 * result + typeInitializer.hashCode();
-            result = 31 * result + explicitAuxiliaryTypes.hashCode();
-            result = 31 * result + classFileVersion.hashCode();
-            result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
-            result = 31 * result + implementationContextFactory.hashCode();
-            result = 31 * result + asmVisitorWrapper.hashCode();
-            result = 31 * result + attributeAppender.hashCode();
-            result = 31 * result + fieldPool.hashCode();
-            result = 31 * result + methodPool.hashCode();
-            result = 31 * result + instrumentedMethods.hashCode();
-            result = 31 * result + annotationValueFilterFactory.hashCode();
-            return result;
-        }
-
         /**
          * Creates the instrumented type.
          *
@@ -1530,6 +1403,46 @@ public interface TypeWriter<T> {
          * @return A byte array that is represented by the instrumented type.
          */
         protected abstract byte[] create(Implementation.Context.ExtractableView implementationContext);
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            Default<?> aDefault = (Default<?>) other;
+            return instrumentedType.equals(aDefault.instrumentedType)
+                    && fieldPool.equals(aDefault.fieldPool)
+                    && methodPool.equals(aDefault.methodPool)
+                    && explicitAuxiliaryTypes.equals(aDefault.explicitAuxiliaryTypes)
+                    && instrumentedMethods.equals(aDefault.instrumentedMethods)
+                    && loadedTypeInitializer.equals(aDefault.loadedTypeInitializer)
+                    && typeInitializer.equals(aDefault.typeInitializer)
+                    && typeAttributeAppender.equals(aDefault.typeAttributeAppender)
+                    && asmVisitorWrapper.equals(aDefault.asmVisitorWrapper)
+                    && classFileVersion.equals(aDefault.classFileVersion)
+                    && annotationValueFilterFactory.equals(aDefault.annotationValueFilterFactory)
+                    && annotationRetention == aDefault.annotationRetention
+                    && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
+                    && implementationContextFactory.equals(aDefault.implementationContextFactory);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = instrumentedType.hashCode();
+            result = 31 * result + fieldPool.hashCode();
+            result = 31 * result + methodPool.hashCode();
+            result = 31 * result + explicitAuxiliaryTypes.hashCode();
+            result = 31 * result + instrumentedMethods.hashCode();
+            result = 31 * result + loadedTypeInitializer.hashCode();
+            result = 31 * result + typeInitializer.hashCode();
+            result = 31 * result + typeAttributeAppender.hashCode();
+            result = 31 * result + asmVisitorWrapper.hashCode();
+            result = 31 * result + classFileVersion.hashCode();
+            result = 31 * result + annotationValueFilterFactory.hashCode();
+            result = 31 * result + annotationRetention.hashCode();
+            result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
+            result = 31 * result + implementationContextFactory.hashCode();
+            return result;
+        }
 
         /**
          * A class validator that validates that a class only defines members that are appropriate for the sort of the generated class.
@@ -2452,71 +2365,45 @@ public interface TypeWriter<T> {
              */
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
-            /**
-             * The class file locator to use.
-             */
-            private final ClassFileLocator classFileLocator;
-
-            /**
-             * The target type that is to be redefined via inlining.
-             */
             private final TypeDescription originalType;
 
-            /**
-             * The method rebase resolver to use.
-             */
+            private final ClassFileLocator classFileLocator;
+
             private final MethodRebaseResolver methodRebaseResolver;
 
-            /**
-             * Creates a new type writer for inlining a type into an existing type description.
-             *
-             * @param instrumentedType             The instrumented type that is to be written.
-             * @param loadedTypeInitializer        The loaded type initializer of the instrumented type.
-             * @param typeInitializer              The type initializer of the instrumented type.
-             * @param explicitAuxiliaryTypes       A list of explicit auxiliary types that are to be added to the created dynamic type.
-             * @param classFileVersion             The class file version of the written type.
-             * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
-             * @param implementationContextFactory The implementation context factory to use.
-             * @param asmVisitorWrapper          A class visitor wrapper to apply during instrumentation.
-             * @param attributeAppender            The type attribute appender to apply.
-             * @param fieldPool                    The field pool to be used for instrumenting fields.
-             * @param methodPool                   The method pool to be used for instrumenting methods.
-             * @param instrumentedMethods          A list of all instrumented methods.
-             * @param classFileLocator             The class file locator to use.
-             * @param originalType                 The original type that is to be redefined via inlining.
-             * @param methodRebaseResolver         The method rebase resolver to use.
-             */
             protected ForInlining(TypeDescription instrumentedType,
-                                  LoadedTypeInitializer loadedTypeInitializer,
-                                  InstrumentedType.TypeInitializer typeInitializer,
-                                  List<DynamicType> explicitAuxiliaryTypes,
-                                  ClassFileVersion classFileVersion,
-                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                  Implementation.Context.Factory implementationContextFactory,
-                                  AsmVisitorWrapper asmVisitorWrapper,
-                                  TypeAttributeAppender attributeAppender,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
-                                  MethodList instrumentedMethods,
-                                  ClassFileLocator classFileLocator,
+                                  List<DynamicType> explicitAuxiliaryTypes,
+                                  MethodList<?> instrumentedMethods,
+                                  LoadedTypeInitializer loadedTypeInitializer,
+                                  InstrumentedType.TypeInitializer typeInitializer,
+                                  TypeAttributeAppender typeAttributeAppender,
+                                  AsmVisitorWrapper asmVisitorWrapper,
+                                  ClassFileVersion classFileVersion,
+                                  AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                  AnnotationRetention annotationRetention,
+                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                  Implementation.Context.Factory implementationContextFactory,
                                   TypeDescription originalType,
-                                  MethodRebaseResolver methodRebaseResolver,
-                                  AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                                  ClassFileLocator classFileLocator,
+                                  MethodRebaseResolver methodRebaseResolver) {
                 super(instrumentedType,
-                        loadedTypeInitializer,
-                        typeInitializer,
-                        explicitAuxiliaryTypes,
-                        classFileVersion,
-                        auxiliaryTypeNamingStrategy,
-                        implementationContextFactory,
-                        asmVisitorWrapper,
-                        attributeAppender,
                         fieldPool,
                         methodPool,
+                        explicitAuxiliaryTypes,
                         instrumentedMethods,
-                        annotationValueFilterFactory);
-                this.classFileLocator = classFileLocator;
+                        loadedTypeInitializer,
+                        typeInitializer,
+                        typeAttributeAppender,
+                        asmVisitorWrapper,
+                        classFileVersion,
+                        annotationValueFilterFactory,
+                        annotationRetention,
+                        auxiliaryTypeNamingStrategy,
+                        implementationContextFactory);
                 this.originalType = originalType;
+                this.classFileLocator = classFileLocator;
                 this.methodRebaseResolver = methodRebaseResolver;
             }
 
@@ -2542,10 +2429,10 @@ public interface TypeWriter<T> {
              */
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
-                ClassWriter classWriter = FrameComputingClassWriter.of(classReader, asmVisitorWrapper.mergeWriter(ASM_NO_FLAGS), classFileLocator);
+                ClassWriter classWriter = FrameComputingClassWriter.of(classReader, asmVisitorWrapper.mergeWriter(ASM_MANUAL_FLAGS), classFileLocator);
                 classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
                         new ValidatingClassVisitor(classWriter)),
-                        implementationContext), asmVisitorWrapper.mergeReader(ASM_NO_FLAGS));
+                        implementationContext), asmVisitorWrapper.mergeReader(ASM_MANUAL_FLAGS));
                 return classWriter.toByteArray();
             }
 
@@ -2568,16 +2455,16 @@ public interface TypeWriter<T> {
                 if (other == null || getClass() != other.getClass()) return false;
                 if (!super.equals(other)) return false;
                 ForInlining<?> that = (ForInlining<?>) other;
-                return classFileLocator.equals(that.classFileLocator)
-                        && originalType.equals(that.originalType)
+                return originalType.equals(that.originalType)
+                        && classFileLocator.equals(that.classFileLocator)
                         && methodRebaseResolver.equals(that.methodRebaseResolver);
             }
 
             @Override
             public int hashCode() {
                 int result = super.hashCode();
-                result = 31 * result + classFileLocator.hashCode();
                 result = 31 * result + originalType.hashCode();
+                result = 31 * result + classFileLocator.hashCode();
                 result = 31 * result + methodRebaseResolver.hashCode();
                 return result;
             }
@@ -2586,20 +2473,22 @@ public interface TypeWriter<T> {
             public String toString() {
                 return "TypeWriter.Default.ForInlining{" +
                         "instrumentedType=" + instrumentedType +
-                        ", loadedTypeInitializer=" + loadedTypeInitializer +
-                        ", typeInitializer=" + typeInitializer +
-                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
-                        ", classFileVersion=" + classFileVersion +
-                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                        ", asmVisitorWrapper=" + asmVisitorWrapper +
-                        ", attributeAppender=" + attributeAppender +
                         ", fieldPool=" + fieldPool +
                         ", methodPool=" + methodPool +
+                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
                         ", instrumentedMethods=" + instrumentedMethods +
-                        ", classFileLocator=" + classFileLocator +
-                        ", originalType=" + originalType +
-                        ", methodRebaseResolver=" + methodRebaseResolver +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
+                        ", typeAttributeAppender=" + typeAttributeAppender +
+                        ", asmVisitorWrapper=" + asmVisitorWrapper +
+                        ", classFileVersion=" + classFileVersion +
                         ", annotationValueFilterFactory=" + annotationValueFilterFactory +
+                        ", annotationRetention=" + annotationRetention +
+                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                        ", implementationContextFactory=" + implementationContextFactory +
+                        ", originalType=" + originalType +
+                        ", classFileLocator=" + classFileLocator +
+                        ", methodRebaseResolver=" + methodRebaseResolver +
                         '}';
             }
 
@@ -2849,7 +2738,7 @@ public interface TypeWriter<T> {
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    attributeAppender.apply(this, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                    typeAttributeAppender.apply(this, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
@@ -2962,6 +2851,29 @@ public interface TypeWriter<T> {
                             '}';
                 }
 
+                protected class AttributeObtainingFieldVisitor extends FieldVisitor {
+
+                    private final FieldPool.Record record;
+
+                    public AttributeObtainingFieldVisitor(FieldVisitor fieldVisitor, FieldPool.Record record) {
+                        super(Opcodes.ASM5, fieldVisitor);
+                        this.record = record;
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitAnnotation(descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public void visitEnd() {
+                        record.apply(fv, annotationValueFilterFactory);
+                        super.visitEnd();
+                    }
+                }
+
                 /**
                  * A method visitor that preserves the code of a method in the class file by copying it into a rebased
                  * method while copying all attributes and annotations to the actual method.
@@ -3006,6 +2918,20 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitAnnotation(descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitParameterAnnotation(index, descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
                     public void visitCode() {
                         record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
                         actualMethodVisitor.visitEnd();
@@ -3032,22 +2958,6 @@ public interface TypeWriter<T> {
                                 ", entry=" + record +
                                 ", resolution=" + resolution +
                                 '}';
-                    }
-                }
-
-                protected class AttributeObtainingFieldVisitor extends FieldVisitor {
-
-                    private final FieldPool.Record record;
-
-                    public AttributeObtainingFieldVisitor(FieldVisitor fieldVisitor, FieldPool.Record record) {
-                        super(Opcodes.ASM5, fieldVisitor);
-                        this.record = record;
-                    }
-
-                    @Override
-                    public void visitEnd() {
-                        record.apply(fv, annotationValueFilterFactory);
-                        super.visitEnd();
                     }
                 }
 
@@ -3083,6 +2993,20 @@ public interface TypeWriter<T> {
                     @Override
                     public AnnotationVisitor visitAnnotationDefault() {
                         return IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitAnnotation(descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitParameterAnnotation(index, descriptor, visible)
+                                : IGNORE_ANNOTATION;
                     }
 
                     @Override
@@ -3163,53 +3087,39 @@ public interface TypeWriter<T> {
          */
         public static class ForCreation<U> extends Default<U> {
 
-            /**
-             * Creates a new type writer for creating a new type.
-             *
-             * @param instrumentedType             The instrumented type that is to be written.
-             * @param loadedTypeInitializer        The loaded type initializer of the instrumented type.
-             * @param typeInitializer              The type initializer of the instrumented type.
-             * @param explicitAuxiliaryTypes       A list of explicit auxiliary types that are to be added to the created dynamic type.
-             * @param classFileVersion             The class file version of the written type.
-             * @param auxiliaryTypeNamingStrategy  A naming strategy that is used for naming auxiliary types.
-             * @param implementationContextFactory The implementation context factory to use.
-             * @param asmVisitorWrapper          A class visitor wrapper to apply during instrumentation.
-             * @param attributeAppender            The type attribute appender to apply.
-             * @param fieldPool                    The field pool to be used for instrumenting fields.
-             * @param methodPool                   The method pool to be used for instrumenting methods.
-             * @param instrumentedMethods          A list of all instrumented methods.
-             */
             protected ForCreation(TypeDescription instrumentedType,
-                                  LoadedTypeInitializer loadedTypeInitializer,
-                                  InstrumentedType.TypeInitializer typeInitializer,
-                                  List<DynamicType> explicitAuxiliaryTypes,
-                                  ClassFileVersion classFileVersion,
-                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                  Implementation.Context.Factory implementationContextFactory,
-                                  AsmVisitorWrapper asmVisitorWrapper,
-                                  TypeAttributeAppender attributeAppender,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
-                                  MethodList instrumentedMethods,
-                                  AnnotationValueFilter.Factory annotationValueFilterFactory) {
+                                  List<DynamicType> explicitAuxiliaryTypes,
+                                  MethodList<?> instrumentedMethods,
+                                  LoadedTypeInitializer loadedTypeInitializer,
+                                  InstrumentedType.TypeInitializer typeInitializer,
+                                  TypeAttributeAppender typeAttributeAppender,
+                                  AsmVisitorWrapper asmVisitorWrapper,
+                                  ClassFileVersion classFileVersion,
+                                  AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                  AnnotationRetention annotationRetention,
+                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                  Implementation.Context.Factory implementationContextFactory) {
                 super(instrumentedType,
-                        loadedTypeInitializer,
-                        typeInitializer,
-                        explicitAuxiliaryTypes,
-                        classFileVersion,
-                        auxiliaryTypeNamingStrategy,
-                        implementationContextFactory,
-                        asmVisitorWrapper,
-                        attributeAppender,
                         fieldPool,
                         methodPool,
+                        explicitAuxiliaryTypes,
                         instrumentedMethods,
-                        annotationValueFilterFactory);
+                        loadedTypeInitializer,
+                        typeInitializer,
+                        typeAttributeAppender,
+                        asmVisitorWrapper,
+                        classFileVersion,
+                        annotationValueFilterFactory,
+                        annotationRetention,
+                        auxiliaryTypeNamingStrategy,
+                        implementationContextFactory);
             }
 
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
-                ClassWriter classWriter = new ClassWriter(asmVisitorWrapper.mergeWriter(ASM_NO_FLAGS));
+                ClassWriter classWriter = new ClassWriter(asmVisitorWrapper.mergeWriter(ASM_MANUAL_FLAGS));
                 ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType, new ValidatingClassVisitor(classWriter));
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
@@ -3219,7 +3129,7 @@ public interface TypeWriter<T> {
                                 ? TypeDescription.OBJECT
                                 : instrumentedType.getSuperType().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
-                attributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {
                     fieldPool.target(fieldDescription).apply(classVisitor, annotationValueFilterFactory);
                 }
@@ -3235,19 +3145,20 @@ public interface TypeWriter<T> {
             public String toString() {
                 return "TypeWriter.Default.ForCreation{" +
                         "instrumentedType=" + instrumentedType +
-                        ", loadedTypeInitializer=" + loadedTypeInitializer +
-                        ", typeInitializer=" + typeInitializer +
-                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
-                        ", classFileVersion=" + classFileVersion +
-                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                        ", implementationContextFactory=" + implementationContextFactory +
-                        ", asmVisitorWrapper=" + asmVisitorWrapper +
-                        ", attributeAppender=" + attributeAppender +
                         ", fieldPool=" + fieldPool +
                         ", methodPool=" + methodPool +
+                        ", explicitAuxiliaryTypes=" + explicitAuxiliaryTypes +
                         ", instrumentedMethods=" + instrumentedMethods +
+                        ", loadedTypeInitializer=" + loadedTypeInitializer +
+                        ", typeInitializer=" + typeInitializer +
+                        ", typeAttributeAppender=" + typeAttributeAppender +
+                        ", asmVisitorWrapper=" + asmVisitorWrapper +
+                        ", classFileVersion=" + classFileVersion +
                         ", annotationValueFilterFactory=" + annotationValueFilterFactory +
-                        "}";
+                        ", annotationRetention=" + annotationRetention +
+                        ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                        ", implementationContextFactory=" + implementationContextFactory +
+                        '}';
             }
         }
     }

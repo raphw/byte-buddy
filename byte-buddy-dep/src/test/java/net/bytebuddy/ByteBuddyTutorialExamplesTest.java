@@ -42,7 +42,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -114,7 +113,7 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedNamingStrategy() throws Exception {
         DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
-                .withNamingStrategy(new GettingStartedNamingStrategy())
+                .with(new GettingStartedNamingStrategy()) // TODO: Update tutorial
                 .subclass(Object.class)
                 .make();
         assertThat(dynamicType, notNullValue());
@@ -277,7 +276,7 @@ public class ByteBuddyTutorialExamplesTest {
     public void testFieldsAndMethodsExplicitMethodCall() throws Exception {
         Object object = new ByteBuddy()
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .defineConstructor(Collections.<Class<?>>singletonList(int.class), Visibility.PUBLIC)
+                .defineConstructor(Visibility.PUBLIC).withParameters(int.class) // TODO: Update tutorial
                 .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -600,11 +599,11 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    private static class GettingStartedNamingStrategy implements NamingStrategy {
+    private static class GettingStartedNamingStrategy extends NamingStrategy.AbstractBase { // TODO: Update tutorial
 
         @Override
-        public String name(UnnamedType unnamedType) {
-            return "i.love.ByteBuddy." + unnamedType.getSuperClass().asErasure().getSimpleName();
+        protected String name(TypeDescription typeDescription) {
+            return "i.love.ByteBuddy." + typeDescription.getSimpleName();
         }
     }
 

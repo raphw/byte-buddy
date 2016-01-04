@@ -320,8 +320,7 @@ public enum MethodInvocation {
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
                     typeDescription.isInterface());
-            int parameterSize = methodDescription.getStackSize();
-            int returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
+            int parameterSize = methodDescription.getStackSize(), returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
             return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
 

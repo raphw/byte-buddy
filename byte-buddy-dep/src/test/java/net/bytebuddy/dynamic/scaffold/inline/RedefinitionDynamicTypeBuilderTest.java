@@ -1,6 +1,7 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -45,16 +46,19 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
     }
 
     @Override
+    protected DynamicType.Builder<?> createDisabledContext() {
+        return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).redefine(Foo.class);
+    }
+
+    @Override
     protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().redefine(Foo.class);
     }
-
 
     @Override
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new ByteBuddy().redefine(typeDescription, classFileLocator);
     }
-
 
     @Test
     public void testConstructorRetentionNoAuxiliaryType() throws Exception {
@@ -133,6 +137,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
             @Override
             public TypeDescription create() {
                 TypeDescription rawTypeDescription = mock(TypeDescription.class);
+                when(rawTypeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
                 TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
                 when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
                 when(typeDescription.asGenericType()).thenReturn(typeDescription);

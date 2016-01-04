@@ -59,7 +59,7 @@ public interface AnnotationValueFilter {
 
         @Override
         public String toString() {
-            return "AnnotationAppender.ValueFilter.Default." + name();
+            return "AnnotationValueFilter.Default." + name();
         }
     }
 }

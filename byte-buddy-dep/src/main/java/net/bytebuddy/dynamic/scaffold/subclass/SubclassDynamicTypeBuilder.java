@@ -7,68 +7,68 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
-/**
- * Creates a dynamic type on basis of loaded types where the dynamic type extends a given type.
- *
- * @param <T> The best known loaded type representing the built dynamic type.
- */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     private final ConstructorStrategy constructorStrategy;
 
     public SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
-                                      ElementMatcher<? super MethodDescription> ignored,
-                                      AnnotationValueFilter.Factory annotationValueFilterFactory,
                                       ClassFileVersion classFileVersion,
-                                      MethodGraph.Compiler methodGraphCompiler,
                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                      AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                      AnnotationRetention annotationRetention,
                                       Implementation.Context.Factory implementationContextFactory,
+                                      MethodGraph.Compiler methodGraphCompiler,
+                                      ElementMatcher<? super MethodDescription> ignoredMethods,
                                       ConstructorStrategy constructorStrategy) {
         this(instrumentedType,
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
-                ignored,
-                TypeAttributeAppender.NoOp.INSTANCE,
+                TypeAttributeAppender.ForInstrumentedType.INSTANCE,
                 AsmVisitorWrapper.NoOp.INSTANCE,
-                annotationValueFilterFactory,
                 classFileVersion,
-                methodGraphCompiler,
                 auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
                 implementationContextFactory,
+                methodGraphCompiler,
+                ignoredMethods,
                 constructorStrategy);
     }
 
     protected SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
-                                         ElementMatcher<? super MethodDescription> ignored,
                                          TypeAttributeAppender typeAttributeAppender,
                                          AsmVisitorWrapper asmVisitorWrapper,
-                                         AnnotationValueFilter.Factory annotationValueFilterFactory,
                                          ClassFileVersion classFileVersion,
-                                         MethodGraph.Compiler methodGraphCompiler,
                                          AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                         AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                         AnnotationRetention annotationRetention,
                                          Implementation.Context.Factory implementationContextFactory,
+                                         MethodGraph.Compiler methodGraphCompiler,
+                                         ElementMatcher<? super MethodDescription> ignoredMethods,
                                          ConstructorStrategy constructorStrategy) {
         super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
-                ignored,
                 typeAttributeAppender,
                 asmVisitorWrapper,
-                annotationValueFilterFactory,
                 classFileVersion,
-                methodGraphCompiler,
                 auxiliaryTypeNamingStrategy,
-                implementationContextFactory);
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                ignoredMethods);
         this.constructorStrategy = constructorStrategy;
     }
 
@@ -76,25 +76,27 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     protected DynamicType.Builder<T> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
-                                                 ElementMatcher<? super MethodDescription> ignored,
                                                  TypeAttributeAppender typeAttributeAppender,
                                                  AsmVisitorWrapper asmVisitorWrapper,
-                                                 AnnotationValueFilter.Factory annotationValueFilterFactory,
                                                  ClassFileVersion classFileVersion,
-                                                 MethodGraph.Compiler methodGraphCompiler,
                                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                                 Implementation.Context.Factory implementationContextFactory) {
+                                                 AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                 AnnotationRetention annotationRetention,
+                                                 Implementation.Context.Factory implementationContextFactory,
+                                                 MethodGraph.Compiler methodGraphCompiler,
+                                                 ElementMatcher<? super MethodDescription> ignoredMethods) {
         return new SubclassDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
-                ignored,
                 typeAttributeAppender,
                 asmVisitorWrapper,
-                annotationValueFilterFactory,
                 classFileVersion,
-                methodGraphCompiler,
                 auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
                 implementationContextFactory,
+                methodGraphCompiler,
+                ignoredMethods,
                 constructorStrategy);
     }
 
@@ -102,16 +104,17 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry)
-                .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, new InstrumentableMatcher(ignored))
+                .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, new InstrumentableMatcher(ignoredMethods))
                 .compile(SubclassImplementationTarget.Factory.SUPER_TYPE);
         return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
-                auxiliaryTypeNamingStrategy,
-                implementationContextFactory,
-                asmVisitorWrapper,
                 typeAttributeAppender,
+                asmVisitorWrapper,
                 classFileVersion,
-                annotationValueFilterFactory).make();
+                annotationValueFilterFactory,
+                annotationRetention,
+                auxiliaryTypeNamingStrategy,
+                implementationContextFactory).make();
     }
 
     /**
@@ -131,9 +134,37 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
 
     @Override
     public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && constructorStrategy.equals(((SubclassDynamicTypeBuilder<?>) other).constructorStrategy);
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        if (!super.equals(other)) return false;
+        SubclassDynamicTypeBuilder<?> that = (SubclassDynamicTypeBuilder<?>) other;
+        return constructorStrategy.equals(that.constructorStrategy);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = super.hashCode();
+        result = 31 * result + constructorStrategy.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "SubclassDynamicTypeBuilder{" +
+                "instrumentedType=" + instrumentedType +
+                ", fieldRegistry=" + fieldRegistry +
+                ", methodRegistry=" + methodRegistry +
+                ", typeAttributeAppender=" + typeAttributeAppender +
+                ", asmVisitorWrapper=" + asmVisitorWrapper +
+                ", classFileVersion=" + classFileVersion +
+                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
+                ", annotationRetention=" + annotationRetention +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", implementationContextFactory=" + implementationContextFactory +
+                ", methodGraphCompiler=" + methodGraphCompiler +
+                ", ignoredMethods=" + ignoredMethods +
+                ", constructorStrategy=" + constructorStrategy +
+                '}';
     }
 
     /**

@@ -24,17 +24,17 @@ public interface NamingStrategy {
             return name(superType.asErasure());
         }
 
+        protected abstract String name(TypeDescription typeDescription);
+
         @Override
         public String redefine(TypeDescription typeDescription) {
-            return name(typeDescription);
+            return typeDescription.getName();
         }
 
         @Override
         public String rebase(TypeDescription typeDescription) {
-            return name(typeDescription);
+            return typeDescription.getName();
         }
-
-        protected abstract String name(TypeDescription typeDescription);
     }
 
     /**

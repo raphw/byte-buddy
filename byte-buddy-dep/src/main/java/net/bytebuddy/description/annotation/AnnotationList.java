@@ -1,6 +1,7 @@
 package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -59,6 +60,8 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      */
     AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher);
 
+    TypeList asTypeList();
+
     /**
      * An abstract base implementation of an annotation list.
      */
@@ -114,6 +117,15 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
                 }
             }
             return wrap(annotationDescriptions);
+        }
+
+        @Override
+        public TypeList asTypeList() {
+            List<TypeDescription> annotationTypes = new ArrayList<TypeDescription>(size());
+            for (AnnotationDescription annotation : this) {
+                annotationTypes.add(annotation.getAnnotationType());
+            }
+            return new TypeList.Explicit(annotationTypes);
         }
 
         @Override
@@ -261,6 +273,11 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         @Override
         public AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher) {
             return this;
+        }
+
+        @Override
+        public TypeList asTypeList() {
+            return new TypeList.Empty();
         }
     }
 }

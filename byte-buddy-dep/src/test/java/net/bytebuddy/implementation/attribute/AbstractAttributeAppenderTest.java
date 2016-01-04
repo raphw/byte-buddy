@@ -25,7 +25,7 @@ public abstract class AbstractAttributeAppenderTest {
     protected TypeDescription instrumentedType;
 
     @Mock
-    protected AnnotationAppender.ValueFilter valueFilter;
+    protected AnnotationValueFilter valueFilter;
 
     @Before
     public void setUp() throws Exception {

@@ -5,7 +5,9 @@ import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.ClassVisitor}.
@@ -61,6 +63,47 @@ public interface TypeAttributeAppender {
         @Override
         public String toString() {
             return "TypeAttributeAppender.ForInstrumentedType." + name();
+        }
+
+        public static class Excluding implements TypeAttributeAppender {
+
+            private final Set<? extends TypeDescription> excludedTypes;
+
+            public Excluding(TypeDescription originalType) {
+                this(new HashSet<TypeDescription>(originalType.getDeclaredAnnotations().asTypeList()));
+            }
+
+            public Excluding(Set<? extends TypeDescription> excludedTypes) {
+                this.excludedTypes = excludedTypes;
+            }
+
+            @Override
+            public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
+                AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+                for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
+                    if (!excludedTypes.contains(annotation.getAnnotationType())) {
+                        appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+                    }
+                }
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && excludedTypes.equals(((Excluding) other).excludedTypes);
+            }
+
+            @Override
+            public int hashCode() {
+                return excludedTypes.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "TypeAttributeAppender.ForInstrumentedType.Excluding{" +
+                        "excludedTypes=" + excludedTypes +
+                        '}';
+            }
         }
     }
 

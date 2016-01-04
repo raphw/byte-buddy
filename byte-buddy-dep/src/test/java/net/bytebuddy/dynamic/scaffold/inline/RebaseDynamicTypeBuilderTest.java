@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -12,6 +13,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
@@ -46,6 +48,11 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
     @Override
     protected DynamicType.Builder<?> createPlain() {
         return create(Foo.class);
+    }
+
+    @Override
+    protected DynamicType.Builder<?> createDisabledContext() {
+        return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).rebase(Foo.class);
     }
 
     @Override
@@ -123,7 +130,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
     public void testCannotRebaseDefinedMethod() throws Exception {
         new ByteBuddy()
                 .rebase(Foo.class)
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList()).intercept(SuperMethodCall.INSTANCE)
+                .defineMethod(FOO, void.class).intercept(SuperMethodCall.INSTANCE)
                 .make();
     }
 
@@ -161,6 +168,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
             public TypeDescription create() {
                 TypeDescription rawTypeDescription = mock(TypeDescription.class);
                 when(rawTypeDescription.asErasure()).thenReturn(rawTypeDescription);
+                when(rawTypeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
                 TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
                 when(typeDescription.asGenericType()).thenReturn(typeDescription);
                 when(typeDescription.asErasure()).thenReturn(rawTypeDescription);

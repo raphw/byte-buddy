@@ -11,7 +11,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -154,7 +154,7 @@ public class ImplementationContextDefaultTest {
     private TypeList.Generic firstSpecialExceptionTypes, secondSpecialExceptionTypes;
 
     @Mock
-    private AnnotationAppender.ValueFilter.Factory annotationValueFilterFactory;
+    private AnnotationValueFilter.Factory annotationValueFilterFactory;
 
     @Before
     @SuppressWarnings("unchecked")
