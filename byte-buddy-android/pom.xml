@@ -5,7 +5,7 @@
     <parent>
         <artifactId>byte-buddy-parent</artifactId>
         <groupId>net.bytebuddy</groupId>
-        <version>0.7.8</version>
+        <version>0.8-SNAPSHOT</version>
     </parent>
 
     <artifactId>byte-buddy-android</artifactId>
