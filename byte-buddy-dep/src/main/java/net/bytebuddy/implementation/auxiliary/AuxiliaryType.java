@@ -11,6 +11,11 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.utility.RandomString;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 /**
  * An auxiliary type that provides services to the instrumentation of another type. Implementations should provide
  * meaningful {@code equals(Object)} and {@code hashCode()} implementations in order to avoid multiple creations
@@ -169,5 +174,11 @@ public interface AuxiliaryType {
                 return "Instrumentation.Context.Default.AuxiliaryTypeNamingStrategySuffixingRandom{suffix='" + suffix + '\'' + '}';
             }
         }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    @interface Eager {
+        /* empty */
     }
 }

@@ -2,9 +2,12 @@ package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+
+import java.util.Collections;
 
 /**
  * A trivial type that extends {@link java.lang.Object} without defining any fields, methods or constructors.
@@ -12,10 +15,15 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
  */
 public enum TrivialType implements AuxiliaryType {
 
-    /**
-     * The singleton instance.
-     */
-    INSTANCE;
+    EAGER(true),
+
+    PLAIN(false);
+
+    private final boolean eager;
+
+    TrivialType(boolean eager) {
+        this.eager = eager;
+    }
 
     @Override
     public DynamicType make(String auxiliaryTypeName,
@@ -24,6 +32,9 @@ public enum TrivialType implements AuxiliaryType {
         return new ByteBuddy(classFileVersion)
                 .with(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .annotateType(eager
+                        ? Collections.singletonList(AnnotationDescription.Builder.forType(Eager.class).make())
+                        : Collections.<AnnotationDescription>emptyList())
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .make();

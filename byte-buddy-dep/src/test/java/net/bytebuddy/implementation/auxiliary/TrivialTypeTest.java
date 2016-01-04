@@ -30,7 +30,7 @@ public class TrivialTypeTest {
     @Test
     public void testCreation() throws Exception {
         when(classFileVersion.getMinorMajorVersion()).thenReturn(ClassFileVersion.JAVA_V5.getMinorMajorVersion());
-        DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
+        DynamicType dynamicType = TrivialType.PLAIN.make(FOO, classFileVersion, methodAccessorFactory); // TODO: Test eager with annotation
         assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));

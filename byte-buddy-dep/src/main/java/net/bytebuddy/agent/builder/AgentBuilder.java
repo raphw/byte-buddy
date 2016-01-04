@@ -10,6 +10,7 @@ import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -1006,9 +1007,9 @@ public interface AgentBuilder {
                             Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                                (auxiliaryType.isAssignableTo(instrumentedType)
-                                        ? independentTypes
-                                        : dependentTypes).remove(auxiliaryType);
+                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.Eager.class)
+                                        ? dependentTypes
+                                        : independentTypes).remove(auxiliaryType);
                             }
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (!independentTypes.isEmpty()) {
