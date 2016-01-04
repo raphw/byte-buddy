@@ -233,7 +233,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(SampleClass.class), not(new Object()));
         assertThat(describe(SampleClass.class), not(equalTo(null)));
         assertThat(describe(Object[].class), is((TypeDescription) new TypeDescription.ForLoadedType(Object[].class)));
-        assertThat(describe(Object[].class), not((TypeDescription) TypeDescription.OBJECT));
+        assertThat(describe(Object[].class), not(TypeDescription.OBJECT));
     }
 
     @Test
@@ -499,8 +499,16 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.AbstractBase.SuperTypeIterator.class).applyBasic();
+    public void testRepresents() throws Exception {
+        assertThat(describe(Object.class).represents(Object.class), is(true));
+        assertThat(describe(Object.class).represents(Serializable.class), is(false));
+        assertThat(describe(List.class).represents(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType()), is(false));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testRepresentsNullPointer() throws Exception {
+        describe(Object.class).represents(null);
+
     }
 
     protected interface SampleInterface {

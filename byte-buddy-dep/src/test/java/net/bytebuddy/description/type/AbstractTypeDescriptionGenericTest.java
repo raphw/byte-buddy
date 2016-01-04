@@ -39,10 +39,14 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     protected abstract TypeDescription.Generic describe(Method method);
 
-    @Test
-    public void testNonGenericTypeNoOwnerType() throws Exception { // TODO: Still true?
-        assertThat(describe(NonGeneric.class.getDeclaredField(FOO)).getOwnerType(), nullValue(TypeDescription.Generic.class));
-        assertThat(describe(NonGeneric.class.getDeclaredField(FOO)).getParameters().size(), is(0));
+    @Test(expected = IllegalStateException.class)
+    public void testNonGenericTypeNoOwnerType() throws Exception {
+        describe(NonGeneric.class.getDeclaredField(FOO)).getOwnerType();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonGenericTypeNoParameters() throws Exception {
+        describe(NonGeneric.class.getDeclaredField(FOO)).getParameters();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -452,8 +456,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getDeclaredFields().size(), is(0));
         assertThat(typeDescription.getDeclaredMethods().size(), is(0));
-        assertThat(typeDescription.getParameters().size(), is(0));
-        assertThat(typeDescription.getOwnerType(), nullValue(TypeDescription.Generic.class));
         assertThat(typeDescription.getSuperType(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
         assertThat(typeDescription.getSourceCodeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
@@ -503,6 +505,16 @@ public abstract class AbstractTypeDescriptionGenericTest {
         describe(SimpleGenericArrayType.class.getDeclaredField(FOO)).getLowerBounds();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testGenericArrayTypeNoOwnerType() throws Exception {
+        describe(SimpleGenericArrayType.class.getDeclaredField(FOO)).getOwnerType();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testGenericArrayTypeNoParameters() throws Exception {
+        describe(SimpleGenericArrayType.class.getDeclaredField(FOO)).getParameters();
+    }
+
     @Test
     public void testGenericArrayOfGenericComponentType() throws Exception {
         TypeDescription.Generic typeDescription = describe(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO));
@@ -510,8 +522,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getDeclaredFields().size(), is(0));
         assertThat(typeDescription.getDeclaredMethods().size(), is(0));
-        assertThat(typeDescription.getParameters().size(), is(0));
-        assertThat(typeDescription.getOwnerType(), nullValue(TypeDescription.Generic.class));
         assertThat(typeDescription.getSuperType(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
         assertThat(typeDescription.getSourceCodeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
@@ -883,22 +893,18 @@ public abstract class AbstractTypeDescriptionGenericTest {
         TypeDescription.Generic superType = typeDescription.getSuperType();
         assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
-        assertThat(superType.getParameters().size(), is(0));
         assertThat(superType.getDeclaredFields().size(), is(1));
         assertThat(superType.getDeclaredFields().getOnly().getDeclaringType().getDeclaredFields().getOnly().getType(),
                 is(superType.getDeclaredFields().getOnly().getType()));
         TypeDescription.Generic fieldType = superType.getDeclaredFields().getOnly().getType();
         assertThat(fieldType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(fieldType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(fieldType.getParameters().size(), is(0));
         TypeDescription.Generic methodReturnType = superType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
         assertThat(methodReturnType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(methodReturnType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodReturnType.getParameters().size(), is(0));
         TypeDescription.Generic methodParameterType = superType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().asTypeList().getOnly();
         assertThat(methodParameterType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(methodParameterType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodParameterType.getParameters().size(), is(0));
         assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType().getDeclaredMethods().filter(isMethod()).getOnly().getReturnType(),
                 is(superType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType()));
         assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType().getDeclaredMethods().filter(isMethod()).getOnly().getParameters().getOnly().getType(),
@@ -913,16 +919,13 @@ public abstract class AbstractTypeDescriptionGenericTest {
         TypeDescription.Generic interfaceType = typeDescription.getInterfaces().getOnly();
         assertThat(interfaceType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(interfaceType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
-        assertThat(interfaceType.getParameters().size(), is(0));
         assertThat(interfaceType.getDeclaredFields().size(), is(0));
         TypeDescription.Generic methodReturnType = interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
         assertThat(methodReturnType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(methodReturnType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodReturnType.getParameters().size(), is(0));
         TypeDescription.Generic methodParameterType = interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().asTypeList().getOnly();
         assertThat(methodParameterType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(methodParameterType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodParameterType.getParameters().size(), is(0));
         assertThat(interfaceType.getDeclaredMethods().getOnly().getDeclaringType().getDeclaredMethods().getOnly().getReturnType(),
                 is(interfaceType.getDeclaredMethods().getOnly().getReturnType()));
         assertThat(interfaceType.getDeclaredMethods().getOnly().getDeclaringType().getDeclaredMethods().getOnly().getParameters().getOnly().getType(),
@@ -1207,6 +1210,14 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 is(TypeDescription.Generic.Sort.NON_GENERIC));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(1).represents(RuntimeException.class),
                 is(true));
+    }
+
+    @Test
+    public void testRepresents() throws Exception {
+        assertThat(describe(SimpleParameterizedType.class.getDeclaredField(FOO))
+                .represents(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType()), is(true));
+        assertThat(describe(SimpleParameterizedType.class.getDeclaredField(FOO))
+                .represents(List.class), is(false));
     }
 
     @SuppressWarnings("unused")

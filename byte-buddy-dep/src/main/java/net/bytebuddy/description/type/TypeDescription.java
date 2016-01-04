@@ -332,11 +332,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          * Returns the type parameters of this type.
          * </p>
          * <p>
-         * Parameters are only well-defined for parameterized types
-         * ({@link Sort#PARAMETERIZED}), generic array types
-         * ({@link Sort#GENERIC_ARRAY}) and non-generic types
-         * ({@link Sort#NON_GENERIC}). For non-generic and generic array types,
-         * the returned list is always empty. For all other types, this method throws an {@link IllegalStateException}.
+         * Parameters are only well-defined for parameterized types ({@link Sort#PARAMETERIZED}).
+         * For all other types, this method throws an {@link IllegalStateException}.
          * </p>
          *
          * @return A list of this type's type parameters.
@@ -348,11 +345,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          * Returns the owner type of this type.
          * </p>
          * <p>
-         * An owner type is only well-defined for parameterized types
-         * ({@link Sort#PARAMETERIZED}) , generic array types
-         * ({@link Sort#GENERIC_ARRAY}) and non-generic types
-         * ({@link Sort#NON_GENERIC}). Non-generic types and generic array types do
-         * never have an owner type. For all other types, this method throws an {@link IllegalStateException}.
+         * An owner type is only well-defined for parameterized types ({@link Sort#PARAMETERIZED}).
+         * For all other types, this method throws an {@link IllegalStateException}.
          * </p>
          *
          * @return This type's owner type or {@code null} if no such owner type exists.
@@ -1133,10 +1127,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Generic getOwnerType() {
-                TypeDescription ownerType = asErasure().getDeclaringType();
-                return ownerType == null
-                        ? UNDEFINED
-                        : new OfNonGenericType.Latent(ownerType);
+                throw new IllegalStateException("A non-generic type does not imply an owner type: " + this);
             }
 
             @Override
@@ -1146,7 +1137,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public TypeList.Generic getParameters() {
-                return new TypeList.Generic.Empty();
+                throw new IllegalStateException("A non-generic type does not imply an parameter types: " + this);
             }
 
             @Override
@@ -1324,32 +1315,32 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public TypeList.Generic getUpperBounds() {
-                throw new IllegalStateException("An array type does not imply upper type bounds: " + this);
+                throw new IllegalStateException("A generic array type does not imply upper type bounds: " + this);
             }
 
             @Override
             public TypeList.Generic getLowerBounds() {
-                throw new IllegalStateException("An array type does not imply lower type bounds: " + this);
+                throw new IllegalStateException("A generic array type does not imply lower type bounds: " + this);
             }
 
             @Override
             public TypeVariableSource getVariableSource() {
-                throw new IllegalStateException("An array type does not imply a type variable source: " + this);
+                throw new IllegalStateException("A generic array type does not imply a type variable source: " + this);
             }
 
             @Override
             public TypeList.Generic getParameters() {
-                return new TypeList.Generic.Empty();
+                throw new IllegalStateException("A generic array type does not imply type parameters: " + this);
             }
 
             @Override
             public Generic getOwnerType() {
-                return UNDEFINED;
+                throw new IllegalStateException("A generic array type does not imply an owner type: " + this);
             }
 
             @Override
             public String getSymbol() {
-                throw new IllegalStateException("An array type does not imply a symbol: " + this);
+                throw new IllegalStateException("A generic array type does not imply a symbol: " + this);
             }
 
             @Override
@@ -2987,7 +2978,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public boolean represents(java.lang.reflect.Type type) {
-            // TODO: Null pointer?
+            if (type == null) { // Exception is thrown implicitly by TypeDescription.Generic implementations
+                throw new NullPointerException();
+            }
             return type instanceof Class && equals(new ForLoadedType((Class<?>) type));
         }
 
