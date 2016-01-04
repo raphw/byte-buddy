@@ -1424,12 +1424,14 @@ public interface DynamicType {
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && super.equals(other)
+                                && getAdapter().equals(((FieldDefinitionAdapter) other).getAdapter())
                                 && token.equals(((FieldDefinitionAdapter) other).token);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = super.hashCode();
+                        result = 31 * result + getAdapter().hashCode();
                         result = 31 * result + token.hashCode();
                         return result;
                     }
@@ -1497,12 +1499,14 @@ public interface DynamicType {
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && super.equals(other)
+                                && getAdapter().equals(((FieldMatchAdapter) other).getAdapter())
                                 && matcher.equals(((FieldMatchAdapter) other).matcher);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = super.hashCode();
+                        result = 31 * result + getAdapter().hashCode();
                         result = 31 * result + matcher.hashCode();
                         return result;
                     }
@@ -1704,8 +1708,8 @@ public interface DynamicType {
                         @SuppressWarnings("unchecked")
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
-                                    && token.equals(((ParameterAnnotationAdapter) other).token)
-                                    && getAdapter().equals(((ParameterAnnotationAdapter) other).getAdapter());
+                                    && token.equals(((SimpleParameterAnnotationAdapter) other).token)
+                                    && getAdapter().equals(((SimpleParameterAnnotationAdapter) other).getAdapter());
                         }
 
                         @Override
@@ -1789,7 +1793,9 @@ public interface DynamicType {
                         @Override
                         @SuppressWarnings("unchecked")
                         public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other);
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && super.equals(other)
+                                    && getAdapter().equals(((AnnotationAdapter) other).getAdapter());
                         }
 
                         @Override
@@ -1913,7 +1919,9 @@ public interface DynamicType {
                         @Override
                         @SuppressWarnings("unchecked")
                         public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass()) && super.equals(other);
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && super.equals(other)
+                                    && getAdapter().equals(((AnnotationAdapter) other).getAdapter());
                         }
 
                         @Override
@@ -1983,6 +1991,33 @@ public interface DynamicType {
                             elementMatcher = elementMatcher.or(isDeclaredBy(isSubTypeOf(typeDescription.asErasure())));
                         }
                         return materialize().invokable(isDeclaredBy(isInterface()).and(elementMatcher));
+                    }
+
+                    private Builder.AbstractBase.Adapter<U> getAdapter() {
+                        return Builder.AbstractBase.Adapter.this;
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        OptionalMethodMatchAdapter that = (OptionalMethodMatchAdapter) other;
+                        return interfaces.equals(that.interfaces)
+                                && getAdapter().equals(that.getAdapter());
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return 31 * getAdapter().hashCode() + interfaces.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "DynamicType.Builder.AbstractBase.Adapter.OptionalMethodMatchAdapter{" +
+                                "adapter=" + getAdapter() +
+                                ", interfaces=" + interfaces +
+                                '}';
                     }
                 }
             }
