@@ -79,57 +79,20 @@ public interface AsmVisitorWrapper {
         }
     }
 
-    class FlagSetting implements AsmVisitorWrapper {
-
-        private final int writerFlags;
-
-        private final int readerFlags;
-
-        public FlagSetting(int writerFlags, int readerFlags) {
-            this.writerFlags = writerFlags;
-            this.readerFlags = readerFlags;
-        }
+    abstract class AbstractBase implements AsmVisitorWrapper {
 
         @Override
         public int mergeWriter(int flags) {
-            return flags | writerFlags;
+            return flags;
         }
 
         @Override
         public int mergeReader(int flags) {
-            return flags | readerFlags;
-        }
-
-        @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
-            return classVisitor;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            if (this == other) return true;
-            if (other == null || getClass() != other.getClass()) return false;
-            FlagSetting that = (FlagSetting) other;
-            return writerFlags == that.writerFlags && readerFlags == that.readerFlags;
-        }
-
-        @Override
-        public int hashCode() {
-            int result = writerFlags;
-            result = 31 * result + readerFlags;
-            return result;
-        }
-
-        @Override
-        public String toString() {
-            return "ClassVisitorWrapper.FlagSetting{" +
-                    "writerFlags=" + writerFlags +
-                    ", readerFlags=" + readerFlags +
-                    '}';
+            return flags;
         }
     }
 
-    class ForDeclaredField implements AsmVisitorWrapper {
+    class ForDeclaredField extends AbstractBase {
 
         private final List<Entry> entries;
 
@@ -143,16 +106,6 @@ public interface AsmVisitorWrapper {
 
         public ForDeclaredField match(ElementMatcher<? super FieldDescription> matcher, FieldVisitorWrapper fieldVisitorWrapper) {
             return new ForDeclaredField(CompoundList.of(entries, new Entry(matcher, fieldVisitorWrapper)));
-        }
-
-        @Override
-        public int mergeWriter(int flags) {
-            return flags;
-        }
-
-        @Override
-        public int mergeReader(int flags) {
-            return flags;
         }
 
         @Override
@@ -216,7 +169,7 @@ public interface AsmVisitorWrapper {
         }
     }
 
-    class ForDeclaredMethod implements AsmVisitorWrapper {
+    class ForDeclaredMethod extends AbstractBase {
 
         private final List<Entry> entries;
 
@@ -230,16 +183,6 @@ public interface AsmVisitorWrapper {
 
         public ForDeclaredMethod match(ElementMatcher<? super MethodDescription> matcher, MethodVisitorWrapper methodVisitorWrapper) {
             return new ForDeclaredMethod(CompoundList.of(entries, new Entry(matcher, methodVisitorWrapper)));
-        }
-
-        @Override
-        public int mergeWriter(int flags) {
-            return flags;
-        }
-
-        @Override
-        public int mergeReader(int flags) {
-            return flags;
         }
 
         @Override
