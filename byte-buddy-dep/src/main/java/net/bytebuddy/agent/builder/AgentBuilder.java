@@ -1007,7 +1007,7 @@ public interface AgentBuilder {
                             Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.Eager.class)
+                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)
                                         ? dependentTypes
                                         : independentTypes).remove(auxiliaryType);
                             }
@@ -1498,7 +1498,7 @@ public interface AgentBuilder {
                 Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                 Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                 for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                    if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.Eager.class)) {
+                    if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)) {
                         independentTypes.remove(auxiliaryType);
                     }
                 }

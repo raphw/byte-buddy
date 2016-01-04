@@ -70,9 +70,8 @@ public interface LatentMatcher<T> {
         }
     }
 
-    /**
-     * A latent matcher representing a field token that is attached to the instrumented type
-     */
+    // TODO: Does this make sense? Compared to the detached type anyways.
+
     class ForFieldToken implements LatentMatcher<FieldDescription> {
 
         private final FieldDescription.Token token;
@@ -139,14 +138,32 @@ public interface LatentMatcher<T> {
         }
     }
 
+    /**
+     * A compound implementation of a latent matcher.
+     *
+     * @param <S>The type of the matched element.
+     */
     class Compound<S> implements LatentMatcher<S> {
 
+        /**
+         * The matchers this compound matcher represents.
+         */
         private final List<? extends LatentMatcher<? super S>> matchers;
 
+        /**
+         * Creates a new compound latent matcher.
+         *
+         * @param matcher The matchers this compound matcher represents.
+         */
         public Compound(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));
         }
 
+        /**
+         * Creates a new compound latent matcher.
+         *
+         * @param matchers The matchers this compound matcher represents.
+         */
         public Compound(List<? extends LatentMatcher<? super S>> matchers) {
             this.matchers = matchers;
         }

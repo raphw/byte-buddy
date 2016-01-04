@@ -16,18 +16,18 @@ public abstract class AbstractFieldListTest<U, V extends FieldDescription> exten
     @SuppressWarnings("unchecked")
     public void testTokenWithoutMatcher() throws Exception {
         assertThat(asList(getFirst()).asTokenList(),
-                is(new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.singletonList(asElement(getFirst()).asToken()))));
+                is(new ByteCodeElement.Token.TokenList<FieldDescription.Token>(asElement(getFirst()).asToken())));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testTokenWithMatcher() throws Exception {
         assertThat(asList(getFirst()).asTokenList(none()),
-                is(new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.singletonList(asElement(getFirst()).asToken(none())))));
+                is(new ByteCodeElement.Token.TokenList<FieldDescription.Token>(asElement(getFirst()).asToken(none()))));
     }
 
     @Test
-    public void testDeclared() throws Exception {
+    public void testAsDefined() throws Exception {
         assertThat(asList(getFirst()).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
     }
 

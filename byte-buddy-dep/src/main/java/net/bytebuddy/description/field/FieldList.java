@@ -82,7 +82,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     /**
      * An implementation of a field list for an array of loaded fields.
      */
-    class ForLoadedField extends AbstractBase<FieldDescription.InDefinedShape> {
+    class ForLoadedFields extends AbstractBase<FieldDescription.InDefinedShape> {
 
         /**
          * The loaded fields this field list represents.
@@ -94,7 +94,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
          *
          * @param field An array of fields to be represented by this field list.
          */
-        public ForLoadedField(Field... field) {
+        public ForLoadedFields(Field... field) {
             this(Arrays.asList(field));
         }
 
@@ -103,7 +103,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
          *
          * @param fields An array of fields to be represented by this field list.
          */
-        public ForLoadedField(List<? extends Field> fields) {
+        public ForLoadedFields(List<? extends Field> fields) {
             this.fields = fields;
         }
 
@@ -130,6 +130,11 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
          */
         private final List<? extends S> fieldDescriptions;
 
+        /**
+         * Creates a new immutable wrapper field list.
+         *
+         * @param fieldDescription The list of fields to be represented by this field list.
+         */
         @SuppressWarnings("unchecked")
         public Explicit(S... fieldDescription) {
             this(Arrays.asList(fieldDescription));
@@ -169,6 +174,16 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
          * A list of the represented fields' tokens.
          */
         private final List<? extends FieldDescription.Token> tokens;
+
+        /**
+         * Creates a new field list from a list of field tokens.
+         *
+         * @param declaringType The declaring type of the represented fields.
+         * @param token         A list of the represented fields' tokens.
+         */
+        public ForTokens(TypeDescription declaringType, FieldDescription.Token... token) {
+            this(declaringType, Arrays.asList(token));
+        }
 
         /**
          * Creates a new field list from a list of field tokens.

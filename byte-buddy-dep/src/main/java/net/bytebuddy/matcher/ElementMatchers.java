@@ -350,7 +350,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> anyOf(Field... value) {
-        return definedField(anyOf(new FieldList.ForLoadedField(value)));
+        return definedField(anyOf(new FieldList.ForLoadedFields(value)));
     }
 
     /**
@@ -438,7 +438,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with none of the given objects.
      */
     public static <T extends FieldDescription> ElementMatcher.Junction<T> noneOf(Field... value) {
-        return definedField(noneOf(new FieldList.ForLoadedField(value)));
+        return definedField(noneOf(new FieldList.ForLoadedFields(value)));
     }
 
     /**

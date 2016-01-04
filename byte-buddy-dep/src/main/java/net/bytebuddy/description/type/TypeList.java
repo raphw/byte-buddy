@@ -115,6 +115,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          */
         private final List<? extends TypeDescription> typeDescriptions;
 
+        /**
+         * Creates an immutable wrapper.
+         *
+         * @param typeDescriptions The list of types to be represented by this wrapper.
+         */
         public Explicit(TypeDescription... typeDescription) {
             this(Arrays.asList(typeDescription));
         }
@@ -189,8 +194,19 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          */
         TypeList asErasures();
 
+        /**
+         * Returns a list of the generic types' raw types.
+         *
+         * @return A list of the generic types' raw types.
+         */
         Generic asRawTypes();
 
+        /**
+         * Returns a map representing the generic types as type variable symbols.
+         *
+         * @param visitor A visitor to apply to every type variable's bounds.
+         * @return A map representing the generic types as type variable symbols.
+         */
         Map<String, Generic> asSymbols(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
 
         /**
@@ -272,8 +288,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * The generic types represented by this list.
              */
-            private final List<? extends TypeDefinition> genericTypes;
+            private final List<? extends TypeDefinition> typeDefinitions;
 
+            /**
+             * Creates a new explicit list of generic types.
+             *
+             * @param typeDefinition The generic types represented by this list.
+             */
             public Explicit(TypeDefinition... typeDefinition) {
                 this(Arrays.asList(typeDefinition));
             }
@@ -281,20 +302,20 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * Creates a new explicit list of generic types.
              *
-             * @param genericTypes The generic types represented by this list.
+             * @param typeDefinitions The generic types represented by this list.
              */
-            public Explicit(List<? extends TypeDefinition> genericTypes) {
-                this.genericTypes = genericTypes;
+            public Explicit(List<? extends TypeDefinition> typeDefinitions) {
+                this.typeDefinitions = typeDefinitions;
             }
 
             @Override
             public TypeDescription.Generic get(int index) {
-                return genericTypes.get(index).asGenericType();
+                return typeDefinitions.get(index).asGenericType();
             }
 
             @Override
             public int size() {
-                return genericTypes.size();
+                return typeDefinitions.size();
             }
         }
 

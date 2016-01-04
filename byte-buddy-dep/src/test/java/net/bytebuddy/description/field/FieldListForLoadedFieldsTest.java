@@ -3,7 +3,7 @@ package net.bytebuddy.description.field;
 import java.lang.reflect.Field;
 import java.util.List;
 
-public class FieldListForLoadedFieldTest extends AbstractFieldListTest<Field, FieldDescription.InDefinedShape> {
+public class FieldListForLoadedFieldsTest extends AbstractFieldListTest<Field, FieldDescription.InDefinedShape> {
 
     @Override
     protected Field getFirst() throws Exception {
@@ -17,7 +17,7 @@ public class FieldListForLoadedFieldTest extends AbstractFieldListTest<Field, Fi
 
     @Override
     protected FieldList<FieldDescription.InDefinedShape> asList(List<Field> elements) {
-        return new FieldList.ForLoadedField(elements);
+        return new FieldList.ForLoadedFields(elements);
     }
 
     @Override

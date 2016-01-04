@@ -15,12 +15,26 @@ import java.util.Collections;
  */
 public enum TrivialType implements AuxiliaryType {
 
-    EAGER(true),
+    /**
+     * A trivial type that defines the {@link SignatureRelevant} annotation-
+     */
+    SIGNATURE_RELEVANT(true),
 
+    /**
+     * A non-annotated trivial type.
+     */
     PLAIN(false);
 
+    /**
+     * Determines if this type determines the {@link SignatureRelevant} annotation-
+     */
     private final boolean eager;
 
+    /**
+     * Creates a new trivial type.
+     *
+     * @param eager Determines if this type determines the {@link SignatureRelevant} annotation-
+     */
     TrivialType(boolean eager) {
         this.eager = eager;
     }
@@ -33,7 +47,7 @@ public enum TrivialType implements AuxiliaryType {
                 .with(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .annotateType(eager
-                        ? Collections.singletonList(AnnotationDescription.Builder.forType(Eager.class).make())
+                        ? Collections.singletonList(AnnotationDescription.Builder.forType(SignatureRelevant.class).make())
                         : Collections.<AnnotationDescription>emptyList())
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)

@@ -3236,7 +3236,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-            return new FieldList.ForLoadedField(type.getDeclaredFields());
+            return new FieldList.ForLoadedFields(type.getDeclaredFields());
         }
 
         @Override

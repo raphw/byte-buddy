@@ -2,7 +2,7 @@ package net.bytebuddy.description.field;
 
 import java.lang.reflect.Field;
 
-public class FieldDescriptionForLoadedFieldTest extends AbstractFieldDescriptionTest {
+public class FieldDescriptionForLoadedFieldsTest extends AbstractFieldDescriptionTest {
 
     @Override
     protected FieldDescription.InDefinedShape describe(Field field) {

@@ -127,7 +127,7 @@ public class ByteBuddy {
     protected final MethodGraph.Compiler methodGraphCompiler;
 
     /**
-     * A matcher for identifying methods that should be excluded from instrumentation-
+     * A matcher for identifying methods that should be excluded from instrumentation.
      */
     protected final ElementMatcher<? super MethodDescription> ignoredMethods;
 
@@ -172,7 +172,7 @@ public class ByteBuddy {
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
-     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation-
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
                         NamingStrategy namingStrategy,

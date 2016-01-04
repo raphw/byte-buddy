@@ -176,9 +176,13 @@ public interface AuxiliaryType {
         }
     }
 
+    /**
+     * A marker to indicate that an auxiliary type is part of the instrumented types signature. This information can be used to load a type before
+     * the instrumented type such that reflection on the instrumented type does not cause a {@link NoClassDefFoundError}.
+     */
     @Retention(RetentionPolicy.SOURCE)
     @Target(ElementType.TYPE)
-    @interface Eager {
+    @interface SignatureRelevant {
         /* empty */
     }
 }

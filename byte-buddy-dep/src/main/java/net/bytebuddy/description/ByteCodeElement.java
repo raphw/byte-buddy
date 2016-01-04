@@ -86,6 +86,11 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         S asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher);
     }
 
+    /**
+     * A token representing a byte code element.
+     *
+     * @param <T> The type of the implementation.
+     */
     interface Token<T extends Token<T>> {
 
         /**
@@ -108,9 +113,14 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
              */
             private final List<? extends S> tokens;
 
+            /**
+             * Creates a list of tokens.
+             *
+             * @param token The tokens that this list represents.
+             */
             @SuppressWarnings("unchecked")
-            public TokenList(S... tokens) {
-                this(Arrays.asList(tokens));
+            public TokenList(S... token) {
+                this(Arrays.asList(token));
             }
 
             /**

@@ -154,6 +154,11 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          */
         private final List<? extends S> methodDescriptions;
 
+        /**
+         * Creates a new wrapper for a given list of methods.
+         *
+         * @param methodDescription The underlying list of methods used for this method list.
+         */
         @SuppressWarnings("unchecked")
         public Explicit(S... methodDescription) {
             this(Arrays.asList(methodDescription));
@@ -193,6 +198,16 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          * The list of method tokens to represent.
          */
         private final List<? extends MethodDescription.Token> tokens;
+
+        /**
+         * Creates a new list of method descriptions for a list of detached tokens.
+         *
+         * @param declaringType The method's declaring type.
+         * @param token         The list of method tokens to represent.
+         */
+        public ForTokens(TypeDescription declaringType, MethodDescription.Token... token) {
+            this(declaringType, Arrays.asList(token));
+        }
 
         /**
          * Creates a new list of method descriptions for a list of detached tokens.

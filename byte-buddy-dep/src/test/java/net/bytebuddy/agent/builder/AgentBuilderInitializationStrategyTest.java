@@ -88,8 +88,8 @@ public class AgentBuilderInitializationStrategyTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testMinimalRegistrationIndependentType() throws Exception {
-        Annotation eagerAnnotation = mock(AuxiliaryType.Eager.class);
-        when(eagerAnnotation.annotationType()).thenReturn((Class) AuxiliaryType.Eager.class);
+        Annotation eagerAnnotation = mock(AuxiliaryType.SignatureRelevant.class);
+        when(eagerAnnotation.annotationType()).thenReturn((Class) AuxiliaryType.SignatureRelevant.class);
         TypeDescription independent = mock(TypeDescription.class), dependent = mock(TypeDescription.class);
         when(independent.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(eagerAnnotation));
         when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
