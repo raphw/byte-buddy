@@ -3,6 +3,7 @@ package net.bytebuddy.implementation.auxiliary;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Ownership;
@@ -18,6 +19,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatchers;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
@@ -101,7 +103,7 @@ public class TypeProxy implements AuxiliaryType {
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                 .method(any()).intercept(new MethodCall(methodAccessorFactory))
-                .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Ownership.STATIC).intercept(SilentConstruction.INSTANCE)
+                .defineMethod(REFLECTION_METHOD, TargetType.class, Ownership.STATIC).intercept(SilentConstruction.INSTANCE)
                 .make();
     }
 

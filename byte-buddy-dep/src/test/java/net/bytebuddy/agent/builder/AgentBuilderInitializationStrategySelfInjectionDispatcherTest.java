@@ -1,9 +1,11 @@
 package net.bytebuddy.agent.builder;
 
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -15,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 
+import java.lang.annotation.Annotation;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -84,8 +87,10 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
                 return loaded;
             }
         });
-        when(dependent.isAssignableTo(instrumented)).thenReturn(true);
-        when(independent.isAssignableTo(instrumented)).thenReturn(false);
+        Annotation eagerAnnotation = mock(AuxiliaryType.Eager.class);
+        when(eagerAnnotation.annotationType()).thenReturn((Class) AuxiliaryType.Eager.class);
+        when(independent.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(eagerAnnotation));
+        when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(instrumentedInitializer.isAlive()).thenReturn(true);
     }
 

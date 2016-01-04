@@ -235,7 +235,7 @@ public interface DynamicType {
 
         FieldDefinition.Valuable<T> field(LatentMatcher<? super FieldDescription> matcher);
 
-        Builder<T> ignore(ElementMatcher<? super MethodDescription> ignored);
+        Builder<T> ignoreAlso(ElementMatcher<? super MethodDescription> ignored);
 
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor);
 
@@ -1051,8 +1051,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> ignore(ElementMatcher<? super MethodDescription> ignored) {
-                    return materialize().ignore(ignored);
+                public Builder<U> ignoreAlso(ElementMatcher<? super MethodDescription> ignored) {
+                    return materialize().ignoreAlso(ignored);
                 }
 
                 @Override
@@ -1176,7 +1176,7 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> ignore(ElementMatcher<? super MethodDescription> ignoredMethods) {
+                public Builder<U> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
@@ -1770,7 +1770,7 @@ public interface DynamicType {
                         protected Builder<U> materialize() {
                             return Builder.AbstractBase.Adapter.this.materialize(instrumentedType.withMethod(token),
                                     fieldRegistry,
-                                    methodRegistry.append(new LatentMatcher.ForMethodToken(token), handler, methodAttributeAppenderFactory, methodTransformer),
+                                    methodRegistry.prepend(new LatentMatcher.ForMethodToken(token), handler, methodAttributeAppenderFactory, methodTransformer),
                                     typeAttributeAppender,
                                     asmVisitorWrapper,
                                     classFileVersion,

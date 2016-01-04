@@ -176,7 +176,7 @@ public interface AuxiliaryType {
         }
     }
 
-    @Retention(RetentionPolicy.RUNTIME)
+    @Retention(RetentionPolicy.SOURCE)
     @Target(ElementType.TYPE)
     @interface Eager {
         /* empty */

@@ -238,7 +238,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testIgnoredMethod() throws Exception {
         Class<?> type = createPlain()
-                .ignore(named(TO_STRING))
+                .ignoreAlso(named(TO_STRING))
                 .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
@@ -249,7 +249,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testIgnoredMethodDoesNotApplyForDefined() throws Exception {
         Class<?> type = createPlain()
-                .ignore(named(FOO))
+                .ignoreAlso(named(FOO))
                 .defineMethod(FOO, String.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
