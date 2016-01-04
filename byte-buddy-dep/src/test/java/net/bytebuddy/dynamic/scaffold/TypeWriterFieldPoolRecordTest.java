@@ -1,7 +1,11 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -11,8 +15,12 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -22,7 +30,7 @@ public class TypeWriterFieldPoolRecordTest {
 
     private static final int MODIFIER = 42;
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -43,62 +51,99 @@ public class TypeWriterFieldPoolRecordTest {
     private FieldVisitor fieldVisitor;
 
     @Mock
+    private AnnotationVisitor annotationVisitor;
+
+    @Mock
     private FieldDescription fieldDescription;
+
+    @Mock
+    private AnnotationDescription annotationDescription;
+
+    @Mock
+    private Retention retention;
+
+    @Mock
+    private TypeDescription annotationType;
 
     @Mock
     private Object defaultValue;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(fieldDescription.getModifiers()).thenReturn(MODIFIER);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getDescriptor()).thenReturn(BAR);
         when(fieldDescription.getGenericSignature()).thenReturn(QUX);
+        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
         when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, defaultValue)).thenReturn(fieldVisitor);
-        when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, null)).thenReturn(fieldVisitor);
+        when(classVisitor.visitField(MODIFIER, FOO, BAR, QUX, FieldDescription.NO_DEFAULT_VALUE)).thenReturn(fieldVisitor);
         when(annotationValueFilterFactory.on(fieldDescription)).thenReturn(valueFilter);
+        when(fieldVisitor.visitAnnotation(any(String.class), anyBoolean())).thenReturn(annotationVisitor);
+        when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
+        when(annotationType.getDescriptor()).thenReturn(BAZ);
+        when(annotationType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(annotationType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(retention));
+        when(retention.value()).thenReturn(RetentionPolicy.RUNTIME);
+        when(retention.annotationType()).thenReturn((Class) Retention.class);
     }
 
     @Test
-    public void testRichFieldEntryProperties() throws Exception {
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, defaultValue, fieldDescription);
+    public void testExplicitFieldEntryProperties() throws Exception {
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForExplicitField(fieldAttributeAppender, defaultValue, fieldDescription);
         assertThat(record.getFieldAppender(), is(fieldAttributeAppender));
         assertThat(record.resolveDefault(FieldDescription.NO_DEFAULT_VALUE), is(defaultValue));
     }
 
     @Test
-    public void testRichFieldEntryWritesField() throws Exception {
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForRichField(fieldAttributeAppender, defaultValue, fieldDescription);
+    public void testExplicitFieldEntryWritesField() throws Exception {
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForExplicitField(fieldAttributeAppender, defaultValue, fieldDescription);
         record.apply(classVisitor, annotationValueFilterFactory);
         verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, defaultValue);
+        verifyNoMoreInteractions(classVisitor);
         verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription, valueFilter);
         verifyNoMoreInteractions(fieldAttributeAppender);
-        verifyNoMoreInteractions(classVisitor);
         verify(fieldVisitor).visitEnd();
         verifyNoMoreInteractions(fieldVisitor);
     }
 
     @Test
-    public void testSimpleFieldEntryWritesField() throws Exception {
-        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription); /// TODO: Annotation
-        record.apply(classVisitor, annotationValueFilterFactory);
-        verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, null);
-        verifyNoMoreInteractions(classVisitor);
-        verify(fieldVisitor).visitEnd();
-        verifyNoMoreInteractions(fieldVisitor);
+    public void testExplicitFieldEntryWritesFieldPartialApplication() throws Exception {
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForExplicitField(fieldAttributeAppender, defaultValue, fieldDescription);
+        record.apply(fieldVisitor, annotationValueFilterFactory);
+        verify(fieldAttributeAppender).apply(fieldVisitor, fieldDescription, valueFilter);
+        verifyNoMoreInteractions(fieldAttributeAppender);
+        verifyZeroInteractions(fieldVisitor);
     }
 
     @Test
-    public void testSimpleFieldEntryProperties() throws Exception {
-        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForSimpleField(fieldDescription);
+    public void testImplicitFieldEntryProperties() throws Exception {
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForImplicitField(fieldDescription);
         assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
         assertThat(record.resolveDefault(defaultValue), is(defaultValue));
     }
 
     @Test
+    public void testImplicitFieldEntryWritesField() throws Exception {
+        TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForImplicitField(fieldDescription);
+        record.apply(classVisitor, annotationValueFilterFactory);
+        verify(classVisitor).visitField(MODIFIER, FOO, BAR, QUX, FieldDescription.NO_DEFAULT_VALUE);
+        verifyNoMoreInteractions(classVisitor);
+        verify(fieldVisitor).visitAnnotation(BAZ, true);
+        verify(fieldVisitor).visitEnd();
+        verifyNoMoreInteractions(fieldVisitor);
+        verify(annotationVisitor).visitEnd();
+        verifyNoMoreInteractions(annotationVisitor);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldEntryAppliedToField() throws Exception {
+        new TypeWriter.FieldPool.Record.ForImplicitField(fieldDescription).apply(fieldVisitor, annotationValueFilterFactory);
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForSimpleField.class).apply();
-        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForRichField.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForImplicitField.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.FieldPool.Record.ForExplicitField.class).apply();
     }
 }

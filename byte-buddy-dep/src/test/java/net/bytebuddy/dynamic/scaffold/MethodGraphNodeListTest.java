@@ -47,6 +47,6 @@ public class MethodGraphNodeListTest extends AbstractFilterableListTest<MethodGr
     @SuppressWarnings("unused")
     public void testAsMethodList() throws Exception {
         assertThat(new MethodGraph.NodeList(Arrays.asList(new MethodGraph.Node.Simple(first), new MethodGraph.Node.Simple(second))).asMethodList(),
-                is((MethodList) new MethodList.Explicit<MethodDescription>(Arrays.asList(first, second))));
+                is((MethodList) new MethodList.Explicit<MethodDescription>(first, second)));
     }
 }

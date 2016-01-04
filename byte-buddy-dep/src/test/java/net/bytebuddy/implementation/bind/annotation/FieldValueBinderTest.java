@@ -71,8 +71,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     public void testLegalAssignment() throws Exception {
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(instrumentedType.getDeclaredFields())
-                .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
@@ -89,8 +88,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     public void testIllegalAssignmentNonAssignable() throws Exception {
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(instrumentedType.getDeclaredFields())
-                .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
@@ -107,8 +105,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     public void testIllegalAssignmentStaticMethod() throws Exception {
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(instrumentedType.getDeclaredFields())
-                .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
@@ -126,8 +123,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     public void testLegalAssignmentStaticMethodStaticField() throws Exception {
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(instrumentedType.getDeclaredFields())
-                .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
@@ -160,8 +156,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     public void testIllegalAssignmentNonVisible() throws Exception {
         doReturn(void.class).when(annotation).definingType();
         when(annotation.value()).thenReturn(FOO);
-        when(instrumentedType.getDeclaredFields())
-                .thenReturn((FieldList) new FieldList.Explicit<FieldDescription>(Collections.singletonList(fieldDescription)));
+        when(instrumentedType.getDeclaredFields()).thenReturn((FieldList) new FieldList.Explicit<FieldDescription>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
         when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(false);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());

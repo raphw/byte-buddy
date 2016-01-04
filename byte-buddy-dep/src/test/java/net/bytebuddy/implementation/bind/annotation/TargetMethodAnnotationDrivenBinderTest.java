@@ -140,7 +140,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(secondParameter.getDeclaringMethod()).thenReturn(targetMethod);
         when(secondParameter.getIndex()).thenReturn(1);
         when(targetMethod.getParameters())
-                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Arrays.asList(firstParameter, secondParameter)));
+                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(firstParameter, secondParameter));
         when(firstPseudoAnnotation.getAnnotationType())
                 .thenReturn(new TypeDescription.ForLoadedType(FirstPseudoAnnotation.class));
         when(firstPseudoAnnotation.prepare(FirstPseudoAnnotation.class)).thenReturn(firstPseudoAnnotation);

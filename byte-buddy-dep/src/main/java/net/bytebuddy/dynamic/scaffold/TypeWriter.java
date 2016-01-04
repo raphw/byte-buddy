@@ -71,6 +71,8 @@ public interface TypeWriter<T> {
          */
         interface Record {
 
+            boolean isImplicit();
+
             FieldDescription getField();
 
             /**
@@ -94,7 +96,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a simple field without a default value where all of the field's declared annotations are appended.
              */
-            class ForSimpleField implements Record {
+            class ForImplicitField implements Record {
 
                 /**
                  * The implemented field.
@@ -106,8 +108,13 @@ public interface TypeWriter<T> {
                  *
                  * @param fieldDescription The described field.
                  */
-                public ForSimpleField(FieldDescription fieldDescription) {
+                public ForImplicitField(FieldDescription fieldDescription) {
                     this.fieldDescription = fieldDescription;
+                }
+
+                @Override
+                public boolean isImplicit() {
+                    return true;
                 }
 
                 @Override
@@ -138,13 +145,13 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    getFieldAppender().apply(fieldVisitor, fieldDescription, annotationValueFilterFactory.on(fieldDescription));
+                    throw new IllegalStateException("An implicit field visitor is not intended for partial application: " + this);
                 }
 
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldDescription.equals(((ForSimpleField) other).fieldDescription);
+                            && fieldDescription.equals(((ForImplicitField) other).fieldDescription);
                 }
 
                 @Override
@@ -154,7 +161,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.FieldPool.Record.ForSimpleField{" +
+                    return "TypeWriter.FieldPool.Record.ForImplicitField{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
                 }
@@ -163,7 +170,7 @@ public interface TypeWriter<T> {
             /**
              * A record for a rich field with attributes and a potential default value.
              */
-            class ForRichField implements Record {
+            class ForExplicitField implements Record {
 
                 /**
                  * The attribute appender for the field.
@@ -187,10 +194,15 @@ public interface TypeWriter<T> {
                  * @param defaultValue      The field's default value.
                  * @param fieldDescription  The implemented field.
                  */
-                public ForRichField(FieldAttributeAppender attributeAppender, Object defaultValue, FieldDescription fieldDescription) {
+                public ForExplicitField(FieldAttributeAppender attributeAppender, Object defaultValue, FieldDescription fieldDescription) {
                     this.attributeAppender = attributeAppender;
                     this.defaultValue = defaultValue;
                     this.fieldDescription = fieldDescription;
+                }
+
+                @Override
+                public boolean isImplicit() {
+                    return false;
                 }
 
                 @Override
@@ -230,7 +242,7 @@ public interface TypeWriter<T> {
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
-                    ForRichField that = (ForRichField) other;
+                    ForExplicitField that = (ForExplicitField) other;
                     return attributeAppender.equals(that.attributeAppender)
                             && !(defaultValue != null ? !defaultValue.equals(that.defaultValue) : that.defaultValue != null)
                             && fieldDescription.equals(that.fieldDescription);
@@ -246,7 +258,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public String toString() {
-                    return "TypeWriter.FieldPool.Record.ForRichField{" +
+                    return "TypeWriter.FieldPool.Record.ForExplicitField{" +
                             "attributeAppender=" + attributeAppender +
                             ", defaultValue=" + defaultValue +
                             ", fieldDescription=" + fieldDescription +
@@ -2759,13 +2771,16 @@ public interface TypeWriter<T> {
                                                String genericSignature,
                                                Object defaultValue) {
                     FieldDescription fieldDescription = declaredFields.remove(internalName);
-                    return fieldDescription == null
-                            ? super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue)
-                            : redefine(fieldDescription, defaultValue);
+                    if (fieldDescription != null) {
+                        FieldPool.Record record = fieldPool.target(fieldDescription);
+                        if (!record.isImplicit()) {
+                            return redefine(record, defaultValue);
+                        }
+                    }
+                    return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
                 }
 
-                protected FieldVisitor redefine(FieldDescription fieldDescription, Object defaultValue) {
-                    FieldPool.Record record = fieldPool.target(fieldDescription);
+                protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue) {
                     FieldDescription instrumentedField = record.getField();
                     return new AttributeObtainingFieldVisitor(super.visitField(instrumentedField.getModifiers(),
                             instrumentedField.getInternalName(),

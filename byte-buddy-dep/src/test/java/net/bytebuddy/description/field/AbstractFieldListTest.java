@@ -15,20 +15,20 @@ public abstract class AbstractFieldListTest<U, V extends FieldDescription> exten
     @Test
     @SuppressWarnings("unchecked")
     public void testTokenWithoutMatcher() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList(), is(new ByteCodeElement.Token
-                .TokenList<FieldDescription.Token>(Collections.singletonList(asElement(getFirst()).asToken()))));
+        assertThat(asList(getFirst()).asTokenList(),
+                is(new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.singletonList(asElement(getFirst()).asToken()))));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testTokenWithMatcher() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList(none()), is(new ByteCodeElement.Token
-                .TokenList<FieldDescription.Token>(Collections.singletonList(asElement(getFirst()).asToken(none())))));
+        assertThat(asList(getFirst()).asTokenList(none()),
+                is(new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.singletonList(asElement(getFirst()).asToken(none())))));
     }
 
     @Test
     public void testDeclared() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
+        assertThat(asList(getFirst()).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
     }
 
     protected static class Foo {

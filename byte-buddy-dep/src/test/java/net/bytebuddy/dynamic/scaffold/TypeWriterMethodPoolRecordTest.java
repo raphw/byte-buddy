@@ -95,8 +95,7 @@ public class TypeWriterMethodPoolRecordTest {
         when(exceptionTypes.asErasures()).thenReturn(rawExceptionTypes);
         when(rawExceptionTypes.toInternalNames()).thenReturn(new String[]{BAZ});
         when(classVisitor.visitMethod(MODIFIERS, FOO, BAR, QUX, new String[]{BAZ})).thenReturn(methodVisitor);
-        when(methodDescription.getParameters())
-                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Collections.singletonList(parameterDescription)));
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(parameterDescription));
         when(parameterDescription.getName()).thenReturn(FOO);
         when(parameterDescription.getModifiers()).thenReturn(MODIFIERS);
         when(methodVisitor.visitAnnotationDefault()).thenReturn(annotationVisitor);

@@ -6,6 +6,7 @@ import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -106,6 +107,11 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
              * The tokens that this list represents.
              */
             private final List<? extends S> tokens;
+
+            @SuppressWarnings("unchecked")
+            public TokenList(S... tokens) {
+                this(Arrays.asList(tokens));
+            }
 
             /**
              * Creates a list of tokens.

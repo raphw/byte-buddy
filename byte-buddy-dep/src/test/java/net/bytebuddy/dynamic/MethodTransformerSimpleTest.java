@@ -83,16 +83,16 @@ public class MethodTransformerSimpleTest {
         when(methodToken.getTypeVariables()).thenReturn(Collections.<String, TypeList.Generic>singletonMap(QUX, new TypeList.Generic.Explicit(typeVariable)));
         when(methodToken.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
-                .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.singletonList(parameterToken)));
-        when(methodToken.getAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(methodAnnotation)));
+                .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(parameterToken));
+        when(methodToken.getAnnotations()).thenReturn(new AnnotationList.Explicit(methodAnnotation));
         when(modifierContributor.getMask()).thenReturn(MASK);
         when(modifierContributor.getRange()).thenReturn(RANGE);
         when(parameterToken.getType()).thenReturn(parameterType);
-        when(parameterToken.getAnnotations()).thenReturn(new AnnotationList.Explicit(Collections.singletonList(parameterAnnotation)));
+        when(parameterToken.getAnnotations()).thenReturn(new AnnotationList.Explicit(parameterAnnotation));
         when(parameterToken.getName()).thenReturn(BAR);
         when(parameterToken.getModifiers()).thenReturn(MODIFIERS * 2);
         when(definedMethod.getParameters())
-                .thenReturn(new ParameterList.Explicit<ParameterDescription.InDefinedShape>(Collections.singletonList(definedParameter)));
+                .thenReturn(new ParameterList.Explicit<ParameterDescription.InDefinedShape>(definedParameter));
         when(declaringType.asErasure()).thenReturn(rawDeclaringType);
         when(returnType.asErasure()).thenReturn(rawReturnType);
         when(parameterType.asErasure()).thenReturn(rawParameterType);

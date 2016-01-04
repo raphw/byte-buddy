@@ -13,25 +13,24 @@ public abstract class AbstractTypeListGenericTest<U> extends AbstractFilterableL
 
     @Test
     public void testRawTypes() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asErasures().size(), is(1));
-        assertThat(asList(Collections.singletonList(getFirst())).asErasures().getOnly(), is(asElement(getFirst()).asErasure()));
+        assertThat(asList(getFirst()).asErasures().size(), is(1));
+        assertThat(asList(getFirst()).asErasures().getOnly(), is(asElement(getFirst()).asErasure()));
     }
 
     @Test
     public void testVisitor() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).accept(TypeDescription.Generic.Visitor.NoOp.INSTANCE),
-                is(asList(Collections.singletonList(getFirst()))));
+        assertThat(asList(getFirst()).accept(TypeDescription.Generic.Visitor.NoOp.INSTANCE), is(asList(getFirst())));
     }
 
     @Test
     public void testStackSizeEmpty() throws Exception {
-        assertThat(asList(Collections.<U>emptyList()).getStackSize(), is(0));
+        assertThat(emptyList().getStackSize(), is(0));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testStackSizeNonEmpty() throws Exception {
-        assertThat(asList(Arrays.asList(getFirst(), getSecond())).getStackSize(), is(2));
+        assertThat(asList(getFirst(), getSecond()).getStackSize(), is(2));
     }
 
     protected interface Foo<T> {

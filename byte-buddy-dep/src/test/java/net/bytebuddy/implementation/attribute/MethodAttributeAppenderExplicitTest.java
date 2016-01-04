@@ -33,8 +33,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
-        when(methodDescription.getParameters())
-                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Collections.singletonList(parameterDescription)));
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(parameterDescription));
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
     }
 

@@ -130,6 +130,11 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
          */
         private final List<? extends S> fieldDescriptions;
 
+        @SuppressWarnings("unchecked")
+        public Explicit(S... fieldDescription) {
+            this(Arrays.asList(fieldDescription));
+        }
+
         /**
          * Creates a new immutable wrapper field list.
          *

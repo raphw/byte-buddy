@@ -153,7 +153,7 @@ public class AnnotationAppenderDefaultTest {
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         TypeDescription annotationType = mock(TypeDescription.class);
         when(annotationType.getDeclaredMethods())
-                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)));
+                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(methodDescription));
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
         AnnotationVisitor annotationVisitor = mock(AnnotationVisitor.class);

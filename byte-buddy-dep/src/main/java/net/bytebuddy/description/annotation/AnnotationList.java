@@ -197,6 +197,10 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          */
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
+        public Explicit(AnnotationDescription... annotationDescription) {
+            this(Arrays.asList(annotationDescription));
+        }
+
         /**
          * Creates a new list of annotation descriptions.
          *

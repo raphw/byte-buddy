@@ -48,7 +48,7 @@ public interface FieldRegistry {
 
             @Override
             public Record target(FieldDescription fieldDescription) {
-                return new Record.ForSimpleField(fieldDescription);
+                return new Record.ForImplicitField(fieldDescription);
             }
 
             @Override
@@ -229,7 +229,7 @@ public interface FieldRegistry {
                         return entry.bind(instrumentedType, fieldDescription);
                     }
                 }
-                return new Record.ForSimpleField(fieldDescription);
+                return new Record.ForImplicitField(fieldDescription);
             }
 
             @Override
@@ -294,7 +294,7 @@ public interface FieldRegistry {
                  * @return A record representing the binding of this entry to the provided field.
                  */
                 protected Record bind(TypeDescription instrumentedType, FieldDescription fieldDescription) {
-                    return new Record.ForRichField(attributeAppender, defaultValue, fieldTransformer.transform(instrumentedType, fieldDescription));
+                    return new Record.ForExplicitField(attributeAppender, defaultValue, fieldTransformer.transform(instrumentedType, fieldDescription));
                 }
 
                 @Override

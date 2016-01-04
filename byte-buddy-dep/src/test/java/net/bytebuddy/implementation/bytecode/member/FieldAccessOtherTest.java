@@ -14,8 +14,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -50,8 +48,7 @@ public class FieldAccessOtherTest {
         when(fieldDescription.getType()).thenReturn(declaredType);
         when(enumerationDescription.getEnumerationType()).thenReturn(enumerationType);
         when(enumerationDescription.getValue()).thenReturn(FOO);
-        when(enumerationType.getDeclaredFields())
-                .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
+        when(enumerationType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
     }
 
     @Test

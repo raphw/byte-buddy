@@ -14,23 +14,23 @@ public abstract class AbstractTypeListTest<U> extends AbstractFilterableListTest
 
     @Test
     public void testEmptyToInternalNames() throws Exception {
-        assertThat(asList(Collections.<U>emptyList()).toInternalNames(), nullValue(String[].class));
+        assertThat(emptyList().toInternalNames(), nullValue(String[].class));
     }
 
     @Test
     public void testNonEmptyToInternalNames() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).toInternalNames(), is(new String[]{asElement(getFirst()).getInternalName()}));
+        assertThat(asList(getFirst()).toInternalNames(), is(new String[]{asElement(getFirst()).getInternalName()}));
     }
 
     @Test
     public void testEmptyStackSize() throws Exception {
-        assertThat(asList(Collections.<U>emptyList()).getStackSize(), is(0));
+        assertThat(emptyList().getStackSize(), is(0));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testNonEmptyStackSize() throws Exception {
-        assertThat(asList(Arrays.asList(getFirst(), getSecond())).getStackSize(), is(2));
+        assertThat(asList(getFirst(), getSecond()).getStackSize(), is(2));
     }
 
     protected interface Foo {

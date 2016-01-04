@@ -48,7 +48,7 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         when(secondParameter.getStackSize()).thenReturn(StackSize.ZERO);
         sourceParameters = new ParameterList.Explicit.ForTypes(source, Arrays.asList(firstParameter, secondParameter));
         ParameterList<ParameterDescription.InDefinedShape> targetParameters =
-                new ParameterList.Explicit<ParameterDescription.InDefinedShape>(Arrays.asList(firstTargetParameter, secondTargetParameter));
+                new ParameterList.Explicit<ParameterDescription.InDefinedShape>(firstTargetParameter, secondTargetParameter);
         when(source.getParameters()).thenReturn(sourceParameters);
         when(target.getParameters()).thenReturn(targetParameters);
     }

@@ -54,7 +54,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         when(rawSuperType.asErasure()).thenReturn(rawSuperType);
         when(rawSuperType.getInternalName()).thenReturn(BAR);
         when(superType.getDeclaredMethods())
-                .thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(Collections.singletonList(superTypeConstructor)));
+                .thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(superTypeConstructor));
         when(superTypeConstructor.asDefined()).thenReturn(definedSuperTypeConstructor);
         when(definedSuperTypeConstructor.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(definedSuperTypeConstructor.getDeclaringType()).thenReturn(rawSuperType);

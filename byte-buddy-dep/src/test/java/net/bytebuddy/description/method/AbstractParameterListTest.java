@@ -15,25 +15,25 @@ public abstract class AbstractParameterListTest<U extends ParameterDescription, 
     @Test
     @SuppressWarnings("unchecked")
     public void testTokenWithoutMatcher() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList().size(), is(1));
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList().getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));
+        assertThat(asList(getFirst()).asTokenList().size(), is(1));
+        assertThat(asList(getFirst()).asTokenList().getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testTokenWithMatcher() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList(none()).size(), is(1));
-        assertThat(asList(Collections.singletonList(getFirst())).asTokenList(none()).getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));
+        assertThat(asList(getFirst()).asTokenList(none()).size(), is(1));
+        assertThat(asList(getFirst()).asTokenList(none()).getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));
     }
 
     @Test
     public void testTypeList() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asTypeList(), is(Collections.singletonList(asElement(getFirst()).getType())));
+        assertThat(asList(getFirst()).asTypeList(), is(Collections.singletonList(asElement(getFirst()).getType())));
     }
 
     @Test
     public void testDeclared() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
+        assertThat(asList(getFirst()).asDefined(), is(Collections.singletonList(asElement(getFirst()).asDefined())));
     }
 
     protected static class Foo {

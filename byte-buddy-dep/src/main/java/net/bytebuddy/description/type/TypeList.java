@@ -115,6 +115,10 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          */
         private final List<? extends TypeDescription> typeDescriptions;
 
+        public Explicit(TypeDescription... typeDescription) {
+            this(Arrays.asList(typeDescription));
+        }
+
         /**
          * Creates an immutable wrapper.
          *

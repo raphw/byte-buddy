@@ -92,9 +92,8 @@ public class TypePoolLazyDeclarationContextTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         TypePool typePool = mock(TypePool.class);
         when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        when(typeDescription.getDeclaredMethods())
-                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
-                .getEnclosingMethod(typePool), is(methodDescription));
+        when(typeDescription.getDeclaredMethods()).thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(methodDescription));
+        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX).getEnclosingMethod(typePool),
+                is(methodDescription));
     }
 }

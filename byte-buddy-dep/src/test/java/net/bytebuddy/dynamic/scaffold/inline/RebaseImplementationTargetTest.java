@@ -69,7 +69,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     protected Implementation.Target makeImplementationTarget() {
         return RebaseImplementationTarget.of(instrumentedType,
                 methodGraph,
-                new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(rebasedMethod)),
+                new MethodList.Explicit<MethodDescription.InDefinedShape>(rebasedMethod),
                 methodRebaseResolver);
     }
 

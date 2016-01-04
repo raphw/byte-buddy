@@ -154,13 +154,18 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          */
         private final List<? extends S> methodDescriptions;
 
+        @SuppressWarnings("unchecked")
+        public Explicit(S... methodDescription) {
+            this(Arrays.asList(methodDescription));
+        }
+
         /**
          * Creates a new wrapper for a given list of methods.
          *
          * @param methodDescriptions The underlying list of methods used for this method list.
          */
         public Explicit(List<? extends S> methodDescriptions) {
-            this.methodDescriptions = Collections.unmodifiableList(methodDescriptions);
+            this.methodDescriptions = methodDescriptions;
         }
 
         @Override

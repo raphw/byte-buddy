@@ -12,6 +12,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -441,13 +442,18 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         private final List<? extends S> parameterDescriptions;
 
+        @SuppressWarnings("unchecked")
+        public Explicit(S... parameterDescription) {
+            this(Arrays.asList(parameterDescription));
+        }
+
         /**
          * Creates a new list of explicit parameter descriptions.
          *
          * @param parameterDescriptions The list of parameter descriptions that are represented by this list.
          */
         public Explicit(List<? extends S> parameterDescriptions) {
-            this.parameterDescriptions = Collections.unmodifiableList(parameterDescriptions);
+            this.parameterDescriptions = parameterDescriptions;
         }
 
         @Override

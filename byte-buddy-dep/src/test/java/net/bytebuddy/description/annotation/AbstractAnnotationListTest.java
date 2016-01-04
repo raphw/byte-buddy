@@ -20,61 +20,57 @@ public abstract class AbstractAnnotationListTest<U> extends AbstractFilterableLi
 
     @Test
     public void testAnnotationIsPresent() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).isAnnotationPresent(Foo.class), is(true));
+        assertThat(asList(getFirst()).isAnnotationPresent(Foo.class), is(true));
     }
 
     @Test
     public void testAnnotationIsNotPresent() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).isAnnotationPresent(Annotation.class), is(false));
+        assertThat(asList(getFirst()).isAnnotationPresent(Annotation.class), is(false));
     }
 
     @Test
     public void testAnnotationIsPresentDescription() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).isAnnotationPresent(new TypeDescription.ForLoadedType(Foo.class)), is(true));
+        assertThat(asList(getFirst()).isAnnotationPresent(new TypeDescription.ForLoadedType(Foo.class)), is(true));
     }
 
     @Test
     public void testAnnotationIsNotPresentDescription() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).isAnnotationPresent(new TypeDescription.ForLoadedType(Annotation.class)), is(false));
+        assertThat(asList(getFirst()).isAnnotationPresent(new TypeDescription.ForLoadedType(Annotation.class)), is(false));
     }
 
     @Test
     public void testAnnotationOfType() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).ofType(Foo.class),
-                CoreMatchers.is(AnnotationDescription.ForLoadedAnnotation.of(Holder.class.getAnnotation(Foo.class))));
+        assertThat(asList(getFirst()).ofType(Foo.class), is(AnnotationDescription.ForLoadedAnnotation.of(Holder.class.getAnnotation(Foo.class))));
     }
 
     @Test
     public void testAnnotationOfTypeWrongType() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).ofType(Annotation.class), nullValue(AnnotationDescription.Loadable.class));
+        assertThat(asList(getFirst()).ofType(Annotation.class), nullValue(AnnotationDescription.Loadable.class));
     }
 
     @Test
     public void testInherited() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).inherited(Collections.<TypeDescription>emptySet()),
-                is(asList(Collections.singletonList(getFirst()))));
+        assertThat(asList(getFirst()).inherited(Collections.<TypeDescription>emptySet()), is(asList(getFirst())));
     }
 
     @Test
     public void testInheritedIgnoreType() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).inherited(Collections
-                .<TypeDescription>singleton(new TypeDescription.ForLoadedType(Foo.class))).size(), is(0));
+        assertThat(asList(getFirst()).inherited(Collections.<TypeDescription>singleton(new TypeDescription.ForLoadedType(Foo.class))).size(), is(0));
     }
 
     @Test
     public void testInheritedIgnoreNonInherited() throws Exception {
-        assertThat(asList(Collections.singletonList(getSecond())).inherited(Collections.<TypeDescription>emptySet()).size(), is(0));
+        assertThat(asList(getSecond()).inherited(Collections.<TypeDescription>emptySet()).size(), is(0));
     }
 
     @Test
     public void testVisible() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).visibility(ElementMatchers.is(RetentionPolicy.RUNTIME)),
-                is(asList(Collections.singletonList(getFirst()))));
+        assertThat(asList(getFirst()).visibility(ElementMatchers.is(RetentionPolicy.RUNTIME)), is(asList(getFirst())));
     }
 
     @Test
     public void testNotVisible() throws Exception {
-        assertThat(asList(Collections.singletonList(getFirst())).visibility(ElementMatchers.is(RetentionPolicy.SOURCE)).size(), is(0));
+        assertThat(asList(getFirst()).visibility(ElementMatchers.is(RetentionPolicy.SOURCE)).size(), is(0));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
