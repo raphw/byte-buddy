@@ -325,7 +325,7 @@ public interface DynamicType {
          */
         MethodDefinition.ImplementationDefinition.Optional<T> implement(Collection<? extends TypeDefinition> interfaceTypes);
 
-        Builder<T> initializer(ByteCodeAppender.Factory byteCodeAppenderFactory);
+        Builder<T> initializer(ByteCodeAppender byteCodeAppender);
 
         Builder<T> initializer(LoadedTypeInitializer loadedTypeInitializer);
 
@@ -1318,8 +1318,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> initializer(ByteCodeAppender.Factory byteCodeAppenderFactory) {
-                    return materialize().initializer(byteCodeAppenderFactory);
+                public Builder<U> initializer(ByteCodeAppender byteCodeAppender) {
+                    return materialize().initializer(byteCodeAppender);
                 }
 
                 @Override
@@ -1526,8 +1526,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> initializer(ByteCodeAppender.Factory byteCodeAppenderFactory) {
-                    return materialize(instrumentedType.withInitializer(byteCodeAppenderFactory),
+                public Builder<U> initializer(ByteCodeAppender byteCodeAppender) {
+                    return materialize(instrumentedType.withInitializer(byteCodeAppender),
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,

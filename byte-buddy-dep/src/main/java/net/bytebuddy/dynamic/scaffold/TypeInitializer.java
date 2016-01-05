@@ -1,13 +1,15 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import org.objectweb.asm.MethodVisitor;
 
 /**
  * A type initializer is responsible for defining a type's static initialization block.
  */
-public interface TypeInitializer extends ByteCodeAppender.Factory {
+public interface TypeInitializer extends ByteCodeAppender {
 
     /**
      * Indicates if this type initializer is defined.
@@ -20,10 +22,10 @@ public interface TypeInitializer extends ByteCodeAppender.Factory {
      * Expands this type initializer with another byte code appender. For this to be possible, this type initializer must
      * be defined.
      *
-     * @param byteCodeAppenderFactory The byte code appender factory to apply as the type initializer.
+     * @param byteCodeAppender The byte code appender to apply as the type initializer.
      * @return A defined type initializer.
      */
-    TypeInitializer expandWith(ByteCodeAppender.Factory byteCodeAppenderFactory);
+    TypeInitializer expandWith(ByteCodeAppender byteCodeAppender);
 
     /**
      * Returns this type initializer with an ending return statement. For this to be possible, this type initializer must
@@ -31,7 +33,7 @@ public interface TypeInitializer extends ByteCodeAppender.Factory {
      *
      * @return This type initializer with an ending return statement.
      */
-    ByteCodeAppender withReturn(Implementation.Target implementationTarget);
+    ByteCodeAppender withReturn();
 
     /**
      * Canonical implementation of a non-defined type initializer.
@@ -49,17 +51,17 @@ public interface TypeInitializer extends ByteCodeAppender.Factory {
         }
 
         @Override
-        public TypeInitializer expandWith(ByteCodeAppender.Factory byteCodeAppenderFactory) {
-            return new Simple(byteCodeAppenderFactory);
+        public TypeInitializer expandWith(ByteCodeAppender byteCodeAppenderFactory) {
+            return new TypeInitializer.Simple(byteCodeAppenderFactory);
         }
 
         @Override
-        public ByteCodeAppender withReturn(Implementation.Target implementationTarget) {
+        public ByteCodeAppender withReturn() {
             throw new IllegalStateException("Cannot append return to non-defined type initializer");
         }
 
         @Override
-        public ByteCodeAppender appender(Implementation.Target implementationTarget) {
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
             throw new IllegalStateException("Cannot apply a non-defined type initializer");
         }
 
@@ -75,17 +77,17 @@ public interface TypeInitializer extends ByteCodeAppender.Factory {
     class Simple implements TypeInitializer {
 
         /**
-         * The byte code appender factory to apply as the type initializer.
+         * The byte code appender to apply as the type initializer.
          */
-        private final ByteCodeAppender.Factory byteCodeAppenderFactory;
+        private final ByteCodeAppender byteCodeAppender;
 
         /**
          * Creates a new simple type initializer.
          *
-         * @param byteCodeAppenderFactory The byte code appender facotry to apply as the type initializer.
+         * @param byteCodeAppender The byte code appender to apply as the type initializer.
          */
-        public Simple(ByteCodeAppender.Factory byteCodeAppenderFactory) {
-            this.byteCodeAppenderFactory = byteCodeAppenderFactory;
+        public Simple(ByteCodeAppender byteCodeAppender) {
+            this.byteCodeAppender = byteCodeAppender;
         }
 
         @Override
@@ -94,35 +96,35 @@ public interface TypeInitializer extends ByteCodeAppender.Factory {
         }
 
         @Override
-        public TypeInitializer expandWith(ByteCodeAppender.Factory byteCodeAppenderFactory) {
-            return new Simple(new Compound(this.byteCodeAppenderFactory, byteCodeAppenderFactory));
+        public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
+            return new TypeInitializer.Simple(new Compound(this.byteCodeAppender, byteCodeAppender));
         }
 
         @Override
-        public ByteCodeAppender withReturn(Implementation.Target implementationTarget) {
-            return new ByteCodeAppender.Compound(byteCodeAppenderFactory.appender(implementationTarget), new ByteCodeAppender.Simple(MethodReturn.VOID));
+        public ByteCodeAppender withReturn() {
+            return new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(MethodReturn.VOID));
         }
 
         @Override
-        public ByteCodeAppender appender(Implementation.Target implementationTarget) {
-            return byteCodeAppenderFactory.appender(implementationTarget);
+        public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
+            return byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod);
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && byteCodeAppenderFactory.equals(((Simple) other).byteCodeAppenderFactory);
+                    && byteCodeAppender.equals(((TypeInitializer.Simple) other).byteCodeAppender);
         }
 
         @Override
         public int hashCode() {
-            return byteCodeAppenderFactory.hashCode();
+            return byteCodeAppender.hashCode();
         }
 
         @Override
         public String toString() {
             return "InstrumentedType.TypeInitializer.Simple{" +
-                    "byteCodeAppenderFactory=" + byteCodeAppenderFactory +
+                    "byteCodeAppender=" + byteCodeAppender +
                     '}';
         }
     }
