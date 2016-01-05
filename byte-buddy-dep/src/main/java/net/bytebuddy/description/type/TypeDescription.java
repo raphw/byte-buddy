@@ -1081,6 +1081,65 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 '}';
                     }
                 }
+
+                /**
+                 * A substitutor that normalizes a token to represent all {@link TargetType} by a given type and that symbolizes all type variables.
+                 */
+                public static class ForTokenNormalization extends Substitutor {
+
+                    /**
+                     * The type description to substitute all {@link TargetType} representations with.
+                     */
+                    private final TypeDescription.Generic typeDescription;
+
+                    /**
+                     * Creates a new token normalization visitor.
+                     *
+                     * @param typeDescription The type description to substitute all {@link TargetType}
+                     */
+                    public ForTokenNormalization(TypeDescription typeDescription) {
+                        this(typeDescription.asGenericType());
+                    }
+
+                    /**
+                     * Creates a new token normalization visitor.
+                     *
+                     * @param typeDescription The type description to substitute all {@link TargetType}
+                     */
+                    public ForTokenNormalization(Generic typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    protected Generic onSimpleType(Generic typeDescription) {
+                        return typeDescription.represents(TargetType.class)
+                                ? this.typeDescription
+                                : typeDescription;
+                    }
+
+                    @Override
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol());
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeDescription.equals(((ForTokenNormalization) other).typeDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization{" +
+                                "typeDescription=" + typeDescription +
+                                '}';
+                    }
+                }
             }
         }
 

@@ -92,7 +92,8 @@ public interface LatentMatcher<T> {
         @Override
         public ElementMatcher<? super FieldDescription> resolve(TypeDescription instrumentedType) {
             // Casting required for JDK 6.
-            return (ElementMatcher<? super FieldDescription>) representedBy(token.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
+            return (ElementMatcher<? super FieldDescription>) representedBy(token
+                    .accept(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(instrumentedType)));
         }
 
         @Override
@@ -136,7 +137,8 @@ public interface LatentMatcher<T> {
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
             // Casting required for JDK 6.
-            return (ElementMatcher<? super MethodDescription>) representedBy(token.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(instrumentedType)));
+            return (ElementMatcher<? super MethodDescription>) representedBy(token
+                    .accept(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(instrumentedType)));
         }
 
         @Override
