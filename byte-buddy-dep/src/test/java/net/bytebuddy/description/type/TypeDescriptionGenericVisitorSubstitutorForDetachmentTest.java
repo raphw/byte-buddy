@@ -10,7 +10,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TypeDescriptionGenericVisitorForDetachmentTest {
+public class TypeDescriptionGenericVisitorSubstitutorForDetachmentTest {
 
     private static final String FOO = "foo";
 

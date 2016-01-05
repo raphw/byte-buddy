@@ -10,7 +10,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TypeDescriptionGenericVisitorForAttachmentTest {
+public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
 
     private static final String FOO = "foo";
 
