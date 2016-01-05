@@ -21,10 +21,14 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.*;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
+import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.utility.CompoundList;
 
@@ -325,34 +329,188 @@ public interface DynamicType {
          */
         MethodDefinition.ImplementationDefinition.Optional<T> implement(Collection<? extends TypeDefinition> interfaceTypes);
 
+        /**
+         * <p>
+         * Executes the supplied byte code appender within the beginning of the instrumented type's type initializer. The
+         * supplied byte code appender <b>must not return</b> from the method. If several byte code appenders are supplied,
+         * they are executed within their application order.
+         * </p>
+         * <p>
+         * This method should only be used for preparing an instrumented type with a specific configuration. Normally,
+         * a byte code appender is applied via Byte Buddy's standard API by invoking {@link Builder#invokable(ElementMatcher)}
+         * using the {@link ElementMatchers#isTypeInitializer()} matcher.
+         * </p>
+         *
+         * @param byteCodeAppender The byte code appender to execute within the instrumented type's type initializer.
+         * @return A new builder that is equal to this builder but with the supplied byte code appender being executed within
+         * the instrumented type's type initializer.
+         */
         Builder<T> initializer(ByteCodeAppender byteCodeAppender);
 
+        /**
+         * Executes the supplied loaded type initializer when loading the created instrumented type. If several loaded
+         * type initializers are supplied, each loaded type initializer is executed in its registration order.
+         *
+         * @param loadedTypeInitializer The loaded type initializer to execute upon loading the instrumented type.
+         * @return A new builder that is equal to this builder but with the supplied loaded type initializer executed upon
+         * loading the instrumented type.
+         */
         Builder<T> initializer(LoadedTypeInitializer loadedTypeInitializer);
 
+        /**
+         * Defines the supplied type variable without any bounds as a type variable of the instrumented type.
+         *
+         * @param symbol The type variable's symbol.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         */
         Builder<T> typeVariable(String symbol);
 
+        /**
+         * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
+         *
+         * @param symbol The type variable's symbol.
+         * @param bound  The type variable's upper bound.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         */
         Builder<T> typeVariable(String symbol, Type bound);
 
+        /**
+         * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
+         *
+         * @param symbol The type variable's symbol.
+         * @param bound  The type variable's upper bound.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         */
         Builder<T> typeVariable(String symbol, TypeDefinition bound);
 
+        /**
+         * Defines the specified field as a field of the built dynamic type.
+         *
+         * @param name                The name of the field.
+         * @param type                The type of the field.
+         * @param modifierContributor The modifiers of the field.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
         FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, ModifierContributor.ForField... modifierContributor);
 
+        /**
+         * Defines the specified field as a field of the built dynamic type.
+         *
+         * @param name                 The name of the field.
+         * @param type                 The type of the field.
+         * @param modifierContributors The modifiers of the field.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
         FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, Collection<? extends ModifierContributor.ForField> modifierContributors);
 
+        /**
+         * Defines the specified field as a field of the built dynamic type.
+         *
+         * @param name      The name of the field.
+         * @param type      The type of the field.
+         * @param modifiers The modifiers of the field.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
         FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, int modifiers);
 
+        /**
+         * Defines the specified field as a field of the built dynamic type.
+         *
+         * @param name                The name of the field.
+         * @param type                The type of the field.
+         * @param modifierContributor The modifiers of the field.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
         FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, ModifierContributor.ForField... modifierContributor);
 
+        /**
+         * Defines the specified field as a field of the built dynamic type.
+         *
+         * @param name                 The name of the field.
+         * @param type                 The type of the field.
+         * @param modifierContributors The modifiers of the field.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
         FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, Collection<? extends ModifierContributor.ForField> modifierContributors);
 
+        /**
+         * Defines the specified field as a field of the built dynamic type.
+         *
+         * @param name      The name of the field.
+         * @param type      The type of the field.
+         * @param modifiers The modifiers of the field.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
         FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, int modifiers);
 
+        /**
+         * Defines a field that is similar to the supplied field but without copying any annotations on the field.
+         *
+         * @param field The field to imitate as a field of the instrumented type.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
         FieldDefinition.Optional.Valuable<T> define(Field field);
 
+        /**
+         * Defines a field that is similar to the supplied field but without copying any annotations on the field.
+         *
+         * @param field The field to imitate as a field of the instrumented type.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
+        FieldDefinition.Optional.Valuable<T> define(FieldDescription field);
+
+        /**
+         * <p>
+         * Matches a field that is already declared by the instrumented type. This gives opportunity to change that field's
+         * default value, annotations or custom attributes.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the field already defines might be preserved if Byte
+         * Buddy is configured to retain such annotations by {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}.
+         * If any existing annotations should be altered, annotation retention must be disabled.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
+         * @return A builder that allows for changing a field's definition.
+         */
         FieldDefinition.Valuable<T> field(ElementMatcher<? super FieldDescription> matcher);
 
+        /**
+         * <p>
+         * Matches a field that is already declared by the instrumented type. This gives opportunity to change that field's
+         * default value, annotations or custom attributes.
+         * </p>
+         * <p>
+         * A latent field matcher gives opportunity to resolve an {@link ElementMatcher} for a {@link FieldDescription} based
+         * on the instrumented type before applying the matcher.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the field already defines might be preserved if Byte
+         * Buddy is configured to retain such annotations by {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}.
+         * If any existing annotations should be altered, annotation retention must be disabled.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
+         * @return A builder that allows for changing a field's definition.
+         */
         FieldDefinition.Valuable<T> field(LatentMatcher<? super FieldDescription> matcher);
 
+        /**
+         * Specifies to exclude any method that is matched by the supplied matcher from instrumentation. Previously supplied matchers
+         * remain valid after supplying a new matcher, i.e. any method that is matched by a previously supplied matcher is always ignored.
+         *
+         * @param ignored The matcher for determining what methods to exclude from instrumentation.
+         * @return A new builder that is equal to this builder but that is excluding any method that is matched by the supplied matcher from
+         * instrumentation.
+         */
         Builder<T> ignoreAlso(ElementMatcher<? super MethodDescription> ignored);
 
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor);
@@ -387,6 +545,11 @@ public interface DynamicType {
 
         MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher);
 
+        /**
+         * Creates the specificied dynamic type. If the specified dynamic type is not legal, an {@link IllegalStateException} is thrown.
+         *
+         * @return An unloaded dynamic type represesenting the type specified by this builder.
+         */
         DynamicType.Unloaded<T> make();
 
         /**
@@ -1179,7 +1342,12 @@ public interface DynamicType {
 
             @Override
             public FieldDefinition.Optional.Valuable<S> define(Field field) {
-                return defineField(field.getName(), field.getGenericType(), field.getModifiers());
+                return define(new FieldDescription.ForLoadedField(field));
+            }
+
+            @Override
+            public FieldDefinition.Optional.Valuable<S> define(FieldDescription field) {
+                return defineField(field.getName(), field.getType(), field.getModifiers());
             }
 
             @Override
@@ -1420,7 +1588,7 @@ public interface DynamicType {
                 /**
                  * The annotation retention to apply.
                  */
-                protected final AnnotationRetention annotationRetention;
+                protected final AttributeRetention attributeRetention;
 
                 /**
                  * The implementation context factory to apply.
@@ -1448,7 +1616,7 @@ public interface DynamicType {
                  * @param classFileVersion             The class file version to define auxiliary types in.
                  * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
                  * @param annotationValueFilterFactory The annotation value filter factory to apply.
-                 * @param annotationRetention          The annotation retention to apply.
+                 * @param attributeRetention           The annotation retention to apply.
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
@@ -1461,7 +1629,7 @@ public interface DynamicType {
                                   ClassFileVersion classFileVersion,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                  AnnotationRetention annotationRetention,
+                                  AttributeRetention attributeRetention,
                                   Implementation.Context.Factory implementationContextFactory,
                                   MethodGraph.Compiler methodGraphCompiler,
                                   ElementMatcher<? super MethodDescription> ignoredMethods) {
@@ -1473,7 +1641,7 @@ public interface DynamicType {
                     this.classFileVersion = classFileVersion;
                     this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                     this.annotationValueFilterFactory = annotationValueFilterFactory;
-                    this.annotationRetention = annotationRetention;
+                    this.attributeRetention = attributeRetention;
                     this.implementationContextFactory = implementationContextFactory;
                     this.methodGraphCompiler = methodGraphCompiler;
                     this.ignoredMethods = ignoredMethods;
@@ -1519,7 +1687,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods));
@@ -1535,7 +1703,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1551,7 +1719,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1567,7 +1735,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1583,7 +1751,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1599,7 +1767,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1615,7 +1783,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1631,7 +1799,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1647,7 +1815,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1663,7 +1831,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            annotationRetention,
+                            attributeRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1679,7 +1847,7 @@ public interface DynamicType {
                  * @param classFileVersion             The class file version to define auxiliary types in.
                  * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
                  * @param annotationValueFilterFactory The annotation value filter factory to apply.
-                 * @param annotationRetention          The annotation retention to apply.
+                 * @param attributeRetention           The annotation retention to apply.
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
@@ -1693,7 +1861,7 @@ public interface DynamicType {
                                                           ClassFileVersion classFileVersion,
                                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                           AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                          AnnotationRetention annotationRetention,
+                                                          AttributeRetention attributeRetention,
                                                           Implementation.Context.Factory implementationContextFactory,
                                                           MethodGraph.Compiler methodGraphCompiler,
                                                           ElementMatcher<? super MethodDescription> ignoredMethods);
@@ -1710,7 +1878,7 @@ public interface DynamicType {
                             && asmVisitorWrapper.equals(adapter.asmVisitorWrapper)
                             && classFileVersion.equals(adapter.classFileVersion)
                             && annotationValueFilterFactory.equals(adapter.annotationValueFilterFactory)
-                            && annotationRetention == adapter.annotationRetention
+                            && attributeRetention == adapter.attributeRetention
                             && auxiliaryTypeNamingStrategy.equals(adapter.auxiliaryTypeNamingStrategy)
                             && implementationContextFactory.equals(adapter.implementationContextFactory)
                             && methodGraphCompiler.equals(adapter.methodGraphCompiler)
@@ -1726,7 +1894,7 @@ public interface DynamicType {
                     result = 31 * result + asmVisitorWrapper.hashCode();
                     result = 31 * result + classFileVersion.hashCode();
                     result = 31 * result + annotationValueFilterFactory.hashCode();
-                    result = 31 * result + annotationRetention.hashCode();
+                    result = 31 * result + attributeRetention.hashCode();
                     result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
                     result = 31 * result + implementationContextFactory.hashCode();
                     result = 31 * result + methodGraphCompiler.hashCode();
@@ -1787,7 +1955,7 @@ public interface DynamicType {
                                 classFileVersion,
                                 auxiliaryTypeNamingStrategy,
                                 annotationValueFilterFactory,
-                                annotationRetention,
+                                attributeRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 ignoredMethods);
@@ -1888,7 +2056,7 @@ public interface DynamicType {
                                 classFileVersion,
                                 auxiliaryTypeNamingStrategy,
                                 annotationValueFilterFactory,
-                                annotationRetention,
+                                attributeRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 ignoredMethods);
@@ -2217,7 +2385,7 @@ public interface DynamicType {
                                     classFileVersion,
                                     auxiliaryTypeNamingStrategy,
                                     annotationValueFilterFactory,
-                                    annotationRetention,
+                                    attributeRetention,
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     ignoredMethods);
@@ -2346,7 +2514,7 @@ public interface DynamicType {
                                     classFileVersion,
                                     auxiliaryTypeNamingStrategy,
                                     annotationValueFilterFactory,
-                                    annotationRetention,
+                                    attributeRetention,
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     ignoredMethods);
@@ -2410,7 +2578,7 @@ public interface DynamicType {
                                 classFileVersion,
                                 auxiliaryTypeNamingStrategy,
                                 annotationValueFilterFactory,
-                                annotationRetention,
+                                attributeRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 ignoredMethods);
