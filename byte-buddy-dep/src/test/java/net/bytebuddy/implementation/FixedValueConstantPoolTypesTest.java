@@ -12,7 +12,6 @@ import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
 
 @RunWith(Parameterized.class)
 public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends AbstractImplementationTest {
@@ -77,8 +76,7 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
                 {INT_VALUE, IntTarget.class},
                 {LONG_VALUE, LongTarget.class},
                 {FLOAT_VALUE, FloatTarget.class},
-                {DOUBLE_VALUE, DoubleTarget.class},
-                {NULL_VALUE, NullTarget.class}
+                {DOUBLE_VALUE, DoubleTarget.class}
         });
     }
 
@@ -233,20 +231,6 @@ public class FixedValueConstantPoolTypesTest<T extends CallTraceable> extends Ab
         public Double bar() {
             register(BAR);
             return DOUBLE_DEFAULT_VALUE;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class NullTarget extends CallTraceable {
-
-        public Object foo() {
-            register(FOO);
-            return mock(Runnable.class);
-        }
-
-        public Runnable bar() {
-            register(BAR);
-            return mock(Runnable.class);
         }
     }
 }

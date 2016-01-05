@@ -82,7 +82,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     protected abstract DynamicType.Builder<?> createDisabledContext();
 
-    protected abstract DynamicType.Builder createDisabledRetention(Class<?> annotatedClass);
+    protected abstract DynamicType.Builder<?> createDisabledRetention(Class<?> annotatedClass);
 
     @Test
     public void testTypeInitializerRetention() throws Exception {
@@ -416,7 +416,6 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     }
 
     @Test
-    @SuppressWarnings("unchecked")
     public void testEnabledAnnotationRetention() throws Exception {
         Class<?> type = create(Annotated.class)
                 .field(ElementMatchers.any()).annotateField(new Annotation[0])
@@ -429,12 +428,13 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                         ByteArrayClassLoader.PersistenceHandler.LATENT,
                         PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
+        @SuppressWarnings("unchecked")
         Class<? extends Annotation> sampleAnnotation = (Class<? extends Annotation>) type.getClassLoader().loadClass(SampleAnnotation.class.getName());
         assertThat(type.isAnnotationPresent(sampleAnnotation), is(true));
         assertThat(type.getDeclaredField(FOO).isAnnotationPresent(sampleAnnotation), is(true));
         assertThat(type.getDeclaredMethod(FOO, Void.class).isAnnotationPresent(sampleAnnotation), is(true));
         assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(1));
-        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0][0].annotationType(), equalTo((Class) sampleAnnotation));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0][0].annotationType(), is((Object) sampleAnnotation));
     }
 
     public @interface Baz {
