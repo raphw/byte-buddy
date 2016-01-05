@@ -21,10 +21,7 @@ import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
-import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
-import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
-import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
+import net.bytebuddy.implementation.attribute.*;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
@@ -507,11 +504,13 @@ public interface DynamicType {
          * Specifies to exclude any method that is matched by the supplied matcher from instrumentation. Previously supplied matchers
          * remain valid after supplying a new matcher, i.e. any method that is matched by a previously supplied matcher is always ignored.
          *
-         * @param ignored The matcher for determining what methods to exclude from instrumentation.
+         * @param ignoredMethods The matcher for determining what methods to exclude from instrumentation.
          * @return A new builder that is equal to this builder but that is excluding any method that is matched by the supplied matcher from
          * instrumentation.
          */
-        Builder<T> ignoreAlso(ElementMatcher<? super MethodDescription> ignored);
+        Builder<T> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods);
+
+        Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods);
 
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor);
 
@@ -1491,8 +1490,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> ignoreAlso(ElementMatcher<? super MethodDescription> ignored) {
-                    return materialize().ignoreAlso(ignored);
+                public Builder<U> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods) {
+                    return materialize().ignoreAlso(ignoredMethods);
                 }
 
                 @Override
@@ -1588,7 +1587,7 @@ public interface DynamicType {
                 /**
                  * The annotation retention to apply.
                  */
-                protected final AttributeRetention attributeRetention;
+                protected final AnnotationRetention annotationRetention;
 
                 /**
                  * The implementation context factory to apply.
@@ -1616,7 +1615,7 @@ public interface DynamicType {
                  * @param classFileVersion             The class file version to define auxiliary types in.
                  * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
                  * @param annotationValueFilterFactory The annotation value filter factory to apply.
-                 * @param attributeRetention           The annotation retention to apply.
+                 * @param annotationRetention           The annotation retention to apply.
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
@@ -1629,7 +1628,7 @@ public interface DynamicType {
                                   ClassFileVersion classFileVersion,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                  AttributeRetention attributeRetention,
+                                  AnnotationRetention annotationRetention,
                                   Implementation.Context.Factory implementationContextFactory,
                                   MethodGraph.Compiler methodGraphCompiler,
                                   ElementMatcher<? super MethodDescription> ignoredMethods) {
@@ -1641,7 +1640,7 @@ public interface DynamicType {
                     this.classFileVersion = classFileVersion;
                     this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
                     this.annotationValueFilterFactory = annotationValueFilterFactory;
-                    this.attributeRetention = attributeRetention;
+                    this.annotationRetention = annotationRetention;
                     this.implementationContextFactory = implementationContextFactory;
                     this.methodGraphCompiler = methodGraphCompiler;
                     this.ignoredMethods = ignoredMethods;
@@ -1687,7 +1686,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods));
@@ -1703,7 +1702,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1719,7 +1718,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1735,7 +1734,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1751,7 +1750,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1767,7 +1766,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1783,7 +1782,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1794,12 +1793,12 @@ public interface DynamicType {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
-                            typeAttributeAppender,
+                            new TypeAttributeAppender.Compound(this.typeAttributeAppender, typeAttributeAppender),
                             asmVisitorWrapper,
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1815,7 +1814,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1831,7 +1830,7 @@ public interface DynamicType {
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
-                            attributeRetention,
+                            annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
                             ignoredMethods);
@@ -1861,7 +1860,7 @@ public interface DynamicType {
                                                           ClassFileVersion classFileVersion,
                                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                           AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                          AttributeRetention attributeRetention,
+                                                          AnnotationRetention annotationRetention,
                                                           Implementation.Context.Factory implementationContextFactory,
                                                           MethodGraph.Compiler methodGraphCompiler,
                                                           ElementMatcher<? super MethodDescription> ignoredMethods);
@@ -1878,7 +1877,7 @@ public interface DynamicType {
                             && asmVisitorWrapper.equals(adapter.asmVisitorWrapper)
                             && classFileVersion.equals(adapter.classFileVersion)
                             && annotationValueFilterFactory.equals(adapter.annotationValueFilterFactory)
-                            && attributeRetention == adapter.attributeRetention
+                            && annotationRetention == adapter.annotationRetention
                             && auxiliaryTypeNamingStrategy.equals(adapter.auxiliaryTypeNamingStrategy)
                             && implementationContextFactory.equals(adapter.implementationContextFactory)
                             && methodGraphCompiler.equals(adapter.methodGraphCompiler)
@@ -1894,7 +1893,7 @@ public interface DynamicType {
                     result = 31 * result + asmVisitorWrapper.hashCode();
                     result = 31 * result + classFileVersion.hashCode();
                     result = 31 * result + annotationValueFilterFactory.hashCode();
-                    result = 31 * result + attributeRetention.hashCode();
+                    result = 31 * result + annotationRetention.hashCode();
                     result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
                     result = 31 * result + implementationContextFactory.hashCode();
                     result = 31 * result + methodGraphCompiler.hashCode();
@@ -1955,7 +1954,7 @@ public interface DynamicType {
                                 classFileVersion,
                                 auxiliaryTypeNamingStrategy,
                                 annotationValueFilterFactory,
-                                attributeRetention,
+                                annotationRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 ignoredMethods);
@@ -2056,7 +2055,7 @@ public interface DynamicType {
                                 classFileVersion,
                                 auxiliaryTypeNamingStrategy,
                                 annotationValueFilterFactory,
-                                attributeRetention,
+                                annotationRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 ignoredMethods);
@@ -2385,7 +2384,7 @@ public interface DynamicType {
                                     classFileVersion,
                                     auxiliaryTypeNamingStrategy,
                                     annotationValueFilterFactory,
-                                    attributeRetention,
+                                    annotationRetention,
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     ignoredMethods);
@@ -2514,7 +2513,7 @@ public interface DynamicType {
                                     classFileVersion,
                                     auxiliaryTypeNamingStrategy,
                                     annotationValueFilterFactory,
-                                    attributeRetention,
+                                    annotationRetention,
                                     implementationContextFactory,
                                     methodGraphCompiler,
                                     ignoredMethods);
@@ -2578,7 +2577,7 @@ public interface DynamicType {
                                 classFileVersion,
                                 auxiliaryTypeNamingStrategy,
                                 annotationValueFilterFactory,
-                                attributeRetention,
+                                annotationRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
                                 ignoredMethods);
