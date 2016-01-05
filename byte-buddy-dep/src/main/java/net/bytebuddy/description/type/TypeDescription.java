@@ -65,7 +65,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     TypeList.Generic ARRAY_INTERFACES = new TypeList.Generic.ForLoadedTypes(Cloneable.class, Serializable.class);
 
     /**
-     * Represents any undefined property of a type description that is instead represented as {@code null} in order
+     * Represents any undefined property representing a type description that is instead represented as {@code null} in order
      * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
      */
     TypeDescription UNDEFINED = null;
@@ -293,10 +293,22 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          */
         Generic VOID = new OfNonGenericType.ForLoadedType(void.class);
 
+        /**
+         * A representation of the {@link Annotation} type.
+         */
         Generic ANNOTATION = new OfNonGenericType.ForLoadedType(Annotation.class);
 
+        /**
+         * Represents any undefined property representing a generic type description that is instead represented as {@code null} in order
+         * to resemble the Java reflection API which returns {@code null} and is intuitive to many Java developers.
+         */
         Generic UNDEFINED = null;
 
+        /**
+         * Returns this type as a raw type. This ressembles calling {@code asErasure().asGenericType()}.
+         *
+         * @return This type as a raw type.
+         */
         Generic asRawType();
 
         /**
@@ -1072,6 +1084,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
         }
 
+        /**
+         * An abstract base implementation of a generic type description.
+         */
         abstract class AbstractBase implements Generic {
 
             @Override
@@ -2083,10 +2098,21 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 return getSymbol();
             }
 
+            /**
+             * Implementation of a symbolic type variable.
+             */
             public static class Symbolic extends AbstractBase {
 
+                /**
+                 * The symbol of the symbolic type variable.
+                 */
                 private final String symbol;
 
+                /**
+                 * Creates a symbolic type variable.
+                 *
+                 * @param symbol The symbol of the symbolic type variable.
+                 */
                 public Symbolic(String symbol) {
                     this.symbol = symbol;
                 }
@@ -2188,7 +2214,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public boolean represents(java.lang.reflect.Type type) {
-                    return equals(Sort.describe(type));
+                    if (type == null) {
+                        throw new NullPointerException();
+                    }
+                    return false;
                 }
 
                 @Override
@@ -2580,40 +2609,99 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
         }
 
+        /**
+         * A builder for creating describing a generic type as a {@link Generic}.
+         */
         class Builder {
 
+            /**
+             * Represents an undefined {@link java.lang.reflect.Type} within a build step.
+             */
             private static final java.lang.reflect.Type UNDEFINED = null;
 
+            /**
+             * The type description this builder is currently assembling.
+             */
             private final Generic typeDescription;
 
+            /**
+             * Creates a new builder.
+             *
+             * @param typeDescription The type description this builder is currently assembling.
+             */
             protected Builder(Generic typeDescription) {
                 this.typeDescription = typeDescription;
             }
 
+            /**
+             * Creates a raw type of a type description.
+             *
+             * @param type The type to represent as a raw type.
+             * @return A builder for creating a raw type.
+             */
             public static Builder rawType(Class<?> type) {
                 return rawType(new ForLoadedType(type));
             }
 
-            public static Builder rawType(TypeDescription typeDescription) {
-                return new Builder(typeDescription.asGenericType());
+            /**
+             * Creates a raw type of a type description.
+             *
+             * @param type The type to represent as a raw type.
+             * @return A builder for creating a raw type.
+             */
+            public static Builder rawType(TypeDescription type) {
+                return new Builder(type.asGenericType());
             }
 
+            /**
+             * Creates an unbound wildcard.
+             *
+             * @return A description of an unbound wildcard.
+             */
             public static Generic unboundWildcard() {
                 return OfWildcardType.Latent.unbounded();
             }
 
+            /**
+             * Creates a description of a type variable in detached state.
+             *
+             * @param symbol The symbol of the type variable.
+             * @return A detached description of the given type variable.
+             */
             public static Generic typeVariable(String symbol) {
                 return new OfTypeVariable.Symbolic(symbol);
             }
 
+            /**
+             * Creates a parameterized type without an owner type or with a non-generic owner type.
+             *
+             * @param rawType   A raw version of the type to describe as a parameterized type.
+             * @param parameter The type arguments to attach to the raw type as parameters.
+             * @return A builder for creating a parameterized type.
+             */
             public static Builder parameterizedType(Class<?> rawType, java.lang.reflect.Type... parameter) {
                 return parameterizedType(rawType, Arrays.asList(parameter));
             }
 
+            /**
+             * Creates a parameterized type without an owner type or with a non-generic owner type.
+             *
+             * @param rawType    A raw version of the type to describe as a parameterized type.
+             * @param parameters The type arguments to attach to the raw type as parameters.
+             * @return A builder for creating a parameterized type.
+             */
             public static Builder parameterizedType(Class<?> rawType, List<? extends java.lang.reflect.Type> parameters) {
                 return parameterizedType(rawType, UNDEFINED, parameters);
             }
 
+            /**
+             * Creates a parameterized type.
+             *
+             * @param rawType    A raw version of the type to describe as a parameterized type.
+             * @param ownerType  The owner type of the parameterized type.
+             * @param parameters The type arguments to attach to the raw type as parameters.
+             * @return A builder for creating a parameterized type.
+             */
             public static Builder parameterizedType(Class<?> rawType, java.lang.reflect.Type ownerType, List<? extends java.lang.reflect.Type> parameters) {
                 return parameterizedType(new ForLoadedType(rawType),
                         ownerType == null
@@ -2622,14 +2710,36 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         new TypeList.Generic.ForLoadedTypes(parameters));
             }
 
+            /**
+             * Creates a parameterized type without an owner type or with a non-generic owner type.
+             *
+             * @param rawType   A raw version of the type to describe as a parameterized type.
+             * @param parameter The type arguments to attach to the raw type as parameters.
+             * @return A builder for creating a parameterized type.
+             */
             public static Builder parameterizedType(TypeDescription rawType, TypeDefinition... parameter) {
                 return parameterizedType(rawType, Arrays.asList(parameter));
             }
 
+            /**
+             * Creates a parameterized type without an owner type or with a non-generic owner type.
+             *
+             * @param rawType    A raw version of the type to describe as a parameterized type.
+             * @param parameters The type arguments to attach to the raw type as parameters.
+             * @return A builder for creating a parameterized type.
+             */
             public static Builder parameterizedType(TypeDescription rawType, List<? extends TypeDefinition> parameters) {
                 return parameterizedType(rawType, Generic.UNDEFINED, parameters);
             }
 
+            /**
+             * Creates a parameterized type.
+             *
+             * @param rawType    A raw version of the type to describe as a parameterized type.
+             * @param ownerType  The owner type of the parameterized type.
+             * @param parameters The type arguments to attach to the raw type as parameters.
+             * @return A builder for creating a parameterized type.
+             */
             public static Builder parameterizedType(TypeDescription rawType, Generic ownerType, List<? extends TypeDefinition> parameters) {
                 TypeDescription declaringType = rawType.getDeclaringType();
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
@@ -2647,22 +2757,48 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 return new Builder(new OfParameterizedType.Latent(rawType, ownerType, new TypeList.Generic.Explicit(parameters)));
             }
 
+            /**
+             * Transforms this type into the upper bound of a wildcard type.
+             *
+             * @return A generic type description of a wildcard type with this builder's type as an upper bound.
+             */
             public Generic asWildcardUpperBound() {
                 return OfWildcardType.Latent.boundedAbove(typeDescription);
             }
 
+            /**
+             * Transforms this type into the lower bound of a wildcard type.
+             *
+             * @return A generic type description of a wildcard type with this builder's type as an lower bound.
+             */
             public Generic asWildcardLowerBound() {
                 return OfWildcardType.Latent.boundedBelow(typeDescription);
             }
 
+            /**
+             * Represents the built type into an array.
+             *
+             * @return A builder for creating an array of the currently built type.
+             */
             public Builder asArray() {
                 return asArray(1);
             }
 
+            /**
+             * Represents the built type into an array.
+             *
+             * @param arity The arity of the array.
+             * @return A builder for creating an array of the currently built type.
+             */
             public Builder asArray(int arity) {
                 return new Builder(OfGenericArray.Latent.of(typeDescription, arity));
             }
 
+            /**
+             * Finalizes the build and finalizes the created type as a generic type description.
+             *
+             * @return A generic type description of the built type.
+             */
             public Generic asType() {
                 return typeDescription;
             }

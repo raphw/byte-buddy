@@ -199,6 +199,12 @@ public interface NamingStrategy {
          */
         public interface BaseNameResolver {
 
+            /**
+             * Resolves the base name for a given type description.
+             *
+             * @param typeDescription The type for which the base name is resolved.
+             * @return The base name for the given type.
+             */
             String resolve(TypeDescription typeDescription);
 
             /**

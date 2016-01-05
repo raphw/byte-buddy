@@ -37,6 +37,9 @@ public interface FieldDescription extends ByteCodeElement,
      */
     TypeDescription.Generic getType();
 
+    /**
+     * Represents a field description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
+     */
     interface InGenericShape extends FieldDescription {
 
         @Override
@@ -360,6 +363,9 @@ public interface FieldDescription extends ByteCodeElement,
         }
     }
 
+    /**
+     * A token representing a field's properties detached from a type.
+     */
     class Token implements ByteCodeElement.Token<Token> {
 
         /**

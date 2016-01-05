@@ -1,7 +1,6 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.NamedElement;
-import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -10,16 +9,58 @@ import java.lang.reflect.*;
 import java.util.Iterator;
 import java.util.NoSuchElementException;
 
+/**
+ * Implementations define a type, either as a {@link TypeDescription} or as a {@link TypeDescription.Generic}.
+ */
 public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
 
+    /**
+     * Returns this type definition as a generic type.
+     *
+     * @return This type definition represented as a generic type.
+     */
     TypeDescription.Generic asGenericType();
 
+    /**
+     * Returns the erasure of this type. Wildcard types ({@link TypeDescription.Generic.Sort#WILDCARD})
+     * do not have a well-defined erasure and cause an {@link IllegalStateException} to be thrown.
+     *
+     * @return The erasure of this type.
+     */
+    TypeDescription asErasure();
+
+    /**
+     * Returns the super type of this type. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
+     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types.
+     *
+     * @return The super type of this type.
+     */
     TypeDescription.Generic getSuperType();
 
+    /**
+     * Returns the interfaces that this type implements. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
+     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types.
+     *
+     * @return The interfaces that this type implements.
+     */
     TypeList.Generic getInterfaces();
 
+    /**
+     * Returns the fields that this type declares. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
+     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types. Generic array
+     * types never define fields and the returned list is always empty for such types.
+     *
+     * @return The fields that this type declares. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
+     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types. Generic array
+     * types never define methods and the returned list is always empty for such types.
+     */
     FieldList<?> getDeclaredFields();
 
+    /**
+     * Returns the methods that this type declares.
+     *
+     * @return The methods that this type declares.
+     */
     MethodList<?> getDeclaredMethods();
 
     /**
@@ -42,14 +83,6 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
      * @return The sort of the generic type.
      */
     Sort getSort();
-
-    /**
-     * Returns the erasure of this type. Wildcard types ({@link TypeDescription.Generic.Sort#WILDCARD})
-     * do not have a well-defined erasure and cause an {@link IllegalStateException} to be thrown.
-     *
-     * @return The erasure of this type.
-     */
-    TypeDescription asErasure();
 
     /**
      * Returns the name of the type. For generic types, this name is their {@link Object#toString()} representations. For a non-generic
@@ -116,7 +149,7 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
         WILDCARD,
 
         /**
-         * Represents a type variable that is attached to a {@link TypeVariableSource}.
+         * Represents a type variable that is attached to a {@link net.bytebuddy.description.TypeVariableSource}.
          */
         VARIABLE,
 

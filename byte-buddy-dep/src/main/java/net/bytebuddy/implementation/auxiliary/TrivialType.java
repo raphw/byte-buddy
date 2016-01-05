@@ -16,7 +16,7 @@ import java.util.Collections;
 public enum TrivialType implements AuxiliaryType {
 
     /**
-     * A trivial type that defines the {@link SignatureRelevant} annotation-
+     * A trivial type that defines the {@link SignatureRelevant} annotation.
      */
     SIGNATURE_RELEVANT(true),
 
@@ -26,14 +26,14 @@ public enum TrivialType implements AuxiliaryType {
     PLAIN(false);
 
     /**
-     * Determines if this type determines the {@link SignatureRelevant} annotation-
+     * Determines if this type determines the {@link SignatureRelevant} annotation.
      */
     private final boolean eager;
 
     /**
      * Creates a new trivial type.
      *
-     * @param eager Determines if this type determines the {@link SignatureRelevant} annotation-
+     * @param eager Determines if this type determines the {@link SignatureRelevant} annotation.
      */
     TrivialType(boolean eager) {
         this.eager = eager;

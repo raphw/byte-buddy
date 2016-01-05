@@ -17,7 +17,6 @@ import java.util.Set;
  */
 public interface AnnotationList extends FilterableList<AnnotationDescription, AnnotationList> {
 
-
     /**
      * Checks if this list contains an annotation of the given type.
      *
@@ -60,6 +59,11 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      */
     AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher);
 
+    /**
+     * Returns a list of the annotation types of this list.
+     *
+     * @return A list of the annotation types of this list.
+     */
     TypeList asTypeList();
 
     /**
@@ -197,6 +201,11 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          */
         private final List<? extends AnnotationDescription> annotationDescriptions;
 
+        /**
+         * Creates a new list of annotation descriptions.
+         *
+         * @param annotationDescription The list of represented annotation descriptions.
+         */
         public Explicit(AnnotationDescription... annotationDescription) {
             this(Arrays.asList(annotationDescription));
         }

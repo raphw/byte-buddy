@@ -16,10 +16,31 @@ import net.bytebuddy.matcher.LatentMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
+/**
+ * A type builder that creates an instrumented type as a subclass, i.e. a type that is not based on an existing class file.
+ *
+ * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
+ */
 public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
+    /**
+     * The constructor strategy to apply onto the instrumented type.
+     */
     private final ConstructorStrategy constructorStrategy;
 
+    /**
+     * Creates a new type builder for creating a subclass.
+     *
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
+     */
     public SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                       ClassFileVersion classFileVersion,
                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -44,6 +65,23 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 constructorStrategy);
     }
 
+    /**
+     * Creates a new type builder for creating a subclass.
+     *
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param fieldRegistry                The field pool to use.
+     * @param methodRegistry               The method pool to use.
+     * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+     * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
+     */
     protected SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,

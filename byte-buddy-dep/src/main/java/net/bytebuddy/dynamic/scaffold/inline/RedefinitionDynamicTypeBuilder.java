@@ -15,12 +15,37 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
 
+/**
+ * A type builder that redefines an instrumented type.
+ *
+ * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
+ */
 public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
+    /**
+     * The original type that is being redefined or rebased.
+     */
     private final TypeDescription originalType;
 
+    /**
+     * The class file locator for locating the original type's class file.
+     */
     private final ClassFileLocator classFileLocator;
 
+    /**
+     * Creates a redefinition dynamic type builder.
+     *
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param originalType                 The original type that is being redefined or rebased.
+     * @param classFileLocator             The class file locator for locating the original type's class file.
+     */
     public RedefinitionDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                           ClassFileVersion classFileVersion,
                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
@@ -47,6 +72,24 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 classFileLocator);
     }
 
+    /**
+     * Creates a redefinition dynamic type builder.
+     *
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param fieldRegistry                The field pool to use.
+     * @param methodRegistry               The method pool to use.
+     * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+     * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param originalType                 The original type that is being redefined or rebased.
+     * @param classFileLocator             The class file locator for locating the original type's class file.
+     */
     protected RedefinitionDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                              FieldRegistry fieldRegistry,
                                              MethodRegistry methodRegistry,

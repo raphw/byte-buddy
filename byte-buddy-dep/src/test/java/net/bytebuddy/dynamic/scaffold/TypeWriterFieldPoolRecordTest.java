@@ -93,6 +93,7 @@ public class TypeWriterFieldPoolRecordTest {
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForExplicitField(fieldAttributeAppender, defaultValue, fieldDescription);
         assertThat(record.getFieldAppender(), is(fieldAttributeAppender));
         assertThat(record.resolveDefault(FieldDescription.NO_DEFAULT_VALUE), is(defaultValue));
+        assertThat(record.isImplicit(), is(false));
     }
 
     @Test
@@ -121,6 +122,7 @@ public class TypeWriterFieldPoolRecordTest {
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForImplicitField(fieldDescription);
         assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
         assertThat(record.resolveDefault(defaultValue), is(defaultValue));
+        assertThat(record.isImplicit(), is(true));
     }
 
     @Test
@@ -134,6 +136,11 @@ public class TypeWriterFieldPoolRecordTest {
         verifyNoMoreInteractions(fieldVisitor);
         verify(annotationVisitor).visitEnd();
         verifyNoMoreInteractions(annotationVisitor);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldWritesFieldPartialApplication() throws Exception {
+        new TypeWriter.FieldPool.Record.ForImplicitField(fieldDescription).apply(fieldVisitor, annotationValueFilterFactory);
     }
 
     @Test(expected = IllegalStateException.class)

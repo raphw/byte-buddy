@@ -520,7 +520,7 @@ public class ByteBuddy {
      * @return A type builder for redefining the provided type.
      */
     public <T> DynamicType.Builder<T> redefine(TypeDescription type, ClassFileLocator classFileLocator) {
-        return new RedefinitionDynamicTypeBuilder<T>(InstrumentedType.Default.represent(type),
+        return new RedefinitionDynamicTypeBuilder<T>(InstrumentedType.Default.of(type),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 annotationValueFilterFactory,
@@ -620,7 +620,7 @@ public class ByteBuddy {
      * @return A type builder for rebasing the provided type.
      */
     public <T> DynamicType.Builder<T> rebase(TypeDescription type, ClassFileLocator classFileLocator, MethodNameTransformer methodNameTransformer) {
-        return new RebaseDynamicTypeBuilder<T>(InstrumentedType.Default.represent(type),
+        return new RebaseDynamicTypeBuilder<T>(InstrumentedType.Default.of(type),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 annotationValueFilterFactory,

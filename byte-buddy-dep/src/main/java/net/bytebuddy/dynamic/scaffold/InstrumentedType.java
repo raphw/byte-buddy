@@ -25,7 +25,7 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
- * should however be immutable and return new instance when their mutator methods are called.
+ * should however be immutable and return new instance when its builder methods are invoked.
  */
 public interface InstrumentedType extends TypeDescription {
 
@@ -45,12 +45,37 @@ public interface InstrumentedType extends TypeDescription {
      */
     InstrumentedType withMethod(MethodDescription.Token token);
 
+    /**
+     * Creates a new instrumented type with changed modifiers.
+     *
+     * @param modifiers The instrumented type's modifiers.
+     * @return A new instrumented type that is equal to this instrumented type but with the given modifiers.
+     */
     InstrumentedType withModifiers(int modifiers);
 
+    /**
+     * Creates a new instrumented type with the given interfaces implemented.
+     *
+     * @param interfaceTypes The interface types to implement.
+     * @return A new instrumented type that is equal to this instrumented type but with the given interfaces implemented.
+     */
     InstrumentedType withInterfaces(List<? extends Generic> interfaceTypes);
 
+    /**
+     * Creates a new instrumented type with the given type variable implemented.
+     *
+     * @param symbol The type variable's symbol.
+     * @param bound  The type variable's bound.
+     * @return A new instrumented type that is equal to this instrumented type but with the given type variable defined.
+     */
     InstrumentedType withTypeVariable(String symbol, Generic bound);
 
+    /**
+     * Creates a new instrumented type with the given annotations.
+     *
+     * @param annotationDescriptions The annotations to add to the instrumented type.
+     * @return A new instrumented type that is equal to this instrumented type but annotated with the given annotations
+     */
     InstrumentedType withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
 
     /**
@@ -210,6 +235,9 @@ public interface InstrumentedType extends TypeDescription {
         }
     }
 
+    /**
+     * Implementations represent an {@link InstrumentedType} with a flexible name.
+     */
     interface WithFlexibleName extends InstrumentedType {
 
         @Override
@@ -236,11 +264,26 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender);
 
+        /**
+         * Creates a new instrumented type with a changed name.
+         *
+         * @param name The name of the instrumented type.
+         * @return A new instrumented type that has the given name.
+         */
         WithFlexibleName withName(String name);
     }
 
+    /**
+     * Implementations are able to prepare an {@link InstrumentedType}.
+     */
     interface Prepareable {
 
+        /**
+         * Prepares a given instrumented type.
+         *
+         * @param instrumentedType The instrumented type in its current form.
+         * @return The prepared instrumented type.
+         */
         InstrumentedType prepare(InstrumentedType instrumentedType);
     }
 
@@ -264,6 +307,9 @@ public interface InstrumentedType extends TypeDescription {
          */
         private final Generic superType;
 
+        /**
+         * A mapping of type variable symbols to their bounds.
+         */
         private final Map<String, ? extends TypeList.Generic> typeVariables;
 
         /**
@@ -353,22 +399,22 @@ public interface InstrumentedType extends TypeDescription {
          * @param localClass             {@code true} if this type is a local class.
          */
         protected Default(String name,
-                       int modifiers,
-                       Generic superType,
-                       Map<String, ? extends TypeList.Generic> typeVariables,
-                       List<? extends Generic> interfaceTypes,
-                       List<? extends FieldDescription.Token> fieldTokens,
-                       List<? extends MethodDescription.Token> methodTokens,
-                       List<? extends AnnotationDescription> annotationDescriptions,
-                       TypeInitializer typeInitializer,
-                       LoadedTypeInitializer loadedTypeInitializer,
-                       TypeDescription declaringType,
-                       MethodDescription enclosingMethod,
-                       TypeDescription enclosingType,
-                       List<? extends TypeDescription> declaredTypes,
-                       boolean memberClass,
-                       boolean anonymousClass,
-                       boolean localClass) {
+                          int modifiers,
+                          Generic superType,
+                          Map<String, ? extends TypeList.Generic> typeVariables,
+                          List<? extends Generic> interfaceTypes,
+                          List<? extends FieldDescription.Token> fieldTokens,
+                          List<? extends MethodDescription.Token> methodTokens,
+                          List<? extends AnnotationDescription> annotationDescriptions,
+                          TypeInitializer typeInitializer,
+                          LoadedTypeInitializer loadedTypeInitializer,
+                          TypeDescription declaringType,
+                          MethodDescription enclosingMethod,
+                          TypeDescription enclosingType,
+                          List<? extends TypeDescription> declaredTypes,
+                          boolean memberClass,
+                          boolean anonymousClass,
+                          boolean localClass) {
             this.name = name;
             this.modifiers = modifiers;
             this.typeVariables = typeVariables;
@@ -388,6 +434,14 @@ public interface InstrumentedType extends TypeDescription {
             this.localClass = localClass;
         }
 
+        /**
+         * Creates an instrumented type that is a subclass of the given super type named as given and with the modifiers.
+         *
+         * @param name      The name of the instrumented type.
+         * @param modifiers The modifiers of the instrumented type.
+         * @param superType The super type of the instrumented type.
+         * @return An instrumented type as a subclass of the given type with the given name and modifiers.
+         */
         public static InstrumentedType.WithFlexibleName subclass(String name, int modifiers, Generic superType) {
             return new Default(name,
                     modifiers,
@@ -408,7 +462,13 @@ public interface InstrumentedType extends TypeDescription {
                     false);
         }
 
-        public static InstrumentedType.WithFlexibleName represent(TypeDescription typeDescription) {
+        /**
+         * Creates an instrumented type that represents the given type description.
+         *
+         * @param typeDescription A description of the type to represent.
+         * @return An instrumented type of the given type.
+         */
+        public static InstrumentedType.WithFlexibleName of(TypeDescription typeDescription) {
             Generic.Visitor<TypeDescription.Generic> visitor = new Generic.Visitor.Substitutor.ForDetachment(named(typeDescription.getName()));
             return new Default(typeDescription.getName(),
                     typeDescription.getModifiers(),

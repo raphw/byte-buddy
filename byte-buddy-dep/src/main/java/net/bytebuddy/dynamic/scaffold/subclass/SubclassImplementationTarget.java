@@ -157,12 +157,26 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      */
     public enum Factory implements Implementation.Target.Factory {
 
+        /**
+         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#SUPER_TYPE}.
+         */
         SUPER_TYPE(OriginTypeResolver.SUPER_TYPE),
 
+        /**
+         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#LEVEL_TYPE}.
+         */
         LEVEL_TYPE(OriginTypeResolver.LEVEL_TYPE);
 
+        /**
+         * The origin type resolver that this factory hands to the created {@link SubclassImplementationTarget}.
+         */
         private final OriginTypeResolver originTypeResolver;
 
+        /**
+         * Creates a new factory.
+         *
+         * @param originTypeResolver The origin type resolver that this factory hands to the created {@link SubclassImplementationTarget}.
+         */
         Factory(OriginTypeResolver originTypeResolver) {
             this.originTypeResolver = originTypeResolver;
         }

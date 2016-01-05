@@ -11,6 +11,7 @@ import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
@@ -71,6 +72,11 @@ public abstract class AbstractAnnotationListTest<U> extends AbstractFilterableLi
     @Test
     public void testNotVisible() throws Exception {
         assertThat(asList(getFirst()).visibility(ElementMatchers.is(RetentionPolicy.SOURCE)).size(), is(0));
+    }
+
+    @Test
+    public void testAsTypeList() throws Exception {
+        assertThat(asList(getFirst()).asTypeList(), is(Collections.singletonList(asElement(getFirst()).getAnnotationType())));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

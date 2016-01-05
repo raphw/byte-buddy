@@ -53,6 +53,9 @@ public interface FieldRegistry {
          */
         enum NoOp implements Compiled {
 
+            /**
+             * The singleton instance.
+             */
             INSTANCE;
 
             @Override

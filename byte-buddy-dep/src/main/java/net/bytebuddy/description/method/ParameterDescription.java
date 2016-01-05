@@ -77,6 +77,9 @@ public interface ParameterDescription extends AnnotatedCodeElement,
      */
     int getOffset();
 
+    /**
+     * Represents a parameter description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
+     */
     interface InGenericShape extends ParameterDescription {
 
         @Override
@@ -910,8 +913,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
     }
 
     /**
-     * A token that describes the shape of a method parameter. A parameter token is equal to another parameter token if
-     * their explicit names are explicitly defined and equal or if the token is of the same identity.
+     * A token representing a parameter's properties detached from a type.
      */
     class Token implements ByteCodeElement.Token<Token> {
 
@@ -964,6 +966,13 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             this(typeDescription, annotationDescriptions, NO_NAME, NO_MODIFIERS);
         }
 
+        /**
+         * Creates a parameter token without annotations.
+         *
+         * @param typeDescription The type of the represented parameter.
+         * @param name            The name of the parameter or {@code null} if no explicit name is defined.
+         * @param modifiers       The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
+         */
         public Token(TypeDescription.Generic typeDescription, String name, Integer modifiers) {
             this(typeDescription, Collections.<AnnotationDescription>emptyList(), name, modifiers);
         }

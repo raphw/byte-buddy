@@ -279,6 +279,8 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
     /**
      * An implementation of an empty method list.
+     *
+     * @param <S> The type of parameter descriptions represented by this list.
      */
     class Empty<S extends MethodDescription> extends FilterableList.Empty<S, MethodList<S>> implements MethodList<S> {
 

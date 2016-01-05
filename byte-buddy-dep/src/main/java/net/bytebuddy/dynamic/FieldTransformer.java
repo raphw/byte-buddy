@@ -2,13 +2,9 @@ package net.bytebuddy.dynamic;
 
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 
 import java.util.Arrays;
 import java.util.List;
@@ -116,8 +112,8 @@ public interface FieldTransformer {
             private final FieldDescription.InDefinedShape fieldDescription;
 
             protected TransformedField(TypeDefinition declaringType,
-                                        FieldDescription.Token token,
-                                        FieldDescription.InDefinedShape fieldDescription) {
+                                       FieldDescription.Token token,
+                                       FieldDescription.InDefinedShape fieldDescription) {
                 this.declaringType = declaringType;
                 this.token = token;
                 this.fieldDescription = fieldDescription;

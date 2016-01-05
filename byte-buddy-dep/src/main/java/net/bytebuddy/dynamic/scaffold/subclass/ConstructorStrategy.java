@@ -37,10 +37,8 @@ public interface ConstructorStrategy {
      * {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(TypeDescription)}
      * method of this instance.
      *
-     * @param methodRegistry                        The original method registry.
-     * @param defaultMethodAttributeAppenderFactory The default method attribute appender factory.
-     * @return A method registry that is capable of providing byte code for the constructors that were added by
-     * this strategy.
+     * @param methodRegistry The original method registry.
+     * @return A method registry that is capable of providing byte code for the constructors that were added by this strategy.
      */
     MethodRegistry inject(MethodRegistry methodRegistry);
 

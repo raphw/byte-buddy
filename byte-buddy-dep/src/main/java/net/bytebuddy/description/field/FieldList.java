@@ -255,6 +255,8 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
 
     /**
      * An implementation of an empty field list.
+     *
+     * @param <S> The type of parameter descriptions represented by this list.
      */
     class Empty<S extends FieldDescription> extends FilterableList.Empty<S, FieldList<S>> implements FieldList<S> {
 

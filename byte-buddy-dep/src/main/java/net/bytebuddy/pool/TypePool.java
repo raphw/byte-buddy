@@ -5831,6 +5831,9 @@ public interface TypePool {
                 return stackSize;
             }
 
+            /**
+             * A generic type list representing raw types.
+             */
             protected static class Generic extends TypeList.Generic.AbstractBase {
 
                 /**

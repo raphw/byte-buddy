@@ -442,6 +442,11 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         private final List<? extends S> parameterDescriptions;
 
+        /**
+         * Creates a new list of explicit parameter descriptions.
+         *
+         * @param parameterDescription The list of parameter descriptions that are represented by this list.
+         */
         @SuppressWarnings("unchecked")
         public Explicit(S... parameterDescription) {
             this(Arrays.asList(parameterDescription));
@@ -597,6 +602,8 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
 
     /**
      * An empty list of parameters.
+     *
+     * @param <S> The type of parameter descriptions represented by this list.
      */
     class Empty<S extends ParameterDescription> extends FilterableList.Empty<S, ParameterList<S>> implements ParameterList<S> {
 

@@ -71,8 +71,18 @@ public interface TypeWriter<T> {
          */
         interface Record {
 
+            /**
+             * Determines if this record is implicit, i.e is not defined by a {@link FieldPool}.
+             *
+             * @return {@code true} if this record is implicit.
+             */
             boolean isImplicit();
 
+            /**
+             * Returns the field that this record represents.
+             *
+             * @return The field that this record represents.
+             */
             FieldDescription getField();
 
             /**
@@ -82,15 +92,28 @@ public interface TypeWriter<T> {
              */
             FieldAttributeAppender getFieldAppender();
 
+            /**
+             * Resolves the default value that this record represents. This is not possible for implicit records.
+             *
+             * @param defaultValue The default value that was defined previously or {@code null} if no default value is defined.
+             * @return The default value for the represented field or {@code null} if no default value is to be defined.
+             */
             Object resolveDefault(Object defaultValue);
 
             /**
              * Writes this entry to a given class visitor.
              *
-             * @param classVisitor The class visitor to which this entry is to be written to.
+             * @param classVisitor                 The class visitor to which this entry is to be written to.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotations.
              */
             void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
+            /**
+             * Applies this record to a field visitor. This is not possible for implicit records.
+             *
+             * @param fieldVisitor                 The field visitor onto which this record is to be applied.
+             * @param annotationValueFilterFactory The annotation value filter factory to use for annotations.
+             */
             void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
@@ -129,7 +152,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public Object resolveDefault(Object defaultValue) {
-                    return defaultValue;
+                    throw new IllegalStateException("An implicit field record does not apply a default value: " + this);
                 }
 
                 @Override
@@ -145,7 +168,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(FieldVisitor fieldVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    throw new IllegalStateException("An implicit field visitor is not intended for partial application: " + this);
+                    throw new IllegalStateException("An implicit field record is not intended for partial application: " + this);
                 }
 
                 @Override
@@ -314,8 +337,9 @@ public interface TypeWriter<T> {
             /**
              * Applies this method entry. This method can always be called and might be a no-op.
              *
-             * @param classVisitor          The class visitor to which this entry should be applied.
-             * @param implementationContext The implementation context to which this entry should be applied.
+             * @param classVisitor                 The class visitor to which this entry should be applied.
+             * @param implementationContext        The implementation context to which this entry should be applied.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotations.
              */
             void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
@@ -331,8 +355,9 @@ public interface TypeWriter<T> {
              * Applies the body of this entry. Applying the body of an entry is only possible if a method is implemented, i.e. the sort of this
              * entry is {@link Record.Sort#IMPLEMENTED}.
              *
-             * @param methodVisitor         The method visitor to which this entry should be applied.
-             * @param implementationContext The implementation context to which this entry should be applied.
+             * @param methodVisitor                The method visitor to which this entry should be applied.
+             * @param implementationContext        The implementation context to which this entry should be applied.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotations.
              */
             void applyBody(MethodVisitor methodVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory);
 
@@ -876,8 +901,17 @@ public interface TypeWriter<T> {
                          */
                         private final TypeDescription instrumentedType;
 
+                        /**
+                         * The method that is the target of the bridge.
+                         */
                         private final MethodDescription bridgeTarget;
 
+                        /**
+                         * Creates a new visibility bridge.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         * @param bridgeTarget     The method that is the target of the bridge.
+                         */
                         protected VisibilityBridge(TypeDescription instrumentedType, MethodDescription bridgeTarget) {
                             this.instrumentedType = instrumentedType;
                             this.bridgeTarget = bridgeTarget;
@@ -1250,36 +1284,99 @@ public interface TypeWriter<T> {
      */
     abstract class Default<S> implements TypeWriter<S> {
 
+        /**
+         * Indicates to ASM that no values should be computed.
+         */
         protected static final int ASM_MANUAL_FLAGS = 0;
 
+        /**
+         * The instrumented type to be created.
+         */
         protected final TypeDescription instrumentedType;
 
+        /**
+         * The field pool to use.
+         */
         protected final FieldPool fieldPool;
 
+        /**
+         * The method pool to use.
+         */
         protected final MethodPool methodPool;
 
+        /**
+         * The explicit auxiliary types to add to the created type.
+         */
         protected final List<DynamicType> explicitAuxiliaryTypes;
 
+        /**
+         * The instrumented methods relevant to this type creation.
+         */
         protected final MethodList<?> instrumentedMethods;
 
+        /**
+         * The loaded type initializer to apply onto the created type after loading.
+         */
         protected final LoadedTypeInitializer loadedTypeInitializer;
 
+        /**
+         * The type initializer to include in the created type's type initializer.
+         */
         protected final InstrumentedType.TypeInitializer typeInitializer;
 
+        /**
+         * The type attribute appender to apply onto the instrumented type.
+         */
         protected final TypeAttributeAppender typeAttributeAppender;
 
+        /**
+         * The ASM visitor wrapper to apply onto the class writer.
+         */
         protected final AsmVisitorWrapper asmVisitorWrapper;
 
+        /**
+         * The class file version to use when no explicit class file version is applied.
+         */
         protected final ClassFileVersion classFileVersion;
 
+        /**
+         * The annotation value filter factory to apply.
+         */
         protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
 
+        /**
+         * The annotation retention to apply.
+         */
         protected final AnnotationRetention annotationRetention;
 
+        /**
+         * The naming strategy for auxiliary types to apply.
+         */
         protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
+        /**
+         * The implementation context factory to apply.
+         */
         protected final Implementation.Context.Factory implementationContextFactory;
 
+        /**
+         * Creates a new default type writer.
+         *
+         * @param instrumentedType             The instrumented type to be created.
+         * @param fieldPool                    The field pool to use.
+         * @param methodPool                   The method pool to use.
+         * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
+         * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+         * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
+         * @param typeInitializer              The type initializer to include in the created type's type initializer.
+         * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+         * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+         * @param classFileVersion             The class file version to use when no explicit class file version is applied.
+         * @param annotationValueFilterFactory The annotation value filter factory to apply.
+         * @param annotationRetention          The annotation retention to apply.
+         * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+         * @param implementationContextFactory The implementation context factory to apply.
+         */
         protected Default(TypeDescription instrumentedType,
                           FieldPool fieldPool,
                           MethodPool methodPool,
@@ -1310,6 +1407,21 @@ public interface TypeWriter<T> {
             this.implementationContextFactory = implementationContextFactory;
         }
 
+        /**
+         * Creates a type writer for creating a new type.
+         *
+         * @param methodRegistry               The compiled method registry to use.
+         * @param fieldPool                    The field pool to use.
+         * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+         * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+         * @param classFileVersion             The class file version to use when no explicit class file version is applied.
+         * @param annotationValueFilterFactory The annotation value filter factory to apply.
+         * @param annotationRetention          The annotation retention to apply.
+         * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+         * @param implementationContextFactory The implementation context factory to apply.
+         * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
+         * @return A suitable type writer.
+         */
         public static <U> TypeWriter<U> forCreation(MethodRegistry.Compiled methodRegistry,
                                                     FieldPool fieldPool,
                                                     TypeAttributeAppender typeAttributeAppender,
@@ -1335,6 +1447,71 @@ public interface TypeWriter<T> {
                     implementationContextFactory);
         }
 
+        /**
+         * Creates a type writer for redefining a type.
+         *
+         * @param methodRegistry               The compiled method registry to use.
+         * @param fieldPool                    The field pool to use.
+         * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+         * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+         * @param classFileVersion             The class file version to use when no explicit class file version is applied.
+         * @param annotationValueFilterFactory The annotation value filter factory to apply.
+         * @param annotationRetention          The annotation retention to apply.
+         * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+         * @param implementationContextFactory The implementation context factory to apply.
+         * @param originalType                 The original type that is being redefined or rebased.
+         * @param classFileLocator             The class file locator for locating the original type's class file.
+         * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
+         * @return A suitable type writer.
+         */
+        public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Compiled methodRegistry,
+                                                        FieldPool fieldPool,
+                                                        TypeAttributeAppender typeAttributeAppender,
+                                                        AsmVisitorWrapper asmVisitorWrapper,
+                                                        ClassFileVersion classFileVersion,
+                                                        AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                        AnnotationRetention annotationRetention,
+                                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                        Implementation.Context.Factory implementationContextFactory,
+                                                        TypeDescription originalType,
+                                                        ClassFileLocator classFileLocator) {
+            return new ForInlining<U>(methodRegistry.getInstrumentedType(),
+                    fieldPool,
+                    methodRegistry,
+                    Collections.<DynamicType>emptyList(),
+                    methodRegistry.getInstrumentedMethods(),
+                    methodRegistry.getLoadedTypeInitializer(),
+                    methodRegistry.getTypeInitializer(),
+                    typeAttributeAppender,
+                    asmVisitorWrapper,
+                    classFileVersion,
+                    annotationValueFilterFactory,
+                    annotationRetention,
+                    auxiliaryTypeNamingStrategy,
+                    implementationContextFactory,
+                    originalType,
+                    classFileLocator,
+                    MethodRebaseResolver.Disabled.INSTANCE);
+        }
+
+        /**
+         * Creates a type writer for rebasing a type.
+         *
+         * @param methodRegistry               The compiled method registry to use.
+         * @param fieldPool                    The field pool to use.
+         * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+         * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+         * @param classFileVersion             The class file version to use when no explicit class file version is applied.
+         * @param annotationValueFilterFactory The annotation value filter factory to apply.
+         * @param annotationRetention          The annotation retention to apply.
+         * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+         * @param implementationContextFactory The implementation context factory to apply.
+         * @param originalType                 The original type that is being redefined or rebased.
+         * @param classFileLocator             The class file locator for locating the original type's class file.
+         * @param methodRebaseResolver         The method rebase resolver to use for rebasing names.
+         * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
+         * @return A suitable type writer.
+         */
         public static <U> TypeWriter<U> forRebasing(MethodRegistry.Compiled methodRegistry,
                                                     FieldPool fieldPool,
                                                     TypeAttributeAppender typeAttributeAppender,
@@ -1364,36 +1541,6 @@ public interface TypeWriter<T> {
                     originalType,
                     classFileLocator,
                     methodRebaseResolver);
-        }
-
-        public static <U> TypeWriter<U> forRedefinition(MethodRegistry.Compiled methodRegistry,
-                                                        FieldPool fieldPool,
-                                                        TypeAttributeAppender typeAttributeAppender,
-                                                        AsmVisitorWrapper asmVisitorWrapper,
-                                                        ClassFileVersion classFileVersion,
-                                                        AnnotationValueFilter.Factory annotationValueFilterFactory,
-                                                        AnnotationRetention annotationRetention,
-                                                        AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                                        Implementation.Context.Factory implementationContextFactory,
-                                                        TypeDescription originalType,
-                                                        ClassFileLocator classFileLocator) {
-            return new ForInlining<U>(methodRegistry.getInstrumentedType(),
-                    fieldPool,
-                    methodRegistry,
-                    Collections.<DynamicType>emptyList(),
-                    methodRegistry.getInstrumentedMethods(),
-                    methodRegistry.getLoadedTypeInitializer(),
-                    methodRegistry.getTypeInitializer(),
-                    typeAttributeAppender,
-                    asmVisitorWrapper,
-                    classFileVersion,
-                    annotationValueFilterFactory,
-                    annotationRetention,
-                    auxiliaryTypeNamingStrategy,
-                    implementationContextFactory,
-                    originalType,
-                    classFileLocator,
-                    MethodRebaseResolver.Disabled.INSTANCE);
         }
 
         @Override
@@ -2363,11 +2510,6 @@ public interface TypeWriter<T> {
         public static class ForInlining<U> extends Default<U> {
 
             /**
-             * Indicates that a class does not define an explicit super class.
-             */
-            private static final TypeDescription NO_SUPER_CLASS = null;
-
-            /**
              * Indicates that a method should be ignored.
              */
             private static final MethodVisitor IGNORE_METHOD = null;
@@ -2377,12 +2519,42 @@ public interface TypeWriter<T> {
              */
             private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
+            /**
+             * The original type that is being redefined or rebased.
+             */
             private final TypeDescription originalType;
 
+            /**
+             * The class file locator for locating the original type's class file.
+             */
             private final ClassFileLocator classFileLocator;
 
+            /**
+             * The method rebase resolver to use for rebasing methods.
+             */
             private final MethodRebaseResolver methodRebaseResolver;
 
+            /**
+             * Creates a new default type writer for creating a new type that is not based on an existing class file.
+             *
+             * @param instrumentedType             The instrumented type to be created.
+             * @param fieldPool                    The field pool to use.
+             * @param methodPool                   The method pool to use.
+             * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
+             * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+             * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
+             * @param typeInitializer              The type initializer to include in the created type's type initializer.
+             * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+             * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+             * @param classFileVersion             The class file version to define auxiliary types in.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply.
+             * @param annotationRetention          The annotation retention to apply.
+             * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+             * @param implementationContextFactory The implementation context factory to apply.
+             * @param originalType                 The original type that is being redefined or rebased.
+             * @param classFileLocator             The class file locator for locating the original type's class file.
+             * @param methodRebaseResolver         The method rebase resolver to use for rebasing methods.
+             */
             protected ForInlining(TypeDescription instrumentedType,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,
@@ -2746,7 +2918,7 @@ public interface TypeWriter<T> {
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            (instrumentedType.getSuperType() == NO_SUPER_CLASS ?
+                            (instrumentedType.getSuperType() == null ?
                                     TypeDescription.OBJECT :
                                     instrumentedType.getSuperType().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
@@ -2780,6 +2952,13 @@ public interface TypeWriter<T> {
                     return super.visitField(modifiers, internalName, descriptor, genericSignature, defaultValue);
                 }
 
+                /**
+                 * Redefines a field using the given explicit field pool record and default value.
+                 *
+                 * @param record       The field pool value to apply during visitation of the existing field.
+                 * @param defaultValue The default value to write onto the field which might be {@code null}.
+                 * @return A field visitor for visiting the existing field definition.
+                 */
                 protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue) {
                     FieldDescription instrumentedField = record.getField();
                     return new AttributeObtainingFieldVisitor(super.visitField(instrumentedField.getModifiers(),
@@ -2799,7 +2978,7 @@ public interface TypeWriter<T> {
                         if (implementationContext.isRetainTypeInitializer()) {
                             return super.visitMethod(modifiers, internalName, descriptor, genericSignature, exceptionTypeInternalName);
                         } else {
-                            TypeInitializerInjection injectedCode = new TypeInitializerInjection(instrumentedType);
+                            TypeInitializerInjection injectedCode = new TypeInitializerInjection(new TypeInitializerDelegate(instrumentedType, RandomString.make()));
                             this.injectedCode = injectedCode;
                             return super.visitMethod(injectedCode.getInjectorProxyMethod().getModifiers(),
                                     injectedCode.getInjectorProxyMethod().getInternalName(),
@@ -2866,11 +3045,24 @@ public interface TypeWriter<T> {
                             '}';
                 }
 
+                /**
+                 * A field visitor that obtains all attributes and annotations of a field that is found in the
+                 * class file but that discards all code.
+                 */
                 protected class AttributeObtainingFieldVisitor extends FieldVisitor {
 
+                    /**
+                     * The field pool record to apply onto the field visitor.
+                     */
                     private final FieldPool.Record record;
 
-                    public AttributeObtainingFieldVisitor(FieldVisitor fieldVisitor, FieldPool.Record record) {
+                    /**
+                     * Creates a new attribute obtaining field visitor.
+                     *
+                     * @param fieldVisitor The field visitor to delegate to.
+                     * @param record       The field pool record to apply onto the field visitor.
+                     */
+                    protected AttributeObtainingFieldVisitor(FieldVisitor fieldVisitor, FieldPool.Record record) {
                         super(Opcodes.ASM5, fieldVisitor);
                         this.record = record;
                     }
@@ -2886,6 +3078,14 @@ public interface TypeWriter<T> {
                     public void visitEnd() {
                         record.apply(fv, annotationValueFilterFactory);
                         super.visitEnd();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingFieldVisitor{" +
+                                "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
+                                ", record=" + record +
+                                '}';
                     }
                 }
 
@@ -2970,7 +3170,7 @@ public interface TypeWriter<T> {
                         return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor{" +
                                 "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
                                 ", actualMethodVisitor=" + actualMethodVisitor +
-                                ", entry=" + record +
+                                ", record=" + record +
                                 ", resolution=" + resolution +
                                 '}';
                     }
@@ -2978,7 +3178,7 @@ public interface TypeWriter<T> {
 
                 /**
                  * A method visitor that obtains all attributes and annotations of a method that is found in the
-                 * class file but discards all code.
+                 * class file but that discards all code.
                  */
                 protected class AttributeObtainingMethodVisitor extends MethodVisitor {
 
@@ -3040,7 +3240,7 @@ public interface TypeWriter<T> {
                         return "TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor{" +
                                 "classVisitor=" + TypeWriter.Default.ForInlining.RedefinitionClassVisitor.this +
                                 ", actualMethodVisitor=" + actualMethodVisitor +
-                                ", entry=" + record +
+                                ", record=" + record +
                                 '}';
                     }
                 }
@@ -3059,10 +3259,10 @@ public interface TypeWriter<T> {
                     /**
                      * Creates a new type initializer injection.
                      *
-                     * @param instrumentedType The instrumented type.
+                     * @param injectorProxyMethod The method to which the original type initializer code is to be written to.
                      */
-                    protected TypeInitializerInjection(TypeDescription instrumentedType) {
-                        injectorProxyMethod = new TypeInitializerDelegate(instrumentedType, RandomString.make());
+                    protected TypeInitializerInjection(MethodDescription injectorProxyMethod) {
+                        this.injectorProxyMethod = injectorProxyMethod;
                     }
 
                     @Override
@@ -3102,6 +3302,24 @@ public interface TypeWriter<T> {
          */
         public static class ForCreation<U> extends Default<U> {
 
+            /**
+             * Creates a new default type writer for creating a new type that is not based on an existing class file.
+             *
+             * @param instrumentedType             The instrumented type to be created.
+             * @param fieldPool                    The field pool to use.
+             * @param methodPool                   The method pool to use.
+             * @param explicitAuxiliaryTypes       The explicit auxiliary types to add to the created type.
+             * @param instrumentedMethods          The instrumented methods relevant to this type creation.
+             * @param loadedTypeInitializer        The loaded type initializer to apply onto the created type after loading.
+             * @param typeInitializer              The type initializer to include in the created type's type initializer.
+             * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+             * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+             * @param classFileVersion             The class file version to write the instrumented type in and to apply when creating auxiliary types.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply.
+             * @param annotationRetention          The annotation retention to apply.
+             * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+             * @param implementationContextFactory The implementation context factory to apply.
+             */
             protected ForCreation(TypeDescription instrumentedType,
                                   FieldPool fieldPool,
                                   MethodPool methodPool,

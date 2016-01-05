@@ -1,7 +1,9 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -13,7 +15,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class AnnotationAppenderValueFilterDefaultTest {
+public class AnnotationValueFilterDefaultTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -62,6 +64,22 @@ public class AnnotationAppenderValueFilterDefaultTest {
         verifyNoMoreInteractions(annotationDescription);
         verify(methodDescription).getDefaultValue();
         verifyNoMoreInteractions(methodDescription);
+    }
+
+    @Test
+    public void testFactory() throws Exception {
+        assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.on(mock(FieldDescription.class)),
+                is((AnnotationValueFilter) AnnotationValueFilter.Default.SKIP_DEFAULTS));
+        assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.on(mock(MethodDescription.class)),
+                is((AnnotationValueFilter) AnnotationValueFilter.Default.SKIP_DEFAULTS));
+        assertThat(AnnotationValueFilter.Default.SKIP_DEFAULTS.on(mock(TypeDescription.class)),
+                is((AnnotationValueFilter) AnnotationValueFilter.Default.SKIP_DEFAULTS));
+        assertThat(AnnotationValueFilter.Default.APPEND_DEFAULTS.on(mock(FieldDescription.class)),
+                is((AnnotationValueFilter) AnnotationValueFilter.Default.APPEND_DEFAULTS));
+        assertThat(AnnotationValueFilter.Default.APPEND_DEFAULTS.on(mock(MethodDescription.class)),
+                is((AnnotationValueFilter) AnnotationValueFilter.Default.APPEND_DEFAULTS));
+        assertThat(AnnotationValueFilter.Default.APPEND_DEFAULTS.on(mock(TypeDescription.class)),
+                is((AnnotationValueFilter) AnnotationValueFilter.Default.APPEND_DEFAULTS));
     }
 
     @Test

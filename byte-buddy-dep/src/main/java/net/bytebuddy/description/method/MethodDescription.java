@@ -227,6 +227,11 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isDefaultValue(Object value);
 
+    /**
+     * Returns a signature token representing this method.
+     *
+     * @return A signature token representing this method.
+     */
     SignatureToken asSignatureToken();
 
     /**
@@ -236,6 +241,9 @@ public interface MethodDescription extends TypeVariableSource,
      */
     TypeToken asTypeToken();
 
+    /**
+     * Represents a method description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
+     */
     interface InGenericShape extends MethodDescription {
 
         @Override
@@ -919,6 +927,11 @@ public interface MethodDescription extends TypeVariableSource,
          */
         private final int modifiers;
 
+        /**
+         * Returns the type variables of this method token.
+         *
+         * @return A mapping of a type variable's symbol to a list of its bounds.
+         */
         Map<String, ? extends TypeList.Generic> typeVariables;
 
         /**
@@ -1303,6 +1316,9 @@ public interface MethodDescription extends TypeVariableSource,
         }
     }
 
+    /**
+     * A token representing a method's properties detached from a type.
+     */
     class Token implements ByteCodeElement.Token<Token> {
 
         /**
@@ -1315,6 +1331,9 @@ public interface MethodDescription extends TypeVariableSource,
          */
         private final int modifiers;
 
+        /**
+         * A mapping of a type variable's symbol to a list of its bounds.
+         */
         private final Map<String, ? extends TypeList.Generic> typeVariables;
 
         /**
@@ -1342,10 +1361,22 @@ public interface MethodDescription extends TypeVariableSource,
          */
         private final Object defaultValue;
 
+        /**
+         * Creates a new method token representing a constructor without any parameters, exception types, type variables or annotations.
+         *
+         * @param modifiers The constructor's modifiers.
+         */
         public Token(int modifiers) {
             this(MethodDescription.CONSTRUCTOR_INTERNAL_NAME, modifiers, TypeDescription.Generic.VOID);
         }
 
+        /**
+         * Creates a new method token representing a method without any parameters, exception types, type variables or annotations.
+         *
+         * @param name       The name of the method.
+         * @param modifiers  The modifiers of the method.
+         * @param returnType The return type of the method.
+         */
         public Token(String name, int modifiers, TypeDescription.Generic returnType) {
             this(name, modifiers, returnType, Collections.<TypeDescription.Generic>emptyList());
         }
@@ -1353,7 +1384,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Creates a new method token with simple values.
          *
-         * @param name   The internal name of the represented method.
+         * @param name           The internal name of the represented method.
          * @param modifiers      The modifiers of the represented method.
          * @param returnType     The return type of the represented method.
          * @param parameterTypes The parameter types of this method.
@@ -1372,7 +1403,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Creates a new token for a method description.
          *
-         * @param name    The internal name of the represented method.
+         * @param name            The internal name of the represented method.
          * @param modifiers       The modifiers of the represented method.
          * @param typeVariables   The type variables of the the represented method.
          * @param returnType      The return type of the represented method.
@@ -1417,6 +1448,11 @@ public interface MethodDescription extends TypeVariableSource,
             return modifiers;
         }
 
+        /**
+         * Returns the type variables of this method token.
+         *
+         * @return A mapping of a type variable's symbol to a list of its bounds.
+         */
         public Map<String, TypeList.Generic> getTypeVariables() {
             return new LinkedHashMap<String, TypeList.Generic>(typeVariables);
         }
@@ -1525,8 +1561,14 @@ public interface MethodDescription extends TypeVariableSource,
         }
     }
 
+    /**
+     * A token representing a method's name and raw return and parameter types.
+     */
     class SignatureToken {
 
+        /**
+         * The internal name of the represented method.
+         */
         private final String name;
 
         /**
@@ -1542,6 +1584,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Creates a new type token.
          *
+         * @param name           The internal name of the represented method.
          * @param returnType     The represented method's raw return type.
          * @param parameterTypes The represented method's raw parameter types.
          */
@@ -1551,6 +1594,11 @@ public interface MethodDescription extends TypeVariableSource,
             this.parameterTypes = parameterTypes;
         }
 
+        /**
+         * Returns the internal name of the represented method.
+         *
+         * @return The internal name of the represented method.
+         */
         public String getName() {
             return name;
         }
@@ -1573,6 +1621,11 @@ public interface MethodDescription extends TypeVariableSource,
             return new ArrayList<TypeDescription>(parameterTypes);
         }
 
+        /**
+         * Returns this signature token as a type token.
+         *
+         * @return This signature token as a type token.
+         */
         public TypeToken asTypeToken() {
             return new TypeToken(returnType, parameterTypes);
         }

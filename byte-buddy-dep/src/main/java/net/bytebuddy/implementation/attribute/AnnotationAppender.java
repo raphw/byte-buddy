@@ -23,10 +23,10 @@ public interface AnnotationAppender {
     /**
      * Terminally writes the given annotation to the specified target.
      *
-     * @param annotation           The annotation to be written.
-     * @param annotationVisibility Determines the annotation visibility for the given annotation.
-     * @return Usually {@code this} or any other annotation appender capable of writing another annotation to
-     * the specified target.
+     * @param annotation            The annotation to be written.
+     * @param annotationVisibility  Determines the annotation visibility for the given annotation.
+     * @param annotationValueFilter The annotation value filter to use.
+     * @return Usually {@code this} or any other annotation appender capable of writing another annotation to the specified target.
      */
     AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, AnnotationValueFilter annotationValueFilter);
 
@@ -326,7 +326,7 @@ public interface AnnotationAppender {
         /**
          * Creates a default annotation appender.
          *
-         * @param target      The target to which annotations are written to.
+         * @param target The target to which annotations are written to.
          */
         public Default(Target target) {
             this.target = target;
@@ -335,9 +335,9 @@ public interface AnnotationAppender {
         /**
          * Handles the writing of a single annotation to an annotation visitor.
          *
-         * @param annotationVisitor The annotation visitor the write process is to be applied on.
-         * @param annotation        The annotation to be written.
-         * @param annotationValueFilter       The value filter to apply for discovering which values of an annotation should be written.
+         * @param annotationVisitor     The annotation visitor the write process is to be applied on.
+         * @param annotation            The annotation to be written.
+         * @param annotationValueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
         private static void handle(AnnotationVisitor annotationVisitor, AnnotationDescription annotation, AnnotationValueFilter annotationValueFilter) {
             for (MethodDescription.InDefinedShape methodDescription : annotation.getAnnotationType().getDeclaredMethods()) {
@@ -387,8 +387,9 @@ public interface AnnotationAppender {
         /**
          * Tries to append a given annotation by reflectively reading an annotation.
          *
-         * @param annotation The annotation to be written.
-         * @param visible    {@code true} if this annotation should be treated as visible at runtime.
+         * @param annotation            The annotation to be written.
+         * @param visible               {@code true} if this annotation should be treated as visible at runtime.
+         * @param annotationValueFilter The annotation value filter to apply.
          */
         private void doAppend(AnnotationDescription annotation, boolean visible, AnnotationValueFilter annotationValueFilter) {
             handle(target.visit(annotation.getAnnotationType().getDescriptor(), visible), annotation, annotationValueFilter);

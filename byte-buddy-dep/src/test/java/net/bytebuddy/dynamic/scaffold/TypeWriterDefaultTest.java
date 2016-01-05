@@ -4,10 +4,14 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.TypeConstantAdjustment;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -24,12 +28,15 @@ import org.junit.rules.MethodRule;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TypeWriterDefaultTest {
 
@@ -407,6 +414,30 @@ public class TypeWriterDefaultTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.class).create(new ObjectPropertyAssertion.Creator<TypeWriter.Default.ForInlining<?>>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public TypeWriter.Default.ForInlining<?> create() {
+                TypeWriter.Default.ForInlining<?> inlining = mock(TypeWriter.Default.ForInlining.class);
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
+                try {
+                    Field instrumentedMethods = TypeWriter.Default.class.getDeclaredField("instrumentedMethods");
+                    Field instrumentedType = TypeWriter.Default.class.getDeclaredField("instrumentedType");
+                    instrumentedMethods.setAccessible(true);
+                    instrumentedType.setAccessible(true);
+                    instrumentedMethods.set(inlining, new MethodList.Empty<MethodDescription>());
+                    instrumentedType.set(inlining, typeDescription);
+                    return inlining;
+                } catch (Exception ignored) {
+                    throw new AssertionError();
+                }
+            }
+        }).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingFieldVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.TypeInitializerInjection.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.FramePreservingRemapper.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.FramePreservingRemapper.FramePreservingMethodRemapper.class)
                 .create(new ObjectPropertyAssertion.Creator<String>() {

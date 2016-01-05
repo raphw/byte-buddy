@@ -37,4 +37,9 @@ public class AnnotationListEmptyTest {
     public void testAnnotationVisibility() throws Exception {
         assertThat(new AnnotationList.Empty().visibility(none()).size(), is(0));
     }
+
+    @Test
+    public void testAsTypeList() throws Exception {
+        assertThat(new AnnotationList.Empty().asTypeList().size(), is(0));
+    }
 }

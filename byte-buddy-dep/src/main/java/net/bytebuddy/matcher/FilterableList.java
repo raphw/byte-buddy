@@ -83,6 +83,9 @@ public interface FilterableList<T, S extends FilterableList<T, S>> extends List<
      */
     abstract class AbstractBase<T, S extends FilterableList<T, S>> extends AbstractList<T> implements FilterableList<T, S> {
 
+        /**
+         * A convenience variable indicating the index of a list's only variable.
+         */
         private static final int ONLY = 0;
 
         @Override

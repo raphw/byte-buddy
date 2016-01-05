@@ -267,8 +267,8 @@ public interface Implementation extends InstrumentedType.Prepareable {
         /**
          * Creates a special method invocation for invoking a default method.
          *
-         * @param targetType  The interface on which the default method is to be invoked.
-         * @param token A token that uniquely describes the method to invoke.
+         * @param targetType The interface on which the default method is to be invoked.
+         * @param token      A token that uniquely describes the method to invoke.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
@@ -431,11 +431,15 @@ public interface Implementation extends InstrumentedType.Prepareable {
              * to the provided class visitor. This contains any fields for value caching, any accessor method and it
              * writes the type initializer. The type initializer must therefore never be written manually.
              *
-             * @param classVisitor The class visitor to which the extractable view is to be written.
-             * @param methodPool   A method pool which is queried for any user code to add to the type initializer.
-             * @param injectedCode Potential code that is to be injected into the type initializer.
+             * @param classVisitor                 The class visitor to which the extractable view is to be written.
+             * @param methodPool                   A method pool which is queried for any user code to add to the type initializer.
+             * @param injectedCode                 Potential code that is to be injected into the type initializer.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotation.
              */
-            void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode, AnnotationValueFilter.Factory annotationValueFilterFactory);
+            void drain(ClassVisitor classVisitor,
+                       TypeWriter.MethodPool methodPool,
+                       InjectedCode injectedCode,
+                       AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
              * Prohibits any instrumentation of an instrumented class's type initializer.

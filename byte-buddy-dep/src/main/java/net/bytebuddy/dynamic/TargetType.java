@@ -9,10 +9,13 @@ import net.bytebuddy.description.type.TypeDescription;
 public final class TargetType {
 
     /**
-     * A description representation of the {@link net.bytebuddy.dynamic.TargetType}.
+     * A description of the {@link net.bytebuddy.dynamic.TargetType}.
      */
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
 
+    /**
+     * A generic description of the {@link net.bytebuddy.dynamic.TargetType}.
+     */
     public static final TypeDescription.Generic GENERIC_DESCRIPTION = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(TargetType.class);
 
     /**
