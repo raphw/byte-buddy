@@ -67,7 +67,7 @@ public interface TypeInitializer extends ByteCodeAppender {
 
         @Override
         public String toString() {
-            return "InstrumentedType.TypeInitializer.None." + name();
+            return "TypeInitializer.None." + name();
         }
     }
 
@@ -123,7 +123,7 @@ public interface TypeInitializer extends ByteCodeAppender {
 
         @Override
         public String toString() {
-            return "InstrumentedType.TypeInitializer.Simple{" +
+            return "TypeInitializer.Simple{" +
                     "byteCodeAppender=" + byteCodeAppender +
                     '}';
         }

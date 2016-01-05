@@ -39,7 +39,7 @@ public class LatentMatcherCompoundTest {
     @SuppressWarnings("unchecked")
     public void testManifestation() throws Exception {
         assertThat(new LatentMatcher.Compound(left, right).resolve(instrumentedType),
-                is((ElementMatcher) none().and((ElementMatcher) leftMatcher).and((ElementMatcher) rightMatcher)));
+                is((ElementMatcher) none().or((ElementMatcher) leftMatcher).or((ElementMatcher) rightMatcher)));
     }
 
     @Test

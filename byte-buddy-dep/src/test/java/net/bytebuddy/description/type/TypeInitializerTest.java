@@ -58,8 +58,7 @@ public class TypeInitializerTest {
     @Test
     public void testSimpleExpansion() throws Exception {
         assertThat(new TypeInitializer.Simple(byteCodeAppender).expandWith(byteCodeAppender),
-                is((TypeInitializer) new TypeInitializer
-                        .Simple(new ByteCodeAppender.Compound(byteCodeAppender, byteCodeAppender))));
+                is((TypeInitializer) new TypeInitializer.Simple(new ByteCodeAppender.Compound(byteCodeAppender, byteCodeAppender))));
     }
 
     @Test

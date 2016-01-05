@@ -70,8 +70,6 @@ public interface LatentMatcher<T> {
         }
     }
 
-    // TODO: Does this make sense? Compared to the detached type anyways.
-
     /**
      * A latent matcher where the field token is being attached to the instrumented type before matching.
      */
@@ -161,9 +159,10 @@ public interface LatentMatcher<T> {
     }
 
     /**
-     * A compound implementation of a latent matcher.
+     * A compound implementation of a latent matcher. A compound matcher matches a method if at least one of the resolved matchers
+     * matches the target element.
      *
-     * @param <S>The type of the matched element.
+     * @param <S> The type of the matched element.
      */
     class Compound<S> implements LatentMatcher<S> {
 
@@ -194,7 +193,7 @@ public interface LatentMatcher<T> {
         public ElementMatcher<? super S> resolve(TypeDescription instrumentedType) {
             ElementMatcher.Junction<? super S> matcher = none();
             for (LatentMatcher<? super S> latentMatcher : matchers) {
-                matcher = matcher.and(latentMatcher.resolve(instrumentedType));
+                matcher = matcher.or(latentMatcher.resolve(instrumentedType));
             }
             return matcher;
         }
