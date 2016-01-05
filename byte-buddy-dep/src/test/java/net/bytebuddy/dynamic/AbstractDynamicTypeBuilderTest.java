@@ -379,6 +379,20 @@ public abstract class AbstractDynamicTypeBuilderTest {
         .get(null), is((Object) FOO));
     }
 
+    @Test
+    public void testSerialVersionUid() throws Exception {
+        Class<?> type = createPlain()
+                .serialVersionUid(42L)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Field field = type.getDeclaredField("serialVersionUID");
+        field.setAccessible(true);
+        assertThat((Long) field.get(null), is(42L));
+        assertThat(field.getType(), is((Object) long.class));
+        assertThat(field.getModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SampleAnnotation {
 

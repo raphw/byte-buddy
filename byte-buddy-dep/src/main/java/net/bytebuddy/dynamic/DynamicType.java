@@ -9,7 +9,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
-import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -25,7 +25,6 @@ import net.bytebuddy.implementation.attribute.*;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.utility.CompoundList;
 
@@ -386,7 +385,7 @@ public interface DynamicType {
          * @param name                The name of the field.
          * @param type                The type of the field.
          * @param modifierContributor The modifiers of the field.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, ModifierContributor.ForField... modifierContributor);
@@ -397,7 +396,7 @@ public interface DynamicType {
          * @param name                 The name of the field.
          * @param type                 The type of the field.
          * @param modifierContributors The modifiers of the field.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, Collection<? extends ModifierContributor.ForField> modifierContributors);
@@ -408,7 +407,7 @@ public interface DynamicType {
          * @param name      The name of the field.
          * @param type      The type of the field.
          * @param modifiers The modifiers of the field.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> defineField(String name, Type type, int modifiers);
@@ -419,7 +418,7 @@ public interface DynamicType {
          * @param name                The name of the field.
          * @param type                The type of the field.
          * @param modifierContributor The modifiers of the field.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, ModifierContributor.ForField... modifierContributor);
@@ -430,7 +429,7 @@ public interface DynamicType {
          * @param name                 The name of the field.
          * @param type                 The type of the field.
          * @param modifierContributors The modifiers of the field.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, Collection<? extends ModifierContributor.ForField> modifierContributors);
@@ -441,7 +440,7 @@ public interface DynamicType {
          * @param name      The name of the field.
          * @param type      The type of the field.
          * @param modifiers The modifiers of the field.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> defineField(String name, TypeDefinition type, int modifiers);
@@ -450,7 +449,7 @@ public interface DynamicType {
          * Defines a field that is similar to the supplied field but without copying any annotations on the field.
          *
          * @param field The field to imitate as a field of the instrumented type.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> define(Field field);
@@ -459,10 +458,19 @@ public interface DynamicType {
          * Defines a field that is similar to the supplied field but without copying any annotations on the field.
          *
          * @param field The field to imitate as a field of the instrumented type.
-         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
          */
         FieldDefinition.Optional.Valuable<T> define(FieldDescription field);
+
+        /**
+         * Defines a private, static, final field for a serial version UID of the given value.
+         *
+         * @param serialVersionUid The serial version UID to define as a value.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
+         */
+        FieldDefinition.Optional<T> serialVersionUid(long serialVersionUid);
 
         /**
          * <p>
@@ -470,9 +478,10 @@ public interface DynamicType {
          * default value, annotations or custom attributes.
          * </p>
          * <p>
-         * When a type is redefined or rebased, any annotations that the field already defines might be preserved if Byte
-         * Buddy is configured to retain such annotations by {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}.
-         * If any existing annotations should be altered, annotation retention must be disabled.
+         * When a type is redefined or rebased, any annotations that the field declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
          * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
@@ -487,9 +496,10 @@ public interface DynamicType {
          * {@link ElementMatcher} based on the instrumented type before applying the matcher.
          * </p>
          * <p>
-         * When a type is redefined or rebased, any annotations that the field already defines might be preserved if Byte
-         * Buddy is configured to retain such annotations by {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}.
-         * If any existing annotations should be altered, annotation retention must be disabled.
+         * When a type is redefined or rebased, any annotations that the field declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
          * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
@@ -507,38 +517,207 @@ public interface DynamicType {
          */
         Builder<T> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods);
 
+        /**
+         * Specifies to exclude any method that is matched by the supplied matcher from instrumentation. Previously supplied matchers
+         * remain valid after supplying a new matcher, i.e. any method that is matched by a previously supplied matcher is always ignored.
+         * Using a latent matcher gives opportunity to resolve an {@link ElementMatcher} based on the instrumented type before applying the
+         * matcher.
+         *
+         * @param ignoredMethods The matcher for determining what methods to exclude from instrumentation.
+         * @return A new builder that is equal to this builder but that is excluding any method that is matched by the supplied matcher from
+         * instrumentation.
+         */
         Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods);
 
+        /**
+         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param name                The name of the method.
+         * @param returnType          The method's return type.
+         * @param modifierContributor The method's modifiers.
+         * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
+         */
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor);
 
-        MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributor);
+        /**
+         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param name                 The name of the method.
+         * @param returnType           The method's return type.
+         * @param modifierContributors The method's modifiers.
+         * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
+         */
+        MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors);
 
+        /**
+         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param name       The name of the method.
+         * @param returnType The method's return type.
+         * @param modifiers  The method's modifiers.
+         * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
+         */
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, int modifiers);
 
+        /**
+         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param name                The name of the method.
+         * @param returnType          The method's return type.
+         * @param modifierContributor The method's modifiers.
+         * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
+         */
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, ModifierContributor.ForMethod... modifierContributor);
 
-        MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributor);
+        /**
+         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param name                 The name of the method.
+         * @param returnType           The method's return type.
+         * @param modifierContributors The method's modifiers.
+         * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
+         */
+        MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors);
 
+        /**
+         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param name       The name of the method.
+         * @param returnType The method's return type.
+         * @param modifiers  The method's modifiers.
+         * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
+         */
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, int modifiers);
 
+        /**
+         * Defines the specified constructor to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param modifierContributor The constructor's modifiers.
+         * @return A builder that allows for further defining the constructor, either by adding more properties or by defining an implementation.
+         */
         MethodDefinition.ParameterDefinition.Initial<T> defineConstructor(ModifierContributor.ForMethod... modifierContributor);
 
-        MethodDefinition.ParameterDefinition.Initial<T> defineConstructor(Collection<? extends ModifierContributor.ForMethod> modifierContributor);
+        /**
+         * Defines the specified constructor to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param modifierContributors The constructor's modifiers.
+         * @return A builder that allows for further defining the constructor, either by adding more properties or by defining an implementation.
+         */
+        MethodDefinition.ParameterDefinition.Initial<T> defineConstructor(Collection<? extends ModifierContributor.ForMethod> modifierContributors);
 
+        /**
+         * Defines the specified constructor to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * type variables can be defined in subsequent steps.
+         *
+         * @param modifiers The constructor's modifiers.
+         * @return A builder that allows for further defining the constructor, either by adding more properties or by defining an implementation.
+         */
         MethodDefinition.ParameterDefinition.Initial<T> defineConstructor(int modifiers);
 
+        /**
+         * Defines a method that is similar to the supplied method but without copying any annotations of the method or method parameters.
+         *
+         * @param method The method to imitate as a method of the instrumented type.
+         * @return A builder that allows for defining an implementation for the method.
+         */
         MethodDefinition.ImplementationDefinition<T> define(Method method);
 
+        /**
+         * Defines a constructor that is similar to the supplied constructor but without copying any annotations of the constructor or
+         * constructor parameters.
+         *
+         * @param constructor The constructor to imitate as a method of the instrumented type.
+         * @return A builder that allows for defining an implementation for the constructor.
+         */
         MethodDefinition.ImplementationDefinition<T> define(Constructor<?> constructor);
 
+        /**
+         * Defines a method or constructor that is similar to the supplied method description but without copying any annotations of
+         * the method/constructor or method/constructor parameters.
+         *
+         * @param methodDescription The method description to imitate as a method or constructor of the instrumented type.
+         * @return A builder that allows for defining an implementation for the method or constructor.
+         */
         MethodDefinition.ImplementationDefinition<T> define(MethodDescription methodDescription);
 
+        /**
+         * <p>
+         * Matches a method that is already declared or inherited by the instrumented type. This gives opportunity to change or to
+         * override that method's implementation, default value, annotations or custom attributes. It is also possible to make
+         * a method abstract.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the method declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
+         * @return A builder that allows for changing a field's definition.
+         */
         MethodDefinition.ImplementationDefinition<T> method(ElementMatcher<? super MethodDescription> matcher);
 
+        /**
+         * <p>
+         * Matches a constructor that is already declared by the instrumented type. This gives opportunity to change that constructor's
+         * implementation, default value, annotations or custom attributes.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the constructor declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
+         * @return A builder that allows for changing a field's definition.
+         */
         MethodDefinition.ImplementationDefinition<T> constructor(ElementMatcher<? super MethodDescription> matcher);
 
+        /**
+         * <p>
+         * Matches a method or constructor that is already declared or inherited by the instrumented type. This gives
+         * opportunity to change or to override that method's or constructor's implementation, default value, annotations
+         * or custom attributes. It is also possible to make a method abstract.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the method or constructor declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
+         * @return A builder that allows for changing a field's definition.
+         */
         MethodDefinition.ImplementationDefinition<T> invokable(ElementMatcher<? super MethodDescription> matcher);
 
+        /**
+         * <p>
+         * Matches a method or constructor that is already declared or inherited by the instrumented type. This gives
+         * opportunity to change or to override that method's or constructor's implementation, default value, annotations
+         * or custom attributes. It is also possible to make a method abstract. Using a latent matcher gives opportunity
+         * to resolve an {@link ElementMatcher} based on the instrumented type before applying the matcher.
+         * </p>
+         * <p>
+         * When a type is redefined or rebased, any annotations that the method or constructor declared previously is preserved
+         * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
+         * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
+         * altered, annotation retention must be disabled.
+         * </p>
+         *
+         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
+         * @return A builder that allows for changing a field's definition.
+         */
         MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher);
 
         /**
@@ -555,16 +734,60 @@ public interface DynamicType {
          */
         interface FieldDefinition<S> {
 
+            /**
+             * Annotates the previously defined or matched field with the supplied annotations.
+             *
+             * @param annotation The annotations to declare on the previously defined or matched field.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched field.
+             */
             FieldDefinition.Optional<S> annotateField(Annotation... annotation);
 
+            /**
+             * Annotates the previously defined or matched field with the supplied annotations.
+             *
+             * @param annotations The annotations to declare on the previously defined or matched field.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched field.
+             */
             FieldDefinition.Optional<S> annotateField(List<? extends Annotation> annotations);
 
+            /**
+             * Annotates the previously defined or matched field with the supplied annotations.
+             *
+             * @param annotation The annotations to declare on the previously defined or matched field.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched field.
+             */
             FieldDefinition.Optional<S> annotateField(AnnotationDescription... annotation);
 
+            /**
+             * Annotates the previously defined or matched field with the supplied annotations.
+             *
+             * @param annotations The annotations to declare on the previously defined or matched field.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched field.
+             */
             FieldDefinition.Optional<S> annotateField(Collection<? extends AnnotationDescription> annotations);
 
+            /**
+             * Applies the supplied attribute appender factory onto the previously defined or matched field.
+             *
+             * @param fieldAttributeAppenderFactory The field attribute appender factory that should be applied on the
+             *                                      previously defined or matched field.
+             * @return A new builder that is equal to this builder but with the supplied field attribute appender factory
+             * applied to the previously defined or matched field.
+             */
             FieldDefinition.Optional<S> attribute(FieldAttributeAppender.Factory fieldAttributeAppenderFactory);
 
+            /**
+             * Applies the supplied field transformer onto the previously defined or matched field. The transformed
+             * field is written <i>as it is</i> and it not subject to any validations.
+             *
+             * @param fieldTransformer The field transformer to apply to the previously defined or matched field.
+             * @return A new builder that is equal to this builder but with the supplied field transformer
+             * applied to the previously defined or matched field.
+             */
             FieldDefinition.Optional<S> transform(FieldTransformer fieldTransformer);
 
             /**
@@ -574,16 +797,58 @@ public interface DynamicType {
              */
             interface Valuable<U> extends FieldDefinition<U> {
 
+                /**
+                 * Defines the supplied {@code boolean} value as a default value of the previously defined or matched field.
+                 *
+                 * @param value The value to define as a default value of the defined field.
+                 * @return A new builder that is equal to this builder but with the given default value declared for the
+                 * previously defined or matched field.
+                 */
                 FieldDefinition.Optional<U> value(boolean value);
 
+                /**
+                 * Defines the supplied {@code int} value as a default value of the previously defined or matched field.
+                 *
+                 * @param value The value to define as a default value of the defined field.
+                 * @return A new builder that is equal to this builder but with the given default value declared for the
+                 * previously defined or matched field.
+                 */
                 FieldDefinition.Optional<U> value(int value);
 
+                /**
+                 * Defines the supplied {@code long} value as a default value of the previously defined or matched field.
+                 *
+                 * @param value The value to define as a default value of the defined field.
+                 * @return A new builder that is equal to this builder but with the given default value declared for the
+                 * previously defined or matched field.
+                 */
                 FieldDefinition.Optional<U> value(long value);
 
+                /**
+                 * Defines the supplied {@code float} value as a default value of the previously defined or matched field.
+                 *
+                 * @param value The value to define as a default value of the defined field.
+                 * @return A new builder that is equal to this builder but with the given default value declared for the
+                 * previously defined or matched field.
+                 */
                 FieldDefinition.Optional<U> value(float value);
 
+                /**
+                 * Defines the supplied {@code double} value as a default value of the previously defined or matched field.
+                 *
+                 * @param value The value to define as a default value of the defined field.
+                 * @return A new builder that is equal to this builder but with the given default value declared for the
+                 * previously defined or matched field.
+                 */
                 FieldDefinition.Optional<U> value(double value);
 
+                /**
+                 * Defines the supplied {@link String} value as a default value of the previously defined or matched field.
+                 *
+                 * @param value The value to define as a default value of the defined field.
+                 * @return A new builder that is equal to this builder but with the given default value declared for the
+                 * previously defined or matched field.
+                 */
                 FieldDefinition.Optional<U> value(String value);
             }
 
@@ -638,6 +903,13 @@ public interface DynamicType {
                             return defaultValue(value);
                         }
 
+                        /**
+                         * Defines the supplied value as a default value of the previously defined or matched field.
+                         *
+                         * @param defaultValue The value to define as a default value of the defined field.
+                         * @return A new builder that is equal to this builder but with the given default value declared for the
+                         * previously defined or matched field.
+                         */
                         protected abstract FieldDefinition.Optional<U> defaultValue(Object defaultValue);
 
                         /**
@@ -753,24 +1025,100 @@ public interface DynamicType {
          */
         interface MethodDefinition<S> extends Builder<S> {
 
+            /**
+             * Annotates the previously defined or matched method with the supplied annotations.
+             *
+             * @param annotation The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method.
+             */
             MethodDefinition<S> annotateMethod(Annotation... annotation);
 
+            /**
+             * Annotates the previously defined or matched method with the supplied annotations.
+             *
+             * @param annotations The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method.
+             */
             MethodDefinition<S> annotateMethod(List<? extends Annotation> annotations);
 
+            /**
+             * Annotates the previously defined or matched method with the supplied annotations.
+             *
+             * @param annotation The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method.
+             */
             MethodDefinition<S> annotateMethod(AnnotationDescription... annotation);
 
+            /**
+             * Annotates the previously defined or matched method with the supplied annotations.
+             *
+             * @param annotations The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method.
+             */
             MethodDefinition<S> annotateMethod(Collection<? extends AnnotationDescription> annotations);
 
+            /**
+             * Annotates the parameter of the given index of the previously defined or matched method with the supplied annotations.
+             *
+             * @param index      The parameter's index.
+             * @param annotation The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method's parameter of the given index.
+             */
             MethodDefinition<S> annotateParameter(int index, Annotation... annotation);
 
+            /**
+             * Annotates the parameter of the given index of the previously defined or matched method with the supplied annotations.
+             *
+             * @param index       The parameter's index.
+             * @param annotations The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method's parameter of the given index.
+             */
             MethodDefinition<S> annotateParameter(int index, List<? extends Annotation> annotations);
 
+            /**
+             * Annotates the parameter of the given index of the previously defined or matched method with the supplied annotations.
+             *
+             * @param index      The parameter's index.
+             * @param annotation The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method's parameter of the given index.
+             */
             MethodDefinition<S> annotateParameter(int index, AnnotationDescription... annotation);
 
+            /**
+             * Annotates the parameter of the given index of the previously defined or matched method with the supplied annotations.
+             *
+             * @param index       The parameter's index.
+             * @param annotations The annotations to declare on the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined or matched method's parameter of the given index.
+             */
             MethodDefinition<S> annotateParameter(int index, Collection<? extends AnnotationDescription> annotations);
 
+            /**
+             * Applies the supplied method attribute appender factory onto the previously defined or matched method.
+             *
+             * @param methodAttributeAppenderFactory The method attribute appender factory that should be applied on the
+             *                                       previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the supplied method attribute appender factory
+             * applied to the previously defined or matched method.
+             */
             MethodDefinition<S> attribute(MethodAttributeAppender.Factory methodAttributeAppenderFactory);
 
+            /**
+             * Applies the supplied method transformer onto the previously defined or matched method. The transformed
+             * method is written <i>as it is</i> and it not subject to any validations.
+             *
+             * @param methodTransformer The method transformer to apply to the previously defined or matched method.
+             * @return A new builder that is equal to this builder but with the supplied method transformer
+             * applied to the previously defined or matched method.
+             */
             MethodDefinition<S> transform(MethodTransformer methodTransformer);
 
             /**
@@ -780,12 +1128,41 @@ public interface DynamicType {
              */
             interface ImplementationDefinition<U> {
 
+                /**
+                 * Implements the previously defined or matched method by the supplied implementation.
+                 *
+                 * @param implementation The implementation for implementing the previously defined or matched method.
+                 * @return A new builder where the previously defined or matched method is implemented by the
+                 * supplied implementation.
+                 */
                 MethodDefinition<U> intercept(Implementation implementation);
 
+                /**
+                 * Defines the previously defined or matched method to be {@code abstract}.
+                 *
+                 * @return A new builder where the previously defined or matched method is implemented to be abstract.
+                 */
                 MethodDefinition<U> withoutCode();
 
+                /**
+                 * Defines the previously defined or matched method to return the supplied value as an annotation default value. The
+                 * value must be supplied in its unloaded state, i.e. enumerations as {@link net.bytebuddy.description.enumeration.EnumerationDescription},
+                 * types as {@link TypeDescription} and annotations as {@link AnnotationDescription}. For supplying loaded types, use
+                 * {@link ImplementationDefinition#defaultValue(Object, Class)} must be used.
+                 *
+                 * @param value The value to be defined as a default value.
+                 * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
+                 */
                 MethodDefinition<U> defaultValue(Object value);
 
+                /**
+                 * Defines the previously defined or matched method to return the supplied value as an annotation default value. The
+                 * value must be supplied in its loaded state paired with the property type of the value.
+                 *
+                 * @param value The value to be defined as a default value.
+                 * @param type  The type of the annotation property.
+                 * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
+                 */
                 MethodDefinition<U> defaultValue(Object value, Class<?> type);
 
                 /**
@@ -794,7 +1171,7 @@ public interface DynamicType {
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
                 interface Optional<V> extends ImplementationDefinition<V>, Builder<V> {
-                /* union type */
+                    /* union type */
                 }
 
                 /**
@@ -818,14 +1195,48 @@ public interface DynamicType {
              */
             interface TypeVariableDefinition<U> extends ImplementationDefinition<U> {
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method. The defined method variable does not define any bounds.
+                 *
+                 * @param symbol The symbol of the type variable.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
+                 */
                 TypeVariableDefinition<U> typeVariable(String symbol);
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param symbol The symbol of the type variable.
+                 * @param bound  The bounds of the type variables.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
+                 */
                 TypeVariableDefinition<U> typeVariable(String symbol, Type... bound);
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param symbol The symbol of the type variable.
+                 * @param bounds The bounds of the type variables.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
+                 */
                 TypeVariableDefinition<U> typeVariable(String symbol, List<? extends Type> bounds);
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param symbol The symbol of the type variable.
+                 * @param bound  The bounds of the type variables.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
+                 */
                 TypeVariableDefinition<U> typeVariable(String symbol, TypeDefinition... bound);
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param symbol The symbol of the type variable.
+                 * @param bounds The bounds of the type variables.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
+                 */
                 TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
 
                 /**
@@ -864,12 +1275,36 @@ public interface DynamicType {
              */
             interface ExceptionDefinition<U> extends TypeVariableDefinition<U> {
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param type The type of the exception being declared by the currently defined method.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified exception type.
+                 */
                 ExceptionDefinition<U> throwing(Type... type);
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param types The type of the exception being declared by the currently defined method.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified exception type.
+                 */
                 ExceptionDefinition<U> throwing(List<? extends Type> types);
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param type The type of the exception being declared by the currently defined method.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified exception type.
+                 */
                 ExceptionDefinition<U> throwing(TypeDefinition... type);
 
+                /**
+                 * Defines a method variable to be declared by the currently defined method.
+                 *
+                 * @param types The type of the exception being declared by the currently defined method.
+                 * @return A new builder that is equal to the current builder but where the currently defined method declares the specified exception type.
+                 */
                 ExceptionDefinition<U> throwing(Collection<? extends TypeDefinition> types);
 
                 /**
@@ -903,16 +1338,64 @@ public interface DynamicType {
              */
             interface ParameterDefinition<U> extends ExceptionDefinition<U> {
 
+                /**
+                 * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                 *
+                 * @param type                The parameter's type.
+                 * @param name                The parameter's name.
+                 * @param modifierContributor The parameter's modifiers.
+                 * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                 */
                 Annotatable<U> withParameter(Type type, String name, ModifierContributor.ForParameter... modifierContributor);
 
+                /**
+                 * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                 *
+                 * @param type                 The parameter's type.
+                 * @param name                 The parameter's name.
+                 * @param modifierContributors The parameter's modifiers.
+                 * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                 */
                 Annotatable<U> withParameter(Type type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors);
 
+                /**
+                 * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                 *
+                 * @param type      The parameter's type.
+                 * @param name      The parameter's name.
+                 * @param modifiers The parameter's modifiers.
+                 * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                 */
                 Annotatable<U> withParameter(Type type, String name, int modifiers);
 
+                /**
+                 * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                 *
+                 * @param type                The parameter's type.
+                 * @param name                The parameter's name.
+                 * @param modifierContributor The parameter's modifiers.
+                 * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                 */
                 Annotatable<U> withParameter(TypeDefinition type, String name, ModifierContributor.ForParameter... modifierContributor);
 
+                /**
+                 * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                 *
+                 * @param type                 The parameter's type.
+                 * @param name                 The parameter's name.
+                 * @param modifierContributors The parameter's modifiers.
+                 * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                 */
                 Annotatable<U> withParameter(TypeDefinition type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors);
 
+                /**
+                 * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                 *
+                 * @param type      The parameter's type.
+                 * @param name      The parameter's name.
+                 * @param modifiers The parameter's modifiers.
+                 * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                 */
                 Annotatable<U> withParameter(TypeDefinition type, String name, int modifiers);
 
                 /**
@@ -922,12 +1405,40 @@ public interface DynamicType {
                  */
                 interface Annotatable<V> extends ParameterDefinition<V> {
 
+                    /**
+                     * Annotates the previously defined parameter with the specifed annotations.
+                     *
+                     * @param annotation The annotations to declare on the previously defined parameter.
+                     * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                     * the specified annotations.
+                     */
                     Annotatable<V> annotateParameter(Annotation... annotation);
 
+                    /**
+                     * Annotates the previously defined parameter with the specifed annotations.
+                     *
+                     * @param annotations The annotations to declare on the previously defined parameter.
+                     * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                     * the specified annotations.
+                     */
                     Annotatable<V> annotateParameter(List<? extends Annotation> annotations);
 
+                    /**
+                     * Annotates the previously defined parameter with the specifed annotations.
+                     *
+                     * @param annotation The annotations to declare on the previously defined parameter.
+                     * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                     * the specified annotations.
+                     */
                     Annotatable<V> annotateParameter(AnnotationDescription... annotation);
 
+                    /**
+                     * Annotates the previously defined parameter with the specifed annotations.
+                     *
+                     * @param annotations The annotations to declare on the previously defined parameter.
+                     * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                     * the specified annotations.
+                     */
                     Annotatable<V> annotateParameter(Collection<? extends AnnotationDescription> annotations);
 
                     /**
@@ -994,6 +1505,11 @@ public interface DynamicType {
                                 return materialize().defaultValue(value, type);
                             }
 
+                            /**
+                             * Materializes this instance as a parameter definition with the currently defined properties.
+                             *
+                             * @return A parameter definition with the currently defined properties.
+                             */
                             protected abstract MethodDefinition.ParameterDefinition<X> materialize();
                         }
                     }
@@ -1006,20 +1522,70 @@ public interface DynamicType {
                  */
                 interface Simple<V> extends ExceptionDefinition<V> {
 
+                    /**
+                     * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                     *
+                     * @param type The parameter's type.
+                     * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                     */
                     Annotatable<V> withParameter(Type type);
 
+                    /**
+                     * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
+                     *
+                     * @param type The parameter's type.
+                     * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
+                     */
                     Annotatable<V> withParameter(TypeDefinition type);
 
+                    /**
+                     * A builder for optionally defining an annotation on a parameter.
+                     *
+                     * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                     */
                     interface Annotatable<V> extends Simple<V> {
 
+                        /**
+                         * Annotates the previously defined parameter with the specifed annotations.
+                         *
+                         * @param annotation The annotations to declare on the previously defined parameter.
+                         * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                         * the specified annotations.
+                         */
                         Annotatable<V> annotateParameter(Annotation... annotation);
 
+                        /**
+                         * Annotates the previously defined parameter with the specifed annotations.
+                         *
+                         * @param annotations The annotations to declare on the previously defined parameter.
+                         * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                         * the specified annotations.
+                         */
                         Annotatable<V> annotateParameter(List<? extends Annotation> annotations);
 
+                        /**
+                         * Annotates the previously defined parameter with the specifed annotations.
+                         *
+                         * @param annotation The annotations to declare on the previously defined parameter.
+                         * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                         * the specified annotations.
+                         */
                         Annotatable<V> annotateParameter(AnnotationDescription... annotation);
 
+                        /**
+                         * Annotates the previously defined parameter with the specifed annotations.
+                         *
+                         * @param annotations The annotations to declare on the previously defined parameter.
+                         * @return A new builder that is equal to this builder but with the previously defined parameter annotated with
+                         * the specified annotations.
+                         */
                         Annotatable<V> annotateParameter(Collection<? extends AnnotationDescription> annotations);
 
+                        /**
+                         * An abstract base implementation of a simple parameter definition.
+                         *
+                         * @param <W> A loaded type that the built type is guaranteed to be a subclass of.
+                         */
                         abstract class AbstractBase<W> extends ParameterDefinition.Simple.AbstractBase<W> implements Annotatable<W> {
 
                             @Override
@@ -1037,6 +1603,11 @@ public interface DynamicType {
                                 return annotateParameter(Arrays.asList(annotation));
                             }
 
+                            /**
+                             * An adapter implementation of a simple parameter definition.
+                             *
+                             * @param <X> A loaded type that the built type is guaranteed to be a subclass of.
+                             */
                             protected abstract static class Adapter<X> extends Annotatable.AbstractBase<X> {
 
                                 @Override
@@ -1074,11 +1645,21 @@ public interface DynamicType {
                                     return materialize().defaultValue(value, type);
                                 }
 
+                                /**
+                                 * Materializes this instance as a simple parameter definition with the currently defined properties.
+                                 *
+                                 * @return A simple parameter definition with the currently defined properties.
+                                 */
                                 protected abstract MethodDefinition.ParameterDefinition.Simple<X> materialize();
                             }
                         }
                     }
 
+                    /**
+                     * An abstract base implementation of an exception definition.
+                     *
+                     * @param <W> A loaded type that the built type is guaranteed to be a subclass of.
+                     */
                     abstract class AbstractBase<W> extends ExceptionDefinition.AbstractBase<W> implements Simple<W> {
 
                         @Override
@@ -1088,20 +1669,52 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * A builder for defining an implementation of a method and optionally defining a type variable, thrown exception or method parameter.
+                 * Implementations allow for the <i>one-by-one</i> definition of parameters what gives opportunity to annotate parameters in a fluent
+                 * style. Doing so, it is optionally possible to define parameter names and modifiers. This can be done for either all or no parameters.
+                 * Alternatively, parameters without annotations, names or modifiers can be defined by a single step.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 interface Initial<V> extends ParameterDefinition<V>, Simple<V> {
 
+                    /**
+                     * Defines the specified parameters for the currently defined method.
+                     *
+                     * @param type The parameter types.
+                     * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
+                     */
                     ExceptionDefinition<V> withParameters(Type... type);
 
+                    /**
+                     * Defines the specified parameters for the currently defined method.
+                     *
+                     * @param types The parameter types.
+                     * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
+                     */
                     ExceptionDefinition<V> withParameters(List<? extends Type> types);
 
+                    /**
+                     * Defines the specified parameters for the currently defined method.
+                     *
+                     * @param type The parameter types.
+                     * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
+                     */
                     ExceptionDefinition<V> withParameters(TypeDefinition... type);
 
+                    /**
+                     * Defines the specified parameters for the currently defined method.
+                     *
+                     * @param types The parameter types.
+                     * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
+                     */
                     ExceptionDefinition<V> withParameters(Collection<? extends TypeDefinition> types);
 
                     /**
                      * An abstract base implementation for an initial parameter definition.
                      *
-                     * @param <W>
+                     * @param <W> A loaded type that the built type is guaranteed to be a subclass of.
                      */
                     abstract class AbstractBase<W> extends ParameterDefinition.AbstractBase<W> implements Initial<W> {
 
@@ -1170,6 +1783,11 @@ public interface DynamicType {
                 }
             }
 
+            /**
+             * An abstract base implementation of a method definition.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements MethodDefinition<U> {
 
                 @Override
@@ -1202,15 +1820,36 @@ public interface DynamicType {
                     return annotateParameter(index, Arrays.asList(annotation));
                 }
 
+                /**
+                 * An adapter implementation of a method definition.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 protected abstract static class Adapter<V> extends MethodDefinition.AbstractBase<V> {
 
+                    /**
+                     * The handler that determines how a method is implemented.
+                     */
                     protected final MethodRegistry.Handler handler;
 
+                    /**
+                     * The method attribute appender factory to apply onto the method that is currently being implemented.
+                     */
                     protected final MethodAttributeAppender.Factory methodAttributeAppenderFactory;
 
+                    /**
+                     * The method transformer to apply onto the method that is currently being implemented.
+                     */
                     protected final MethodTransformer methodTransformer;
 
-                    public Adapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
+                    /**
+                     * Creates a new adapter for a method definition.
+                     *
+                     * @param handler                        The handler that determines how a method is implemented.
+                     * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
+                     * @param methodTransformer              The method transformer to apply onto the method that is currently being implemented.
+                     */
+                    protected Adapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
                         this.handler = handler;
                         this.methodAttributeAppenderFactory = methodAttributeAppenderFactory;
                         this.methodTransformer = methodTransformer;
@@ -1226,6 +1865,14 @@ public interface DynamicType {
                         return materialize(handler, methodAttributeAppenderFactory, new MethodTransformer.Compound(this.methodTransformer, methodTransformer));
                     }
 
+                    /**
+                     * Materializes the current builder as a method definition.
+                     *
+                     * @param handler                        The handler that determines how a method is implemented.
+                     * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
+                     * @param methodTransformer              The method transformer to apply onto the method that is currently being implemented.
+                     * @return Returns a method definition for the supplied properties.
+                     */
                     protected abstract MethodDefinition<V> materialize(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer);
 
                     @Override
@@ -1347,6 +1994,11 @@ public interface DynamicType {
             }
 
             @Override
+            public FieldDefinition.Optional<S> serialVersionUid(long serialVersionUid) {
+                return defineField("serialVersionUID", long.class, Visibility.PRIVATE, FieldManifestation.FINAL, Ownership.STATIC).value(serialVersionUid);
+            }
+
+            @Override
             public FieldDefinition.Valuable<S> field(ElementMatcher<? super FieldDescription> matcher) {
                 return field(new LatentMatcher.Resolved<FieldDescription>(matcher));
             }
@@ -1362,8 +2014,8 @@ public interface DynamicType {
             }
 
             @Override
-            public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, Type returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributor) {
-                return defineMethod(name, returnType, ModifierContributor.Resolver.of(modifierContributor).resolve());
+            public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, Type returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors) {
+                return defineMethod(name, returnType, ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
             @Override
@@ -1377,8 +2029,8 @@ public interface DynamicType {
             }
 
             @Override
-            public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, TypeDefinition returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributor) {
-                return defineMethod(name, returnType, ModifierContributor.Resolver.of(modifierContributor).resolve());
+            public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, TypeDefinition returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors) {
+                return defineMethod(name, returnType, ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
             @Override
@@ -1387,8 +2039,8 @@ public interface DynamicType {
             }
 
             @Override
-            public MethodDefinition.ParameterDefinition.Initial<S> defineConstructor(Collection<? extends ModifierContributor.ForMethod> modifierContributor) {
-                return defineConstructor(ModifierContributor.Resolver.of(modifierContributor).resolve());
+            public MethodDefinition.ParameterDefinition.Initial<S> defineConstructor(Collection<? extends ModifierContributor.ForMethod> modifierContributors) {
+                return defineConstructor(ModifierContributor.Resolver.of(modifierContributors).resolve());
             }
 
             @Override
@@ -1847,6 +2499,7 @@ public interface DynamicType {
                 /**
                  * Materializes the supplied state of a dynamic type builder.
                  *
+                 * @param instrumentedType             The instrumented type.
                  * @param fieldRegistry                The current field registry.
                  * @param methodRegistry               The current method registry.
                  * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
@@ -2172,13 +2825,20 @@ public interface DynamicType {
 
                     @Override
                     public MethodDefinition<U> withoutCode() {
-                        return materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
+                        return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
+                                ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
+                                token.getTypeVariables(),
+                                token.getReturnType(),
+                                token.getParameterTokens(),
+                                token.getExceptionTypes(),
+                                token.getAnnotations(),
+                                token.getDefaultValue())).materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
                     }
 
                     @Override
                     public MethodDefinition<U> defaultValue(Object value) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
-                                token.getModifiers(),
+                                ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
                                 token.getTypeVariables(),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
@@ -2227,10 +2887,21 @@ public interface DynamicType {
                                 '}';
                     }
 
+                    /**
+                     * An annotation adapter for a parameter definition.
+                     */
                     protected class ParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Annotatable.AbstractBase.Adapter<U> {
 
+                        /**
+                         * The token of the currently defined parameter.
+                         */
                         private final ParameterDescription.Token token;
 
+                        /**
+                         * Creates a new parameter annotation adapter.
+                         *
+                         * @param token The token of the currently defined parameter.
+                         */
                         protected ParameterAnnotationAdapter(ParameterDescription.Token token) {
                             this.token = token;
                         }
@@ -2255,7 +2926,12 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getDefaultValue()));
                         }
 
-                        private MethodDefinitionAdapter getAdapter() {
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private MethodDefinitionAdapter getOuter() {
                             return MethodDefinitionAdapter.this;
                         }
 
@@ -2264,27 +2940,38 @@ public interface DynamicType {
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && token.equals(((ParameterAnnotationAdapter) other).token)
-                                    && getAdapter().equals(((ParameterAnnotationAdapter) other).getAdapter());
+                                    && getOuter().equals(((ParameterAnnotationAdapter) other).getOuter());
                         }
 
                         @Override
                         public int hashCode() {
-                            return 31 * getAdapter().hashCode() + token.hashCode();
+                            return 31 * getOuter().hashCode() + token.hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.ParameterAnnotationAdapter{" +
-                                    "adapter=" + getAdapter() +
+                                    "adapter=" + getOuter() +
                                     ", token=" + token +
                                     '}';
                         }
                     }
 
+                    /**
+                     * An annotation adapter for a simple parameter definition.
+                     */
                     protected class SimpleParameterAnnotationAdapter extends MethodDefinition.ParameterDefinition.Simple.Annotatable.AbstractBase.Adapter<U> {
 
+                        /**
+                         * The token of the currently defined parameter.
+                         */
                         private final ParameterDescription.Token token;
 
+                        /**
+                         * Creates a new simple parameter annotation adapter.
+                         *
+                         * @param token The token of the currently defined parameter.
+                         */
                         protected SimpleParameterAnnotationAdapter(ParameterDescription.Token token) {
                             this.token = token;
                         }
@@ -2309,7 +2996,12 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getDefaultValue()));
                         }
 
-                        private MethodDefinitionAdapter getAdapter() {
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private MethodDefinitionAdapter getOuter() {
                             return MethodDefinitionAdapter.this;
                         }
 
@@ -2318,29 +3010,44 @@ public interface DynamicType {
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && token.equals(((SimpleParameterAnnotationAdapter) other).token)
-                                    && getAdapter().equals(((SimpleParameterAnnotationAdapter) other).getAdapter());
+                                    && getOuter().equals(((SimpleParameterAnnotationAdapter) other).getOuter());
                         }
 
                         @Override
                         public int hashCode() {
-                            return 31 * getAdapter().hashCode() + token.hashCode();
+                            return 31 * getOuter().hashCode() + token.hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.SimpleParameterAnnotationAdapter{" +
-                                    "adapter=" + getAdapter() +
+                                    "adapter=" + getOuter() +
                                     ", token=" + token +
                                     '}';
                         }
                     }
 
+                    /**
+                     * An annotation adapter for a method definition.
+                     */
                     protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
 
+                        /**
+                         * Creates a new annotation adapter.
+                         *
+                         * @param handler The handler that determines how a method is implemented.
+                         */
                         protected AnnotationAdapter(MethodRegistry.Handler handler) {
                             this(handler, MethodAttributeAppender.ForInstrumentedMethod.INSTANCE, MethodTransformer.NoOp.INSTANCE);
                         }
 
+                        /**
+                         * Creates a new annotation adapter.
+                         *
+                         * @param handler                        The handler that determines how a method is implemented.
+                         * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
+                         * @param methodTransformer              The method transformer to apply onto the method that is currently being implemented.
+                         */
                         protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
                             super(handler, methodAttributeAppenderFactory, methodTransformer);
                         }
@@ -2398,7 +3105,12 @@ public interface DynamicType {
                                     ignoredMethods);
                         }
 
-                        private MethodDefinitionAdapter getAdapter() {
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private MethodDefinitionAdapter getOuter() {
                             return MethodDefinitionAdapter.this;
                         }
 
@@ -2407,18 +3119,18 @@ public interface DynamicType {
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && super.equals(other)
-                                    && getAdapter().equals(((AnnotationAdapter) other).getAdapter());
+                                    && getOuter().equals(((AnnotationAdapter) other).getOuter());
                         }
 
                         @Override
                         public int hashCode() {
-                            return super.hashCode() + getAdapter().hashCode();
+                            return super.hashCode() + getOuter().hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.AnnotationAdapter{" +
-                                    "adapter=" + getAdapter() +
+                                    "adapter=" + getOuter() +
                                     ", handler=" + handler +
                                     ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
                                     ", methodTransformer=" + methodTransformer +
@@ -2432,8 +3144,16 @@ public interface DynamicType {
                  */
                 protected class MethodMatchAdapter extends MethodDefinition.ImplementationDefinition.AbstractBase<U> {
 
+                    /**
+                     * The method matcher of this adapter.
+                     */
                     private final LatentMatcher<? super MethodDescription> matcher;
 
+                    /**
+                     * Creates a new method match adapter.
+                     *
+                     * @param matcher The method matcher of this adapter.
+                     */
                     protected MethodMatchAdapter(LatentMatcher<? super MethodDescription> matcher) {
                         this.matcher = matcher;
                     }
@@ -2453,11 +3173,22 @@ public interface DynamicType {
                         return materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
                     }
 
-                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
+                    /**
+                     * Materializes the method definition with the supplied handler.
+                     *
+                     * @param handler The handler that implementes any method matched by this instances matcher.
+                     * @return A method definition where any matched method is implemented by the supplied handler.
+                     */
+                    private MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
                         return new AnnotationAdapter(handler);
                     }
 
-                    private Adapter<?> getAdapter() {
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private Adapter<?> getOuter() {
                         return Adapter.this;
                     }
 
@@ -2466,28 +3197,43 @@ public interface DynamicType {
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && matcher.equals(((MethodMatchAdapter) other).matcher)
-                                && getAdapter().equals(((MethodMatchAdapter) other).getAdapter());
+                                && getOuter().equals(((MethodMatchAdapter) other).getOuter());
                     }
 
                     @Override
                     public int hashCode() {
-                        return 31 * getAdapter().hashCode() + matcher.hashCode();
+                        return 31 * getOuter().hashCode() + matcher.hashCode();
                     }
 
                     @Override
                     public String toString() {
                         return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter{" +
-                                "adapter=" + getAdapter() +
+                                "adapter=" + getOuter() +
                                 ", matcher=" + matcher +
                                 '}';
                     }
 
+                    /**
+                     * An annotation adapter for implementing annotations during a method definition.
+                     */
                     protected class AnnotationAdapter extends MethodDefinition.AbstractBase.Adapter<U> {
 
+                        /**
+                         * Creates a new annotation adapter.
+                         *
+                         * @param handler The handler that determines how a method is implemented.
+                         */
                         protected AnnotationAdapter(MethodRegistry.Handler handler) {
                             this(handler, MethodAttributeAppender.NoOp.INSTANCE, MethodTransformer.NoOp.INSTANCE);
                         }
 
+                        /**
+                         * Creates a new annotation adapter.
+                         *
+                         * @param handler                        The handler that determines how a method is implemented.
+                         * @param methodAttributeAppenderFactory The method attribute appender factory to apply onto the method that is currently being implemented.
+                         * @param methodTransformer              The method transformer to apply onto the method that is currently being implemnted.
+                         */
                         protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
                             super(handler, methodAttributeAppenderFactory, methodTransformer);
                         }
@@ -2527,7 +3273,12 @@ public interface DynamicType {
                                     ignoredMethods);
                         }
 
-                        private MethodMatchAdapter getAdapter() {
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private MethodMatchAdapter getOuter() {
                             return MethodMatchAdapter.this;
                         }
 
@@ -2536,18 +3287,18 @@ public interface DynamicType {
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
                                     && super.equals(other)
-                                    && getAdapter().equals(((AnnotationAdapter) other).getAdapter());
+                                    && getOuter().equals(((AnnotationAdapter) other).getOuter());
                         }
 
                         @Override
                         public int hashCode() {
-                            return super.hashCode() + getAdapter().hashCode();
+                            return super.hashCode() + getOuter().hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.AnnotationAdapter{" +
-                                    "adapter=" + getAdapter() +
+                                    "adapter=" + getOuter() +
                                     ", handler=" + handler +
                                     ", methodAttributeAppenderFactory=" + methodAttributeAppenderFactory +
                                     ", methodTransformer=" + methodTransformer +
