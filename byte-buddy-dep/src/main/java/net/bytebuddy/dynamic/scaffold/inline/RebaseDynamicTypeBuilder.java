@@ -13,7 +13,7 @@ import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 import static net.bytebuddy.matcher.ElementMatchers.methodRepresentedBy;
@@ -62,7 +62,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                     AnnotationRetention annotationRetention,
                                     Implementation.Context.Factory implementationContextFactory,
                                     MethodGraph.Compiler methodGraphCompiler,
-                                    ElementMatcher<? super MethodDescription> ignoredMethods,
+                                    LatentMatcher<? super MethodDescription> ignoredMethods,
                                     TypeDescription originalType,
                                     ClassFileLocator classFileLocator,
                                     MethodNameTransformer methodNameTransformer) {
@@ -113,7 +113,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                        AnnotationRetention annotationRetention,
                                        Implementation.Context.Factory implementationContextFactory,
                                        MethodGraph.Compiler methodGraphCompiler,
-                                       ElementMatcher<? super MethodDescription> ignoredMethods,
+                                       LatentMatcher<? super MethodDescription> ignoredMethods,
                                        TypeDescription originalType,
                                        ClassFileLocator classFileLocator,
                                        MethodNameTransformer methodNameTransformer) {
@@ -146,7 +146,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                                                  AnnotationRetention annotationRetention,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
-                                                 ElementMatcher<? super MethodDescription> ignoredMethods) {
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new RebaseDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,

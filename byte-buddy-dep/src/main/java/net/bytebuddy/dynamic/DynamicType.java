@@ -483,11 +483,8 @@ public interface DynamicType {
         /**
          * <p>
          * Matches a field that is already declared by the instrumented type. This gives opportunity to change that field's
-         * default value, annotations or custom attributes.
-         * </p>
-         * <p>
-         * A latent field matcher gives opportunity to resolve an {@link ElementMatcher} for a {@link FieldDescription} based
-         * on the instrumented type before applying the matcher.
+         * default value, annotations or custom attributes. Using a latent matcher gives opportunity to resolve an
+         * {@link ElementMatcher} based on the instrumented type before applying the matcher.
          * </p>
          * <p>
          * When a type is redefined or rebased, any annotations that the field already defines might be preserved if Byte
@@ -1355,6 +1352,11 @@ public interface DynamicType {
             }
 
             @Override
+            public Builder<S> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods) {
+                return ignoreAlso(new LatentMatcher.Resolved<MethodDescription>(ignoredMethods));
+            }
+
+            @Override
             public MethodDefinition.ParameterDefinition.Initial<S> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor) {
                 return defineMethod(name, returnType, Arrays.asList(modifierContributor));
             }
@@ -1495,6 +1497,11 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Builder<U> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
+                    return materialize().ignoreAlso(ignoredMethods);
+                }
+
+                @Override
                 public Builder<U> typeVariable(String symbol, TypeDefinition bound) {
                     return materialize().typeVariable(symbol, bound);
                 }
@@ -1602,7 +1609,7 @@ public interface DynamicType {
                 /**
                  * A matcher for identifying methods that should be excluded from instrumentation.
                  */
-                protected final ElementMatcher<? super MethodDescription> ignoredMethods;
+                protected final LatentMatcher<? super MethodDescription> ignoredMethods;
 
                 /**
                  * Creates a new default type writer for creating a new type that is not based on an existing class file.
@@ -1615,7 +1622,7 @@ public interface DynamicType {
                  * @param classFileVersion             The class file version to define auxiliary types in.
                  * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
                  * @param annotationValueFilterFactory The annotation value filter factory to apply.
-                 * @param annotationRetention           The annotation retention to apply.
+                 * @param annotationRetention          The annotation retention to apply.
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
@@ -1631,7 +1638,7 @@ public interface DynamicType {
                                   AnnotationRetention annotationRetention,
                                   Implementation.Context.Factory implementationContextFactory,
                                   MethodGraph.Compiler methodGraphCompiler,
-                                  ElementMatcher<? super MethodDescription> ignoredMethods) {
+                                  LatentMatcher<? super MethodDescription> ignoredMethods) {
                     this.instrumentedType = instrumentedType;
                     this.fieldRegistry = fieldRegistry;
                     this.methodRegistry = methodRegistry;
@@ -1677,7 +1684,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods) {
+                @SuppressWarnings("unchecked") // In absence of @SafeVarargs for Java 6
+                public Builder<U> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods) {
                     return materialize(instrumentedType,
                             fieldRegistry,
                             methodRegistry,
@@ -1689,7 +1697,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
-                            new ElementMatcher.Junction.Disjunction<MethodDescription>(this.ignoredMethods, ignoredMethods));
+                            new LatentMatcher.Compound(this.ignoredMethods, ignoredMethods));
                 }
 
                 @Override
@@ -1846,7 +1854,7 @@ public interface DynamicType {
                  * @param classFileVersion             The class file version to define auxiliary types in.
                  * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
                  * @param annotationValueFilterFactory The annotation value filter factory to apply.
-                 * @param attributeRetention           The annotation retention to apply.
+                 * @param annotationRetention          The annotation retention to apply.
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
@@ -1863,7 +1871,7 @@ public interface DynamicType {
                                                           AnnotationRetention annotationRetention,
                                                           Implementation.Context.Factory implementationContextFactory,
                                                           MethodGraph.Compiler methodGraphCompiler,
-                                                          ElementMatcher<? super MethodDescription> ignoredMethods);
+                                                          LatentMatcher<? super MethodDescription> ignoredMethods);
 
                 @Override
                 public boolean equals(Object other) {

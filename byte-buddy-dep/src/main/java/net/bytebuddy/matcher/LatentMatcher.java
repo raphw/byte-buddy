@@ -190,6 +190,16 @@ public interface LatentMatcher<T> {
             this.matchers = matchers;
         }
 
+        /**
+         * Creates a new compound latent matcher for method descriptions. This method is defined non-generically
+         * to avoid warnings over unsafe use of varargs that cannot be suppressed on Java.
+         *
+         * @param matcher The matchers this compound matcher represents.
+         */
+        public static LatentMatcher<MethodDescription> of(LatentMatcher<? super MethodDescription>... matcher) {
+            return new Compound<MethodDescription>(Arrays.asList(matcher));
+        }
+
         @Override
         public ElementMatcher<? super S> resolve(TypeDescription instrumentedType) {
             ElementMatcher.Junction<? super S> matcher = none();

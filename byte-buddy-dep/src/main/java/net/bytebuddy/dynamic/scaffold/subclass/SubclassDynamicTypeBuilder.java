@@ -48,7 +48,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       AnnotationRetention annotationRetention,
                                       Implementation.Context.Factory implementationContextFactory,
                                       MethodGraph.Compiler methodGraphCompiler,
-                                      ElementMatcher<? super MethodDescription> ignoredMethods,
+                                      LatentMatcher<? super MethodDescription> ignoredMethods,
                                       ConstructorStrategy constructorStrategy) {
         this(instrumentedType,
                 new FieldRegistry.Default(),
@@ -93,7 +93,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          AnnotationRetention annotationRetention,
                                          Implementation.Context.Factory implementationContextFactory,
                                          MethodGraph.Compiler methodGraphCompiler,
-                                         ElementMatcher<? super MethodDescription> ignoredMethods,
+                                         LatentMatcher<? super MethodDescription> ignoredMethods,
                                          ConstructorStrategy constructorStrategy) {
         super(instrumentedType,
                 fieldRegistry,
@@ -122,7 +122,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  AnnotationRetention annotationRetention,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
-                                                 ElementMatcher<? super MethodDescription> ignoredMethods) {
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new SubclassDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
@@ -213,14 +213,14 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
         /**
          * A matcher for the ignored methods.
          */
-        private final ElementMatcher<? super MethodDescription> ignoredMethods;
+        private final LatentMatcher<? super MethodDescription> ignoredMethods;
 
         /**
          * Creates a latent method matcher that matches all methods that are to be instrumented by a {@link SubclassDynamicTypeBuilder}.
          *
          * @param ignoredMethods A matcher for the ignored methods.
          */
-        protected InstrumentableMatcher(ElementMatcher<? super MethodDescription> ignoredMethods) {
+        protected InstrumentableMatcher(LatentMatcher<? super MethodDescription> ignoredMethods) {
             this.ignoredMethods = ignoredMethods;
         }
 
@@ -229,7 +229,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             // Casting is required by JDK 6.
             return (ElementMatcher<? super MethodDescription>) isVirtual().and(not(isFinal()))
                     .and(isVisibleTo(instrumentedType))
-                    .and(not(ignoredMethods))
+                    .and(not(ignoredMethods.resolve(instrumentedType)))
                     .or(isDeclaredBy(instrumentedType));
         }
 

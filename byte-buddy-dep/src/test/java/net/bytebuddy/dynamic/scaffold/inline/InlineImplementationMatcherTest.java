@@ -12,6 +12,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -33,13 +34,17 @@ public class InlineImplementationMatcherTest {
     private TypeDescription.Generic typeDescription, otherType;
 
     @Mock
-    private ElementMatcher<? super MethodDescription> ignoredMethods, predefinedMethods;
+    private LatentMatcher<? super MethodDescription> latentIgnoredMethods;
+
+    @Mock
+    private ElementMatcher<? super MethodDescription> predefinedMethods, ignoredMethods;
 
     private LatentMatcher<MethodDescription> matcher;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        matcher = new InliningImplementationMatcher(ignoredMethods, predefinedMethods);
+        matcher = new InliningImplementationMatcher(latentIgnoredMethods, predefinedMethods);
         when(rawTypeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(rawTypeDescription.asGenericType()).thenReturn(typeDescription);
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
@@ -47,6 +52,7 @@ public class InlineImplementationMatcherTest {
         when(otherType.asErasure()).thenReturn(rawOtherType);
         when(otherType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(rawOtherType.asGenericType()).thenReturn(otherType);
+        when(latentIgnoredMethods.resolve(Mockito.any(TypeDescription.class))).thenReturn((ElementMatcher) ignoredMethods);
     }
 
     @Test

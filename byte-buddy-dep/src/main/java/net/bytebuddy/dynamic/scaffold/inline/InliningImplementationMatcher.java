@@ -16,7 +16,7 @@ public class InliningImplementationMatcher implements LatentMatcher<MethodDescri
     /**
      * A method matcher that matches any ignored method.
      */
-    private final ElementMatcher<? super MethodDescription> ignoredMethods;
+    private final LatentMatcher<? super MethodDescription> ignoredMethods;
 
     /**
      * A method matcher that matches any predefined method.
@@ -29,7 +29,7 @@ public class InliningImplementationMatcher implements LatentMatcher<MethodDescri
      * @param ignoredMethods             A method matcher that matches any ignored method.
      * @param predefinedMethodSignatures A method matcher that matches any predefined method.
      */
-    protected InliningImplementationMatcher(ElementMatcher<? super MethodDescription> ignoredMethods,
+    protected InliningImplementationMatcher(LatentMatcher<? super MethodDescription> ignoredMethods,
                                             ElementMatcher<? super MethodDescription> predefinedMethodSignatures) {
         this.ignoredMethods = ignoredMethods;
         this.predefinedMethodSignatures = predefinedMethodSignatures;
@@ -44,7 +44,7 @@ public class InliningImplementationMatcher implements LatentMatcher<MethodDescri
      * @param originalType   The original type of the instrumentation before adding any user methods.
      * @return A latent method matcher that identifies any method to instrument for a rebasement or redefinition.
      */
-    protected static LatentMatcher<MethodDescription> of(ElementMatcher<? super MethodDescription> ignoredMethods, TypeDescription originalType) {
+    protected static LatentMatcher<MethodDescription> of(LatentMatcher<? super MethodDescription> ignoredMethods, TypeDescription originalType) {
         ElementMatcher.Junction<MethodDescription> predefinedMethodSignatures = none();
         for (MethodDescription methodDescription : originalType.getDeclaredMethods()) {
             ElementMatcher.Junction<MethodDescription> signature = methodDescription.isConstructor()
@@ -59,7 +59,8 @@ public class InliningImplementationMatcher implements LatentMatcher<MethodDescri
 
     @Override
     public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-        return (ElementMatcher<? super MethodDescription>) not(ignoredMethods).and(isVirtual().and(not(isFinal())).or(isDeclaredBy(instrumentedType)))
+        return (ElementMatcher<? super MethodDescription>) not(ignoredMethods.resolve(instrumentedType))
+                .and(isVirtual().and(not(isFinal())).or(isDeclaredBy(instrumentedType)))
                 .or(isDeclaredBy(instrumentedType).and(not(predefinedMethodSignatures)));
     }
 

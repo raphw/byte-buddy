@@ -16,6 +16,7 @@ import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
@@ -33,13 +34,16 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     private TypeDescription.Generic typeDescription, otherType;
 
     @Mock
+    private LatentMatcher<? super MethodDescription> latentIgnoredMethods;
+
+    @Mock
     private ElementMatcher<? super MethodDescription> ignoredMethods;
 
     private LatentMatcher<MethodDescription> matcher;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        matcher = new SubclassDynamicTypeBuilder.InstrumentableMatcher(ignoredMethods);
         when(rawTypeDescription.asGenericType()).thenReturn(typeDescription);
         when(rawTypeDescription.asErasure()).thenReturn(rawTypeDescription);
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
@@ -52,6 +56,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(otherType.asGenericType()).thenReturn(otherType);
         when(otherType.asErasure()).thenReturn(rawOtherType);
         when(otherType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(latentIgnoredMethods.resolve(any(TypeDescription.class))).thenReturn((ElementMatcher) ignoredMethods);
+        matcher = new SubclassDynamicTypeBuilder.InstrumentableMatcher(latentIgnoredMethods);
     }
 
     @Test

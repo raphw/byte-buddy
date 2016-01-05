@@ -54,10 +54,10 @@ public interface MethodRegistry {
      *
      * @param instrumentedType    The instrumented type that should be created.
      * @param methodGraphCompiler The method graph compiler to be used for analyzing the fully assembled instrumented type.
-     * @param methodFilter        A filter that only matches methods that should be instrumented.
+     * @param ignoredMethods        A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
-    Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMatcher<? super MethodDescription> methodFilter);
+    Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMatcher<? super MethodDescription> ignoredMethods);
 
     /**
      * A handler for implementing a method.
@@ -467,7 +467,7 @@ public interface MethodRegistry {
         @Override
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodGraph.Compiler methodGraphCompiler,
-                                               LatentMatcher<? super MethodDescription> methodFilter) {
+                                               LatentMatcher<? super MethodDescription> ignoredMethods) {
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
             Set<Handler> handlers = new HashSet<Handler>();
             MethodList<?> helperMethods = instrumentedType.getDeclaredMethods();
@@ -486,7 +486,7 @@ public interface MethodRegistry {
             ElementMatcher<? super MethodDescription> relevanceMatcher = (ElementMatcher<? super MethodDescription>) not(anyOf(implementations.keySet()))
                     .and(returns(isVisibleTo(instrumentedType)))
                     .and(hasParameters(whereNone(hasType(not(isVisibleTo(instrumentedType))))))
-                    .and(methodFilter.resolve(instrumentedType));
+                    .and(ignoredMethods.resolve(instrumentedType));
             for (MethodGraph.Node node : methodGraph.listNodes()) {
                 MethodDescription methodDescription = node.getRepresentative();
                 boolean visibilityBridge = instrumentedType.isPublic() && !instrumentedType.isInterface();

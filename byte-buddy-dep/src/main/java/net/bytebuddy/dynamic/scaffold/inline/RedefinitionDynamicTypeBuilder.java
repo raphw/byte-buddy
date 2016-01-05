@@ -13,7 +13,7 @@ import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 
 /**
  * A type builder that redefines an instrumented type.
@@ -53,7 +53,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           AnnotationRetention annotationRetention,
                                           Implementation.Context.Factory implementationContextFactory,
                                           MethodGraph.Compiler methodGraphCompiler,
-                                          ElementMatcher<? super MethodDescription> ignoredMethods,
+                                          LatentMatcher<? super MethodDescription> ignoredMethods,
                                           TypeDescription originalType,
                                           ClassFileLocator classFileLocator) {
         this(instrumentedType,
@@ -101,7 +101,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              AnnotationRetention annotationRetention,
                                              Implementation.Context.Factory implementationContextFactory,
                                              MethodGraph.Compiler methodGraphCompiler,
-                                             ElementMatcher<? super MethodDescription> ignoredMethods,
+                                             LatentMatcher<? super MethodDescription> ignoredMethods,
                                              TypeDescription originalType,
                                              ClassFileLocator classFileLocator) {
         super(instrumentedType,
@@ -132,7 +132,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  AnnotationRetention annotationRetention,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
-                                                 ElementMatcher<? super MethodDescription> ignoredMethods) {
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new RedefinitionDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,

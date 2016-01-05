@@ -35,6 +35,7 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
@@ -129,7 +130,7 @@ public class ByteBuddy {
     /**
      * A matcher for identifying methods that should be excluded from instrumentation.
      */
-    protected final ElementMatcher<? super MethodDescription> ignoredMethods;
+    protected final LatentMatcher<? super MethodDescription> ignoredMethods;
 
     /**
      * <p>
@@ -159,7 +160,7 @@ public class ByteBuddy {
                 AnnotationRetention.ENABLED,
                 Implementation.Context.Default.Factory.INSTANCE,
                 MethodGraph.Compiler.DEFAULT,
-                isSynthetic().or(isDefaultFinalizer()));
+                new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
     }
 
     /**
@@ -181,7 +182,7 @@ public class ByteBuddy {
                         AnnotationRetention annotationRetention,
                         Implementation.Context.Factory implementationContextFactory,
                         MethodGraph.Compiler methodGraphCompiler,
-                        ElementMatcher<? super MethodDescription> ignoredMethods) {
+                        LatentMatcher<? super MethodDescription> ignoredMethods) {
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
         this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
@@ -818,6 +819,21 @@ public class ByteBuddy {
      * @return A new Byte Buddy instance that excludes any method from instrumentation if it is matched by the supplied matcher.
      */
     public ByteBuddy ignore(ElementMatcher<? super MethodDescription> ignoredMethods) {
+        return ignore(new LatentMatcher.Resolved<MethodDescription>(ignoredMethods));
+    }
+
+    /**
+     * <p>
+     * Creates a new configuration where any {@link MethodDescription} that matches the provided method matcher is excluded
+     * from instrumentation. Any previous matcher for ignored methods is replaced. By default, Byte Buddy ignores any
+     * synthetic method (bridge methods are handled automatically) and the {@link Object#finalize()} method. Using a latent
+     * matcher gives opportunity to resolve an {@link ElementMatcher} based on the instrumented type before applying the matcher.
+     * </p>
+     *
+     * @param ignoredMethods A matcher for identifying methods to be excluded from instrumentation.
+     * @return A new Byte Buddy instance that excludes any method from instrumentation if it is matched by the supplied matcher.
+     */
+    public ByteBuddy ignore(LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new ByteBuddy(classFileVersion,
                 namingStrategy,
                 auxiliaryTypeNamingStrategy,
