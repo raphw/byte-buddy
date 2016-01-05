@@ -15,12 +15,13 @@ import java.util.List;
 /**
  * A method transformer allows to transform a method prior to its definition. This way, previously defined methods
  * can be substituted by a different method description. It is the responsibility of the method transformer that
- * the substitute method remains signature compatible to the substituted method.
+ * the substitute method remains compatible to the substituted method.
  */
 public interface MethodTransformer {
 
     /**
-     * Transforms a method.
+     * Transforms a method. The transformed method is <b>not</b> validated by Byte Buddy and it is the responsibility
+     * of the transformer to assure the validity of the transformation.
      *
      * @param instrumentedType  The instrumented type.
      * @param methodDescription The method to be transformed.

@@ -3,11 +3,9 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.modifier.MethodManifestation;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.MethodTransformer;
+import net.bytebuddy.dynamic.*;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
@@ -360,6 +358,17 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     }
 
     @Test
+    public void testFieldTransformationExistingField() throws Exception {
+        Class<?> type = create(Transform.class)
+                .field(named(FOO))
+                .transform(FieldTransformer.Simple.withModifiers(Visibility.PUBLIC))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredField(FOO).getModifiers(), is(Opcodes.ACC_PUBLIC));
+    }
+
+    @Test
     public void testReaderHint() throws Exception {
         AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
         when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
@@ -504,7 +513,10 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         /* empty */
     }
 
+    @SuppressWarnings("unused")
     public static class Transform {
+
+        Void foo;
 
         public String foo() {
             return null;

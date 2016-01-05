@@ -236,10 +236,23 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    public void testFieldTransformation() throws Exception {
+        Class<?> type = createPlain()
+                .defineField(FOO, Void.class)
+                .field(named(FOO))
+                .transform(FieldTransformer.Simple.withModifiers(Visibility.PUBLIC))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredField(FOO).getModifiers(), is(Opcodes.ACC_PUBLIC));
+    }
+
+    @Test
     public void testIgnoredMethod() throws Exception {
         Class<?> type = createPlain()
                 .ignoreAlso(named(TO_STRING))
-                .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .method(named(TO_STRING))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

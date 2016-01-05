@@ -113,6 +113,7 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getTypeVariables().getOnly().getSymbol(), is(QUX));
         assertThat(transformed.getExceptionTypes().size(), is(1));
         assertThat(transformed.getExceptionTypes().getOnly(), is(exceptionType));
+        assertThat(transformed.getDeclaredAnnotations(), is(Collections.singletonList(methodAnnotation)));
         assertThat(transformed.getParameters().size(), is(1));
         assertThat(transformed.getParameters().getOnly().getType(), is(parameterType));
         assertThat(transformed.getParameters().getOnly().getName(), is(BAR));
@@ -120,6 +121,7 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(transformed.getParameters().getOnly().getDeclaredAnnotations().getOnly(), is(parameterAnnotation));
         assertThat(transformed.getParameters().getOnly().asDefined(), is(definedParameter));
+        assertThat(transformed.getParameters().getOnly().getDeclaredAnnotations(), is(Collections.singletonList(parameterAnnotation)));
         assertThat(transformed.getParameters().getOnly().getDeclaringMethod(), is(transformed));
         assertThat(transformed.asDefined(), is(definedMethod));
     }

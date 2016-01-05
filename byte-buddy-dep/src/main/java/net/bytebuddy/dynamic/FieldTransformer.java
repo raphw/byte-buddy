@@ -9,12 +9,31 @@ import net.bytebuddy.description.type.TypeDescription;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * A field transformer allows to transform a field prior to its definition. This way, previously defined fields
+ * can be substituted by a different field description. It is the responsibility of the field transformer that
+ * the substitute field remains compatible to the substituted field.
+ */
 public interface FieldTransformer {
 
+    /**
+     * Transforms a field. The transformed field is <b>not</b> validated by Byte Buddy and it is the responsibility
+     * of the transformer to assure the validity of the transformation.
+     *
+     * @param instrumentedType The instrumented type.
+     * @param fieldDescription The field to be transformed.
+     * @return The transformed field.
+     */
     FieldDescription transform(TypeDescription instrumentedType, FieldDescription fieldDescription);
 
+    /**
+     * A field transformer that returns the original field.
+     */
     enum NoOp implements FieldTransformer {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -28,14 +47,31 @@ public interface FieldTransformer {
         }
     }
 
+    /**
+     * A simple implementation of a field transformer.
+     */
     class Simple implements FieldTransformer {
 
+        /**
+         * The token transformer to apply to a transformed field.
+         */
         private final TokenTransformer tokenTransformer;
 
+        /**
+         * Creates a new simple field transformer.
+         *
+         * @param tokenTransformer The token transformer to apply to a transformed field.
+         */
         public Simple(TokenTransformer tokenTransformer) {
             this.tokenTransformer = tokenTransformer;
         }
 
+        /**
+         * Creates a field transformer that patches the transformed field by the givien modifier contributors.
+         *
+         * @param modifierContributor The modifier contributors to apply.
+         * @return A suitable field transformer.
+         */
         public static FieldTransformer withModifiers(ModifierContributor.ForField... modifierContributor) {
             return new Simple(new TokenTransformer.ForModifierTransformation(Arrays.asList(modifierContributor)));
         }
@@ -58,19 +94,39 @@ public interface FieldTransformer {
 
         @Override
         public String toString() {
-            return "MethodTransformer.Simple{" +
-                    "transformer=" + tokenTransformer +
+            return "FieldTransformer.Simple{" +
+                    "tokenTransformer=" + tokenTransformer +
                     '}';
         }
 
+        /**
+         * A transformer for a field token where the resulting token is used to represent the transformed field.
+         */
         public interface TokenTransformer {
 
+            /**
+             * Transforms a field token.
+             *
+             * @param token The original token that is being transformed.
+             * @return The transformed field token.
+             */
             FieldDescription.Token transform(FieldDescription.Token token);
 
+            /**
+             * A token transformer that transforms a field's modifier.
+             */
             class ForModifierTransformation implements TokenTransformer {
 
+                /**
+                 * The list of modifier contributors to apply onto the transformed field token.
+                 */
                 private final List<? extends ModifierContributor.ForField> modifierContributors;
 
+                /**
+                 * Creates a new field token modifier for transforming a field's modifiers.
+                 *
+                 * @param modifierContributors The list of modifier contributors to apply onto the transformed field token.
+                 */
                 public ForModifierTransformation(List<? extends ModifierContributor.ForField> modifierContributors) {
                     this.modifierContributors = modifierContributors;
                 }
@@ -96,21 +152,40 @@ public interface FieldTransformer {
 
                 @Override
                 public String toString() {
-                    return "MethodTransformer.Simple.Transformer.ForModifierTransformation{" +
+                    return "FieldTransformer.Simple.TokenTransformer.ForModifierTransformation{" +
                             "modifierContributors=" + modifierContributors +
                             '}';
                 }
             }
         }
 
+        /**
+         * An implementation of a transformed field.
+         */
         protected static class TransformedField extends FieldDescription.AbstractBase {
 
+            /**
+             * The field's declaring type.
+             */
             private final TypeDefinition declaringType;
 
+            /**
+             * A field token representing the transformed field.
+             */
             private final FieldDescription.Token token;
 
+            /**
+             * The field's defined shape.
+             */
             private final FieldDescription.InDefinedShape fieldDescription;
 
+            /**
+             * Creates a new transformed field.
+             *
+             * @param declaringType    The field's declaring type.
+             * @param token            A field token representing the transformed field.
+             * @param fieldDescription The field's defined shape.
+             */
             protected TransformedField(TypeDefinition declaringType,
                                        FieldDescription.Token token,
                                        FieldDescription.InDefinedShape fieldDescription) {
@@ -151,14 +226,30 @@ public interface FieldTransformer {
         }
     }
 
+    /**
+     * A compound field transformer that applies a list of given transformers in the given order.
+     */
     class Compound implements FieldTransformer {
 
+        /**
+         * The field transformers represented by this compound transformer in their application order.
+         */
         private final List<? extends FieldTransformer> fieldTransformers;
 
+        /**
+         * Creates a new compound transformer.
+         *
+         * @param fieldTransformer The field transformers represented by this compound transformer in their application order.
+         */
         public Compound(FieldTransformer... fieldTransformer) {
             this(Arrays.asList(fieldTransformer));
         }
 
+        /**
+         * Creates a new compound transformer.
+         *
+         * @param fieldTransformers The field transformers represented by this compound transformer in their application order.
+         */
         public Compound(List<? extends FieldTransformer> fieldTransformers) {
             this.fieldTransformers = fieldTransformers;
         }
@@ -185,7 +276,7 @@ public interface FieldTransformer {
 
         @Override
         public String toString() {
-            return "MethodTransformer.Compound{" +
+            return "FieldTransformer.Compound{" +
                     "fieldTransformers=" + fieldTransformers +
                     '}';
         }
