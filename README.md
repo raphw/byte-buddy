@@ -118,7 +118,7 @@ that by Byte Buddy generates require Byte Buddy on the class path! Given the abo
 to implement the Java 8 `java.util.function.Function` interface and its abstract `apply` method:
 
 ```java
-Class<? extends Function> dynamicType = new ByteBuddy()
+Class<? extends java.util.function.Function> dynamicType = new ByteBuddy()
   .subclass(java.util.function.Function.class)
   .method(ElementMatchers.named("apply"))
   .intercept(MethodDelegation.to(new FunctionInterceptor()))
