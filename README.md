@@ -115,10 +115,10 @@ public class Interceptor {
 
 Note that the above `Interceptor` does not depend on any Byte Buddy type. This is good news because none of the classes
 that by Byte Buddy generates require Byte Buddy on the class path! Given the above `Interceptor`, we can use Byte Buddy 
-to implement the Java 8 `Function` interface and its abstract `apply` method:
+to implement the Java 8 `java.util.function.Function` interface and its abstract `apply` method:
 
 ```java
-Class<? extends Comparator> dynamicType = new ByteBuddy()
+Class<? extends Function> dynamicType = new ByteBuddy()
   .subclass(Function.class)
   .method(ElementMatchers.named("apply"))
   .intercept(MethodDelegation.to(new FunctionInterceptor()))
