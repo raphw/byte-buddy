@@ -178,37 +178,154 @@ public interface DynamicType {
      */
     File toJar(File file, Manifest manifest) throws IOException;
 
+    /**
+     * A builder for creating a dynamic type.
+     *
+     * @param <T> A loaded type that the built type is guaranteed to be a subclass of.
+     */
     interface Builder<T> {
 
+        /**
+         * Applies the supplied {@link AsmVisitorWrapper} onto the {@link org.objectweb.asm.ClassVisitor} during building a dynamic type.
+         * Using an ASM visitor, it is possible to manipulate byte code directly. Byte Buddy does not validate directly created byte code
+         * and it remains the responsibility of the visitor's implementor to generate legal byte code. If several ASM visitor wrappers
+         * are registered, they are applied on top of another in their registration order.
+         *
+         * @param asmVisitorWrapper The ASM visitor wrapper to apply during
+         * @return A new builder that is equal to this builder and applies the ASM visitor wrapper.
+         */
         Builder<T> visit(AsmVisitorWrapper asmVisitorWrapper);
 
+        /**
+         * Names the dynamic type by the supplied name. The name needs to be fully qualified and in the binary format (packages separated
+         * by dots: {@code foo.Bar}). A type's package determines what other types are visible to the instrumented type and what methods
+         * can be overridden or be represented in method signatures or as field types.
+         *
+         * @param name The fully qualified name of the generated class in a binary format.
+         * @return A new builder that is equal to this builder but with the instrumented type named by the supplied name.
+         */
         Builder<T> name(String name);
 
-        Builder<T> attribute(TypeAttributeAppender typeAttributeAppender);
-
+        /**
+         * Defines the supplied modifiers as the modifiers of the instrumented type.
+         *
+         * @param modifierContributor The modifiers of the instrumented type.
+         * @return A new builder that is equal to this builder but with the supplied modifiers applied onto the instrumented type.
+         */
         Builder<T> modifiers(ModifierContributor.ForType... modifierContributor);
 
+        /**
+         * Defines the supplied modifiers as the modifiers of the instrumented type.
+         *
+         * @param modifierContributors The modifiers of the instrumented type.
+         * @return A new builder that is equal to this builder but with the supplied modifiers applied onto the instrumented type.
+         */
         Builder<T> modifiers(Collection<? extends ModifierContributor.ForType> modifierContributors);
 
+        /**
+         * Defines the supplied modifiers as the modifiers of the instrumented type.
+         *
+         * @param modifiers The modifiers of the instrumented type.
+         * @return A new builder that is equal to this builder but with the supplied modifiers applied onto the instrumented type.
+         */
         Builder<T> modifiers(int modifiers);
 
+        /**
+         * Merges the supplied modifier contributors with the modifiers of the instrumented type and defines them as the instrumented
+         * type's new modifiers.
+         *
+         * @param modifierContributor The modifiers of the instrumented type.
+         * @return A new builder that is equal to this builder but with the supplied modifiers merged into the instrumented type's modifiers.
+         */
+        Builder<T> merge(ModifierContributor.ForType... modifierContributor);
+
+        /**
+         * Merges the supplied modifier contributors with the modifiers of the instrumented type and defines them as the instrumented
+         * type's new modifiers.
+         *
+         * @param modifierContributors The modifiers of the instrumented type.
+         * @return A new builder that is equal to this builder but with the supplied modifiers merged into the instrumented type's modifiers.
+         */
+        Builder<T> merge(Collection<? extends ModifierContributor.ForType> modifierContributors);
+
+        /**
+         * Applies the given type attribute appender onto the instrumented type. Using a type attribute appender, it is possible to append
+         * any type of meta data to a type, not only Java {@link Annotation}s.
+         *
+         * @param typeAttributeAppender The type attribute appender to apply.
+         * @return A new builder that is equal to this builder but with the supplied type attribute appender applied to the instrumented type.
+         */
+        Builder<T> attribute(TypeAttributeAppender typeAttributeAppender);
+
+        /**
+         * Annotates the instrumented type with the supplied annotations.
+         *
+         * @param annotation The annotations to add to the instrumented type.
+         * @return A new builder that is equal to this builder but with the annotations added to the instrumented type.
+         */
         Builder<T> annotateType(Annotation... annotation);
 
+        /**
+         * Annotates the instrumented type with the supplied annotations.
+         *
+         * @param annotations The annotations to add to the instrumented type.
+         * @return A new builder that is equal to this builder but with the annotations added to the instrumented type.
+         */
         Builder<T> annotateType(List<? extends Annotation> annotations);
 
+        /**
+         * Annotates the instrumented type with the supplied annotations.
+         *
+         * @param annotation The annotations to add to the instrumented type.
+         * @return A new builder that is equal to this builder but with the annotations added to the instrumented type.
+         */
         Builder<T> annotateType(AnnotationDescription... annotation);
 
+        /**
+         * Annotates the instrumented type with the supplied annotations.
+         *
+         * @param annotations The annotations to add to the instrumented type.
+         * @return A new builder that is equal to this builder but with the annotations added to the instrumented type.
+         */
         Builder<T> annotateType(Collection<? extends AnnotationDescription> annotations);
 
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(Type... type);
+        /**
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         *
+         * @param interfaceType The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(Type... interfaceType);
 
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(List<? extends Type> types);
+        /**
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         *
+         * @param interfaceTypes The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(List<? extends Type> interfaceTypes);
 
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(TypeDefinition... type);
+        /**
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         *
+         * @param interfaceType The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(TypeDefinition... interfaceType);
 
-        MethodDefinition.ImplementationDefinition.Optional<T> implement(Collection<? extends TypeDefinition> types);
+        /**
+         * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
+         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         *
+         * @param interfaceTypes The interface types to implement.
+         * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
+         */
+        MethodDefinition.ImplementationDefinition.Optional<T> implement(Collection<? extends TypeDefinition> interfaceTypes);
 
-        Builder<T> initializer(ByteCodeAppender byteCodeAppender);
+        Builder<T> initializer(ByteCodeAppender.Factory byteCodeAppenderFactory);
 
         Builder<T> initializer(LoadedTypeInitializer loadedTypeInitializer);
 
@@ -272,6 +389,11 @@ public interface DynamicType {
 
         DynamicType.Unloaded<T> make();
 
+        /**
+         * A builder for a field definition.
+         *
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         */
         interface FieldDefinition<S> {
 
             FieldDefinition.Optional<S> annotateField(Annotation... annotation);
@@ -286,6 +408,11 @@ public interface DynamicType {
 
             FieldDefinition.Optional<S> transform(FieldTransformer fieldTransformer);
 
+            /**
+             * A builder for a field definition that allows for defining a value.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface Valuable<U> extends FieldDefinition<U> {
 
                 FieldDefinition.Optional<U> value(boolean value);
@@ -301,10 +428,25 @@ public interface DynamicType {
                 FieldDefinition.Optional<U> value(String value);
             }
 
+            /**
+             * A builder for an optional field definition.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface Optional<U> extends FieldDefinition<U>, Builder<U> {
 
+                /**
+                 * A builder for an optional field definition that allows for defining a value.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 interface Valuable<V> extends FieldDefinition.Valuable<V>, Optional<V> {
 
+                    /**
+                     * An abstract base implementation of an optional field definition that allows for defining a value.
+                     *
+                     * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+                     */
                     abstract class AbstractBase<U> extends Optional.AbstractBase<U> implements Optional.Valuable<U> {
 
                         @Override
@@ -339,14 +481,35 @@ public interface DynamicType {
 
                         protected abstract FieldDefinition.Optional<U> defaultValue(Object defaultValue);
 
+                        /**
+                         * An adapter for an optional field definition that allows for defining a value.
+                         *
+                         * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                         */
                         protected abstract static class Adapter<V> extends Optional.Valuable.AbstractBase<V> {
 
+                            /**
+                             * The field attribute appender factory to apply.
+                             */
                             protected final FieldAttributeAppender.Factory fieldAttributeAppenderFactory;
 
+                            /**
+                             * The field transformer to apply.
+                             */
                             protected final FieldTransformer fieldTransformer;
 
+                            /**
+                             * The field's default value or {@code null} if no value is to be defined.
+                             */
                             protected final Object defaultValue;
 
+                            /**
+                             * Creates a new field adapter.
+                             *
+                             * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
+                             * @param fieldTransformer              The field transformer to apply.
+                             * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
+                             */
                             protected Adapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue) {
                                 this.fieldAttributeAppenderFactory = fieldAttributeAppenderFactory;
                                 this.fieldTransformer = fieldTransformer;
@@ -368,6 +531,14 @@ public interface DynamicType {
                                 return materialize(fieldAttributeAppenderFactory, fieldTransformer, defaultValue);
                             }
 
+                            /**
+                             * Creates a new optional field definition for which all of the supplied values are represented.
+                             *
+                             * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
+                             * @param fieldTransformer              The field transformer to apply.
+                             * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
+                             * @return A new field definition that represents the supplied values.
+                             */
                             protected abstract FieldDefinition.Optional<V> materialize(FieldAttributeAppender.Factory fieldAttributeAppenderFactory, FieldTransformer fieldTransformer, Object defaultValue);
 
                             @Override
@@ -391,6 +562,11 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * An abstract base implementation for an optional field definition.
+                 *
+                 * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements FieldDefinition.Optional<U> {
 
                     @Override
@@ -411,6 +587,11 @@ public interface DynamicType {
             }
         }
 
+        /**
+         * A builder for a method definition.
+         *
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         */
         interface MethodDefinition<S> extends Builder<S> {
 
             MethodDefinition<S> annotateMethod(Annotation... annotation);
@@ -433,6 +614,11 @@ public interface DynamicType {
 
             MethodDefinition<S> transform(MethodTransformer methodTransformer);
 
+            /**
+             * A builder for defining an implementation of a method.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface ImplementationDefinition<U> {
 
                 MethodDefinition<U> intercept(Implementation implementation);
@@ -443,10 +629,20 @@ public interface DynamicType {
 
                 MethodDefinition<U> defaultValue(Object value, Class<?> type);
 
+                /**
+                 * A builder for optionally defining an implementation of a method.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 interface Optional<V> extends ImplementationDefinition<V>, Builder<V> {
                 /* union type */
                 }
 
+                /**
+                 * An abstract base implementation for a builder optionally defining an implementation of a method.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 abstract class AbstractBase<V> implements ImplementationDefinition<V> {
 
                     @Override
@@ -456,6 +652,11 @@ public interface DynamicType {
                 }
             }
 
+            /**
+             * A builder for defining an implementation of a method and optionally defining a type variable.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface TypeVariableDefinition<U> extends ImplementationDefinition<U> {
 
                 TypeVariableDefinition<U> typeVariable(String symbol);
@@ -468,6 +669,11 @@ public interface DynamicType {
 
                 TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
 
+                /**
+                 * An abstract base implementation for defining an implementation of a method and optionally definign a type variable.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 abstract class AbstractBase<V> extends ImplementationDefinition.AbstractBase<V> implements TypeVariableDefinition<V> {
 
                     @Override
@@ -492,6 +698,11 @@ public interface DynamicType {
                 }
             }
 
+            /**
+             * A builder for defining an implementation of a method and optionally defining a type variable or thrown exception.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface ExceptionDefinition<U> extends TypeVariableDefinition<U> {
 
                 ExceptionDefinition<U> throwing(Type... type);
@@ -502,6 +713,11 @@ public interface DynamicType {
 
                 ExceptionDefinition<U> throwing(Collection<? extends TypeDefinition> types);
 
+                /**
+                 * An abstract base implementation for defining an implementation of a method and optionally definign a type variable or thrown exception.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 abstract class AbstractBase<V> extends TypeVariableDefinition.AbstractBase<V> implements ExceptionDefinition<V> {
 
                     @Override
@@ -521,6 +737,11 @@ public interface DynamicType {
                 }
             }
 
+            /**
+             * A builder for defining an implementation of a method and optionally defining a type variable, thrown exception or method parameter.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             interface ParameterDefinition<U> extends ExceptionDefinition<U> {
 
                 Annotatable<U> withParameter(Type type, String name, ModifierContributor.ForParameter... modifierContributor);
@@ -535,6 +756,11 @@ public interface DynamicType {
 
                 Annotatable<U> withParameter(TypeDefinition type, String name, int modifiers);
 
+                /**
+                 * A builder for optionally defining an annotation on a parameter.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 interface Annotatable<V> extends ParameterDefinition<V> {
 
                     Annotatable<V> annotateParameter(Annotation... annotation);
@@ -545,6 +771,11 @@ public interface DynamicType {
 
                     Annotatable<V> annotateParameter(Collection<? extends AnnotationDescription> annotations);
 
+                    /**
+                     * An abstract base implementation for defining an annotation on a parameter.
+                     *
+                     * @param <W> A loaded type that the built type is guaranteed to be a subclass of.
+                     */
                     abstract class AbstractBase<W> extends ParameterDefinition.AbstractBase<W> implements Annotatable<W> {
 
                         @Override
@@ -562,6 +793,11 @@ public interface DynamicType {
                             return annotateParameter(Arrays.asList(annotation));
                         }
 
+                        /**
+                         * An adapter implementation for defining an annotation on a parameter.
+                         *
+                         * @param <X> A loaded type that the built type is guaranteed to be a subclass of.
+                         */
                         protected abstract static class Adapter<X> extends Annotatable.AbstractBase<X> {
 
                             @Override
@@ -604,6 +840,11 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * A builder for defining an implementation of a method and optionally defining a type variable, thrown exception or a parameter type.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 interface Simple<V> extends ExceptionDefinition<V> {
 
                     Annotatable<V> withParameter(Type type);
@@ -698,6 +939,11 @@ public interface DynamicType {
 
                     ExceptionDefinition<V> withParameters(Collection<? extends TypeDefinition> types);
 
+                    /**
+                     * An abstract base implementation for an initial parameter definition.
+                     *
+                     * @param <W>
+                     */
                     abstract class AbstractBase<W> extends ParameterDefinition.AbstractBase<W> implements Initial<W> {
 
                         @Override
@@ -731,6 +977,11 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * An abstract base implementation for defining an implementation of a method and optionally definign a type variable, thrown exception or parameter type.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 abstract class AbstractBase<V> extends ExceptionDefinition.AbstractBase<V> implements ParameterDefinition<V> {
 
                     @Override
@@ -839,6 +1090,11 @@ public interface DynamicType {
             }
         }
 
+        /**
+         * An abstract base implementation of a dynamic type builder.
+         *
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         */
         abstract class AbstractBase<S> implements Builder<S> {
 
             @Override
@@ -867,18 +1123,23 @@ public interface DynamicType {
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition.Optional<S> implement(Type... type) {
-                return implement(Arrays.asList(type));
+            public Builder<S> merge(ModifierContributor.ForType... modifierContributor) {
+                return merge(Arrays.asList(modifierContributor));
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition.Optional<S> implement(List<? extends Type> types) {
-                return implement(new TypeList.Generic.ForLoadedTypes(types));
+            public MethodDefinition.ImplementationDefinition.Optional<S> implement(Type... interfaceType) {
+                return implement(Arrays.asList(interfaceType));
             }
 
             @Override
-            public MethodDefinition.ImplementationDefinition.Optional<S> implement(TypeDefinition... type) {
-                return implement(Arrays.asList(type));
+            public MethodDefinition.ImplementationDefinition.Optional<S> implement(List<? extends Type> interfaceTypes) {
+                return implement(new TypeList.Generic.ForLoadedTypes(interfaceTypes));
+            }
+
+            @Override
+            public MethodDefinition.ImplementationDefinition.Optional<S> implement(TypeDefinition... interfaceType) {
+                return implement(Arrays.asList(interfaceType));
             }
 
             @Override
@@ -1009,6 +1270,11 @@ public interface DynamicType {
                 return invokable(new LatentMatcher.Resolved<MethodDescription>(matcher));
             }
 
+            /**
+             * A delegator for a dynamic type builder delegating all invocations to another dynamic type builder.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             public abstract static class Delegator<U> extends AbstractBase<U> {
 
                 @Override
@@ -1037,18 +1303,23 @@ public interface DynamicType {
                 }
 
                 @Override
+                public Builder<U> merge(Collection<? extends ModifierContributor.ForType> modifierContributors) {
+                    return materialize().merge(modifierContributors);
+                }
+
+                @Override
                 public Builder<U> name(String name) {
                     return materialize().name(name);
                 }
 
                 @Override
-                public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> types) {
-                    return materialize().implement(types);
+                public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> interfaceTypes) {
+                    return materialize().implement(interfaceTypes);
                 }
 
                 @Override
-                public Builder<U> initializer(ByteCodeAppender byteCodeAppender) {
-                    return materialize().initializer(byteCodeAppender);
+                public Builder<U> initializer(ByteCodeAppender.Factory byteCodeAppenderFactory) {
+                    return materialize().initializer(byteCodeAppenderFactory);
                 }
 
                 @Override
@@ -1091,35 +1362,97 @@ public interface DynamicType {
                     return materialize().make();
                 }
 
+                /**
+                 * Creates a new builder that realizes the current state of the builder.
+                 *
+                 * @return A new builder that realizes the current state of the builder.
+                 */
                 protected abstract Builder<U> materialize();
             }
 
+            /**
+             * An adapter implementation of a dynamic type builder.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             public abstract static class Adapter<U> extends AbstractBase<U> {
 
+                /**
+                 * The instrumented type to be created.
+                 */
                 protected final InstrumentedType.WithFlexibleName instrumentedType;
 
+                /**
+                 * The current field registry.
+                 */
                 protected final FieldRegistry fieldRegistry;
 
+                /**
+                 * The current method registry.
+                 */
                 protected final MethodRegistry methodRegistry;
 
+                /**
+                 * The type attribute appender to apply onto the instrumented type.
+                 */
                 protected final TypeAttributeAppender typeAttributeAppender;
 
+                /**
+                 * The ASM visitor wrapper to apply onto the class writer.
+                 */
                 protected final AsmVisitorWrapper asmVisitorWrapper;
 
+                /**
+                 * The class file version to define auxiliary types in.
+                 */
                 protected final ClassFileVersion classFileVersion;
 
-                protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
-
-                protected final AnnotationRetention annotationRetention;
-
+                /**
+                 * The naming strategy for auxiliary types to apply.
+                 */
                 protected final AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
+                /**
+                 * The annotation value filter factory to apply.
+                 */
+                protected final AnnotationValueFilter.Factory annotationValueFilterFactory;
+
+                /**
+                 * The annotation retention to apply.
+                 */
+                protected final AnnotationRetention annotationRetention;
+
+                /**
+                 * The implementation context factory to apply.
+                 */
                 protected final Implementation.Context.Factory implementationContextFactory;
 
+                /**
+                 * The method graph compiler to use.
+                 */
                 protected final MethodGraph.Compiler methodGraphCompiler;
 
+                /**
+                 * A matcher for identifying methods that should be excluded from instrumentation.
+                 */
                 protected final ElementMatcher<? super MethodDescription> ignoredMethods;
 
+                /**
+                 * Creates a new default type writer for creating a new type that is not based on an existing class file.
+                 *
+                 * @param instrumentedType             The instrumented type to be created.
+                 * @param fieldRegistry                The current field registry.
+                 * @param methodRegistry               The current method registry.
+                 * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+                 * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+                 * @param classFileVersion             The class file version to define auxiliary types in.
+                 * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+                 * @param annotationValueFilterFactory The annotation value filter factory to apply.
+                 * @param annotationRetention          The annotation retention to apply.
+                 * @param implementationContextFactory The implementation context factory to apply.
+                 * @param methodGraphCompiler          The method graph compiler to use.
+                 * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+                 */
                 protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
                                   FieldRegistry fieldRegistry,
                                   MethodRegistry methodRegistry,
@@ -1172,8 +1505,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> types) {
-                    return new OptionalMethodMatchAdapter(new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(types)));
+                public MethodDefinition.ImplementationDefinition.Optional<U> implement(Collection<? extends TypeDefinition> interfaceTypes) {
+                    return new OptionalMethodMatchAdapter(new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(interfaceTypes)));
                 }
 
                 @Override
@@ -1193,8 +1526,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> initializer(ByteCodeAppender byteCodeAppender) {
-                    return materialize(instrumentedType.withInitializer(byteCodeAppender),
+                public Builder<U> initializer(ByteCodeAppender.Factory byteCodeAppenderFactory) {
+                    return materialize(instrumentedType.withInitializer(byteCodeAppenderFactory),
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,
@@ -1243,6 +1576,22 @@ public interface DynamicType {
                 @Override
                 public Builder<U> modifiers(int modifiers) {
                     return materialize(instrumentedType.withModifiers(modifiers),
+                            fieldRegistry,
+                            methodRegistry,
+                            typeAttributeAppender,
+                            asmVisitorWrapper,
+                            classFileVersion,
+                            auxiliaryTypeNamingStrategy,
+                            annotationValueFilterFactory,
+                            annotationRetention,
+                            implementationContextFactory,
+                            methodGraphCompiler,
+                            ignoredMethods);
+                }
+
+                @Override
+                public Builder<U> merge(Collection<? extends ModifierContributor.ForType> modifierContributors) {
+                    return materialize(instrumentedType.withModifiers(ModifierContributor.Resolver.of(modifierContributors).resolve(instrumentedType.getModifiers())),
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,
@@ -1320,6 +1669,22 @@ public interface DynamicType {
                             ignoredMethods);
                 }
 
+                /**
+                 * Materializes the supplied state of a dynamic type builder.
+                 *
+                 * @param fieldRegistry                The current field registry.
+                 * @param methodRegistry               The current method registry.
+                 * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+                 * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+                 * @param classFileVersion             The class file version to define auxiliary types in.
+                 * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
+                 * @param annotationValueFilterFactory The annotation value filter factory to apply.
+                 * @param annotationRetention          The annotation retention to apply.
+                 * @param implementationContextFactory The implementation context factory to apply.
+                 * @param methodGraphCompiler          The method graph compiler to use.
+                 * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+                 * @return A type builder that represents the supplied arguments.
+                 */
                 protected abstract Builder<U> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                           FieldRegistry fieldRegistry,
                                                           MethodRegistry methodRegistry,
@@ -1369,14 +1734,33 @@ public interface DynamicType {
                     return result;
                 }
 
+                /**
+                 * An adapter for defining a new field.
+                 */
                 protected class FieldDefinitionAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
+                    /**
+                     * The token representing the current field definition.
+                     */
                     private final FieldDescription.Token token;
 
+                    /**
+                     * Creates a new field definition adapter.
+                     *
+                     * @param token The token representing the current field definition.
+                     */
                     protected FieldDefinitionAdapter(FieldDescription.Token token) {
                         this(FieldAttributeAppender.ForInstrumentedField.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, token);
                     }
 
+                    /**
+                     * Creates a new field definition adapter.
+                     *
+                     * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
+                     * @param fieldTransformer              The field transformer to apply.
+                     * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
+                     * @param token                         The token representing the current field definition.
+                     */
                     protected FieldDefinitionAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                      FieldTransformer fieldTransformer,
                                                      Object defaultValue,
@@ -1416,7 +1800,12 @@ public interface DynamicType {
                         return new FieldDefinitionAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, token);
                     }
 
-                    private Builder.AbstractBase.Adapter<?> getAdapter() {
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private Builder.AbstractBase.Adapter<?> getOuter() {
                         return Builder.AbstractBase.Adapter.this;
                     }
 
@@ -1425,14 +1814,14 @@ public interface DynamicType {
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && super.equals(other)
-                                && getAdapter().equals(((FieldDefinitionAdapter) other).getAdapter())
+                                && getOuter().equals(((FieldDefinitionAdapter) other).getOuter())
                                 && token.equals(((FieldDefinitionAdapter) other).token);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = super.hashCode();
-                        result = 31 * result + getAdapter().hashCode();
+                        result = 31 * result + getOuter().hashCode();
                         result = 31 * result + token.hashCode();
                         return result;
                     }
@@ -1440,7 +1829,7 @@ public interface DynamicType {
                     @Override
                     public String toString() {
                         return "DynamicType.Builder.AbstractBase.Adapter.FieldDefinitionAdapter{" +
-                                "adapter=" + getAdapter() +
+                                "adapter=" + getOuter() +
                                 ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
                                 ", fieldTransformer=" + fieldTransformer +
                                 ", defaultValue=" + defaultValue +
@@ -1449,14 +1838,33 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * An adapter for matching an existing field.
+                 */
                 protected class FieldMatchAdapter extends FieldDefinition.Optional.Valuable.AbstractBase.Adapter<U> {
 
+                    /**
+                     * The matcher for any fields to apply this matcher to.
+                     */
                     private final LatentMatcher<? super FieldDescription> matcher;
 
+                    /**
+                     * Creates a new field match adapter.
+                     *
+                     * @param matcher The matcher for any fields to apply this matcher to.
+                     */
                     protected FieldMatchAdapter(LatentMatcher<? super FieldDescription> matcher) {
                         this(FieldAttributeAppender.NoOp.INSTANCE, FieldTransformer.NoOp.INSTANCE, FieldDescription.NO_DEFAULT_VALUE, matcher);
                     }
 
+                    /**
+                     * Creates a new field match adapter.
+                     *
+                     * @param fieldAttributeAppenderFactory The field attribute appender factory to apply.
+                     * @param fieldTransformer              The field transformer to apply.
+                     * @param defaultValue                  The field's default value or {@code null} if no value is to be defined.
+                     * @param matcher                       The matcher for any fields to apply this matcher to.
+                     */
                     protected FieldMatchAdapter(FieldAttributeAppender.Factory fieldAttributeAppenderFactory,
                                                 FieldTransformer fieldTransformer,
                                                 Object defaultValue,
@@ -1491,7 +1899,12 @@ public interface DynamicType {
                         return new FieldMatchAdapter(fieldAttributeAppenderFactory, fieldTransformer, defaultValue, matcher);
                     }
 
-                    private Builder.AbstractBase.Adapter<?> getAdapter() {
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private Builder.AbstractBase.Adapter<?> getOuter() {
                         return Builder.AbstractBase.Adapter.this;
                     }
 
@@ -1500,14 +1913,14 @@ public interface DynamicType {
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && super.equals(other)
-                                && getAdapter().equals(((FieldMatchAdapter) other).getAdapter())
+                                && getOuter().equals(((FieldMatchAdapter) other).getOuter())
                                 && matcher.equals(((FieldMatchAdapter) other).matcher);
                     }
 
                     @Override
                     public int hashCode() {
                         int result = super.hashCode();
-                        result = 31 * result + getAdapter().hashCode();
+                        result = 31 * result + getOuter().hashCode();
                         result = 31 * result + matcher.hashCode();
                         return result;
                     }
@@ -1515,7 +1928,7 @@ public interface DynamicType {
                     @Override
                     public String toString() {
                         return "DynamicType.Builder.AbstractBase.Adapter.FieldMatchAdapter{" +
-                                "adapter=" + getAdapter() +
+                                "adapter=" + getOuter() +
                                 ", fieldAttributeAppenderFactory=" + fieldAttributeAppenderFactory +
                                 ", fieldTransformer=" + fieldTransformer +
                                 ", defaultValue=" + defaultValue +
@@ -1524,10 +1937,21 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * An adapter for defining a new method.
+                 */
                 protected class MethodDefinitionAdapter extends MethodDefinition.ParameterDefinition.Initial.AbstractBase<U> {
 
+                    /**
+                     * A token representing the currently defined method.
+                     */
                     private final MethodDescription.Token token;
 
+                    /**
+                     * Creates a new method definition adapter.
+                     *
+                     * @param token A token representing the currently defined method.
+                     */
                     protected MethodDefinitionAdapter(MethodDescription.Token token) {
                         this.token = token;
                     }
@@ -1588,11 +2012,22 @@ public interface DynamicType {
                                 value)).materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
                     }
 
-                    protected MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
+                    /**
+                     * Materializes the given handler as the implementation.
+                     *
+                     * @param handler The handler for implementing the method.
+                     * @return A method definition for the given handler.
+                     */
+                    private MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
                         return new AnnotationAdapter(handler);
                     }
 
-                    private Adapter<?> getAdapter() {
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private Adapter<?> getOuter() {
                         return Adapter.this;
                     }
 
@@ -1601,18 +2036,18 @@ public interface DynamicType {
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && token.equals(((MethodDefinitionAdapter) other).token)
-                                && getAdapter().equals(((MethodDefinitionAdapter) other).getAdapter());
+                                && getOuter().equals(((MethodDefinitionAdapter) other).getOuter());
                     }
 
                     @Override
                     public int hashCode() {
-                        return 31 * getAdapter().hashCode() + token.hashCode();
+                        return 31 * getOuter().hashCode() + token.hashCode();
                     }
 
                     @Override
                     public String toString() {
                         return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter{" +
-                                "adapter=" + getAdapter() +
+                                "adapter=" + getOuter() +
                                 ", token=" + token +
                                 '}';
                     }
@@ -1817,6 +2252,9 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * An adapter for matching an existing method.
+                 */
                 protected class MethodMatchAdapter extends MethodDefinition.ImplementationDefinition.AbstractBase<U> {
 
                     private final LatentMatcher<? super MethodDescription> matcher;
@@ -1943,10 +2381,21 @@ public interface DynamicType {
                     }
                 }
 
+                /**
+                 * An adapter for optionally matching methods defined by declared interfaces.
+                 */
                 protected class OptionalMethodMatchAdapter extends Builder.AbstractBase.Delegator<U> implements MethodDefinition.ImplementationDefinition.Optional<U> {
 
+                    /**
+                     * The interfaces whose methods are optionally matched.
+                     */
                     private final List<TypeDescription.Generic> interfaces;
 
+                    /**
+                     * Creates a new optional method match adapter.
+                     *
+                     * @param interfaces The interfaces whose methods are optionally matched.
+                     */
                     protected OptionalMethodMatchAdapter(List<TypeDescription.Generic> interfaces) {
                         this.interfaces = interfaces;
                     }
@@ -1987,6 +2436,11 @@ public interface DynamicType {
                         return interfaceType().defaultValue(value, type);
                     }
 
+                    /**
+                     * Returns a matcher for the interfaces' methods.
+                     *
+                     * @return A matcher for the interfaces' methods.
+                     */
                     private MethodDefinition.ImplementationDefinition<U> interfaceType() {
                         ElementMatcher.Junction<MethodDescription> elementMatcher = none();
                         for (TypeDescription.Generic typeDescription : interfaces) {
@@ -1995,7 +2449,12 @@ public interface DynamicType {
                         return materialize().invokable(isDeclaredBy(isInterface()).and(elementMatcher));
                     }
 
-                    private Builder.AbstractBase.Adapter<U> getAdapter() {
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private Builder.AbstractBase.Adapter<U> getOuter() {
                         return Builder.AbstractBase.Adapter.this;
                     }
 
@@ -2006,18 +2465,18 @@ public interface DynamicType {
                         if (other == null || getClass() != other.getClass()) return false;
                         OptionalMethodMatchAdapter that = (OptionalMethodMatchAdapter) other;
                         return interfaces.equals(that.interfaces)
-                                && getAdapter().equals(that.getAdapter());
+                                && getOuter().equals(that.getOuter());
                     }
 
                     @Override
                     public int hashCode() {
-                        return 31 * getAdapter().hashCode() + interfaces.hashCode();
+                        return 31 * getOuter().hashCode() + interfaces.hashCode();
                     }
 
                     @Override
                     public String toString() {
                         return "DynamicType.Builder.AbstractBase.Adapter.OptionalMethodMatchAdapter{" +
-                                "adapter=" + getAdapter() +
+                                "adapter=" + getOuter() +
                                 ", interfaces=" + interfaces +
                                 '}';
                     }

@@ -1,7 +1,7 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -17,7 +17,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
 
-public class InstrumentedTypeTypeInitializerTest {
+public class TypeInitializerTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -36,35 +36,35 @@ public class InstrumentedTypeTypeInitializerTest {
 
     @Test
     public void testNoneExpansion() throws Exception {
-        assertThat(InstrumentedType.TypeInitializer.None.INSTANCE.expandWith(byteCodeAppender),
-                is((InstrumentedType.TypeInitializer) new InstrumentedType.TypeInitializer.Simple(byteCodeAppender)));
+        assertThat(TypeInitializer.None.INSTANCE.expandWith(byteCodeAppender),
+                is((TypeInitializer) new TypeInitializer.Simple(byteCodeAppender)));
     }
 
     @Test
     public void testNoneDefined() throws Exception {
-        assertThat(InstrumentedType.TypeInitializer.None.INSTANCE.isDefined(), is(false));
+        assertThat(TypeInitializer.None.INSTANCE.isDefined(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNoneThrowsExceptionOnApplication() throws Exception {
-        InstrumentedType.TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext, methodDescription);
+        TypeInitializer.None.INSTANCE.apply(methodVisitor, implementationContext, methodDescription);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testNoneThrowsExceptionOnTermination() throws Exception {
-        InstrumentedType.TypeInitializer.None.INSTANCE.withReturn();
+        TypeInitializer.None.INSTANCE.withReturn();
     }
 
     @Test
     public void testSimpleExpansion() throws Exception {
-        assertThat(new InstrumentedType.TypeInitializer.Simple(byteCodeAppender).expandWith(byteCodeAppender),
-                is((InstrumentedType.TypeInitializer) new InstrumentedType.TypeInitializer
+        assertThat(new TypeInitializer.Simple(byteCodeAppender).expandWith(byteCodeAppender),
+                is((TypeInitializer) new TypeInitializer
                         .Simple(new ByteCodeAppender.Compound(byteCodeAppender, byteCodeAppender))));
     }
 
     @Test
     public void testSimpleApplication() throws Exception {
-        InstrumentedType.TypeInitializer typeInitializer = new InstrumentedType.TypeInitializer.Simple(byteCodeAppender);
+        TypeInitializer typeInitializer = new TypeInitializer.Simple(byteCodeAppender);
         assertThat(typeInitializer.isDefined(), is(true));
         typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
@@ -75,7 +75,7 @@ public class InstrumentedTypeTypeInitializerTest {
     @Test
     public void testSimpleApplicationAfterTermination() throws Exception {
         when(byteCodeAppender.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
-        ByteCodeAppender terminated = new InstrumentedType.TypeInitializer.Simple(byteCodeAppender).withReturn();
+        ByteCodeAppender terminated = new TypeInitializer.Simple(byteCodeAppender).withReturn();
         terminated.apply(methodVisitor, implementationContext, methodDescription);
         verify(byteCodeAppender).apply(methodVisitor, implementationContext, methodDescription);
         verify(methodVisitor).visitInsn(Opcodes.RETURN);
@@ -85,7 +85,7 @@ public class InstrumentedTypeTypeInitializerTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(InstrumentedType.TypeInitializer.Simple.class).apply();
-        ObjectPropertyAssertion.of(InstrumentedType.TypeInitializer.None.class).apply();
+        ObjectPropertyAssertion.of(TypeInitializer.Simple.class).apply();
+        ObjectPropertyAssertion.of(TypeInitializer.None.class).apply();
     }
 }
