@@ -125,7 +125,7 @@ Class<? extends java.util.function.Function> dynamicType = new ByteBuddy()
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
-assertThat(dynamicType.newInstance().apply("Byte Buddy"), is("Hello from Byte Buddy"));
+assertThat((String) dynamicType.newInstance().apply("Byte Buddy"), is("Hello from Byte Buddy"));
 ```
 
 Executing the above code, Byte Buddy implements Java's `Function` interface and implements the `apply` method
