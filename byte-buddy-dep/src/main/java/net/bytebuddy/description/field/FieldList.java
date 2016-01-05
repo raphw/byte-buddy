@@ -8,7 +8,6 @@ import net.bytebuddy.matcher.FilterableList;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -262,12 +261,12 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
-            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.<FieldDescription.Token>emptyList());
+            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>();
         }
 
         @Override
         public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
-            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(Collections.<FieldDescription.Token>emptyList());
+            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>();
         }
 
         @Override

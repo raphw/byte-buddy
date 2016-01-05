@@ -4,7 +4,7 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -396,7 +396,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(annotation).getValue(new MethodDescription.Latent(new TypeDescription.ForLoadedType(annotation.annotationType()),
                 methodName,
                 Opcodes.ACC_PUBLIC,
-                Collections.<String, TypeList.Generic>emptyMap(),
+                Collections.<TypeVariableToken>emptyList(),
                 new TypeDescription.Generic.OfNonGenericType.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),

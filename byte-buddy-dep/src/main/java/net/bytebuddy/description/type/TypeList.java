@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -11,7 +12,9 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * Implementations represent a list of type descriptions.
@@ -118,7 +121,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
         /**
          * Creates an immutable wrapper.
          *
-         * @param typeDescriptions The list of types to be represented by this wrapper.
+         * @param typeDescription The list of types to be represented by this wrapper.
          */
         public Explicit(TypeDescription... typeDescription) {
             this(Arrays.asList(typeDescription));
@@ -201,13 +204,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          */
         Generic asRawTypes();
 
-        /**
-         * Returns a map representing the generic types as type variable symbols.
-         *
-         * @param visitor A visitor to apply to every type variable's bounds.
-         * @return A map representing the generic types as type variable symbols.
-         */
-        Map<String, Generic> asSymbols(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
+        ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
 
         /**
          * Transforms the generic types by applying the supplied visitor to each of them.
@@ -244,12 +241,12 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             @Override
-            public Map<String, Generic> asSymbols(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-                Map<String, Generic> symbols = new LinkedHashMap<String, Generic>();
+            public ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                List<TypeVariableToken> tokens = new ArrayList<TypeVariableToken>(size());
                 for (TypeDescription.Generic typeVariable : this) {
-                    symbols.put(typeVariable.getSymbol(), typeVariable.getUpperBounds().accept(visitor));
+                    tokens.add(TypeVariableToken.of(typeVariable, visitor));
                 }
-                return symbols;
+                return new ByteCodeElement.Token.TokenList<TypeVariableToken>(tokens);
             }
 
             @Override
@@ -396,7 +393,14 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return new ForDetachedTypes(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
             }
 
-            public static Generic attach(TypeDescription typeDescription, Map<String, ? extends TypeList.Generic> detachedTypeVariables) {
+            /**
+             * Creates a list of type variables that are attached to the provided type.
+             *
+             * @param typeDescription       The type to which the type variables are to be attached to.
+             * @param detachedTypeVariables A mapping of type variable symbols to their detached type variable bounds.
+             * @return A type list representing the symbolic type variables in their attached state to the given type description.
+             */
+            public static Generic attachVariables(TypeDescription typeDescription, List<? extends TypeVariableToken> detachedTypeVariables) {
                 return new OfTypeVariables(typeDescription, detachedTypeVariables, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(typeDescription));
             }
 
@@ -422,7 +426,14 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return new ForDetachedTypes(detachedTypes, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(methodDescription));
             }
 
-            public static Generic attach(MethodDescription methodDescription, Map<String, ? extends TypeList.Generic> detachedTypeVariables) {
+            /**
+             * Creates a list of type variables that are attached to the provided method.
+             *
+             * @param methodDescription     The method to which the type variables are to be attached to.
+             * @param detachedTypeVariables A mapping of type variable symbols to their detached type variable bounds.
+             * @return A type list representing the symbolic type variables in their attached state to the given method description.
+             */
+            public static Generic attachVariables(MethodDescription methodDescription, List<? extends TypeVariableToken> detachedTypeVariables) {
                 return new OfTypeVariables(methodDescription, detachedTypeVariables, TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(methodDescription));
             }
 
@@ -447,67 +458,63 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return detachedTypes.size();
             }
 
+            /**
+             *
+             */
             protected static class OfTypeVariables extends Generic.AbstractBase {
 
                 private final TypeVariableSource typeVariableSource;
 
-                private final List<Map.Entry<String, ? extends Generic>> typeVariables;
+                private final List<? extends TypeVariableToken> detachedTypeVariables;
 
                 private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
                 public OfTypeVariables(TypeVariableSource typeVariableSource,
-                                       Map<String, ? extends Generic> typeVariables,
-                                       TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-                    this(typeVariableSource, new ArrayList<Map.Entry<String, ? extends Generic>>(typeVariables.entrySet()), visitor);
-                }
-
-                public OfTypeVariables(TypeVariableSource typeVariableSource,
-                                       List<Map.Entry<String, ? extends Generic>> typeVariables,
+                                       List<? extends TypeVariableToken> detachedTypeVariables,
                                        TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                     this.typeVariableSource = typeVariableSource;
-                    this.typeVariables = typeVariables;
+                    this.detachedTypeVariables = detachedTypeVariables;
                     this.visitor = visitor;
                 }
 
                 @Override
                 public TypeDescription.Generic get(int index) {
-                    return new DetachedTypeVariable(typeVariableSource, typeVariables.get(index), visitor);
+                    return new AttachedTypeVariable(typeVariableSource, detachedTypeVariables.get(index), visitor);
                 }
 
                 @Override
                 public int size() {
-                    return typeVariables.size();
+                    return detachedTypeVariables.size();
                 }
 
-                protected static class DetachedTypeVariable extends TypeDescription.Generic.OfTypeVariable {
+                /**
+                 * A wrapper for representing a type variable in its attached state.
+                 */
+                protected static class AttachedTypeVariable extends TypeDescription.Generic.OfTypeVariable {
 
+                    /**
+                     * The type variable source that defines the type variable.
+                     */
                     private final TypeVariableSource typeVariableSource;
 
-                    private final String symbol;
+                    private final TypeVariableToken typeVariableToken;
 
-                    private final Generic upperBounds;
-
+                    /**
+                     * The visitor to apply onto the detached bounds for their attachment.
+                     */
                     private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
-                    protected DetachedTypeVariable(TypeVariableSource typeVariableSource,
-                                                   Map.Entry<String, ? extends Generic> typeVariable,
-                                                   Visitor<? extends TypeDescription.Generic> visitor) {
-                        this(typeVariableSource, typeVariable.getKey(), typeVariable.getValue(), visitor);
-                    }
-
-                    protected DetachedTypeVariable(TypeVariableSource typeVariableSource,
-                                                   String symbol,
-                                                   Generic upperBounds,
+                    protected AttachedTypeVariable(TypeVariableSource typeVariableSource,
+                                                   TypeVariableToken typeVariableToken,
                                                    Visitor<? extends TypeDescription.Generic> visitor) {
                         this.typeVariableSource = typeVariableSource;
-                        this.symbol = symbol;
-                        this.upperBounds = upperBounds;
+                        this.typeVariableToken = typeVariableToken;
                         this.visitor = visitor;
                     }
 
                     @Override
                     public Generic getUpperBounds() {
-                        return upperBounds.accept(visitor);
+                        return typeVariableToken.getUpperBounds().accept(visitor);
                     }
 
                     @Override
@@ -517,7 +524,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                     @Override
                     public String getSymbol() {
-                        return symbol;
+                        return typeVariableToken.getSymbol();
                     }
                 }
             }
@@ -790,8 +797,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             @Override
-            public Map<String, Generic> asSymbols(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-                return Collections.emptyMap();
+            public ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                return new ByteCodeElement.Token.TokenList<TypeVariableToken>();
             }
 
             @Override

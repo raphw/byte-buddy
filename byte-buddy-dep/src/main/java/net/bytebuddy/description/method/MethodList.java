@@ -9,7 +9,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.none;
@@ -286,12 +285,12 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
-            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
+            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
         }
 
         @Override
         public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
-            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
+            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
         }
 
         @Override

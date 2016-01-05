@@ -10,6 +10,7 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -80,7 +81,8 @@ public class MethodTransformerSimpleTest {
         when(methodToken.getName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
-        when(methodToken.getTypeVariables()).thenReturn(Collections.<String, TypeList.Generic>singletonMap(QUX, new TypeList.Generic.Explicit(typeVariableBound)));
+        when(methodToken.getTypeVariables()).thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>(new TypeVariableToken(QUX,
+                new TypeList.Generic.Explicit(typeVariableBound))));
         when(methodToken.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
                 .thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(parameterToken));
@@ -130,9 +132,7 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));
         assertThat(transformed.getReturnType(), is(returnType));
         assertThat(transformed.getTypeVariables().size(), is(1));
-        assertThat(transformed.getTypeVariables().containsKey(QUX), is(true));
-        assertThat(transformed.getTypeVariables().get(QUX).size(), is(1));
-        assertThat(transformed.getTypeVariables().get(QUX).contains(typeVariableBound), is(true));
+        assertThat(transformed.getTypeVariables().get(0), is(new TypeVariableToken(QUX, typeVariableBound)));
         assertThat(transformed.getExceptionTypes().size(), is(1));
         assertThat(transformed.getExceptionTypes().getOnly(), is(exceptionType));
         assertThat(transformed.getParameterTokens().size(), is(1));

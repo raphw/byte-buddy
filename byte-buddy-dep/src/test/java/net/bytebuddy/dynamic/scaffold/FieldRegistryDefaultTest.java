@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.dynamic.FieldTransformer;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
@@ -12,9 +13,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.objectweb.asm.FieldVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class FieldRegistryDefaultTest {
@@ -55,13 +58,28 @@ public class FieldRegistryDefaultTest {
         when(fieldTransformer.transform(instrumentedType, knownField)).thenReturn(instrumentedField);
     }
 
-    @Test
-    public void testNoFieldsRegistered() throws Exception {
-        TypeWriter.FieldPool.Record record = new FieldRegistry.Default()
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldCannotResolveDefaultValue() throws Exception {
+        new FieldRegistry.Default()
                 .compile(instrumentedType)
-                .target(unknownField);
-        assertThat(record.resolveDefault(defaultValue), is(defaultValue));
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
+                .target(unknownField)
+                .resolveDefault(defaultValue);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldCannotReceiveAppender() throws Exception {
+        new FieldRegistry.Default()
+                .compile(instrumentedType)
+                .target(unknownField)
+                .getFieldAppender();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldCannotRApplyPartially() throws Exception {
+        new FieldRegistry.Default()
+                .compile(instrumentedType)
+                .target(unknownField)
+                .apply(mock(FieldVisitor.class), mock(AnnotationValueFilter.Factory.class));
     }
 
     @Test
@@ -69,12 +87,13 @@ public class FieldRegistryDefaultTest {
         TypeWriter.FieldPool fieldPool = new FieldRegistry.Default()
                 .prepend(latentMatcher, distinctFactory, defaultValue, fieldTransformer)
                 .compile(instrumentedType);
+        assertThat(fieldPool.target(knownField).isImplicit(), is(false));
         assertThat(fieldPool.target(knownField).getField(), is(instrumentedField));
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
         assertThat(fieldPool.target(knownField).resolveDefault(otherDefaultValue), is(defaultValue));
+        assertThat(fieldPool.target(unknownField).isImplicit(), is(true));
         assertThat(fieldPool.target(unknownField).getField(), is(unknownField));
-        assertThat(fieldPool.target(unknownField).resolveDefault(otherDefaultValue), is(otherDefaultValue));
-        assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
+
     }
 
     @Test

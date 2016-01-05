@@ -13,6 +13,7 @@ import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.FieldRegistry;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -1257,7 +1258,7 @@ public interface DynamicType {
 
                 @Override
                 public Builder<U> typeVariable(String symbol, TypeDefinition bound) {
-                    return materialize(instrumentedType.withTypeVariable(symbol, bound.asGenericType()),
+                    return materialize(instrumentedType.withTypeVariable(new TypeVariableToken(symbol, bound.asGenericType())),
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,
@@ -1558,11 +1559,9 @@ public interface DynamicType {
 
                     @Override
                     public MethodDefinition.TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
-                        Map<String, TypeList.Generic> typeVariables = new LinkedHashMap<String, TypeList.Generic>(token.getTypeVariables());
-                        typeVariables.put(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)));
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 token.getModifiers(),
-                                typeVariables,
+                                CompoundList.of(token.getTypeVariables(), new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)))),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),

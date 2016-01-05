@@ -5,7 +5,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -44,7 +44,7 @@ public class InstrumentedTypeTest {
         return new InstrumentedType.Default(FOO + "." + BAZ,
                 Opcodes.ACC_PUBLIC,
                 TypeDescription.Generic.OBJECT,
-                Collections.<String, TypeList.Generic>emptyMap(),
+                Collections.<TypeVariableToken>emptyList(),
                 Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),

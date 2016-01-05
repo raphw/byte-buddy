@@ -147,12 +147,12 @@ public interface TypeWriter<T> {
 
                 @Override
                 public FieldAttributeAppender getFieldAppender() {
-                    return FieldAttributeAppender.ForInstrumentedField.INSTANCE;
+                    throw new IllegalStateException("An implicit field record does not expose a field appender: " + this);
                 }
 
                 @Override
                 public Object resolveDefault(Object defaultValue) {
-                    throw new IllegalStateException("An implicit field record does not apply a default value: " + this);
+                    throw new IllegalStateException("An implicit field record does not expose a default value: " + this);
                 }
 
                 @Override
@@ -162,7 +162,9 @@ public interface TypeWriter<T> {
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
                             FieldDescription.NO_DEFAULT_VALUE);
-                    getFieldAppender().apply(fieldVisitor, fieldDescription, annotationValueFilterFactory.on(fieldDescription));
+                    FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor,
+                            fieldDescription,
+                            annotationValueFilterFactory.on(fieldDescription));
                     fieldVisitor.visitEnd();
                 }
 

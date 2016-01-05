@@ -203,7 +203,7 @@ public interface MethodTransformer {
 
             @Override
             public TypeList.Generic getTypeVariables() {
-                return TypeList.Generic.ForDetachedTypes.attach(this, token.getTypeVariables());
+                return TypeList.Generic.ForDetachedTypes.attachVariables(this, token.getTypeVariables());
             }
 
             @Override

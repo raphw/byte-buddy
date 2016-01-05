@@ -3860,4 +3860,5 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             return packageDescription.getName() + "." + PackageDescription.PACKAGE_CLASS_NAME;
         }
     }
+
 }

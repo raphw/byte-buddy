@@ -10,6 +10,7 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
@@ -22,7 +23,10 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.GenericSignatureFormatError;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Iterator;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -577,7 +581,7 @@ public interface MethodDescription extends TypeVariableSource,
             TypeDescription.Generic.Visitor<TypeDescription.Generic> visitor = new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(targetTypeMatcher);
             return new Token(getInternalName(),
                     getModifiers(),
-                    getTypeVariables().asSymbols(visitor),
+                    getTypeVariables().asTokenList(visitor),
                     getReturnType().accept(visitor),
                     getParameters().asTokenList(targetTypeMatcher),
                     getExceptionTypes().accept(visitor),
@@ -928,11 +932,9 @@ public interface MethodDescription extends TypeVariableSource,
         private final int modifiers;
 
         /**
-         * Returns the type variables of this method token.
-         *
-         * @return A mapping of a type variable's symbol to a list of its bounds.
+         * A tokenized list representing the method's type variables.
          */
-        Map<String, ? extends TypeList.Generic> typeVariables;
+        private final List<? extends TypeVariableToken> typeVariables;
 
         /**
          * The return type of this method.
@@ -993,7 +995,7 @@ public interface MethodDescription extends TypeVariableSource,
         public Latent(TypeDescription declaringType,
                       String internalName,
                       int modifiers,
-                      Map<String, ? extends TypeList.Generic> typeVariables,
+                      List<? extends TypeVariableToken> typeVariables,
                       TypeDescription.Generic returnType,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends TypeDescription.Generic> exceptionTypes,
@@ -1012,7 +1014,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return TypeList.Generic.ForDetachedTypes.attach(this, typeVariables);
+            return TypeList.Generic.ForDetachedTypes.attachVariables(this, typeVariables);
         }
 
         @Override
@@ -1332,9 +1334,9 @@ public interface MethodDescription extends TypeVariableSource,
         private final int modifiers;
 
         /**
-         * A mapping of a type variable's symbol to a list of its bounds.
+         * A list of tokens representing the method's type variables.
          */
-        private final Map<String, ? extends TypeList.Generic> typeVariables;
+        private final List<? extends TypeVariableToken> typeVariables;
 
         /**
          * The return type of the represented method.
@@ -1392,7 +1394,7 @@ public interface MethodDescription extends TypeVariableSource,
         public Token(String name, int modifiers, TypeDescription.Generic returnType, List<? extends TypeDescription.Generic> parameterTypes) {
             this(name,
                     modifiers,
-                    Collections.<String, TypeList.Generic>emptyMap(),
+                    Collections.<TypeVariableToken>emptyList(),
                     returnType,
                     new ParameterDescription.Token.TypeList(parameterTypes),
                     Collections.<TypeDescription.Generic>emptyList(),
@@ -1414,7 +1416,7 @@ public interface MethodDescription extends TypeVariableSource,
          */
         public Token(String name,
                      int modifiers,
-                     Map<String, ? extends TypeList.Generic> typeVariables,
+                     List<? extends TypeVariableToken> typeVariables,
                      TypeDescription.Generic returnType,
                      List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends TypeDescription.Generic> exceptionTypes,
@@ -1451,10 +1453,10 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * Returns the type variables of this method token.
          *
-         * @return A mapping of a type variable's symbol to a list of its bounds.
+         * @return A a list of tokens representing the method's type variables.
          */
-        public Map<String, TypeList.Generic> getTypeVariables() {
-            return new LinkedHashMap<String, TypeList.Generic>(typeVariables);
+        public TokenList<TypeVariableToken> getTypeVariables() {
+            return new TokenList<TypeVariableToken>(typeVariables);
         }
 
         /**
@@ -1504,13 +1506,9 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-            Map<String, TypeList.Generic> typeVariables = new HashMap<String, TypeList.Generic>();
-            for (Map.Entry<String, ? extends TypeList.Generic> typeVariable : getTypeVariables().entrySet()) {
-                typeVariables.put(typeVariable.getKey(), typeVariable.getValue().accept(visitor));
-            }
             return new Token(getName(),
                     getModifiers(),
-                    typeVariables,
+                    getTypeVariables().accept(visitor),
                     getReturnType().accept(visitor),
                     getParameterTokens().accept(visitor),
                     getExceptionTypes().accept(visitor),

@@ -120,8 +120,6 @@ public class TypeWriterFieldPoolRecordTest {
     @Test
     public void testImplicitFieldEntryProperties() throws Exception {
         TypeWriter.FieldPool.Record record = new TypeWriter.FieldPool.Record.ForImplicitField(fieldDescription);
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) FieldAttributeAppender.ForInstrumentedField.INSTANCE));
-        assertThat(record.resolveDefault(defaultValue), is(defaultValue));
         assertThat(record.isImplicit(), is(true));
     }
 

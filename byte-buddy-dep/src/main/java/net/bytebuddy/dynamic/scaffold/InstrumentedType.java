@@ -9,6 +9,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -17,9 +18,7 @@ import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Collections;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
@@ -61,14 +60,7 @@ public interface InstrumentedType extends TypeDescription {
      */
     InstrumentedType withInterfaces(List<? extends Generic> interfaceTypes);
 
-    /**
-     * Creates a new instrumented type with the given type variable implemented.
-     *
-     * @param symbol The type variable's symbol.
-     * @param bound  The type variable's bound.
-     * @return A new instrumented type that is equal to this instrumented type but with the given type variable defined.
-     */
-    InstrumentedType withTypeVariable(String symbol, Generic bound);
+    InstrumentedType withTypeVariable(TypeVariableToken typeVariable);
 
     /**
      * Creates a new instrumented type with the given annotations.
@@ -253,7 +245,7 @@ public interface InstrumentedType extends TypeDescription {
         WithFlexibleName withInterfaces(List<? extends Generic> interfaceTypes);
 
         @Override
-        WithFlexibleName withTypeVariable(String symbol, Generic bound);
+        WithFlexibleName withTypeVariable(TypeVariableToken typeVariable);
 
         @Override
         WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
@@ -308,9 +300,9 @@ public interface InstrumentedType extends TypeDescription {
         private final Generic superType;
 
         /**
-         * A mapping of type variable symbols to their bounds.
+         * The instrumented type's type variables in their tokenized form.
          */
-        private final Map<String, ? extends TypeList.Generic> typeVariables;
+        private final List<? extends TypeVariableToken> typeVariables;
 
         /**
          * A list of interfaces of the instrumented type.
@@ -382,7 +374,7 @@ public interface InstrumentedType extends TypeDescription {
          *
          * @param name                   The binary name of the instrumented type.
          * @param modifiers              The modifiers of the instrumented type.
-         * @param typeVariables          A list of type variables of the instrumented type.
+         * @param typeVariables          The instrumented type's type variables in their tokenized form.
          * @param superType              The generic super type of the instrumented type.
          * @param interfaceTypes         A list of interfaces of the instrumented type.
          * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
@@ -401,7 +393,7 @@ public interface InstrumentedType extends TypeDescription {
         protected Default(String name,
                           int modifiers,
                           Generic superType,
-                          Map<String, ? extends TypeList.Generic> typeVariables,
+                          List<? extends TypeVariableToken> typeVariables,
                           List<? extends Generic> interfaceTypes,
                           List<? extends FieldDescription.Token> fieldTokens,
                           List<? extends MethodDescription.Token> methodTokens,
@@ -446,7 +438,7 @@ public interface InstrumentedType extends TypeDescription {
             return new Default(name,
                     modifiers,
                     superType,
-                    Collections.<String, TypeList.Generic>emptyMap(),
+                    Collections.<TypeVariableToken>emptyList(),
                     Collections.<Generic>emptyList(),
                     Collections.<FieldDescription.Token>emptyList(),
                     Collections.<MethodDescription.Token>emptyList(),
@@ -473,7 +465,7 @@ public interface InstrumentedType extends TypeDescription {
             return new Default(typeDescription.getName(),
                     typeDescription.getModifiers(),
                     typeDescription.getSuperType(),
-                    typeDescription.getTypeVariables().asSymbols(visitor),
+                    typeDescription.getTypeVariables().asTokenList(visitor),
                     typeDescription.getInterfaces().accept(visitor),
                     typeDescription.getDeclaredFields().asTokenList(named(typeDescription.getName())),
                     typeDescription.getDeclaredMethods().asTokenList(named(typeDescription.getName())),
@@ -595,13 +587,11 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public WithFlexibleName withTypeVariable(String symbol, Generic bound) {
-            Map<String, TypeList.Generic> typeVariables = new LinkedHashMap<String, TypeList.Generic>(this.typeVariables);
-            typeVariables.put(symbol, new TypeList.Generic.Explicit(bound));
+        public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
             return new Default(name,
                     modifiers,
                     superType,
-                    typeVariables,
+                    CompoundList.of(typeVariables, typeVariable),
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
@@ -762,7 +752,7 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return TypeList.Generic.ForDetachedTypes.attach(this, typeVariables);
+            return TypeList.Generic.ForDetachedTypes.attachVariables(this, typeVariables);
         }
 
         @Override
