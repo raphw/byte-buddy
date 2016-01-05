@@ -72,10 +72,21 @@ public interface LatentMatcher<T> {
 
     // TODO: Does this make sense? Compared to the detached type anyways.
 
+    /**
+     * A latent matcher where the field token is being attached to the instrumented type before matching.
+     */
     class ForFieldToken implements LatentMatcher<FieldDescription> {
 
+        /**
+         * A token representing the field being matched.
+         */
         private final FieldDescription.Token token;
 
+        /**
+         * Creates a new latent matcher for a field token.
+         *
+         * @param token A token representing the field being matched.
+         */
         public ForFieldToken(FieldDescription.Token token) {
             this.token = token;
         }
@@ -105,10 +116,21 @@ public interface LatentMatcher<T> {
         }
     }
 
+    /**
+     * A latent matcher where the method token is being attached to the instrumented type before matching.
+     */
     class ForMethodToken implements LatentMatcher<MethodDescription> {
 
+        /**
+         * A token representing the method being matched.
+         */
         private final MethodDescription.Token token;
 
+        /**
+         * Creates a new latent matcher for a method token.
+         *
+         * @param token A token representing the method being matched.
+         */
         public ForMethodToken(MethodDescription.Token token) {
             this.token = token;
         }
