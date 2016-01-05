@@ -42,8 +42,9 @@ public interface AsmVisitorWrapper {
     /**
      * Applies a {@code ClassVisitorWrapper} to the creation of a {@link net.bytebuddy.dynamic.DynamicType}.
      *
-     * @param classVisitor A {@code ClassVisitor} to become the new primary class visitor to which the created
-     *                     {@link net.bytebuddy.dynamic.DynamicType} is written to.
+     * @param instrumentedType The instrumented type.
+     * @param classVisitor     A {@code ClassVisitor} to become the new primary class visitor to which the created
+     *                         {@link net.bytebuddy.dynamic.DynamicType} is written to.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
      */
     ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor);
@@ -314,7 +315,12 @@ public interface AsmVisitorWrapper {
     }
 
     /**
-     * An ASM visitor wrapper that allows to wrap declared methods of the instrumented type with a {@link MethodVisitorWrapper}.
+     * <p>
+     * An ASM visitor wrapper that allows to wrap <b>declared methods</b> of the instrumented type with a {@link MethodVisitorWrapper}.
+     * </p>
+     * <p>
+     * Note: Inherited methods are <b>not</b> matched by this visitor, even if they are intercepted by a normal interception.
+     * </p>
      */
     class ForDeclaredMethods extends AbstractBase {
 
