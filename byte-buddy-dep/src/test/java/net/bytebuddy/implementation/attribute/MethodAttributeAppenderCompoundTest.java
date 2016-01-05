@@ -1,8 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -16,10 +14,10 @@ public class MethodAttributeAppenderCompoundTest extends AbstractMethodAttribute
     @Test
     public void testApplication() throws Exception {
         MethodAttributeAppender methodAttributeAppender = new MethodAttributeAppender.Compound(first, second);
-        methodAttributeAppender.apply(methodVisitor, methodDescription, valueFilter);
-        verify(first).apply(methodVisitor, methodDescription, valueFilter);
+        methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
+        verify(first).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(first);
-        verify(second).apply(methodVisitor, methodDescription, valueFilter);
+        verify(second).apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyNoMoreInteractions(second);
         verifyZeroInteractions(instrumentedType);
     }

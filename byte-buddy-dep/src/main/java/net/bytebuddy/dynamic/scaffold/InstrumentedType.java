@@ -60,6 +60,12 @@ public interface InstrumentedType extends TypeDescription {
      */
     InstrumentedType withInterfaces(List<? extends Generic> interfaceTypes);
 
+    /**
+     * Creates a new instrumented type with the given type variable defined.
+     *
+     * @param typeVariable The type variable to declare.
+     * @return A new instrumented type that is equal to this instrumented type but with the given type variable declared.
+     */
     InstrumentedType withTypeVariable(TypeVariableToken typeVariable);
 
     /**

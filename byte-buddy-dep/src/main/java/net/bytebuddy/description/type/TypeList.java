@@ -204,6 +204,13 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          */
         Generic asRawTypes();
 
+        /**
+         * Transforms a list of attached type variables into their tokenized form. Calling this method throws an {@link IllegalStateException}
+         * if any type in this list does not represent a type variable ({@link net.bytebuddy.description.type.TypeDefinition.Sort#VARIABLE}).
+         *
+         * @param visitor The visitor to use for detaching the type variable's bounds.
+         * @return A list of tokens representing the type variables contained in this list.
+         */
         ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
 
         /**
@@ -459,19 +466,35 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             /**
-             *
+             * A list of attached type variables represented by a list of type variable tokens.
              */
             protected static class OfTypeVariables extends Generic.AbstractBase {
 
+                /**
+                 * The type variable's source.
+                 */
                 private final TypeVariableSource typeVariableSource;
 
+                /**
+                 * A token representing the type variable in its detached state.
+                 */
                 private final List<? extends TypeVariableToken> detachedTypeVariables;
 
+                /**
+                 * A visitor for attaching the type variable's bounds.
+                 */
                 private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
-                public OfTypeVariables(TypeVariableSource typeVariableSource,
-                                       List<? extends TypeVariableToken> detachedTypeVariables,
-                                       TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+                /**
+                 * Creates a new list of attached type variables representing a list of type variable tokens.
+                 *
+                 * @param typeVariableSource    The type variable's source.
+                 * @param detachedTypeVariables A token representing the type variable in its detached state.
+                 * @param visitor               A visitor for attaching the type variable's bounds.
+                 */
+                protected OfTypeVariables(TypeVariableSource typeVariableSource,
+                                          List<? extends TypeVariableToken> detachedTypeVariables,
+                                          TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                     this.typeVariableSource = typeVariableSource;
                     this.detachedTypeVariables = detachedTypeVariables;
                     this.visitor = visitor;
@@ -493,17 +516,27 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected static class AttachedTypeVariable extends TypeDescription.Generic.OfTypeVariable {
 
                     /**
-                     * The type variable source that defines the type variable.
+                     * The type variable's source.
                      */
                     private final TypeVariableSource typeVariableSource;
 
+                    /**
+                     * A token representing the type variable in its detached state.
+                     */
                     private final TypeVariableToken typeVariableToken;
 
                     /**
-                     * The visitor to apply onto the detached bounds for their attachment.
+                     * A visitor for attaching the type variable's bounds.
                      */
                     private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
+                    /**
+                     * Creates a new attached type variable.
+                     *
+                     * @param typeVariableSource The type variable's source.
+                     * @param typeVariableToken  A token representing the type variable in its detached state.
+                     * @param visitor            A visitor for attaching the type variable's bounds.
+                     */
                     protected AttachedTypeVariable(TypeVariableSource typeVariableSource,
                                                    TypeVariableToken typeVariableToken,
                                                    Visitor<? extends TypeDescription.Generic> visitor) {

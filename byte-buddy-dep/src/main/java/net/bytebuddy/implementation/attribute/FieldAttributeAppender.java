@@ -17,9 +17,9 @@ public interface FieldAttributeAppender {
     /**
      * Applies this attribute appender to a given field visitor.
      *
-     * @param fieldVisitor     The field visitor to which the attributes that are represented by this attribute appender
-     *                         are written to.
-     * @param fieldDescription The description of the field to which the field visitor belongs to.
+     * @param fieldVisitor          The field visitor to which the attributes that are represented by this attribute appender are written to.
+     * @param fieldDescription      The description of the field to which the field visitor belongs to.
+     * @param annotationValueFilter The annotation value filter to apply when writing annotations.
      */
     void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter);
 
@@ -73,10 +73,20 @@ public interface FieldAttributeAppender {
              */
             private final List<? extends Factory> factories;
 
+            /**
+             * Creates a new compound field attribute appender factory.
+             *
+             * @param factory The factories to represent in the order of their application.
+             */
             public Compound(Factory... factory) {
                 this(Arrays.asList(factory));
             }
 
+            /**
+             * Creates a new compound field attribute appender factory.
+             *
+             * @param factories The factories to represent in the order of their application.
+             */
             public Compound(List<? extends Factory> factories) {
                 this.factories = factories;
             }
@@ -108,8 +118,14 @@ public interface FieldAttributeAppender {
         }
     }
 
+    /**
+     * An attribute appender that writes all annotations that are declared on a field.
+     */
     enum ForInstrumentedField implements FieldAttributeAppender, Factory {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -204,6 +220,12 @@ public interface FieldAttributeAppender {
             this(Arrays.asList(fieldAttributeAppender));
         }
 
+        /**
+         * Creates a new compound field attribute appender.
+         *
+         * @param fieldAttributeAppenders The field attribute appenders that are to be combined by this compound appender
+         *                                in the order of their application.
+         */
         public Compound(List<? extends FieldAttributeAppender> fieldAttributeAppenders) {
             this.fieldAttributeAppenders = fieldAttributeAppenders;
         }

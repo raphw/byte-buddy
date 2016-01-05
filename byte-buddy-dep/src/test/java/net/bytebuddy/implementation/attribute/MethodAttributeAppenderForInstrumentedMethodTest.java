@@ -10,8 +10,6 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -21,12 +19,12 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodAnnotations() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
+        when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
                 .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getDeclaringType()).thenReturn(mock(TypeDescription.Generic.class));
-        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription, valueFilter);
+        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
@@ -38,14 +36,14 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
     @Test
     @SuppressWarnings("unchecked")
     public void testMethodParameterAnnotations() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
+        when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
         when(parameterDescription.getDeclaredAnnotations())
                 .thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(parameterDescription));
         when(methodDescription.getDeclaringType()).thenReturn(mock(TypeDescription.Generic.class));
-        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription, valueFilter);
+        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitParameterAnnotation(0, Type.getDescriptor(Baz.class), true);
         verify(methodVisitor).visitParameterAnnotation(0, Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);

@@ -3,15 +3,15 @@ package net.bytebuddy.implementation.attribute;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
-import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class MethodAttributeAppenderNoOpTest extends AbstractMethodAttributeAppenderTest {
 
     @Test
     public void testApplication() throws Exception {
-        MethodAttributeAppender.NoOp.INSTANCE.apply(methodVisitor, methodDescription, valueFilter);
+        MethodAttributeAppender.NoOp.INSTANCE.apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(methodDescription);
     }

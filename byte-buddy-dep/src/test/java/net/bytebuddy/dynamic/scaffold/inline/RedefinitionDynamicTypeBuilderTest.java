@@ -14,6 +14,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -48,6 +49,11 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
     @Override
     protected DynamicType.Builder<?> createDisabledContext() {
         return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).redefine(Foo.class);
+    }
+
+    @Override
+    protected DynamicType.Builder createDisabledRetention(Class<?> annotatedClass) {
+        return new ByteBuddy().with(AnnotationRetention.DISABLED).redefine(annotatedClass);
     }
 
     @Override

@@ -17,6 +17,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.SuperMethodCall;
+import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.test.visibility.PackageAnnotation;
@@ -53,6 +54,11 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
     @Override
     protected DynamicType.Builder<?> createDisabledContext() {
         return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).rebase(Foo.class);
+    }
+
+    @Override
+    protected DynamicType.Builder createDisabledRetention(Class<?> annotatedClass) {
+        return new ByteBuddy().with(AnnotationRetention.DISABLED).rebase(annotatedClass);
     }
 
     @Override

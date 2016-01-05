@@ -20,6 +20,12 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      */
     private final List<? extends TypeDescription.Generic> upperBounds;
 
+    /**
+     * Creates a new type variable token.
+     *
+     * @param symbol     The type variable's symbol.
+     * @param upperBound The type variable's single upper bound.
+     */
     public TypeVariableToken(String symbol, TypeDescription.Generic upperBound) {
         this(symbol, Collections.singletonList(upperBound));
     }
@@ -35,6 +41,13 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         this.upperBounds = upperBounds;
     }
 
+    /**
+     * Transforms a type variable into a type variable token with its bounds detached.
+     *
+     * @param typeVariable A type variable in its attached state.
+     * @param visitor      A visitor for detaching the type variable's upper bounds.
+     * @return A token representing the detached type variable.
+     */
     public static TypeVariableToken of(TypeDescription.Generic typeVariable, TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
         return new TypeVariableToken(typeVariable.getSymbol(), typeVariable.getUpperBounds().accept(visitor));
     }

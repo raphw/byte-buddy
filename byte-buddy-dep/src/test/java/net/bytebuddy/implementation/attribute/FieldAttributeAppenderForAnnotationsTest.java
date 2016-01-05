@@ -15,14 +15,14 @@ public class FieldAttributeAppenderForAnnotationsTest extends AbstractFieldAttri
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Qux.Instance())).apply(fieldVisitor, fieldDescription, valueFilter);
+        new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Qux.Instance())).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyZeroInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
     }
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Baz.Instance())).apply(fieldVisitor, fieldDescription, valueFilter);
+        new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Baz.Instance())).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
@@ -30,7 +30,7 @@ public class FieldAttributeAppenderForAnnotationsTest extends AbstractFieldAttri
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance())).apply(fieldVisitor, fieldDescription, valueFilter);
+        new FieldAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance())).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);

@@ -9,7 +9,7 @@ public class TypeAttributeAppenderNoOpTest extends AbstractTypeAttributeAppender
 
     @Test
     public void testApplication() throws Exception {
-        TypeAttributeAppender.NoOp.INSTANCE.apply(classVisitor, instrumentedType, valueFilter);
+        TypeAttributeAppender.NoOp.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
         verifyZeroInteractions(classVisitor);
         verifyZeroInteractions(instrumentedType);
     }

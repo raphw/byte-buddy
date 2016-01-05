@@ -17,8 +17,9 @@ public interface TypeAttributeAppender {
     /**
      * Applies this type attribute appender.
      *
-     * @param classVisitor     The class visitor to which the annotations of this visitor should be written to.
-     * @param instrumentedType A description of the instrumented type that is target of the ongoing instrumentation.
+     * @param classVisitor          The class visitor to which the annotations of this visitor should be written to.
+     * @param instrumentedType      A description of the instrumented type that is target of the ongoing instrumentation.
+     * @param annotationValueFilter The annotation value filter to apply when writing annotations.
      */
     void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter);
 
@@ -50,6 +51,9 @@ public interface TypeAttributeAppender {
      */
     enum ForInstrumentedType implements TypeAttributeAppender {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -65,23 +69,39 @@ public interface TypeAttributeAppender {
             return "TypeAttributeAppender.ForInstrumentedType." + name();
         }
 
+        /**
+         * A type attribute appender that writes all annotations of the instrumented types but those that are explicitly excluded.
+         */
         public static class Excluding implements TypeAttributeAppender {
 
-            private final Set<? extends TypeDescription> excludedTypes;
+            /**
+             * A set of the annotations that are excluded.
+             */
+            private final Set<? extends AnnotationDescription> excludedAnnotations;
 
-            public Excluding(TypeDescription originalType) {
-                this(new HashSet<TypeDescription>(originalType.getDeclaredAnnotations().asTypeList()));
+            /**
+             * Creates a new excluding type annotation appender.
+             *
+             * @param typeDescription A type whose annotations are excluded from writing.
+             */
+            public Excluding(TypeDescription typeDescription) {
+                this(new HashSet<AnnotationDescription>(typeDescription.getDeclaredAnnotations()));
             }
 
-            public Excluding(Set<? extends TypeDescription> excludedTypes) {
-                this.excludedTypes = excludedTypes;
+            /**
+             * Creates a new excluding type annotation appender.
+             *
+             * @param excludedAnnotations A set of the annotations that are excluded.
+             */
+            public Excluding(Set<? extends AnnotationDescription> excludedAnnotations) {
+                this.excludedAnnotations = excludedAnnotations;
             }
 
             @Override
             public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
                 AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
                 for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
-                    if (!excludedTypes.contains(annotation.getAnnotationType())) {
+                    if (!excludedAnnotations.contains(annotation)) {
                         appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
                     }
                 }
@@ -90,18 +110,18 @@ public interface TypeAttributeAppender {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && excludedTypes.equals(((Excluding) other).excludedTypes);
+                        && excludedAnnotations.equals(((Excluding) other).excludedAnnotations);
             }
 
             @Override
             public int hashCode() {
-                return excludedTypes.hashCode();
+                return excludedAnnotations.hashCode();
             }
 
             @Override
             public String toString() {
                 return "TypeAttributeAppender.ForInstrumentedType.Excluding{" +
-                        "excludedTypes=" + excludedTypes +
+                        "excludedAnnotations=" + excludedAnnotations +
                         '}';
             }
         }
@@ -173,6 +193,11 @@ public interface TypeAttributeAppender {
             this(Arrays.asList(typeAttributeAppender));
         }
 
+        /**
+         * Creates a new compound attribute appender.
+         *
+         * @param typeAttributeAppenders The type attribute appenders to concatenate in the order of their application.
+         */
         public Compound(List<? extends TypeAttributeAppender> typeAttributeAppenders) {
             this.typeAttributeAppenders = typeAttributeAppenders;
         }

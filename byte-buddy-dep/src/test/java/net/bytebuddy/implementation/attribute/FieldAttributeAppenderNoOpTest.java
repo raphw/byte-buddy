@@ -11,7 +11,7 @@ public class FieldAttributeAppenderNoOpTest extends AbstractFieldAttributeAppend
 
     @Test
     public void testApplication() throws Exception {
-        FieldAttributeAppender.NoOp.INSTANCE.apply(fieldVisitor, fieldDescription, valueFilter);
+        FieldAttributeAppender.NoOp.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyZeroInteractions(fieldVisitor);
         verifyZeroInteractions(fieldDescription);
     }

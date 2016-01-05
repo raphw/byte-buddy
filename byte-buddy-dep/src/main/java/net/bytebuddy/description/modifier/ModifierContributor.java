@@ -68,38 +68,93 @@ public interface ModifierContributor {
         /* marker interface */
     }
 
+    /**
+     * A resolver for Java modifiers represented by {@link ModifierContributor}s.
+     *
+     * @param <T> The type of the {@link ModifierContributor}s being resolved.
+     */
     class Resolver<T extends ModifierContributor> {
 
+        /**
+         * The modifier contributors to resolve.
+         */
         private final Collection<? extends T> modifierContributors;
 
+        /**
+         * Creates a new resolver.
+         *
+         * @param modifierContributors The modifier contributors to resolve.
+         */
         protected Resolver(Collection<? extends T> modifierContributors) {
             this.modifierContributors = modifierContributors;
         }
 
+        /**
+         * Creates a new resolver for modifier contributors to a type.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
         public static Resolver<ForType> of(ForType... modifierContributor) {
             return of(Arrays.asList(modifierContributor));
         }
 
+        /**
+         * Creates a new resolver for modifier contributors to a field.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
         public static Resolver<ForField> of(ForField... modifierContributor) {
             return of(Arrays.asList(modifierContributor));
         }
 
+        /**
+         * Creates a new resolver for modifier contributors to a method.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
         public static Resolver<ForMethod> of(ForMethod... modifierContributor) {
             return of(Arrays.asList(modifierContributor));
         }
 
+        /**
+         * Creates a new resolver for modifier contributors to a parameter.
+         *
+         * @param modifierContributor The modifier contributors to resolve.
+         * @return A resolver for the provided modifier contributors.
+         */
         public static Resolver<ForParameter> of(ForParameter... modifierContributor) {
             return Resolver.of(Arrays.asList(modifierContributor));
         }
 
+        /**
+         * Creates a new resolver for any modifier contributor of a given type.
+         *
+         * @param modifierContributors The modifier contributors to resolve.
+         * @param <S>                  The modifier contributors type.
+         * @return A resolver for the provided modifier contributors.
+         */
         public static <S extends ModifierContributor> Resolver<S> of(Collection<? extends S> modifierContributors) {
             return new Resolver<S>(modifierContributors);
         }
 
+        /**
+         * Resolves the modifier contributors based on a zero modifier.
+         *
+         * @return The resolved modifiers.
+         */
         public int resolve() {
             return resolve(EMPTY_MASK);
         }
 
+        /**
+         * Resolves the modifier contributors based on a given modifier.
+         *
+         * @param modifiers The base modifiers.
+         * @return The resolved modifiers.
+         */
         public int resolve(int modifiers) {
             for (T modifierContributor : modifierContributors) {
                 modifiers = (modifiers & ~modifierContributor.getRange()) | modifierContributor.getMask();

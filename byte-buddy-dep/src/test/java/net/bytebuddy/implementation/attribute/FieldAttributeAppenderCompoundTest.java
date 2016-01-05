@@ -1,8 +1,6 @@
 package net.bytebuddy.implementation.attribute;
 
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 
@@ -16,10 +14,10 @@ public class FieldAttributeAppenderCompoundTest extends AbstractFieldAttributeAp
     @Test
     public void testApplication() throws Exception {
         FieldAttributeAppender fieldAttributeAppender = new FieldAttributeAppender.Compound(first, second);
-        fieldAttributeAppender.apply(fieldVisitor, fieldDescription, valueFilter);
-        verify(first).apply(fieldVisitor, fieldDescription, valueFilter);
+        fieldAttributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilter);
+        verify(first).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyNoMoreInteractions(first);
-        verify(second).apply(fieldVisitor, fieldDescription, valueFilter);
+        verify(second).apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyNoMoreInteractions(second);
         verifyZeroInteractions(instrumentedType);
     }

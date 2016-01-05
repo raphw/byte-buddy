@@ -19,10 +19,11 @@ public interface MethodAttributeAppender {
     /**
      * Applies this attribute appender to a given method visitor.
      *
-     * @param methodVisitor     The method visitor to which the attributes that are represented by this attribute
-     *                          appender are written to.
-     * @param methodDescription The description of the method for which the given method visitor creates an
-     *                          instrumentation for.
+     * @param methodVisitor         The method visitor to which the attributes that are represented by this attribute
+     *                              appender are written to.
+     * @param methodDescription     The description of the method for which the given method visitor creates an
+     *                              instrumentation for.
+     * @param annotationValueFilter The annotation value filter to apply when the annotations are written.
      */
     void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter);
 
@@ -79,13 +80,17 @@ public interface MethodAttributeAppender {
             /**
              * Creates a new compound method attribute appender factory.
              *
-             * @param factory The factories that are to be combined by this compound factory in the order of their
-             *                application.
+             * @param factory The factories that are to be combined by this compound factory in the order of their application.
              */
             public Compound(Factory... factory) {
                 this(Arrays.asList(factory));
             }
 
+            /**
+             * Creates a new compound method attribute appender factory.
+             *
+             * @param factories The factories that are to be combined by this compound factory in the order of their application.
+             */
             public Compound(List<? extends Factory> factories) {
                 this.factories = factories;
             }
@@ -123,6 +128,9 @@ public interface MethodAttributeAppender {
      */
     enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
 
+        /**
+         * The singleton instance.
+         */
         INSTANCE;
 
         @Override
@@ -186,11 +194,24 @@ public interface MethodAttributeAppender {
             this(Target.OnMethod.INSTANCE, annotations);
         }
 
+        /**
+         * Creates an explicit annotation appender for a either a method or one of its parameters..
+         *
+         * @param target      The target to which the annotation should be written to.
+         * @param annotations The annotations to write.
+         */
         protected Explicit(Target target, List<? extends AnnotationDescription> annotations) {
             this.target = target;
             this.annotations = annotations;
         }
 
+        /**
+         * Creates a method attribute appender factory that writes all annotations of a given method, both the method
+         * annotations themselves and all annotations that are defined for every parameter.
+         *
+         * @param methodDescription The method from which to extract the annotations.
+         * @return A method attribute appender factory for an appender that writes all annotations of the supplied method.
+         */
         public static Factory of(MethodDescription methodDescription) {
             ParameterList<?> parameters = methodDescription.getParameters();
             List<MethodAttributeAppender.Factory> methodAttributeAppenders = new ArrayList<MethodAttributeAppender.Factory>(parameters.size() + 1);
@@ -338,6 +359,12 @@ public interface MethodAttributeAppender {
             this(Arrays.asList(methodAttributeAppender));
         }
 
+        /**
+         * Creates a new compound method attribute appender.
+         *
+         * @param methodAttributeAppenders The method attribute appenders that are to be combined by this compound appender
+         *                                 in the order of their application.
+         */
         public Compound(List<? extends MethodAttributeAppender> methodAttributeAppenders) {
             this.methodAttributeAppenders = methodAttributeAppenders;
         }
