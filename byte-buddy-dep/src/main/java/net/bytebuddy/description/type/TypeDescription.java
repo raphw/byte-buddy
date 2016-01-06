@@ -1737,6 +1737,76 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                 }
             }
+
+            enum Validator implements Visitor<Boolean> {
+
+                TYPE_VARIABLE(false, false, true, false, false),
+
+                FIELD(true, true, true, false, false),
+
+                METHOD_RETURN(true, true, true, true, false),
+
+                METHOD_PARAMETER(true, true, true, false, false),
+
+                EXCEPTION(false, false, true, false, true);
+
+                private final boolean acceptsArray;
+
+                private final boolean acceptsPrimitive;
+
+                private final boolean acceptsVariable;
+
+                private final boolean acceptsVoid;
+
+                private final boolean requiresThrowable;
+
+                Validator(boolean acceptsArray, boolean acceptsPrimitive, boolean acceptsVariable, boolean acceptsVoid, boolean requiresThrowable) {
+                    this.acceptsArray = acceptsArray;
+                    this.acceptsPrimitive = acceptsPrimitive;
+                    this.acceptsVariable = acceptsVariable;
+                    this.acceptsVoid = acceptsVoid;
+                    this.requiresThrowable = requiresThrowable;
+                }
+
+                @Override
+                public Boolean onGenericArray(Generic genericArray) {
+                    return acceptsArray;
+                }
+
+                @Override
+                public Boolean onWildcard(Generic wildcard) {
+                    return false;
+                }
+
+                @Override
+                public Boolean onParameterizedType(Generic parameterizedType) {
+                    return !requiresThrowable;
+                }
+
+                @Override
+                public Boolean onTypeVariable(Generic typeVariable) {
+                    if (requiresThrowable) {
+                        for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                            if (bound.accept(this)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+                    return acceptsVariable;
+                }
+
+                @Override
+                public Boolean onNonGenericType(Generic typeDescription) {
+                    if (typeDescription.isArray()) {
+                        return acceptsArray;
+                    } else if (typeDescription.isPrimitive()) {
+                        return acceptsPrimitive && (acceptsVoid || !typeDescription.represents(void.class));
+                    } else {
+                        return !requiresThrowable || typeDescription.asErasure().isAssignableTo(Throwable.class);
+                    }
+                }
+            }
         }
 
         /**

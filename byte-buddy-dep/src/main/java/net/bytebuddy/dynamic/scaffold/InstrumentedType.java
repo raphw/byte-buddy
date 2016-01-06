@@ -790,7 +790,7 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Duplicate type variable symbol for " + typeVariable);
                 }
                 for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
-                    if (bound.accept(null)) {
+                    if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                         throw new IllegalStateException("Illegal type variable bound " + bound + " for " + typeVariable);
                     }
                 }
@@ -813,7 +813,7 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + fieldDescription);
                     }
                 }
-                if (fieldDescription.getType().accept(null)) {
+                if (!fieldDescription.getType().accept(Generic.Visitor.Validator.FIELD)) {
                     throw new IllegalStateException("Illegal type variable bound " + fieldDescription.getType() + " for " + fieldDescription);
                 }
             }
@@ -829,7 +829,7 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate type variable symbol for " + typeVariable + " of " + methodDescription);
                     }
                     for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
-                        if (bound.accept(null)) {
+                        if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                             throw new IllegalStateException("Illegal type variable bound " + bound + " for " + typeVariable + " of " + methodDescription);
                         }
                     }
@@ -840,7 +840,7 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);
                     }
                 }
-                if (methodDescription.getReturnType().accept(null)) {
+                if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
                     throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
                 }
                 Set<String> parameterNames = new HashSet<String>();
@@ -855,12 +855,15 @@ public interface InstrumentedType extends TypeDescription {
                             throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + parameterDescription);
                         }
                     }
-                    if (parameterDescription.getType().accept(null)) {
+                    if (!parameterDescription.getType().accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
                         throw new IllegalStateException("Illegal parameter type " + parameterDescription.getType() + " for " + parameterDescription);
                     }
                 }
+                Set<TypeDescription.Generic> exceptionTypes = new HashSet<Generic>();
                 for (TypeDescription.Generic exceptionType : methodDescription.getExceptionTypes()) {
-                    if (exceptionType.accept(null)) {
+                    if (!exceptionTypes.add(exceptionType)) {
+                        throw new IllegalStateException("Duplicate exception type " + exceptionType + " for " + methodDescription);
+                    } else if (!exceptionType.accept(Generic.Visitor.Validator.EXCEPTION)) {
                         throw new IllegalStateException("Illegal exception type " + exceptionType + " for " + methodDescription);
                     }
                 }
