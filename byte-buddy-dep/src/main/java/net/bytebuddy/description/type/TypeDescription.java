@@ -1207,7 +1207,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 /**
-                 * A dispatcher that allows if a type is assignable
+                 * A dispatcher that allows to check if the visited generic type is assignable to the supplied type.
                  */
                 public interface Dispatcher {
 
