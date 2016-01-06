@@ -6,6 +6,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -18,7 +19,9 @@ import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
@@ -779,6 +782,89 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public TypeDescription validated() {
+            // Internal type
+            Set<String> typeVariableNames = new HashSet<String>();
+            for (TypeDescription.Generic typeVariable : getTypeVariables()) {
+                // Type variable name
+                if (!typeVariableNames.add(typeVariable.getSymbol())) {
+                    throw new IllegalStateException("Duplicate type variable symbol for " + typeVariable);
+                }
+                for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                    if (bound.accept(null)) {
+                        throw new IllegalStateException("Illegal type variable bound " + bound + " for " + typeVariable);
+                    }
+                }
+            }
+            Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
+            for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
+                if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                    throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);
+                }
+            }
+            Set<String> fieldNames = new HashSet<String>();
+            for (FieldDescription.InDefinedShape fieldDescription : getDeclaredFields()) {
+                // Field name
+                if (!fieldNames.add(fieldDescription.getName())) {
+                    throw new IllegalStateException("Duplicate field definition for " + fieldDescription);
+                }
+                Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
+                for (AnnotationDescription annotationDescription : fieldDescription.getDeclaredAnnotations()) {
+                    if (!fieldAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                        throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + fieldDescription);
+                    }
+                }
+                if (fieldDescription.getType().accept(null)) {
+                    throw new IllegalStateException("Illegal type variable bound " + fieldDescription.getType() + " for " + fieldDescription);
+                }
+            }
+            Set<MethodDescription.SignatureToken> methodSignatureTokens = new HashSet<MethodDescription.SignatureToken>();
+            for (MethodDescription.InDefinedShape methodDescription : getDeclaredMethods()) {
+                // Method name
+                if (!methodSignatureTokens.add(methodDescription.asSignatureToken())) {
+                    throw new IllegalStateException("Duplicate method signature for " + methodDescription);
+                }
+                Set<String> methodTypeVariableNames = new HashSet<String>();
+                for (TypeDescription.Generic typeVariable : methodDescription.getTypeVariables()) {
+                    if (!methodTypeVariableNames.add(typeVariable.getSymbol())) {
+                        throw new IllegalStateException("Duplicate type variable symbol for " + typeVariable + " of " + methodDescription);
+                    }
+                    for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                        if (bound.accept(null)) {
+                            throw new IllegalStateException("Illegal type variable bound " + bound + " for " + typeVariable + " of " + methodDescription);
+                        }
+                    }
+                }
+                Set<TypeDescription> methodAnnotationTypes = new HashSet<TypeDescription>();
+                for (AnnotationDescription annotationDescription : methodDescription.getDeclaredAnnotations()) {
+                    if (!methodAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                        throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);
+                    }
+                }
+                if (methodDescription.getReturnType().accept(null)) {
+                    throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                }
+                Set<String> parameterNames = new HashSet<String>();
+                for (ParameterDescription.InDefinedShape parameterDescription : methodDescription.getParameters()) {
+                    // Parameter name
+                    if (parameterDescription.isNamed() && !parameterNames.add(parameterDescription.getName())) {
+                        throw new IllegalStateException("Duplicate parameter name for " + parameterDescription);
+                    }
+                    Set<TypeDescription> parameterAnnotationTypes = new HashSet<TypeDescription>();
+                    for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
+                        if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                            throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + parameterDescription);
+                        }
+                    }
+                    if (parameterDescription.getType().accept(null)) {
+                        throw new IllegalStateException("Illegal parameter type " + parameterDescription.getType() + " for " + parameterDescription);
+                    }
+                }
+                for (TypeDescription.Generic exceptionType : methodDescription.getExceptionTypes()) {
+                    if (exceptionType.accept(null)) {
+                        throw new IllegalStateException("Illegal exception type " + exceptionType + " for " + methodDescription);
+                    }
+                }
+            }
             return this;
         }
     }
