@@ -374,7 +374,8 @@ public interface DynamicType {
          * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
          *
          * @param symbol The type variable's symbol.
-         * @param bound  The type variable's upper bound.
+         * @param bound  The type variable's upper bound. Can also be {@link net.bytebuddy.dynamic.TargetType} if the bound type
+         *               should be equal to the currently instrumented type.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
         Builder<T> typeVariable(String symbol, TypeDefinition bound);
@@ -383,7 +384,8 @@ public interface DynamicType {
          * Defines the specified field as a field of the built dynamic type.
          *
          * @param name                The name of the field.
-         * @param type                The type of the field.
+         * @param type                The type of the field. Can also be {@link net.bytebuddy.dynamic.TargetType} if the field type
+         *                            should be equal to the currently instrumented type.
          * @param modifierContributor The modifiers of the field.
          * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
@@ -394,7 +396,8 @@ public interface DynamicType {
          * Defines the specified field as a field of the built dynamic type.
          *
          * @param name                 The name of the field.
-         * @param type                 The type of the field.
+         * @param type                 The type of the field. Can also be {@link net.bytebuddy.dynamic.TargetType} if the field type
+         *                             should be equal to the currently instrumented type.
          * @param modifierContributors The modifiers of the field.
          * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
@@ -405,7 +408,8 @@ public interface DynamicType {
          * Defines the specified field as a field of the built dynamic type.
          *
          * @param name      The name of the field.
-         * @param type      The type of the field.
+         * @param type      The type of the field. Can also be {@link net.bytebuddy.dynamic.TargetType} if the field type
+         *                  should be equal to the currently instrumented type.
          * @param modifiers The modifiers of the field.
          * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
@@ -416,7 +420,8 @@ public interface DynamicType {
          * Defines the specified field as a field of the built dynamic type.
          *
          * @param name                The name of the field.
-         * @param type                The type of the field.
+         * @param type                The type of the field. Can also be {@link net.bytebuddy.dynamic.TargetType} if the field type
+         *                            should be equal to the currently instrumented type.
          * @param modifierContributor The modifiers of the field.
          * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
@@ -427,7 +432,8 @@ public interface DynamicType {
          * Defines the specified field as a field of the built dynamic type.
          *
          * @param name                 The name of the field.
-         * @param type                 The type of the field.
+         * @param type                 The type of the field. Can also be {@link net.bytebuddy.dynamic.TargetType} if the field type
+         *                             should be equal to the currently instrumented type.
          * @param modifierContributors The modifiers of the field.
          * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
@@ -438,7 +444,8 @@ public interface DynamicType {
          * Defines the specified field as a field of the built dynamic type.
          *
          * @param name      The name of the field.
-         * @param type      The type of the field.
+         * @param type      The type of the field. Can also be {@link net.bytebuddy.dynamic.TargetType} if the field type
+         *                  should be equal to the currently instrumented type.
          * @param modifiers The modifiers of the field.
          * @return A new builder that is equal to this builder but with the given field defined for the instrumented type.
          * Furthermore, it is possible to optionally define a value, annotations or custom attributes for the field.
@@ -483,6 +490,10 @@ public interface DynamicType {
          * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
          * altered, annotation retention must be disabled.
          * </p>
+         * <p>
+         * If a field is already matched by a previously specified field matcher, the new field definition gets precedence
+         * over the previous definition, i.e. the previous field definition is no longer applied.
+         * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
          * @return A builder that allows for changing a field's definition.
@@ -500,6 +511,10 @@ public interface DynamicType {
          * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
          * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
          * altered, annotation retention must be disabled.
+         * </p>
+         * <p>
+         * If a field is already matched by a previously specified field matcher, the new field definition gets precedence
+         * over the previous definition, i.e. the previous field definition is no longer applied.
          * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
@@ -534,7 +549,8 @@ public interface DynamicType {
          * type variables can be defined in subsequent steps.
          *
          * @param name                The name of the method.
-         * @param returnType          The method's return type.
+         * @param returnType          The method's return type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the return type
+         *                            should be equal to the currently instrumented type.
          * @param modifierContributor The method's modifiers.
          * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
          */
@@ -545,7 +561,8 @@ public interface DynamicType {
          * type variables can be defined in subsequent steps.
          *
          * @param name                 The name of the method.
-         * @param returnType           The method's return type.
+         * @param returnType           The method's return type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the return type
+         *                             should be equal to the currently instrumented type.
          * @param modifierContributors The method's modifiers.
          * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
          */
@@ -556,7 +573,8 @@ public interface DynamicType {
          * type variables can be defined in subsequent steps.
          *
          * @param name       The name of the method.
-         * @param returnType The method's return type.
+         * @param returnType The method's return type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the return type
+         *                   should be equal to the currently instrumented type.
          * @param modifiers  The method's modifiers.
          * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
          */
@@ -567,7 +585,8 @@ public interface DynamicType {
          * type variables can be defined in subsequent steps.
          *
          * @param name                The name of the method.
-         * @param returnType          The method's return type.
+         * @param returnType          The method's return type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the return type
+         *                            should be equal to the currently instrumented type.
          * @param modifierContributor The method's modifiers.
          * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
          */
@@ -578,7 +597,8 @@ public interface DynamicType {
          * type variables can be defined in subsequent steps.
          *
          * @param name                 The name of the method.
-         * @param returnType           The method's return type.
+         * @param returnType           The method's return type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the return type
+         *                             should be equal to the currently instrumented type.
          * @param modifierContributors The method's modifiers.
          * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
          */
@@ -589,7 +609,8 @@ public interface DynamicType {
          * type variables can be defined in subsequent steps.
          *
          * @param name       The name of the method.
-         * @param returnType The method's return type.
+         * @param returnType The method's return type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the return type
+         *                   should be equal to the currently instrumented type.
          * @param modifiers  The method's modifiers.
          * @return A builder that allows for further defining the method, either by adding more properties or by defining an implementation.
          */
@@ -660,6 +681,10 @@ public interface DynamicType {
          * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
          * altered, annotation retention must be disabled.
          * </p>
+         * <p>
+         * If a method is already matched by a previously specified matcher, the new method definition gets precedence
+         * over the previous definition, i.e. the previous method definition is no longer applied.
+         * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
          * @return A builder that allows for changing a field's definition.
@@ -676,6 +701,10 @@ public interface DynamicType {
          * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
          * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
          * altered, annotation retention must be disabled.
+         * </p>
+         * <p>
+         * If a constructor is already matched by a previously specified matcher, the new constructor definition gets precedence
+         * over the previous definition, i.e. the previous constructor definition is no longer applied.
          * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
@@ -695,6 +724,10 @@ public interface DynamicType {
          * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
          * altered, annotation retention must be disabled.
          * </p>
+         * <p>
+         * If a method or constructor is already matched by a previously specified matcher, the new definition gets precedence
+         * over the previous definition, i.e. the previous definition is no longer applied.
+         * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
          * @return A builder that allows for changing a field's definition.
@@ -713,6 +746,10 @@ public interface DynamicType {
          * <i>as it is</i> if Byte Buddy is configured to retain such annotations by
          * {@link net.bytebuddy.implementation.attribute.AnnotationRetention#ENABLED}. If any existing annotations should be
          * altered, annotation retention must be disabled.
+         * </p>
+         * <p>
+         * If a method or constructor is already matched by a previously specified matcher, the new definition gets precedence
+         * over the previous definition, i.e. the previous definition is no longer applied.
          * </p>
          *
          * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
@@ -1129,7 +1166,19 @@ public interface DynamicType {
             interface ImplementationDefinition<U> {
 
                 /**
-                 * Implements the previously defined or matched method by the supplied implementation.
+                 * Implements the previously defined or matched method by the supplied implementation. A method interception
+                 * is typically implemented in one of the following ways:
+                 * <ol>
+                 * <li>If a method is declared by the instrumented type and the type builder creates a subclass or redefinition,
+                 * any preexisting method is replaced by the given implementation. Any previously defined implementation is lost.</li>
+                 * <li>If a method is declared by the instrumented type and the type builder creates a rebased version of the
+                 * instrumented type, the original method is preserved within a private, synthetic method within the instrumented
+                 * type. The original method therefore remains invokeable and is treated as the direct super method of the new
+                 * method. When rebasing a type, it therefore becomes possible to invoke a non-virtual method's super method
+                 * when a preexisting method body is replaced.</li>
+                 * <li>If a virtual method is inherited from a super type, it is overridden. The overridden method is available
+                 * for super method invocation.</li>
+                 * </ol>
                  *
                  * @param implementation The implementation for implementing the previously defined or matched method.
                  * @return A new builder where the previously defined or matched method is implemented by the
@@ -1207,7 +1256,8 @@ public interface DynamicType {
                  * Defines a method variable to be declared by the currently defined method.
                  *
                  * @param symbol The symbol of the type variable.
-                 * @param bound  The bounds of the type variables.
+                 * @param bound  The bounds of the type variables. Can also be {@link net.bytebuddy.dynamic.TargetType} for any type
+                 *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
                 TypeVariableDefinition<U> typeVariable(String symbol, Type... bound);
@@ -1216,7 +1266,8 @@ public interface DynamicType {
                  * Defines a method variable to be declared by the currently defined method.
                  *
                  * @param symbol The symbol of the type variable.
-                 * @param bounds The bounds of the type variables.
+                 * @param bounds The bounds of the type variables. Can also be {@link net.bytebuddy.dynamic.TargetType} for any type
+                 *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
                 TypeVariableDefinition<U> typeVariable(String symbol, List<? extends Type> bounds);
@@ -1225,7 +1276,8 @@ public interface DynamicType {
                  * Defines a method variable to be declared by the currently defined method.
                  *
                  * @param symbol The symbol of the type variable.
-                 * @param bound  The bounds of the type variables.
+                 * @param bound  The bounds of the type variables. Can also be {@link net.bytebuddy.dynamic.TargetType} for any type
+                 *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
                 TypeVariableDefinition<U> typeVariable(String symbol, TypeDefinition... bound);
@@ -1234,7 +1286,8 @@ public interface DynamicType {
                  * Defines a method variable to be declared by the currently defined method.
                  *
                  * @param symbol The symbol of the type variable.
-                 * @param bounds The bounds of the type variables.
+                 * @param bounds The bounds of the type variables. Can also be {@link net.bytebuddy.dynamic.TargetType} for any type
+                 *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
                 TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
@@ -1341,7 +1394,8 @@ public interface DynamicType {
                 /**
                  * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                  *
-                 * @param type                The parameter's type.
+                 * @param type                The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                 *                            should be equal to the currently instrumented type.
                  * @param name                The parameter's name.
                  * @param modifierContributor The parameter's modifiers.
                  * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
@@ -1351,7 +1405,8 @@ public interface DynamicType {
                 /**
                  * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                  *
-                 * @param type                 The parameter's type.
+                 * @param type                 The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                 *                             should be equal to the currently instrumented type.
                  * @param name                 The parameter's name.
                  * @param modifierContributors The parameter's modifiers.
                  * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
@@ -1361,7 +1416,8 @@ public interface DynamicType {
                 /**
                  * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                  *
-                 * @param type      The parameter's type.
+                 * @param type      The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                 *                  should be equal to the currently instrumented type.
                  * @param name      The parameter's name.
                  * @param modifiers The parameter's modifiers.
                  * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
@@ -1371,7 +1427,8 @@ public interface DynamicType {
                 /**
                  * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                  *
-                 * @param type                The parameter's type.
+                 * @param type                The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                 *                            should be equal to the currently instrumented type.
                  * @param name                The parameter's name.
                  * @param modifierContributor The parameter's modifiers.
                  * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
@@ -1381,7 +1438,8 @@ public interface DynamicType {
                 /**
                  * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                  *
-                 * @param type                 The parameter's type.
+                 * @param type                 The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                 *                             should be equal to the currently instrumented type.
                  * @param name                 The parameter's name.
                  * @param modifierContributors The parameter's modifiers.
                  * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
@@ -1391,7 +1449,8 @@ public interface DynamicType {
                 /**
                  * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                  *
-                 * @param type      The parameter's type.
+                 * @param type      The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                 *                  should be equal to the currently instrumented type.
                  * @param name      The parameter's name.
                  * @param modifiers The parameter's modifiers.
                  * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
@@ -1525,7 +1584,8 @@ public interface DynamicType {
                     /**
                      * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                      *
-                     * @param type The parameter's type.
+                     * @param type The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                     *             should be equal to the currently instrumented type.
                      * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
                      */
                     Annotatable<V> withParameter(Type type);
@@ -1533,7 +1593,8 @@ public interface DynamicType {
                     /**
                      * Defines the specified parameter for the currently defined method as the last parameter of the currently defined method.
                      *
-                     * @param type The parameter's type.
+                     * @param type The parameter's type. Can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                     *             should be equal to the currently instrumented type.
                      * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameter.
                      */
                     Annotatable<V> withParameter(TypeDefinition type);
@@ -1682,7 +1743,8 @@ public interface DynamicType {
                     /**
                      * Defines the specified parameters for the currently defined method.
                      *
-                     * @param type The parameter types.
+                     * @param type The parameter types. Any type can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                     *             should be equal to the currently instrumented type.
                      * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
                      */
                     ExceptionDefinition<V> withParameters(Type... type);
@@ -1690,7 +1752,8 @@ public interface DynamicType {
                     /**
                      * Defines the specified parameters for the currently defined method.
                      *
-                     * @param types The parameter types.
+                     * @param types The parameter types. Any type can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                     *              should be equal to the currently instrumented type.
                      * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
                      */
                     ExceptionDefinition<V> withParameters(List<? extends Type> types);
@@ -1698,7 +1761,8 @@ public interface DynamicType {
                     /**
                      * Defines the specified parameters for the currently defined method.
                      *
-                     * @param type The parameter types.
+                     * @param type The parameter types. Any type can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                     *             should be equal to the currently instrumented type.
                      * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
                      */
                     ExceptionDefinition<V> withParameters(TypeDefinition... type);
@@ -1706,7 +1770,8 @@ public interface DynamicType {
                     /**
                      * Defines the specified parameters for the currently defined method.
                      *
-                     * @param types The parameter types.
+                     * @param types The parameter types. Any type can also be {@link net.bytebuddy.dynamic.TargetType} if the parameter type
+                     *              should be equal to the currently instrumented type.
                      * @return A new builder that is equal to the current builder but where the currently defined method appends the specified parameters.
                      */
                     ExceptionDefinition<V> withParameters(Collection<? extends TypeDefinition> types);
