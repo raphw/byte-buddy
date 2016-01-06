@@ -51,5 +51,6 @@ public class LatentMatcherForFieldTokenTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(LatentMatcher.ForFieldToken.class).apply();
+        ObjectPropertyAssertion.of(LatentMatcher.ForFieldToken.ResolvedMatcher.class).apply();
     }
 }

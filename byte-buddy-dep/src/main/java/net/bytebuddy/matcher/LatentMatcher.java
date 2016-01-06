@@ -112,12 +112,27 @@ public interface LatentMatcher<T> {
                     '}';
         }
 
+        /**
+         * A resolved matcher of a latent field matcher for a field token.
+         */
         protected static class ResolvedMatcher implements ElementMatcher<FieldDescription> {
 
+            /**
+             * The instrumented type.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The token that is matched.
+             */
             private final FieldDescription.Token token;
 
+            /**
+             * Creates a new resolved matcher of a latent field matcher for a field token.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param token            The token that is matched.
+             */
             protected ResolvedMatcher(TypeDescription instrumentedType, FieldDescription.Token token) {
                 this.instrumentedType = instrumentedType;
                 this.token = token;
@@ -126,6 +141,30 @@ public interface LatentMatcher<T> {
             @Override
             public boolean matches(FieldDescription target) {
                 return target.asToken(is(instrumentedType)).equals(token);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ResolvedMatcher that = (ResolvedMatcher) other;
+                return instrumentedType.equals(that.instrumentedType)
+                        && token.equals(that.token);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + token.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "LatentMatcher.ForFieldToken.ResolvedMatcher{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", token=" + token +
+                        '}';
             }
         }
     }
@@ -172,12 +211,27 @@ public interface LatentMatcher<T> {
                     '}';
         }
 
+        /**
+         * A resolved matcher of a latent method matcher for a method token.
+         */
         protected static class ResolvedMatcher implements ElementMatcher<MethodDescription> {
 
+            /**
+             * The instrumented type.
+             */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The token that is matched.
+             */
             private final MethodDescription.Token token;
 
+            /**
+             * Creates a new resolved method of a latent method matcher for a method token.
+             *
+             * @param instrumentedType The instrumented type.
+             * @param token            The token that is matched.
+             */
             protected ResolvedMatcher(TypeDescription instrumentedType, MethodDescription.Token token) {
                 this.instrumentedType = instrumentedType;
                 this.token = token;
@@ -186,6 +240,30 @@ public interface LatentMatcher<T> {
             @Override
             public boolean matches(MethodDescription target) {
                 return target.asToken(is(instrumentedType)).equals(token);
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                ResolvedMatcher that = (ResolvedMatcher) other;
+                return instrumentedType.equals(that.instrumentedType)
+                        && token.equals(that.token);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = instrumentedType.hashCode();
+                result = 31 * result + token.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "LatentMatcher.ForMethodToken.ResolvedMatcher{" +
+                        "instrumentedType=" + instrumentedType +
+                        ", token=" + token +
+                        '}';
             }
         }
     }
