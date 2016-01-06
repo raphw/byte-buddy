@@ -7,8 +7,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.none;
-import static net.bytebuddy.matcher.ElementMatchers.representedBy;
 
 /**
  * A latent matcher that resolves an {@link ElementMatcher} after supplying the instrumented type.
@@ -91,9 +91,7 @@ public interface LatentMatcher<T> {
 
         @Override
         public ElementMatcher<? super FieldDescription> resolve(TypeDescription instrumentedType) {
-            // Casting required for JDK 6.
-            return (ElementMatcher<? super FieldDescription>) representedBy(token
-                    .accept(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(instrumentedType)));
+            return new ResolvedMatcher(instrumentedType, token);
         }
 
         @Override
@@ -112,6 +110,23 @@ public interface LatentMatcher<T> {
             return "LatentMatcher.ForFieldToken{" +
                     "token=" + token +
                     '}';
+        }
+
+        protected static class ResolvedMatcher implements ElementMatcher<FieldDescription> {
+
+            private final TypeDescription instrumentedType;
+
+            private final FieldDescription.Token token;
+
+            protected ResolvedMatcher(TypeDescription instrumentedType, FieldDescription.Token token) {
+                this.instrumentedType = instrumentedType;
+                this.token = token;
+            }
+
+            @Override
+            public boolean matches(FieldDescription target) {
+                return target.asToken(is(instrumentedType)).equals(token);
+            }
         }
     }
 
@@ -136,9 +151,7 @@ public interface LatentMatcher<T> {
 
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-            // Casting required for JDK 6.
-            return (ElementMatcher<? super MethodDescription>) representedBy(token
-                    .accept(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(instrumentedType)));
+            return new ResolvedMatcher(instrumentedType, token);
         }
 
         @Override
@@ -157,6 +170,23 @@ public interface LatentMatcher<T> {
             return "LatentMatcher.ForMethodToken{" +
                     "token=" + token +
                     '}';
+        }
+
+        protected static class ResolvedMatcher implements ElementMatcher<MethodDescription> {
+
+            private final TypeDescription instrumentedType;
+
+            private final MethodDescription.Token token;
+
+            protected ResolvedMatcher(TypeDescription instrumentedType, MethodDescription.Token token) {
+                this.instrumentedType = instrumentedType;
+                this.token = token;
+            }
+
+            @Override
+            public boolean matches(MethodDescription target) {
+                return target.asToken(is(instrumentedType)).equals(token);
+            }
         }
     }
 

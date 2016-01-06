@@ -91,28 +91,6 @@ public final class ElementMatchers {
     }
 
     /**
-     * Validates if a method is represented by the provided field token.
-     *
-     * @param token The field token to match a method against.
-     * @param <T>   The type of the matched object.
-     * @return A matcher that matches any field that is represented by the provided field description.
-     */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> representedBy(FieldDescription.Token token) {
-        return fieldRepresentedBy(is(token));
-    }
-
-    /**
-     * Matches a field by a token matcher.
-     *
-     * @param matcher The matcher to apply to the field's token.
-     * @param <T>     The matched object's type.
-     * @return A matcher that applies the given matcher to the matched field's token.
-     */
-    public static <T extends FieldDescription> ElementMatcher.Junction<T> fieldRepresentedBy(ElementMatcher<? super FieldDescription.Token> matcher) {
-        return new TokenMatcher<T, FieldDescription.Token>(matcher);
-    }
-
-    /**
      * Exactly matches a given method as a {@link MethodDescription}.
      *
      * @param method The method to match by its description
@@ -146,60 +124,14 @@ public final class ElementMatchers {
     }
 
     /**
-     * Matches a method by a token matcher.
-     *
-     * @param matcher The matcher to apply to the method's token.
-     * @param <T>     The matched object's type.
-     * @return A matcher that applies the given matcher to the matched method's token.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> methodRepresentedBy(ElementMatcher<? super MethodDescription.Token> matcher) {
-        return new TokenMatcher<T, MethodDescription.Token>(matcher);
-    }
-
-    /**
-     * Validates if a method is represented by the provided method token.
-     *
-     * @param token The method token to match a method against.
-     * @param <T>   The type of the matched object.
-     * @return A matcher that matches any method that is represented by the provided method description.
-     */
-    public static <T extends MethodDescription> ElementMatcher.Junction<T> representedBy(MethodDescription.Token token) {
-        return methodRepresentedBy(is(token));
-    }
-
-    /**
      * Matches a parameter in its defined shape.
      *
      * @param matcher The matcher to apply to the matched parameter's defined shape.
      * @param <T>     The matched object's type.
      * @return A matcher that matches a matched parameter's defined shape.
      */
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> definedParameter(
-            ElementMatcher<? super ParameterDescription.InDefinedShape> matcher) {
+    public static <T extends ParameterDescription> ElementMatcher.Junction<T> definedParameter(ElementMatcher<? super ParameterDescription.InDefinedShape> matcher) {
         return new DefinedShapeMatcher<T, ParameterDescription.InDefinedShape>(matcher);
-    }
-
-    /**
-     * Matches a parameter by a token matcher.
-     *
-     * @param matcher The matcher to apply to the parameter's token.
-     * @param <T>     The matched object's type.
-     * @return A matcher that applies the given matcher to the matched parameter's token.
-     */
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> parameterRepresentedBy(
-            ElementMatcher<? super ParameterDescription.Token> matcher) {
-        return new TokenMatcher<T, ParameterDescription.Token>(matcher);
-    }
-
-    /**
-     * Validates if a method is represented by the provided method token.
-     *
-     * @param token The parameter token to match a method against.
-     * @param <T>   The type of the matched object.
-     * @return A matcher that matches any parameter that is represented by the provided parameter description.
-     */
-    public static <T extends ParameterDescription> ElementMatcher.Junction<T> representedBy(ParameterDescription.Token token) {
-        return parameterRepresentedBy(is(token));
     }
 
     /**

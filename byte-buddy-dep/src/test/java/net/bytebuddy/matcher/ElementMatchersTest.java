@@ -150,31 +150,6 @@ public class ElementMatchersTest {
     }
 
     @Test
-    public void testRepresentedByFieldToken() throws Exception {
-        FieldDescription foo = new FieldDescription.ForLoadedField(GenericFieldType.class.getDeclaredField("foo"));
-        FieldDescription bar = new FieldDescription.ForLoadedField(GenericFieldType.class.getDeclaredField("bar"));
-        assertThat(ElementMatchers.representedBy(foo.asToken()).matches(foo), is(true));
-        assertThat(ElementMatchers.representedBy(foo.asToken()).matches(bar), is(false));
-    }
-
-    @Test
-    public void testRepresentedByMethodToken() throws Exception {
-        MethodDescription toString = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString"));
-        MethodDescription hashCode = new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("hashCode"));
-        assertThat(ElementMatchers.representedBy(toString.asToken()).matches(toString), is(true));
-        assertThat(ElementMatchers.representedBy(toString.asToken()).matches(hashCode), is(false));
-    }
-
-    @Test
-    public void testRepresentedByParameterToken() throws Exception {
-        ParameterDescription parameterDescription = mock(ParameterDescription.class);
-        ParameterDescription.Token parameterToken = mock(ParameterDescription.Token.class);
-        when(parameterDescription.asToken()).thenReturn(parameterToken);
-        assertThat(ElementMatchers.representedBy(parameterToken).matches(parameterDescription), is(true));
-        assertThat(ElementMatchers.representedBy(mock(ParameterDescription.Token.class)).matches(parameterDescription), is(false));
-    }
-
-    @Test
     public void testNot() throws Exception {
         Object value = new Object();
         @SuppressWarnings("unchecked")

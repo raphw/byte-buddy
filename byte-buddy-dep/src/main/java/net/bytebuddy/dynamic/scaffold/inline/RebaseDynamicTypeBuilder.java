@@ -16,7 +16,6 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.LatentMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
-import static net.bytebuddy.matcher.ElementMatchers.methodRepresentedBy;
 
 /**
  * A type builder that rebases an instrumented type.
@@ -171,7 +170,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
         MethodList<MethodDescription.InDefinedShape> rebaseableMethods = preparedMethodRegistry.getInstrumentedMethods()
                 .asDefined()
-                .filter(methodRepresentedBy(anyOf(originalType.getDeclaredMethods().asTokenList())));
+                .filter(anyOf(originalType.getDeclaredMethods()));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(preparedMethodRegistry.getInstrumentedType(),
                 rebaseableMethods,
                 classFileVersion,
