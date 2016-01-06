@@ -291,7 +291,8 @@ public interface DynamicType {
 
         /**
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
-         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
          *
          * @param interfaceType The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
@@ -300,7 +301,8 @@ public interface DynamicType {
 
         /**
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
-         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
          *
          * @param interfaceTypes The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
@@ -309,7 +311,8 @@ public interface DynamicType {
 
         /**
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
-         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
          *
          * @param interfaceType The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
@@ -318,7 +321,8 @@ public interface DynamicType {
 
         /**
          * Implements the supplied interfaces for the instrumented type. Optionally, it is possible to define the
-         * methods that are defined by the interfaces and the interfaces' super interfaces.
+         * methods that are defined by the interfaces or the interfaces' super interfaces. This excludes methods that
+         * are explicitly ignored.
          *
          * @param interfaceTypes The interface types to implement.
          * @return A new builder that is equal to this builder but with the interfaces implemented by the instrumented type.
