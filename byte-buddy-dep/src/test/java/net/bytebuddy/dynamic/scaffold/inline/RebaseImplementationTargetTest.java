@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
@@ -18,8 +17,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
-
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -69,7 +66,6 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     protected Implementation.Target makeImplementationTarget() {
         return RebaseImplementationTarget.of(instrumentedType,
                 methodGraph,
-                new MethodList.Explicit<MethodDescription.InDefinedShape>(rebasedMethod),
                 methodRebaseResolver);
     }
 
@@ -80,7 +76,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.isRebased()).thenReturn(false);
         when(resolution.getResolvedMethod()).thenReturn(invokableMethod);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
-        verify(methodRebaseResolver).resolve(rebasedMethod);
+        verify(methodRebaseResolver).asTokenMap();
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
@@ -103,7 +99,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Trivial.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
-        verify(methodRebaseResolver).resolve(rebasedMethod);
+        verify(methodRebaseResolver).asTokenMap();
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) rebasedMethod));
@@ -127,7 +123,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getAdditionalArguments()).thenReturn(NullConstant.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
-        verify(methodRebaseResolver).resolve(rebasedMethod);
+        verify(methodRebaseResolver).asTokenMap();
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) rebasedMethod));

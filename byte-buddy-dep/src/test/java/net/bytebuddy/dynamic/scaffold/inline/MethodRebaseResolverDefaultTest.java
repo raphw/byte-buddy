@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -35,6 +36,9 @@ public class MethodRebaseResolverDefaultTest {
     private MethodDescription.InDefinedShape methodDescription, otherMethod;
 
     @Mock
+    private MethodDescription.Token token, otherToken;
+
+    @Mock
     private MethodRebaseResolver.Resolution resolution;
 
     @Mock
@@ -58,6 +62,9 @@ public class MethodRebaseResolverDefaultTest {
         when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(methodDescription.getInternalName()).thenReturn(FOO);
+        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(instrumentedType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
+        when(otherMethod.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(BAR);
         when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(QUX);
         when(classFileVersion.getMinorMajorVersion()).thenReturn(Opcodes.V1_6);
@@ -83,7 +90,7 @@ public class MethodRebaseResolverDefaultTest {
     @Test
     public void testCreationWithoutConstructor() throws Exception {
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
-                new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription),
+                Collections.singleton(token), // TODO
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -98,7 +105,7 @@ public class MethodRebaseResolverDefaultTest {
     public void testCreationWithConstructor() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
-                new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription),
+                Collections.singleton(token), // TODO
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);

@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -16,10 +15,9 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 /**
  * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.
@@ -46,6 +44,8 @@ public interface MethodRebaseResolver {
      */
     List<DynamicType> getAuxiliaryTypes();
 
+    Map<MethodDescription.SignatureToken, Resolution> asTokenMap();
+
     /**
      * A method rebase resolver that preserves any method in its original form.
      */
@@ -64,6 +64,11 @@ public interface MethodRebaseResolver {
         @Override
         public List<DynamicType> getAuxiliaryTypes() {
             return Collections.emptyList();
+        }
+
+        @Override
+        public Map<MethodDescription.SignatureToken, Resolution> asTokenMap() {
+            return Collections.emptyMap();
         }
 
         @Override
@@ -462,25 +467,27 @@ public interface MethodRebaseResolver {
          * @return A method rebase resolver that is capable of rebasing any of the provided methods.
          */
         public static MethodRebaseResolver make(TypeDescription instrumentedType,
-                                                MethodList<MethodDescription.InDefinedShape> rebaseableMethods,
+                                                Set<? extends MethodDescription.Token> rebaseableMethods,
                                                 ClassFileVersion classFileVersion,
                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                 MethodNameTransformer methodNameTransformer) {
             DynamicType placeholderType = null;
-            Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>(rebaseableMethods.size());
-            for (MethodDescription.InDefinedShape instrumentedMethod : rebaseableMethods) {
-                Resolution resolution;
-                if (instrumentedMethod.isConstructor()) {
-                    if (placeholderType == null) {
-                        placeholderType = TrivialType.SIGNATURE_RELEVANT.make(auxiliaryTypeNamingStrategy.name(instrumentedType),
-                                classFileVersion,
-                                AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
+            Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>();
+            for (MethodDescription.InDefinedShape instrumentedMethod : instrumentedType.getDeclaredMethods()) {
+                if (rebaseableMethods.contains(instrumentedMethod.asToken(is(instrumentedMethod)))) {
+                    Resolution resolution;
+                    if (instrumentedMethod.isConstructor()) {
+                        if (placeholderType == null) {
+                            placeholderType = TrivialType.SIGNATURE_RELEVANT.make(auxiliaryTypeNamingStrategy.name(instrumentedType),
+                                    classFileVersion,
+                                    AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
+                        }
+                        resolution = Resolution.ForRebasedConstructor.of(instrumentedMethod, placeholderType.getTypeDescription());
+                    } else {
+                        resolution = Resolution.ForRebasedMethod.of(instrumentedMethod, methodNameTransformer);
                     }
-                    resolution = Resolution.ForRebasedConstructor.of(instrumentedMethod, placeholderType.getTypeDescription());
-                } else {
-                    resolution = Resolution.ForRebasedMethod.of(instrumentedMethod, methodNameTransformer);
+                    resolutions.put(instrumentedMethod, resolution);
                 }
-                resolutions.put(instrumentedMethod, resolution);
             }
             return placeholderType == null
                     ? new Default(resolutions, Collections.<DynamicType>emptyList())
@@ -498,6 +505,15 @@ public interface MethodRebaseResolver {
         @Override
         public List<DynamicType> getAuxiliaryTypes() {
             return dynamicTypes;
+        }
+
+        @Override
+        public Map<MethodDescription.SignatureToken, Resolution> asTokenMap() {
+            Map<MethodDescription.SignatureToken, Resolution> tokenMap = new HashMap<MethodDescription.SignatureToken, Resolution>();
+            for (Map.Entry<MethodDescription.InDefinedShape, Resolution> entry : resolutions.entrySet()) {
+                tokenMap.put(entry.getKey().asSignatureToken(), entry.getValue());
+            }
+            return tokenMap;
         }
 
         @Override

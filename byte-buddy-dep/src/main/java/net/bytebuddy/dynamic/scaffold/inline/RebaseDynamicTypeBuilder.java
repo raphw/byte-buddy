@@ -3,7 +3,6 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -15,7 +14,9 @@ import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.LatentMatcher;
 
-import static net.bytebuddy.matcher.ElementMatchers.anyOf;
+import java.util.HashSet;
+
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 /**
  * A type builder that rebases an instrumented type.
@@ -168,15 +169,12 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         MethodRegistry.Prepared preparedMethodRegistry = methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
-        MethodList<MethodDescription.InDefinedShape> rebaseableMethods = preparedMethodRegistry.getInstrumentedMethods()
-                .asDefined()
-                .filter(anyOf(originalType.getDeclaredMethods())); // TODO
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(preparedMethodRegistry.getInstrumentedType(),
-                rebaseableMethods,
+                new HashSet<MethodDescription.Token>(originalType.getDeclaredMethods().asTokenList(is(originalType))),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
-        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new RebaseImplementationTarget.Factory(rebaseableMethods, methodRebaseResolver));
+        MethodRegistry.Compiled compiledMethodRegistry = preparedMethodRegistry.compile(new RebaseImplementationTarget.Factory(methodRebaseResolver));
         return TypeWriter.Default.<T>forRebasing(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
                 typeAttributeAppender,
