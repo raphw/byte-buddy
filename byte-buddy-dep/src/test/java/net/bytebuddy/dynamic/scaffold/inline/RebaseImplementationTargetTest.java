@@ -10,6 +10,7 @@ import net.bytebuddy.implementation.AbstractImplementationTargetTest;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +34,10 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private MethodDescription.InDefinedShape rebasedMethod;
 
     @Mock
-    private MethodDescription.SignatureToken rebasedToken;
+    private MethodDescription.Token rebasedToken;
+
+    @Mock
+    private MethodDescription.SignatureToken rebasedSignatureToken;
 
     @Mock
     private MethodRebaseResolver.Resolution resolution;
@@ -52,12 +56,13 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(genericSuperType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(BAR);
         when(rebasedMethod.getInternalName()).thenReturn(QUX);
+        when(rebasedMethod.asToken(ElementMatchers.is(instrumentedType))).thenReturn(rebasedToken);
         when(rebasedMethod.getDescriptor()).thenReturn(FOO);
         when(rebasedMethod.asDefined()).thenReturn(rebasedMethod);
         when(rebasedMethod.getReturnType()).thenReturn(genericReturnType);
         when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
-        when(rebasedMethod.asSignatureToken()).thenReturn(rebasedToken);
+        when(rebasedMethod.asSignatureToken()).thenReturn(rebasedSignatureToken);
         when(methodRebaseResolver.resolve(rebasedMethod)).thenReturn(resolution);
         super.setUp();
     }
@@ -75,7 +80,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(invokableMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
         when(resolution.isRebased()).thenReturn(false);
         when(resolution.getResolvedMethod()).thenReturn(invokableMethod);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
         verify(methodRebaseResolver).asTokenMap();
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -98,7 +103,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Trivial.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
         verify(methodRebaseResolver).asTokenMap();
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -122,7 +127,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getResolvedMethod()).thenReturn(rebasedMethod);
         when(resolution.getAdditionalArguments()).thenReturn(NullConstant.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(true);
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
         verify(methodRebaseResolver).asTokenMap();
         verifyNoMoreInteractions(methodRebaseResolver);
         assertThat(specialMethodInvocation.isValid(), is(true));
@@ -147,7 +152,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(resolution.getAdditionalArguments()).thenReturn(StackManipulation.Trivial.INSTANCE);
         when(rebasedMethod.isSpecializableFor(instrumentedType)).thenReturn(false);
         when(methodRebaseResolver.resolve(invokableMethod)).thenReturn(new MethodRebaseResolver.Resolution.Preserved(invokableMethod));
-        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedToken);
+        Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(rebasedSignatureToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
 

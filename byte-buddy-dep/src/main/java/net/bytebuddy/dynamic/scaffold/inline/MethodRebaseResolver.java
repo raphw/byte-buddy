@@ -474,7 +474,7 @@ public interface MethodRebaseResolver {
             DynamicType placeholderType = null;
             Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>();
             for (MethodDescription.InDefinedShape instrumentedMethod : instrumentedType.getDeclaredMethods()) {
-                if (rebaseableMethods.contains(instrumentedMethod.asToken(is(instrumentedMethod)))) {
+                if (rebaseableMethods.contains(instrumentedMethod.asToken(is(instrumentedType)))) {
                     Resolution resolution;
                     if (instrumentedMethod.isConstructor()) {
                         if (placeholderType == null) {
