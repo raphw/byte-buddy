@@ -14,13 +14,6 @@ public abstract class AbstractParameterListTest<U extends ParameterDescription, 
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testTokenWithoutMatcher() throws Exception {
-        assertThat(asList(getFirst()).asTokenList().size(), is(1));
-        assertThat(asList(getFirst()).asTokenList().getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
     public void testTokenWithMatcher() throws Exception {
         assertThat(asList(getFirst()).asTokenList(none()).size(), is(1));
         assertThat(asList(getFirst()).asTokenList(none()).getOnly().getType(), is(TypeDefinition.Sort.describe(Void.class)));

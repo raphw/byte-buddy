@@ -9,6 +9,8 @@ import net.bytebuddy.description.type.TypeDescription;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
+
 /**
  * A field transformer allows to transform a field prior to its definition. This way, previously defined fields
  * can be substituted by a different field description. It is the responsibility of the field transformer that
@@ -78,7 +80,8 @@ public interface FieldTransformer {
 
         @Override
         public FieldDescription transform(TypeDescription instrumentedType, FieldDescription fieldDescription) {
-            return new TransformedField(fieldDescription.getDeclaringType(), tokenTransformer.transform(fieldDescription.asToken()), fieldDescription.asDefined());
+            return new TransformedField(fieldDescription.getDeclaringType(),
+                    tokenTransformer.transform(fieldDescription.asToken(is(instrumentedType))), fieldDescription.asDefined());
         }
 
         @Override

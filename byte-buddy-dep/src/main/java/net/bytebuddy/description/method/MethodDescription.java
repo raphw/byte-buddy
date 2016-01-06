@@ -572,15 +572,10 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Token asToken() {
-            return asToken(none());
-        }
-
-        @Override
-        public Token asToken(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public Token asToken(ElementMatcher<? super TypeDescription> matcher) {
             return new Token(getInternalName(),
                     getModifiers(),
-                    getTypeVariables().asTokenList(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
+                    getTypeVariables().asTokenList(matcher),
                     getReturnType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getParameters().asTokenList(matcher),
                     getExceptionTypes().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
@@ -970,7 +965,7 @@ public interface MethodDescription extends TypeVariableSource,
             this(declaringType,
                     token.getName(),
                     token.getModifiers(),
-                    token.getTypeVariables(),
+                    token.getTypeVariableTokens(),
                     token.getReturnType(),
                     token.getParameterTokens(),
                     token.getExceptionTypes(),
@@ -1454,7 +1449,7 @@ public interface MethodDescription extends TypeVariableSource,
          *
          * @return A a list of tokens representing the method's type variables.
          */
-        public TokenList<TypeVariableToken> getTypeVariables() {
+        public TokenList<TypeVariableToken> getTypeVariableTokens() {
             return new TokenList<TypeVariableToken>(typeVariables);
         }
 
@@ -1507,7 +1502,7 @@ public interface MethodDescription extends TypeVariableSource,
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             return new Token(getName(),
                     getModifiers(),
-                    getTypeVariables().accept(visitor),
+                    getTypeVariableTokens().accept(visitor),
                     getReturnType().accept(visitor),
                     getParameterTokens().accept(visitor),
                     getExceptionTypes().accept(visitor),

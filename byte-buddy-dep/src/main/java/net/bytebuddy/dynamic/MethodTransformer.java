@@ -12,6 +12,8 @@ import net.bytebuddy.description.type.TypeList;
 import java.util.Arrays;
 import java.util.List;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
+
 /**
  * A method transformer allows to transform a method prior to its definition. This way, previously defined methods
  * can be substituted by a different method description. It is the responsibility of the method transformer that
@@ -82,7 +84,8 @@ public interface MethodTransformer {
 
         @Override
         public MethodDescription transform(TypeDescription instrumentedType, MethodDescription methodDescription) {
-            return new TransformedMethod(methodDescription.getDeclaringType(), tokenTransformer.transform(methodDescription.asToken()), methodDescription.asDefined());
+            return new TransformedMethod(methodDescription.getDeclaringType(),
+                    tokenTransformer.transform(methodDescription.asToken(is(instrumentedType))), methodDescription.asDefined());
         }
 
         @Override
@@ -139,7 +142,7 @@ public interface MethodTransformer {
                 public MethodDescription.Token transform(MethodDescription.Token token) {
                     return new MethodDescription.Token(token.getName(),
                             ModifierContributor.Resolver.of(modifierContributors).resolve(token.getModifiers()),
-                            token.getTypeVariables(),
+                            token.getTypeVariableTokens(),
                             token.getReturnType(),
                             token.getParameterTokens(),
                             token.getExceptionTypes(),
@@ -204,7 +207,7 @@ public interface MethodTransformer {
 
             @Override
             public TypeList.Generic getTypeVariables() {
-                return TypeList.Generic.ForDetachedTypes.attachVariables(this, token.getTypeVariables());
+                return TypeList.Generic.ForDetachedTypes.attachVariables(this, token.getTypeVariableTokens());
             }
 
             @Override

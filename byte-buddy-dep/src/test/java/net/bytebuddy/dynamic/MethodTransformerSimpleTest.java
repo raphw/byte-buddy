@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -75,13 +76,13 @@ public class MethodTransformerSimpleTest {
         when(typeVariableBound.getSymbol()).thenReturn(QUX);
         when(typeVariableBound.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         when(typeVariableBound.asGenericType()).thenReturn(typeVariableBound);
-        when(methodDescription.asToken()).thenReturn(methodToken);
+        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(methodToken);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(methodDescription.asDefined()).thenReturn(definedMethod);
         when(methodToken.getName()).thenReturn(FOO);
         when(methodToken.getModifiers()).thenReturn(MODIFIERS);
         when(methodToken.getReturnType()).thenReturn(returnType);
-        when(methodToken.getTypeVariables()).thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>(new TypeVariableToken(QUX,
+        when(methodToken.getTypeVariableTokens()).thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>(new TypeVariableToken(QUX,
                 new TypeList.Generic.Explicit(typeVariableBound))));
         when(methodToken.getExceptionTypes()).thenReturn(new TypeList.Generic.Explicit(exceptionType));
         when(methodToken.getParameterTokens())
@@ -133,8 +134,8 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getName(), is(FOO));
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));
         assertThat(transformed.getReturnType(), is(returnType));
-        assertThat(transformed.getTypeVariables().size(), is(1));
-        assertThat(transformed.getTypeVariables().get(0), is(new TypeVariableToken(QUX, typeVariableBound)));
+        assertThat(transformed.getTypeVariableTokens().size(), is(1));
+        assertThat(transformed.getTypeVariableTokens().get(0), is(new TypeVariableToken(QUX, typeVariableBound)));
         assertThat(transformed.getExceptionTypes().size(), is(1));
         assertThat(transformed.getExceptionTypes().getOnly(), is(exceptionType));
         assertThat(transformed.getParameterTokens().size(), is(1));

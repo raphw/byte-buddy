@@ -18,8 +18,6 @@ import java.util.AbstractList;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
-
 /**
  * Description of the parameter of a Java method or constructor.
  */
@@ -146,12 +144,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public Token asToken() {
-            return asToken(none());
-        }
-
-        @Override
-        public Token asToken(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public Token asToken(ElementMatcher<? super TypeDescription> matcher) {
             return new Token(getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getDeclaredAnnotations(),
                     isNamed()

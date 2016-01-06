@@ -35,6 +35,8 @@ import org.objectweb.asm.commons.SimpleRemapper;
 import java.io.IOException;
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
+
 /**
  * A type writer is a utility for writing an actual class file using the ASM library.
  *
@@ -1237,7 +1239,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                        return new ParameterList.ForTokens(this, bridgeTarget.getParameters().asTokenList());
+                        return new ParameterList.ForTokens(this, bridgeTarget.getParameters().asTokenList(is(instrumentedType)));
                     }
 
                     @Override

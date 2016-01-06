@@ -20,7 +20,7 @@ import org.objectweb.asm.MethodVisitor;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
@@ -467,14 +467,13 @@ public interface InstrumentedType extends TypeDescription {
          * @return An instrumented type of the given type.
          */
         public static InstrumentedType.WithFlexibleName of(TypeDescription typeDescription) {
-            Generic.Visitor<TypeDescription.Generic> visitor = Generic.Visitor.Substitutor.ForDetachment.of(typeDescription);
             return new Default(typeDescription.getName(),
                     typeDescription.getModifiers(),
                     typeDescription.getSuperType(),
-                    typeDescription.getTypeVariables().asTokenList(visitor),
-                    typeDescription.getInterfaces().accept(visitor),
-                    typeDescription.getDeclaredFields().asTokenList(),
-                    typeDescription.getDeclaredMethods().asTokenList(named(typeDescription.getName())),
+                    typeDescription.getTypeVariables().asTokenList(is(typeDescription)),
+                    typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
+                    typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
+                    typeDescription.getDeclaredMethods().asTokenList(is(typeDescription)),
                     typeDescription.getDeclaredAnnotations(),
                     TypeInitializer.None.INSTANCE,
                     LoadedTypeInitializer.NoOp.INSTANCE,

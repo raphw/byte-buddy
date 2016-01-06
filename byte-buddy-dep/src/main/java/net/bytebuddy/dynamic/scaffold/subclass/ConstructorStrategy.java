@@ -77,7 +77,7 @@ public interface ConstructorStrategy {
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (defaultConstructors.size() == 1) {
-                    return defaultConstructors.asTokenList();
+                    return defaultConstructors.asTokenList(is(instrumentedType));
                 } else {
                     throw new IllegalArgumentException(instrumentedType.getSuperType() + " declares no constructor that is visible to " + instrumentedType);
                 }
@@ -104,7 +104,7 @@ public interface ConstructorStrategy {
                 TypeDescription.Generic superType = instrumentedType.getSuperType();
                 return (superType == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList();
+                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
             }
 
             @Override
@@ -127,7 +127,7 @@ public interface ConstructorStrategy {
                 TypeDescription.Generic superType = instrumentedType.getSuperType();
                 return (superType == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
+                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList(is(instrumentedType));
             }
 
             @Override

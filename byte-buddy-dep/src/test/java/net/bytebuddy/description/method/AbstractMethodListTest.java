@@ -14,12 +14,6 @@ public abstract class AbstractMethodListTest<U, V extends MethodDescription> ext
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testTokenWithoutMatcher() throws Exception {
-        assertThat(asList(getFirst()).asTokenList(), is(new ByteCodeElement.Token.TokenList<MethodDescription.Token>(asElement(getFirst()).asToken())));
-    }
-
-    @Test
-    @SuppressWarnings("unchecked")
     public void testTokenWithMatcher() throws Exception {
         assertThat(asList(getFirst()).asTokenList(none()),
                 is(new ByteCodeElement.Token.TokenList<MethodDescription.Token>(asElement(getFirst()).asToken(none()))));

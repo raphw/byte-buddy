@@ -10,8 +10,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
-
 /**
  * Implementations represent a list of field descriptions.
  *
@@ -20,20 +18,13 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 public interface FieldList<T extends FieldDescription> extends FilterableList<T, FieldList<T>> {
 
     /**
-     * Transforms the list of field descriptions into a list of detached tokens.
-     *
-     * @return The transformed token list.
-     */
-    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList();
-
-    /**
      * Transforms the list of field descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
      * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher);
+    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
 
     /**
      * Returns this list of these field descriptions resolved to their defined shape.
@@ -50,12 +41,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     abstract class AbstractBase<S extends FieldDescription> extends FilterableList.AbstractBase<S, FieldList<S>> implements FieldList<S> {
 
         @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
-            return asTokenList(none());
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<FieldDescription.Token> tokens = new ArrayList<FieldDescription.Token>(size());
             for (FieldDescription fieldDescription : this) {
                 tokens.add(fieldDescription.asToken(matcher));
@@ -260,12 +246,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
     class Empty<S extends FieldDescription> extends FilterableList.Empty<S, FieldList<S>> implements FieldList<S> {
 
         @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList() {
-            return new ByteCodeElement.Token.TokenList<FieldDescription.Token>();
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>();
         }
 

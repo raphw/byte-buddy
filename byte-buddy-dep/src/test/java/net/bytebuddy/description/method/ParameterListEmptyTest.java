@@ -14,11 +14,6 @@ public class ParameterListEmptyTest {
     }
 
     @Test
-    public void testTokenListWithoutFilter() throws Exception {
-        assertThat(new ParameterList.Empty<ParameterDescription>().asTokenList().size(), is(0));
-    }
-
-    @Test
     public void testTokenListMetaData() throws Exception {
         assertThat(new ParameterList.Empty<ParameterDescription>().hasExplicitMetaData(), is(true));
     }

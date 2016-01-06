@@ -11,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
-
 /**
  * Implementations represent a list of method descriptions.
  *
@@ -21,20 +19,13 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 public interface MethodList<T extends MethodDescription> extends FilterableList<T, MethodList<T>> {
 
     /**
-     * Transforms the list of method descriptions into a list of detached tokens.
-     *
-     * @return The transformed token list.
-     */
-    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList();
-
-    /**
      * Transforms the list of method descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
      * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher);
+    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
 
     /**
      * Returns this list of these method descriptions resolved to their defined shape.
@@ -56,12 +47,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
-            return asTokenList(none());
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
             for (MethodDescription fieldDescription : this) {
                 tokens.add(fieldDescription.asToken(matcher));
@@ -284,12 +270,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     class Empty<S extends MethodDescription> extends FilterableList.Empty<S, MethodList<S>> implements MethodList<S> {
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
-            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
         }
 

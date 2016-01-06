@@ -38,13 +38,13 @@ public class LatentMatcherForMethodTokenTest {
 
     @Test
     public void testMatch() throws Exception {
-        when(methodDescription.asToken()).thenReturn(token);
+        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
         assertThat(new LatentMatcher.ForMethodToken(token).resolve(instrumentedType).matches(methodDescription), is(true));
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(methodDescription.asToken()).thenReturn(otherToken);
+        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
         assertThat(new LatentMatcher.ForMethodToken(token).resolve(instrumentedType).matches(methodDescription), is(false));
     }
 

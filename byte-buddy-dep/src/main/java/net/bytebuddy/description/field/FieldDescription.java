@@ -15,8 +15,6 @@ import java.lang.reflect.Modifier;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
-
 /**
  * Implementations of this interface describe a Java field. Implementations of this interface must provide meaningful
  * {@code equal(Object)} and {@code hashCode()} implementations.
@@ -108,12 +106,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public FieldDescription.Token asToken() {
-            return asToken(none());
-        }
-
-        @Override
-        public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription> matcher) {
             return new FieldDescription.Token(getName(),
                     getModifiers(),
                     getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),

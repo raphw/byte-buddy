@@ -7,6 +7,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
@@ -211,7 +212,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          * @param visitor The visitor to use for detaching the type variable's bounds.
          * @return A list of tokens representing the type variables contained in this list.
          */
-        ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
+        ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(ElementMatcher<? super TypeDescription> visitor);
 
         /**
          * Transforms the generic types by applying the supplied visitor to each of them.
@@ -219,7 +220,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          * @param visitor The visitor to apply to each type.
          * @return A list of the types returned by the supplied visitor.
          */
-        Generic accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
+        Generic accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> matcher);
 
         /**
          * Returns the sum of the size of all types contained in this list.
@@ -248,10 +249,10 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             @Override
-            public ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+            public ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
                 List<TypeVariableToken> tokens = new ArrayList<TypeVariableToken>(size());
                 for (TypeDescription.Generic typeVariable : this) {
-                    tokens.add(TypeVariableToken.of(typeVariable, visitor));
+                    tokens.add(TypeVariableToken.of(typeVariable, matcher));
                 }
                 return new ByteCodeElement.Token.TokenList<TypeVariableToken>(tokens);
             }
@@ -547,7 +548,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                     @Override
                     public Generic getUpperBounds() {
-                        return typeVariableToken.getUpperBounds().accept(visitor);
+                        return typeVariableToken.getBounds().accept(visitor);
                     }
 
                     @Override
@@ -830,7 +831,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             }
 
             @Override
-            public ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
+            public ByteCodeElement.Token.TokenList<TypeVariableToken> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
                 return new ByteCodeElement.Token.TokenList<TypeVariableToken>();
             }
 

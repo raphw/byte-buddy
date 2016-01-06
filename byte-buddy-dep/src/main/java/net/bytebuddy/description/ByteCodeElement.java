@@ -70,20 +70,13 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         T asDefined();
 
         /**
-         * Returns a token representative of this type dependant.
-         *
-         * @return A token representative of this type dependant.
-         */
-        S asToken();
-
-        /**
          * Returns a token representative of this type dependant. All types that are matched by the supplied matcher are replaced by
          * {@link net.bytebuddy.dynamic.TargetType} descriptions.
          *
-         * @param targetTypeMatcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions.
+         * @param matcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions.
          * @return A token representative of this type dependant.
          */
-        S asToken(ElementMatcher<? super TypeDescription.Generic> targetTypeMatcher);
+        S asToken(ElementMatcher<? super TypeDescription> matcher);
     }
 
     /**

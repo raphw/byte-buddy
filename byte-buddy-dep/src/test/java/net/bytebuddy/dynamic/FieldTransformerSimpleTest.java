@@ -6,6 +6,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -58,7 +59,7 @@ public class FieldTransformerSimpleTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(fieldType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(fieldType);
-        when(fieldDescription.asToken()).thenReturn(fieldToken);
+        when(fieldDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(fieldToken);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
         when(fieldDescription.asDefined()).thenReturn(definedField);
         when(fieldToken.getName()).thenReturn(FOO);

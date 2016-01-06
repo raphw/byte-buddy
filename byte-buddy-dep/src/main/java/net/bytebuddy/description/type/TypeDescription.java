@@ -968,14 +968,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * A type matcher for identifying the declaring type.
                      */
-                    private final ElementMatcher<? super TypeDescription.Generic> typeMatcher;
+                    private final ElementMatcher<? super TypeDescription> typeMatcher;
 
                     /**
                      * Creates a visitor for detaching a type.
                      *
                      * @param typeMatcher A type matcher for identifying the declaring type.
                      */
-                    public ForDetachment(ElementMatcher<? super TypeDescription.Generic> typeMatcher) {
+                    public ForDetachment(ElementMatcher<? super TypeDescription> typeMatcher) {
                         this.typeMatcher = typeMatcher;
                     }
 
@@ -996,7 +996,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     protected Generic onSimpleType(Generic typeDescription) {
-                        return typeMatcher.matches(typeDescription)
+                        return typeMatcher.matches(typeDescription.asErasure())
                                 ? TargetType.GENERIC_DESCRIPTION
                                 : typeDescription;
                     }

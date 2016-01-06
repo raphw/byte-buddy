@@ -170,7 +170,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
         MethodList<MethodDescription.InDefinedShape> rebaseableMethods = preparedMethodRegistry.getInstrumentedMethods()
                 .asDefined()
-                .filter(anyOf(originalType.getDeclaredMethods()));
+                .filter(anyOf(originalType.getDeclaredMethods())); // TODO
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(preparedMethodRegistry.getInstrumentedType(),
                 rebaseableMethods,
                 classFileVersion,

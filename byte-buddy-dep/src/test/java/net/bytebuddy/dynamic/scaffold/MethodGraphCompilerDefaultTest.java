@@ -102,8 +102,8 @@ public class MethodGraphCompilerDefaultTest {
         assertThat(methodGraph.listNodes().contains(methodNode), is(true));
         MethodGraph.Node baseNode = methodGraph.getSuperGraph().locate(method.asSignatureToken());
         assertThat(methodNode, not(baseNode));
-        assertThat(baseNode.getRepresentative(),
-                is((MethodDescription) typeDescription.getSuperType().getDeclaredMethods().filter(representedBy(method.asToken())).getOnly()));
+        assertThat(typeDescription.getSuperType().getDeclaredMethods().filter(ElementMatchers.is(baseNode.getRepresentative())).getOnly(),
+                is(baseNode.getRepresentative()));
     }
 
     @Test

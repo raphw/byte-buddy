@@ -2879,7 +2879,7 @@ public interface DynamicType {
                     public MethodDefinition.ExceptionDefinition<U> throwing(Collection<? extends TypeDefinition> types) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 token.getModifiers(),
-                                token.getTypeVariables(),
+                                token.getTypeVariableTokens(),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
                                 CompoundList.of(token.getExceptionTypes(), new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(types))),
@@ -2891,7 +2891,7 @@ public interface DynamicType {
                     public MethodDefinition.TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 token.getModifiers(),
-                                CompoundList.of(token.getTypeVariables(), new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)))),
+                                CompoundList.of(token.getTypeVariableTokens(), new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)))),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),
@@ -2908,7 +2908,7 @@ public interface DynamicType {
                     public MethodDefinition<U> withoutCode() {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
-                                token.getTypeVariables(),
+                                token.getTypeVariableTokens(),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),
@@ -2920,7 +2920,7 @@ public interface DynamicType {
                     public MethodDefinition<U> defaultValue(Object value) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
-                                token.getTypeVariables(),
+                                token.getTypeVariableTokens(),
                                 token.getReturnType(),
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),
@@ -2999,7 +2999,7 @@ public interface DynamicType {
                         protected MethodDefinition.ParameterDefinition<U> materialize() {
                             return new MethodDefinitionAdapter(new MethodDescription.Token(MethodDefinitionAdapter.this.token.getName(),
                                     MethodDefinitionAdapter.this.token.getModifiers(),
-                                    MethodDefinitionAdapter.this.token.getTypeVariables(),
+                                    MethodDefinitionAdapter.this.token.getTypeVariableTokens(),
                                     MethodDefinitionAdapter.this.token.getReturnType(),
                                     CompoundList.of(MethodDefinitionAdapter.this.token.getParameterTokens(), token),
                                     MethodDefinitionAdapter.this.token.getExceptionTypes(),
@@ -3069,7 +3069,7 @@ public interface DynamicType {
                         protected MethodDefinition.ParameterDefinition.Simple<U> materialize() {
                             return new MethodDefinitionAdapter(new MethodDescription.Token(MethodDefinitionAdapter.this.token.getName(),
                                     MethodDefinitionAdapter.this.token.getModifiers(),
-                                    MethodDefinitionAdapter.this.token.getTypeVariables(),
+                                    MethodDefinitionAdapter.this.token.getTypeVariableTokens(),
                                     MethodDefinitionAdapter.this.token.getReturnType(),
                                     CompoundList.of(MethodDefinitionAdapter.this.token.getParameterTokens(), token),
                                     MethodDefinitionAdapter.this.token.getExceptionTypes(),
@@ -3137,7 +3137,7 @@ public interface DynamicType {
                         public MethodDefinition<U> annotateMethod(Collection<? extends AnnotationDescription> annotations) {
                             return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                     token.getModifiers(),
-                                    token.getTypeVariables(),
+                                    token.getTypeVariableTokens(),
                                     token.getReturnType(),
                                     token.getParameterTokens(),
                                     token.getExceptionTypes(),
@@ -3154,7 +3154,7 @@ public interface DynamicType {
                                     token.getParameterTokens().get(index).getModifiers()));
                             return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                     token.getModifiers(),
-                                    token.getTypeVariables(),
+                                    token.getTypeVariableTokens(),
                                     token.getReturnType(),
                                     parameterTokens,
                                     token.getExceptionTypes(),

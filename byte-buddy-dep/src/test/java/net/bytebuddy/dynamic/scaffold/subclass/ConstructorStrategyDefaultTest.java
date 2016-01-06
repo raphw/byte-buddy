@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -54,7 +55,7 @@ public class ConstructorStrategyDefaultTest {
                 any(MethodTransformer.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperType()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn((MethodList) methodList);
-        when(filteredMethodList.asTokenList()).thenReturn(filteredMethodTokenList);
+        when(filteredMethodList.asTokenList(ElementMatchers.is(instrumentedType))).thenReturn(filteredMethodTokenList);
     }
 
     @Test

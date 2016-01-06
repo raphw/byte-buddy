@@ -743,31 +743,6 @@ public interface MethodGraph {
                 MethodDescription merge(MethodDescription left, MethodDescription right);
 
                 /**
-                 * A merger that returns the left node only if both methods are fully identical and throws an exception otherwise.
-                 */
-                enum Strict implements Merger {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public MethodDescription merge(MethodDescription left, MethodDescription right) {
-                        if (left.asToken().equals(right.asToken())) {
-                            return left;
-                        } else {
-                            throw new IllegalArgumentException("Discovered conflicting methods: " + left + " and " + right);
-                        }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Merger.Strict." + name();
-                    }
-                }
-
-                /**
                  * A directional merger that always returns either the left or right method description.
                  */
                 enum Directional implements Merger {

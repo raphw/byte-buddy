@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.matcher.ElementMatcher;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,8 +49,8 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      * @param visitor      A visitor for detaching the type variable's upper bounds.
      * @return A token representing the detached type variable.
      */
-    public static TypeVariableToken of(TypeDescription.Generic typeVariable, TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-        return new TypeVariableToken(typeVariable.getSymbol(), typeVariable.getUpperBounds().accept(visitor));
+    public static TypeVariableToken of(TypeDescription.Generic typeVariable, ElementMatcher<? super TypeDescription> matcher) {
+        return new TypeVariableToken(typeVariable.getSymbol(), typeVariable.getUpperBounds().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)));
     }
 
     /**
@@ -66,13 +67,13 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      *
      * @return The type variable's upper bounds.
      */
-    public TypeList.Generic getUpperBounds() {
+    public TypeList.Generic getBounds() {
         return new TypeList.Generic.Explicit(upperBounds);
     }
 
     @Override
     public TypeVariableToken accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-        return new TypeVariableToken(getSymbol(), getUpperBounds().accept(visitor));
+        return new TypeVariableToken(getSymbol(), getBounds().accept(visitor));
     }
 
     @Override

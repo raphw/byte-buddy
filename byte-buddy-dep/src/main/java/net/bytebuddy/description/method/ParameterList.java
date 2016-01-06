@@ -15,8 +15,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.none;
-
 /**
  * Represents a list of parameters of a method or a constructor.
  *
@@ -32,20 +30,13 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     TypeList.Generic asTypeList();
 
     /**
-     * Transforms the list of parameter descriptions into a list of detached tokens.
-     *
-     * @return The transformed token list.
-     */
-    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList();
-
-    /**
      * Transforms the list of parameter descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
      * @param targetTypeMatcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
 
     /**
      * Returns this list of these parameter descriptions resolved to their defined shape.
@@ -79,12 +70,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
-            return asTokenList(none());
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
             for (ParameterDescription parameterDescription : this) {
                 tokens.add(parameterDescription.asToken(matcher));
@@ -617,12 +603,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
-            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>();
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>();
         }
 

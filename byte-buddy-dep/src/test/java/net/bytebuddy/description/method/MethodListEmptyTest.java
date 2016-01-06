@@ -14,11 +14,6 @@ public class MethodListEmptyTest {
     }
 
     @Test
-    public void testTokenListWithoutFilter() throws Exception {
-        assertThat(new MethodList.Empty<MethodDescription>().asTokenList().size(), is(0));
-    }
-
-    @Test
     public void testDeclaredList() throws Exception {
         assertThat(new MethodList.Empty<MethodDescription>().asDefined().size(), is(0));
     }

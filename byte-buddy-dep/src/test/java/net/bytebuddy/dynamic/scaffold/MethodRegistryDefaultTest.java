@@ -12,6 +12,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -329,7 +330,7 @@ public class MethodRegistryDefaultTest {
         when(superType.asErasure()).thenReturn(rawSuperType);
         when(typeDescription.getSuperType()).thenReturn(superType);
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
-        when(instrumentedMethod.asToken()).thenReturn(methodToken);
+        when(instrumentedMethod.asToken(ElementMatchers.is(typeDescription))).thenReturn(methodToken);
         when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)

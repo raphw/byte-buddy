@@ -2,7 +2,6 @@ package net.bytebuddy.matcher;
 
 
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -39,13 +38,13 @@ public class LatentMatcherForFieldTokenTest {
 
     @Test
     public void testMatch() throws Exception {
-        when(fieldDescription.asToken()).thenReturn(token);
+        when(fieldDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
         assertThat(new LatentMatcher.ForFieldToken(token).resolve(instrumentedType).matches(fieldDescription), is(true));
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(fieldDescription.asToken()).thenReturn(otherToken);
+        when(fieldDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
         assertThat(new LatentMatcher.ForFieldToken(token).resolve(instrumentedType).matches(fieldDescription), is(false));
     }
 

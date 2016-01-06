@@ -222,9 +222,10 @@ public interface Implementation extends InstrumentedType.Prepareable {
 
             @Override
             public String toString() {
-                return "Instrumentation.SpecialMethodInvocation.Simple{" +
+                return "Implementation.SpecialMethodInvocation.Simple{" +
                         "typeDescription=" + typeDescription +
                         ", methodDescription=" + methodDescription +
+                        ", stackManipulation=" + stackManipulation +
                         '}';
             }
         }
