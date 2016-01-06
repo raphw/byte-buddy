@@ -928,7 +928,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     protected Generic onSimpleType(Generic typeDescription) {
-                        return typeDescription.equals(TargetType.DESCRIPTION)
+                        return typeDescription.represents(TargetType.class)
                                 ? declaringType
                                 : typeDescription;
                     }

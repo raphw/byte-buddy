@@ -154,7 +154,8 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
         VARIABLE,
 
         /**
-         * Represents a type variable that is merely symbolic and is not attached to a {@link TypeVariableSource} and does not defined bounds.
+         * Represents a type variable that is merely symbolic and is not attached to a {@link net.bytebuddy.description.TypeVariableSource}
+         * and does not defined bounds.
          */
         VARIABLE_SYMBOLIC;
 
