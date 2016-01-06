@@ -95,11 +95,11 @@ A more complex example
 
 Of course, a *Hello World example* is a too simple use case for evaluating the quality of a code generation library.
 In reality, a user of such a library wants to perform more complex manipulations, for example by introducing hooks
-into the execution path of a Java program. Using Byte Buddy, doing so is however equally simple. The followingexample 
+into the execution path of a Java program. Using Byte Buddy, doing so is however equally simple. The following example 
 gives a taste of how method calls can be intercepted.
 
 Byte Buddy expresses dynamically defined method implementations by instances of the `Implementation` interface. In the
-previous exaple, `FixedValue` that implementes this interface was already demonstrated. By implementing this interface, 
+previous example, `FixedValue` that implements this interface was already demonstrated. By implementing this interface, 
 a user of Byte Buddy can go to the length of defining custom byte code for a method. Normally, it is however easier to 
 use Byte Buddy's predefined implementations such as `MethodDelegation` which allows for implementing any method in 
 plain Java. Using this implementation is straight forward as it operates by delegating the control flow to any POJO. As 
@@ -150,7 +150,7 @@ public class GeneralInterceptor {
 With the above interceptor, any intercepted method could be matched and processed. For example, when matching
 `Function::apply`, the method's arguments would be passed as the single element of an array. Also, a `Method` 
 reference to `Fuction::apply` would be passed as the interceptor's second argument due to the `@Origin` 
-annotation. By declaringthe `@RuntimeType` annotation on the method, Byte Buddy finally casts the returned 
+annotation. By declaring the `@RuntimeType` annotation on the method, Byte Buddy finally casts the returned 
 value to the return value of the intercepted method if this is necessary. In doing so, Byte Buddy also applies
 automatic boxing and unboxing.
 
@@ -207,7 +207,7 @@ suggested. This is in particularly true when you plan to redistribute your code 
 of Byte Buddy will update their ASM dependency to newer version what will then lead to version clashes between
 different ASM versions that were repackaged by Byte Buddy, if you have not follow this recommendation!
 
-There exist several tools that allow for an easy automatization of the repacking of dependencies during your build
+There exist several tools that allow for an easy automation of the repacking of dependencies during your build
 processes. You can for example use the
 [Shade plugin](http://maven.apache.org/plugins/maven-shade-plugin/examples/class-relocation.html) for Maven. With
 Gradle, a similar tool is the [Shadow plugin](https://github.com/johnrengelman/shadow). Another alternative is
@@ -240,7 +240,7 @@ mvn package -Pextras
 
 The zero-dependency jar file is then saved in *byte-buddy/target/byte-buddy-#.#-SNAPSHOT.jar*. The regular jar
 file is saved in *byte-buddy-dep/target/byte-buddy-dep-#.#-SNAPSHOT.jar*. Additionally, source code and javadoc
-artifacts are built when using this profile.See the [developer page](http://bytebuddy.net/#/develop) for further
+artifacts are built when using this profile. See the [developer page](http://bytebuddy.net/#/develop) for further
 information on building the project.
 
 Please use GitHub's [issue tracker](https://github.com/raphw/byte-buddy/issues) for reporting bugs. When committing
