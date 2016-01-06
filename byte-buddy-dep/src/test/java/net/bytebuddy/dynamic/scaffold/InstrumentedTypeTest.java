@@ -1,10 +1,12 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
@@ -31,6 +33,8 @@ public class InstrumentedTypeTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
+    private static final int MODIFIERS = 42;
+
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
@@ -40,12 +44,12 @@ public class InstrumentedTypeTest {
     @Mock
     private Implementation.Context implementationContext;
 
-    protected static InstrumentedType makePlainInstrumentedType() {
+    protected static InstrumentedType.WithFlexibleName makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
-                Opcodes.ACC_PUBLIC,
+                MODIFIERS,
                 TypeDescription.Generic.OBJECT,
                 Collections.<TypeVariableToken>emptyList(),
-                Collections.<TypeDescription.Generic>singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Serializable.class)),
+                Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
@@ -58,6 +62,37 @@ public class InstrumentedTypeTest {
                 false,
                 false,
                 false);
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    public void testWithTypeVariable() throws Exception {
+        TypeDescription.Generic boundType = mock(TypeDescription.Generic.class);
+        when(boundType.asGenericType()).thenReturn(boundType);
+        when(boundType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(boundType);
+        TypeDescription rawBoundType = mock(TypeDescription.class);
+        when(boundType.asErasure()).thenReturn(rawBoundType);
+        when(rawBoundType.getName()).thenReturn(FOO);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getTypeVariables().size(), is(0));
+        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, boundType));
+        assertThat(instrumentedType.getTypeVariables().size(), is(1));
+        TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
+        assertThat(typeVariable.getTypeName(), is(BAR));
+        assertThat(typeVariable.getVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
+        assertThat(typeVariable.getUpperBounds(), is(Collections.singletonList(boundType)));
+    }
+
+    @Test
+    public void testWithTypeVariableWithInstrumentedType() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getTypeVariables().size(), is(0));
+        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, TargetType.GENERIC_DESCRIPTION));
+        assertThat(instrumentedType.getTypeVariables().size(), is(1));
+        TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
+        assertThat(typeVariable.getTypeName(), is(BAR));
+        assertThat(typeVariable.getVariableSource(), sameInstance((TypeVariableSource) instrumentedType));
+        assertThat(typeVariable.getUpperBounds(), is(Collections.singletonList(instrumentedType.asGenericType())));
     }
 
     @Test
@@ -181,6 +216,56 @@ public class InstrumentedTypeTest {
     }
 
     @Test
+    @SuppressWarnings("unchecked")
+    public void testWithInterface() throws Exception {
+        TypeDescription.Generic interfaceType = mock(TypeDescription.Generic.class);
+        when(interfaceType.asGenericType()).thenReturn(interfaceType);
+        when(interfaceType.accept(Mockito.any(TypeDescription.Generic.Visitor.class))).thenReturn(interfaceType);
+        TypeDescription rawBoundType = mock(TypeDescription.class);
+        when(interfaceType.asErasure()).thenReturn(rawBoundType);
+        when(rawBoundType.getName()).thenReturn(FOO);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getInterfaces().size(), is(0));
+        instrumentedType = instrumentedType.withInterfaces(new TypeList.Generic.Explicit(interfaceType));
+        assertThat(instrumentedType.getInterfaces().size(), is(1));
+        assertThat(instrumentedType.getInterfaces(), is(Collections.singletonList(interfaceType)));
+    }
+
+    @Test
+    public void testWithInterfaceOfInstrumentedType() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getInterfaces().size(), is(0));
+        instrumentedType = instrumentedType.withInterfaces(new TypeList.Generic.Explicit(TargetType.DESCRIPTION));
+        assertThat(instrumentedType.getInterfaces().size(), is(1));
+        assertThat(instrumentedType.getInterfaces(), is(Collections.singletonList(instrumentedType.asGenericType())));
+    }
+
+    @Test
+    public void testWithAnnotation() throws Exception {
+        AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getDeclaredAnnotations().size(), is(0));
+        instrumentedType = instrumentedType.withAnnotations(Collections.singletonList(annotationDescription));
+        assertThat(instrumentedType.getDeclaredAnnotations(), is(Collections.singletonList(annotationDescription)));
+    }
+
+    @Test
+    public void testWithName() throws Exception {
+        InstrumentedType.WithFlexibleName instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getName(), is(FOO + "." + BAZ));
+        instrumentedType = instrumentedType.withName(BAR);
+        assertThat(instrumentedType.getName(), is(BAR));
+    }
+
+    @Test
+    public void testModifiers() throws Exception {
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.getModifiers(), is(MODIFIERS));
+        instrumentedType = instrumentedType.withModifiers(MODIFIERS);
+        assertThat(instrumentedType.getModifiers(), is(MODIFIERS));
+    }
+
+    @Test
     public void testWithLoadedTypeInitializerInitial() throws Exception {
         LoadedTypeInitializer loadedTypeInitializer = makePlainInstrumentedType().getLoadedTypeInitializer();
         assertThat(loadedTypeInitializer.isAlive(), is(false));
@@ -281,11 +366,8 @@ public class InstrumentedTypeTest {
     public void testIsAssignableTo() {
         assertThat(makePlainInstrumentedType().isAssignableTo(Object.class), is(true));
         assertThat(makePlainInstrumentedType().isAssignableTo(makePlainInstrumentedType()), is(true));
-        assertThat(makePlainInstrumentedType().isAssignableTo(Serializable.class), is(true));
         assertThat(makePlainInstrumentedType().isAssignableTo(Integer.class), is(false));
         assertThat(makePlainInstrumentedType().isAssignableTo(TypeDescription.OBJECT), is(true));
-        assertThat(makePlainInstrumentedType().isAssignableTo(new TypeDescription.ForLoadedType(Serializable.class)), is(true));
-        assertThat(makePlainInstrumentedType().isAssignableTo(new TypeDescription.ForLoadedType(Integer.class)), is(false));
     }
 
     @Test
@@ -304,8 +386,7 @@ public class InstrumentedTypeTest {
 
     @Test
     public void testInterfaces() {
-        assertThat(makePlainInstrumentedType().getInterfaces().size(), is(1));
-        assertThat(makePlainInstrumentedType().getInterfaces().getOnly(), is((TypeDefinition) new TypeDescription.ForLoadedType(Serializable.class)));
+        assertThat(makePlainInstrumentedType().getInterfaces().size(), is(0));
     }
 
     @Test
@@ -352,5 +433,43 @@ public class InstrumentedTypeTest {
     @Test
     public void testDeclaredTypes() throws Exception {
         assertThat(makePlainInstrumentedType().getDeclaredTypes().size(), is(0));
+    }
+
+    @Test
+    public void testFieldTokenIsVisited() throws Exception {
+        FieldDescription.Token token = mock(FieldDescription.Token.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.withField(token), is(instrumentedType));
+        verify(token).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verifyNoMoreInteractions(token);
+    }
+
+    @Test
+    public void testMethodTokenIsVisited() throws Exception {
+        MethodDescription.Token token = mock(MethodDescription.Token.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.withMethod(token), is(instrumentedType));
+        verify(token).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verifyNoMoreInteractions(token);
+    }
+
+    @Test
+    public void testTypeVariableIsVisited() throws Exception {
+        TypeVariableToken token = mock(TypeVariableToken.class);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.withTypeVariable(token), is(instrumentedType));
+        verify(token).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verifyNoMoreInteractions(token);
+    }
+
+    @Test
+    public void testInterfaceTypesVisited() throws Exception {
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.asGenericType()).thenReturn(typeDescription);
+        InstrumentedType instrumentedType = makePlainInstrumentedType();
+        assertThat(instrumentedType.withInterfaces(new TypeList.Generic.Explicit(typeDescription)), is(instrumentedType));
+        verify(typeDescription).accept(TypeDescription.Generic.Visitor.Substitutor.ForDetachment.of(instrumentedType));
+        verify(typeDescription).asGenericType();
+        verifyNoMoreInteractions(typeDescription);
     }
 }

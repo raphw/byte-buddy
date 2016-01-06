@@ -1002,6 +1002,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeMatcher.equals(((ForDetachment) other).typeMatcher);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeMatcher.hashCode();
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeDescription.Generic.Visitor.Substitutor.ForDetachment{" +
                                 "typeMatcher=" + typeMatcher +
