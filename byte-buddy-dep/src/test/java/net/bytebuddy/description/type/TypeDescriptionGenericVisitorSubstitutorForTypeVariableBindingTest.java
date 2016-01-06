@@ -13,6 +13,8 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest {
 
@@ -48,6 +50,17 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
     @Test(expected = IllegalStateException.class)
     public void testTypeVariableUnknown() throws Exception {
         new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(unknown);
+    }
+
+    @Test
+    public void testUnequalVariablesAndParameters() throws Exception {
+        TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+        when(typeDescription.getParameters()).thenReturn(new TypeList.Generic.Explicit(mock(TypeDescription.Generic.class)));
+        TypeDescription rawTypeDescription = mock(TypeDescription.class);
+        when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+        when(rawTypeDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
+        assertThat(TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding.bind(typeDescription),
+                is((TypeDescription.Generic.Visitor<TypeDescription.Generic>) TypeDescription.Generic.Visitor.TypeVariableErasing.INSTANCE));
     }
 
     @Test

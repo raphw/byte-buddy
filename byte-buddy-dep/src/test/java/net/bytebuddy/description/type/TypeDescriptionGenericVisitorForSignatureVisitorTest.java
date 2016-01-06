@@ -2,10 +2,16 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+import org.objectweb.asm.signature.SignatureVisitor;
+
+import static org.mockito.Mockito.mock;
 
 public class TypeDescriptionGenericVisitorForSignatureVisitorTest {
 
-    /* The actual methods are implicitly tested when reading types via a type pool or while writing type signatures when creating types. */
+    @Test(expected = IllegalStateException.class)
+    public void testSignatureVisitorTypeVariableThrowsException() throws Exception {
+        new TypeDescription.Generic.Visitor.ForSignatureVisitor(mock(SignatureVisitor.class)).onWildcard(mock(TypeDescription.Generic.class));
+    }
 
     @Test
     public void testObjectProperties() throws Exception {

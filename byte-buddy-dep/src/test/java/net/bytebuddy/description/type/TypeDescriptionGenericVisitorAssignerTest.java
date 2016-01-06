@@ -15,6 +15,8 @@ import java.util.concurrent.Callable;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.core.Is.is;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TypeDescriptionGenericVisitorAssignerTest {
 
@@ -32,7 +34,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     private TypeDescription.Generic callableWildcard;
 
-    private TypeDescription.Generic arrayListTypeVariableT, arrayListTypeVariableS, arrayListTypeVariableU, arrayListTypeVariableV;
+    private TypeDescription.Generic arrayListTypeVariableT, arrayListTypeVariableS;
 
     private TypeDescription.Generic collectionRawArray, listRawArray, listWildcardArray, arrayListRawArray;
 
@@ -42,9 +44,9 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     private TypeDescription.Generic typeVariableT, typeVariableS, typeVariableU, typeVariableV;
 
-    private TypeDescription.Generic tArray, sArray, uArray;
+    private TypeDescription.Generic arrayTypeVariableT, arrayTypeVariableS, arrayTypeVariableU;
 
-    private TypeDescription.Generic tNestedArray;
+    private TypeDescription.Generic arrayNestedTypeVariableT;
 
     @Before
     public void setUp() throws Exception {
@@ -64,8 +66,8 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         listWildcard = fields.filter(named("listWildcard")).getOnly().getType();
         arrayListTypeVariableT = fields.filter(named("arrayListTypeVariableT")).getOnly().getType();
         arrayListTypeVariableS = fields.filter(named("arrayListTypeVariableS")).getOnly().getType();
-        arrayListTypeVariableU = fields.filter(named("arrayListTypeVariableU")).getOnly().getType();
-        arrayListTypeVariableV = fields.filter(named("arrayListTypeVariableV")).getOnly().getType();
+        TypeDescription.Generic arrayListTypeVariableU = fields.filter(named("arrayListTypeVariableU")).getOnly().getType();
+        TypeDescription.Generic arrayListTypeVariableV = fields.filter(named("arrayListTypeVariableV")).getOnly().getType();
         abstractListRaw = fields.filter(named("abstractListRaw")).getOnly().getType();
         callableWildcard = fields.filter(named("callableWildcard")).getOnly().getType();
         arrayListRaw = fields.filter(named("arrayListRaw")).getOnly().getType();
@@ -82,10 +84,10 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         typeVariableS = arrayListTypeVariableS.getParameters().getOnly();
         typeVariableU = arrayListTypeVariableU.getParameters().getOnly();
         typeVariableV = arrayListTypeVariableV.getParameters().getOnly();
-        tArray = fields.filter(named("tArray")).getOnly().getType();
-        sArray = fields.filter(named("sArray")).getOnly().getType();
-        uArray = fields.filter(named("uArray")).getOnly().getType();
-        tNestedArray = fields.filter(named("tNestedArray")).getOnly().getType();
+        arrayTypeVariableT = fields.filter(named("arrayTypeVariableT")).getOnly().getType();
+        arrayTypeVariableS = fields.filter(named("arrayTypeVariableS")).getOnly().getType();
+        arrayTypeVariableU = fields.filter(named("arrayTypeVariableU")).getOnly().getType();
+        arrayNestedTypeVariableT = fields.filter(named("arrayNestedTypeVariableT")).getOnly().getType();
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -190,7 +192,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
     }
 
     @Test
-    public void testAssignNonGenericArrayFromGenericArrayTypeOfIncompatibleArrity() throws Exception {
+    public void testAssignNonGenericArrayFromGenericArrayTypeOfIncompatibleArity() throws Exception {
         assertThat(objectNestedArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(listWildcardArray), is(false));
     }
@@ -257,25 +259,37 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     @Test
     public void testAssignGenericArrayFromAssignableGenericArray() throws Exception {
-        assertThat(tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(uArray), is(true));
+        assertThat(arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayTypeVariableU), is(true));
+    }
+
+    @Test
+    public void testAssignGenericNestedArrayFromNonAssignableGenericArray() throws Exception {
+        assertThat(arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayNestedTypeVariableT), is(false));
+    }
+
+    @Test
+    public void testAssignGenericNestedArrayFromAssignableObjectArray() throws Exception {
+        assertThat(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Object[][].class).accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayNestedTypeVariableT), is(true));
     }
 
     @Test
     public void testAssignGenericArrayFromNonAssignableGenericArray() throws Exception {
-        assertThat(tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(sArray), is(false));
+        assertThat(arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayTypeVariableS), is(false));
     }
 
     @Test
     public void testAssignGenericArrayFromNonAssignableNonGenericNonArrayType() throws Exception {
-        assertThat(tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        assertThat(arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(TypeDescription.Generic.OBJECT), is(false));
     }
 
     @Test
     public void testAssignGenericArrayFromNonAssignableNonGenericArrayType() throws Exception {
-        assertThat(tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        assertThat(arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(objectArray), is(false));
     }
 
@@ -287,19 +301,19 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     @Test
     public void testAssignGenericArrayFromNonAssignableTypeVariable() throws Exception {
-        assertThat(tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        assertThat(arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(typeVariableT), is(false));
     }
 
     @Test
     public void testAssignGenericArrayFromNonAssignableParameterizedType() throws Exception {
-        assertThat(tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        assertThat(arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(arrayListWildcard), is(false));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testAssignGenericArrayFromWildcardThrowsException() throws Exception {
-        tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+        arrayTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(unboundWildcard);
     }
 
@@ -348,7 +362,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
     @Test
     public void testAssignParameterizedWildcardTypeFromNonAssignableGenericArrayType() throws Exception {
         assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(tArray), is(false));
+                .isAssignableFrom(arrayTypeVariableT), is(false));
     }
 
     @Test
@@ -375,6 +389,113 @@ public class TypeDescriptionGenericVisitorAssignerTest {
                 .isAssignableFrom(arrayListTypeVariableS), is(false));
     }
 
+    @Test
+    public void testAssignUpperBoundFromAssignableBound() throws Exception {
+        assertThat(collectionUpperBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableT), is(true));
+    }
+
+    @Test
+    public void testAssignUpperBoundFromAssignableBoundSuperType() throws Exception {
+        assertThat(collectionUpperBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableU), is(true));
+    }
+
+    @Test
+    public void testAssignUpperBoundFromAssignableUpperBoundSuperType() throws Exception {
+        assertThat(collectionUpperBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionUpperBoundTypeVariableU), is(true));
+    }
+
+    @Test
+    public void testAssignUpperBoundFromAssignableUpperBoundEqualType() throws Exception {
+        assertThat(collectionUpperBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableU), is(true));
+    }
+
+    @Test
+    public void testAssignUpperBoundFromNonAssignableBoundType() throws Exception {
+        assertThat(collectionUpperBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableS), is(false));
+    }
+
+    @Test
+    public void testAssignUpperBoundFromNonAssignableUpperBoundType() throws Exception {
+        assertThat(collectionUpperBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionUpperBoundTypeVariableS), is(false));
+    }
+
+    @Test
+    public void testAssignUpperBoundFromLowerpperBoundType() throws Exception {
+        assertThat(collectionUpperBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionLowerBoundTypeVariableT), is(false));
+    }
+
+    @Test
+    public void testAssignLowerBoundFromAssignableBound() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableT), is(true));
+    }
+
+    @Test
+    public void testAssignLowerBoundFromAssignableBoundSuperType() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableU.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableT), is(true));
+    }
+
+    @Test
+    public void testAssignLowerBoundFromAssignableUpperBoundSuperType() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableU.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionLowerBoundTypeVariableT), is(true));
+    }
+
+    @Test
+    public void testAssigLowerBoundFromAssignableUpperBoundEqualType() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableU.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableT), is(true));
+    }
+
+    @Test
+    public void testAssignLowerBoundFromNonAssignableBoundType() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableS), is(false));
+    }
+
+    @Test
+    public void testAssignLowerBoundFromNonAssignableUpperBoundType() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionLowerBoundTypeVariableS), is(false));
+    }
+
+    @Test
+    public void testAssignLowerBoundFromLowerpperBoundType() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionUpperBoundTypeVariableT), is(false));
+    }
+
+    @Test
+    public void testAssignLowerBoundFromAssignableBoundSubType() throws Exception {
+        assertThat(collectionLowerBoundTypeVariableU.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableT), is(true));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAssignParameterizedTypeFromWildcardTypeThrowsException() throws Exception {
+        collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(unboundWildcard);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testAssignIncompatibleParameterizedTypesThrowsException() throws Exception {
+        TypeDescription.Generic source = mock(TypeDescription.Generic.class), target = mock(TypeDescription.Generic.class);
+        TypeDescription erasure = mock(TypeDescription.class);
+        when(source.asErasure()).thenReturn(erasure);
+        when(target.asErasure()).thenReturn(erasure);
+        when(source.getParameters()).thenReturn(new TypeList.Generic.Empty());
+        when(target.getParameters()).thenReturn(new TypeList.Generic.Explicit(mock(TypeDescription.Generic.class)));
+        new TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType(target).onParameterizedType(source);
+    }
+
     // TODO: assignParameterizedTypeFromXXX
 
     @Test
@@ -386,6 +507,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.InvariantBinding.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.CovariantBinding.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.ContravariantBinding.class).apply();
     }
 
@@ -442,12 +564,12 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
         private Callable<?> callableWildcard;
 
-        private T[] tArray;
+        private T[] arrayTypeVariableT;
 
-        private T[][] tNestedArray;
+        private T[][] arrayNestedTypeVariableT;
 
-        private S[] sArray;
+        private S[] arrayTypeVariableS;
 
-        private U[] uArray;
+        private U[] arrayTypeVariableU;
     }
 }

@@ -1428,7 +1428,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                     }
                                     return true;
                                 } else {
-                                    throw new IllegalStateException("Incompatible generic types: " + parameterizedType + " and " + this.parameterizedType);
+                                    throw new IllegalArgumentException("Incompatible generic types: " + parameterizedType + " and " + this.parameterizedType);
                                 }
                             }
                             Generic superType = parameterizedType.getSuperType();
