@@ -10,6 +10,7 @@ import java.util.AbstractList;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -17,11 +18,21 @@ import static org.hamcrest.core.Is.is;
 
 public class TypeDescriptionGenericVisitorAssignerTest {
 
-    private TypeDescription.Generic collectionRaw, listRaw, listWildcard;
+    private TypeDescription.Generic collectionWildcard, collectionRaw;
+
+    private TypeDescription.Generic collectionTypeVariableT, collectionTypeVariableS, collectionTypeVariableU;
+
+    private TypeDescription.Generic collectionUpperBoundTypeVariableT, collectionUpperBoundTypeVariableS, collectionUpperBoundTypeVariableU;
+
+    private TypeDescription.Generic collectionLowerBoundTypeVariableT, collectionLowerBoundTypeVariableS, collectionLowerBoundTypeVariableU;
+
+    private TypeDescription.Generic listRaw, listWildcard;
 
     private TypeDescription.Generic abstractListRaw, arrayListRaw, arrayListWildcard;
 
-    private TypeDescription.Generic listTypeVariableT, listTypeVariableS, listTypeVariableU, tNestedArray;
+    private TypeDescription.Generic callableWildcard;
+
+    private TypeDescription.Generic arrayListTypeVariableT, arrayListTypeVariableS, arrayListTypeVariableU, arrayListTypeVariableV;
 
     private TypeDescription.Generic collectionRawArray, listRawArray, listWildcardArray, arrayListRawArray;
 
@@ -29,20 +40,34 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     private TypeDescription.Generic unboundWildcard;
 
-    private TypeDescription.Generic typeVariableT, typeVariableS, typeVariableU;
+    private TypeDescription.Generic typeVariableT, typeVariableS, typeVariableU, typeVariableV;
 
     private TypeDescription.Generic tArray, sArray, uArray;
+
+    private TypeDescription.Generic tNestedArray;
 
     @Before
     public void setUp() throws Exception {
         FieldList<?> fields = new TypeDescription.ForLoadedType(GenericTypes.class).getDeclaredFields();
         collectionRaw = fields.filter(named("collectionRaw")).getOnly().getType();
+        collectionWildcard = fields.filter(named("collectionWildcard")).getOnly().getType();
+        collectionTypeVariableT = fields.filter(named("collectionTypeVariableT")).getOnly().getType();
+        collectionTypeVariableS = fields.filter(named("collectionTypeVariableS")).getOnly().getType();
+        collectionTypeVariableU = fields.filter(named("collectionTypeVariableU")).getOnly().getType();
+        collectionUpperBoundTypeVariableT = fields.filter(named("collectionUpperBoundTypeVariableT")).getOnly().getType();
+        collectionUpperBoundTypeVariableS = fields.filter(named("collectionUpperBoundTypeVariableS")).getOnly().getType();
+        collectionUpperBoundTypeVariableU = fields.filter(named("collectionUpperBoundTypeVariableU")).getOnly().getType();
+        collectionLowerBoundTypeVariableT = fields.filter(named("collectionLowerBoundTypeVariableT")).getOnly().getType();
+        collectionLowerBoundTypeVariableS = fields.filter(named("collectionLowerBoundTypeVariableS")).getOnly().getType();
+        collectionLowerBoundTypeVariableU = fields.filter(named("collectionLowerBoundTypeVariableU")).getOnly().getType();
         listRaw = fields.filter(named("listRaw")).getOnly().getType();
         listWildcard = fields.filter(named("listWildcard")).getOnly().getType();
-        listTypeVariableT = fields.filter(named("listTypeVariableT")).getOnly().getType();
-        listTypeVariableS = fields.filter(named("listTypeVariableS")).getOnly().getType();
-        listTypeVariableU = fields.filter(named("listTypeVariableU")).getOnly().getType();
+        arrayListTypeVariableT = fields.filter(named("arrayListTypeVariableT")).getOnly().getType();
+        arrayListTypeVariableS = fields.filter(named("arrayListTypeVariableS")).getOnly().getType();
+        arrayListTypeVariableU = fields.filter(named("arrayListTypeVariableU")).getOnly().getType();
+        arrayListTypeVariableV = fields.filter(named("arrayListTypeVariableV")).getOnly().getType();
         abstractListRaw = fields.filter(named("abstractListRaw")).getOnly().getType();
+        callableWildcard = fields.filter(named("callableWildcard")).getOnly().getType();
         arrayListRaw = fields.filter(named("arrayListRaw")).getOnly().getType();
         arrayListWildcard = fields.filter(named("arrayListWildcard")).getOnly().getType();
         collectionRawArray = fields.filter(named("collectionRawArray")).getOnly().getType();
@@ -53,9 +78,10 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         objectArray = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Object[].class);
         objectNestedArray = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Object[][].class);
         unboundWildcard = listWildcard.getParameters().getOnly();
-        typeVariableT = listTypeVariableT.getParameters().getOnly();
-        typeVariableS = listTypeVariableS.getParameters().getOnly();
-        typeVariableU = listTypeVariableU.getParameters().getOnly();
+        typeVariableT = arrayListTypeVariableT.getParameters().getOnly();
+        typeVariableS = arrayListTypeVariableS.getParameters().getOnly();
+        typeVariableU = arrayListTypeVariableU.getParameters().getOnly();
+        typeVariableV = arrayListTypeVariableV.getParameters().getOnly();
         tArray = fields.filter(named("tArray")).getOnly().getType();
         sArray = fields.filter(named("sArray")).getOnly().getType();
         uArray = fields.filter(named("uArray")).getOnly().getType();
@@ -279,55 +305,74 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     @Test
     public void testAssignParameterizedWildcardTypeFromEqualType() throws Exception {
-        assertThat(listWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(listWildcard), is(true));
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionWildcard), is(true));
     }
 
     @Test
     public void testAssignParameterizedWildcardTypeFromEqualRawType() throws Exception {
-        assertThat(listWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(listRaw), is(true));
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionRaw), is(true));
     }
 
     @Test
-    public void testAssignParameterizedWildcardTypeFromAssignableWildcardType() throws Exception {
-        assertThat(arrayListWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(listWildcard), is(true));
+    public void testAssignParameterizedWildcardTypeFromAssignableParameterizedWildcardType() throws Exception {
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayListWildcard), is(true));
     }
 
     @Test
-    public void testAssignParameterizedWildcardTypeFromAssignableRawType() throws Exception {
-        assertThat(arrayListWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(arrayListRaw), is(true));
+    public void testAssignParameterizedWildcardTypeFromAssignableParameterizedNonWildcardTypeType() throws Exception {
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayListTypeVariableT), is(true));
     }
 
     @Test
-    public void testAssignParameterizedWildcardTypeFromAssignableNonGenericType() throws Exception {
-        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(TypeDescription.Generic.OBJECT), is(true));
+    public void testAssignParameterizedWildcardTypeFromAssignableTypeVariableType() throws Exception {
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(typeVariableV), is(true));
     }
 
     @Test
-    public void testAssignParameterizedWildcardTypeFromNonAssignableNonGenericType() throws Exception {
-        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+    public void testAssignParameterizedWildcardTypeFromNonAssignableRawType() throws Exception {
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(TypeDescription.STRING.asGenericType()), is(false));
     }
 
     @Test
-    public void testAssignParameterizedWildcardTypeFromNonAssignableArrayType() throws Exception {
-        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(listRawArray), is(false));
+    public void testAssignParameterizedWildcardTypeFromNonAssignableParameterizedType() throws Exception {
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(callableWildcard), is(false));
     }
 
     @Test
-    public void testAssignParameterizedWildcardTypeFromAssignableTypeVariable() throws Exception {
-        // TODO
+    public void testAssignParameterizedWildcardTypeFromNonAssignableGenericArrayType() throws Exception {
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayListWildcard), is(false));
     }
 
     @Test
-    public void testAssignParameterizedWildcardTypeFromNonAssignableTypeVariable() throws Exception {
-        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+    public void testAssignParameterizedWildcardTypeFromNonAssignableTypeVariableType() throws Exception {
+        assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
                 .isAssignableFrom(typeVariableT), is(false));
+    }
+
+    @Test
+    public void testAssignParameterizedTypeVariableTypeFromEqualParameterizedTypeVariableTypeType() throws Exception {
+        assertThat(collectionTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(collectionTypeVariableT), is(true));
+    }
+
+    @Test
+    public void testAssignParameterizedTypeVariableTypeFromAssignableParameterizedTypeVariableTypeType() throws Exception {
+        assertThat(collectionTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayListTypeVariableT), is(true));
+    }
+
+    @Test
+    public void testAssignParameterizedTypeVariableTypeFromNonAssignableParameterizedTypeVariableTypeType() throws Exception {
+        assertThat(collectionTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayListTypeVariableS), is(false));
     }
 
     // TODO: assignParameterizedTypeFromXXX
@@ -346,15 +391,35 @@ public class TypeDescriptionGenericVisitorAssignerTest {
     }
 
     @SuppressWarnings({"unused", "unchecked"})
-    private static class GenericTypes<T, S, U extends T> {
+    private static class GenericTypes<T, S, U extends T, V extends List<?>> {
 
         private Collection collectionRaw;
+
+        private Collection<?> collectionWildcard;
+
+        private Collection<T> collectionTypeVariableT;
+
+        private Collection<S> collectionTypeVariableS;
+
+        private Collection<U> collectionTypeVariableU;
+
+        private Collection<? extends T> collectionUpperBoundTypeVariableT;
+
+        private Collection<? extends S> collectionUpperBoundTypeVariableS;
+
+        private Collection<? extends U> collectionUpperBoundTypeVariableU;
+
+        private Collection<? super T> collectionLowerBoundTypeVariableT;
+
+        private Collection<? super S> collectionLowerBoundTypeVariableS;
+
+        private Collection<? super U> collectionLowerBoundTypeVariableU;
+
+        private Collection[] collectionRawArray;
 
         private List listRaw;
 
         private List<?> listWildcard;
-
-        private Collection[] collectionRawArray;
 
         private List[] listRawArray;
 
@@ -368,11 +433,15 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
         private ArrayList[] arrayListRawArray;
 
-        private ArrayList<T> listTypeVariableT;
+        private ArrayList<T> arrayListTypeVariableT;
 
-        private ArrayList<S> listTypeVariableS;
+        private ArrayList<S> arrayListTypeVariableS;
 
-        private ArrayList<U> listTypeVariableU;
+        private ArrayList<U> arrayListTypeVariableU;
+
+        private ArrayList<V> arrayListTypeVariableV;
+
+        private Callable<?> callableWildcard;
 
         private T[] tArray;
 

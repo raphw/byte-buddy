@@ -1428,7 +1428,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                     }
                                     return true;
                                 } else {
-                                    return true; // assignment to erasure or incompatible type versions.
+                                    throw new IllegalStateException("Incompatible generic types: " + parameterizedType + " and " + this.parameterizedType);
                                 }
                             }
                             Generic superType = parameterizedType.getSuperType();
@@ -1458,12 +1458,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             if (parameterizedType.asErasure().equals(typeDescription.asErasure())) {
                                 return true;
                             }
-                            Generic superType = parameterizedType.getSuperType();
-                            if (superType != null && superType.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription)) {
+                            Generic superType = typeDescription.getSuperType();
+                            if (superType != null && isAssignableFrom(superType)) {
                                 return true;
                             }
-                            for (Generic interfaceType : parameterizedType.getInterfaces()) {
-                                if (interfaceType.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription)) {
+                            for (Generic interfaceType : typeDescription.getInterfaces()) {
+                                if (isAssignableFrom(interfaceType)) {
                                     return true;
                                 }
                             }
@@ -1552,7 +1552,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                                 @Override
                                 public boolean isAssignableFrom(Generic typeDescription) {
-                                    return !typeDescription.getSort().isWildcard() && this.typeDescription.asErasure().equals(typeDescription.asErasure());
+                                    return typeDescription.equals(this.typeDescription);
                                 }
 
                                 @Override
