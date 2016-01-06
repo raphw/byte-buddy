@@ -1624,14 +1624,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             protected static class ContravariantBinding implements Dispatcher {
 
                                 /**
-                                 * The lower bound type of a contracariant parameter.
+                                 * The lower bound type of a contravariant parameter.
                                  */
                                 private final Generic lowerBound;
 
                                 /**
-                                 * Creates a new dispatcher for contracariant parameter of a parameterized type.
+                                 * Creates a new dispatcher for contravariant parameter of a parameterized type.
                                  *
-                                 * @param lowerBound The lower bound type of a contracariant parameter.
+                                 * @param lowerBound The lower bound type of a contravariant parameter.
                                  */
                                 protected ContravariantBinding(Generic lowerBound) {
                                     this.lowerBound = lowerBound;
