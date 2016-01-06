@@ -334,7 +334,7 @@ public interface DynamicType {
          * <p>
          * This method should only be used for preparing an instrumented type with a specific configuration. Normally,
          * a byte code appender is applied via Byte Buddy's standard API by invoking {@link Builder#invokable(ElementMatcher)}
-         * using the {@link ElementMatchers#isTypeInitializer()} matcher.
+         * using the {@link net.bytebuddy.matcher.ElementMatchers#isTypeInitializer()} matcher.
          * </p>
          *
          * @param byteCodeAppender The byte code appender to execute within the instrumented type's type initializer.
@@ -3315,14 +3315,14 @@ public interface DynamicType {
                     /**
                      * The interfaces whose methods are optionally matched.
                      */
-                    private final List<TypeDescription.Generic> interfaces;
+                    private final TypeList.Generic interfaces;
 
                     /**
                      * Creates a new optional method match adapter.
                      *
                      * @param interfaces The interfaces whose methods are optionally matched.
                      */
-                    protected OptionalMethodMatchAdapter(List<TypeDescription.Generic> interfaces) {
+                    protected OptionalMethodMatchAdapter(TypeList.Generic interfaces) {
                         this.interfaces = interfaces;
                     }
 

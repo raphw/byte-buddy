@@ -58,7 +58,7 @@ public interface InstrumentedType extends TypeDescription {
      * @param interfaceTypes The interface types to implement.
      * @return A new instrumented type that is equal to this instrumented type but with the given interfaces implemented.
      */
-    InstrumentedType withInterfaces(List<? extends Generic> interfaceTypes);
+    InstrumentedType withInterfaces(TypeList.Generic interfaceTypes);
 
     /**
      * Creates a new instrumented type with the given type variable defined.
@@ -248,7 +248,7 @@ public interface InstrumentedType extends TypeDescription {
         WithFlexibleName withModifiers(int modifiers);
 
         @Override
-        WithFlexibleName withInterfaces(List<? extends Generic> interfaceTypes);
+        WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes);
 
         @Override
         WithFlexibleName withTypeVariable(TypeVariableToken typeVariable);
@@ -467,13 +467,13 @@ public interface InstrumentedType extends TypeDescription {
          * @return An instrumented type of the given type.
          */
         public static InstrumentedType.WithFlexibleName of(TypeDescription typeDescription) {
-            Generic.Visitor<TypeDescription.Generic> visitor = new Generic.Visitor.Substitutor.ForDetachment(named(typeDescription.getName()));
+            Generic.Visitor<TypeDescription.Generic> visitor = Generic.Visitor.Substitutor.ForDetachment.of(typeDescription);
             return new Default(typeDescription.getName(),
                     typeDescription.getModifiers(),
                     typeDescription.getSuperType(),
                     typeDescription.getTypeVariables().asTokenList(visitor),
                     typeDescription.getInterfaces().accept(visitor),
-                    typeDescription.getDeclaredFields().asTokenList(named(typeDescription.getName())),
+                    typeDescription.getDeclaredFields().asTokenList(),
                     typeDescription.getDeclaredMethods().asTokenList(named(typeDescription.getName())),
                     typeDescription.getDeclaredAnnotations(),
                     TypeInitializer.None.INSTANCE,
@@ -515,7 +515,7 @@ public interface InstrumentedType extends TypeDescription {
                     superType,
                     typeVariables,
                     interfaceTypes,
-                    CompoundList.of(fieldTokens, token),
+                    CompoundList.of(fieldTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
@@ -537,7 +537,7 @@ public interface InstrumentedType extends TypeDescription {
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
-                    CompoundList.of(methodTokens, token),
+                    CompoundList.of(methodTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     annotationDescriptions,
                     typeInitializer,
                     loadedTypeInitializer,
@@ -551,12 +551,12 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public WithFlexibleName withInterfaces(List<? extends Generic> interfaceTypes) {
+        public WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes) {
             return new Default(name,
                     modifiers,
                     superType,
                     typeVariables,
-                    CompoundList.of(this.interfaceTypes, interfaceTypes),
+                    CompoundList.of(this.interfaceTypes, interfaceTypes.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
@@ -597,7 +597,7 @@ public interface InstrumentedType extends TypeDescription {
             return new Default(name,
                     modifiers,
                     superType,
-                    CompoundList.of(typeVariables, typeVariable),
+                    CompoundList.of(typeVariables, typeVariable.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,

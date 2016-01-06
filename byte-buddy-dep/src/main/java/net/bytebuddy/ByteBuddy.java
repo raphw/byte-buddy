@@ -295,14 +295,14 @@ public class ByteBuddy {
      */
     public <T> DynamicType.Builder<T> subclass(TypeDefinition superType, ConstructorStrategy constructorStrategy) {
         TypeDescription.Generic actualSuperType;
-        List<TypeDescription.Generic> interfaceTypes;
+        TypeList.Generic interfaceTypes;
         if (superType.isPrimitive() || superType.isArray() || superType.asErasure().isFinal()) {
             throw new IllegalArgumentException("Cannot subclass primitive, array or final types: " + superType);
         } else if (superType.asErasure().isInterface()) {
-            interfaceTypes = Collections.singletonList(superType.asGenericType());
+            interfaceTypes = new TypeList.Generic.Explicit(superType.asGenericType());
             actualSuperType = TypeDescription.Generic.OBJECT;
         } else {
-            interfaceTypes = Collections.emptyList();
+            interfaceTypes = new TypeList.Generic.Empty();
             actualSuperType = superType.asGenericType();
         }
         return new SubclassDynamicTypeBuilder<T>(InstrumentedType.Default.subclass(namingStrategy.subclass(superType.asGenericType()),
@@ -418,7 +418,7 @@ public class ByteBuddy {
     public DynamicType.Builder<? extends Annotation> makeAnnotation() {
         return new SubclassDynamicTypeBuilder<Annotation>(InstrumentedType.Default.subclass(namingStrategy.subclass(TypeDescription.Generic.ANNOTATION),
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.ANNOTATION).resolve(),
-                TypeDescription.Generic.OBJECT).withInterfaces(Collections.singletonList(TypeDescription.Generic.ANNOTATION)),
+                TypeDescription.Generic.OBJECT).withInterfaces(new TypeList.Generic.Explicit(TypeDescription.Generic.ANNOTATION)),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 annotationValueFilterFactory,

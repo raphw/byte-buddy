@@ -26,6 +26,7 @@ import java.lang.annotation.Annotation;
 import java.lang.reflect.*;
 import java.util.*;
 
+import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
@@ -976,6 +977,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      */
                     public ForDetachment(ElementMatcher<? super TypeDescription> typeMatcher) {
                         this.typeMatcher = typeMatcher;
+                    }
+
+                    /**
+                     * Returns a new detachment visitor that detaches any type matching the supplied type description.
+                     *
+                     * @param typeDescription The type to detach.
+                     * @return A detachment visitor for the supplied type description.
+                     */
+                    public static Visitor<Generic> of(TypeDescription typeDescription) {
+                        return new ForDetachment(is(typeDescription));
                     }
 
                     @Override
