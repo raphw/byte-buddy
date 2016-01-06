@@ -348,7 +348,7 @@ public class TypeDescriptionGenericVisitorAssignerTest {
     @Test
     public void testAssignParameterizedWildcardTypeFromNonAssignableGenericArrayType() throws Exception {
         assertThat(collectionWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
-                .isAssignableFrom(arrayListWildcard), is(false));
+                .isAssignableFrom(tArray), is(false));
     }
 
     @Test
@@ -386,7 +386,6 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.InvariantBinding.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.CovariantBinding.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.ContravariantBinding.class).apply();
     }
 

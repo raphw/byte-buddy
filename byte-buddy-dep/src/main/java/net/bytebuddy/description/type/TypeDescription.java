@@ -1575,12 +1575,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             }
 
                             /**
-                             * A dispatcher for an covariant parameter of a parameterized type, i.e. a type that is the upper bound of a wildcard.
+                             * A dispatcher for an covariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
                              */
-                            protected static class CovariantBinding extends AbstractBase {
+                            protected static class CovariantBinding implements Dispatcher {
 
                                 /**
-                                 * The upper bound type of a covariant parameter.
+                                 * The lower bound type of a contracariant parameter.
                                  */
                                 private final Generic upperBound;
 
@@ -1594,28 +1594,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 }
 
                                 @Override
-                                public Boolean onGenericArray(Generic genericArray) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onWildcard(Generic wildcard) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onParameterizedType(Generic parameterizedType) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onTypeVariable(Generic typeVariable) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onNonGenericType(Generic typeDescription) {
-                                    throw new UnsupportedOperationException();
+                                public boolean isAssignableFrom(Generic typeDescription) {
+                                    // TODO: wildcard with bounds
+                                    return typeDescription.getSort().isWildcard() || upperBound.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription);
                                 }
 
                                 @Override
@@ -1640,7 +1621,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             /**
                              * A dispatcher for an contravariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
                              */
-                            protected static class ContravariantBinding extends AbstractBase {
+                            protected static class ContravariantBinding implements Dispatcher {
 
                                 /**
                                  * The lower bound type of a contracariant parameter.
@@ -1657,28 +1638,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 }
 
                                 @Override
-                                public Boolean onGenericArray(Generic genericArray) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onWildcard(Generic wildcard) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onParameterizedType(Generic parameterizedType) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onTypeVariable(Generic typeVariable) {
-                                    throw new UnsupportedOperationException();
-                                }
-
-                                @Override
-                                public Boolean onNonGenericType(Generic typeDescription) {
-                                    throw new UnsupportedOperationException();
+                                public boolean isAssignableFrom(Generic typeDescription) {
+                                    // TODO: wildcard with bounds
+                                    return typeDescription.getSort().isWildcard() || typeDescription.accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
                                 }
 
                                 @Override
