@@ -185,6 +185,16 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return compareTo(classFileVersion) > -1;
     }
 
+    /**
+     * Checks if this class file version is less than the provided version.
+     *
+     * @param classFileVersion The version to check against.
+     * @return {@code true} if this version is less than the given version.
+     */
+    public boolean isLessThan(ClassFileVersion classFileVersion) {
+        return compareTo(classFileVersion) < 0;
+    }
+
     @Override
     public int compareTo(ClassFileVersion other) {
         return Integer.signum(getMajorVersion() == other.getMajorVersion()
