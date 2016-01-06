@@ -45,7 +45,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      * @param targetTypeMatcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> targetTypeMatcher);
 
     /**
      * Returns this list of these parameter descriptions resolved to their defined shape.
@@ -84,10 +84,10 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
             for (ParameterDescription parameterDescription : this) {
-                tokens.add(parameterDescription.asToken(targetTypeMatcher));
+                tokens.add(parameterDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(tokens);
         }
@@ -622,7 +622,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>();
         }
 

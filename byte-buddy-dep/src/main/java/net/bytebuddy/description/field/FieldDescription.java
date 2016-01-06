@@ -113,10 +113,10 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         @Override
-        public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public FieldDescription.Token asToken(ElementMatcher<? super TypeDescription.Generic> matcher) {
             return new FieldDescription.Token(getName(),
                     getModifiers(),
-                    getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
+                    getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getDeclaredAnnotations());
         }
 

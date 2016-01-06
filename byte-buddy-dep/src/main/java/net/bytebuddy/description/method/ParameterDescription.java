@@ -151,8 +151,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         @Override
-        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
-            return new Token(getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(targetTypeMatcher)),
+        public Token asToken(ElementMatcher<? super TypeDescription.Generic> matcher) {
+            return new Token(getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getDeclaredAnnotations(),
                     isNamed()
                             ? getName()

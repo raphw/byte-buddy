@@ -577,14 +577,13 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Token asToken(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
-            TypeDescription.Generic.Visitor<TypeDescription.Generic> visitor = new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(targetTypeMatcher);
+        public Token asToken(ElementMatcher<? super TypeDescription.Generic> matcher) {
             return new Token(getInternalName(),
                     getModifiers(),
-                    getTypeVariables().asTokenList(visitor),
-                    getReturnType().accept(visitor),
-                    getParameters().asTokenList(targetTypeMatcher),
-                    getExceptionTypes().accept(visitor),
+                    getTypeVariables().asTokenList(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
+                    getReturnType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
+                    getParameters().asTokenList(matcher),
+                    getExceptionTypes().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getDeclaredAnnotations(),
                     getDefaultValue());
         }

@@ -968,25 +968,25 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * A type matcher for identifying the declaring type.
                      */
-                    private final ElementMatcher<? super TypeDescription> typeMatcher;
+                    private final ElementMatcher<? super TypeDescription.Generic> typeMatcher;
 
                     /**
                      * Creates a visitor for detaching a type.
                      *
                      * @param typeMatcher A type matcher for identifying the declaring type.
                      */
-                    public ForDetachment(ElementMatcher<? super TypeDescription> typeMatcher) {
+                    public ForDetachment(ElementMatcher<? super TypeDescription.Generic> typeMatcher) {
                         this.typeMatcher = typeMatcher;
                     }
 
                     /**
                      * Returns a new detachment visitor that detaches any type matching the supplied type description.
                      *
-                     * @param typeDescription The type to detach.
+                     * @param typeDefinition The type to detach.
                      * @return A detachment visitor for the supplied type description.
                      */
-                    public static Visitor<Generic> of(TypeDescription typeDescription) {
-                        return new ForDetachment(is(typeDescription));
+                    public static Visitor<Generic> of(TypeDefinition typeDefinition) {
+                        return new ForDetachment(is(typeDefinition));
                     }
 
                     @Override
@@ -996,7 +996,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     protected Generic onSimpleType(Generic typeDescription) {
-                        return typeMatcher.matches(typeDescription.asErasure())
+                        return typeMatcher.matches(typeDescription)
                                 ? TargetType.GENERIC_DESCRIPTION
                                 : typeDescription;
                     }

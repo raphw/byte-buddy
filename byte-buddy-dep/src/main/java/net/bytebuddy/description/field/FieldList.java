@@ -30,10 +30,10 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
      * Transforms the list of field descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
-     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher);
 
     /**
      * Returns this list of these field descriptions resolved to their defined shape.
@@ -55,10 +55,10 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
             List<FieldDescription.Token> tokens = new ArrayList<FieldDescription.Token>(size());
             for (FieldDescription fieldDescription : this) {
-                tokens.add(fieldDescription.asToken(targetTypeMatcher));
+                tokens.add(fieldDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>(tokens);
         }
@@ -265,7 +265,7 @@ public interface FieldList<T extends FieldDescription> extends FilterableList<T,
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<FieldDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
             return new ByteCodeElement.Token.TokenList<FieldDescription.Token>();
         }
 

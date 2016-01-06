@@ -31,10 +31,10 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
      * Transforms the list of method descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
-     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher);
 
     /**
      * Returns this list of these method descriptions resolved to their defined shape.
@@ -61,10 +61,10 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
             List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
             for (MethodDescription fieldDescription : this) {
-                tokens.add(fieldDescription.asToken(targetTypeMatcher));
+                tokens.add(fieldDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
         }
@@ -289,7 +289,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription.Generic> matcher) {
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
         }
 
