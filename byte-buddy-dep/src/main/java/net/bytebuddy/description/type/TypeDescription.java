@@ -1458,12 +1458,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             if (parameterizedType.asErasure().equals(typeDescription.asErasure())) {
                                 return true;
                             }
-                            Generic superType = typeDescription.getSuperType();
-                            if (superType != null && isAssignableFrom(superType)) {
+                            Generic superType = parameterizedType.getSuperType();
+                            if (superType != null && superType.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription)) {
                                 return true;
                             }
-                            for (Generic interfaceType : typeDescription.getInterfaces()) {
-                                if (isAssignableFrom(interfaceType)) {
+                            for (Generic interfaceType : parameterizedType.getInterfaces()) {
+                                if (interfaceType.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription)) {
                                     return true;
                                 }
                             }

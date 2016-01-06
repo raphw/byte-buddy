@@ -273,7 +273,61 @@ public class TypeDescriptionGenericVisitorAssignerTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testAssignGenericArrayFromWildcardThrowsException() throws Exception {
-        tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE).isAssignableFrom(unboundWildcard);
+        tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(unboundWildcard);
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromEqualType() throws Exception {
+        assertThat(listWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(listWildcard), is(true));
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromEqualRawType() throws Exception {
+        assertThat(listWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(listRaw), is(true));
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromAssignableWildcardType() throws Exception {
+        assertThat(arrayListWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(listWildcard), is(true));
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromAssignableRawType() throws Exception {
+        assertThat(arrayListWildcard.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(arrayListRaw), is(true));
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromAssignableNonGenericType() throws Exception {
+        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(TypeDescription.Generic.OBJECT), is(true));
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromNonAssignableNonGenericType() throws Exception {
+        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(TypeDescription.STRING.asGenericType()), is(false));
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromNonAssignableArrayType() throws Exception {
+        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(listRawArray), is(false));
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromAssignableTypeVariable() throws Exception {
+        // TODO
+    }
+
+    @Test
+    public void testAssignParameterizedWildcardTypeFromNonAssignableTypeVariable() throws Exception {
+        assertThat(listTypeVariableT.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE)
+                .isAssignableFrom(typeVariableT), is(false));
     }
 
     // TODO: assignParameterizedTypeFromXXX
