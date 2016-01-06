@@ -19,6 +19,8 @@ import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.util.Collections;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -63,7 +65,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
         when(rebasedMethod.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
         when(rebasedMethod.getDeclaringType()).thenReturn(instrumentedType);
         when(rebasedMethod.asSignatureToken()).thenReturn(rebasedSignatureToken);
-        when(methodRebaseResolver.resolve(rebasedMethod)).thenReturn(resolution);
+        when(methodRebaseResolver.asTokenMap()).thenReturn(Collections.singletonMap(rebasedSignatureToken, resolution));
         super.setUp();
     }
 

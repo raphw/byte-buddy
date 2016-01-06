@@ -46,7 +46,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      * Transforms a type variable into a type variable token with its bounds detached.
      *
      * @param typeVariable A type variable in its attached state.
-     * @param visitor      A visitor for detaching the type variable's upper bounds.
+     * @param matcher      A matcher that identifies types to detach from the upper bound types.
      * @return A token representing the detached type variable.
      */
     public static TypeVariableToken of(TypeDescription.Generic typeVariable, ElementMatcher<? super TypeDescription> matcher) {

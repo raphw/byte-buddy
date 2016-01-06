@@ -33,7 +33,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      * Transforms the list of parameter descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
-     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
     ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);

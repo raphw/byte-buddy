@@ -110,6 +110,13 @@ public interface InstrumentedType extends TypeDescription {
     TypeInitializer getTypeInitializer();
 
     /**
+     * Validates the instrumented type to define a legal Java type.
+     *
+     * @return This instrumented type as a non-modifiable type description.
+     */
+    TypeDescription validated();
+
+    /**
      * A type initializer is responsible for defining a type's static initialization block.
      */
     interface TypeInitializer extends ByteCodeAppender {
@@ -768,6 +775,11 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public TypeDescription validated() {
+            return this; // Currently a no-op
         }
     }
 }

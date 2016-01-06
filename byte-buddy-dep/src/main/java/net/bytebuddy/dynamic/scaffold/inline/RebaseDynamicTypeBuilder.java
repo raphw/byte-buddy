@@ -3,6 +3,7 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
@@ -12,9 +13,11 @@ import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.LatentMatcher;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
@@ -170,7 +173,9 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 methodGraphCompiler,
                 InliningImplementationMatcher.of(ignoredMethods, originalType));
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(preparedMethodRegistry.getInstrumentedType(),
-                new HashSet<MethodDescription.Token>(originalType.getDeclaredMethods().asTokenList(is(originalType))),
+                new HashSet<MethodDescription.Token>(originalType.getDeclaredMethods()
+                        .filter(RebaseableMatcher.of(preparedMethodRegistry.getInstrumentedType(), preparedMethodRegistry.getInstrumentedMethods()))
+                        .asTokenList(is(originalType))),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -228,5 +233,72 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
                 ", classFileLocator=" + classFileLocator +
                 ", methodNameTransformer=" + methodNameTransformer +
                 '}';
+    }
+
+    /**
+     * A matcher that filters any method that should not be rebased, i.e. that is not already defined by the original type.
+     */
+    protected static class RebaseableMatcher implements ElementMatcher<MethodDescription> {
+
+        /**
+         * The instrumented type.
+         */
+        private final TypeDescription instrumentedType;
+
+        /**
+         * A set of method tokens representing all instrumented methods.
+         */
+        private final Set<MethodDescription.Token> instrumentedMethodTokens;
+
+        /**
+         * Creates a new matcher for identifying rebasable methods.
+         *
+         * @param instrumentedType    The instrumented type.
+         * @param instrumentedMethods A set of method tokens representing all instrumented methods.
+         */
+        protected RebaseableMatcher(TypeDescription instrumentedType, Set<MethodDescription.Token> instrumentedMethods) {
+            this.instrumentedType = instrumentedType;
+            this.instrumentedMethodTokens = instrumentedMethods;
+        }
+
+        /**
+         * Returns a matcher that filters any method that should not be rebased.
+         *
+         * @param instrumentedType    The instrumented type.
+         * @param instrumentedMethods All instrumented methods.
+         * @return A suitable matcher that filters all methods that should not be rebased.
+         */
+        protected static ElementMatcher<MethodDescription> of(TypeDescription instrumentedType, MethodList<?> instrumentedMethods) {
+            return new RebaseableMatcher(instrumentedType, new HashSet<MethodDescription.Token>(instrumentedMethods.asTokenList(is(instrumentedType))));
+        }
+
+        @Override
+        public boolean matches(MethodDescription target) {
+            return instrumentedMethodTokens.contains(target.asToken(is(instrumentedType)));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            RebaseableMatcher that = (RebaseableMatcher) other;
+            return instrumentedType.equals(that.instrumentedType)
+                    && instrumentedMethodTokens.equals(that.instrumentedMethodTokens);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = instrumentedType.hashCode();
+            result = 31 * result + instrumentedMethodTokens.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "RebaseDynamicTypeBuilder.RebaseableMatcher{" +
+                    "instrumentedType=" + instrumentedType +
+                    ", instrumentedMethodTokens=" + instrumentedMethodTokens +
+                    '}';
+        }
     }
 }

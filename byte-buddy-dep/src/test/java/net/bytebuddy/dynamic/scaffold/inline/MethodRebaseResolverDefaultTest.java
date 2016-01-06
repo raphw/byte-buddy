@@ -39,6 +39,9 @@ public class MethodRebaseResolverDefaultTest {
     private MethodDescription.Token token, otherToken;
 
     @Mock
+    private MethodDescription.SignatureToken signatureToken;
+
+    @Mock
     private MethodRebaseResolver.Resolution resolution;
 
     @Mock
@@ -63,6 +66,7 @@ public class MethodRebaseResolverDefaultTest {
         when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(methodDescription.getInternalName()).thenReturn(FOO);
         when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(methodDescription.asSignatureToken()).thenReturn(signatureToken);
         when(instrumentedType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
         when(otherMethod.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(BAR);
@@ -85,6 +89,14 @@ public class MethodRebaseResolverDefaultTest {
                 Collections.singletonList(dynamicType));
         assertThat(methodRebaseResolver.getAuxiliaryTypes().size(), is(1));
         assertThat(methodRebaseResolver.getAuxiliaryTypes().contains(dynamicType), is(true));
+    }
+
+    @Test
+    public void testTokenMap() throws Exception {
+        MethodRebaseResolver methodRebaseResolver = new MethodRebaseResolver.Default(Collections.singletonMap(methodDescription, resolution),
+                Collections.singletonList(dynamicType));
+        assertThat(methodRebaseResolver.asTokenMap().size(), is(1));
+        assertThat(methodRebaseResolver.asTokenMap().get(signatureToken), is(resolution));
     }
 
     @Test

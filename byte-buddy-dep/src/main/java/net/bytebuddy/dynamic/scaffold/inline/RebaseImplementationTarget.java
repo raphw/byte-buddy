@@ -46,7 +46,6 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
      *
      * @param instrumentedType     The instrumented type.
      * @param methodGraph          A method graph of the instrumented type.
-     * @param rebaseableMethods    A list of methods that can be considered for rebasing.
      * @param methodRebaseResolver A method rebase resolver to be used when calling a rebased method.
      * @return An implementation target for the given input.
      */

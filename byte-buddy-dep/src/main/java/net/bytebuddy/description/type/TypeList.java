@@ -220,7 +220,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
          * @param visitor The visitor to apply to each type.
          * @return A list of the types returned by the supplied visitor.
          */
-        Generic accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> matcher);
+        Generic accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
 
         /**
          * Returns the sum of the size of all types contained in this list.

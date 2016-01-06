@@ -46,7 +46,6 @@ import java.util.*;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * <p>
  * Instances of this class serve as a focus point for configuration of the library's behavior and as an entry point
  * to any form of code generation using the library. For this purpose, Byte Buddy offers a fluent API which allows
  * for the step-wise generation of a new Java type. A type is generated either by:
@@ -71,7 +70,6 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
  * Instead, the following method chain is corrent use of the API:
  * <pre>
  * ByteBuddy byteBuddy = new ByteBuddy().foo();</pre>
- * </p>
  * <p>
  * For the creation of Java agents, Byte Buddy offers a convenience API implemented by the
  * {@link net.bytebuddy.agent.builder.AgentBuilder}. The API wraps a {@link ByteBuddy} instance and offers agent-specific

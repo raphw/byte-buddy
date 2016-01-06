@@ -44,6 +44,11 @@ public interface MethodRebaseResolver {
      */
     List<DynamicType> getAuxiliaryTypes();
 
+    /**
+     * Returns a map of all rebasable methods' signature tokens to their resolution.
+     *
+     * @return A map of all rebasable methods' signature tokens to their resolution.
+     */
     Map<MethodDescription.SignatureToken, Resolution> asTokenMap();
 
     /**
@@ -460,21 +465,21 @@ public interface MethodRebaseResolver {
          * Creates a new method rebase resolver.
          *
          * @param instrumentedType            The instrumented type.
-         * @param rebaseableMethods           The methods that are possible to rebase.
+         * @param rebaseableMethodTokens      Tokens describing all methods that can possibly be rebased.
          * @param classFileVersion            The class file version for the instrumentation.
          * @param auxiliaryTypeNamingStrategy The naming strategy for naming a potential auxiliary type.
          * @param methodNameTransformer       A transformer for method names.
          * @return A method rebase resolver that is capable of rebasing any of the provided methods.
          */
         public static MethodRebaseResolver make(TypeDescription instrumentedType,
-                                                Set<? extends MethodDescription.Token> rebaseableMethods,
+                                                Set<? extends MethodDescription.Token> rebaseableMethodTokens,
                                                 ClassFileVersion classFileVersion,
                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                 MethodNameTransformer methodNameTransformer) {
             DynamicType placeholderType = null;
             Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>();
             for (MethodDescription.InDefinedShape instrumentedMethod : instrumentedType.getDeclaredMethods()) {
-                if (rebaseableMethods.contains(instrumentedMethod.asToken(is(instrumentedType)))) {
+                if (rebaseableMethodTokens.contains(instrumentedMethod.asToken(is(instrumentedType)))) {
                     Resolution resolution;
                     if (instrumentedMethod.isConstructor()) {
                         if (placeholderType == null) {
