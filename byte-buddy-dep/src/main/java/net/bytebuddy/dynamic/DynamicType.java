@@ -685,9 +685,12 @@ public interface DynamicType {
          * If a method is already matched by a previously specified matcher, the new method definition gets precedence
          * over the previous definition, i.e. the previous method definition is no longer applied.
          * </p>
+         * <p>
+         * Note that the specified definition does never apply for methods that are explicitly ignored.
+         * </p>
          *
-         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
-         * @return A builder that allows for changing a field's definition.
+         * @param matcher The matcher that determines what methods are affected by the subsequent specification.
+         * @return A builder that allows for changing a method's or constructor's definition.
          */
         MethodDefinition.ImplementationDefinition<T> method(ElementMatcher<? super MethodDescription> matcher);
 
@@ -706,9 +709,12 @@ public interface DynamicType {
          * If a constructor is already matched by a previously specified matcher, the new constructor definition gets precedence
          * over the previous definition, i.e. the previous constructor definition is no longer applied.
          * </p>
+         * <p>
+         * Note that the specified definition does never apply for methods that are explicitly ignored.
+         * </p>
          *
-         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
-         * @return A builder that allows for changing a field's definition.
+         * @param matcher The matcher that determines what constructors are affected by the subsequent specification.
+         * @return A builder that allows for changing a method's or constructor's definition.
          */
         MethodDefinition.ImplementationDefinition<T> constructor(ElementMatcher<? super MethodDescription> matcher);
 
@@ -728,9 +734,12 @@ public interface DynamicType {
          * If a method or constructor is already matched by a previously specified matcher, the new definition gets precedence
          * over the previous definition, i.e. the previous definition is no longer applied.
          * </p>
+         * <p>
+         * Note that the specified definition does never apply for methods that are explicitly ignored.
+         * </p>
          *
-         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
-         * @return A builder that allows for changing a field's definition.
+         * @param matcher The matcher that determines what methods or constructors are affected by the subsequent specification.
+         * @return A builder that allows for changing a method's or constructor's definition.
          */
         MethodDefinition.ImplementationDefinition<T> invokable(ElementMatcher<? super MethodDescription> matcher);
 
@@ -751,9 +760,12 @@ public interface DynamicType {
          * If a method or constructor is already matched by a previously specified matcher, the new definition gets precedence
          * over the previous definition, i.e. the previous definition is no longer applied.
          * </p>
+         * <p>
+         * Note that the specified definition does never apply for methods that are explicitly ignored.
+         * </p>
          *
-         * @param matcher The matcher that determines what declared fields are affected by the subsequent specification.
-         * @return A builder that allows for changing a field's definition.
+         * @param matcher The matcher that determines what declared methods or constructors are affected by the subsequent specification.
+         * @return A builder that allows for changing a method's or constructor's definition.
          */
         MethodDefinition.ImplementationDefinition<T> invokable(LatentMatcher<? super MethodDescription> matcher);
 
