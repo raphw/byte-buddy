@@ -276,6 +276,8 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         tArray.accept(TypeDescription.Generic.Visitor.Assigner.INSTANCE).isAssignableFrom(unboundWildcard);
     }
 
+    // TODO: assignParameterizedTypeFromXXX
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.class).apply();

@@ -1253,7 +1253,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         public Boolean onGenericArray(Generic genericArray) {
                             return typeDescription.isArray()
                                     ? genericArray.getComponentType().accept(new ForNonGenericType(typeDescription.getComponentType()))
-                                    : typeDescription.represents(Object.class) || TypeDescription.ARRAY_INTERFACES.contains(typeDescription);
+                                    : typeDescription.represents(Object.class) || TypeDescription.ARRAY_INTERFACES.contains(typeDescription.asGenericType());
                         }
 
                         @Override

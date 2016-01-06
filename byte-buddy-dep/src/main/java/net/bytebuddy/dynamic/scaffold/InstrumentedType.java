@@ -779,7 +779,7 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public TypeDescription validated() {
-            return this; // Currently a no-op
+            return this; // TODO: Implement validation based on assigner!
         }
     }
 }
