@@ -1595,8 +1595,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                                 @Override
                                 public boolean isAssignableFrom(Generic typeDescription) {
-                                    // TODO: wildcard with bounds
-                                    return typeDescription.getSort().isWildcard() || upperBound.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription);
+                                    if (typeDescription.getSort().isWildcard()) {
+                                        return typeDescription.getLowerBounds().isEmpty() && upperBound.accept(Assigner.INSTANCE)
+                                                .isAssignableFrom(typeDescription.getUpperBounds().getOnly());
+                                    } else {
+                                        return upperBound.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription);
+                                    }
                                 }
 
                                 @Override
@@ -1639,8 +1643,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                                 @Override
                                 public boolean isAssignableFrom(Generic typeDescription) {
-                                    // TODO: wildcard with bounds
-                                    return typeDescription.getSort().isWildcard() || typeDescription.accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
+                                    if (typeDescription.getSort().isWildcard()) {
+                                        TypeList.Generic lowerBounds = typeDescription.getLowerBounds();
+                                        return !lowerBounds.isEmpty() && lowerBounds.getOnly().accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
+                                    } else {
+                                        return typeDescription.getSort().isWildcard() || typeDescription.accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
+                                    }
                                 }
 
                                 @Override
