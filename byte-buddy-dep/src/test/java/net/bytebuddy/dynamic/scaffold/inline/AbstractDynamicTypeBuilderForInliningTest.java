@@ -66,6 +66,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         typePool = TypePool.Default.ofClassPath();
     }
 

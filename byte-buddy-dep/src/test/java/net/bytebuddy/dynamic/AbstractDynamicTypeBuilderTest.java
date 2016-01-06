@@ -5,10 +5,8 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.modifier.MethodManifestation;
-import net.bytebuddy.description.modifier.Ownership;
-import net.bytebuddy.description.modifier.TypeManifestation;
-import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -17,6 +15,7 @@ import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -26,8 +25,13 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.objectweb.asm.ClassVisitor;
@@ -38,15 +42,13 @@ import org.objectweb.asm.Opcodes;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
@@ -93,7 +95,18 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     private static final String STRING_FIELD = "stringField";
 
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    private Type list, fooVariable;
+
     protected abstract DynamicType.Builder<?> createPlain();
+
+    @Before
+    public void setUp() throws Exception {
+        list = Holder.class.getDeclaredField("list").getGenericType();
+        fooVariable = ((ParameterizedType) Holder.class.getDeclaredField("fooList").getGenericType()).getActualTypeArguments()[0];
+    }
 
     @Test
     public void testMethodDefinition() throws Exception {
@@ -373,10 +386,10 @@ public abstract class AbstractDynamicTypeBuilderTest {
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
                 }).make()
-        .load(null, ClassLoadingStrategy.Default.WRAPPER)
-        .getLoaded()
-        .getDeclaredField(FOO)
-        .get(null), is((Object) FOO));
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .getDeclaredField(FOO)
+                .get(null), is((Object) FOO));
     }
 
     @Test
@@ -391,6 +404,71 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat((Long) field.get(null), is(42L));
         assertThat(field.getType(), is((Object) long.class));
         assertThat(field.getModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL));
+    }
+
+    @Test
+    public void testTypeVariable() throws Exception {
+        Class<?> type = createPlain()
+                .typeVariable(FOO)
+                .typeVariable(BAR, String.class)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getTypeParameters().length, is(2));
+        assertThat(type.getTypeParameters()[0].getName(), is(FOO));
+        assertThat(type.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
+        assertThat(type.getTypeParameters()[1].getName(), is(BAR));
+        assertThat(type.getTypeParameters()[1].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[1].getBounds()[0], is((Object) String.class));
+    }
+
+    @Test
+    public void testGenericFieldDefinition() throws Exception {
+        Class<?> type = createPlain()
+                .defineField(QUX, list)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredField(QUX).getGenericType(), is(list));
+    }
+
+    @Test
+    public void testGenericMethodDefinition() throws Exception {
+        Class<?> type = createPlain()
+                .defineMethod(QUX, list)
+                .withParameter(list, BAR, ProvisioningState.MANDATED)
+                .throwing(fooVariable)
+                .typeVariable(FOO, Exception.class)
+                .intercept(StubMethod.INSTANCE)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters().length, is(1));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0].getName(), is(FOO));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0].getBounds()[0], is((Object) Exception.class));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericReturnType(), is(list));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericExceptionTypes()[0], is((Type) type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0]));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericParameterTypes().length, is(1));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericParameterTypes()[0], is(list));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testGenericMethodDefinitionMetaDataParameter() throws Exception {
+        Class<?> type = createPlain()
+                .defineMethod(QUX, list)
+                .withParameter(list, BAR, ProvisioningState.MANDATED)
+                .throwing(fooVariable)
+                .typeVariable(FOO, Exception.class)
+                .intercept(StubMethod.INSTANCE)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getName(), is(BAR));
+        assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getModifiers(),
+                is(ProvisioningState.MANDATED.getMask()));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -478,5 +556,12 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public static String intercept(@SuperCall Callable<String> zuper) throws Exception {
             return zuper.call() + BAR;
         }
+    }
+
+    private static class Holder<foo> {
+
+        List<?> list;
+
+        List<foo> fooList;
     }
 }
