@@ -472,4 +472,6 @@ public class InstrumentedTypeTest {
         verify(typeDescription).asGenericType();
         verifyNoMoreInteractions(typeDescription);
     }
+
+    // TODO: Validation tests
 }

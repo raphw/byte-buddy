@@ -805,10 +805,17 @@ public interface InstrumentedType extends TypeDescription {
                 } else if (!isValidIdentifier(variableSymbol)) {
                     throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + this);
                 }
+                boolean interfaceBound = false;
                 for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                     if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
-                        throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + "for " + this);
+                        throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + this);
+                    } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
+                        throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + this);
                     }
+                    interfaceBound = true;
+                }
+                if (!interfaceBound) {
+                    throw new IllegalStateException("Type variable " + typeVariable + " for " + this + " does not define at least one bound");
                 }
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
@@ -848,10 +855,17 @@ public interface InstrumentedType extends TypeDescription {
                     } else if (!isValidIdentifier(variableSymbol)) {
                         throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + methodDescription);
                     }
+                    boolean interfaceBound = false;
                     for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                         if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                             throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + methodDescription);
+                        } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
+                            throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         }
+                        interfaceBound = true;
+                    }
+                    if (!interfaceBound) {
+                        throw new IllegalStateException("Type variable " + typeVariable + " for " + methodDescription + " does not define at least one bound");
                     }
                 }
                 Set<TypeDescription> methodAnnotationTypes = new HashSet<TypeDescription>();
@@ -903,11 +917,17 @@ public interface InstrumentedType extends TypeDescription {
             return this;
         }
 
-        private static boolean isValidIdentifier(String[] name) {
-            if (name.length == 0) {
+        /**
+         * Checks if an array of identifiers is a valid compound Java identifier.
+         *
+         * @param identifier an array of potentially invalid Java identifiers.
+         * @return {@code true} if all identifiers are valid and the array is not empty.
+         */
+        private static boolean isValidIdentifier(String[] identifier) {
+            if (identifier.length == 0) {
                 return false;
             }
-            for (String part : name) {
+            for (String part : identifier) {
                 if (!isValidIdentifier(part)) {
                     return false;
                 }
@@ -915,14 +935,20 @@ public interface InstrumentedType extends TypeDescription {
             return true;
         }
 
-        private static boolean isValidIdentifier(String name) {
-            if (name.isEmpty() || !Character.isJavaIdentifierStart(name.charAt(0))) {
+        /**
+         * Checks if a Java identifier is valid.
+         *
+         * @param identifier The identifier to check for validity.
+         * @return {@code true} if the given identifier is valid.
+         */
+        private static boolean isValidIdentifier(String identifier) {
+            if (identifier.isEmpty() || !Character.isJavaIdentifierStart(identifier.charAt(0))) {
                 return false;
-            } else if (name.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
+            } else if (identifier.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
                 return true;
             }
-            for (int index = 1; index < name.length(); index++) {
-                if (!Character.isJavaIdentifierPart(name.charAt(index))) {
+            for (int index = 1; index < identifier.length(); index++) {
+                if (!Character.isJavaIdentifierPart(identifier.charAt(index))) {
                     return false;
                 }
             }

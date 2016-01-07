@@ -1738,12 +1738,24 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
+            /**
+             * A validator for Java types that are defined for a specified type use within a Java class file.
+             */
             enum Validator implements Visitor<Boolean> {
 
+                /**
+                 * A validator for checking a type's non-null super class.
+                 */
                 SUPER_CLASS(false, false, false, false, false),
 
+                /**
+                 * A validator for an interface type.
+                 */
                 INTERFACE(false, false, false, false, false),
 
+                /**
+                 * A validator for a type variable, either declared by a
+                 */
                 TYPE_VARIABLE(false, false, true, false, false),
 
                 FIELD(true, true, true, false, false),
