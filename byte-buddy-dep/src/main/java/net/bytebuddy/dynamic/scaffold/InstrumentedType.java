@@ -782,16 +782,32 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public TypeDescription validated() {
-            // Internal type
+            if (!isValidIdentifier(getName().split("\\."))) {
+                throw new IllegalStateException("Illegal type name: " + getName());
+            }
+            TypeDescription.Generic superType = getSuperType();
+            if (superType != null && !superType.accept(Generic.Visitor.Validator.SUPER_CLASS)) {
+                throw new IllegalStateException("Illegal super class " + getSuperType() + " for " + this);
+            }
+            Set<TypeDescription> interfaceErasures = new HashSet<TypeDescription>();
+            for (TypeDescription.Generic interfaceType : getInterfaces()) {
+                if (!interfaceErasures.add(interfaceType.asErasure())) {
+                    throw new IllegalStateException("Already implemented interface " + interfaceType + " for " + this);
+                } else if (!interfaceType.accept(Generic.Visitor.Validator.INTERFACE)) {
+                    throw new IllegalStateException("Illegal interface " + interfaceType + " for " + this);
+                }
+            }
             Set<String> typeVariableNames = new HashSet<String>();
             for (TypeDescription.Generic typeVariable : getTypeVariables()) {
-                // Type variable name
-                if (!typeVariableNames.add(typeVariable.getSymbol())) {
-                    throw new IllegalStateException("Duplicate type variable symbol for " + typeVariable);
+                String variableSymbol = typeVariable.getSymbol();
+                if (!typeVariableNames.add(variableSymbol)) {
+                    throw new IllegalStateException("Duplicate type variable symbol pf " + typeVariable + " for " + this);
+                } else if (!isValidIdentifier(variableSymbol)) {
+                    throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + this);
                 }
                 for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                     if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
-                        throw new IllegalStateException("Illegal type variable bound " + bound + " for " + typeVariable);
+                        throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + "for " + this);
                     }
                 }
             }
@@ -803,9 +819,11 @@ public interface InstrumentedType extends TypeDescription {
             }
             Set<String> fieldNames = new HashSet<String>();
             for (FieldDescription.InDefinedShape fieldDescription : getDeclaredFields()) {
-                // Field name
-                if (!fieldNames.add(fieldDescription.getName())) {
+                String fieldName = fieldDescription.getName();
+                if (!fieldNames.add(fieldName)) {
                     throw new IllegalStateException("Duplicate field definition for " + fieldDescription);
+                } else if (!isValidIdentifier(fieldName)) {
+                    throw new IllegalStateException("Illegal field name for " + fieldDescription);
                 }
                 Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : fieldDescription.getDeclaredAnnotations()) {
@@ -819,18 +837,20 @@ public interface InstrumentedType extends TypeDescription {
             }
             Set<MethodDescription.SignatureToken> methodSignatureTokens = new HashSet<MethodDescription.SignatureToken>();
             for (MethodDescription.InDefinedShape methodDescription : getDeclaredMethods()) {
-                // Method name
                 if (!methodSignatureTokens.add(methodDescription.asSignatureToken())) {
                     throw new IllegalStateException("Duplicate method signature for " + methodDescription);
                 }
                 Set<String> methodTypeVariableNames = new HashSet<String>();
                 for (TypeDescription.Generic typeVariable : methodDescription.getTypeVariables()) {
-                    if (!methodTypeVariableNames.add(typeVariable.getSymbol())) {
-                        throw new IllegalStateException("Duplicate type variable symbol for " + typeVariable + " of " + methodDescription);
+                    String variableSymbol = typeVariable.getSymbol();
+                    if (!methodTypeVariableNames.add(variableSymbol)) {
+                        throw new IllegalStateException("Duplicate type variable symbol of " + typeVariable + " for " + methodDescription);
+                    } else if (!isValidIdentifier(variableSymbol)) {
+                        throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + methodDescription);
                     }
                     for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                         if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
-                            throw new IllegalStateException("Illegal type variable bound " + bound + " for " + typeVariable + " of " + methodDescription);
+                            throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         }
                     }
                 }
@@ -840,14 +860,26 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);
                     }
                 }
-                if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
+                if (methodDescription.isTypeInitializer()) {
+                    throw new IllegalStateException("Illegal explicit declaration of a type initializer by " + this);
+                } else if (methodDescription.isConstructor()) {
+                    if (!methodDescription.getReturnType().represents(void.class)) {
+                        throw new IllegalStateException("A constructor must return void " + methodDescription);
+                    }
+                } else if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
                     throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                } else if (isValidIdentifier(methodDescription.getInternalName())) {
+                    throw new IllegalStateException("Illegal method name for: " + methodDescription);
                 }
                 Set<String> parameterNames = new HashSet<String>();
                 for (ParameterDescription.InDefinedShape parameterDescription : methodDescription.getParameters()) {
-                    // Parameter name
-                    if (parameterDescription.isNamed() && !parameterNames.add(parameterDescription.getName())) {
-                        throw new IllegalStateException("Duplicate parameter name for " + parameterDescription);
+                    if (parameterDescription.isNamed()) {
+                        String parameterName = parameterDescription.getName();
+                        if (!parameterNames.add(parameterName)) {
+                            throw new IllegalStateException("Duplicate parameter name for " + parameterDescription);
+                        } else if (!isValidIdentifier(parameterName)) {
+                            throw new IllegalStateException("Illegal parameter name for " + parameterDescription);
+                        }
                     }
                     Set<TypeDescription> parameterAnnotationTypes = new HashSet<TypeDescription>();
                     for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
@@ -869,6 +901,30 @@ public interface InstrumentedType extends TypeDescription {
                 }
             }
             return this;
+        }
+
+        private static boolean isValidIdentifier(String[] name) {
+            if (name.length == 0) {
+                return false;
+            }
+            for (String part : name) {
+                if (!isValidIdentifier(part)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private static boolean isValidIdentifier(String name) {
+            if (name.isEmpty() || !Character.isJavaIdentifierStart(name.charAt(0))) {
+                return false;
+            }
+            for (int index = 1; index < name.length(); index++) {
+                if (!Character.isJavaIdentifierPart(name.charAt(index))) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }
