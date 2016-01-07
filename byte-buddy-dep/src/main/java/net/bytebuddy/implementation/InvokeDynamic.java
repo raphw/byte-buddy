@@ -29,7 +29,10 @@ import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.isVisibleTo;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -2809,7 +2812,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public InvocationProvider.Target.Resolved resolve(TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                     StackManipulation[] stackManipulation = new StackManipulation[argumentProviders.size()];
-                    List<TypeDescription> parameterTypes = new LinkedList<TypeDescription>();
+                    List<TypeDescription> parameterTypes = new ArrayList<TypeDescription>();
                     int index = 0;
                     for (ArgumentProvider argumentProvider : argumentProviders) {
                         ArgumentProvider.Resolved resolved = argumentProvider.resolve(instrumentedType, instrumentedMethod, assigner, typing);

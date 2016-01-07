@@ -797,8 +797,12 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Illegal interface " + interfaceType + " for " + this);
                 }
             }
+            TypeList.Generic typeVariables = getTypeVariables();
+            if (!typeVariables.isEmpty() && isAssignableTo(Throwable.class)) {
+                throw new IllegalStateException("Cannot define throwable " + this + " to be generic");
+            }
             Set<String> typeVariableNames = new HashSet<String>();
-            for (TypeDescription.Generic typeVariable : getTypeVariables()) {
+            for (TypeDescription.Generic typeVariable : typeVariables) {
                 String variableSymbol = typeVariable.getSymbol();
                 if (!typeVariableNames.add(variableSymbol)) {
                     throw new IllegalStateException("Duplicate type variable symbol pf " + typeVariable + " for " + this);

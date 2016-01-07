@@ -10,7 +10,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.*;
@@ -144,7 +144,7 @@ public class InvocationHandlerAdapterTest extends AbstractImplementationTest {
 
         private Foo() {
             marker = FOO;
-            methods = new LinkedList<Method>();
+            methods = new ArrayList<Method>();
         }
 
         private Foo(String marker) {

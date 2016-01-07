@@ -1574,7 +1574,7 @@ public interface TypePool {
                      * Creates a new base implementation of an incomplete token.
                      */
                     public AbstractBase() {
-                        parameters = new LinkedList<LazyTypeDescription.GenericTypeToken>();
+                        parameters = new ArrayList<LazyTypeDescription.GenericTypeToken>();
                     }
 
                     @Override
@@ -1799,7 +1799,7 @@ public interface TypePool {
                  * Creates a new signature visitor.
                  */
                 public ForSignature() {
-                    typeVariableTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
+                    typeVariableTokens = new ArrayList<LazyTypeDescription.GenericTypeToken>();
                 }
 
                 /**
@@ -1820,7 +1820,7 @@ public interface TypePool {
                 public void visitFormalTypeParameter(String name) {
                     collectTypeParameter();
                     currentTypeParameter = name;
-                    currentBounds = new LinkedList<LazyTypeDescription.GenericTypeToken>();
+                    currentBounds = new ArrayList<LazyTypeDescription.GenericTypeToken>();
                 }
 
                 @Override
@@ -1876,7 +1876,7 @@ public interface TypePool {
                      * Creates a new parser for a type signature.
                      */
                     protected OfType() {
-                        interfaceTypeTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
+                        interfaceTypeTokens = new ArrayList<LazyTypeDescription.GenericTypeToken>();
                     }
 
                     /**
@@ -2021,8 +2021,8 @@ public interface TypePool {
                      * Creates a parser for a generic method signature.
                      */
                     public OfMethod() {
-                        parameterTypeTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
-                        exceptionTypeTokens = new LinkedList<LazyTypeDescription.GenericTypeToken>();
+                        parameterTypeTokens = new ArrayList<LazyTypeDescription.GenericTypeToken>();
+                        exceptionTypeTokens = new ArrayList<LazyTypeDescription.GenericTypeToken>();
                     }
 
                     /**
@@ -2310,12 +2310,12 @@ public interface TypePool {
              */
             protected TypeExtractor() {
                 super(Opcodes.ASM5);
-                annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
-                fieldTokens = new LinkedList<LazyTypeDescription.FieldToken>();
-                methodTokens = new LinkedList<LazyTypeDescription.MethodToken>();
+                annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
+                fieldTokens = new ArrayList<LazyTypeDescription.FieldToken>();
+                methodTokens = new ArrayList<LazyTypeDescription.MethodToken>();
                 anonymousType = false;
                 declarationContext = LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE;
-                declaredTypes = new LinkedList<String>();
+                declaredTypes = new ArrayList<String>();
             }
 
             @Override
@@ -2555,7 +2555,7 @@ public interface TypePool {
                                           RawNonPrimitiveArray.ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
-                        values = new LinkedList<AnnotationDescription.AnnotationValue<?, ?>>();
+                        values = new ArrayList<AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override
@@ -2683,7 +2683,7 @@ public interface TypePool {
                     this.internalName = internalName;
                     this.descriptor = descriptor;
                     this.genericSignature = genericSignature;
-                    annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
+                    annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
                 }
 
                 @Override
@@ -2845,11 +2845,11 @@ public interface TypePool {
                     this.descriptor = descriptor;
                     this.genericSignature = genericSignature;
                     this.exceptionName = exceptionName;
-                    annotationTokens = new LinkedList<LazyTypeDescription.AnnotationToken>();
+                    annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
                     Type[] parameterTypes = Type.getMethodType(descriptor).getArgumentTypes();
                     parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>();
                     for (int i = 0; i < parameterTypes.length; i++) {
-                        parameterAnnotationTokens.put(i, new LinkedList<LazyTypeDescription.AnnotationToken>());
+                        parameterAnnotationTokens.put(i, new ArrayList<LazyTypeDescription.AnnotationToken>());
                     }
                     parameterTokens = new ArrayList<LazyTypeDescription.MethodToken.ParameterToken>(parameterTypes.length);
                     legacyParameterBag = new ParameterBag(parameterTypes);

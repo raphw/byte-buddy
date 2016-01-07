@@ -21,9 +21,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -473,7 +473,7 @@ public final class ElementMatchers {
      */
     public static <T extends Iterable<? extends TypeDescription.Generic>> ElementMatcher.Junction<T> rawTypes(
             Iterable<? extends TypeDescription> typeDescriptions) {
-        List<ElementMatcher<? super TypeDescription>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription>>();
+        List<ElementMatcher<? super TypeDescription>> typeMatchers = new ArrayList<ElementMatcher<? super TypeDescription>>();
         for (TypeDescription typeDescription : typeDescriptions) {
             typeMatchers.add(is(typeDescription));
         }
@@ -1005,7 +1005,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's generic parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesGenericArguments(List<? extends TypeDefinition> typeDefinitions) {
-        List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription.Generic>>();
+        List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new ArrayList<ElementMatcher<? super TypeDescription.Generic>>();
         for (TypeDefinition typeDefinition : typeDefinitions) {
             typeMatchers.add(is(typeDefinition));
         }
@@ -1055,7 +1055,7 @@ public final class ElementMatchers {
      * @return A method matcher that matches a method's raw parameter types against the supplied arguments.
      */
     public static <T extends MethodDescription> ElementMatcher.Junction<T> takesArguments(Iterable<? extends TypeDescription> typeDescriptions) {
-        List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new LinkedList<ElementMatcher<? super TypeDescription.Generic>>();
+        List<ElementMatcher<? super TypeDescription.Generic>> typeMatchers = new ArrayList<ElementMatcher<? super TypeDescription.Generic>>();
         for (TypeDescription typeDescription : typeDescriptions) {
             typeMatchers.add(rawType(typeDescription));
         }

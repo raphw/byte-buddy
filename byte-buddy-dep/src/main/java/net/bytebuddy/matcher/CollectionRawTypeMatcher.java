@@ -3,7 +3,7 @@ package net.bytebuddy.matcher;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,7 +29,7 @@ public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinitio
 
     @Override
     public boolean matches(T target) {
-        List<TypeDescription> typeDescriptions = new LinkedList<TypeDescription>();
+        List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>();
         for (TypeDefinition typeDefinition : target) {
             typeDescriptions.add(typeDefinition.asErasure());
         }

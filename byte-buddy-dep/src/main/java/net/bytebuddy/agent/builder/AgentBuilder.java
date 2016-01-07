@@ -1676,7 +1676,7 @@ public interface AgentBuilder {
                  */
                 protected ForRedefinition(Default.Transformation transformation) {
                     this.transformation = transformation;
-                    entries = new LinkedList<Entry>();
+                    entries = new ArrayList<Entry>();
                 }
 
                 @Override
@@ -1840,7 +1840,7 @@ public interface AgentBuilder {
                  */
                 protected ForRetransformation(Default.Transformation transformation) {
                     this.transformation = transformation;
-                    types = new LinkedList<Class<?>>();
+                    types = new ArrayList<Class<?>>();
                 }
 
                 @Override

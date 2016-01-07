@@ -369,20 +369,41 @@ public interface DynamicType {
          * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
          *
          * @param symbol The type variable's symbol.
-         * @param bound  The type variable's upper bound.
+         * @param bound  The type variable's upper bounds. Can also be {@link net.bytebuddy.dynamic.TargetType} if the bound type
+         *               should be equal to the currently instrumented type.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
-        Builder<T> typeVariable(String symbol, Type bound);
+        Builder<T> typeVariable(String symbol, Type... bound);
 
         /**
          * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
          *
          * @param symbol The type variable's symbol.
-         * @param bound  The type variable's upper bound. Can also be {@link net.bytebuddy.dynamic.TargetType} if the bound type
+         * @param bounds The type variable's upper bounds. Can also be {@link net.bytebuddy.dynamic.TargetType} if the bound type
          *               should be equal to the currently instrumented type.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
-        Builder<T> typeVariable(String symbol, TypeDefinition bound);
+        Builder<T> typeVariable(String symbol, List<? extends Type> bounds);
+
+        /**
+         * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
+         *
+         * @param symbol The type variable's symbol.
+         * @param bound  The type variable's upper bounds. Can also be {@link net.bytebuddy.dynamic.TargetType} if the bound type
+         *               should be equal to the currently instrumented type.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         */
+        Builder<T> typeVariable(String symbol, TypeDefinition... bound);
+
+        /**
+         * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
+         *
+         * @param symbol The type variable's symbol.
+         * @param bounds The type variable's upper bounds. Can also be {@link net.bytebuddy.dynamic.TargetType} if the bound type
+         *               should be equal to the currently instrumented type.
+         * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
+         */
+        Builder<T> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
 
         /**
          * Defines the specified field as a field of the built dynamic type.
@@ -2035,8 +2056,18 @@ public interface DynamicType {
             }
 
             @Override
-            public Builder<S> typeVariable(String symbol, Type bound) {
-                return typeVariable(symbol, TypeDefinition.Sort.describe(bound));
+            public Builder<S> typeVariable(String symbol, Type... bound) {
+                return typeVariable(symbol, Arrays.asList(bound));
+            }
+
+            @Override
+            public Builder<S> typeVariable(String symbol, List<? extends Type> bounds) {
+                return typeVariable(symbol, new TypeList.Generic.ForLoadedTypes(bounds));
+            }
+
+            @Override
+            public Builder<S> typeVariable(String symbol, TypeDefinition... bound) {
+                return typeVariable(symbol, Arrays.asList(bound));
             }
 
             @Override
@@ -2235,8 +2266,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> typeVariable(String symbol, TypeDefinition bound) {
-                    return materialize().typeVariable(symbol, bound);
+                public Builder<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                    return materialize().typeVariable(symbol, bounds);
                 }
 
                 @Override
@@ -2514,8 +2545,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> typeVariable(String symbol, TypeDefinition bound) {
-                    return materialize(instrumentedType.withTypeVariable(new TypeVariableToken(symbol, bound.asGenericType())),
+                public Builder<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                    return materialize(instrumentedType.withTypeVariable(new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)))),
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,

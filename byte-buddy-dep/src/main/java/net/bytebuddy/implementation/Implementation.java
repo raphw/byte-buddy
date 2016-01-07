@@ -720,7 +720,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDefinedShape>();
                 registeredGetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
                 registeredSetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
-                accessorMethods = new LinkedList<TypeWriter.MethodPool.Record>();
+                accessorMethods = new ArrayList<TypeWriter.MethodPool.Record>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
