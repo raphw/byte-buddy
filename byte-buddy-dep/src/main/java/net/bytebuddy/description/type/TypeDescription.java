@@ -1183,7 +1183,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Dispatcher onWildcard(Generic wildcard) {
-                    throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
+                    TypeList.Generic lowerBounds = wildcard.getLowerBounds();
+                    return lowerBounds.isEmpty()
+                            ? wildcard.getUpperBounds().getOnly().accept(this)
+                            : new Dispatcher.ForContravariantType(lowerBounds.getOnly());
                 }
 
                 @Override
@@ -1665,7 +1668,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 @Override
                                 public String toString() {
                                     return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.ContravariantBinding{" +
-                                            "lowerBound=" + lowerBound +
+                                            "typeDescription=" + lowerBound +
                                             '}';
                                 }
                             }
@@ -1735,6 +1738,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                     '}';
                         }
                     }
+
+                    class ForContravariantType implements Dispatcher {
+
+                        private final TypeDescription.Generic typeDescription;
+
+                        protected ForContravariantType(Generic typeDescription) {
+                            this.typeDescription = typeDescription;
+                        }
+
+                        @Override
+                        public boolean isAssignableFrom(Generic typeDescription) {
+                            return typeDescription.accept(Assigner.INSTANCE).isAssignableFrom(this.typeDescription);
+                        }
+                    }
                 }
             }
 
@@ -1770,7 +1787,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Boolean onGenericArray(Generic genericArray) {
-                    return acceptsArray;
+                    return acceptsArray && genericArray.accept(ForType.INSTANCE);
                 }
 
                 @Override
@@ -1780,18 +1797,26 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Boolean onParameterizedType(Generic parameterizedType) {
-                    return !requiresThrowable;
+                    return !requiresThrowable && parameterizedType.accept(ForType.INSTANCE);
                 }
 
                 @Override
                 public Boolean onTypeVariable(Generic typeVariable) {
                     if (requiresThrowable) {
                         for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
-                            if (bound.accept(this)) {
+                            if (!bound.accept(ForType.INSTANCE)) {
+                                return false;
+                            } else if (bound.accept(this)) {
                                 return true;
                             }
                         }
                         return false;
+                    } else {
+                        for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                            if (!bound.accept(ForType.INSTANCE)) {
+                                return false;
+                            }
+                        }
                     }
                     return acceptsVariable;
                 }
@@ -1804,6 +1829,69 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         return acceptsPrimitive && (acceptsVoid || !typeDescription.represents(void.class));
                     } else {
                         return !requiresThrowable || typeDescription.asErasure().isAssignableTo(Throwable.class);
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Visitor.Validator." + name();
+                }
+
+                public enum ForType implements Visitor<Boolean> {
+
+                    INSTANCE;
+
+                    @Override
+                    public Boolean onGenericArray(Generic genericArray) {
+                        return genericArray.getComponentType().accept(this);
+                    }
+
+                    @Override
+                    public Boolean onWildcard(Generic wildcard) {
+                        TypeList.Generic lowerBounds = wildcard.getLowerBounds();
+                        return lowerBounds.isEmpty()
+                                ? wildcard.getUpperBounds().getOnly().accept(this)
+                                : lowerBounds.getOnly().accept(this);
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        TypeDescription.Generic ownerType = parameterizedType.getOwnerType();
+                        if (ownerType != null && !ownerType.accept(this)) {
+                            return false;
+                        }
+                        // TODO: erasure type variables are not bound and can of course not be assigned!
+                        TypeList.Generic typeVariables = parameterizedType.asErasure().getTypeVariables();
+                        int index = 0;
+                        for (TypeDescription.Generic parameter : parameterizedType.getParameters()) {
+                            for (TypeDescription.Generic bound : typeVariables.get(index++).getUpperBounds()) {
+                                if (bound.accept(Assigner.INSTANCE).isAssignableFrom(parameter)) {
+                                    return true;
+                                }
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(Generic typeVariable) {
+                        for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                            if (!bound.accept(this)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return true;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Validator.ForType." + name();
                     }
                 }
             }
