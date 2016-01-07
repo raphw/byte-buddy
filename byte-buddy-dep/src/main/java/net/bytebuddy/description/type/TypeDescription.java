@@ -1754,28 +1754,64 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 INTERFACE(false, false, false, false, false),
 
                 /**
-                 * A validator for a type variable, either declared by a
+                 * A validator for a type variable.
                  */
                 TYPE_VARIABLE(false, false, true, false, false),
 
+                /**
+                 * A validator for a field type.
+                 */
                 FIELD(true, true, true, false, false),
 
+                /**
+                 * A validator for a method return type.
+                 */
                 METHOD_RETURN(true, true, true, true, false),
 
+                /**
+                 * A validator for a method parameter type.
+                 */
                 METHOD_PARAMETER(true, true, true, false, false),
 
+                /**
+                 * A validator for a method exception type.
+                 */
                 EXCEPTION(false, false, true, false, true);
 
+                /**
+                 * {@code true} if this validator accepts array types.
+                 */
                 private final boolean acceptsArray;
 
+                /**
+                 * {@code true} if this validator accepts primitive types.
+                 */
                 private final boolean acceptsPrimitive;
 
+                /**
+                 * {@code true} if this validator accepts type variables.
+                 */
                 private final boolean acceptsVariable;
 
+                /**
+                 * {@code true} if this validator accepts the {@code void} type.
+                 */
                 private final boolean acceptsVoid;
 
+                /**
+                 * {@code true} if this validator requires a throwable type.
+                 */
                 private final boolean requiresThrowable;
 
+                /**
+                 * Creates a new validator.
+                 *
+                 * @param acceptsArray      {@code true} if this validator accepts array types.
+                 * @param acceptsPrimitive  {@code true} if this validator accepts primitive types.
+                 * @param acceptsVariable   {@code true} if this validator accepts type variables.
+                 * @param acceptsVoid       {@code true} if this validator accepts the {@code void} type.
+                 * @param requiresThrowable {@code true} if this validator requires a throwable type.
+                 */
                 Validator(boolean acceptsArray, boolean acceptsPrimitive, boolean acceptsVariable, boolean acceptsVoid, boolean requiresThrowable) {
                     this.acceptsArray = acceptsArray;
                     this.acceptsPrimitive = acceptsPrimitive;
