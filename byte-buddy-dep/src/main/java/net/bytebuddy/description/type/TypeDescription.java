@@ -1665,7 +1665,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 @Override
                                 public String toString() {
                                     return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.ContravariantBinding{" +
-                                            "typeDescription=" + lowerBound +
+                                            "lowerBound=" + lowerBound +
                                             '}';
                                 }
                             }

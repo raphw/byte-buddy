@@ -868,7 +868,7 @@ public interface InstrumentedType extends TypeDescription {
                     }
                 } else if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
                     throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
-                } else if (isValidIdentifier(methodDescription.getInternalName())) {
+                } else if (!isValidIdentifier(methodDescription.getInternalName())) {
                     throw new IllegalStateException("Illegal method name for: " + methodDescription);
                 }
                 Set<String> parameterNames = new HashSet<String>();
@@ -918,6 +918,8 @@ public interface InstrumentedType extends TypeDescription {
         private static boolean isValidIdentifier(String name) {
             if (name.isEmpty() || !Character.isJavaIdentifierStart(name.charAt(0))) {
                 return false;
+            } else if (name.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
+                return true;
             }
             for (int index = 1; index < name.length(); index++) {
                 if (!Character.isJavaIdentifierPart(name.charAt(index))) {
