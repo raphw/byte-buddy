@@ -7,7 +7,6 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.*;
@@ -508,7 +507,19 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test(expected = NullPointerException.class)
     public void testRepresentsNullPointer() throws Exception {
         describe(Object.class).represents(null);
+    }
 
+    @Test
+    public void testNonAvailableAnnotations() throws Exception {
+        TypeDescription typeDescription = describe(new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(MissingAnnotations.class),
+                null,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(MissingAnnotations.class.getName()));
+        assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
+        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
     }
 
     protected interface SampleInterface {
@@ -627,6 +638,18 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     public static class InnerInnerClass {
 
         public static class Foo {
+            /* empty */
+        }
+    }
+
+    @SampleAnnotation
+    public static class MissingAnnotations {
+
+        @SampleAnnotation
+        Void foo;
+
+        @SampleAnnotation
+        void foo(@SampleAnnotation  Void foo) {
             /* empty */
         }
     }

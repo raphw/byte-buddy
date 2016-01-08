@@ -485,15 +485,13 @@ public interface TypePool {
 
             @Override
             public AnnotationDescription resolve() {
-                return annotationToken.toAnnotationDescription(typePool);
+                return annotationToken.toAnnotationDescription(typePool).resolve();
             }
 
             @Override
             @SuppressWarnings("unchecked")
             public Loaded<Annotation> load(ClassLoader classLoader) throws ClassNotFoundException {
-                Class<?> type = classLoader.loadClass(annotationToken.getDescriptor()
-                        .substring(1, annotationToken.getDescriptor().length() - 1)
-                        .replace('/', '.'));
+                Class<?> type = classLoader.loadClass(annotationToken.getBinaryName());
                 if (type.isAnnotation()) {
                     return new ForAnnotation.Loaded<Annotation>((Annotation) Proxy.newProxyInstance(classLoader,
                             new Class<?>[]{type},
@@ -3524,10 +3522,7 @@ public interface TypePool {
          */
         private final boolean anonymousType;
 
-        /**
-         * A list of annotation descriptions that are declared by this type.
-         */
-        private final List<AnnotationDescription> declaredAnnotations;
+        private final List<AnnotationToken> annotationTokens;
 
         /**
          * A list of field descriptions that are declared by this type.
@@ -3585,10 +3580,7 @@ public interface TypePool {
             this.declarationContext = declarationContext;
             this.declaredTypes = declaredTypes;
             this.anonymousType = anonymousType;
-            declaredAnnotations = new ArrayList<AnnotationDescription>(annotationTokens.size());
-            for (AnnotationToken annotationToken : annotationTokens) {
-                declaredAnnotations.add(annotationToken.toAnnotationDescription(typePool));
-            }
+            this.annotationTokens = annotationTokens;
             declaredFields = new ArrayList<FieldDescription.InDefinedShape>(fieldTokens.size());
             for (FieldToken fieldToken : fieldTokens) {
                 declaredFields.add(fieldToken.toFieldDescription(this));
@@ -3679,7 +3671,7 @@ public interface TypePool {
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.Explicit(declaredAnnotations);
+            return LazyAnnotationDescription.asList(typePool, annotationTokens);
         }
 
         @Override
@@ -5087,15 +5079,6 @@ public interface TypePool {
             }
 
             /**
-             * Returns the descriptor of the represented annotation.
-             *
-             * @return The descriptor of the represented annotation.
-             */
-            public String getDescriptor() {
-                return descriptor;
-            }
-
-            /**
              * Returns a map of annotation value names to their value representations.
              *
              * @return A map of annotation value names to their value representations.
@@ -5104,14 +5087,21 @@ public interface TypePool {
                 return values;
             }
 
+            public String getBinaryName() {
+                return descriptor.substring(1, descriptor.length() - 1).replace('/', '.');
+            }
+
             /**
              * Transforms this token into an annotation description.
              *
              * @param typePool The type pool to be used for looking up linked types.
-             * @return An annotation description that resembles this token.
+             * @return An optional description of this annotation's token.
              */
-            private AnnotationDescription toAnnotationDescription(TypePool typePool) {
-                return new LazyAnnotationDescription(typePool, descriptor, values);
+            private Resolution toAnnotationDescription(TypePool typePool) {
+                TypePool.Resolution resolution = typePool.describe(getBinaryName());
+                return resolution.isResolved()
+                        ? new Resolution.Simple(new LazyAnnotationDescription(typePool, resolution.resolve(), values))
+                        : Resolution.Illegal.INSTANCE;
             }
 
             @Override
@@ -5136,6 +5126,47 @@ public interface TypePool {
                         "descriptor='" + descriptor + '\'' +
                         ", values=" + values +
                         '}';
+            }
+
+            protected interface Resolution {
+
+                boolean isResolved();
+
+                AnnotationDescription resolve();
+
+                enum Illegal implements Resolution {
+
+                    INSTANCE;
+
+                    @Override
+                    public boolean isResolved() {
+                        return false;
+                    }
+
+                    @Override
+                    public AnnotationDescription resolve() {
+                        throw new IllegalStateException();
+                    }
+                }
+
+                class Simple implements Resolution {
+
+                    private final AnnotationDescription annotationDescription;
+
+                    protected Simple(AnnotationDescription annotationDescription) {
+                        this.annotationDescription = annotationDescription;
+                    }
+
+                    @Override
+                    public boolean isResolved() {
+                        return true;
+                    }
+
+                    @Override
+                    public AnnotationDescription resolve() {
+                        return annotationDescription;
+                    }
+                }
             }
         }
 
@@ -5620,33 +5651,42 @@ public interface TypePool {
             protected final TypePool typePool;
 
             /**
+             * The type of this annotation.
+             */
+            private final TypeDescription annotationType;
+
+            /**
              * A map of annotation values by their property name.
              */
             protected final Map<String, AnnotationValue<?, ?>> values;
 
             /**
-             * The descriptor of this annotation.
-             */
-            private final String descriptor;
-
-            /**
              * Creates a new lazy annotation description.
              *
-             * @param typePool   The type pool to be used for looking up linked types.
-             * @param descriptor The descriptor of the annotation type.
-             * @param values     A map of annotation value names to their value representations.
+             * @param typePool       The type pool to be used for looking up linked types.
+             * @param annotationType The annotation's type.
+             * @param values         A map of annotation value names to their value representations.
              */
-            private LazyAnnotationDescription(TypePool typePool,
-                                              String descriptor,
-                                              Map<String, AnnotationValue<?, ?>> values) {
+            private LazyAnnotationDescription(TypePool typePool, TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> values) {
                 this.typePool = typePool;
-                this.descriptor = descriptor;
+                this.annotationType = annotationType;
                 this.values = values;
+            }
+
+            private static AnnotationList asList(TypePool typePool, List<? extends AnnotationToken> tokens) {
+                List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
+                for (AnnotationToken token : tokens) {
+                    AnnotationToken.Resolution resolution = token.toAnnotationDescription(typePool);
+                    if (resolution.isResolved()) {
+                        annotationDescriptions.add(resolution.resolve());
+                    }
+                }
+                return new AnnotationList.Explicit(annotationDescriptions);
             }
 
             @Override
             public Object getValue(MethodDescription.InDefinedShape methodDescription) {
-                if (!methodDescription.getDeclaringType().asErasure().getDescriptor().equals(descriptor)) {
+                if (!methodDescription.getDeclaringType().asErasure().equals(annotationType)) {
                     throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
                 }
                 AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
@@ -5661,12 +5701,15 @@ public interface TypePool {
 
             @Override
             public TypeDescription getAnnotationType() {
-                return typePool.describe(descriptor.substring(1, descriptor.length() - 1).replace('/', '.')).resolve();
+                return annotationType;
             }
 
             @Override
             public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
-                return new Loadable<T>(typePool, descriptor, values, annotationType);
+                if (!this.annotationType.represents(annotationType)) {
+                    throw new IllegalArgumentException(annotationType + " does not represent " + this.annotationType);
+                }
+                return new Loadable<T>(typePool, annotationType, values);
             }
 
             /**
@@ -5685,18 +5728,12 @@ public interface TypePool {
                  * Creates a new loadable version of a lazy annotation.
                  *
                  * @param typePool       The type pool to be used for looking up linked types.
-                 * @param descriptor     The descriptor of the represented annotation.
+                 * @param annotationType The annotation's type.
                  * @param values         A map of annotation value names to their value representations.
                  * @param annotationType The loaded annotation type.
                  */
-                private Loadable(TypePool typePool,
-                                 String descriptor,
-                                 Map<String, AnnotationValue<?, ?>> values,
-                                 Class<S> annotationType) {
-                    super(typePool, descriptor, values);
-                    if (!Type.getDescriptor(annotationType).equals(descriptor)) {
-                        throw new IllegalArgumentException(annotationType + " does not correspond to " + descriptor);
-                    }
+                private Loadable(TypePool typePool, Class<S> annotationType, Map<String, AnnotationValue<?, ?>> values) {
+                    super(typePool, new ForLoadedType(annotationType), values);
                     this.annotationType = annotationType;
                 }
 
@@ -6164,7 +6201,7 @@ public interface TypePool {
             /**
              * The descriptor of this field's type.
              */
-            private final String fieldTypeDescriptor;
+            private final String descriptor;
 
             /**
              * A resolution of this field's generic type.
@@ -6174,7 +6211,7 @@ public interface TypePool {
             /**
              * A list of annotation descriptions of this field.
              */
-            private final List<AnnotationDescription> declaredAnnotations;
+            private final List<AnnotationToken> annotationTokens;
 
             /**
              * Creates a new lazy field description.
@@ -6192,22 +6229,19 @@ public interface TypePool {
                                          List<AnnotationToken> annotationTokens) {
                 this.modifiers = modifiers;
                 this.name = name;
-                fieldTypeDescriptor = descriptor;
+                this.descriptor = descriptor;
                 this.signatureResolution = signatureResolution;
-                declaredAnnotations = new ArrayList<AnnotationDescription>(annotationTokens.size());
-                for (AnnotationToken annotationToken : annotationTokens) {
-                    declaredAnnotations.add(annotationToken.toAnnotationDescription(typePool));
-                }
+                this.annotationTokens = annotationTokens;
             }
 
             @Override
             public Generic getType() {
-                return signatureResolution.resolveFieldType(fieldTypeDescriptor, typePool, this);
+                return signatureResolution.resolveFieldType(descriptor, typePool, this);
             }
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Explicit(declaredAnnotations);
+                return LazyAnnotationDescription.asList(typePool, annotationTokens);
             }
 
             @Override
@@ -6261,16 +6295,9 @@ public interface TypePool {
              */
             private final List<String> exceptionTypeDescriptors;
 
-            /**
-             * A list of annotation descriptions that are declared by this method.
-             */
-            private final List<AnnotationDescription> declaredAnnotations;
+            private final List<AnnotationToken> annotationTokens;
 
-            /**
-             * A nested list of annotation descriptions that are declared by the parameters of this
-             * method in their oder.
-             */
-            private final List<List<AnnotationDescription>> declaredParameterAnnotations;
+            private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
 
             /**
              * An array of parameter names which may be {@code null} if no explicit name is known for a parameter.
@@ -6335,20 +6362,8 @@ public interface TypePool {
                         exceptionTypeDescriptors.add(Type.getObjectType(anExceptionTypeInternalName).getDescriptor());
                     }
                 }
-                declaredAnnotations = new ArrayList<AnnotationDescription>(annotationTokens.size());
-                for (AnnotationToken annotationToken : annotationTokens) {
-                    declaredAnnotations.add(annotationToken.toAnnotationDescription(typePool));
-                }
-                declaredParameterAnnotations = new ArrayList<List<AnnotationDescription>>(parameterType.length);
-                for (int index = 0; index < parameterType.length; index++) {
-                    List<AnnotationToken> tokens = parameterAnnotationTokens.get(index);
-                    List<AnnotationDescription> annotationDescriptions;
-                    annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
-                    for (AnnotationToken annotationToken : tokens) {
-                        annotationDescriptions.add(annotationToken.toAnnotationDescription(typePool));
-                    }
-                    declaredParameterAnnotations.add(annotationDescriptions);
-                }
+                this.annotationTokens = annotationTokens;
+                this.parameterAnnotationTokens = parameterAnnotationTokens;
                 parameterNames = new String[parameterType.length];
                 parameterModifiers = new Integer[parameterType.length];
                 if (parameterTokens.size() == parameterType.length) {
@@ -6379,7 +6394,7 @@ public interface TypePool {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.Explicit(declaredAnnotations);
+                return LazyAnnotationDescription.asList(typePool, annotationTokens);
             }
 
             @Override
@@ -6500,7 +6515,10 @@ public interface TypePool {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Explicit(declaredParameterAnnotations.get(index));
+                    List<AnnotationToken> annotationTokens = parameterAnnotationTokens.get(index);
+                    return annotationTokens == null
+                            ? new AnnotationList.Empty()
+                            : LazyAnnotationDescription.asList(typePool, annotationTokens);
                 }
             }
         }
