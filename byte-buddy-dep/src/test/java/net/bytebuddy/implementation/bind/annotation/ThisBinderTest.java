@@ -17,10 +17,7 @@ import static org.mockito.Mockito.*;
 public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
 
     @Mock
-    private TypeDescription parameterType; // TODO: Remove?
-
-    @Mock
-    private TypeDescription.Generic genericParameterType, genericInstrumentedType;
+    private TypeDescription.Generic parameterType, genericInstrumentedType;
 
     public ThisBinderTest() {
         super(This.class);
@@ -31,7 +28,6 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     public void setUp() throws Exception {
         super.setUp();
         when(stackManipulation.isValid()).thenReturn(true);
-        when(genericParameterType.asErasure()).thenReturn(parameterType);
         when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
     }
 
@@ -43,12 +39,12 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Test
     public void testLegalBinding() throws Exception {
         when(stackManipulation.isValid()).thenReturn(true);
-        when(target.getType()).thenReturn(genericParameterType);
+        when(target.getType()).thenReturn(parameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(assigner).assign(genericInstrumentedType, genericParameterType, Assigner.Typing.STATIC);
+        verify(assigner).assign(genericInstrumentedType, parameterType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
@@ -57,14 +53,14 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Test
     public void testLegalBindingRuntimeType() throws Exception {
         when(stackManipulation.isValid()).thenReturn(true);
-        when(target.getType()).thenReturn(genericParameterType);
+        when(target.getType()).thenReturn(parameterType);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(assigner).assign(genericInstrumentedType, genericParameterType, Assigner.Typing.DYNAMIC);
+        verify(assigner).assign(genericInstrumentedType, parameterType, Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
@@ -73,14 +69,14 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
     @Test
     public void testIllegalBinding() throws Exception {
         when(stackManipulation.isValid()).thenReturn(false);
-        when(target.getType()).thenReturn(genericParameterType);
+        when(target.getType()).thenReturn(parameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(assigner.assign(any(TypeDescription.Generic.class), any(TypeDescription.Generic.class), any(Assigner.Typing.class)))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
-        verify(assigner).assign(genericInstrumentedType, genericParameterType, Assigner.Typing.STATIC);
+        verify(assigner).assign(genericInstrumentedType, parameterType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
@@ -91,7 +87,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         when(stackManipulation.isValid()).thenReturn(true);
         when(annotation.optional()).thenReturn(true);
         when(source.isStatic()).thenReturn(true);
-        when(target.getType()).thenReturn(genericParameterType);
+        when(target.getType()).thenReturn(parameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -103,7 +99,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
 
     @Test
     public void testStaticMethodIllegal() throws Exception {
-        when(target.getType()).thenReturn(genericParameterType);
+        when(target.getType()).thenReturn(parameterType);
         when(source.isStatic()).thenReturn(true);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -112,15 +108,15 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveType() throws Exception {
-        when(genericParameterType.isPrimitive()).thenReturn(true);
-        when(target.getType()).thenReturn(genericParameterType);
+        when(parameterType.isPrimitive()).thenReturn(true);
+        when(target.getType()).thenReturn(parameterType);
         This.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayType() throws Exception {
-        when(genericParameterType.isArray()).thenReturn(true);
-        when(target.getType()).thenReturn(genericParameterType);
+        when(parameterType.isArray()).thenReturn(true);
+        when(target.getType()).thenReturn(parameterType);
         This.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

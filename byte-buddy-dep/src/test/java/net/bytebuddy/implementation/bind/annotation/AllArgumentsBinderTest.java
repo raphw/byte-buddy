@@ -26,7 +26,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     private static final String FOO = "foo";
 
     @Mock
-    private TypeDescription.Generic firstSourceType, secondSourceType;
+    private TypeDescription.Generic firstSourceType, secondSourceType, genericInstrumentedType;
 
     @Mock
     private TypeDescription rawTargetType, rawComponentType;
@@ -40,6 +40,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
 
     @Override
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
         when(firstSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
@@ -47,6 +48,10 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(componentType.asErasure()).thenReturn(rawComponentType);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(targetType.asErasure()).thenReturn(rawTargetType);
+        when(firstSourceType.asGenericType()).thenReturn(firstSourceType);
+        when(firstSourceType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(firstSourceType);
+        when(secondSourceType.asGenericType()).thenReturn(secondSourceType);
+        when(secondSourceType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(secondSourceType);
     }
 
     @Override

@@ -22,7 +22,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -87,7 +86,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         when(methodNameTransformer.transform(methodDescription)).thenReturn(QUX);
         when(otherMethodNameTransformer.transform(methodDescription)).thenReturn(FOO + BAR);
         when(parameterType.getStackSize()).thenReturn(StackSize.ZERO);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(genericParameterType)));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, genericParameterType));
         when(genericReturnType.asErasure()).thenReturn(returnType);
         when(genericReturnType.asRawType()).thenReturn(genericReturnType);
         when(genericReturnType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(genericReturnType);
@@ -107,7 +106,7 @@ public class MethodRebaseResolverResolutionForRebasedMethodTest {
         assertThat(resolution.getResolvedMethod().getModifiers(), is(rebasedMethodModifiers));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(genericReturnType));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
-                .ForTypes(resolution.getResolvedMethod(), Collections.singletonList(parameterType))));
+                .ForTypes(resolution.getResolvedMethod(), parameterType)));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));

@@ -59,7 +59,7 @@ public class MethodInvocationDynamicTest {
         when(methodDescription.getInternalName()).thenReturn(QUX);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(declaringType.getInternalName()).thenReturn(BAR);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Arrays.asList(firstType, secondType)));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, firstType, secondType));
     }
 
     @Test

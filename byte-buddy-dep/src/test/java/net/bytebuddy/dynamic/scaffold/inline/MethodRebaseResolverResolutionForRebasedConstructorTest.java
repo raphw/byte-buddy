@@ -18,9 +18,6 @@ import org.mockito.Mock;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Arrays;
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -57,7 +54,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         when(methodDescription.isConstructor()).thenReturn(true);
         when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, Collections.singletonList(parameterType)));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(methodDescription, parameterType));
         when(placeholderType.getStackSize()).thenReturn(StackSize.ZERO);
         when(placeholderType.asErasure()).thenReturn(rawPlaceholderType);
         when(placeholderType.asGenericType()).thenReturn(placeholderType);
@@ -85,7 +82,7 @@ public class MethodRebaseResolverResolutionForRebasedConstructorTest {
         assertThat(resolution.getResolvedMethod().getModifiers(), is(Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PRIVATE));
         assertThat(resolution.getResolvedMethod().getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(resolution.getResolvedMethod().getParameters(), is((ParameterList<ParameterDescription.InDefinedShape>) new ParameterList.Explicit
-                .ForTypes(resolution.getResolvedMethod(), Arrays.asList(parameterType, placeholderType))));
+                .ForTypes(resolution.getResolvedMethod(), parameterType, placeholderType)));
         StackManipulation.Size size = resolution.getAdditionalArguments().apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));

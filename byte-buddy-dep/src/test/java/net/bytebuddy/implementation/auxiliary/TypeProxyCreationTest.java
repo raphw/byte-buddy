@@ -24,7 +24,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -71,7 +70,7 @@ public class TypeProxyCreationTest {
                 .listNodes()
                 .asMethodList()
                 .filter(isVirtual().and(not(isFinal())).and(not(isDefaultFinalizer())));
-        when(proxyMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(proxyMethod, Arrays.asList(foo, foo, foo)));
+        when(proxyMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(proxyMethod, foo, foo, foo));
         when(proxyMethod.getDeclaringType()).thenReturn(foo);
         when(proxyMethod.getInternalName()).thenReturn(FOO);
         when(proxyMethod.getDescriptor()).thenReturn(FOO);

@@ -234,6 +234,7 @@ public class PackageTypeStrategyManifestReadingTest {
 
     @Test
     @IntegrationRule.Enforce
+    @JavaVersionRule.Enforce(9)
     @Ignore("Cannot yet determine tests specific to Java 9")
     public void testSealBaseLocatorForTypeResourceUrlJavaRuntimeImageUrl() throws Exception {
         URL url = new URL("jrt:/foo/bar");
@@ -245,6 +246,7 @@ public class PackageTypeStrategyManifestReadingTest {
 
     @Test
     @IntegrationRule.Enforce
+    @JavaVersionRule.Enforce(9)
     @Ignore("Cannot yet determine tests specific to Java 9")
     public void testSealBaseLocatorForTypeResourceUrlJavaRuntimeImageUrlRawModule() throws Exception {
         URL url = new URL("jrt:/foo");

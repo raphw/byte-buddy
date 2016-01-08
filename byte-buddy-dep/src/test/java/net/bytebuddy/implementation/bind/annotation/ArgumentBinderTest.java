@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     @Mock
-    private TypeDescription sourceType, targetType; // TODO: Remove?
+    private TypeDescription sourceType, targetType;
 
     @Mock
     private TypeDescription.Generic genericSourceType, genericTargetType;

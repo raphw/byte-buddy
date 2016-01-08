@@ -33,7 +33,6 @@ import org.objectweb.asm.Opcodes;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.startsWith;
@@ -219,8 +218,7 @@ public class ImplementationContextDefaultTest {
         when(firstSpecialParameterType.asGenericType()).thenReturn(firstSpecialParameterType);
         when(firstSpecialParameterType.asRawType()).thenReturn(firstSpecialParameterType);
         when(firstSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        when(firstSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(firstSpecialMethod,
-                Collections.singletonList(firstSpecialParameterType)));
+        when(firstSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(firstSpecialMethod, firstSpecialParameterType));
         when(secondSpecialInvocation.getMethodDescription()).thenReturn(secondSpecialMethod);
         when(secondSpecialInvocation.getTypeDescription()).thenReturn(secondSpecialType);
         when(secondSpecialMethod.getInternalName()).thenReturn(BAR);
@@ -240,8 +238,7 @@ public class ImplementationContextDefaultTest {
         when(secondSpecialReturnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(secondSpecialReturnType.asRawType()).thenReturn(secondSpecialReturnType);
         when(secondSpecialInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(new StackManipulation.Size(0, 0));
-        when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod,
-                Collections.singletonList(secondSpecialParameterType)));
+        when(secondSpecialMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(secondSpecialMethod, secondSpecialParameterType));
         when(firstField.getType()).thenReturn(firstFieldType);
         when(firstField.getName()).thenReturn(FOO);
         when(firstField.getInternalName()).thenReturn(FOO);
@@ -476,8 +473,7 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription.InDefinedShape firstMethodDescription = implementationContext.registerAccessorFor(firstSpecialInvocation);
-        assertThat(firstMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstMethodDescription,
-                Collections.singletonList(firstSpecialParameterType))));
+        assertThat(firstMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstMethodDescription, firstSpecialParameterType)));
         assertThat(firstMethodDescription.getReturnType(), is(firstSpecialReturnType));
         assertThat(firstMethodDescription.getInternalName(), startsWith(FOO));
         assertThat(firstMethodDescription.getModifiers(), is(accessorMethodModifiers));
@@ -485,8 +481,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerAccessorFor(firstSpecialInvocation), is(firstMethodDescription));
         when(secondSpecialMethod.isStatic()).thenReturn(true);
         MethodDescription.InDefinedShape secondMethodDescription = implementationContext.registerAccessorFor(secondSpecialInvocation);
-        assertThat(secondMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondMethodDescription,
-                Collections.singletonList(secondSpecialParameterType))));
+        assertThat(secondMethodDescription.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondMethodDescription, secondSpecialParameterType)));
         assertThat(secondMethodDescription.getReturnType(), is(secondSpecialReturnType));
         assertThat(secondMethodDescription.getInternalName(), startsWith(BAR));
         assertThat(secondMethodDescription.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
@@ -620,8 +615,7 @@ public class ImplementationContextDefaultTest {
                 typeInitializer,
                 classFileVersion);
         MethodDescription.InDefinedShape firstFieldSetter = implementationContext.registerSetterFor(firstField);
-        assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter,
-                Collections.singletonList(firstFieldType))));
+        assertThat(firstFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(firstFieldSetter, firstFieldType)));
         assertThat(firstFieldSetter.getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(firstFieldSetter.getInternalName(), startsWith(FOO));
         assertThat(firstFieldSetter.getModifiers(), is(accessorMethodModifiers));
@@ -629,8 +623,7 @@ public class ImplementationContextDefaultTest {
         assertThat(implementationContext.registerSetterFor(firstField), is(firstFieldSetter));
         when(secondField.isStatic()).thenReturn(true);
         MethodDescription.InDefinedShape secondFieldSetter = implementationContext.registerSetterFor(secondField);
-        assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter,
-                Collections.singletonList(secondFieldType))));
+        assertThat(secondFieldSetter.getParameters(), is((ParameterList) new ParameterList.Explicit.ForTypes(secondFieldSetter, secondFieldType)));
         assertThat(secondFieldSetter.getReturnType(), is(TypeDescription.Generic.VOID));
         assertThat(secondFieldSetter.getInternalName(), startsWith(BAR));
         assertThat(secondFieldSetter.getModifiers(), is(accessorMethodModifiers | Opcodes.ACC_STATIC));
