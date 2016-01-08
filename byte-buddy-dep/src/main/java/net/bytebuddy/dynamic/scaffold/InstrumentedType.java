@@ -18,10 +18,7 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.MethodVisitor;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
@@ -299,6 +296,14 @@ public interface InstrumentedType extends TypeDescription {
      * A default implementation of an instrumented type.
      */
     class Default extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
+
+        private static final Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(
+                "abstract", "continue", "for", "new", "switch", "assert", "default", "goto", "package", "synchronized", "boolean",
+                "do", "if", "private", "this", "break", "double", "implements", "protected", "throw", "byte", "else", "import",
+                "public", "throws", "case", "enum", "instanceof", "return", "transient", "catch", "extends", "int", "short",
+                "try", "char", "final", "interface", "static", "void", "class", "finally", "long", "strictfp", "volatile",
+                "const", "float", "native", "super", "while"
+        ));
 
         /**
          * The binary name of the instrumented type.
@@ -786,15 +791,15 @@ public interface InstrumentedType extends TypeDescription {
                 throw new IllegalStateException("Illegal type name: " + getName());
             }
             TypeDescription.Generic superType = getSuperType();
-            if (superType != null && !superType.accept(Generic.Visitor.Validator.SUPER_CLASS)) {
+            if (superType != null && (!superType.accept(Generic.Visitor.Validator.SUPER_CLASS))) {
                 throw new IllegalStateException("Illegal super class " + getSuperType() + " for " + this);
             }
             Set<TypeDescription> interfaceErasures = new HashSet<TypeDescription>();
             for (TypeDescription.Generic interfaceType : getInterfaces()) {
-                if (!interfaceErasures.add(interfaceType.asErasure())) {
-                    throw new IllegalStateException("Already implemented interface " + interfaceType + " for " + this);
-                } else if (!interfaceType.accept(Generic.Visitor.Validator.INTERFACE)) {
+                if (!interfaceType.accept(Generic.Visitor.Validator.INTERFACE)) {
                     throw new IllegalStateException("Illegal interface " + interfaceType + " for " + this);
+                } else if (!interfaceErasures.add(interfaceType.asErasure())) {
+                    throw new IllegalStateException("Already implemented interface " + interfaceType + " for " + this);
                 }
             }
             TypeList.Generic typeVariables = getTypeVariables();
@@ -810,9 +815,12 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + this);
                 }
                 boolean interfaceBound = false;
+                Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
                 for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                     if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                         throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + this);
+                    } else if (!bounds.add(bound)) {
+                        throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + this);
                     } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
                         throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + this);
                     }
@@ -860,9 +868,12 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + methodDescription);
                     }
                     boolean interfaceBound = false;
+                    Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
                     for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                         if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                             throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + methodDescription);
+                        } else if(!bounds.add(bound)) {
+                            throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
                             throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         }
@@ -946,7 +957,7 @@ public interface InstrumentedType extends TypeDescription {
          * @return {@code true} if the given identifier is valid.
          */
         private static boolean isValidIdentifier(String identifier) {
-            if (identifier.isEmpty() || !Character.isJavaIdentifierStart(identifier.charAt(0))) {
+            if (KEYWORDS.contains(identifier) || identifier.isEmpty() || !Character.isJavaIdentifierStart(identifier.charAt(0))) {
                 return false;
             } else if (identifier.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
                 return true;

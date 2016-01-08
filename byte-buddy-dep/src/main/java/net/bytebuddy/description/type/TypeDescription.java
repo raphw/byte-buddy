@@ -1746,37 +1746,77 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * A validator for checking a type's non-null super class.
                  */
-                SUPER_CLASS(false, false, false, false, false),
+                SUPER_CLASS(false, false, false, false) {
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return super.onNonGenericType(typeDescription) && !typeDescription.asErasure().isInterface();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        return !parameterizedType.asErasure().isInterface();
+                    }
+                },
 
                 /**
                  * A validator for an interface type.
                  */
-                INTERFACE(false, false, false, false, false),
+                INTERFACE(false, false, false, false) {
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return super.onNonGenericType(typeDescription) && typeDescription.asErasure().isInterface();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        return parameterizedType.asErasure().isInterface();
+                    }
+                },
 
                 /**
                  * A validator for a type variable.
                  */
-                TYPE_VARIABLE(false, false, true, false, false),
+                TYPE_VARIABLE(false, false, true, false),
 
                 /**
                  * A validator for a field type.
                  */
-                FIELD(true, true, true, false, false),
+                FIELD(true, true, true, false),
 
                 /**
                  * A validator for a method return type.
                  */
-                METHOD_RETURN(true, true, true, true, false),
+                METHOD_RETURN(true, true, true, true),
 
                 /**
                  * A validator for a method parameter type.
                  */
-                METHOD_PARAMETER(true, true, true, false, false),
+                METHOD_PARAMETER(true, true, true, false),
 
                 /**
                  * A validator for a method exception type.
                  */
-                EXCEPTION(false, false, true, false, true);
+                EXCEPTION(false, false, true, false) {
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        return false;
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(Generic typeVariable) {
+                        for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                            if (bound.accept(this)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return typeDescription.asErasure().isAssignableTo(Throwable.class);
+                    }
+                };
 
                 /**
                  * {@code true} if this validator accepts array types.
@@ -1799,25 +1839,18 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final boolean acceptsVoid;
 
                 /**
-                 * {@code true} if this validator requires a throwable type.
-                 */
-                private final boolean requiresThrowable;
-
-                /**
                  * Creates a new validator.
                  *
-                 * @param acceptsArray      {@code true} if this validator accepts array types.
-                 * @param acceptsPrimitive  {@code true} if this validator accepts primitive types.
-                 * @param acceptsVariable   {@code true} if this validator accepts type variables.
-                 * @param acceptsVoid       {@code true} if this validator accepts the {@code void} type.
-                 * @param requiresThrowable {@code true} if this validator requires a throwable type.
+                 * @param acceptsArray     {@code true} if this validator accepts array types.
+                 * @param acceptsPrimitive {@code true} if this validator accepts primitive types.
+                 * @param acceptsVariable  {@code true} if this validator accepts type variables.
+                 * @param acceptsVoid      {@code true} if this validator accepts the {@code void} type.
                  */
-                Validator(boolean acceptsArray, boolean acceptsPrimitive, boolean acceptsVariable, boolean acceptsVoid, boolean requiresThrowable) {
+                Validator(boolean acceptsArray, boolean acceptsPrimitive, boolean acceptsVariable, boolean acceptsVoid) {
                     this.acceptsArray = acceptsArray;
                     this.acceptsPrimitive = acceptsPrimitive;
                     this.acceptsVariable = acceptsVariable;
                     this.acceptsVoid = acceptsVoid;
-                    this.requiresThrowable = requiresThrowable;
                 }
 
                 @Override
@@ -1832,31 +1865,19 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Boolean onParameterizedType(Generic parameterizedType) {
-                    return !requiresThrowable;
+                    return true;
                 }
 
                 @Override
                 public Boolean onTypeVariable(Generic typeVariable) {
-                    if (requiresThrowable) {
-                        for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
-                            if (bound.accept(this)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
                     return acceptsVariable;
                 }
 
                 @Override
                 public Boolean onNonGenericType(Generic typeDescription) {
-                    if (typeDescription.isArray()) {
-                        return acceptsArray;
-                    } else if (typeDescription.isPrimitive()) {
-                        return acceptsPrimitive && (acceptsVoid || !typeDescription.represents(void.class));
-                    } else {
-                        return !requiresThrowable || typeDescription.asErasure().isAssignableTo(Throwable.class);
-                    }
+                    return (acceptsArray || !typeDescription.isArray())
+                            && (acceptsPrimitive || !typeDescription.isPrimitive())
+                            && (acceptsVoid || !typeDescription.represents(void.class));
                 }
 
                 @Override
