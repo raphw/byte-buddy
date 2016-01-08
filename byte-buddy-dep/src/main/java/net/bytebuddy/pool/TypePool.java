@@ -3522,6 +3522,9 @@ public interface TypePool {
          */
         private final boolean anonymousType;
 
+        /**
+         * A list of tokens that represent the annotations of this type.
+         */
         private final List<AnnotationToken> annotationTokens;
 
         /**
@@ -3546,7 +3549,7 @@ public interface TypePool {
          * @param declarationContext    The declaration context of this type.
          * @param declaredTypes         A list of descriptors representing the types that are declared by this type.
          * @param anonymousType         {@code true} if this type is an anonymous type.
-         * @param annotationTokens      A list of tokens describing the annotation's of this type.
+         * @param annotationTokens      A list of tokens that represent the annotations of this type.
          * @param fieldTokens           A list of field tokens describing the field's of this type.
          * @param methodTokens          A list of method tokens describing the method's of this type.
          */
@@ -5083,11 +5086,16 @@ public interface TypePool {
              *
              * @return A map of annotation value names to their value representations.
              */
-            public Map<String, AnnotationDescription.AnnotationValue<?, ?>> getValues() {
+            protected Map<String, AnnotationDescription.AnnotationValue<?, ?>> getValues() {
                 return values;
             }
 
-            public String getBinaryName() {
+            /**
+             * Returns the annotation type's binary name.
+             *
+             * @return The annotation type's binary name.
+             */
+            protected String getBinaryName() {
                 return descriptor.substring(1, descriptor.length() - 1).replace('/', '.');
             }
 
@@ -5101,7 +5109,7 @@ public interface TypePool {
                 TypePool.Resolution resolution = typePool.describe(getBinaryName());
                 return resolution.isResolved()
                         ? new Resolution.Simple(new LazyAnnotationDescription(typePool, resolution.resolve(), values))
-                        : Resolution.Illegal.INSTANCE;
+                        : new Resolution.Illegal(getBinaryName());
             }
 
             @Override
@@ -5128,31 +5136,41 @@ public interface TypePool {
                         '}';
             }
 
+            /**
+             * A resolution for an annotation tokens. Any annotation is suppressed if its type is not available.
+             * This conforms to the handling of the Java reflection API.
+             */
             protected interface Resolution {
 
+                /**
+                 * Returns {@code true} if the represented annotation could be resolved.
+                 *
+                 * @return {@code true} if the represented annotation could be resolved.
+                 */
                 boolean isResolved();
 
+                /**
+                 * Returns the resolved annotation. This method throws an exception if this instance is not resolved.
+                 *
+                 * @return The resolved annotation. This method throws an exception if this instance is not resolved.
+                 */
                 AnnotationDescription resolve();
 
-                enum Illegal implements Resolution {
-
-                    INSTANCE;
-
-                    @Override
-                    public boolean isResolved() {
-                        return false;
-                    }
-
-                    @Override
-                    public AnnotationDescription resolve() {
-                        throw new IllegalStateException();
-                    }
-                }
-
+                /**
+                 * A simple resolved annotation.
+                 */
                 class Simple implements Resolution {
 
+                    /**
+                     * The represented annotation description.
+                     */
                     private final AnnotationDescription annotationDescription;
 
+                    /**
+                     * Creates a new simple resolution.
+                     *
+                     * @param annotationDescription The represented annotation description.
+                     */
                     protected Simple(AnnotationDescription annotationDescription) {
                         this.annotationDescription = annotationDescription;
                     }
@@ -5165,6 +5183,72 @@ public interface TypePool {
                     @Override
                     public AnnotationDescription resolve() {
                         return annotationDescription;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && annotationDescription.equals(((Simple) other).annotationDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return annotationDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.LazyTypeDescription.AnnotationToken.Resolution.Simple{" +
+                                "annotationDescription=" + annotationDescription +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An illegal resolution.
+                 */
+                class Illegal implements Resolution {
+
+                    /**
+                     * The annotation's binary type name.
+                     */
+                    private final String annotationType;
+
+                    /**
+                     * Creates a new illegal resolution.
+                     *
+                     * @param annotationType The annotation's binary type name.
+                     */
+                    public Illegal(String annotationType) {
+                        this.annotationType = annotationType;
+                    }
+
+                    @Override
+                    public boolean isResolved() {
+                        return false;
+                    }
+
+                    @Override
+                    public AnnotationDescription resolve() {
+                        throw new IllegalStateException("Annotation type is not available: " + annotationType);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && annotationType.equals(((Illegal) other).annotationType);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return annotationType.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.LazyTypeDescription.AnnotationToken.Resolution.Illegal{" +
+                                "annotationType=" + annotationType +
+                                '}';
                     }
                 }
             }
@@ -5673,7 +5757,15 @@ public interface TypePool {
                 this.values = values;
             }
 
-            private static AnnotationList asList(TypePool typePool, List<? extends AnnotationToken> tokens) {
+            /**
+             * Represents a list of annotation tokens in form of a list of lazy type annotations. Any annotation with
+             * a type that cannot be loaded from the type pool is ignored and not included in the list.
+             *
+             * @param typePool The type pool to be used for looking up linked types.
+             * @param tokens   The tokens to represent in the list.
+             * @return A list of the loadable annotations.
+             */
+            protected static AnnotationList asList(TypePool typePool, List<? extends AnnotationToken> tokens) {
                 List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
                 for (AnnotationToken token : tokens) {
                     AnnotationToken.Resolution resolution = token.toAnnotationDescription(typePool);
@@ -5728,9 +5820,8 @@ public interface TypePool {
                  * Creates a new loadable version of a lazy annotation.
                  *
                  * @param typePool       The type pool to be used for looking up linked types.
-                 * @param annotationType The annotation's type.
+                 * @param annotationType The annotation's loaded type.
                  * @param values         A map of annotation value names to their value representations.
-                 * @param annotationType The loaded annotation type.
                  */
                 private Loadable(TypePool typePool, Class<S> annotationType, Map<String, AnnotationValue<?, ?>> values) {
                     super(typePool, new ForLoadedType(annotationType), values);
@@ -6295,8 +6386,15 @@ public interface TypePool {
              */
             private final List<String> exceptionTypeDescriptors;
 
+            /**
+             * The annotation tokens representing the method's annotations.
+             */
             private final List<AnnotationToken> annotationTokens;
 
+            /**
+             * The annotation tokens representing the parameter's annotation. Every index can
+             * contain {@code null} if a parameter does not define any annotations.
+             */
             private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
 
             /**
@@ -6324,10 +6422,9 @@ public interface TypePool {
              * @param exceptionTypeInternalName The internal names of the exceptions that are declared by this
              *                                  method or {@code null} if no exceptions are declared by this
              *                                  method.
-             * @param annotationTokens          A list of annotation tokens representing annotations that are declared
-             *                                  by this method.
-             * @param parameterAnnotationTokens A nested list of annotation tokens representing annotations that are
-             *                                  declared by the fields of this method.
+             * @param annotationTokens          The annotation tokens representing the method's annotations.
+             * @param parameterAnnotationTokens The annotation tokens representing the parameter's annotation. Every
+             *                                  index can contain {@code null} if a parameter does not define any annotations.
              * @param parameterTokens           A list of parameter tokens which might be empty or even out of sync
              *                                  with the actual parameters if the debugging information found in a
              *                                  class was corrupt.

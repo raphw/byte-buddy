@@ -113,7 +113,7 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedNamingStrategy() throws Exception {
         DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
-                .with(new GettingStartedNamingStrategy()) // TODO: Update tutorial
+                .with(new GettingStartedNamingStrategy())
                 .subclass(Object.class)
                 .make();
         assertThat(dynamicType, notNullValue());
@@ -276,7 +276,7 @@ public class ByteBuddyTutorialExamplesTest {
     public void testFieldsAndMethodsExplicitMethodCall() throws Exception {
         Object object = new ByteBuddy()
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .defineConstructor(Visibility.PUBLIC).withParameters(int.class) // TODO: Update tutorial
+                .defineConstructor(Visibility.PUBLIC).withParameters(int.class)
                 .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -473,7 +473,7 @@ public class ByteBuddyTutorialExamplesTest {
                 MethodDescription toStringMethod = TypeDescription.OBJECT.getDeclaredMethods()
                         .filter(named("toString"))
                         .getOnly();
-                return MethodInvocation.invoke(toStringMethod).virtual(source.asErasure()); // TODO: Update tutorial
+                return MethodInvocation.invoke(toStringMethod).virtual(source.asErasure());
             } else {
                 return StackManipulation.Illegal.INSTANCE;
             }
@@ -604,7 +604,7 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    private static class GettingStartedNamingStrategy extends NamingStrategy.AbstractBase { // TODO: Update tutorial
+    private static class GettingStartedNamingStrategy extends NamingStrategy.AbstractBase {
 
         @Override
         protected String name(TypeDescription superType) {
