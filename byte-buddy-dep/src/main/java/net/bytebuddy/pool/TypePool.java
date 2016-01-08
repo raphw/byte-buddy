@@ -2295,12 +2295,6 @@ public interface TypePool {
              */
             private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
-            private LazyTypeDescription.TypeVariableToken typeVariablesTokensForExtensions;
-
-            private LazyTypeDescription.TypeVariableToken typeVariableTokenForTypeParameters;
-
-            private LazyTypeDescription.TypeVariableToken typeVariableTokenForTypeParameterBounds;
-
             /**
              * A list of field tokens describing fields that are found on the visited type.
              */
@@ -2358,9 +2352,6 @@ public interface TypePool {
             protected TypeExtractor() {
                 super(Opcodes.ASM5);
                 annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
-                typeVariablesTokensForExtensions = null; // TODO
-                typeVariableTokenForTypeParameters = null; // TODO
-                typeVariableTokenForTypeParameterBounds = null; // TODO
                 fieldTokens = new ArrayList<LazyTypeDescription.FieldToken>();
                 methodTokens = new ArrayList<LazyTypeDescription.MethodToken>();
                 anonymousType = false;
