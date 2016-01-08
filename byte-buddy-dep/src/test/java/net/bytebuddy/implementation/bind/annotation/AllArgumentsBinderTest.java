@@ -29,10 +29,10 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     private TypeDescription.Generic firstSourceType, secondSourceType;
 
     @Mock
-    private TypeDescription targetType, componentType;
+    private TypeDescription rawTargetType, rawComponentType;
 
     @Mock
-    private TypeDescription.Generic genericTargetType, genericComponentType;
+    private TypeDescription.Generic targetType, componentType;
 
     public AllArgumentsBinderTest() {
         super(AllArguments.class);
@@ -44,8 +44,9 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         super.setUp();
         when(firstSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(genericTargetType.asErasure()).thenReturn(targetType);
-        when(genericComponentType.asErasure()).thenReturn(componentType);
+        when(componentType.asErasure()).thenReturn(rawComponentType);
+        when(targetType.getComponentType()).thenReturn(componentType);
+        when(targetType.asErasure()).thenReturn(rawTargetType);
     }
 
     @Override
@@ -73,10 +74,10 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(stackManipulation.isValid()).thenReturn(true);
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, firstSourceType, secondSourceType));
         when(source.isStatic()).thenReturn(false);
-        when(genericTargetType.isArray()).thenReturn(true);
+        when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getType()).thenReturn(genericTargetType);
+        when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(targetAnnotation));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -85,8 +86,8 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(firstSourceType, genericComponentType, Assigner.Typing.of(dynamicallyTyped));
-        verify(assigner).assign(secondSourceType, genericComponentType, Assigner.Typing.of(dynamicallyTyped));
+        verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.of(dynamicallyTyped));
+        verify(assigner).assign(secondSourceType, componentType, Assigner.Typing.of(dynamicallyTyped));
         verifyNoMoreInteractions(assigner);
     }
 
@@ -97,10 +98,10 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(stackManipulation.isValid()).thenReturn(false);
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, firstSourceType, secondSourceType));
         when(source.isStatic()).thenReturn(false);
-        when(genericTargetType.isArray()).thenReturn(true);
+        when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getType()).thenReturn(genericTargetType);
+        when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -109,7 +110,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(firstSourceType, genericComponentType, Assigner.Typing.STATIC);
+        verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
     }
 
@@ -120,12 +121,12 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(stackManipulation.isValid()).thenReturn(false);
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, firstSourceType, secondSourceType));
         when(source.isStatic()).thenReturn(false);
-        when(genericTargetType.isArray()).thenReturn(true);
+        when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(target.getType()).thenReturn(genericTargetType);
+        when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(componentType.getInternalName()).thenReturn(FOO);
+        when(rawComponentType.getInternalName()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
@@ -142,8 +143,8 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         verify(source, atLeast(1)).isStatic();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(firstSourceType, genericComponentType, Assigner.Typing.STATIC);
-        verify(assigner).assign(secondSourceType, genericComponentType, Assigner.Typing.STATIC);
+        verify(assigner).assign(firstSourceType, componentType, Assigner.Typing.STATIC);
+        verify(assigner).assign(secondSourceType, componentType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
     }
 

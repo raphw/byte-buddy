@@ -137,8 +137,8 @@ public class MethodVariableAccessOfMethodArgumentsTest {
 
     @Test
     public void testBridgeMethodWithCasting() throws Exception {
-        when(bridgeMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(bridgeMethod,
-                Arrays.asList(secondParameterType, secondParameterType)));
+        when(secondRawParameterType.asErasure()).thenReturn(secondRawParameterType);
+        when(bridgeMethod.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(bridgeMethod, Arrays.asList(secondParameterType, secondParameterType)));
         StackManipulation stackManipulation = MethodVariableAccess.allArgumentsOf(methodDescription).asBridgeOf(bridgeMethod);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);

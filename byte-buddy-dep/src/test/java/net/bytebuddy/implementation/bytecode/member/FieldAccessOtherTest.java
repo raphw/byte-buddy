@@ -104,12 +104,12 @@ public class FieldAccessOtherTest {
     @Test
     public void testGenericFieldAccessGetter() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class), declaredErasure = mock(TypeDescription.class);
+        when(genericErasure.asErasure()).thenReturn(genericErasure);
         when(genericType.asErasure()).thenReturn(genericErasure);
         when(declaredType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = FieldAccess.forField(genericField).getter();
         assertThat(stackManipulation.isValid(), is(true));
-        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
-                TypeCasting.to(genericErasure))));
+        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(), TypeCasting.to(genericErasure))));
     }
 
     @Test

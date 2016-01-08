@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.collection;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -65,7 +66,7 @@ public class ArrayFactory implements CollectionFactory {
      * @param componentType The component type of the array to be created.
      * @return A suitable array creator.
      */
-    private static ArrayCreator makeArrayCreatorFor(TypeDescription.Generic componentType) {
+    private static ArrayCreator makeArrayCreatorFor(TypeDefinition componentType) {
         if (componentType.isPrimitive()) {
             if (componentType.represents(boolean.class)) {
                 return ArrayCreator.ForPrimitiveType.BOOLEAN;

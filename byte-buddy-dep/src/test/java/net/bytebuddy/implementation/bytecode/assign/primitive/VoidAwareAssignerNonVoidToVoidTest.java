@@ -72,14 +72,14 @@ public class VoidAwareAssignerNonVoidToVoidTest {
     public void setUp() throws Exception {
         when(source.represents(sourceType)).thenReturn(true);
         when(source.getStackSize()).thenReturn(StackSize.of(sourceType));
+        when(source.asErasure()).thenReturn(rawSource);
+        when(rawSource.represents(sourceType)).thenReturn(true);
+        when(rawSource.asErasure()).thenReturn(rawSource);
         if (sourceType.isPrimitive()) {
             when(source.isPrimitive()).thenReturn(true);
         }
         when(target.represents(void.class)).thenReturn(true);
         when(target.isPrimitive()).thenReturn(true);
-        when(source.asErasure()).thenReturn(rawSource);
-        when(rawSource.represents(sourceType)).thenReturn(true);
-        when(rawSource.asErasure()).thenReturn(rawSource);
     }
 
     @After

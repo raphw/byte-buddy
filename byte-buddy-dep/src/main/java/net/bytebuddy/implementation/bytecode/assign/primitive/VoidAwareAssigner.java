@@ -43,7 +43,7 @@ public class VoidAwareAssigner implements Assigner {
                     ? DefaultValue.of(target)
                     : StackManipulation.Illegal.INSTANCE;
         } else if (/* superType != void.class && */ target.represents(void.class)) {
-            return Removal.pop(source.asErasure());
+            return Removal.pop(source);
         } else /* superType != void.class && subType != void.class */ {
             return chained.assign(source, target, typing);
         }

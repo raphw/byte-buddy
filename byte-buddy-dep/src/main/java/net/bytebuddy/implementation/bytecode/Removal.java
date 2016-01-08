@@ -1,6 +1,6 @@
 package net.bytebuddy.implementation.bytecode;
 
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
@@ -54,11 +54,11 @@ public enum Removal implements StackManipulation {
     /**
      * Removes a value from the operand stack dependant of its size.
      *
-     * @param typeDescription The type to remove from the stack.
+     * @param typeDefinition The type to remove from the stack.
      * @return A stack manipulation that represents the removal.
      */
-    public static StackManipulation pop(TypeDescription typeDescription) {
-        switch (typeDescription.getStackSize()) {
+    public static StackManipulation pop(TypeDefinition typeDefinition) {
+        switch (typeDefinition.getStackSize()) {
             case SINGLE:
                 return SINGLE;
             case DOUBLE:
