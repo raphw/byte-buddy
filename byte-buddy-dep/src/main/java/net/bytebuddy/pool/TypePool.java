@@ -1055,6 +1055,16 @@ public interface TypePool {
                 public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
                     values.put(name, annotationValue);
                 }
+
+                protected abstract static class ForTypeVariable extends AbstractBase {
+
+                    protected final TypePath typePath;
+
+                    protected ForTypeVariable(String descriptor, TypePath typePath) {
+                        super(descriptor);
+                        this.typePath = typePath;
+                    }
+                }
             }
         }
 
@@ -2275,7 +2285,11 @@ public interface TypePool {
              */
             private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
-            private final LazyTypeDescription.TypeVariableToken.ForType typeVariableToken;
+            private LazyTypeDescription.TypeVariableToken typeVariablesTokensForExtensions;
+
+            private LazyTypeDescription.TypeVariableToken typeVariableTokenForTypeParameters;
+
+            private LazyTypeDescription.TypeVariableToken typeVariableTokenForTypeParameterBounds;
 
             /**
              * A list of field tokens describing fields that are found on the visited type.
@@ -2334,7 +2348,9 @@ public interface TypePool {
             protected TypeExtractor() {
                 super(Opcodes.ASM5);
                 annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
-                typeVariableToken = new LazyTypeDescription.TypeVariableToken.ForType();
+                typeVariablesTokensForExtensions = null; // TODO
+                typeVariableTokenForTypeParameters = null; // TODO
+                typeVariableTokenForTypeParameterBounds = null; // TODO
                 fieldTokens = new ArrayList<LazyTypeDescription.FieldToken>();
                 methodTokens = new ArrayList<LazyTypeDescription.MethodToken>();
                 anonymousType = false;
@@ -2388,11 +2404,12 @@ public interface TypePool {
             }
 
             @Override
-            public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+            public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, TypePath typePath, String descriptor, boolean visible) {
                 AnnotationRegistrant annotationRegistrant;
-                switch (typeReference) {
+                TypeReference typeReference = new TypeReference(rawTypeReference);
+                switch (typeReference.getSort()) {
                     case TypeReference.CLASS_EXTENDS:
-                        annotationRegistrant = new OnExtensionCollector(descriptor, typePath);
+                        annotationRegistrant = new OnExtensionCollector(descriptor, typePath, typeReference.getSuperTypeIndex());
                         break;
                     case TypeReference.CLASS_TYPE_PARAMETER:
                         annotationRegistrant = new OnTypeParameterCollector(descriptor, typePath);
@@ -2454,6 +2471,45 @@ public interface TypePool {
                         ", anonymousType=" + anonymousType +
                         ", declarationContext=" + declarationContext +
                         '}';
+            }
+
+            protected class OnExtensionCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+
+                private final int typeIndex;
+
+                protected OnExtensionCollector(String descriptor, TypePath typePath, int typeIndex) {
+                    super(descriptor, typePath);
+                    this.typeIndex = typeIndex;
+                }
+
+                @Override
+                public void onComplete() {
+                    //typeVariablesTokensForExtensions.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                }
+            }
+
+            protected class OnTypeParameterCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+
+                protected OnTypeParameterCollector(String descriptor, TypePath typePath) {
+                    super(descriptor, typePath);
+                }
+
+                @Override
+                public void onComplete() {
+                    //typeVariableTokenForTypeParameters.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                }
+            }
+
+            protected class OnTypeParameterBoundCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+
+                protected OnTypeParameterBoundCollector(String descriptor, TypePath typePath) {
+                    super(descriptor, typePath);
+                }
+
+                @Override
+                public void onComplete() {
+                    //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                }
             }
 
             /**
@@ -5014,6 +5070,17 @@ public interface TypePool {
                     }
                 }
             }
+        }
+
+        protected interface TypeVariableToken {
+
+            TypeVariableToken getComponentToken();
+
+            TypeVariableToken getIndex();
+
+            TypeVariableToken with(AnnotationToken annotationToken);
+
+            List<AnnotationToken> getAnnotationTokens();
         }
 
         /**

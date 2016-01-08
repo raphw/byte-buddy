@@ -17,6 +17,7 @@ public abstract class AbstractFilterableListTest<T, S extends FilterableList<T, 
 
     protected abstract S asList(List<U> elements);
 
+    //@SafeVarargs
     protected S asList(U... element) {
         return asList(Arrays.asList(element));
     }

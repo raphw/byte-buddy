@@ -28,10 +28,11 @@ public class TypeVariableTokenTest {
     private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(bound.asGenericType()).thenReturn(bound);
         when(visitedBound.asGenericType()).thenReturn(visitedBound);
-        when(bound.accept(visitor)).thenReturn(visitedBound);
+        when(bound.accept((TypeDescription.Generic.Visitor) visitor)).thenReturn(visitedBound);
     }
 
     @Test

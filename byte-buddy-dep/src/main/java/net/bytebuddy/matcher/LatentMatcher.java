@@ -286,6 +286,7 @@ public interface LatentMatcher<T> {
          *
          * @param matcher The matchers this compound matcher represents.
          */
+        //@SafeVarargs
         public Compound(LatentMatcher<? super S>... matcher) {
             this(Arrays.asList(matcher));
         }
