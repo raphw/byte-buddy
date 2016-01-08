@@ -1,5 +1,7 @@
 package net.bytebuddy.description.modifier;
 
+import org.objectweb.asm.Opcodes;
+
 import java.util.Arrays;
 import java.util.Collection;
 
@@ -41,31 +43,55 @@ public interface ModifierContributor {
     boolean isDefault();
 
     /**
-     * A marker interface for modifiers that can be applied to methods.
+     * A marker interface for modifiers that can be applied to types.
      */
-    interface ForMethod extends ModifierContributor {
-        /* marker interface */
+    interface ForType extends ModifierContributor {
+
+        /**
+         * A mask for all legal modifiers of a Java type.
+         */
+        int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
+                | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION | Opcodes.ACC_DEPRECATED
+                | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC;
     }
 
     /**
      * A marker interface for modifiers that can be applied to fields.
      */
     interface ForField extends ModifierContributor {
-        /* marker interface */
+
+        /**
+         * A mask for all legal modifiers of a Java field.
+         */
+        int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
+                | Opcodes.ACC_DEPRECATED | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC
+                | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE;
     }
 
     /**
-     * A marker interface for modifiers that can be applied to types.
+     * A marker interface for modifiers that can be applied to methods.
      */
-    interface ForType extends ModifierContributor {
-        /* marker interface */
+    interface ForMethod extends ModifierContributor {
+
+        /**
+         * A mask for all legal modifiers of a Java method.
+         */
+        int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
+                | Opcodes.ACC_BRIDGE | Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT
+                | Opcodes.ACC_STATIC | Opcodes.ACC_STRICT | Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC
+                | Opcodes.ACC_VARARGS;
     }
 
     /**
      * A marker interface for modifiers that can be applied to method parameters.
      */
     interface ForParameter extends ModifierContributor {
-        /* marker interface */
+
+        /**
+         * A mask for all legal modifiers of a Java parameter.
+         */
+        int MASK = Opcodes.ACC_MANDATED | Opcodes.ACC_FINAL | Opcodes.ACC_SYNTHETIC;
+
     }
 
     /**

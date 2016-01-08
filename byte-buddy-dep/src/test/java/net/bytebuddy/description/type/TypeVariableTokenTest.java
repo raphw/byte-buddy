@@ -36,13 +36,13 @@ public class TypeVariableTokenTest {
 
     @Test
     public void testProperties() throws Exception {
-        assertThat(new TypeVariableToken(FOO, bound).getSymbol(), is(FOO));
-        assertThat(new TypeVariableToken(FOO, bound).getBounds(), is(Collections.singletonList(bound)));
+        assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound)).getSymbol(), is(FOO));
+        assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound)).getBounds(), is(Collections.singletonList(bound)));
     }
 
     @Test
     public void testVisitor() throws Exception {
-        assertThat(new TypeVariableToken(FOO, bound).accept(visitor), is(new TypeVariableToken(FOO, visitedBound)));
+        assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound)).accept(visitor), is(new TypeVariableToken(FOO, Collections.singletonList(visitedBound))));
     }
 
     @Test

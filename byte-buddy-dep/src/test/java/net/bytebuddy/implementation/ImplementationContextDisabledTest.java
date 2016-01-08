@@ -3,7 +3,7 @@ package net.bytebuddy.implementation;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -48,13 +48,13 @@ public class ImplementationContextDisabledTest {
     public void testFactory() throws Exception {
         assertThat(Implementation.Context.Disabled.Factory.INSTANCE.make(instrumentedType,
                 mock(AuxiliaryType.NamingStrategy.class),
-                mock(InstrumentedType.TypeInitializer.class),
+                mock(TypeInitializer.class),
                 mock(ClassFileVersion.class)), is((Implementation.Context.ExtractableView) new Implementation.Context.Disabled(instrumentedType)));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFactoryWithTypeInitializer() throws Exception {
-        InstrumentedType.TypeInitializer typeInitializer = mock(InstrumentedType.TypeInitializer.class);
+        TypeInitializer typeInitializer = mock(TypeInitializer.class);
         when(typeInitializer.isDefined()).thenReturn(true);
         Implementation.Context.Disabled.Factory.INSTANCE.make(instrumentedType,
                 mock(AuxiliaryType.NamingStrategy.class),

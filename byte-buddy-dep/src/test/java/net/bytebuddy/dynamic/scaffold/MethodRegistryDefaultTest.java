@@ -68,7 +68,7 @@ public class MethodRegistryDefaultTest {
     private MethodGraph.Linked methodGraph;
 
     @Mock
-    private InstrumentedType.TypeInitializer typeInitializer;
+    private TypeInitializer typeInitializer;
 
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;

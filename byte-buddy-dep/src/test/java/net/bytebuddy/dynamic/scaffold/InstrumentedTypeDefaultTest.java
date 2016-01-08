@@ -1,10 +1,12 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
@@ -35,7 +37,7 @@ public class InstrumentedTypeDefaultTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", ILLEGAL_NAME = "<>";
 
-    private static final int MODIFIERS = 42;
+    private static final int MODIFIERS = 42, ILLEGAL_MODIFIERS = -1;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -55,7 +57,7 @@ public class InstrumentedTypeDefaultTest {
                 Collections.<FieldDescription.Token>emptyList(),
                 Collections.<MethodDescription.Token>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
-                InstrumentedType.TypeInitializer.None.INSTANCE,
+                TypeInitializer.None.INSTANCE,
                 LoadedTypeInitializer.NoOp.INSTANCE,
                 TypeDescription.UNDEFINED,
                 MethodDescription.UNDEFINED,
@@ -77,7 +79,7 @@ public class InstrumentedTypeDefaultTest {
         when(rawBoundType.getName()).thenReturn(FOO);
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getTypeVariables().size(), is(0));
-        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, boundType));
+        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, Collections.singletonList(boundType)));
         assertThat(instrumentedType.getTypeVariables().size(), is(1));
         TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
         assertThat(typeVariable.getTypeName(), is(BAR));
@@ -89,7 +91,7 @@ public class InstrumentedTypeDefaultTest {
     public void testWithTypeVariableWithInstrumentedType() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getTypeVariables().size(), is(0));
-        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, TargetType.GENERIC_DESCRIPTION));
+        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, Collections.singletonList(TargetType.GENERIC_DESCRIPTION)));
         assertThat(instrumentedType.getTypeVariables().size(), is(1));
         TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
         assertThat(typeVariable.getTypeName(), is(BAR));
@@ -296,7 +298,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test
     public void testWithTypeInitializerInitial() throws Exception {
-        InstrumentedType.TypeInitializer typeInitializer = makePlainInstrumentedType().getTypeInitializer();
+        TypeInitializer typeInitializer = makePlainInstrumentedType().getTypeInitializer();
         assertThat(typeInitializer.isDefined(), is(false));
     }
 
@@ -306,7 +308,7 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         ByteCodeAppender byteCodeAppender = mock(ByteCodeAppender.class);
         instrumentedType = instrumentedType.withInitializer(byteCodeAppender);
-        InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
+        TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
         assertThat(typeInitializer.isDefined(), is(true));
         MethodDescription methodDescription = mock(MethodDescription.class);
         typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
@@ -322,7 +324,7 @@ public class InstrumentedTypeDefaultTest {
         when(first.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
         when(second.apply(methodVisitor, implementationContext, methodDescription)).thenReturn(new ByteCodeAppender.Size(0, 0));
         instrumentedType = instrumentedType.withInitializer(first).withInitializer(second);
-        InstrumentedType.TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
+        TypeInitializer typeInitializer = instrumentedType.getTypeInitializer();
         assertThat(typeInitializer.isDefined(), is(true));
         typeInitializer.apply(methodVisitor, implementationContext, methodDescription);
         verify(first).apply(methodVisitor, implementationContext, methodDescription);
@@ -482,17 +484,32 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testTypeIllegalEndName() throws Exception {
-        makePlainInstrumentedType().withName("a" + ILLEGAL_NAME).validated();
+        makePlainInstrumentedType().withName(FOO + ILLEGAL_NAME).validated();
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testKeywordName() throws Exception {
+    public void testTypeEmptyEndName() throws Exception {
+        makePlainInstrumentedType().withName(NamedElement.EMPTY_NAME).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeChainedEmptyEndName() throws Exception {
+        makePlainInstrumentedType().withName("." + FOO).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeIllegalKeywordName() throws Exception {
         makePlainInstrumentedType().withName(void.class.getName()).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testTypeIllegalSubType() throws Exception {
-        InstrumentedType.Default.subclass(FOO, 0, TypeDefinition.Sort.describe(Serializable.class)).validated();
+        InstrumentedType.Default.subclass(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(Serializable.class)).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeIllegalModifiers() throws Exception {
+        InstrumentedType.Default.subclass(FOO, ILLEGAL_MODIFIERS, TypeDefinition.Sort.describe(Serializable.class)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -509,10 +526,24 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testTypeThrowableWithGenerics() throws Exception {
+        InstrumentedType.Default.of(new TypeDescription.ForLoadedType(Exception.class))
+                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testTypeDuplicateTypeVariableName() throws Exception {
         makePlainInstrumentedType()
                 .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
                 .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeTypeVariableIllegalName() throws Exception {
+        makePlainInstrumentedType()
+                .withTypeVariable(new TypeVariableToken(ILLEGAL_NAME, Collections.singletonList(TypeDescription.Generic.OBJECT)))
                 .validated();
     }
 
@@ -528,6 +559,13 @@ public class InstrumentedTypeDefaultTest {
         makePlainInstrumentedType()
                 .withTypeVariable(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Sort.describe(Serializable.class),
                         TypeDefinition.Sort.describe(Serializable.class))))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testTypeTypeVariableIllegalBound() throws Exception {
+        makePlainInstrumentedType()
+                .withTypeVariable(new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.VOID)))
                 .validated();
     }
 
@@ -548,34 +586,74 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testFieldDuplicateName() throws Exception {
+        makePlainInstrumentedType()
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testFieldIllegalName() throws Exception {
-        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, 0, TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT)).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldIllegalModifiers() throws Exception {
+        makePlainInstrumentedType().withField(new FieldDescription.Token(FOO, ILLEGAL_MODIFIERS, TypeDescription.Generic.OBJECT)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldIllegalType() throws Exception {
-        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, 0, TypeDescription.Generic.VOID)).validated();
+        makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.VOID)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void tesFieldDuplicateAnnotation() throws Exception {
         makePlainInstrumentedType()
-                .withField(new FieldDescription.Token(FOO, 0, TypeDescription.Generic.OBJECT, Arrays.asList(
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT, Arrays.asList(
                         AnnotationDescription.Builder.forType(SampleAnnotation.class).make(),
                         AnnotationDescription.Builder.forType(SampleAnnotation.class).make()
                 ))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testMethodDuplicateErasure() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodTypeInitializer() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.VOID))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testConstructorNonVoid() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodIllegalName() throws Exception {
-        makePlainInstrumentedType().withMethod(new MethodDescription.Token(ILLEGAL_NAME, 0, TypeDescription.Generic.OBJECT)).validated();
+        makePlainInstrumentedType().withMethod(new MethodDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT)).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIllegalModifiers() throws Exception {
+        makePlainInstrumentedType().withMethod(new MethodDescription.Token(FOO, ILLEGAL_MODIFIERS, TypeDescription.Generic.OBJECT)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testMethodDuplicateAnnotation() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
@@ -588,10 +666,24 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testMethodIllegalTypeVariableName() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.singletonList(new TypeVariableToken(ILLEGAL_NAME, Collections.singletonList(TypeDescription.Generic.OBJECT))),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodDuplicateTypeVariableName() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Arrays.asList(
                                 new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT)),
                                 new TypeVariableToken(FOO, Collections.singletonList(TypeDescription.Generic.OBJECT))
@@ -608,8 +700,22 @@ public class InstrumentedTypeDefaultTest {
     public void testMethodTypeVariableMissingBound() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Collections.singletonList(new TypeVariableToken(FOO, Collections.<TypeDescription.Generic>emptyList())),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodTypeVariableIllegalBound() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.singletonList(new TypeVariableToken(FOO, Collections.<TypeDescription.Generic>singletonList(TypeDescription.Generic.VOID))),
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
@@ -622,7 +728,7 @@ public class InstrumentedTypeDefaultTest {
     public void testMethodTypeVariableDuplicateBound() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Collections.singletonList(new TypeVariableToken(FOO, Arrays.asList(TypeDefinition.Sort.describe(Serializable.class),
                                 TypeDefinition.Sort.describe(Serializable.class)))),
                         TypeDescription.Generic.OBJECT,
@@ -637,7 +743,7 @@ public class InstrumentedTypeDefaultTest {
     public void testMethodTypeVariableDoubleClassBound() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Collections.singletonList(new TypeVariableToken(FOO, Arrays.asList(TypeDescription.Generic.OBJECT, TypeDefinition.Sort.describe(String.class)))),
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
@@ -648,10 +754,24 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testMethodParameterIllegalName() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, ILLEGAL_NAME, 0)),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodParameterIllegalType() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
                         Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.VOID)),
@@ -665,7 +785,7 @@ public class InstrumentedTypeDefaultTest {
     public void testMethodParameterDuplicateName() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
                         Arrays.asList(
@@ -678,10 +798,24 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testMethodParameterIllegalModiifers() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, FOO, -1)),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodParameterDuplicateAnnotation() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
-                        0,
+                        ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
                         Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, Arrays.asList(
@@ -690,6 +824,48 @@ public class InstrumentedTypeDefaultTest {
                         ))), Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIllegalException() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.singletonList(TypeDescription.Generic.OBJECT),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodDuplicateException() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Arrays.asList(TypeDefinition.Sort.describe(Exception.class), TypeDefinition.Sort.describe(Exception.class)),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIllegalDefaultValue() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        FOO))
                 .validated();
     }
 

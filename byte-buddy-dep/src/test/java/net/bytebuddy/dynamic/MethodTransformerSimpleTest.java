@@ -34,7 +34,7 @@ public class MethodTransformerSimpleTest {
     private static final int MODIFIERS = 42, RANGE = 3, MASK = 1;
 
     @Rule
-    public TestRule mocktioRule = new MockitoRule(this);
+    public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
     private TypeDescription instrumentedType, rawDeclaringType, rawReturnType, rawParameterType;
@@ -135,7 +135,7 @@ public class MethodTransformerSimpleTest {
         assertThat(transformed.getModifiers(), is((MODIFIERS & ~RANGE) | MASK));
         assertThat(transformed.getReturnType(), is(returnType));
         assertThat(transformed.getTypeVariableTokens().size(), is(1));
-        assertThat(transformed.getTypeVariableTokens().get(0), is(new TypeVariableToken(QUX, typeVariableBound)));
+        assertThat(transformed.getTypeVariableTokens().get(0), is(new TypeVariableToken(QUX, Collections.singletonList(typeVariableBound))));
         assertThat(transformed.getExceptionTypes().size(), is(1));
         assertThat(transformed.getExceptionTypes().getOnly(), is(exceptionType));
         assertThat(transformed.getParameterTokens().size(), is(1));

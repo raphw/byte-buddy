@@ -12,6 +12,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -513,7 +514,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             ExtractableView make(TypeDescription instrumentedType,
                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                 InstrumentedType.TypeInitializer typeInitializer,
+                                 TypeInitializer typeInitializer,
                                  ClassFileVersion classFileVersion);
         }
 
@@ -604,7 +605,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                            InstrumentedType.TypeInitializer typeInitializer,
+                                            TypeInitializer typeInitializer,
                                             ClassFileVersion classFileVersion) {
                     if (typeInitializer.isDefined()) {
                         throw new IllegalStateException("Cannot define type initializer which was explicitly disabled: " + typeInitializer);
@@ -643,7 +644,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
             /**
              * The type initializer of the created instrumented type.
              */
-            private final InstrumentedType.TypeInitializer typeInitializer;
+            private final TypeInitializer typeInitializer;
 
             /**
              * The class file version that the instrumented type is written in.
@@ -711,7 +712,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
              */
             protected Default(TypeDescription instrumentedType,
                               AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                              InstrumentedType.TypeInitializer typeInitializer,
+                              TypeInitializer typeInitializer,
                               ClassFileVersion classFileVersion) {
                 this.instrumentedType = instrumentedType;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
@@ -802,7 +803,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                               InjectedCode injectedCode,
                               AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 fieldCacheCanAppendEntries = false;
-                InstrumentedType.TypeInitializer typeInitializer = this.typeInitializer;
+                TypeInitializer typeInitializer = this.typeInitializer;
                 for (Map.Entry<FieldCacheEntry, FieldDescription.InDefinedShape> entry : registeredFieldCacheEntries.entrySet()) {
                     classVisitor.visitField(entry.getValue().getModifiers(),
                             entry.getValue().getInternalName(),
@@ -1493,7 +1494,7 @@ public interface Implementation extends InstrumentedType.Prepareable {
                 @Override
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                            InstrumentedType.TypeInitializer typeInitializer,
+                                            TypeInitializer typeInitializer,
                                             ClassFileVersion classFileVersion) {
                     return new Default(instrumentedType, auxiliaryTypeNamingStrategy, typeInitializer, classFileVersion);
                 }

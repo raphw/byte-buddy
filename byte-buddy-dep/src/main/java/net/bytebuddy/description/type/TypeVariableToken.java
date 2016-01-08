@@ -3,7 +3,6 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.matcher.ElementMatcher;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -20,16 +19,6 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      * The type variable's upper bounds.
      */
     private final List<? extends TypeDescription.Generic> bounds;
-
-    /**
-     * Creates a new type variable token.
-     *
-     * @param symbol The type variable's symbol.
-     * @param bound  The type variable's upper bounds.
-     */
-    public TypeVariableToken(String symbol, TypeDescription.Generic... bound) {
-        this(symbol, Arrays.asList(bound));
-    }
 
     /**
      * Creates a new type variable token.

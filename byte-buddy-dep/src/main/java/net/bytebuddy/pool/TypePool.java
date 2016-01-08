@@ -3568,7 +3568,7 @@ public interface TypePool {
                                       List<FieldToken> fieldTokens,
                                       List<MethodToken> methodTokens) {
             this.typePool = typePool;
-            this.modifiers = modifiers;
+            this.modifiers = modifiers & ~Opcodes.ACC_SUPER;
             this.name = Type.getObjectType(name).getClassName();
             this.superTypeDescriptor = superTypeInternalName == null
                     ? NO_SUPER_TYPE

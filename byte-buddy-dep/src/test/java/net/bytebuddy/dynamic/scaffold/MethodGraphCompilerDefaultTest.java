@@ -920,7 +920,7 @@ public class MethodGraphCompilerDefaultTest {
                         TypeDescription.Generic.VOID,
                         Collections.<TypeDescription.Generic>emptyList())),
                 Collections.<AnnotationDescription>emptyList(),
-                InstrumentedType.TypeInitializer.None.INSTANCE,
+                TypeInitializer.None.INSTANCE,
                 LoadedTypeInitializer.NoOp.INSTANCE,
                 TypeDescription.UNDEFINED,
                 MethodDescription.UNDEFINED,

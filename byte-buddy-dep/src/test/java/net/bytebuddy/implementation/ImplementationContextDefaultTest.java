@@ -9,7 +9,7 @@ import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -73,7 +73,7 @@ public class ImplementationContextDefaultTest {
     private TypeDescription instrumentedType, firstDescription, secondDescription;
 
     @Mock
-    private InstrumentedType.TypeInitializer typeInitializer, otherTypeInitializer, thirdTypeInitializer;
+    private TypeInitializer typeInitializer, otherTypeInitializer, thirdTypeInitializer;
 
     @Mock
     private ClassFileVersion classFileVersion;

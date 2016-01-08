@@ -377,7 +377,7 @@ public interface MethodRegistry {
          *
          * @return The type initializer of the instrumented type.
          */
-        InstrumentedType.TypeInitializer getTypeInitializer();
+        TypeInitializer getTypeInitializer();
 
         /**
          * Compiles this prepared method registry.
@@ -419,7 +419,7 @@ public interface MethodRegistry {
          *
          * @return The type initializer of the instrumented type.
          */
-        InstrumentedType.TypeInitializer getTypeInitializer();
+        TypeInitializer getTypeInitializer();
     }
 
     /**
@@ -688,7 +688,7 @@ public interface MethodRegistry {
             /**
              * The type initializer of the instrumented type.
              */
-            private final InstrumentedType.TypeInitializer typeInitializer;
+            private final TypeInitializer typeInitializer;
 
             /**
              * The instrumented type.
@@ -711,7 +711,7 @@ public interface MethodRegistry {
              */
             protected Prepared(LinkedHashMap<MethodDescription, Entry> implementations,
                                LoadedTypeInitializer loadedTypeInitializer,
-                               InstrumentedType.TypeInitializer typeInitializer,
+                               TypeInitializer typeInitializer,
                                TypeDescription instrumentedType,
                                MethodGraph.Linked methodGraph) {
                 this.implementations = implementations;
@@ -732,7 +732,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public InstrumentedType.TypeInitializer getTypeInitializer() {
+            public TypeInitializer getTypeInitializer() {
                 return typeInitializer;
             }
 
@@ -943,7 +943,7 @@ public interface MethodRegistry {
             /**
              * The type initializer of the instrumented type.
              */
-            private final InstrumentedType.TypeInitializer typeInitializer;
+            private final TypeInitializer typeInitializer;
 
             /**
              * A map of all method descriptions mapped to their handling entries.
@@ -960,7 +960,7 @@ public interface MethodRegistry {
              */
             protected Compiled(TypeDescription instrumentedType,
                                LoadedTypeInitializer loadedTypeInitializer,
-                               InstrumentedType.TypeInitializer typeInitializer,
+                               TypeInitializer typeInitializer,
                                LinkedHashMap<MethodDescription, Entry> implementations) {
                 this.instrumentedType = instrumentedType;
                 this.loadedTypeInitializer = loadedTypeInitializer;
@@ -979,7 +979,7 @@ public interface MethodRegistry {
             }
 
             @Override
-            public InstrumentedType.TypeInitializer getTypeInitializer() {
+            public TypeInitializer getTypeInitializer() {
                 return typeInitializer;
             }
 

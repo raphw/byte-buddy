@@ -7,16 +7,14 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
-import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.utility.CompoundList;
-import org.objectweb.asm.MethodVisitor;
 
 import java.util.*;
 
@@ -115,130 +113,6 @@ public interface InstrumentedType extends TypeDescription {
      * @return This instrumented type as a non-modifiable type description.
      */
     TypeDescription validated();
-
-    /**
-     * A type initializer is responsible for defining a type's static initialization block.
-     */
-    interface TypeInitializer extends ByteCodeAppender {
-
-        /**
-         * Indicates if this type initializer is defined.
-         *
-         * @return {@code true} if this type initializer is defined.
-         */
-        boolean isDefined();
-
-        /**
-         * Expands this type initializer with another byte code appender. For this to be possible, this type initializer must
-         * be defined.
-         *
-         * @param byteCodeAppender The byte code appender to apply within the type initializer.
-         * @return A defined type initializer.
-         */
-        TypeInitializer expandWith(ByteCodeAppender byteCodeAppender);
-
-        /**
-         * Returns this type initializer with an ending return statement. For this to be possible, this type initializer must
-         * be defined.
-         *
-         * @return This type initializer with an ending return statement.
-         */
-        ByteCodeAppender withReturn();
-
-        /**
-         * Canonical implementation of a non-defined type initializer.
-         */
-        enum None implements TypeInitializer {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public boolean isDefined() {
-                return false;
-            }
-
-            @Override
-            public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
-                return new TypeInitializer.Simple(byteCodeAppender);
-            }
-
-            @Override
-            public ByteCodeAppender withReturn() {
-                throw new IllegalStateException("Cannot append return to non-defined type initializer");
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                throw new IllegalStateException("Cannot apply a non-defined type initializer");
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.TypeInitializer.None." + name();
-            }
-        }
-
-        /**
-         * A simple, defined type initializer that executes a given {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
-         */
-        class Simple implements TypeInitializer {
-
-            /**
-             * The stack manipulation to apply within the type initializer.
-             */
-            private final ByteCodeAppender byteCodeAppender;
-
-            /**
-             * Creates a new simple type initializer.
-             *
-             * @param byteCodeAppender The byte code appender manipulation to apply within the type initializer.
-             */
-            public Simple(ByteCodeAppender byteCodeAppender) {
-                this.byteCodeAppender = byteCodeAppender;
-            }
-
-            @Override
-            public boolean isDefined() {
-                return true;
-            }
-
-            @Override
-            public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
-                return new TypeInitializer.Simple(new ByteCodeAppender.Compound(this.byteCodeAppender, byteCodeAppender));
-            }
-
-            @Override
-            public ByteCodeAppender withReturn() {
-                return new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(MethodReturn.VOID));
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                return byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && byteCodeAppender.equals(((TypeInitializer.Simple) other).byteCodeAppender);
-            }
-
-            @Override
-            public int hashCode() {
-                return byteCodeAppender.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.TypeInitializer.Simple{" +
-                        "byteCodeAppender=" + byteCodeAppender +
-                        '}';
-            }
-        }
-    }
 
     /**
      * Implementations represent an {@link InstrumentedType} with a flexible name.
@@ -791,7 +665,9 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public TypeDescription validated() {
             if (!isValidIdentifier(getName().split("\\."))) {
-                throw new IllegalStateException("Illegal type name: " + getName());
+                throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
+            } else if ((getModifiers() & ~ModifierContributor.ForType.MASK) != EMPTY_MASK) {
+                throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for " + this);
             }
             TypeDescription.Generic superType = getSuperType();
             if (superType != null && (!superType.accept(Generic.Visitor.Validator.SUPER_CLASS))) {
@@ -846,6 +722,8 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Duplicate field definition for " + fieldDescription);
                 } else if (!isValidIdentifier(fieldName)) {
                     throw new IllegalStateException("Illegal field name for " + fieldDescription);
+                } else if((fieldDescription.getModifiers() & ~ModifierContributor.ForField.MASK) != EMPTY_MASK) {
+                    throw new IllegalStateException("Illegal field modifiers " + fieldDescription.getModifiers() + " for " + fieldDescription);
                 }
                 Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : fieldDescription.getDeclaredAnnotations()) {
@@ -861,6 +739,8 @@ public interface InstrumentedType extends TypeDescription {
             for (MethodDescription.InDefinedShape methodDescription : getDeclaredMethods()) {
                 if (!methodSignatureTokens.add(methodDescription.asSignatureToken())) {
                     throw new IllegalStateException("Duplicate method signature for " + methodDescription);
+                } else if ((methodDescription.getModifiers() & ~ModifierContributor.ForMethod.MASK) != 0) {
+                    throw new IllegalStateException("Illegal modifiers " + methodDescription.getModifiers() + " for " + methodDescription);
                 }
                 Set<String> methodTypeVariableNames = new HashSet<String>();
                 for (TypeDescription.Generic typeVariable : methodDescription.getTypeVariables()) {
@@ -901,26 +781,29 @@ public interface InstrumentedType extends TypeDescription {
                 } else if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
                     throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
                 } else if (!isValidIdentifier(methodDescription.getInternalName())) {
-                    throw new IllegalStateException("Illegal method name for: " + methodDescription);
+                    throw new IllegalStateException("Illegal method name for " + methodDescription);
                 }
                 Set<String> parameterNames = new HashSet<String>();
                 for (ParameterDescription.InDefinedShape parameterDescription : methodDescription.getParameters()) {
                     if (parameterDescription.isNamed()) {
                         String parameterName = parameterDescription.getName();
                         if (!parameterNames.add(parameterName)) {
-                            throw new IllegalStateException("Duplicate parameter name for " + parameterDescription);
+                            throw new IllegalStateException("Duplicate parameter name of " + parameterDescription + " for " + methodDescription);
                         } else if (!isValidIdentifier(parameterName)) {
-                            throw new IllegalStateException("Illegal parameter name for " + parameterDescription);
+                            throw new IllegalStateException("Illegal parameter name of " + parameterDescription + " for " + methodDescription);
                         }
+                    }
+                    if (parameterDescription.hasModifiers() && (parameterDescription.getModifiers() & ~ModifierContributor.ForParameter.MASK) != EMPTY_MASK) {
+                        throw new IllegalStateException("Illegal modifiers of " + parameterDescription + " for " + methodDescription);
                     }
                     Set<TypeDescription> parameterAnnotationTypes = new HashSet<TypeDescription>();
                     for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
                         if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
-                            throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + parameterDescription);
+                            throw new IllegalStateException("Duplicate annotation " + annotationDescription + " of " + parameterDescription + " for " + methodDescription);
                         }
                     }
                     if (!parameterDescription.getType().accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
-                        throw new IllegalStateException("Illegal parameter type " + parameterDescription.getType() + " for " + parameterDescription);
+                        throw new IllegalStateException("Illegal parameter type of " + parameterDescription + " for " + methodDescription);
                     }
                 }
                 Set<TypeDescription.Generic> exceptionTypes = new HashSet<Generic>();
@@ -930,6 +813,10 @@ public interface InstrumentedType extends TypeDescription {
                     } else if (!exceptionType.accept(Generic.Visitor.Validator.EXCEPTION)) {
                         throw new IllegalStateException("Illegal exception type " + exceptionType + " for " + methodDescription);
                     }
+                }
+                Object defaultValue = methodDescription.getDefaultValue();
+                if (defaultValue != null && !methodDescription.isDefaultValue(defaultValue)) {
+                    throw new IllegalStateException("Illegal default value " + defaultValue + "for " + methodDescription);
                 }
             }
             return this;

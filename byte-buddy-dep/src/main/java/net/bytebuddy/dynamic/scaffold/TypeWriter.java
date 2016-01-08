@@ -1326,7 +1326,7 @@ public interface TypeWriter<T> {
         /**
          * The type initializer to include in the created type's type initializer.
          */
-        protected final InstrumentedType.TypeInitializer typeInitializer;
+        protected final TypeInitializer typeInitializer;
 
         /**
          * The type attribute appender to apply onto the instrumented type.
@@ -1387,7 +1387,7 @@ public interface TypeWriter<T> {
                           List<DynamicType> explicitAuxiliaryTypes,
                           MethodList<?> instrumentedMethods,
                           LoadedTypeInitializer loadedTypeInitializer,
-                          InstrumentedType.TypeInitializer typeInitializer,
+                          TypeInitializer typeInitializer,
                           TypeAttributeAppender typeAttributeAppender,
                           AsmVisitorWrapper asmVisitorWrapper,
                           ClassFileVersion classFileVersion,
@@ -2565,7 +2565,7 @@ public interface TypeWriter<T> {
                                   List<DynamicType> explicitAuxiliaryTypes,
                                   MethodList<?> instrumentedMethods,
                                   LoadedTypeInitializer loadedTypeInitializer,
-                                  InstrumentedType.TypeInitializer typeInitializer,
+                                  TypeInitializer typeInitializer,
                                   TypeAttributeAppender typeAttributeAppender,
                                   AsmVisitorWrapper asmVisitorWrapper,
                                   ClassFileVersion classFileVersion,
@@ -3330,7 +3330,7 @@ public interface TypeWriter<T> {
                                   List<DynamicType> explicitAuxiliaryTypes,
                                   MethodList<?> instrumentedMethods,
                                   LoadedTypeInitializer loadedTypeInitializer,
-                                  InstrumentedType.TypeInitializer typeInitializer,
+                                  TypeInitializer typeInitializer,
                                   TypeAttributeAppender typeAttributeAppender,
                                   AsmVisitorWrapper asmVisitorWrapper,
                                   ClassFileVersion classFileVersion,
