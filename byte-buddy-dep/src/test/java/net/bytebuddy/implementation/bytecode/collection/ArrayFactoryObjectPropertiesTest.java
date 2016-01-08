@@ -26,22 +26,21 @@ public class ArrayFactoryObjectPropertiesTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testVoidIsIllegal() throws Exception {
-        ArrayFactory.forType(TypeDescription.VOID);
+        ArrayFactory.forType(TypeDescription.Generic.VOID);
     }
 
     @Test
     public void testIllegalArrayStackManipulation() throws Exception {
-        assertThat(ArrayFactory.forType(TypeDescription.OBJECT)
+        assertThat(ArrayFactory.forType(TypeDescription.Generic.OBJECT)
                 .new ArrayStackManipulation(Collections.<StackManipulation>singletonList(StackManipulation.Illegal.INSTANCE))
                 .isValid(), is(false));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(ArrayFactory.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+        ObjectPropertyAssertion.of(ArrayFactory.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription.Generic>() {
             @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getInternalName()).thenReturn("" + System.identityHashCode(mock));
+            public void apply(TypeDescription.Generic mock) {
                 when(mock.getStackSize()).thenReturn(StackSize.ZERO);
             }
         }).ignoreFields("sizeDecrease", "arrayCreator").apply();

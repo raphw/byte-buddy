@@ -217,7 +217,7 @@ public abstract class FixedValue implements Implementation {
                                           MethodDescription instrumentedMethod,
                                           TypeDescription.Generic fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
-        StackManipulation assignment = assigner.assign(fixedValueType.asErasure(), instrumentedMethod.getReturnType().asErasure(), typing);
+        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType(), typing);
         if (!assignment.isValid()) {
             throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
         }

@@ -26,7 +26,10 @@ public abstract class AbstractArrayFactoryTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription componentTypeDescription;
+    private TypeDescription.Generic componentType;
+
+    @Mock
+    private TypeDescription rawComponentType;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -40,6 +43,7 @@ public abstract class AbstractArrayFactoryTest {
     @Before
     public void setUp() throws Exception {
         when(stackManipulation.isValid()).thenReturn(true);
+        when(componentType.asErasure()).thenReturn(rawComponentType);
     }
 
     @After
@@ -49,7 +53,7 @@ public abstract class AbstractArrayFactoryTest {
 
     protected void testCreationUsing(Class<?> componentType, int storageOpcode) throws Exception {
         defineComponentType(componentType);
-        CollectionFactory arrayFactory = ArrayFactory.forType(componentTypeDescription);
+        CollectionFactory arrayFactory = ArrayFactory.forType(this.componentType);
         StackManipulation arrayStackManipulation = arrayFactory.withValues(Collections.singletonList(stackManipulation));
         assertThat(arrayStackManipulation.isValid(), is(true));
         verify(stackManipulation, atLeast(1)).isValid();
@@ -68,12 +72,11 @@ public abstract class AbstractArrayFactoryTest {
 
     protected abstract void verifyArrayCreation(MethodVisitor methodVisitor);
 
-    private void defineComponentType(Class<?> componentType) {
-        when(componentTypeDescription.isPrimitive()).thenReturn(componentType.isPrimitive());
-        when(componentTypeDescription.represents(componentType)).thenReturn(true);
-        when(componentTypeDescription.getInternalName()).thenReturn(Type.getInternalName(componentType));
-        when(componentTypeDescription.getStackSize()).thenReturn(StackSize.of(componentType));
-        when(stackManipulation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
-                .thenReturn(StackSize.of(componentType).toIncreasingSize());
+    private void defineComponentType(Class<?> type) {
+        when(componentType.isPrimitive()).thenReturn(type.isPrimitive());
+        when(componentType.represents(type)).thenReturn(true);
+        when(rawComponentType.getInternalName()).thenReturn(Type.getInternalName(type));
+        when(componentType.getStackSize()).thenReturn(StackSize.of(type));
+        when(stackManipulation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(StackSize.of(type).toIncreasingSize());
     }
 }

@@ -475,6 +475,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
              * Creates a new parameter type list.
              *
              * @param methodDescription The method description that declares the parameters.
+             * @param typeDefinition   A list of detached types representing the parameters.
+             */
+            public ForTypes(MethodDescription.InDefinedShape methodDescription, TypeDefinition... typeDefinition) {
+                this(methodDescription, Arrays.asList(typeDefinition));
+            }
+
+            /**
+             * Creates a new parameter type list.
+             *
+             * @param methodDescription The method description that declares the parameters.
              * @param typeDefinitions   A list of detached types representing the parameters.
              */
             public ForTypes(MethodDescription.InDefinedShape methodDescription, List<? extends TypeDefinition> typeDefinitions) {

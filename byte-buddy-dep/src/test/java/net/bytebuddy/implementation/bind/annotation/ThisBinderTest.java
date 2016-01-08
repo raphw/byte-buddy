@@ -17,10 +17,10 @@ import static org.mockito.Mockito.*;
 public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
 
     @Mock
-    private TypeDescription parameterType;
+    private TypeDescription parameterType; // TODO: Remove?
 
     @Mock
-    private TypeDescription.Generic genericParameterType;
+    private TypeDescription.Generic genericParameterType, genericInstrumentedType;
 
     public ThisBinderTest() {
         super(This.class);
@@ -32,6 +32,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         super.setUp();
         when(stackManipulation.isValid()).thenReturn(true);
         when(genericParameterType.asErasure()).thenReturn(parameterType);
+        when(instrumentedType.asGenericType()).thenReturn(genericInstrumentedType);
     }
 
     @Override
@@ -47,7 +48,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(assigner).assign(instrumentedType, parameterType, Assigner.Typing.STATIC);
+        verify(assigner).assign(genericInstrumentedType, genericParameterType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
@@ -63,7 +64,7 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(assigner).assign(instrumentedType, parameterType, Assigner.Typing.DYNAMIC);
+        verify(assigner).assign(genericInstrumentedType, genericParameterType, Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
@@ -74,12 +75,12 @@ public class ThisBinderTest extends AbstractAnnotationBinderTest<This> {
         when(stackManipulation.isValid()).thenReturn(false);
         when(target.getType()).thenReturn(genericParameterType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
+        when(assigner.assign(any(TypeDescription.Generic.class), any(TypeDescription.Generic.class), any(Assigner.Typing.class)))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = This.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
-        verify(assigner).assign(instrumentedType, parameterType, Assigner.Typing.STATIC);
+        verify(assigner).assign(genericInstrumentedType, genericParameterType, Assigner.Typing.STATIC);
         verifyNoMoreInteractions(assigner);
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();

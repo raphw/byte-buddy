@@ -32,7 +32,7 @@ public class PrimitiveTypeAwareAssignerUnboxingTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    private TypeDescription.Generic sourceTypeDescription, targetTypeDescription;
 
     @Mock
     private Assigner chainedAssigner;

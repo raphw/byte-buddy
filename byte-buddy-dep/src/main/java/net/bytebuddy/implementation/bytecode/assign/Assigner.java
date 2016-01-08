@@ -22,15 +22,15 @@ public interface Assigner {
     Assigner DEFAULT = new VoidAwareAssigner(new PrimitiveTypeAwareAssigner(ReferenceTypeAwareAssigner.INSTANCE));
 
     /**
-     * @param sourceType The original type that is to be transformed into the {@code targetType}.
-     * @param targetType The target type into which the {@code sourceType} is to be converted.
+     * @param source The original type that is to be transformed into the {@code targetType}.
+     * @param target The target type into which the {@code sourceType} is to be converted.
      * @param typing     A hint whether the assignment should consider the runtime type of the source type,
      *                   i.e. if type down or cross castings are allowed. If this hint is set, this is
      *                   also an indication that {@code void} to non-{@code void} assignments are permitted.
      * @return A stack manipulation that transforms the {@code sourceType} into the {@code targetType} if this
      * is possible. An illegal stack manipulation otherwise.
      */
-    StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing);
+    StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing);
 
     /**
      * Indicates for a type assignment, if a type casting should be applied in case that two types are not statically assignable.
@@ -95,16 +95,28 @@ public interface Assigner {
     enum EqualTypesOnly implements Assigner {
 
         /**
-         * The singleton instance.
+         * An type assigner that only considers equal generic types to be assignable.
          */
-        INSTANCE;
+        GENERIC {
+            @Override
+            public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
+                return source.equals(target)
+                        ? StackManipulation.Trivial.INSTANCE
+                        : StackManipulation.Illegal.INSTANCE;
+            }
+        },
 
-        @Override
-        public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
-            return sourceType.equals(targetType)
-                    ? StackManipulation.Trivial.INSTANCE
-                    : StackManipulation.Illegal.INSTANCE;
-        }
+        /**
+         * A type assigner that considers two generic types to be equal if their erasure is equal.
+         */
+        ERASURE {
+            @Override
+            public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
+                return source.asErasure().equals(target.asErasure())
+                        ? StackManipulation.Trivial.INSTANCE
+                        : StackManipulation.Illegal.INSTANCE;
+            }
+        };
 
         @Override
         public String toString() {
@@ -123,7 +135,7 @@ public interface Assigner {
         INSTANCE;
 
         @Override
-        public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
+        public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
             return StackManipulation.Illegal.INSTANCE;
         }
 

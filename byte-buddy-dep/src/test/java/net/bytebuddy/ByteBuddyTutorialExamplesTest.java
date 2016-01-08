@@ -468,12 +468,12 @@ public class ByteBuddyTutorialExamplesTest {
         INSTANCE;
 
         @Override
-        public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
-            if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
+        public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
+            if (!source.isPrimitive() && target.represents(String.class)) {
                 MethodDescription toStringMethod = TypeDescription.OBJECT.getDeclaredMethods()
                         .filter(named("toString"))
                         .getOnly();
-                return MethodInvocation.invoke(toStringMethod).virtual(sourceType);
+                return MethodInvocation.invoke(toStringMethod).virtual(source.asErasure()); // TODO: Update tutorial
             } else {
                 return StackManipulation.Illegal.INSTANCE;
             }

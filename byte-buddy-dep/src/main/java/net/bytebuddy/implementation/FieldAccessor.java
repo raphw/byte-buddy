@@ -98,7 +98,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asErasure(), methodDescription.getReturnType().asErasure(), typing);
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), methodDescription.getReturnType(), typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
         }
@@ -126,9 +126,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType().asErasure(),
-                fieldDescription.getType().asErasure(),
-                typing);
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType(), fieldDescription.getType(), typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
         } else if (fieldDescription.isFinal()) {

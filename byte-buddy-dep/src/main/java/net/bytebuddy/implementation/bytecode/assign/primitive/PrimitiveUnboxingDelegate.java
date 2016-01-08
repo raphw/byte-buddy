@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -105,7 +106,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * @param typeDescription A description of the primitive type.
      * @return A corresponding primitive unboxing delegate.
      */
-    protected static PrimitiveUnboxingDelegate forPrimitive(TypeDescription typeDescription) {
+    protected static PrimitiveUnboxingDelegate forPrimitive(TypeDescription.Generic typeDescription) {
         if (typeDescription.represents(boolean.class)) {
             return BOOLEAN;
         } else if (typeDescription.represents(byte.class)) {
@@ -137,32 +138,41 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
      * in order to then check if the given type is assignable to the inferred wrapper type.</li>
      * </ol>
      *
-     * @param typeDescription A non-primitive type.
+     * @param typeDefinition A non-primitive type.
      * @return An unboxing responsible capable of performing an unboxing operation while considering a further assignment
      * of the unboxed value.
      */
-    public static UnboxingResponsible forReferenceType(TypeDescription typeDescription) {
-        if (typeDescription.isPrimitive()) {
-            throw new IllegalArgumentException("Expected reference type instead of " + typeDescription);
-        } else if (typeDescription.represents(Boolean.class)) {
+    public static UnboxingResponsible forReferenceType(TypeDefinition typeDefinition) {
+        if (typeDefinition.isPrimitive()) {
+            throw new IllegalArgumentException("Expected reference type instead of " + typeDefinition);
+        } else if (typeDefinition.represents(Boolean.class)) {
             return ExplicitlyTypedUnboxingResponsible.BOOLEAN;
-        } else if (typeDescription.represents(Byte.class)) {
+        } else if (typeDefinition.represents(Byte.class)) {
             return ExplicitlyTypedUnboxingResponsible.BYTE;
-        } else if (typeDescription.represents(Short.class)) {
+        } else if (typeDefinition.represents(Short.class)) {
             return ExplicitlyTypedUnboxingResponsible.SHORT;
-        } else if (typeDescription.represents(Character.class)) {
+        } else if (typeDefinition.represents(Character.class)) {
             return ExplicitlyTypedUnboxingResponsible.CHARACTER;
-        } else if (typeDescription.represents(Integer.class)) {
+        } else if (typeDefinition.represents(Integer.class)) {
             return ExplicitlyTypedUnboxingResponsible.INTEGER;
-        } else if (typeDescription.represents(Long.class)) {
+        } else if (typeDefinition.represents(Long.class)) {
             return ExplicitlyTypedUnboxingResponsible.LONG;
-        } else if (typeDescription.represents(Float.class)) {
+        } else if (typeDefinition.represents(Float.class)) {
             return ExplicitlyTypedUnboxingResponsible.FLOAT;
-        } else if (typeDescription.represents(Double.class)) {
+        } else if (typeDefinition.represents(Double.class)) {
             return ExplicitlyTypedUnboxingResponsible.DOUBLE;
         } else {
-            return new ImplicitlyTypedUnboxingResponsible(typeDescription);
+            return new ImplicitlyTypedUnboxingResponsible(typeDefinition.asGenericType());
         }
+    }
+
+    /**
+     * Returns the wrapper type that this unboxing delegate represents.
+     *
+     * @return A generic version of this delegate's wrapper type.
+     */
+    protected TypeDescription.Generic getWrapperType() {
+        return wrapperType.asGenericType();
     }
 
     @Override
@@ -173,7 +183,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
     @Override
     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
         methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                wrapperType.getInternalName(),
+                wrapperType.asErasure().getInternalName(),
                 unboxingMethodName,
                 unboxingMethodDescriptor,
                 false);
@@ -245,7 +255,7 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, Assigner.Typing typing) {
+        public StackManipulation assignUnboxedTo(TypeDescription.Generic targetType, Assigner assigner, Assigner.Typing typing) {
             return new Compound(
                     primitiveUnboxingDelegate,
                     PrimitiveWideningDelegate.forPrimitive(primitiveUnboxingDelegate.primitiveType).widenTo(targetType));
@@ -266,13 +276,13 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
          * Attempts to unbox the represented type in order to assign the unboxed value to the given target type
          * while using the assigner that is provided by the method call.
          *
-         * @param targetType The type that is the desired outcome of the assignment.
-         * @param assigner   The assigner used to assign the unboxed type to the target type.
-         * @param typing     Determines if a type-casting should be attempted for incompatible types.
+         * @param target   The type that is the desired outcome of the assignment.
+         * @param assigner The assigner used to assign the unboxed type to the target type.
+         * @param typing   Determines if a type-casting should be attempted for incompatible types.
          * @return A stack manipulation representing this assignment if such an assignment is possible. An illegal
          * assignment otherwise.
          */
-        StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, Assigner.Typing typing);
+        StackManipulation assignUnboxedTo(TypeDescription.Generic target, Assigner assigner, Assigner.Typing typing);
     }
 
     /**
@@ -285,22 +295,22 @@ public enum PrimitiveUnboxingDelegate implements StackManipulation {
         /**
          * The original type which should be unboxed but is not of any known wrapper type.
          */
-        private final TypeDescription originalType;
+        private final TypeDescription.Generic originalType;
 
         /**
          * Creates a new implicitly typed unboxing responsible.
          *
          * @param originalType The original type which should be unboxed but is not of any known wrapper type.
          */
-        protected ImplicitlyTypedUnboxingResponsible(TypeDescription originalType) {
+        protected ImplicitlyTypedUnboxingResponsible(TypeDescription.Generic originalType) {
             this.originalType = originalType;
         }
 
         @Override
-        public StackManipulation assignUnboxedTo(TypeDescription targetType, Assigner assigner, Assigner.Typing typing) {
-            PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(targetType);
+        public StackManipulation assignUnboxedTo(TypeDescription.Generic target, Assigner assigner, Assigner.Typing typing) {
+            PrimitiveUnboxingDelegate primitiveUnboxingDelegate = PrimitiveUnboxingDelegate.forPrimitive(target);
             return new Compound(
-                    assigner.assign(originalType, primitiveUnboxingDelegate.wrapperType, typing),
+                    assigner.assign(originalType, primitiveUnboxingDelegate.getWrapperType(), typing),
                     primitiveUnboxingDelegate);
         }
 

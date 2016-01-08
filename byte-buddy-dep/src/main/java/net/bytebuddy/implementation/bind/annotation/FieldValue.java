@@ -98,9 +98,7 @@ public @interface FieldValue {
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(resolution.getFieldDescription()).getter(),
-                        assigner.assign(resolution.getFieldDescription().getType().asErasure(),
-                                target.getType().asErasure(),
-                                RuntimeType.Verifier.check(target))
+                        assigner.assign(resolution.getFieldDescription().getType(), target.getType(), RuntimeType.Verifier.check(target))
                 );
                 return stackManipulation.isValid()
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation)

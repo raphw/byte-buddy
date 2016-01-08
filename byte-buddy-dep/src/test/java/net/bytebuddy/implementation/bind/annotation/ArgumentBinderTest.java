@@ -25,7 +25,7 @@ import static org.mockito.Mockito.*;
 public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     @Mock
-    private TypeDescription sourceType, targetType;
+    private TypeDescription sourceType, targetType; // TODO: Remove?
 
     @Mock
     private TypeDescription.Generic genericSourceType, genericTargetType;
@@ -110,7 +110,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         verify(source, atLeast(1)).getParameters();
         verify(target, atLeast(1)).getType();
         verify(target, atLeast(1)).getDeclaredAnnotations();
-        verify(assigner).assign(sourceType, targetType, Assigner.Typing.of(dynamicallyTyped));
+        verify(assigner).assign(genericSourceType, genericTargetType, Assigner.Typing.of(dynamicallyTyped));
         verifyNoMoreInteractions(assigner);
     }
 
@@ -152,6 +152,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
 
     }
 
+    @SuppressWarnings("unused")
     private static class Carrier {
 
         private void method(@Argument(0) Void parameter) {

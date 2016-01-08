@@ -123,13 +123,13 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return A list of stack manipulation that loads all arguments of an instrumented method.
      */
     private List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
-        TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList().asErasures();
+        TypeList.Generic parameterTypes = instrumentedMethod.getParameters().asTypeList();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
         int currentIndex = 1;
-        for (TypeDescription parameterType : parameterTypes) {
+        for (TypeDescription.Generic parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
                     MethodVariableAccess.of(parameterType).loadOffset(currentIndex),
-                    assigner.assign(parameterType, TypeDescription.OBJECT, Assigner.Typing.STATIC)));
+                    assigner.assign(parameterType, TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
             currentIndex += parameterType.getStackSize().getSize();
         }
         return instruction;
@@ -174,9 +174,9 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod.asDefined()).cached()
                         : MethodConstant.forMethod(instrumentedMethod.asDefined()),
-                ArrayFactory.forType(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
+                ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
-                assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType().asErasure(), Assigner.Typing.DYNAMIC),
+                assigner.assign(TypeDescription.Generic.OBJECT, instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

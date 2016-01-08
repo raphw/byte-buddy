@@ -1431,13 +1431,13 @@ public interface AgentBuilder {
                                 new TextConstant(Nexus.class.getName()),
                                 MethodInvocation.invoke(NexusAccessor.INSTANCE.loadClass),
                                 new TextConstant("initialize"),
-                                ArrayFactory.forType(TypeDescription.CLASS)
+                                ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
                                         .withValues(Arrays.asList(
                                                 ClassConstant.of(TypeDescription.CLASS),
                                                 ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
                                 MethodInvocation.invoke(NexusAccessor.INSTANCE.getDeclaredMethod),
                                 NullConstant.INSTANCE,
-                                ArrayFactory.forType(TypeDescription.OBJECT)
+                                ArrayFactory.forType(TypeDescription.Generic.OBJECT)
                                         .withValues(Arrays.asList(
                                                 ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
                                                 new StackManipulation.Compound(

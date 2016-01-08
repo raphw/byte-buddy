@@ -1333,7 +1333,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     @Override
                     public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                         return new Resolved.Simple(new StackManipulation.Compound(stackManipulation,
-                                assigner.assign(primitiveType, wrapperType, typing)), wrapperType);
+                                assigner.assign(primitiveType.asGenericType(), wrapperType.asGenericType(), typing)), wrapperType);
                     }
 
                     @Override
@@ -1567,7 +1567,7 @@ public class InvokeDynamic implements Implementation.Composable {
                 @Override
                 public Resolved resolve(TypeDescription instrumentedType, MethodDescription instrumentedMethod, Assigner assigner, Assigner.Typing typing) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(name)).getOnly();
-                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asErasure(), fieldType.asErasure(), typing);
+                    StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), fieldType, typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + fieldType);
                     }
@@ -1826,7 +1826,7 @@ public class InvokeDynamic implements Implementation.Composable {
                     if (index >= parameters.size()) {
                         throw new IllegalStateException("No parameter " + index + " for " + instrumentedMethod);
                     }
-                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType().asErasure(), typeDescription, typing);
+                    StackManipulation stackManipulation = assigner.assign(parameters.get(index).getType(), typeDescription.asGenericType(), typing);
                     if (!stackManipulation.isValid()) {
                         throw new IllegalArgumentException("Cannot assign " + parameters.get(index) + " to " + typeDescription);
                     }
@@ -2890,7 +2890,7 @@ public class InvokeDynamic implements Implementation.Composable {
 
             @Override
             public StackManipulation resolve(MethodDescription interceptedMethod, TypeDescription returnType, Assigner assigner, Assigner.Typing typing) {
-                StackManipulation stackManipulation = assigner.assign(returnType, interceptedMethod.getReturnType().asErasure(), typing);
+                StackManipulation stackManipulation = assigner.assign(returnType.asGenericType(), interceptedMethod.getReturnType(), typing);
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot return " + returnType + " from " + interceptedMethod);
                 }

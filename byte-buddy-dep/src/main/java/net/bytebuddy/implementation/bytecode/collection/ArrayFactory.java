@@ -19,7 +19,7 @@ public class ArrayFactory implements CollectionFactory {
     /**
      * The component type of the array this array factory is creating.
      */
-    private final TypeDescription componentType;
+    private final TypeDescription.Generic componentType;
 
     /**
      * The array creator delegate that supplies suitable opcodes for the creation of an array and the storage of
@@ -42,7 +42,7 @@ public class ArrayFactory implements CollectionFactory {
      * @param componentType The component type of the array factory.
      * @param arrayCreator  The array creator responsible for providing the correct byte code instructions.
      */
-    protected ArrayFactory(TypeDescription componentType, ArrayCreator arrayCreator) {
+    protected ArrayFactory(TypeDescription.Generic componentType, ArrayCreator arrayCreator) {
         this.componentType = componentType;
         this.arrayCreator = arrayCreator;
         // Size decreases by index and array reference (2) and array element (1, 2) after each element storage.
@@ -55,7 +55,7 @@ public class ArrayFactory implements CollectionFactory {
      * @param componentType The component type of the array that is to be build.
      * @return A new array factory for the given type.
      */
-    public static ArrayFactory forType(TypeDescription componentType) {
+    public static ArrayFactory forType(TypeDescription.Generic componentType) {
         return new ArrayFactory(componentType, makeArrayCreatorFor(componentType));
     }
 
@@ -65,7 +65,7 @@ public class ArrayFactory implements CollectionFactory {
      * @param componentType The component type of the array to be created.
      * @return A suitable array creator.
      */
-    private static ArrayCreator makeArrayCreatorFor(TypeDescription componentType) {
+    private static ArrayCreator makeArrayCreatorFor(TypeDescription.Generic componentType) {
         if (componentType.isPrimitive()) {
             if (componentType.represents(boolean.class)) {
                 return ArrayCreator.ForPrimitiveType.BOOLEAN;
@@ -87,7 +87,7 @@ public class ArrayFactory implements CollectionFactory {
                 throw new IllegalArgumentException("Cannot create array of type " + componentType);
             }
         } else {
-            return new ArrayCreator.ForReferenceType(componentType);
+            return new ArrayCreator.ForReferenceType(componentType.asErasure());
         }
     }
 
@@ -97,7 +97,7 @@ public class ArrayFactory implements CollectionFactory {
     }
 
     @Override
-    public TypeDescription getComponentType() {
+    public TypeDescription.Generic getComponentType() {
         return componentType;
     }
 

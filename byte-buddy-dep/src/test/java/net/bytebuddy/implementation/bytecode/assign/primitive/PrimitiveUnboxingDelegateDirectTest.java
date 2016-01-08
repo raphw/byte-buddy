@@ -42,7 +42,10 @@ public class PrimitiveUnboxingDelegateDirectTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription primitiveTypeDescription, wrapperTypeDescription;
+    private TypeDescription.Generic primitiveTypeDescription, wrapperTypeDescription;
+
+    @Mock
+    private TypeDescription rawPrimitiveTypeDescription, rawWrapperTypeDescription;
 
     @Mock
     private Assigner chainedAssigner;
@@ -86,11 +89,13 @@ public class PrimitiveUnboxingDelegateDirectTest {
     public void setUp() throws Exception {
         when(primitiveTypeDescription.isPrimitive()).thenReturn(true);
         when(primitiveTypeDescription.represents(primitiveType)).thenReturn(true);
-        when(primitiveTypeDescription.getInternalName()).thenReturn(Type.getInternalName(primitiveType));
+        when(primitiveTypeDescription.asErasure()).thenReturn(rawPrimitiveTypeDescription);
+        when(rawPrimitiveTypeDescription.getInternalName()).thenReturn(Type.getInternalName(primitiveType));
         when(wrapperTypeDescription.isPrimitive()).thenReturn(false);
         when(wrapperTypeDescription.represents(wrapperType)).thenReturn(true);
-        when(wrapperTypeDescription.getInternalName()).thenReturn(Type.getInternalName(wrapperType));
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
+        when(wrapperTypeDescription.asErasure()).thenReturn(rawWrapperTypeDescription);
+        when(rawWrapperTypeDescription.getInternalName()).thenReturn(Type.getInternalName(wrapperType));
+        when(chainedAssigner.assign(any(TypeDescription.Generic.class), any(TypeDescription.Generic.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
         when(stackManipulation.isValid()).thenReturn(true);
         when(stackManipulation.apply(any(MethodVisitor.class), any(Implementation.Context.class))).thenReturn(StackSize.ZERO.toIncreasingSize());
     }
@@ -109,7 +114,7 @@ public class PrimitiveUnboxingDelegateDirectTest {
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                wrapperTypeDescription.getInternalName(),
+                Type.getInternalName(wrapperType),
                 unboxingMethodName,
                 unboxingMethodDescriptor,
                 false);
@@ -120,7 +125,8 @@ public class PrimitiveUnboxingDelegateDirectTest {
 
     @Test
     public void testImplicitBoxing() throws Exception {
-        TypeDescription referenceTypeDescription = mock(TypeDescription.class);
+        TypeDescription.Generic referenceTypeDescription = mock(TypeDescription.Generic.class);
+        when(referenceTypeDescription.asGenericType()).thenReturn(referenceTypeDescription);
         StackManipulation primitiveStackManipulation = PrimitiveUnboxingDelegate.forReferenceType(referenceTypeDescription)
                 .assignUnboxedTo(primitiveTypeDescription, chainedAssigner, Assigner.Typing.DYNAMIC);
         assertThat(primitiveStackManipulation.isValid(), is(true));
@@ -128,12 +134,12 @@ public class PrimitiveUnboxingDelegateDirectTest {
         assertThat(size.getSizeImpact(), is(sizeChange));
         assertThat(size.getMaximalSize(), is(sizeChange));
         verify(methodVisitor).visitMethodInsn(Opcodes.INVOKEVIRTUAL,
-                wrapperTypeDescription.getInternalName(),
+                Type.getInternalName(wrapperType),
                 unboxingMethodName,
                 unboxingMethodDescriptor,
                 false);
         verifyNoMoreInteractions(methodVisitor);
-        verify(chainedAssigner).assign(referenceTypeDescription, new TypeDescription.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
+        verify(chainedAssigner).assign(referenceTypeDescription, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(chainedAssigner);
         verify(stackManipulation, atLeast(1)).isValid();
         verify(stackManipulation).apply(methodVisitor, implementationContext);

@@ -38,15 +38,15 @@ public class PrimitiveTypeAwareAssigner implements Assigner {
     }
 
     @Override
-    public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
-        if (sourceType.isPrimitive() && targetType.isPrimitive()) {
-            return PrimitiveWideningDelegate.forPrimitive(sourceType).widenTo(targetType);
-        } else if (sourceType.isPrimitive() /* && !subType.isPrimitive() */) {
-            return PrimitiveBoxingDelegate.forPrimitive(sourceType).assignBoxedTo(targetType, referenceTypeAwareAssigner, typing);
-        } else if (/* !superType.isPrimitive() && */ targetType.isPrimitive()) {
-            return PrimitiveUnboxingDelegate.forReferenceType(sourceType).assignUnboxedTo(targetType, referenceTypeAwareAssigner, typing);
+    public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
+        if (source.isPrimitive() && target.isPrimitive()) {
+            return PrimitiveWideningDelegate.forPrimitive(source).widenTo(target);
+        } else if (source.isPrimitive() /* && !subType.isPrimitive() */) {
+            return PrimitiveBoxingDelegate.forPrimitive(source).assignBoxedTo(target, referenceTypeAwareAssigner, typing);
+        } else if (/* !superType.isPrimitive() && */ target.isPrimitive()) {
+            return PrimitiveUnboxingDelegate.forReferenceType(source).assignUnboxedTo(target, referenceTypeAwareAssigner, typing);
         } else /* !superType.isPrimitive() && !subType.isPrimitive()) */ {
-            return referenceTypeAwareAssigner.assign(sourceType, targetType, typing);
+            return referenceTypeAwareAssigner.assign(source, target, typing);
         }
     }
 

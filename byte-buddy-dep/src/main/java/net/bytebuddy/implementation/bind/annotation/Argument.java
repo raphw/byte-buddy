@@ -72,16 +72,16 @@ public @interface Argument {
          */
         UNIQUE {
             @Override
-            protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
-                                                                             TypeDescription targetType,
+            protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription.Generic source,
+                                                                             TypeDescription.Generic target,
                                                                              int sourceParameterIndex,
                                                                              Assigner assigner,
                                                                              Assigner.Typing typing,
                                                                              int parameterOffset) {
                 return MethodDelegationBinder.ParameterBinding.Unique.of(
                         new StackManipulation.Compound(
-                                MethodVariableAccess.of(sourceType).loadOffset(parameterOffset),
-                                assigner.assign(sourceType, targetType, typing)),
+                                MethodVariableAccess.of(source).loadOffset(parameterOffset),
+                                assigner.assign(source, target, typing)),
                         new ArgumentTypeResolver.ParameterIndexToken(sourceParameterIndex)
                 );
             }
@@ -92,16 +92,14 @@ public @interface Argument {
          */
         ANONYMOUS {
             @Override
-            protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
-                                                                             TypeDescription targetType,
+            protected MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription.Generic source,
+                                                                             TypeDescription.Generic target,
                                                                              int sourceParameterIndex,
                                                                              Assigner assigner,
                                                                              Assigner.Typing typing,
                                                                              int parameterOffset) {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(
-                        new StackManipulation.Compound(
-                                MethodVariableAccess.of(sourceType).loadOffset(parameterOffset),
-                                assigner.assign(sourceType, targetType, typing))
+                        new StackManipulation.Compound(MethodVariableAccess.of(source).loadOffset(parameterOffset), assigner.assign(source, target, typing))
                 );
             }
         };
@@ -109,16 +107,16 @@ public @interface Argument {
         /**
          * Creates a binding that corresponds to this binding mechanic.
          *
-         * @param sourceType           The source type to be bound.
-         * @param targetType           The target type the {@code sourceType} is to be bound to.
+         * @param source           The source type to be bound.
+         * @param target           The target type the {@code sourceType} is to be bound to.
          * @param sourceParameterIndex The index of the source parameter.
          * @param assigner             The assigner that is used to perform the assignment.
          * @param typing               Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @param parameterOffset      The offset of the source method's parameter.
          * @return A binding considering the chosen binding mechanic.
          */
-        protected abstract MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription sourceType,
-                                                                                  TypeDescription targetType,
+        protected abstract MethodDelegationBinder.ParameterBinding<?> makeBinding(TypeDescription.Generic source,
+                                                                                  TypeDescription.Generic target,
                                                                                   int sourceParameterIndex,
                                                                                   Assigner assigner,
                                                                                   Assigner.Typing typing,
@@ -161,8 +159,8 @@ public @interface Argument {
             } else if (source.getParameters().size() <= argument.value()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getType().asErasure(),
-                    target.getType().asErasure(),
+            return argument.bindingMechanic().makeBinding(source.getParameters().get(argument.value()).getType(),
+                    target.getType(),
                     argument.value(),
                     assigner,
                     RuntimeType.Verifier.check(target),

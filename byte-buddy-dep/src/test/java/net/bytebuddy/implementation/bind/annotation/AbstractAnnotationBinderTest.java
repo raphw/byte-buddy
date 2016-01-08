@@ -3,10 +3,8 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -54,15 +52,6 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
     @Mock
     protected StackManipulation stackManipulation;
 
-    @Mock
-    protected ParameterList<?> sourceParameterList;
-
-    @Mock
-    protected TypeList.Generic sourceTypeList;
-
-    @Mock
-    protected TypeList rawSourceTypeList;
-
     protected AbstractAnnotationBinderTest(Class<T> annotationType) {
         super(annotationType);
     }
@@ -83,10 +72,7 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
         annotation = mock(annotationType);
         doReturn(annotationType).when(annotation).annotationType();
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
-        when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
-        when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
-        when(sourceTypeList.asErasures()).thenReturn(rawSourceTypeList);
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
+        when(assigner.assign(any(TypeDescription.Generic.class), any(TypeDescription.Generic.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
         when(implementationTarget.getInstrumentedType()).thenReturn(instrumentedType);
         when(implementationTarget.getOriginType()).thenReturn(instrumentedType);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);

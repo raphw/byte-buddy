@@ -1060,7 +1060,7 @@ public class ByteBuddy {
                 }
                 stackManipulation = new StackManipulation.Compound(
                         stackManipulation,
-                        ArrayFactory.forType(instrumentedType).withValues(fieldGetters),
+                        ArrayFactory.forType(instrumentedType.asGenericType()).withValues(fieldGetters),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(ENUM_VALUES)).getOnly()).putter()
                 );
                 return new Size(stackManipulation.apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
