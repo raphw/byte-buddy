@@ -2491,7 +2491,7 @@ public interface TypePool {
 
                 @Override
                 public void onComplete() {
-                    //typeVariablesTokensForExtensions.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    LazyTypeDescription.AnnotationToken annotationToken = new LazyTypeDescription.AnnotationToken(descriptor, values);
                 }
             }
 
@@ -2503,7 +2503,6 @@ public interface TypePool {
 
                 @Override
                 public void onComplete() {
-                    //typeVariableTokenForTypeParameters.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
                 }
             }
 
@@ -2515,7 +2514,6 @@ public interface TypePool {
 
                 @Override
                 public void onComplete() {
-                    //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
                 }
             }
 
@@ -3041,7 +3039,6 @@ public interface TypePool {
 
                     @Override
                     public void onComplete() {
-                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
                     }
                 }
 
@@ -3054,19 +3051,6 @@ public interface TypePool {
 
                     @Override
                     public void onComplete() {
-                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
-                    }
-                }
-
-                protected class TypeAnnotationOnTypeParameterBoundCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
-
-                    protected TypeAnnotationOnTypeParameterBoundCollector(String descriptor, TypePath typePath, int index) {
-                        super(descriptor, typePath, index);
-                    }
-
-                    @Override
-                    public void onComplete() {
-                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
                     }
                 }
 
@@ -3078,7 +3062,6 @@ public interface TypePool {
 
                     @Override
                     public void onComplete() {
-                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
                     }
                 }
 
@@ -3090,7 +3073,6 @@ public interface TypePool {
 
                     @Override
                     public void onComplete() {
-                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
                     }
                 }
 
