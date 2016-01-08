@@ -303,7 +303,8 @@ public interface LatentMatcher<T> {
         public ElementMatcher<? super S> resolve(TypeDescription instrumentedType) {
             ElementMatcher.Junction<? super S> matcher = none();
             for (LatentMatcher<? super S> latentMatcher : matchers) {
-                matcher = matcher.or(latentMatcher.resolve(instrumentedType));
+                // Casting required for Java 6 compiler.
+                matcher = matcher.or((ElementMatcher<? super S>) latentMatcher.resolve(instrumentedType));
             }
             return matcher;
         }
