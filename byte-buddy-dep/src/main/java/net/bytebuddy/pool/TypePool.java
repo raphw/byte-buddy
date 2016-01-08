@@ -1064,6 +1064,16 @@ public interface TypePool {
                         super(descriptor);
                         this.typePath = typePath;
                     }
+
+                    protected abstract static class WithIndex extends ForTypeVariable {
+
+                        protected final int index;
+
+                        protected WithIndex(String descriptor, TypePath typePath, int index) {
+                            super(descriptor, typePath);
+                            this.index = index;
+                        }
+                    }
                 }
             }
         }
@@ -2409,16 +2419,16 @@ public interface TypePool {
                 TypeReference typeReference = new TypeReference(rawTypeReference);
                 switch (typeReference.getSort()) {
                     case TypeReference.CLASS_EXTENDS:
-                        annotationRegistrant = new OnExtensionCollector(descriptor, typePath, typeReference.getSuperTypeIndex());
+                        annotationRegistrant = new TypeAnnotationOnExtensionCollector(descriptor, typePath, typeReference.getSuperTypeIndex());
                         break;
                     case TypeReference.CLASS_TYPE_PARAMETER:
-                        annotationRegistrant = new OnTypeParameterCollector(descriptor, typePath);
+                        annotationRegistrant = new TypeAnnotationOnTypeParameterCollector(descriptor, typePath, typeReference.getTypeParameterIndex());
                         break;
                     case TypeReference.CLASS_TYPE_PARAMETER_BOUND:
-                        annotationRegistrant = new OnTypeParameterBoundCollector(descriptor, typePath);
+                        annotationRegistrant = new TypeAnnotationOnTypeParameterBoundCollector(descriptor, typePath, typeReference.getTypeParameterBoundIndex());
                         break;
                     default:
-                        throw new IllegalStateException("Unexpected type reference: " + typeReference);
+                        throw new IllegalStateException("Unexpected type reference: " + typeReference.getSort());
                 }
                 return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
             }
@@ -2473,13 +2483,10 @@ public interface TypePool {
                         '}';
             }
 
-            protected class OnExtensionCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+            protected class TypeAnnotationOnExtensionCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
 
-                private final int typeIndex;
-
-                protected OnExtensionCollector(String descriptor, TypePath typePath, int typeIndex) {
-                    super(descriptor, typePath);
-                    this.typeIndex = typeIndex;
+                protected TypeAnnotationOnExtensionCollector(String descriptor, TypePath typePath, int index) {
+                    super(descriptor, typePath, index);
                 }
 
                 @Override
@@ -2488,10 +2495,10 @@ public interface TypePool {
                 }
             }
 
-            protected class OnTypeParameterCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+            protected class TypeAnnotationOnTypeParameterCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
 
-                protected OnTypeParameterCollector(String descriptor, TypePath typePath) {
-                    super(descriptor, typePath);
+                protected TypeAnnotationOnTypeParameterCollector(String descriptor, TypePath typePath, int index) {
+                    super(descriptor, typePath, index);
                 }
 
                 @Override
@@ -2500,10 +2507,10 @@ public interface TypePool {
                 }
             }
 
-            protected class OnTypeParameterBoundCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+            protected class TypeAnnotationOnTypeParameterBoundCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
 
-                protected OnTypeParameterBoundCollector(String descriptor, TypePath typePath) {
-                    super(descriptor, typePath);
+                protected TypeAnnotationOnTypeParameterBoundCollector(String descriptor, TypePath typePath, int index) {
+                    super(descriptor, typePath, index);
                 }
 
                 @Override
@@ -2563,8 +2570,7 @@ public interface TypePool {
                  * @param annotationRegistrant The annotation registrant to register found annotation values on.
                  * @param componentTypeLocator A locator for the component type of any found annotation value.
                  */
-                protected AnnotationExtractor(AnnotationRegistrant annotationRegistrant,
-                                              ComponentTypeLocator componentTypeLocator) {
+                protected AnnotationExtractor(AnnotationRegistrant annotationRegistrant, ComponentTypeLocator componentTypeLocator) {
                     super(Opcodes.ASM5);
                     this.annotationRegistrant = annotationRegistrant;
                     this.componentTypeLocator = componentTypeLocator;
@@ -2633,8 +2639,7 @@ public interface TypePool {
                      * @param name                   The name of the annotation property the collected array is representing.
                      * @param componentTypeReference A lazy reference to resolve the component type of the collected array.
                      */
-                    protected ArrayLookup(String name,
-                                          RawNonPrimitiveArray.ComponentTypeReference componentTypeReference) {
+                    protected ArrayLookup(String name, RawNonPrimitiveArray.ComponentTypeReference componentTypeReference) {
                         this.name = name;
                         this.componentTypeReference = componentTypeReference;
                         values = new ArrayList<AnnotationDescription.AnnotationValue<?, ?>>();
@@ -2753,6 +2758,20 @@ public interface TypePool {
                 }
 
                 @Override
+                public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, TypePath typePath, String descriptor, boolean visible) {
+                    AnnotationRegistrant annotationRegistrant;
+                    TypeReference typeReference = new TypeReference(rawTypeReference);
+                    switch (typeReference.getSort()) {
+                        case TypeReference.FIELD:
+                            annotationRegistrant = new TypeAnnotationOnFieldCollector(descriptor, typePath);
+                            break;
+                        default:
+                            throw new IllegalStateException("Unexpected type reference on field: " + typeReference.getSort());
+                    }
+                    return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                }
+
+                @Override
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     return new AnnotationExtractor(new OnFieldCollector(descriptor), new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
@@ -2776,6 +2795,18 @@ public interface TypePool {
                             ", genericSignature='" + genericSignature + '\'' +
                             ", annotationTokens=" + annotationTokens +
                             '}';
+                }
+
+                protected class TypeAnnotationOnFieldCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+
+                    protected TypeAnnotationOnFieldCollector(String descriptor, TypePath typePath) {
+                        super(descriptor, typePath);
+                    }
+
+                    @Override
+                    public void onComplete() {
+
+                    }
                 }
 
                 /**
@@ -2900,6 +2931,32 @@ public interface TypePool {
                 }
 
                 @Override
+                public AnnotationVisitor visitTypeAnnotation(int rawTypeReference, TypePath typePath, String descriptor, boolean visible) {
+                    AnnotationRegistrant annotationRegistrant;
+                    TypeReference typeReference = new TypeReference(rawTypeReference);
+                    switch (typeReference.getSort()) {
+                        case TypeReference.METHOD_TYPE_PARAMETER:
+                            annotationRegistrant = new TypeAnnotationOnMethodTypeParameterCollector(descriptor, typePath, typeReference.getTypeParameterIndex());
+                            break;
+                        case TypeReference.METHOD_TYPE_PARAMETER_BOUND:
+                            annotationRegistrant = new TypeAnnotationOnMethodTypeParameterBoundCollector(descriptor, typePath, typeReference.getTypeParameterBoundIndex());
+                            break;
+                        case TypeReference.METHOD_RETURN:
+                            annotationRegistrant = new TypeAnnotationOnMethodReturnCollector(descriptor, typePath);
+                            break;
+                        case TypeReference.THROWS:
+                            annotationRegistrant = new TypeAnnotationOnThrowsCollector(descriptor, typePath, typeReference.getExceptionIndex());
+                            break;
+                        case TypeReference.METHOD_RECEIVER:
+                        case TypeReference.METHOD_FORMAL_PARAMETER:
+                            return null; // TODO
+                        default:
+                            throw new IllegalStateException("Unexpected type reference on method: " + typeReference.getSort());
+                    }
+                    return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                }
+
+                @Override
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     return new AnnotationExtractor(new OnMethodCollector(descriptor), new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
@@ -2974,6 +3031,67 @@ public interface TypePool {
                             ", firstLabel=" + firstLabel +
                             ", defaultValue=" + defaultValue +
                             '}';
+                }
+
+                protected class TypeAnnotationOnMethodTypeParameterCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
+
+                    protected TypeAnnotationOnMethodTypeParameterCollector(String descriptor, TypePath typePath, int index) {
+                        super(descriptor, typePath, index);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    }
+                }
+
+
+                protected class TypeAnnotationOnMethodTypeParameterBoundCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
+
+                    protected TypeAnnotationOnMethodTypeParameterBoundCollector(String descriptor, TypePath typePath, int index) {
+                        super(descriptor, typePath, index);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    }
+                }
+
+                protected class TypeAnnotationOnTypeParameterBoundCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
+
+                    protected TypeAnnotationOnTypeParameterBoundCollector(String descriptor, TypePath typePath, int index) {
+                        super(descriptor, typePath, index);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    }
+                }
+
+                protected class TypeAnnotationOnMethodReturnCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable {
+
+                    protected TypeAnnotationOnMethodReturnCollector(String descriptor, TypePath typePath) {
+                        super(descriptor, typePath);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    }
+                }
+
+                protected class TypeAnnotationOnThrowsCollector extends AnnotationRegistrant.AbstractBase.ForTypeVariable.WithIndex {
+
+                    protected TypeAnnotationOnThrowsCollector(String descriptor, TypePath typePath, int index) {
+                        super(descriptor, typePath, index);
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        //typeVariableTokenForTypeParameterBounds.put(typePath, new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    }
                 }
 
                 /**
