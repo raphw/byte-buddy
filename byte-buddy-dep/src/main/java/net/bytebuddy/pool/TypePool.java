@@ -1033,6 +1033,29 @@ public interface TypePool {
              * Called once all annotation values are visited.
              */
             void onComplete();
+
+            abstract class AbstractBase implements AnnotationRegistrant {
+
+                /**
+                 * The annotation descriptor.
+                 */
+                protected final String descriptor;
+
+                /**
+                 * The values that were collected so far.
+                 */
+                protected final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+
+                protected AbstractBase(String descriptor) {
+                    this.descriptor = descriptor;
+                    values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
+                }
+
+                @Override
+                public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
+                    values.put(name, annotationValue);
+                }
+            }
         }
 
         /**
@@ -2252,6 +2275,8 @@ public interface TypePool {
              */
             private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
+            private final LazyTypeDescription.TypeVariableToken.ForType typeVariableToken;
+
             /**
              * A list of field tokens describing fields that are found on the visited type.
              */
@@ -2309,6 +2334,7 @@ public interface TypePool {
             protected TypeExtractor() {
                 super(Opcodes.ASM5);
                 annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
+                typeVariableToken = new LazyTypeDescription.TypeVariableToken.ForType();
                 fieldTokens = new ArrayList<LazyTypeDescription.FieldToken>();
                 methodTokens = new ArrayList<LazyTypeDescription.MethodToken>();
                 anonymousType = false;
@@ -2358,8 +2384,26 @@ public interface TypePool {
 
             @Override
             public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                return new AnnotationExtractor(new OnTypeCollector(descriptor),
-                        new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                return new AnnotationExtractor(new OnTypeCollector(descriptor), new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+            }
+
+            @Override
+            public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                AnnotationRegistrant annotationRegistrant;
+                switch (typeReference) {
+                    case TypeReference.CLASS_EXTENDS:
+                        annotationRegistrant = new OnExtensionCollector(descriptor, typePath);
+                        break;
+                    case TypeReference.CLASS_TYPE_PARAMETER:
+                        annotationRegistrant = new OnTypeParameterCollector(descriptor, typePath);
+                        break;
+                    case TypeReference.CLASS_TYPE_PARAMETER_BOUND:
+                        annotationRegistrant = new OnTypeParameterBoundCollector(descriptor, typePath);
+                        break;
+                    default:
+                        throw new IllegalStateException("Unexpected type reference: " + typeReference);
+                }
+                return new AnnotationExtractor(annotationRegistrant, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
             }
 
             @Override
@@ -2415,17 +2459,7 @@ public interface TypePool {
             /**
              * An annotation registrant that collects annotations found on a type.
              */
-            protected class OnTypeCollector implements AnnotationRegistrant {
-
-                /**
-                 * The descriptor of the annotation that is being collected.
-                 */
-                private final String descriptor;
-
-                /**
-                 * The values that were collected so far.
-                 */
-                private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+            protected class OnTypeCollector extends AnnotationRegistrant.AbstractBase {
 
                 /**
                  * Creates a new on type collector.
@@ -2433,13 +2467,7 @@ public interface TypePool {
                  * @param descriptor The descriptor of the annotation that is being collected.
                  */
                 protected OnTypeCollector(String descriptor) {
-                    this.descriptor = descriptor;
-                    values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
-                }
-
-                @Override
-                public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
-                    values.put(name, annotationValue);
+                    super(descriptor);
                 }
 
                 @Override
@@ -2500,7 +2528,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitAnnotation(String name, String descriptor) {
-                    return new AnnotationExtractor(new AnnotationLookup(name, descriptor),
+                    return new AnnotationExtractor(new AnnotationLookup(descriptor, name),
                             new ComponentTypeLocator.ForAnnotationProperty(TypePool.Default.this, descriptor));
                 }
 
@@ -2580,22 +2608,12 @@ public interface TypePool {
                 /**
                  * An annotation registrant for registering the values on an array that is itself an annotation property.
                  */
-                protected class AnnotationLookup implements AnnotationRegistrant {
+                protected class AnnotationLookup extends AnnotationRegistrant.AbstractBase {
 
                     /**
                      * The name of the original annotation for which the annotation values are looked up.
                      */
                     private final String name;
-
-                    /**
-                     * The descriptor of the original annotation for which the annotation values are looked up.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * A mapping of annotation property values to their values.
-                     */
-                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new annotation registrant for a recursive annotation lookup.
@@ -2605,15 +2623,9 @@ public interface TypePool {
                      * @param descriptor The descriptor of the original annotation for which the annotation values are
                      *                   looked up.
                      */
-                    protected AnnotationLookup(String name, String descriptor) {
+                    protected AnnotationLookup(String descriptor, String name) {
+                        super(descriptor);
                         this.name = name;
-                        this.descriptor = descriptor;
-                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
-                    }
-
-                    @Override
-                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
-                        values.put(name, annotationValue);
                     }
 
                     @Override
@@ -2686,8 +2698,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                    return new AnnotationExtractor(new OnFieldCollector(descriptor),
-                            new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(new OnFieldCollector(descriptor), new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
@@ -2714,31 +2725,10 @@ public interface TypePool {
                 /**
                  * An annotation registrant that collects annotations that are declared on a field.
                  */
-                protected class OnFieldCollector implements AnnotationRegistrant {
+                protected class OnFieldCollector extends AnnotationRegistrant.AbstractBase {
 
-                    /**
-                     * The annotation descriptor.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * A mapping of annotation property names to their values.
-                     */
-                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
-
-                    /**
-                     * Creates a new annotation field registrant.
-                     *
-                     * @param descriptor The descriptor of the annotation.
-                     */
                     protected OnFieldCollector(String descriptor) {
-                        this.descriptor = descriptor;
-                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
-                    }
-
-                    @Override
-                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
-                        values.put(name, annotationValue);
+                        super(descriptor);
                     }
 
                     @Override
@@ -2855,14 +2845,12 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                    return new AnnotationExtractor(new OnMethodCollector(descriptor),
-                            new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(new OnMethodCollector(descriptor), new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
                 public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
-                    return new AnnotationExtractor(new OnMethodParameterCollector(descriptor, index),
-                            new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(new OnMethodParameterCollector(descriptor, index), new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
@@ -2935,17 +2923,7 @@ public interface TypePool {
                 /**
                  * An annotation registrant for annotations found on the method itself.
                  */
-                protected class OnMethodCollector implements AnnotationRegistrant {
-
-                    /**
-                     * The descriptor of the annotation.
-                     */
-                    private final String descriptor;
-
-                    /**
-                     * A mapping of annotation properties to their values.
-                     */
-                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+                protected class OnMethodCollector extends AnnotationRegistrant.AbstractBase {
 
                     /**
                      * Creates a new method annotation registrant.
@@ -2953,13 +2931,7 @@ public interface TypePool {
                      * @param descriptor The descriptor of the annotation.
                      */
                     protected OnMethodCollector(String descriptor) {
-                        this.descriptor = descriptor;
-                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
-                    }
-
-                    @Override
-                    public void register(String name, AnnotationDescription.AnnotationValue<?, ?> annotationValue) {
-                        values.put(name, annotationValue);
+                        super(descriptor);
                     }
 
                     @Override
@@ -2980,22 +2952,12 @@ public interface TypePool {
                 /**
                  * An annotation registrant that collects annotations that are found on a specific parameter.
                  */
-                protected class OnMethodParameterCollector implements AnnotationRegistrant {
-
-                    /**
-                     * The descriptor of the annotation.
-                     */
-                    private final String descriptor;
+                protected class OnMethodParameterCollector extends AnnotationRegistrant.AbstractBase {
 
                     /**
                      * The index of the parameter of this annotation.
                      */
                     private final int index;
-
-                    /**
-                     * A mapping of annotation properties to their values.
-                     */
-                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * Creates a new method parameter annotation registrant.
@@ -3004,9 +2966,8 @@ public interface TypePool {
                      * @param index      The index of the parameter of this annotation.
                      */
                     protected OnMethodParameterCollector(String descriptor, int index) {
-                        this.descriptor = descriptor;
+                        super(descriptor);
                         this.index = index;
-                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override
