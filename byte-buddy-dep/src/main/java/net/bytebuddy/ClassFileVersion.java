@@ -2,6 +2,9 @@ package net.bytebuddy;
 
 import org.objectweb.asm.Opcodes;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
+
 /**
  * A wrapper object for representing a validated class file version in the format that is specified by the
  * <a href="http://docs.oracle.com/javase/specs/jvms/se7/html/jvms-4.html">JVMS</a>.
@@ -57,11 +60,6 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * The class file version of Java 9.
      */
     public static final ClassFileVersion JAVA_V9 = JAVA_V8;
-
-    /**
-     * The system property for this JVM's Java version.
-     */
-    private static final String JAVA_VERSION_PROPERTY = "java.version";
 
     /**
      * The version number that is represented by this class file version instance.
@@ -130,7 +128,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return The currently running Java process's class file version.
      */
     public static ClassFileVersion forCurrentJavaVersion() {
-        String versionString = System.getProperty(JAVA_VERSION_PROPERTY);
+        String versionString = AccessController.doPrivileged(VersionPropertyAction.INSTANCE);
         int[] versionIndex = {-1, 0, 0};
         for (int i = 1; i < 3; i++) {
             versionIndex[i] = versionString.indexOf('.', versionIndex[i - 1] + 1);
@@ -187,6 +185,16 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return compareTo(classFileVersion) > -1;
     }
 
+    /**
+     * Checks if this class file version is less than the provided version.
+     *
+     * @param classFileVersion The version to check against.
+     * @return {@code true} if this version is less than the given version.
+     */
+    public boolean isLessThan(ClassFileVersion classFileVersion) {
+        return compareTo(classFileVersion) < 0;
+    }
+
     @Override
     public int compareTo(ClassFileVersion other) {
         return Integer.signum(getMajorVersion() == other.getMajorVersion()
@@ -208,5 +216,31 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     @Override
     public String toString() {
         return "ClassFileVersion{versionNumber=" + versionNumber + '}';
+    }
+
+    /**
+     * A privileged action for reading the {@code java.version} property.
+     */
+    protected enum VersionPropertyAction implements PrivilegedAction<String> {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        /**
+         * The system property for this JVM's Java version.
+         */
+        private static final String JAVA_VERSION_PROPERTY = "java.version";
+
+        @Override
+        public String run() {
+            return System.getProperty(JAVA_VERSION_PROPERTY);
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileVersion.VersionPropertyAction." + name();
+        }
     }
 }

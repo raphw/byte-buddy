@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -15,7 +16,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Annotation;
-import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -26,10 +26,13 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     private static final String FOO = "foo";
 
     @Mock
-    private TypeDescription firstSourceType, secondSourceType;
+    private TypeDescription.Generic firstSourceType, secondSourceType, genericInstrumentedType;
 
     @Mock
-    private TypeDescription targetType, componentType;
+    private TypeDescription rawTargetType, rawComponentType;
+
+    @Mock
+    private TypeDescription.Generic targetType, componentType;
 
     public AllArgumentsBinderTest() {
         super(AllArguments.class);
@@ -37,11 +40,18 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
 
     @Override
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         super.setUp();
         when(firstSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(secondSourceType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(targetType.asErasure()).thenReturn(targetType);
+        when(componentType.asErasure()).thenReturn(rawComponentType);
+        when(targetType.getComponentType()).thenReturn(componentType);
+        when(targetType.asErasure()).thenReturn(rawTargetType);
+        when(firstSourceType.asGenericType()).thenReturn(firstSourceType);
+        when(firstSourceType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(firstSourceType);
+        when(secondSourceType.asGenericType()).thenReturn(secondSourceType);
+        when(secondSourceType.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(secondSourceType);
     }
 
     @Override
@@ -67,7 +77,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     private void testLegalStrictBinding(boolean dynamicallyTyped, Annotation... targetAnnotation) throws Exception {
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(true);
-        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, firstSourceType, secondSourceType));
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
@@ -91,7 +101,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(1);
         when(annotation.value()).thenReturn(AllArguments.Assignment.STRICT);
         when(stackManipulation.isValid()).thenReturn(false);
-        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, firstSourceType, secondSourceType));
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
@@ -114,14 +124,14 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(1);
         when(annotation.value()).thenReturn(AllArguments.Assignment.SLACK);
         when(stackManipulation.isValid()).thenReturn(false);
-        when(rawSourceTypeList.iterator()).thenReturn(Arrays.asList(firstSourceType, secondSourceType).iterator());
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, firstSourceType, secondSourceType));
         when(source.isStatic()).thenReturn(false);
         when(targetType.isArray()).thenReturn(true);
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(target.getType()).thenReturn(targetType);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
-        when(componentType.getInternalName()).thenReturn(FOO);
+        when(rawComponentType.getInternalName()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
@@ -146,10 +156,11 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
     @Test(expected = IllegalStateException.class)
     public void testNonArrayTypeBinding() throws Exception {
         when(target.getIndex()).thenReturn(0);
-        TypeDescription targetType = mock(TypeDescription.class);
+        TypeDescription.Generic targetType = mock(TypeDescription.Generic.class);
+        TypeDescription rawTargetType = mock(TypeDescription.class);
+        when(targetType.asErasure()).thenReturn(rawTargetType);
         when(targetType.isArray()).thenReturn(false);
         when(target.getType()).thenReturn(targetType);
-        when(targetType.asErasure()).thenReturn(targetType);
         AllArguments.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

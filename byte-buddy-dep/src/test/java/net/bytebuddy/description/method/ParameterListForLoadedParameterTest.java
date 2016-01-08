@@ -1,7 +1,7 @@
 package net.bytebuddy.description.method;
 
 import java.lang.reflect.Method;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 public class ParameterListForLoadedParameterTest extends AbstractParameterListTest<ParameterDescription.InDefinedShape, Method> {
@@ -18,7 +18,7 @@ public class ParameterListForLoadedParameterTest extends AbstractParameterListTe
 
     @Override
     protected ParameterList<ParameterDescription.InDefinedShape> asList(List<Method> elements) {
-        List<ParameterDescription.InDefinedShape> parameters = new LinkedList<ParameterDescription.InDefinedShape>();
+        List<ParameterDescription.InDefinedShape> parameters = new ArrayList<ParameterDescription.InDefinedShape>(elements.size());
         for (Method method : elements) {
             parameters.add(new MethodDescription.ForLoadedMethod(method).getParameters().getOnly());
         }

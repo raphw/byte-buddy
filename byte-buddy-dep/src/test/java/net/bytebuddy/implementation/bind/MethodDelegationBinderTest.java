@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bind;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -51,7 +52,7 @@ public class MethodDelegationBinderTest {
             @Override
             public MethodDescription create() {
                 MethodDescription methodDescription = mock(MethodDescription.class);
-                when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
+                when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
                 return methodDescription;
             }
         }).applyBasic();

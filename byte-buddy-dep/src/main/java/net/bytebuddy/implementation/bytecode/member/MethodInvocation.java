@@ -320,8 +320,7 @@ public enum MethodInvocation {
                     methodDescription.getInternalName(),
                     methodDescription.getDescriptor(),
                     typeDescription.isInterface());
-            int parameterSize = methodDescription.getStackSize();
-            int returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
+            int parameterSize = methodDescription.getStackSize(), returnValueSize = methodDescription.getReturnType().getStackSize().getSize();
             return new Size(returnValueSize - parameterSize, Math.max(0, returnValueSize - parameterSize));
         }
 
@@ -369,7 +368,7 @@ public enum MethodInvocation {
             if (other == null || getClass() != other.getClass()) return false;
             Invocation that = (Invocation) other;
             return MethodInvocation.this.equals(((Invocation) other).getOuterInstance())
-                    && methodDescription.asToken().equals(that.methodDescription.asToken())
+                    && methodDescription.asSignatureToken().equals(that.methodDescription.asSignatureToken())
                     && typeDescription.equals(that.typeDescription);
         }
 
@@ -377,7 +376,7 @@ public enum MethodInvocation {
         public int hashCode() {
             int result = typeDescription.hashCode();
             result = 31 * result + MethodInvocation.this.hashCode();
-            result = 31 * result + methodDescription.asToken().hashCode();
+            result = 31 * result + methodDescription.asSignatureToken().hashCode();
             return result;
         }
 

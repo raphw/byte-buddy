@@ -2,7 +2,6 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -10,10 +9,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-
-import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Implementations represent a list of method descriptions.
@@ -23,20 +19,13 @@ import static net.bytebuddy.matcher.ElementMatchers.none;
 public interface MethodList<T extends MethodDescription> extends FilterableList<T, MethodList<T>> {
 
     /**
-     * Transforms the list of method descriptions into a list of detached tokens.
-     *
-     * @return The transformed token list.
-     */
-    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList();
-
-    /**
      * Transforms the list of method descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
-     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
 
     /**
      * Returns this list of these method descriptions resolved to their defined shape.
@@ -58,15 +47,10 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
-            return asTokenList(none());
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<MethodDescription.Token> tokens = new ArrayList<MethodDescription.Token>(size());
             for (MethodDescription fieldDescription : this) {
-                tokens.add(fieldDescription.asToken(targetTypeMatcher));
+                tokens.add(fieldDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(tokens);
         }
@@ -158,10 +142,20 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         /**
          * Creates a new wrapper for a given list of methods.
          *
+         * @param methodDescription The underlying list of methods used for this method list.
+         */
+        @SuppressWarnings("unchecked")
+        public Explicit(S... methodDescription) {
+            this(Arrays.asList(methodDescription));
+        }
+
+        /**
+         * Creates a new wrapper for a given list of methods.
+         *
          * @param methodDescriptions The underlying list of methods used for this method list.
          */
         public Explicit(List<? extends S> methodDescriptions) {
-            this.methodDescriptions = Collections.unmodifiableList(methodDescriptions);
+            this.methodDescriptions = methodDescriptions;
         }
 
         @Override
@@ -194,6 +188,16 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          * Creates a new list of method descriptions for a list of detached tokens.
          *
          * @param declaringType The method's declaring type.
+         * @param token         The list of method tokens to represent.
+         */
+        public ForTokens(TypeDescription declaringType, MethodDescription.Token... token) {
+            this(declaringType, Arrays.asList(token));
+        }
+
+        /**
+         * Creates a new list of method descriptions for a list of detached tokens.
+         *
+         * @param declaringType The method's declaring type.
          * @param tokens        The list of method tokens to represent.
          */
         public ForTokens(TypeDescription declaringType, List<? extends MethodDescription.Token> tokens) {
@@ -215,12 +219,12 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
     /**
      * A list of method descriptions that yields {@link net.bytebuddy.description.method.MethodDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase<MethodDescription> {
+    class TypeSubstituting extends AbstractBase<MethodDescription.InGenericShape> {
 
         /**
          * The methods' declaring type.
          */
-        private final GenericTypeDescription declaringType;
+        private final TypeDescription.Generic declaringType;
 
         /**
          * The list of method descriptions to represent.
@@ -230,7 +234,7 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
         /**
          * The visitor to apply to each method description before returning it.
          */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a new type substituting method list.
@@ -239,16 +243,16 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
          * @param methodDescriptions The list of method descriptions to represent.
          * @param visitor            The visitor to apply to each method description before returning it.
          */
-        public TypeSubstituting(GenericTypeDescription declaringType,
+        public TypeSubstituting(TypeDescription.Generic declaringType,
                                 List<? extends MethodDescription> methodDescriptions,
-                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             this.declaringType = declaringType;
             this.methodDescriptions = methodDescriptions;
             this.visitor = visitor;
         }
 
         @Override
-        public MethodDescription get(int index) {
+        public MethodDescription.InGenericShape get(int index) {
             return new MethodDescription.TypeSubstituting(declaringType, methodDescriptions.get(index), visitor);
         }
 
@@ -260,23 +264,20 @@ public interface MethodList<T extends MethodDescription> extends FilterableList<
 
     /**
      * An implementation of an empty method list.
+     *
+     * @param <S> The type of parameter descriptions represented by this list.
      */
-    class Empty extends FilterableList.Empty<MethodDescription.InDefinedShape, MethodList<MethodDescription.InDefinedShape>>
-            implements MethodList<MethodDescription.InDefinedShape> {
+    class Empty<S extends MethodDescription> extends FilterableList.Empty<S, MethodList<S>> implements MethodList<S> {
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList() {
-            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
+        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
+            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>();
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<MethodDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
-            return new ByteCodeElement.Token.TokenList<MethodDescription.Token>(Collections.<MethodDescription.Token>emptyList());
-        }
-
-        @Override
+        @SuppressWarnings("unchecked")
         public MethodList<MethodDescription.InDefinedShape> asDefined() {
-            return this;
+            return (MethodList<MethodDescription.InDefinedShape>) this;
         }
     }
 }

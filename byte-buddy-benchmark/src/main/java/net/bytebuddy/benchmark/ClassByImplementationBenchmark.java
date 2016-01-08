@@ -166,7 +166,7 @@ public class ClassByImplementationBenchmark {
     @Benchmark
     public ExampleInterface benchmarkByteBuddy() throws Exception {
         return new ByteBuddy()
-                .withIgnoredMethods(none())
+                .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(baseClass)).intercept(StubMethod.INSTANCE)
                 .make()

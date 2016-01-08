@@ -1,8 +1,9 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeDefinition;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -11,10 +12,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Arrays;
 import java.util.List;
-
-import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
  * Represents a list of parameters of a method or a constructor.
@@ -28,23 +27,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
      *
      * @return A list of types representing the parameters of this list.
      */
-    GenericTypeList asTypeList();
-
-    /**
-     * Transforms the list of parameter descriptions into a list of detached tokens.
-     *
-     * @return The transformed token list.
-     */
-    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList();
+    TypeList.Generic asTypeList();
 
     /**
      * Transforms the list of parameter descriptions into a list of detached tokens. All types that are matched by the provided
      * target type matcher are substituted by {@link net.bytebuddy.dynamic.TargetType}.
      *
-     * @param targetTypeMatcher A matcher that indicates type substitution.
+     * @param matcher A matcher that indicates type substitution.
      * @return The transformed token list.
      */
-    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
+    ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher);
 
     /**
      * Returns this list of these parameter descriptions resolved to their defined shape.
@@ -78,26 +70,21 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
-            return asTokenList(none());
-        }
-
-        @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
             List<ParameterDescription.Token> tokens = new ArrayList<ParameterDescription.Token>(size());
             for (ParameterDescription parameterDescription : this) {
-                tokens.add(parameterDescription.asToken(targetTypeMatcher));
+                tokens.add(parameterDescription.asToken(matcher));
             }
             return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(tokens);
         }
 
         @Override
-        public GenericTypeList asTypeList() {
-            List<GenericTypeDescription> types = new ArrayList<GenericTypeDescription>(size());
+        public TypeList.Generic asTypeList() {
+            List<TypeDescription.Generic> types = new ArrayList<TypeDescription.Generic>(size());
             for (ParameterDescription parameterDescription : this) {
                 types.add(parameterDescription.getType());
             }
-            return new GenericTypeList.Explicit(types);
+            return new TypeList.Generic.Explicit(types);
         }
 
         @Override
@@ -157,16 +144,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         /**
-         * Creates a new list that describes the parameters of the given {@link Method}.
-         *
-         * @param method The method for which the parameters should be described.
-         * @return A list describing the method's parameters.
-         */
-        public static ParameterList<ParameterDescription.InDefinedShape> of(Method method) {
-            return DISPATCHER.describe(method);
-        }
-
-        /**
          * Creates a new list that describes the parameters of the given {@link Constructor}.
          *
          * @param constructor The constructor for which the parameters should be described.
@@ -174,6 +151,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          */
         public static ParameterList<ParameterDescription.InDefinedShape> of(Constructor<?> constructor) {
             return DISPATCHER.describe(constructor);
+        }
+
+        /**
+         * Creates a new list that describes the parameters of the given {@link Method}.
+         *
+         * @param method The method for which the parameters should be described.
+         * @return A list describing the method's parameters.
+         */
+        public static ParameterList<ParameterDescription.InDefinedShape> of(Method method) {
+            return DISPATCHER.describe(method);
         }
 
         @Override
@@ -195,20 +182,20 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             int getParameterCount(Object executable);
 
             /**
-             * Describes a {@link Method}'s parameters of the given VM.
-             *
-             * @param method The method for which the parameters should be described.
-             * @return A list describing the method's parameters.
-             */
-            ParameterList<ParameterDescription.InDefinedShape> describe(Method method);
-
-            /**
              * Describes a {@link Constructor}'s parameters of the given VM.
              *
              * @param constructor The constructor for which the parameters should be described.
              * @return A list describing the constructor's parameters.
              */
             ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor);
+
+            /**
+             * Describes a {@link Method}'s parameters of the given VM.
+             *
+             * @param method The method for which the parameters should be described.
+             * @return A list describing the method's parameters.
+             */
+            ParameterList<ParameterDescription.InDefinedShape> describe(Method method);
 
             /**
              * A dispatcher for a legacy VM that does not support the {@code java.lang.reflect.Parameter} type.
@@ -226,13 +213,13 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
-                    return new OfLegacyVmMethod(method);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
+                    return new OfLegacyVmConstructor(constructor);
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
-                    return new OfLegacyVmConstructor(constructor);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
+                    return new OfLegacyVmMethod(method);
                 }
 
                 @Override
@@ -272,13 +259,13 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
-                    return new OfMethod(method);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
+                    return new OfConstructor(constructor);
                 }
 
                 @Override
-                public ParameterList<ParameterDescription.InDefinedShape> describe(Constructor<?> constructor) {
-                    return new OfConstructor(constructor);
+                public ParameterList<ParameterDescription.InDefinedShape> describe(Method method) {
+                    return new OfMethod(method);
                 }
 
                 @Override
@@ -298,26 +285,6 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                             "getParameterCount=" + getParameterCount +
                             '}';
                 }
-            }
-        }
-
-        /**
-         * Describes the list of {@link Method} parameters on a modern VM.
-         */
-        protected static class OfMethod extends ForLoadedExecutable<Method> {
-
-            /**
-             * Creates a new description of the parameters of a method.
-             *
-             * @param method The method that is represented by this instance.
-             */
-            protected OfMethod(Method method) {
-                super(method);
-            }
-
-            @Override
-            public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index);
             }
         }
 
@@ -342,45 +309,22 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         /**
-         * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
-         * type is not available.
+         * Describes the list of {@link Method} parameters on a modern VM.
          */
-        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
+        protected static class OfMethod extends ForLoadedExecutable<Method> {
 
             /**
-             * The represented method.
-             */
-            private final Method method;
-
-            /**
-             * An array of this method's parameter types.
-             */
-            private final Class<?>[] parameterType;
-
-            /**
-             * An array of all parameter annotations of the represented method.
-             */
-            private final Annotation[][] parameterAnnotation;
-
-            /**
-             * Creates a legacy representation of a method's parameters.
+             * Creates a new description of the parameters of a method.
              *
-             * @param method The method to represent.
+             * @param method The method that is represented by this instance.
              */
-            protected OfLegacyVmMethod(Method method) {
-                this.method = method;
-                this.parameterType = method.getParameterTypes();
-                this.parameterAnnotation = method.getParameterAnnotations();
+            protected OfMethod(Method method) {
+                super(method);
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
-            }
-
-            @Override
-            public int size() {
-                return parameterType.length;
+                return new ParameterDescription.ForLoadedParameter.OfMethod(executable, index);
             }
         }
 
@@ -426,6 +370,49 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 return parameterType.length;
             }
         }
+
+        /**
+         * Represents a list of method parameters on virtual machines where the {@code java.lang.reflect.Parameter}
+         * type is not available.
+         */
+        protected static class OfLegacyVmMethod extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
+
+            /**
+             * The represented method.
+             */
+            private final Method method;
+
+            /**
+             * An array of this method's parameter types.
+             */
+            private final Class<?>[] parameterType;
+
+            /**
+             * An array of all parameter annotations of the represented method.
+             */
+            private final Annotation[][] parameterAnnotation;
+
+            /**
+             * Creates a legacy representation of a method's parameters.
+             *
+             * @param method The method to represent.
+             */
+            protected OfLegacyVmMethod(Method method) {
+                this.method = method;
+                this.parameterType = method.getParameterTypes();
+                this.parameterAnnotation = method.getParameterAnnotations();
+            }
+
+            @Override
+            public ParameterDescription.InDefinedShape get(int index) {
+                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
+            }
+
+            @Override
+            public int size() {
+                return parameterType.length;
+            }
+        }
     }
 
     /**
@@ -443,10 +430,20 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * Creates a new list of explicit parameter descriptions.
          *
+         * @param parameterDescription The list of parameter descriptions that are represented by this list.
+         */
+        @SuppressWarnings("unchecked")
+        public Explicit(S... parameterDescription) {
+            this(Arrays.asList(parameterDescription));
+        }
+
+        /**
+         * Creates a new list of explicit parameter descriptions.
+         *
          * @param parameterDescriptions The list of parameter descriptions that are represented by this list.
          */
         public Explicit(List<? extends S> parameterDescriptions) {
-            this.parameterDescriptions = Collections.unmodifiableList(parameterDescriptions);
+            this.parameterDescriptions = parameterDescriptions;
         }
 
         @Override
@@ -472,31 +469,41 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * A list of detached types representing the parameters.
              */
-            private final List<? extends GenericTypeDescription> typeDescriptions;
+            private final List<? extends TypeDefinition> typeDefinitions;
 
             /**
              * Creates a new parameter type list.
              *
              * @param methodDescription The method description that declares the parameters.
-             * @param typeDescriptions  A list of detached types representing the parameters.
+             * @param typeDefinition   A list of detached types representing the parameters.
              */
-            public ForTypes(MethodDescription.InDefinedShape methodDescription, List<? extends GenericTypeDescription> typeDescriptions) {
+            public ForTypes(MethodDescription.InDefinedShape methodDescription, TypeDefinition... typeDefinition) {
+                this(methodDescription, Arrays.asList(typeDefinition));
+            }
+
+            /**
+             * Creates a new parameter type list.
+             *
+             * @param methodDescription The method description that declares the parameters.
+             * @param typeDefinitions   A list of detached types representing the parameters.
+             */
+            public ForTypes(MethodDescription.InDefinedShape methodDescription, List<? extends TypeDefinition> typeDefinitions) {
                 this.methodDescription = methodDescription;
-                this.typeDescriptions = typeDescriptions;
+                this.typeDefinitions = typeDefinitions;
             }
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
                 int offset = methodDescription.isStatic() ? 0 : 1;
-                for (GenericTypeDescription typeDescription : typeDescriptions.subList(0, index)) {
-                    offset += typeDescription.getStackSize().getSize();
+                for (TypeDefinition typeDefinition : typeDefinitions.subList(0, index)) {
+                    offset += typeDefinition.getStackSize().getSize();
                 }
-                return new ParameterDescription.Latent(methodDescription, typeDescriptions.get(index), index, offset);
+                return new ParameterDescription.Latent(methodDescription, typeDefinitions.get(index).asGenericType(), index, offset);
             }
 
             @Override
             public int size() {
-                return typeDescriptions.size();
+                return typeDefinitions.size();
             }
         }
     }
@@ -545,12 +552,12 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
     /**
      * A list of parameter descriptions that yields {@link net.bytebuddy.description.method.ParameterDescription.TypeSubstituting}.
      */
-    class TypeSubstituting extends AbstractBase<ParameterDescription> {
+    class TypeSubstituting extends AbstractBase<ParameterDescription.InGenericShape> {
 
         /**
          * The method that is declaring the transformed parameters.
          */
-        private final MethodDescription declaringMethod;
+        private final MethodDescription.InGenericShape declaringMethod;
 
         /**
          * The untransformed parameters that are represented by this list.
@@ -560,7 +567,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         /**
          * The visitor to apply to the parameter types before returning them.
          */
-        private final GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor;
+        private final TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
         /**
          * Creates a new type substituting parameter list.
@@ -569,16 +576,16 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
          * @param parameterDescriptions The untransformed parameters that are represented by this list.
          * @param visitor               The visitor to apply to the parameter types before returning them.
          */
-        public TypeSubstituting(MethodDescription declaringMethod,
+        public TypeSubstituting(MethodDescription.InGenericShape declaringMethod,
                                 List<? extends ParameterDescription> parameterDescriptions,
-                                GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+                                TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             this.declaringMethod = declaringMethod;
             this.parameterDescriptions = parameterDescriptions;
             this.visitor = visitor;
         }
 
         @Override
-        public ParameterDescription get(int index) {
+        public ParameterDescription.InGenericShape get(int index) {
             return new ParameterDescription.TypeSubstituting(declaringMethod, parameterDescriptions.get(index), visitor);
         }
 
@@ -590,9 +597,10 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
 
     /**
      * An empty list of parameters.
+     *
+     * @param <S> The type of parameter descriptions represented by this list.
      */
-    class Empty extends FilterableList.Empty<ParameterDescription.InDefinedShape, ParameterList<ParameterDescription.InDefinedShape>>
-            implements ParameterList<ParameterDescription.InDefinedShape> {
+    class Empty<S extends ParameterDescription> extends FilterableList.Empty<S, ParameterList<S>> implements ParameterList<S> {
 
         @Override
         public boolean hasExplicitMetaData() {
@@ -600,23 +608,19 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         }
 
         @Override
-        public GenericTypeList asTypeList() {
-            return new GenericTypeList.Empty();
+        public TypeList.Generic asTypeList() {
+            return new TypeList.Generic.Empty();
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList() {
-            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
+        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super TypeDescription> matcher) {
+            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>();
         }
 
         @Override
-        public ByteCodeElement.Token.TokenList<ParameterDescription.Token> asTokenList(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher) {
-            return new ByteCodeElement.Token.TokenList<ParameterDescription.Token>(Collections.<ParameterDescription.Token>emptyList());
-        }
-
-        @Override
+        @SuppressWarnings("unchecked")
         public ParameterList<ParameterDescription.InDefinedShape> asDefined() {
-            return this;
+            return (ParameterList<ParameterDescription.InDefinedShape>) this;
         }
     }
 }

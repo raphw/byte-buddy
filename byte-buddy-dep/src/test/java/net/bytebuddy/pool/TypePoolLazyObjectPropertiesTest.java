@@ -6,6 +6,9 @@ import org.junit.Test;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.MatcherAssert.assertThat;
+
 public class TypePoolLazyObjectPropertiesTest {
 
     @Test
@@ -20,6 +23,18 @@ public class TypePoolLazyObjectPropertiesTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationToken.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationToken.Resolution.Simple.class).apply();
+        ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.AnnotationToken.Resolution.Illegal.class).apply();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalResolutionThrowsException() throws Exception {
+        new TypePool.LazyTypeDescription.AnnotationToken.Resolution.Illegal("foo").resolve();
+    }
+
+    @Test
+    public void testIllegalResolutionIsNotResolved() throws Exception {
+        assertThat(new TypePool.LazyTypeDescription.AnnotationToken.Resolution.Illegal("foo").isResolved(), is(false));
     }
 
     @Test

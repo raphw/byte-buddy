@@ -1,10 +1,10 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -16,6 +16,7 @@ import org.objectweb.asm.Opcodes;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
@@ -27,20 +28,36 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private TypeDescription typeDescription, otherType;
+    private TypeDescription rawTypeDescription, rawOtherType;
+
+    @Mock
+    private TypeDescription.Generic typeDescription, otherType;
+
+    @Mock
+    private LatentMatcher<? super MethodDescription> latentIgnoredMethods;
 
     @Mock
     private ElementMatcher<? super MethodDescription> ignoredMethods;
 
-    private LatentMethodMatcher latentMethodMatcher;
+    private LatentMatcher<MethodDescription> matcher;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        latentMethodMatcher = new SubclassDynamicTypeBuilder.InstrumentableMatcher(ignoredMethods);
-        when(typeDescription.asErasure()).thenReturn(typeDescription);
-        when(typeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(otherType.asErasure()).thenReturn(otherType);
-        when(otherType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(rawTypeDescription.asGenericType()).thenReturn(typeDescription);
+        when(rawTypeDescription.asErasure()).thenReturn(rawTypeDescription);
+        when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+        when(typeDescription.asGenericType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+        when(typeDescription.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(rawOtherType.asGenericType()).thenReturn(otherType);
+        when(rawOtherType.asErasure()).thenReturn(rawOtherType);
+        when(otherType.asErasure()).thenReturn(rawOtherType);
+        when(otherType.asGenericType()).thenReturn(otherType);
+        when(otherType.asErasure()).thenReturn(rawOtherType);
+        when(otherType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(latentIgnoredMethods.resolve(any(TypeDescription.class))).thenReturn((ElementMatcher) ignoredMethods);
+        matcher = new SubclassDynamicTypeBuilder.InstrumentableMatcher(latentIgnoredMethods);
     }
 
     @Test
@@ -48,9 +65,9 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
-        when(methodDescription.getDeclaringType()).thenReturn(otherType);
-        when(methodDescription.isVisibleTo(typeDescription)).thenReturn(true);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
+        when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
+        when(methodDescription.isVisibleTo(rawTypeDescription)).thenReturn(true);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test
@@ -58,9 +75,9 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
-        when(methodDescription.getDeclaringType()).thenReturn(otherType);
-        when(methodDescription.isVisibleTo(typeDescription)).thenReturn(false);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
+        when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
+        when(methodDescription.isVisibleTo(rawTypeDescription)).thenReturn(false);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
     }
 
     @Test
@@ -68,9 +85,9 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
-        when(methodDescription.getDeclaringType()).thenReturn(otherType);
-        when(methodDescription.isVisibleTo(typeDescription)).thenReturn(false);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
+        when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
+        when(methodDescription.isVisibleTo(rawTypeDescription)).thenReturn(false);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
     }
 
     @Test
@@ -78,8 +95,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(false);
         when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
-        when(methodDescription.getDeclaringType()).thenReturn(otherType);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
+        when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
     }
 
     @Test
@@ -87,8 +104,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
-        when(methodDescription.getDeclaringType()).thenReturn(otherType);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(false));
+        when(methodDescription.getDeclaringType()).thenReturn(rawOtherType);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(false));
     }
 
     @Test
@@ -96,8 +113,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
-        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
+        when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test
@@ -105,8 +122,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(true);
-        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
+        when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test
@@ -114,8 +131,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(false);
         when(methodDescription.getModifiers()).thenReturn(0);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
-        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
+        when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test
@@ -123,8 +140,8 @@ public class SubclassDynamicTypeBuilderInstrumentableMatcherTest {
         when(methodDescription.isVirtual()).thenReturn(true);
         when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_FINAL);
         when(ignoredMethods.matches(methodDescription)).thenReturn(false);
-        when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
-        assertThat(latentMethodMatcher.resolve(typeDescription).matches(methodDescription), is(true));
+        when(methodDescription.getDeclaringType()).thenReturn(rawTypeDescription);
+        assertThat(matcher.resolve(rawTypeDescription).matches(methodDescription), is(true));
     }
 
     @Test

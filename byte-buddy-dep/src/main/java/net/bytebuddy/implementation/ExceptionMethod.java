@@ -10,7 +10,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.takesArguments;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This implementation causes a {@link java.lang.Throwable} to be thrown when the instrumented method is invoked.
@@ -50,7 +49,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType) {
-        return throwing(new TypeDescription.ForLoadedType(nonNull(exceptionType)));
+        return throwing(new TypeDescription.ForLoadedType(exceptionType));
     }
 
     /**
@@ -66,7 +65,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         if (!exceptionType.isAssignableTo(Throwable.class)) {
             throw new IllegalArgumentException(exceptionType + " does not extend throwable");
         }
-        return new ExceptionMethod(nonNull(exceptionType), new ConstructionDelegate.ForDefaultConstructor(exceptionType));
+        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForDefaultConstructor(exceptionType));
     }
 
     /**
@@ -80,7 +79,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
      * instrumented methods.
      */
     public static Implementation throwing(Class<? extends Throwable> exceptionType, String message) {
-        return throwing(new TypeDescription.ForLoadedType(nonNull(exceptionType)), message);
+        return throwing(new TypeDescription.ForLoadedType(exceptionType), message);
     }
 
     /**
@@ -97,7 +96,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
         if (!exceptionType.isAssignableTo(Throwable.class)) {
             throw new IllegalArgumentException(exceptionType + " does not extend throwable");
         }
-        return new ExceptionMethod(nonNull(exceptionType), new ConstructionDelegate.ForStringConstructor(exceptionType, nonNull(message)));
+        return new ExceptionMethod(exceptionType, new ConstructionDelegate.ForStringConstructor(exceptionType, message));
     }
 
     @Override

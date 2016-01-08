@@ -29,7 +29,7 @@ public class AssignerRefusingTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription first, second;
+    private TypeDescription.Generic first, second;
 
     @Mock
     private MethodVisitor methodVisitor;

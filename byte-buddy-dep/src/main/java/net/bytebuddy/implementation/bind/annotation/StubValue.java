@@ -56,7 +56,7 @@ public @interface StubValue {
             StackManipulation stackManipulation = source.getReturnType().represents(void.class)
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(DefaultValue.of(source.getReturnType().asErasure()),
-                    assigner.assign(source.getReturnType().asErasure(), TypeDescription.OBJECT, Assigner.Typing.STATIC));
+                    assigner.assign(source.getReturnType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC));
             return stackManipulation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation)
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;

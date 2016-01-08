@@ -47,6 +47,9 @@ public class FieldAccessTest {
     private TypeDescription declaringType, fieldType;
 
     @Mock
+    private TypeDescription.Generic genericFieldType;
+
+    @Mock
     private MethodVisitor methodVisitor;
 
     @Mock
@@ -84,11 +87,12 @@ public class FieldAccessTest {
     public void setUp() throws Exception {
         when(declaringType.asErasure()).thenReturn(declaringType);
         when(fieldDescription.getDeclaringType()).thenReturn(declaringType);
-        when(fieldDescription.getType()).thenReturn(fieldType);
+        when(fieldDescription.getType()).thenReturn(genericFieldType);
+        when(genericFieldType.asErasure()).thenReturn(fieldType);
+        when(genericFieldType.getStackSize()).thenReturn(fieldSize);
         when(declaringType.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getInternalName()).thenReturn(BAR);
         when(fieldDescription.getDescriptor()).thenReturn(QUX);
-        when(fieldType.getStackSize()).thenReturn(fieldSize);
         when(fieldDescription.isStatic()).thenReturn(isStatic);
     }
 

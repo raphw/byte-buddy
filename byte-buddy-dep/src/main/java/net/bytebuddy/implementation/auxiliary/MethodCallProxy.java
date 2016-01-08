@@ -8,8 +8,9 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -28,7 +29,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -133,13 +133,13 @@ public class MethodCallProxy implements AuxiliaryType {
         MethodDescription accessorMethod = methodAccessorFactory.registerAccessorFor(specialMethodInvocation);
         LinkedHashMap<String, TypeDescription> parameterFields = extractFields(accessorMethod);
         DynamicType.Builder<?> builder = new ByteBuddy(classFileVersion)
+                .with(PrecomputedMethodGraph.INSTANCE)
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .methodGraphCompiler(PrecomputedMethodGraph.INSTANCE)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(Runnable.class, Callable.class).intercept(new MethodCall(accessorMethod, assigner))
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
+                .defineConstructor().withParameters(parameterFields.values())
                 .intercept(ConstructorCall.INSTANCE);
         for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
             builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);
@@ -193,27 +193,27 @@ public class MethodCallProxy implements AuxiliaryType {
          * Creates the precomputed method graph.
          */
         PrecomputedMethodGraph() {
-            LinkedHashMap<MethodDescription.Token, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.Token, MethodGraph.Node>();
+            LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, MethodGraph.Node>();
             MethodDescription callMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Callable.class),
                     "call",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
-                    Collections.<GenericTypeDescription>emptyList(),
-                    TypeDescription.OBJECT,
+                    Collections.<TypeVariableToken>emptyList(),
+                    TypeDescription.Generic.OBJECT,
                     Collections.<ParameterDescription.Token>emptyList(),
-                    Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)),
+                    Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.<AnnotationDescription>emptyList(),
                     MethodDescription.NO_DEFAULT_VALUE);
-            nodes.put(callMethod.asToken(), new MethodGraph.Node.Simple(callMethod));
+            nodes.put(callMethod.asSignatureToken(), new MethodGraph.Node.Simple(callMethod));
             MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
                     "run",
                     Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT,
-                    Collections.<GenericTypeDescription>emptyList(),
-                    TypeDescription.VOID,
+                    Collections.<TypeVariableToken>emptyList(),
+                    TypeDescription.Generic.VOID,
                     Collections.<ParameterDescription.Token>emptyList(),
-                    Collections.<GenericTypeDescription>emptyList(),
+                    Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
                     MethodDescription.NO_DEFAULT_VALUE);
-            nodes.put(runMethod.asToken(), new MethodGraph.Node.Simple(runMethod));
+            nodes.put(runMethod.asSignatureToken(), new MethodGraph.Node.Simple(runMethod));
             MethodGraph methodGraph = new MethodGraph.Simple(nodes);
             this.methodGraph = new MethodGraph.Linked.Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());
         }
@@ -224,7 +224,7 @@ public class MethodCallProxy implements AuxiliaryType {
         }
 
         @Override
-        public MethodGraph.Linked compile(TypeDescription typeDescription, TypeDescription viewPoint) {
+        public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
             return methodGraph;
         }
 
@@ -263,7 +263,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         @Override
@@ -299,7 +299,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 for (FieldDescription fieldDescription : fieldList) {
                     fieldLoading[index] = new StackManipulation.Compound(
                             thisReference,
-                            MethodVariableAccess.forType(fieldDescription.getType().asErasure())
+                            MethodVariableAccess.of(fieldDescription.getType().asErasure())
                                     .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                             FieldAccess.forField(fieldDescription).putter()
                     );
@@ -365,7 +365,7 @@ public class MethodCallProxy implements AuxiliaryType {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         @Override
@@ -411,7 +411,7 @@ public class MethodCallProxy implements AuxiliaryType {
             public Size apply(MethodVisitor methodVisitor,
                               Context implementationContext,
                               MethodDescription instrumentedMethod) {
-                StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadOffset(0);
+                StackManipulation thisReference = MethodVariableAccess.of(instrumentedType).loadOffset(0);
                 FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                 StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                 int index = 0;
@@ -421,9 +421,7 @@ public class MethodCallProxy implements AuxiliaryType {
                 StackManipulation.Size stackSize = new StackManipulation.Compound(
                         new StackManipulation.Compound(fieldLoading),
                         MethodInvocation.invoke(accessorMethod),
-                        assigner.assign(accessorMethod.getReturnType().asErasure(),
-                                instrumentedMethod.getReturnType().asErasure(),
-                                Assigner.Typing.DYNAMIC),
+                        assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                         MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                 ).apply(methodVisitor, implementationContext);
                 return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

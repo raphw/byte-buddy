@@ -5,7 +5,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.FieldVisitor;
 
-import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -17,11 +17,11 @@ public interface FieldAttributeAppender {
     /**
      * Applies this attribute appender to a given field visitor.
      *
-     * @param fieldVisitor     The field visitor to which the attributes that are represented by this attribute appender
-     *                         are written to.
-     * @param fieldDescription The description of the field to which the field visitor belongs to.
+     * @param fieldVisitor          The field visitor to which the attributes that are represented by this attribute appender are written to.
+     * @param fieldDescription      The description of the field to which the field visitor belongs to.
+     * @param annotationValueFilter The annotation value filter to apply when writing annotations.
      */
-    void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription);
+    void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter);
 
     /**
      * A field attribute appender that does not append any attributes.
@@ -39,7 +39,7 @@ public interface FieldAttributeAppender {
         }
 
         @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
             /* do nothing */
         }
 
@@ -71,43 +71,79 @@ public interface FieldAttributeAppender {
             /**
              * The factories that this compound factory represents in their application order.
              */
-            private final Factory[] factory;
+            private final List<? extends Factory> factories;
 
             /**
              * Creates a new compound field attribute appender factory.
              *
-             * @param factory The factories that are to be combined by this compound factory in the order of their
-             *                application.
+             * @param factory The factories to represent in the order of their application.
              */
             public Compound(Factory... factory) {
-                this.factory = factory;
+                this(Arrays.asList(factory));
+            }
+
+            /**
+             * Creates a new compound field attribute appender factory.
+             *
+             * @param factories The factories to represent in the order of their application.
+             */
+            public Compound(List<? extends Factory> factories) {
+                this.factories = factories;
             }
 
             @Override
             public FieldAttributeAppender make(TypeDescription typeDescription) {
-                FieldAttributeAppender[] fieldAttributeAppender = new FieldAttributeAppender[factory.length];
-                int index = 0;
-                for (Factory factory : this.factory) {
-                    fieldAttributeAppender[index++] = factory.make(typeDescription);
+                List<FieldAttributeAppender> fieldAttributeAppenders = new ArrayList<FieldAttributeAppender>(factories.size());
+                for (Factory factory : factories) {
+                    fieldAttributeAppenders.add(factory.make(typeDescription));
                 }
-                return new FieldAttributeAppender.Compound(fieldAttributeAppender);
+                return new FieldAttributeAppender.Compound(fieldAttributeAppenders);
             }
 
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && Arrays.equals(factory, ((Compound) other).factory);
+                        && factories.equals(((Compound) other).factories);
             }
 
             @Override
             public int hashCode() {
-                return Arrays.hashCode(factory);
+                return factories.hashCode();
             }
 
             @Override
             public String toString() {
-                return "FieldAttributeAppender.Factory.Compound{factory=" + Arrays.toString(factory) + '}';
+                return "FieldAttributeAppender.Factory.Compound{factories=" + factories + '}';
             }
+        }
+    }
+
+    /**
+     * An attribute appender that writes all annotations that are declared on a field.
+     */
+    enum ForInstrumentedField implements FieldAttributeAppender, Factory {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
+            AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
+            for (AnnotationDescription annotation : fieldDescription.getDeclaredAnnotations()) {
+                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+            }
+        }
+
+        @Override
+        public FieldAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public String toString() {
+            return "FieldAttributeAppender.ForInstrumentedField." + name();
         }
     }
 
@@ -115,7 +151,7 @@ public interface FieldAttributeAppender {
      * Appends an annotation to a field. The visibility of the annotation is determined by the annotation type's
      * {@link java.lang.annotation.RetentionPolicy} annotation.
      */
-    class ForAnnotation implements FieldAttributeAppender, Factory {
+    class Explicit implements FieldAttributeAppender, Factory {
 
         /**
          * The annotations that this appender appends.
@@ -123,26 +159,19 @@ public interface FieldAttributeAppender {
         private final List<? extends AnnotationDescription> annotations;
 
         /**
-         * The value filter to apply for discovering which values of an annotation should be written.
-         */
-        private final AnnotationAppender.ValueFilter valueFilter;
-
-        /**
          * Creates a new annotation attribute appender for explicit annotation values. All values, including default values, are copied.
          *
          * @param annotations The annotations to be appended to the field.
-         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
          */
-        public ForAnnotation(List<? extends AnnotationDescription> annotations, AnnotationAppender.ValueFilter valueFilter) {
+        public Explicit(List<? extends AnnotationDescription> annotations) {
             this.annotations = annotations;
-            this.valueFilter = valueFilter;
         }
 
         @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor), valueFilter);
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
+            AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
             for (AnnotationDescription annotation : annotations) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
+                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
             }
         }
 
@@ -154,91 +183,18 @@ public interface FieldAttributeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && annotations.equals(((ForAnnotation) other).annotations)
-                    && valueFilter.equals(((ForAnnotation) other).valueFilter);
+                    && annotations.equals(((Explicit) other).annotations);
         }
 
         @Override
         public int hashCode() {
-            return annotations.hashCode() + 31 * valueFilter.hashCode();
+            return annotations.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.ForAnnotation{" +
+            return "FieldAttributeAppender.Explicit{" +
                     "annotations=" + annotations +
-                    "valueFilter=" + valueFilter +
-                    '}';
-        }
-    }
-
-    /**
-     * Writes all annotations that are found on a field that belongs to a loaded type of the JVM as visible
-     * annotations.
-     */
-    class ForField implements FieldAttributeAppender, Factory {
-
-        /**
-         * The field from which the annotations should be copied.
-         */
-        private final FieldDescription fieldDescription;
-
-        /**
-         * The value filter to apply for discovering which values of an annotation should be written.
-         */
-        private final AnnotationAppender.ValueFilter valueFilter;
-
-        /**
-         * Creates a new field attribute appender that appends all annotations that are found on a field.
-         *
-         * @param field       The field from which the annotations to append are read.
-         * @param valueFilter The value filter to apply for discovering which values of an annotation should be written.
-         */
-        public ForField(Field field, AnnotationAppender.ValueFilter valueFilter) {
-            this(new FieldDescription.ForLoadedField(field), valueFilter);
-        }
-
-        /**
-         * Creates a new field attribute appender that appends all annotations that are found on a field.
-         *
-         * @param fieldDescription The field from which the annotations to append are read.
-         * @param valueFilter      The value filter to apply for discovering which values of an annotation should be written.
-         */
-        public ForField(FieldDescription fieldDescription, AnnotationAppender.ValueFilter valueFilter) {
-            this.fieldDescription = fieldDescription;
-            this.valueFilter = valueFilter;
-        }
-
-        @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor), valueFilter);
-            for (AnnotationDescription annotation : this.fieldDescription.getDeclaredAnnotations()) {
-                annotationAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation));
-            }
-        }
-
-        @Override
-        public FieldAttributeAppender make(TypeDescription typeDescription) {
-            return this;
-        }
-
-        @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && fieldDescription.equals(((ForField) other).fieldDescription)
-                    && valueFilter.equals(((ForField) other).valueFilter);
-        }
-
-        @Override
-        public int hashCode() {
-            return fieldDescription.hashCode() + 31 * valueFilter.hashCode();
-        }
-
-        @Override
-        public String toString() {
-            return "FieldAttributeAppender.ForField{" +
-                    "fieldDescription=" + fieldDescription +
-                    ", valueFilter=" + valueFilter +
                     '}';
         }
     }
@@ -252,7 +208,7 @@ public interface FieldAttributeAppender {
         /**
          * The field attribute appenders this appender represents in their application order.
          */
-        private final FieldAttributeAppender[] fieldAttributeAppender;
+        private final List<? extends FieldAttributeAppender> fieldAttributeAppenders;
 
         /**
          * Creates a new compound field attribute appender.
@@ -261,30 +217,40 @@ public interface FieldAttributeAppender {
          *                               in the order of their application.
          */
         public Compound(FieldAttributeAppender... fieldAttributeAppender) {
-            this.fieldAttributeAppender = fieldAttributeAppender;
+            this(Arrays.asList(fieldAttributeAppender));
+        }
+
+        /**
+         * Creates a new compound field attribute appender.
+         *
+         * @param fieldAttributeAppenders The field attribute appenders that are to be combined by this compound appender
+         *                                in the order of their application.
+         */
+        public Compound(List<? extends FieldAttributeAppender> fieldAttributeAppenders) {
+            this.fieldAttributeAppenders = fieldAttributeAppenders;
         }
 
         @Override
-        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription) {
-            for (FieldAttributeAppender fieldAttributeAppender : this.fieldAttributeAppender) {
-                fieldAttributeAppender.apply(fieldVisitor, fieldDescription);
+        public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
+            for (FieldAttributeAppender fieldAttributeAppender : fieldAttributeAppenders) {
+                fieldAttributeAppender.apply(fieldVisitor, fieldDescription, annotationValueFilter);
             }
         }
 
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(fieldAttributeAppender, ((Compound) other).fieldAttributeAppender);
+                    && fieldAttributeAppenders.equals(((Compound) other).fieldAttributeAppenders);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(fieldAttributeAppender);
+            return fieldAttributeAppenders.hashCode();
         }
 
         @Override
         public String toString() {
-            return "FieldAttributeAppender.Compound{fieldAttributeAppender=" + Arrays.toString(fieldAttributeAppender) + '}';
+            return "FieldAttributeAppender.Compound{fieldAttributeAppenders=" + fieldAttributeAppenders + '}';
         }
     }
 }

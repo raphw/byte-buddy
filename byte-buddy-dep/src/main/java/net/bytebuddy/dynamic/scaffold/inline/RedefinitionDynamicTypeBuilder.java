@@ -1,274 +1,217 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.asm.ClassVisitorWrapper;
-import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
-import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.AnnotationRetention;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.matcher.ElementMatcher;
-
-import java.util.List;
-
-import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.utility.ByteBuddyCommons.joinUniqueRaw;
+import net.bytebuddy.matcher.LatentMatcher;
 
 /**
- * A dynamic type builder that redefines a given type, i.e. it replaces any redefined method with another implementation.
+ * A type builder that redefines an instrumented type.
  *
- * @param <T> The actual type of the rebased type.
+ * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
-public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     /**
-     * A locator for finding a class file to a given type.
+     * The original type that is being redefined or rebased.
+     */
+    private final TypeDescription originalType;
+
+    /**
+     * The class file locator for locating the original type's class file.
      */
     private final ClassFileLocator classFileLocator;
 
     /**
-     * Creates a new redefinition dynamic type builder.
+     * Creates a redefinition dynamic type builder.
      *
-     * @param classFileVersion                      The class file version for the created dynamic type.
-     * @param namingStrategy                        The naming strategy for naming the dynamic type.
-     * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
-     * @param implementationContextFactory          The implementation context factory to use.
-     * @param levelType                             The type that is to be redefined.
-     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
-     * @param modifiers                             The modifiers to be represented by the dynamic type.
-     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
-     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   A ASM class visitor to apply to the writing process.
-     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
-     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodGraphCompiler                   The method graph compiler to be used.
-     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
-     *                                              no specific appender was specified for a given field.
-     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
-     *                                              if no specific appender was specified for a given method.
-     * @param classFileLocator                      A locator for finding a class file to a given type.
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param originalType                 The original type that is being redefined or rebased.
+     * @param classFileLocator             The class file locator for locating the original type's class file.
      */
-    public RedefinitionDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                          NamingStrategy namingStrategy,
+    public RedefinitionDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
+                                          ClassFileVersion classFileVersion,
                                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                          AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                          AnnotationRetention annotationRetention,
                                           Implementation.Context.Factory implementationContextFactory,
-                                          TypeDescription levelType,
-                                          List<TypeDescription> interfaceTypes,
-                                          int modifiers,
-                                          TypeAttributeAppender attributeAppender,
-                                          ElementMatcher<? super MethodDescription> ignoredMethods,
-                                          ClassVisitorWrapper classVisitorWrapper,
-                                          FieldRegistry fieldRegistry,
-                                          MethodRegistry methodRegistry,
                                           MethodGraph.Compiler methodGraphCompiler,
-                                          FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                          MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                          TypeValidation typeValidation,
+                                          LatentMatcher<? super MethodDescription> ignoredMethods,
+                                          TypeDescription originalType,
                                           ClassFileLocator classFileLocator) {
-        this(classFileVersion,
-                namingStrategy,
+        this(instrumentedType,
+                new FieldRegistry.Default(),
+                new MethodRegistry.Default(),
+                new TypeAttributeAppender.ForInstrumentedType.Excluding(originalType),
+                AsmVisitorWrapper.NoOp.INSTANCE,
+                classFileVersion,
                 auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
                 implementationContextFactory,
-                InstrumentedType.TypeInitializer.None.INSTANCE,
-                levelType,
-                joinUniqueRaw(interfaceTypes, levelType.getInterfaces()),
-                modifiers,
-                attributeAppender,
-                ignoredMethods,
-                classVisitorWrapper,
-                fieldRegistry,
-                methodRegistry,
                 methodGraphCompiler,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory,
-                levelType.getDeclaredFields().asTokenList(is(levelType)),
-                levelType.getDeclaredMethods().asTokenList(is(levelType)),
+                typeValidation,
+                ignoredMethods,
+                originalType,
                 classFileLocator);
     }
 
     /**
-     * Creates a new redefinition dynamic type builder.
+     * Creates a redefinition dynamic type builder.
      *
-     * @param classFileVersion                      The class file version for the created dynamic type.
-     * @param namingStrategy                        The naming strategy for naming the dynamic type.
-     * @param auxiliaryTypeNamingStrategy           The naming strategy for naming auxiliary types of the dynamic type.
-     * @param implementationContextFactory          The implementation context factory to use.
-     * @param typeInitializer                       The type initializer to use.
-     * @param levelType                             The type that is to be redefined.
-     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
-     * @param modifiers                             The modifiers to be represented by the dynamic type.
-     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
-     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   A ASM class visitor to apply to the writing process.
-     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
-     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodGraphCompiler                   The method graph compiler to be used.
-     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
-     *                                              no specific appender was specified for a given field.
-     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
-     *                                              if no specific appender was specified for a given method.
-     * @param fieldTokens                           A list of field representations that were added explicitly to this
-     *                                              dynamic type.
-     * @param methodTokens                          A list of method representations that were added explicitly to this
-     *                                              dynamic type.
-     * @param classFileLocator                      A locator for finding a class file.
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param fieldRegistry                The field pool to use.
+     * @param methodRegistry               The method pool to use.
+     * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+     * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param originalType                 The original type that is being redefined or rebased.
+     * @param classFileLocator             The class file locator for locating the original type's class file.
      */
-    protected RedefinitionDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                             NamingStrategy namingStrategy,
-                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                             Implementation.Context.Factory implementationContextFactory,
-                                             InstrumentedType.TypeInitializer typeInitializer,
-                                             TypeDescription levelType,
-                                             List<GenericTypeDescription> interfaceTypes,
-                                             int modifiers,
-                                             TypeAttributeAppender attributeAppender,
-                                             ElementMatcher<? super MethodDescription> ignoredMethods,
-                                             ClassVisitorWrapper classVisitorWrapper,
+    protected RedefinitionDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                              FieldRegistry fieldRegistry,
                                              MethodRegistry methodRegistry,
+                                             TypeAttributeAppender typeAttributeAppender,
+                                             AsmVisitorWrapper asmVisitorWrapper,
+                                             ClassFileVersion classFileVersion,
+                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                             AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                             AnnotationRetention annotationRetention,
+                                             Implementation.Context.Factory implementationContextFactory,
                                              MethodGraph.Compiler methodGraphCompiler,
-                                             FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                             MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                             List<FieldDescription.Token> fieldTokens,
-                                             List<MethodDescription.Token> methodTokens,
+                                             TypeValidation typeValidation,
+                                             LatentMatcher<? super MethodDescription> ignoredMethods,
+                                             TypeDescription originalType,
                                              ClassFileLocator classFileLocator) {
-        super(classFileVersion,
-                namingStrategy,
-                auxiliaryTypeNamingStrategy,
-                implementationContextFactory,
-                typeInitializer,
-                levelType,
-                interfaceTypes,
-                modifiers,
-                attributeAppender,
-                ignoredMethods,
-                classVisitorWrapper,
+        super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                typeAttributeAppender,
+                asmVisitorWrapper,
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
                 methodGraphCompiler,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory,
-                fieldTokens,
-                methodTokens);
+                typeValidation,
+                ignoredMethods);
+        this.originalType = originalType;
         this.classFileLocator = classFileLocator;
     }
 
     @Override
-    protected DynamicType.Builder<T> materialize(ClassFileVersion classFileVersion,
-                                                 NamingStrategy namingStrategy,
-                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                                 Implementation.Context.Factory implementationContextFactory,
-                                                 InstrumentedType.TypeInitializer typeInitializer,
-                                                 TypeDescription levelType,
-                                                 List<GenericTypeDescription> interfaceTypes,
-                                                 int modifiers,
-                                                 TypeAttributeAppender attributeAppender,
-                                                 ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                 ClassVisitorWrapper classVisitorWrapper,
+    protected DynamicType.Builder<T> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
+                                                 TypeAttributeAppender typeAttributeAppender,
+                                                 AsmVisitorWrapper asmVisitorWrapper,
+                                                 ClassFileVersion classFileVersion,
+                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                 AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                 AnnotationRetention annotationRetention,
+                                                 Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
-                                                 FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                                 MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                                 List<FieldDescription.Token> fieldTokens,
-                                                 List<MethodDescription.Token> methodTokens) {
-        return new RedefinitionDynamicTypeBuilder<T>(classFileVersion,
-                namingStrategy,
-                auxiliaryTypeNamingStrategy,
-                implementationContextFactory,
-                typeInitializer,
-                levelType,
-                interfaceTypes,
-                modifiers,
-                attributeAppender,
-                ignoredMethods,
-                classVisitorWrapper,
+                                                 TypeValidation typeValidation,
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
+        return new RedefinitionDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                typeAttributeAppender,
+                asmVisitorWrapper,
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
                 methodGraphCompiler,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory,
-                fieldTokens,
-                methodTokens,
+                typeValidation,
+                ignoredMethods,
+                originalType,
                 classFileLocator);
     }
 
     @Override
     public DynamicType.Unloaded<T> make() {
-        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(new InstrumentedType.Default(namingStrategy
-                        .name(new NamingStrategy.UnnamedType.Default(targetType.getSuperType(), interfaceTypes, modifiers, classFileVersion)),
-                        modifiers,
-                        targetType.getTypeVariables().accept(new GenericTypeDescription.Visitor.Substitutor.ForDetachment(is(targetType))),
-                        targetType.getSuperType(),
-                        interfaceTypes,
-                        fieldTokens,
-                        methodTokens,
-                        targetType.getDeclaredAnnotations(),
-                        typeInitializer,
-                        LoadedTypeInitializer.NoOp.INSTANCE,
-                        targetType.getDeclaringType(),
-                        targetType.getEnclosingMethod(),
-                        targetType.getEnclosingType(),
-                        targetType.getDeclaredTypes(),
-                        targetType.isMemberClass(),
-                        targetType.isAnonymousClass(),
-                        targetType.isLocalClass()),
+        MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
-                InliningImplementationMatcher.of(ignoredMethods, targetType))
-                .compile(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE));
+                typeValidation,
+                InliningImplementationMatcher.of(ignoredMethods, originalType)).compile(SubclassImplementationTarget.Factory.LEVEL_TYPE);
         return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
+                typeAttributeAppender,
+                asmVisitorWrapper,
+                classFileVersion,
+                annotationValueFilterFactory,
+                annotationRetention,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                classVisitorWrapper,
-                attributeAppender,
-                classFileVersion,
-                classFileLocator,
-                targetType).make();
+                typeValidation,
+                originalType,
+                classFileLocator).make();
     }
 
     @Override
     public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && classFileLocator.equals(((RedefinitionDynamicTypeBuilder<?>) other).classFileLocator);
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        if (!super.equals(other)) return false;
+        RedefinitionDynamicTypeBuilder<?> that = (RedefinitionDynamicTypeBuilder<?>) other;
+        return originalType.equals(that.originalType)
+                && classFileLocator.equals(that.classFileLocator);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + classFileLocator.hashCode();
+        int result = super.hashCode();
+        result = 31 * result + originalType.hashCode();
+        result = 31 * result + classFileLocator.hashCode();
+        return result;
     }
 
     @Override
     public String toString() {
         return "RedefinitionDynamicTypeBuilder{" +
-                "classFileVersion=" + classFileVersion +
-                ", namingStrategy=" + namingStrategy +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", typeInitializer=" + typeInitializer +
-                ", targetType=" + targetType +
-                ", interfaceTypes=" + interfaceTypes +
-                ", modifiers=" + modifiers +
-                ", attributeAppender=" + attributeAppender +
-                ", ignoredMethods=" + ignoredMethods +
-                ", classVisitorWrapper=" + classVisitorWrapper +
+                "instrumentedType=" + instrumentedType +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
+                ", typeAttributeAppender=" + typeAttributeAppender +
+                ", asmVisitorWrapper=" + asmVisitorWrapper +
+                ", classFileVersion=" + classFileVersion +
+                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
+                ", annotationRetention=" + annotationRetention +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", implementationContextFactory=" + implementationContextFactory +
                 ", methodGraphCompiler=" + methodGraphCompiler +
-                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
-                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
-                ", fieldTokens=" + fieldTokens +
-                ", methodTokens=" + methodTokens +
+                ", typeValidation=" + typeValidation +
+                ", ignoredMethods=" + ignoredMethods +
+                ", originalType=" + originalType +
                 ", classFileLocator=" + classFileLocator +
                 '}';
     }

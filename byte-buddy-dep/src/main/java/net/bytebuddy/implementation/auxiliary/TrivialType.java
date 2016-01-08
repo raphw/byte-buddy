@@ -2,9 +2,12 @@ package net.bytebuddy.implementation.auxiliary;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+
+import java.util.Collections;
 
 /**
  * A trivial type that extends {@link java.lang.Object} without defining any fields, methods or constructors.
@@ -13,20 +16,41 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 public enum TrivialType implements AuxiliaryType {
 
     /**
-     * The singleton instance.
+     * A trivial type that defines the {@link SignatureRelevant} annotation.
      */
-    INSTANCE;
+    SIGNATURE_RELEVANT(true),
+
+    /**
+     * A non-annotated trivial type.
+     */
+    PLAIN(false);
+
+    /**
+     * Determines if this type determines the {@link SignatureRelevant} annotation.
+     */
+    private final boolean eager;
+
+    /**
+     * Creates a new trivial type.
+     *
+     * @param eager Determines if this type determines the {@link SignatureRelevant} annotation.
+     */
+    TrivialType(boolean eager) {
+        this.eager = eager;
+    }
 
     @Override
     public DynamicType make(String auxiliaryTypeName,
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
+                .with(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .methodGraphCompiler(MethodGraph.Empty.INSTANCE) // avoid parsing the graph
+                .annotateType(eager
+                        ? Collections.singletonList(AnnotationDescription.Builder.forType(SignatureRelevant.class).make())
+                        : Collections.<AnnotationDescription>emptyList())
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
-                .methodGraphCompiler(MethodGraph.Empty.INSTANCE)
                 .make();
     }
 

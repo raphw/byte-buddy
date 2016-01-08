@@ -1,17 +1,19 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -33,7 +35,7 @@ public class MethodRegistryDefaultTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private LatentMethodMatcher firstMatcher, secondMatcher, methodFilter;
+    private LatentMatcher<MethodDescription> firstMatcher, secondMatcher, methodFilter;
 
     @Mock
     private MethodRegistry.Handler firstHandler, secondHandler;
@@ -51,7 +53,10 @@ public class MethodRegistryDefaultTest {
     private MethodAttributeAppender firstAppender, secondAppender;
 
     @Mock
-    private InstrumentedType firstType, secondType, typeDescription;
+    private InstrumentedType firstType, secondType, thirdType;
+
+    @Mock
+    private TypeDescription typeDescription;
 
     @Mock
     private MethodDescription instrumentedMethod;
@@ -63,7 +68,7 @@ public class MethodRegistryDefaultTest {
     private MethodGraph.Linked methodGraph;
 
     @Mock
-    private InstrumentedType.TypeInitializer typeInitializer;
+    private TypeInitializer typeInitializer;
 
     @Mock
     private LoadedTypeInitializer loadedTypeInitializer;
@@ -84,42 +89,45 @@ public class MethodRegistryDefaultTest {
     private TypeDescription returnType, parameterType;
 
     @Mock
+    private TypeDescription.Generic genericReturnType, genericParameterType;
+
+    @Mock
     private ParameterDescription.InDefinedShape parameterDescription;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(firstHandler.prepare(firstType)).thenReturn(secondType);
-        when(secondHandler.prepare(secondType)).thenReturn(typeDescription);
+        when(secondHandler.prepare(secondType)).thenReturn(thirdType);
         when(firstHandler.compile(implementationTarget)).thenReturn(firstCompiledHandler);
         when(secondHandler.compile(implementationTarget)).thenReturn(secondCompiledHandler);
-        when(typeDescription.getTypeInitializer()).thenReturn(typeInitializer);
-        when(typeDescription.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
-        when(methodGraphCompiler.compile(typeDescription)).thenReturn(methodGraph);
+        when(thirdType.getTypeInitializer()).thenReturn(typeInitializer);
+        when(thirdType.getLoadedTypeInitializer()).thenReturn(loadedTypeInitializer);
+        when(methodGraphCompiler.compile(thirdType)).thenReturn(methodGraph);
         when(methodGraph.listNodes()).thenReturn(new MethodGraph.NodeList(Collections.singletonList(new MethodGraph.Node.Simple(instrumentedMethod))));
-        when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        when(methodFilter.resolve(typeDescription)).thenReturn((ElementMatcher) resolvedMethodFilter);
-        when(firstMatcher.resolve(typeDescription)).thenReturn((ElementMatcher) firstFilter);
-        when(secondMatcher.resolve(typeDescription)).thenReturn((ElementMatcher) secondFilter);
+        when(firstType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(secondType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(thirdType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+        when(methodFilter.resolve(thirdType)).thenReturn((ElementMatcher) resolvedMethodFilter);
+        when(firstMatcher.resolve(thirdType)).thenReturn((ElementMatcher) firstFilter);
+        when(secondMatcher.resolve(thirdType)).thenReturn((ElementMatcher) secondFilter);
         when(firstFactory.make(typeDescription)).thenReturn(firstAppender);
         when(secondFactory.make(typeDescription)).thenReturn(secondAppender);
         when(implementationTargetFactory.make(typeDescription, methodGraph)).thenReturn(implementationTarget);
         when(firstCompiledHandler.assemble(instrumentedMethod, firstAppender)).thenReturn(firstRecord);
         when(secondCompiledHandler.assemble(instrumentedMethod, secondAppender)).thenReturn(secondRecord);
-        when(typeDescription.asErasure()).thenReturn(typeDescription);
-        when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
-        when(methodTransformer.transform(typeDescription, instrumentedMethod)).thenReturn(instrumentedMethod);
-        when(returnType.asErasure()).thenReturn(returnType);
-        when(returnType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(returnType.isVisibleTo(typeDescription)).thenReturn(true);
-        when(parameterType.asErasure()).thenReturn(parameterType);
-        when(parameterType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        when(parameterType.isVisibleTo(typeDescription)).thenReturn(true);
-        when(instrumentedMethod.getReturnType()).thenReturn(returnType);
-        when(instrumentedMethod.getParameters()).thenReturn(new ParameterList.Explicit(Collections.singletonList(parameterDescription)));
-        when(parameterDescription.getType()).thenReturn(parameterType);
+        when(methodTransformer.transform(thirdType, instrumentedMethod)).thenReturn(instrumentedMethod);
+        when(thirdType.validated()).thenReturn(typeDescription);
+        when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
+        when(genericReturnType.asErasure()).thenReturn(returnType);
+        when(genericReturnType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(returnType.isVisibleTo(thirdType)).thenReturn(true);
+        when(genericParameterType.asErasure()).thenReturn(parameterType);
+        when(genericParameterType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        when(parameterType.isVisibleTo(thirdType)).thenReturn(true);
+        when(instrumentedMethod.getReturnType()).thenReturn(genericReturnType);
+        when(instrumentedMethod.getParameters()).thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(parameterDescription));
+        when(parameterDescription.getType()).thenReturn(genericParameterType);
     }
 
     @Test
@@ -128,8 +136,8 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
@@ -144,8 +152,8 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
@@ -161,9 +169,9 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
-        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
@@ -178,9 +186,9 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Prepared methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
-        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
@@ -202,9 +210,9 @@ public class MethodRegistryDefaultTest {
                 .append(firstMatcher, secondHandler, secondFactory, methodTransformer)
                 .append(firstMatcher, firstHandler, secondFactory, methodTransformer)
                 .append(firstMatcher, secondHandler, firstFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
-        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter);
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
@@ -221,10 +229,10 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
                 .compile(implementationTargetFactory);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
-        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
@@ -244,10 +252,10 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
                 .prepend(firstMatcher, firstHandler, firstFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
                 .compile(implementationTargetFactory);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
-        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
@@ -267,10 +275,10 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
                 .compile(implementationTargetFactory);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
-        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(Collections.singletonList(instrumentedMethod))));
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
+        assertThat(methodRegistry.getInstrumentedMethods(), is((MethodList) new MethodList.Explicit(instrumentedMethod)));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
         verify(firstHandler).prepare(firstType);
@@ -292,9 +300,9 @@ public class MethodRegistryDefaultTest {
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
                 .compile(implementationTargetFactory);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(0));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));
@@ -308,6 +316,8 @@ public class MethodRegistryDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testVisibilityBridgeIfNotMatchedAndVisible() throws Exception {
+        when(instrumentedMethod.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(resolvedMethodFilter.matches(instrumentedMethod)).thenReturn(true);
         when(firstFilter.matches(instrumentedMethod)).thenReturn(false);
         when(secondFilter.matches(instrumentedMethod)).thenReturn(false);
@@ -315,22 +325,22 @@ public class MethodRegistryDefaultTest {
         TypeDescription declaringType = mock(TypeDescription.class);
         when(declaringType.asErasure()).thenReturn(declaringType);
         when(instrumentedMethod.getDeclaringType()).thenReturn(declaringType);
-        when(typeDescription.isPublic()).thenReturn(true);
+        when(thirdType.isPublic()).thenReturn(true);
         when(instrumentedMethod.isPublic()).thenReturn(true);
         when(declaringType.isPackagePrivate()).thenReturn(true);
-        TypeDescription superType = mock(TypeDescription.class);
-        when(superType.asErasure()).thenReturn(superType);
+        TypeDescription.Generic superType = mock(TypeDescription.Generic.class);
+        TypeDescription rawSuperType = mock(TypeDescription.class);
+        when(superType.asErasure()).thenReturn(rawSuperType);
         when(typeDescription.getSuperType()).thenReturn(superType);
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
-        when(instrumentedMethod.asToken()).thenReturn(methodToken);
-        when(methodToken.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(methodToken);
-        when(typeDescription.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(typeDescription);
+        when(instrumentedMethod.asToken(ElementMatchers.is(typeDescription))).thenReturn(methodToken);
+        when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);
         MethodRegistry.Compiled methodRegistry = new MethodRegistry.Default()
                 .append(firstMatcher, firstHandler, firstFactory, methodTransformer)
                 .append(secondMatcher, secondHandler, secondFactory, methodTransformer)
-                .prepare(firstType, methodGraphCompiler, methodFilter)
+                .prepare(firstType, methodGraphCompiler, TypeValidation.ENABLED, methodFilter)
                 .compile(implementationTargetFactory);
-        assertThat(methodRegistry.getInstrumentedType(), is((TypeDescription) typeDescription));
+        assertThat(methodRegistry.getInstrumentedType(), is(typeDescription));
         assertThat(methodRegistry.getInstrumentedMethods().size(), is(1));
         assertThat(methodRegistry.getTypeInitializer(), is(typeInitializer));
         assertThat(methodRegistry.getLoadedTypeInitializer(), is(loadedTypeInitializer));

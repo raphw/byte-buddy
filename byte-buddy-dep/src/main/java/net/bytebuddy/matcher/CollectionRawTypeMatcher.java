@@ -1,9 +1,9 @@
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -11,7 +11,7 @@ import java.util.List;
  *
  * @param <T> The type of the matched entity.
  */
-public class CollectionRawTypeMatcher<T extends Iterable<? extends GenericTypeDescription>> extends ElementMatcher.Junction.AbstractBase<T> {
+public class CollectionRawTypeMatcher<T extends Iterable<? extends TypeDefinition>> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * The matcher to be applied to the raw types.
@@ -29,9 +29,9 @@ public class CollectionRawTypeMatcher<T extends Iterable<? extends GenericTypeDe
 
     @Override
     public boolean matches(T target) {
-        List<TypeDescription> typeDescriptions = new LinkedList<TypeDescription>();
-        for (GenericTypeDescription typeDescription : target) {
-            typeDescriptions.add(typeDescription.asErasure());
+        List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>();
+        for (TypeDefinition typeDefinition : target) {
+            typeDescriptions.add(typeDefinition.asErasure());
         }
         return matcher.matches(typeDescriptions);
     }

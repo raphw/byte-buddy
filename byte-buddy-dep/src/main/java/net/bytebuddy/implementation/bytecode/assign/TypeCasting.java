@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.bytecode.assign;
 
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -30,14 +31,14 @@ public class TypeCasting implements StackManipulation {
     /**
      * Creates a casting to the given, non-primitive type.
      *
-     * @param typeDescription The type to which a value should be casted.
+     * @param typeDefinition The type to which a value should be casted.
      * @return A stack manipulation that represents the casting.
      */
-    public static StackManipulation to(TypeDescription typeDescription) {
-        if (typeDescription.isPrimitive()) {
-            throw new IllegalArgumentException("Cannot cast to primitive type " + typeDescription);
+    public static StackManipulation to(TypeDefinition typeDefinition) {
+        if (typeDefinition.isPrimitive()) {
+            throw new IllegalArgumentException("Cannot cast to primitive type: " + typeDefinition);
         }
-        return new TypeCasting(typeDescription);
+        return new TypeCasting(typeDefinition.asErasure());
     }
 
     @Override

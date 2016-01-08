@@ -42,8 +42,6 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.Callable;
 
@@ -85,13 +83,14 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testExtensiveExample() throws Exception {
-        Class<? extends Comparator> dynamicType = new ByteBuddy()
-                .subclass(Comparator.class)
-                .method(named("compare")).intercept(MethodDelegation.to(new ComparisonInterceptor()))
-                .make()
-                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(dynamicType.newInstance().compare(3, 1), is(2));
+        Class<? extends Function> dynamicType = new ByteBuddy()
+            .subclass(Function.class)
+            .method(named("apply"))
+            .intercept(MethodDelegation.to(new FunctionInterceptor()))
+            .make()
+            .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+            .getLoaded();
+        assertThat(dynamicType.newInstance().apply("Byte Buddy"), is((Object) "Hello from Byte Buddy"));
     }
 
     @Test
@@ -114,7 +113,7 @@ public class ByteBuddyTutorialExamplesTest {
     @Test
     public void testTutorialGettingStartedNamingStrategy() throws Exception {
         DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
-                .withNamingStrategy(new GettingStartedNamingStrategy())
+                .with(new GettingStartedNamingStrategy())
                 .subclass(Object.class)
                 .make();
         assertThat(dynamicType, notNullValue());
@@ -277,7 +276,7 @@ public class ByteBuddyTutorialExamplesTest {
     public void testFieldsAndMethodsExplicitMethodCall() throws Exception {
         Object object = new ByteBuddy()
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .defineConstructor(Collections.<Class<?>>singletonList(int.class), Visibility.PUBLIC)
+                .defineConstructor(Visibility.PUBLIC).withParameters(int.class)
                 .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -469,12 +468,12 @@ public class ByteBuddyTutorialExamplesTest {
         INSTANCE;
 
         @Override
-        public StackManipulation assign(TypeDescription sourceType, TypeDescription targetType, Typing typing) {
-            if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
+        public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
+            if (!source.isPrimitive() && target.represents(String.class)) {
                 MethodDescription toStringMethod = TypeDescription.OBJECT.getDeclaredMethods()
                         .filter(named("toString"))
                         .getOnly();
-                return MethodInvocation.invoke(toStringMethod).virtual(sourceType);
+                return MethodInvocation.invoke(toStringMethod).virtual(source.asErasure());
             } else {
                 return StackManipulation.Illegal.INSTANCE;
             }
@@ -554,10 +553,15 @@ public class ByteBuddyTutorialExamplesTest {
 
     }
 
-    public static class ComparisonInterceptor {
+    public interface Function {
 
-        public int intercept(Object first, Object second) {
-            return first.hashCode() - second.hashCode();
+        Object apply(Object arg);
+    }
+
+    public static class FunctionInterceptor {
+
+        public Object intercept(Object argument) {
+            return "Hello from " + argument;
         }
     }
 
@@ -600,11 +604,11 @@ public class ByteBuddyTutorialExamplesTest {
         }
     }
 
-    private static class GettingStartedNamingStrategy implements NamingStrategy {
+    private static class GettingStartedNamingStrategy extends NamingStrategy.AbstractBase {
 
         @Override
-        public String name(UnnamedType unnamedType) {
-            return "i.love.ByteBuddy." + unnamedType.getSuperClass().asErasure().getSimpleName();
+        protected String name(TypeDescription superType) {
+            return "i.love.ByteBuddy." + superType.getSimpleName();
         }
     }
 

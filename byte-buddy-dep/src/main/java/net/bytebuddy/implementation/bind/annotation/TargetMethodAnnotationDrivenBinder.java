@@ -286,9 +286,9 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
             @Override
             public StackManipulation resolve(Assigner assigner, MethodDescription source, MethodDescription target) {
                 return new StackManipulation.Compound(assigner.assign(target.isConstructor()
-                                ? target.getDeclaringType().asErasure()
-                                : target.getReturnType().asErasure(),
-                        source.getReturnType().asErasure(),
+                                ? target.getDeclaringType().asGenericType()
+                                : target.getReturnType(),
+                        source.getReturnType(),
                         RuntimeType.Verifier.check(target)), MethodReturn.returning(source.getReturnType().asErasure()));
             }
 

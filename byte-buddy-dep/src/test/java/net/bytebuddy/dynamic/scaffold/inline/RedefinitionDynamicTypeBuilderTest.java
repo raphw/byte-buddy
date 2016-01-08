@@ -1,16 +1,21 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
+import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -43,16 +48,29 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
     }
 
     @Override
+    protected DynamicType.Builder<?> createDisabledContext() {
+        return new ByteBuddy().with(Implementation.Context.Disabled.Factory.INSTANCE).redefine(Foo.class);
+    }
+
+    @Override
+    protected DynamicType.Builder createDisabledRetention(Class<?> annotatedClass) {
+        return new ByteBuddy().with(AnnotationRetention.DISABLED).redefine(annotatedClass);
+    }
+
+    @Override
     protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().redefine(Foo.class);
     }
-
 
     @Override
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new ByteBuddy().redefine(typeDescription, classFileLocator);
     }
 
+    @Override
+    protected DynamicType.Builder<?> createPlainWithoutValidation() {
+        return new ByteBuddy().with(TypeValidation.DISABLED).redefine(Foo.class);
+    }
 
     @Test
     public void testConstructorRetentionNoAuxiliaryType() throws Exception {
@@ -130,12 +148,15 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
         }).create(new ObjectPropertyAssertion.Creator<TypeDescription>() {
             @Override
             public TypeDescription create() {
-                TypeDescription typeDescription = mock(TypeDescription.class);
-                when(typeDescription.asErasure()).thenReturn(typeDescription);
-                when(typeDescription.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Collections.singletonList(typeDescription)));
-                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty());
-                when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-                return typeDescription;
+                TypeDescription rawTypeDescription = mock(TypeDescription.class);
+                when(rawTypeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+                TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+                when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
+                when(typeDescription.asGenericType()).thenReturn(typeDescription);
+                when(rawTypeDescription.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(typeDescription));
+                when(rawTypeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
+                when(rawTypeDescription.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
+                return rawTypeDescription;
             }
         }).apply();
     }

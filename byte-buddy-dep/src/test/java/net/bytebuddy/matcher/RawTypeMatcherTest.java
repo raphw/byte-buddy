@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
@@ -13,7 +13,7 @@ import static org.mockito.Mockito.*;
 public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatcher<?>> {
 
     @Mock
-    private GenericTypeDescription genericTypeDescription;
+    private TypeDefinition typeDefinition;
 
     @Mock
     private TypeDescription typeDescription;
@@ -28,17 +28,17 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
 
     @Before
     public void setUp() throws Exception {
-        when(genericTypeDescription.asErasure()).thenReturn(typeDescription);
+        when(typeDefinition.asErasure()).thenReturn(typeDescription);
     }
 
     @Test
     public void testMatch() throws Exception {
         when(elementMatcher.matches(typeDescription)).thenReturn(true);
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(true));
-        verify(genericTypeDescription).getSort();
-        verify(genericTypeDescription).asErasure();
-        verifyNoMoreInteractions(genericTypeDescription);
+        when(typeDefinition.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        assertThat(new RawTypeMatcher<TypeDefinition>(elementMatcher).matches(typeDefinition), is(true));
+        verify(typeDefinition).getSort();
+        verify(typeDefinition).asErasure();
+        verifyNoMoreInteractions(typeDefinition);
         verify(elementMatcher).matches(typeDescription);
         verifyNoMoreInteractions(elementMatcher);
         verifyZeroInteractions(typeDescription);
@@ -46,10 +46,10 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
 
     @Test
     public void testNoMatchWildcard() throws Exception {
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.WILDCARD);
-        assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(false));
-        verify(genericTypeDescription).getSort();
-        verifyNoMoreInteractions(genericTypeDescription);
+        when(typeDefinition.getSort()).thenReturn(TypeDefinition.Sort.WILDCARD);
+        assertThat(new RawTypeMatcher<TypeDefinition>(elementMatcher).matches(typeDefinition), is(false));
+        verify(typeDefinition).getSort();
+        verifyNoMoreInteractions(typeDefinition);
         verifyZeroInteractions(elementMatcher);
         verifyZeroInteractions(typeDescription);
     }
@@ -57,11 +57,11 @@ public class RawTypeMatcherTest extends AbstractElementMatcherTest<RawTypeMatche
     @Test
     public void testNoMatch() throws Exception {
         when(elementMatcher.matches(typeDescription)).thenReturn(false);
-        when(genericTypeDescription.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
-        assertThat(new RawTypeMatcher<GenericTypeDescription>(elementMatcher).matches(genericTypeDescription), is(false));
-        verify(genericTypeDescription).getSort();
-        verify(genericTypeDescription).asErasure();
-        verifyNoMoreInteractions(genericTypeDescription);
+        when(typeDefinition.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
+        assertThat(new RawTypeMatcher<TypeDefinition>(elementMatcher).matches(typeDefinition), is(false));
+        verify(typeDefinition).getSort();
+        verify(typeDefinition).asErasure();
+        verifyNoMoreInteractions(typeDefinition);
         verify(elementMatcher).matches(typeDescription);
         verifyNoMoreInteractions(elementMatcher);
         verifyZeroInteractions(typeDescription);

@@ -30,12 +30,10 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.io.Serializable;
 import java.lang.annotation.*;
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * A target method parameter that is annotated with this annotation allows to forward an intercepted method
@@ -130,7 +128,7 @@ public @interface Pipe {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(Class<?> type) {
-            return install(new TypeDescription.ForLoadedType(nonNull(type)));
+            return install(new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -144,7 +142,7 @@ public @interface Pipe {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Pipe> install(TypeDescription typeDescription) {
-            return new Binder(onlyMethod(nonNull(typeDescription)));
+            return new Binder(onlyMethod(typeDescription));
         }
 
         /**
@@ -300,7 +298,7 @@ public @interface Pipe {
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
                         .method(isDeclaredBy(forwardingType))
                         .intercept(new MethodCall(sourceMethod, assigner))
-                        .defineConstructor(new ArrayList<TypeDescription>(parameterFields.values()))
+                        .defineConstructor().withParameters(parameterFields.values())
                         .intercept(ConstructorCall.INSTANCE);
                 for (Map.Entry<String, TypeDescription> field : parameterFields.entrySet()) {
                     builder = builder.defineField(field.getKey(), field.getValue(), Visibility.PRIVATE);
@@ -387,7 +385,7 @@ public @interface Pipe {
 
                 @Override
                 public ByteCodeAppender appender(Target implementationTarget) {
-                    return new Appender(implementationTarget.getTypeDescription());
+                    return new Appender(implementationTarget.getInstrumentedType());
                 }
 
                 @Override
@@ -424,7 +422,7 @@ public @interface Pipe {
                         for (FieldDescription fieldDescription : fieldList) {
                             fieldLoading[index] = new StackManipulation.Compound(
                                     thisReference,
-                                    MethodVariableAccess.forType(fieldDescription.getType().asErasure())
+                                    MethodVariableAccess.of(fieldDescription.getType().asErasure())
                                             .loadOffset(instrumentedMethod.getParameters().get(index).getOffset()),
                                     FieldAccess.forField(fieldDescription).putter()
                             );
@@ -492,7 +490,7 @@ public @interface Pipe {
 
                 @Override
                 public ByteCodeAppender appender(Target implementationTarget) {
-                    return new Appender(implementationTarget.getTypeDescription());
+                    return new Appender(implementationTarget.getInstrumentedType());
                 }
 
                 @Override
@@ -539,7 +537,7 @@ public @interface Pipe {
                     public Size apply(MethodVisitor methodVisitor,
                                       Context implementationContext,
                                       MethodDescription instrumentedMethod) {
-                        StackManipulation thisReference = MethodVariableAccess.forType(instrumentedType).loadOffset(0);
+                        StackManipulation thisReference = MethodVariableAccess.of(instrumentedType).loadOffset(0);
                         FieldList<?> fieldList = instrumentedType.getDeclaredFields();
                         StackManipulation[] fieldLoading = new StackManipulation[fieldList.size()];
                         int index = 0;
@@ -548,12 +546,10 @@ public @interface Pipe {
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 MethodVariableAccess.REFERENCE.loadOffset(1),
-                                assigner.assign(TypeDescription.OBJECT, redirectedMethod.getDeclaringType().asErasure(), Assigner.Typing.DYNAMIC),
+                                assigner.assign(TypeDescription.Generic.OBJECT, redirectedMethod.getDeclaringType().asGenericType(), Assigner.Typing.DYNAMIC),
                                 new StackManipulation.Compound(fieldLoading),
                                 MethodInvocation.invoke(redirectedMethod),
-                                assigner.assign(redirectedMethod.getReturnType().asErasure(),
-                                        instrumentedMethod.getReturnType().asErasure(),
-                                        Assigner.Typing.DYNAMIC),
+                                assigner.assign(redirectedMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

@@ -16,7 +16,6 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
-import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -46,9 +45,9 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
     public void setUp() throws Exception {
         when(firstParameter.getStackSize()).thenReturn(StackSize.ZERO);
         when(secondParameter.getStackSize()).thenReturn(StackSize.ZERO);
-        sourceParameters = new ParameterList.Explicit.ForTypes(source, Arrays.asList(firstParameter, secondParameter));
+        sourceParameters = new ParameterList.Explicit.ForTypes(source, firstParameter, secondParameter);
         ParameterList<ParameterDescription.InDefinedShape> targetParameters =
-                new ParameterList.Explicit<ParameterDescription.InDefinedShape>(Arrays.asList(firstTargetParameter, secondTargetParameter));
+                new ParameterList.Explicit<ParameterDescription.InDefinedShape>(firstTargetParameter, secondTargetParameter);
         when(source.getParameters()).thenReturn(sourceParameters);
         when(target.getParameters()).thenReturn(targetParameters);
     }

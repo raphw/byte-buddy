@@ -16,7 +16,7 @@ public interface CollectionFactory {
      *
      * @return A type description of this factory's component type.
      */
-    TypeDescription getComponentType();
+    TypeDescription.Generic getComponentType();
 
     /**
      * Applies this collection factory in order to build a new collection where each element is represented by

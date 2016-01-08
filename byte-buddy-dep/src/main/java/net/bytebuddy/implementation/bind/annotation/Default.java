@@ -5,7 +5,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.auxiliary.TypeProxy;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
@@ -91,7 +90,7 @@ public @interface Default {
             if (!proxyType.isInterface()) {
                 throw new IllegalStateException(target + " uses the @Default annotation on an invalid type");
             }
-            if (source.isStatic() || !implementationTarget.getTypeDescription().getInterfaces().asErasures().contains(proxyType)) {
+            if (source.isStatic() || !implementationTarget.getInstrumentedType().getInterfaces().asErasures().contains(proxyType)) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             } else {
                 return new MethodDelegationBinder.ParameterBinding.Anonymous(new TypeProxy.ForDefaultMethod(proxyType,
@@ -116,7 +115,7 @@ public @interface Default {
              * @param parameterType The type of the target parameter.
              * @return The proxy type.
              */
-            TypeDescription resolve(GenericTypeDescription parameterType);
+            TypeDescription resolve(TypeDescription.Generic parameterType);
 
             /**
              * A type locator that yields the target parameter's type.
@@ -129,7 +128,7 @@ public @interface Default {
                 INSTANCE;
 
                 @Override
-                public TypeDescription resolve(GenericTypeDescription parameterType) {
+                public TypeDescription resolve(TypeDescription.Generic parameterType) {
                     return parameterType.asErasure();
                 }
 
@@ -175,7 +174,7 @@ public @interface Default {
                 }
 
                 @Override
-                public TypeDescription resolve(GenericTypeDescription parameterType) {
+                public TypeDescription resolve(TypeDescription.Generic parameterType) {
                     if (!typeDescription.isAssignableTo(parameterType.asErasure())) {
                         throw new IllegalStateException("Impossible to assign " + typeDescription + " to parameter of type " + parameterType);
                     }

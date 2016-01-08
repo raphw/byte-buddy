@@ -25,8 +25,7 @@ public class TypeProxyObjectPropertiesTest {
             public void apply(TypeDescription mock) {
                 FieldDescription.InDefinedShape fieldDescription = Mockito.mock(FieldDescription.InDefinedShape.class);
                 when(fieldDescription.getSourceCodeName()).thenReturn(TypeProxy.INSTANCE_FIELD);
-                when(mock.getDeclaredFields())
-                        .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
+                when(mock.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
             }
         }).skipSynthetic().apply();
         ObjectPropertyAssertion.of(TypeProxy.MethodCall.Appender.AccessorMethodInvocation.class).skipSynthetic().apply();

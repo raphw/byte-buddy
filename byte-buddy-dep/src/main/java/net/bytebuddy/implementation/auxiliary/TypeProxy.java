@@ -23,7 +23,6 @@ import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.Type;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -96,15 +95,13 @@ public class TypeProxy implements AuxiliaryType {
                             ClassFileVersion classFileVersion,
                             MethodAccessorFactory methodAccessorFactory) {
         return new ByteBuddy(classFileVersion)
-                .withIgnoredMethods(ignoreFinalizer ? isFinalizer() : ElementMatchers.<MethodDescription>none())
+                .ignore(ignoreFinalizer ? isFinalizer() : ElementMatchers.<MethodDescription>none())
                 .subclass(proxiedType)
                 .name(auxiliaryTypeName)
                 .modifiers(DEFAULT_TYPE_MODIFIER)
                 .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                .method(any())
-                .intercept(new MethodCall(methodAccessorFactory))
-                .defineMethod(REFLECTION_METHOD, TargetType.DESCRIPTION, Collections.<TypeDescription>emptyList(), Ownership.STATIC)
-                .intercept(SilentConstruction.INSTANCE)
+                .method(any()).intercept(new MethodCall(methodAccessorFactory))
+                .defineMethod(REFLECTION_METHOD, TargetType.class, Ownership.STATIC).intercept(SilentConstruction.INSTANCE)
                 .make();
     }
 
@@ -205,7 +202,7 @@ public class TypeProxy implements AuxiliaryType {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         @Override
@@ -385,7 +382,7 @@ public class TypeProxy implements AuxiliaryType {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeDominant(instrumentedMethod.asToken());
+                    return implementationTarget.invokeDominant(instrumentedMethod.asSignatureToken());
                 }
             },
 
@@ -397,7 +394,7 @@ public class TypeProxy implements AuxiliaryType {
                 public Implementation.SpecialMethodInvocation invoke(Implementation.Target implementationTarget,
                                                                      TypeDescription proxiedType,
                                                                      MethodDescription instrumentedMethod) {
-                    return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.asToken());
+                    return implementationTarget.invokeDefault(proxiedType, instrumentedMethod.asSignatureToken());
                 }
             };
 
@@ -483,12 +480,10 @@ public class TypeProxy implements AuxiliaryType {
                     TypeCreation.forType(proxyType),
                     Duplication.SINGLE,
                     new Compound(constructorValue),
-                    MethodInvocation.invoke(proxyType.getDeclaredMethods()
-                            .filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
+                    MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(implementationTarget.getTypeDescription()).loadOffset(0),
-                    FieldAccess.forField(proxyType.getDeclaredFields()
-                            .filter((ElementMatchers.named(INSTANCE_FIELD))).getOnly()).putter()
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
+                    FieldAccess.forField(proxyType.getDeclaredFields().filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
         }
 
@@ -589,7 +584,7 @@ public class TypeProxy implements AuxiliaryType {
                     MethodInvocation.invoke(proxyType.getDeclaredMethods()
                             .filter(named(REFLECTION_METHOD).and(takesArguments(0))).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(implementationTarget.getTypeDescription()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
@@ -680,7 +675,7 @@ public class TypeProxy implements AuxiliaryType {
                     Duplication.SINGLE,
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     Duplication.SINGLE,
-                    MethodVariableAccess.forType(implementationTarget.getTypeDescription()).loadOffset(0),
+                    MethodVariableAccess.of(implementationTarget.getInstrumentedType()).loadOffset(0),
                     FieldAccess.forField(proxyType.getDeclaredFields()
                             .filter((named(INSTANCE_FIELD))).getOnly()).putter()
             ).apply(methodVisitor, implementationContext);
@@ -737,12 +732,12 @@ public class TypeProxy implements AuxiliaryType {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(INSTANCE_FIELD,
                     Opcodes.ACC_SYNTHETIC,
-                    TypeProxy.this.implementationTarget.getTypeDescription()));
+                    implementationTarget.getInstrumentedType().asGenericType()));
         }
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         /**

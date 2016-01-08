@@ -1,8 +1,8 @@
 package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -31,6 +31,9 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     private TypeDescription targetType;
 
     @Mock
+    private TypeDescription.Generic genericTargetType;
+
+    @Mock
     private MethodDescription.InDefinedShape methodDescription;
 
     public OriginBinderTest() {
@@ -41,8 +44,9 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
         when(targetType.asErasure()).thenReturn(targetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType);
         when(source.asDefined()).thenReturn(methodDescription);
     }
 
@@ -103,7 +107,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testStringBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(String.class)).thenReturn(true);
-        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -113,7 +117,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     public void testModifierBinding() throws Exception {
         when(targetType.getInternalName()).thenReturn(FOO);
         when(targetType.represents(int.class)).thenReturn(true);
-        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
@@ -122,8 +126,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodHandleBinding() throws Exception {
-        targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
-        when(target.getType()).thenReturn(targetType);
+        when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load()));
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typeDescription.asErasure()).thenReturn(typeDescription);
         when(methodDescription.getDeclaringType()).thenReturn(typeDescription);
@@ -135,8 +138,7 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
     @Test
     @JavaVersionRule.Enforce(7)
     public void testMethodTypeBinding() throws Exception {
-        targetType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
-        when(target.getType()).thenReturn(targetType);
+        when(genericTargetType.asErasure()).thenReturn(new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load()));
         when(methodDescription.getDescriptor()).thenReturn(FOO);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Origin.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
@@ -145,8 +147,8 @@ public class OriginBinderTest extends AbstractAnnotationBinderTest<Origin> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalBinding() throws Exception {
-        when(targetType.getName()).thenReturn(FOO);
-        when(targetType.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(targetType.getInternalName()).thenReturn(FOO);
+        when(targetType.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         Origin.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

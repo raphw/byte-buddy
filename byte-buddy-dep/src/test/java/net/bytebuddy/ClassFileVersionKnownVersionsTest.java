@@ -57,7 +57,7 @@ public class ClassFileVersionKnownVersionsTest {
                 {6, Opcodes.V1_6, 50, 0, true, false, false},
                 {7, Opcodes.V1_7, 51, 0, true, true, false},
                 {8, Opcodes.V1_8, 52, 0, true, true, true},
-//                {9, Opcodes.V1_8, 52, 0, true, true}
+//                {9, Opcodes.V1_8 + 1, 53, 0, true, true}
         });
     }
 
@@ -94,7 +94,11 @@ public class ClassFileVersionKnownVersionsTest {
     @Test
     public void testJavaVersion() throws Exception {
         assertThat(ClassFileVersion.ofJavaVersion(javaVersion).getJavaVersion(), is(javaVersion));
+    }
 
+    @Test
+    public void testLessThanJava8() throws Exception {
+        assertThat(ClassFileVersion.ofJavaVersion(javaVersion).isLessThan(ClassFileVersion.JAVA_V8), is(!atLeastJava8));
     }
 
     @Test

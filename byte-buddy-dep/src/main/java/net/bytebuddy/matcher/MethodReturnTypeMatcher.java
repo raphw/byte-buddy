@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that matches its argument's return type against a given type matcher.
@@ -13,14 +13,14 @@ public class MethodReturnTypeMatcher<T extends MethodDescription> extends Elemen
     /**
      * The type matcher to apply to the matched element's return type.
      */
-    private final ElementMatcher<? super GenericTypeDescription> typeMatcher;
+    private final ElementMatcher<? super TypeDescription.Generic> typeMatcher;
 
     /**
      * Creates a new matcher for a matched element's return type.
      *
      * @param typeMatcher The type matcher to apply to the matched element's return type.
      */
-    public MethodReturnTypeMatcher(ElementMatcher<? super GenericTypeDescription> typeMatcher) {
+    public MethodReturnTypeMatcher(ElementMatcher<? super TypeDescription.Generic> typeMatcher) {
         this.typeMatcher = typeMatcher;
     }
 

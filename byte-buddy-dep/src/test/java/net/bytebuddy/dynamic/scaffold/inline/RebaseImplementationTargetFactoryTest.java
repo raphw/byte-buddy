@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -28,7 +29,10 @@ public class RebaseImplementationTargetFactoryTest {
     private MethodGraph.Linked methodGraph;
 
     @Mock
-    private TypeDescription instrumentedType, superType;
+    private TypeDescription instrumentedType;
+
+    @Mock
+    private TypeDescription.Generic superType;
 
     private Implementation.Target.Factory factory;
 
@@ -36,8 +40,8 @@ public class RebaseImplementationTargetFactoryTest {
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty());
-        factory = new RebaseImplementationTarget.Factory(new MethodList.Empty(), methodRebaseResolver);
+        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
+        factory = new RebaseImplementationTarget.Factory(methodRebaseResolver);
     }
 
     @Test

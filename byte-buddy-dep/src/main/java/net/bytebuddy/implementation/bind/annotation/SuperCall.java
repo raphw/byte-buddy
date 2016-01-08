@@ -74,8 +74,8 @@ public @interface SuperCall {
                 throw new IllegalStateException("A super method call proxy can only be assigned to Runnable or Callable types: " + target);
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation = annotation.loadSilent().fallbackToDefault()
-                    ? implementationTarget.invokeDominant(source.asToken())
-                    : implementationTarget.invokeSuper(source.asToken());
+                    ? implementationTarget.invokeDominant(source.asSignatureToken())
+                    : implementationTarget.invokeSuper(source.asSignatureToken());
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new MethodCallProxy
                     .AssignableSignatureCall(specialMethodInvocation, annotation.loadSilent().serializableProxy()))

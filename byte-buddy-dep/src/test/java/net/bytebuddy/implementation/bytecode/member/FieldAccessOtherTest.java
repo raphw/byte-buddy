@@ -4,7 +4,6 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -14,8 +13,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
-
-import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -33,7 +30,7 @@ public class FieldAccessOtherTest {
     private EnumerationDescription enumerationDescription;
 
     @Mock
-    private GenericTypeDescription genericType, declaredType;
+    private TypeDescription.Generic genericType, declaredType;
 
     @Mock
     private TypeDescription enumerationType;
@@ -51,8 +48,7 @@ public class FieldAccessOtherTest {
         when(fieldDescription.getType()).thenReturn(declaredType);
         when(enumerationDescription.getEnumerationType()).thenReturn(enumerationType);
         when(enumerationDescription.getValue()).thenReturn(FOO);
-        when(enumerationType.getDeclaredFields())
-                .thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(Collections.singletonList(fieldDescription)));
+        when(enumerationType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
     }
 
     @Test
@@ -108,12 +104,12 @@ public class FieldAccessOtherTest {
     @Test
     public void testGenericFieldAccessGetter() throws Exception {
         TypeDescription genericErasure = mock(TypeDescription.class), declaredErasure = mock(TypeDescription.class);
+        when(genericErasure.asErasure()).thenReturn(genericErasure);
         when(genericType.asErasure()).thenReturn(genericErasure);
         when(declaredType.asErasure()).thenReturn(declaredErasure);
         StackManipulation stackManipulation = FieldAccess.forField(genericField).getter();
         assertThat(stackManipulation.isValid(), is(true));
-        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(),
-                TypeCasting.to(genericErasure))));
+        assertThat(stackManipulation, is((StackManipulation) new StackManipulation.Compound(FieldAccess.forField(fieldDescription).getter(), TypeCasting.to(genericErasure))));
     }
 
     @Test

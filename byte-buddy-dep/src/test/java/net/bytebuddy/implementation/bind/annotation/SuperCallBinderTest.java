@@ -19,10 +19,13 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     private TypeDescription targetParameterType;
 
     @Mock
+    private TypeDescription.Generic genericTargetParameterType;
+
+    @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Mock
-    private MethodDescription.Token sourceToken;
+    private MethodDescription.SignatureToken sourceToken;
 
     public SuperCallBinderTest() {
         super(SuperCall.class);
@@ -32,10 +35,10 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetParameterType);
+        when(target.getType()).thenReturn(genericTargetParameterType);
+        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType);
+        when(source.asSignatureToken()).thenReturn(sourceToken);
         when(implementationTarget.invokeSuper(sourceToken)).thenReturn(specialMethodInvocation);
-        when(targetParameterType.asErasure()).thenReturn(targetParameterType);
-        when(source.asToken()).thenReturn(sourceToken);
     }
 
     @Override

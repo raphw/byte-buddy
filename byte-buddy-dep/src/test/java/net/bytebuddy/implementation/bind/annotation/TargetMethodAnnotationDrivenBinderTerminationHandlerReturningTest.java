@@ -35,6 +35,9 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerReturningTest {
     private TypeDescription sourceType, targetType;
 
     @Mock
+    private TypeDescription.Generic genericSourceType, genericTargetType;
+
+    @Mock
     private StackManipulation stackManipulation;
 
     @Mock
@@ -42,11 +45,11 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerReturningTest {
 
     @Before
     public void setUp() throws Exception {
-        when(source.getReturnType()).thenReturn(sourceType);
-        when(target.getReturnType()).thenReturn(targetType);
-        when(sourceType.asErasure()).thenReturn(sourceType);
-        when(targetType.asErasure()).thenReturn(targetType);
-        when(assigner.assign(eq(targetType), eq(sourceType), any(Assigner.Typing.class))).thenReturn(stackManipulation);
+        when(source.getReturnType()).thenReturn(genericSourceType);
+        when(target.getReturnType()).thenReturn(genericTargetType);
+        when(genericSourceType.asErasure()).thenReturn(sourceType);
+        when(genericTargetType.asErasure()).thenReturn(targetType);
+        when(assigner.assign(eq(genericTargetType), eq(genericSourceType), any(Assigner.Typing.class))).thenReturn(stackManipulation);
         when(target.getDeclaredAnnotations()).thenReturn(annotationList);
     }
 

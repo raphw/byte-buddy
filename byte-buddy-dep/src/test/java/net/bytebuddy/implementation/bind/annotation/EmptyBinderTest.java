@@ -20,7 +20,7 @@ import static org.mockito.Mockito.*;
 @RunWith(Parameterized.class)
 public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
-    private final TypeDescription typeDescription;
+    private final TypeDescription.Generic typeDescription;
 
     private final int opcode;
 
@@ -32,7 +32,7 @@ public class EmptyBinderTest extends AbstractAnnotationBinderTest<Empty> {
 
     public EmptyBinderTest(Class<?> type, int opcode) {
         super(Empty.class);
-        typeDescription = new TypeDescription.ForLoadedType(type);
+        typeDescription = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(type);
         this.opcode = opcode;
     }
 

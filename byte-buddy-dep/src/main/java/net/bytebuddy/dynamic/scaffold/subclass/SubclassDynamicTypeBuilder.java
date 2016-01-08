@@ -1,237 +1,167 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ClassFileVersion;
-import net.bytebuddy.NamingStrategy;
-import net.bytebuddy.asm.ClassVisitorWrapper;
-import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.LoadedTypeInitializer;
-import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
-import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
+import net.bytebuddy.implementation.attribute.AnnotationRetention;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.TypeAttributeAppender;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.matcher.LatentMethodMatcher;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import net.bytebuddy.matcher.LatentMatcher;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 /**
- * Creates a dynamic type on basis of loaded types where the dynamic type extends a given type.
+ * A type builder that creates an instrumented type as a subclass, i.e. a type that is not based on an existing class file.
  *
- * @param <T> The best known loaded type representing the built dynamic type.
+ * @param <T> A loaded type that the dynamic type is guaranteed to be a subtype of.
  */
-public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase<T> {
+public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBase.Adapter<T> {
 
     /**
-     * A strategy that is used to define and implement constructors based on the subclassed type.
+     * The constructor strategy to apply onto the instrumented type.
      */
     private final ConstructorStrategy constructorStrategy;
 
     /**
-     * Creates a new immutable type builder for a subclassing a given class.
+     * Creates a new type builder for creating a subclass.
      *
-     * @param classFileVersion                      The class file version for the created dynamic type.
-     * @param namingStrategy                        The naming strategy for naming the dynamic type.
-     * @param auxiliaryTypeNamingStrategy           The naming strategy to apply to auxiliary types.
-     * @param implementationContextFactory          The implementation context factory to use.
-     * @param superType                             The super class that the dynamic type should extend.
-     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
-     * @param modifiers                             The modifiers to be represented by the dynamic type.
-     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
-     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   An ASM class visitors to apply to the writing process.
-     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
-     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodGraphCompiler                   The method graph compiler to be used.
-     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
-     *                                              no specific appender was specified for a given field.
-     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
-     *                                              if no specific appender was specified for a given method.
-     * @param constructorStrategy                   The strategy for creating constructors during the final definition
-     *                                              phase of this dynamic type.
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
      */
-    public SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                      NamingStrategy namingStrategy,
+    public SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
+                                      ClassFileVersion classFileVersion,
                                       AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                      AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                      AnnotationRetention annotationRetention,
                                       Implementation.Context.Factory implementationContextFactory,
-                                      TypeDescription superType,
-                                      List<TypeDescription> interfaceTypes,
-                                      int modifiers,
-                                      TypeAttributeAppender attributeAppender,
-                                      ElementMatcher<? super MethodDescription> ignoredMethods,
-                                      ClassVisitorWrapper classVisitorWrapper,
-                                      FieldRegistry fieldRegistry,
-                                      MethodRegistry methodRegistry,
                                       MethodGraph.Compiler methodGraphCompiler,
-                                      FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                      MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
+                                      TypeValidation typeValidation,
+                                      LatentMatcher<? super MethodDescription> ignoredMethods,
                                       ConstructorStrategy constructorStrategy) {
-        this(classFileVersion,
-                namingStrategy,
+        this(instrumentedType,
+                new FieldRegistry.Default(),
+                new MethodRegistry.Default(),
+                TypeAttributeAppender.ForInstrumentedType.INSTANCE,
+                AsmVisitorWrapper.NoOp.INSTANCE,
+                classFileVersion,
                 auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
                 implementationContextFactory,
-                InstrumentedType.TypeInitializer.None.INSTANCE,
-                superType,
-                new ArrayList<GenericTypeDescription>(interfaceTypes),
-                modifiers,
-                attributeAppender,
-                ignoredMethods,
-                classVisitorWrapper,
-                fieldRegistry,
-                methodRegistry,
                 methodGraphCompiler,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory,
-                Collections.<FieldDescription.Token>emptyList(),
-                Collections.<MethodDescription.Token>emptyList(),
+                typeValidation,
+                ignoredMethods,
                 constructorStrategy);
     }
 
     /**
-     * Creates a new immutable type builder for a subclassing a given class.
+     * Creates a new type builder for creating a subclass.
      *
-     * @param classFileVersion                      The class file version for the created dynamic type.
-     * @param namingStrategy                        The naming strategy for naming the dynamic type.
-     * @param auxiliaryTypeNamingStrategy           The naming strategy to apply to auxiliary types.
-     * @param implementationContextFactory          The implementation context factory to use.
-     * @param typeInitializer                       The type initializer to use.
-     * @param superType                             The super class that the dynamic type should extend.
-     * @param interfaceTypes                        A list of interfaces that should be implemented by the created dynamic type.
-     * @param modifiers                             The modifiers to be represented by the dynamic type.
-     * @param attributeAppender                     The attribute appender to apply onto the dynamic type that is created.
-     * @param ignoredMethods                        A matcher for determining methods that are to be ignored for instrumentation.
-     * @param classVisitorWrapper                   An ASM class visitor to apply to the writing process.
-     * @param fieldRegistry                         The field registry to apply to the dynamic type creation.
-     * @param methodRegistry                        The method registry to apply to the dynamic type creation.
-     * @param methodGraphCompiler                   The method graph compiler to be used.
-     * @param defaultFieldAttributeAppenderFactory  The field attribute appender factory that should be applied by default if
-     *                                              no specific appender was specified for a given field.
-     * @param defaultMethodAttributeAppenderFactory The method attribute appender factory that should be applied by default
-     *                                              if no specific appender was specified for a given method.
-     * @param fieldTokens                           A list of field representations that were added explicitly to this
-     *                                              dynamic type.
-     * @param methodTokens                          A list of method representations that were added explicitly to this
-     *                                              dynamic type.
-     * @param constructorStrategy                   The strategy for creating constructors during the final definition
-     *                                              phase of this dynamic type.
+     * @param instrumentedType             An instrumented type representing the subclass.
+     * @param fieldRegistry                The field pool to use.
+     * @param methodRegistry               The method pool to use.
+     * @param typeAttributeAppender        The type attribute appender to apply onto the instrumented type.
+     * @param asmVisitorWrapper            The ASM visitor wrapper to apply onto the class writer.
+     * @param classFileVersion             The class file version to use for types that are not based on an existing class file.
+     * @param auxiliaryTypeNamingStrategy  The naming strategy to use for naming auxiliary types.
+     * @param annotationValueFilterFactory The annotation value filter factory to use.
+     * @param annotationRetention          The annotation retention strategy to use.
+     * @param implementationContextFactory The implementation context factory to use.
+     * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
+     * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
+     * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
      */
-    protected SubclassDynamicTypeBuilder(ClassFileVersion classFileVersion,
-                                         NamingStrategy namingStrategy,
-                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                         Implementation.Context.Factory implementationContextFactory,
-                                         InstrumentedType.TypeInitializer typeInitializer,
-                                         TypeDescription superType,
-                                         List<GenericTypeDescription> interfaceTypes,
-                                         int modifiers,
-                                         TypeAttributeAppender attributeAppender,
-                                         ElementMatcher<? super MethodDescription> ignoredMethods,
-                                         ClassVisitorWrapper classVisitorWrapper,
+    protected SubclassDynamicTypeBuilder(InstrumentedType.WithFlexibleName instrumentedType,
                                          FieldRegistry fieldRegistry,
                                          MethodRegistry methodRegistry,
+                                         TypeAttributeAppender typeAttributeAppender,
+                                         AsmVisitorWrapper asmVisitorWrapper,
+                                         ClassFileVersion classFileVersion,
+                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                         AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                         AnnotationRetention annotationRetention,
+                                         Implementation.Context.Factory implementationContextFactory,
                                          MethodGraph.Compiler methodGraphCompiler,
-                                         FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                         MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                         List<FieldDescription.Token> fieldTokens,
-                                         List<MethodDescription.Token> methodTokens,
+                                         TypeValidation typeValidation,
+                                         LatentMatcher<? super MethodDescription> ignoredMethods,
                                          ConstructorStrategy constructorStrategy) {
-        super(classFileVersion,
-                namingStrategy,
-                auxiliaryTypeNamingStrategy,
-                implementationContextFactory,
-                typeInitializer,
-                superType,
-                interfaceTypes,
-                modifiers,
-                attributeAppender,
-                ignoredMethods,
-                classVisitorWrapper,
+        super(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                typeAttributeAppender,
+                asmVisitorWrapper,
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
                 methodGraphCompiler,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory,
-                fieldTokens,
-                methodTokens);
+                typeValidation,
+                ignoredMethods);
         this.constructorStrategy = constructorStrategy;
     }
 
     @Override
-    protected DynamicType.Builder<T> materialize(ClassFileVersion classFileVersion,
-                                                 NamingStrategy namingStrategy,
-                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                                 Implementation.Context.Factory implementationContextFactory,
-                                                 InstrumentedType.TypeInitializer typeInitializer,
-                                                 TypeDescription targetType,
-                                                 List<GenericTypeDescription> interfaceTypes,
-                                                 int modifiers,
-                                                 TypeAttributeAppender attributeAppender,
-                                                 ElementMatcher<? super MethodDescription> ignoredMethods,
-                                                 ClassVisitorWrapper classVisitorWrapper,
+    protected DynamicType.Builder<T> materialize(InstrumentedType.WithFlexibleName instrumentedType,
                                                  FieldRegistry fieldRegistry,
                                                  MethodRegistry methodRegistry,
+                                                 TypeAttributeAppender typeAttributeAppender,
+                                                 AsmVisitorWrapper asmVisitorWrapper,
+                                                 ClassFileVersion classFileVersion,
+                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
+                                                 AnnotationValueFilter.Factory annotationValueFilterFactory,
+                                                 AnnotationRetention annotationRetention,
+                                                 Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
-                                                 FieldAttributeAppender.Factory defaultFieldAttributeAppenderFactory,
-                                                 MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory,
-                                                 List<FieldDescription.Token> fieldTokens,
-                                                 List<MethodDescription.Token> methodTokens) {
-        return new SubclassDynamicTypeBuilder<T>(classFileVersion,
-                namingStrategy,
-                auxiliaryTypeNamingStrategy,
-                implementationContextFactory,
-                typeInitializer,
-                targetType,
-                interfaceTypes,
-                modifiers,
-                attributeAppender,
-                ignoredMethods,
-                classVisitorWrapper,
+                                                 TypeValidation typeValidation,
+                                                 LatentMatcher<? super MethodDescription> ignoredMethods) {
+        return new SubclassDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
                 methodRegistry,
+                typeAttributeAppender,
+                asmVisitorWrapper,
+                classFileVersion,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
                 methodGraphCompiler,
-                defaultFieldAttributeAppenderFactory,
-                defaultMethodAttributeAppenderFactory,
-                fieldTokens,
-                methodTokens,
+                typeValidation,
+                ignoredMethods,
                 constructorStrategy);
     }
 
     @Override
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
-                .inject(methodRegistry, defaultMethodAttributeAppenderFactory)
-                .prepare(applyConstructorStrategy(new InstrumentedType.Default(namingStrategy.name(new NamingStrategy.UnnamedType.Default(targetType,
-                                interfaceTypes,
-                                modifiers,
-                                classFileVersion)),
-                                modifiers,
-                                Collections.<GenericTypeDescription>emptyList(),
-                                targetType,
-                                interfaceTypes,
-                                fieldTokens,
-                                methodTokens,
-                                Collections.<AnnotationDescription>emptyList(),
-                                typeInitializer,
-                                LoadedTypeInitializer.NoOp.INSTANCE)),
-                        methodGraphCompiler,
-                        new InstrumentableMatcher(ignoredMethods))
-                .compile(new SubclassImplementationTarget.Factory(SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE));
+                .inject(methodRegistry)
+                .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, typeValidation, new InstrumentableMatcher(ignoredMethods))
+                .compile(SubclassImplementationTarget.Factory.SUPER_TYPE);
         return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
+                typeAttributeAppender,
+                asmVisitorWrapper,
+                classFileVersion,
+                annotationValueFilterFactory,
+                annotationRetention,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
-                classVisitorWrapper,
-                attributeAppender,
-                classFileVersion).make();
+                typeValidation).make();
     }
 
     /**
@@ -241,48 +171,46 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @return The instrumented type with the constructor strategy applied onto.
      */
     private InstrumentedType applyConstructorStrategy(InstrumentedType instrumentedType) {
-        if (instrumentedType.isInterface()) {
-            return instrumentedType;
-        }
-        for (MethodDescription.Token methodToken : constructorStrategy.extractConstructors(instrumentedType)) {
-            instrumentedType = instrumentedType.withMethod(methodToken);
+        if (!instrumentedType.isInterface()) {
+            for (MethodDescription.Token token : constructorStrategy.extractConstructors(instrumentedType)) {
+                instrumentedType = instrumentedType.withMethod(token);
+            }
         }
         return instrumentedType;
     }
 
     @Override
     public boolean equals(Object other) {
-        return this == other || !(other == null || getClass() != other.getClass())
-                && super.equals(other)
-                && constructorStrategy.equals(((SubclassDynamicTypeBuilder<?>) other).constructorStrategy);
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        if (!super.equals(other)) return false;
+        SubclassDynamicTypeBuilder<?> that = (SubclassDynamicTypeBuilder<?>) other;
+        return constructorStrategy.equals(that.constructorStrategy);
     }
 
     @Override
     public int hashCode() {
-        return 31 * super.hashCode() + constructorStrategy.hashCode();
+        int result = super.hashCode();
+        result = 31 * result + constructorStrategy.hashCode();
+        return result;
     }
 
     @Override
     public String toString() {
         return "SubclassDynamicTypeBuilder{" +
-                "classFileVersion=" + classFileVersion +
-                ", namingStrategy=" + namingStrategy +
-                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
-                ", implementationContextFactory=" + implementationContextFactory +
-                ", typeInitializer=" + typeInitializer +
-                ", targetType=" + targetType +
-                ", interfaceTypes=" + interfaceTypes +
-                ", modifiers=" + modifiers +
-                ", attributeAppender=" + attributeAppender +
-                ", ignoredMethods=" + ignoredMethods +
-                ", classVisitorWrapper=" + classVisitorWrapper +
+                "instrumentedType=" + instrumentedType +
                 ", fieldRegistry=" + fieldRegistry +
                 ", methodRegistry=" + methodRegistry +
+                ", typeAttributeAppender=" + typeAttributeAppender +
+                ", asmVisitorWrapper=" + asmVisitorWrapper +
+                ", classFileVersion=" + classFileVersion +
+                ", annotationValueFilterFactory=" + annotationValueFilterFactory +
+                ", annotationRetention=" + annotationRetention +
+                ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
+                ", implementationContextFactory=" + implementationContextFactory +
                 ", methodGraphCompiler=" + methodGraphCompiler +
-                ", defaultFieldAttributeAppenderFactory=" + defaultFieldAttributeAppenderFactory +
-                ", defaultMethodAttributeAppenderFactory=" + defaultMethodAttributeAppenderFactory +
-                ", fieldTokens=" + fieldTokens +
-                ", methodTokens=" + methodTokens +
+                ", typeValidation=" + typeValidation +
+                ", ignoredMethods=" + ignoredMethods +
                 ", constructorStrategy=" + constructorStrategy +
                 '}';
     }
@@ -290,19 +218,19 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     /**
      * A matcher that locates all methods that are overridable and not ignored or that are directly defined on the instrumented type.
      */
-    protected static class InstrumentableMatcher implements LatentMethodMatcher {
+    protected static class InstrumentableMatcher implements LatentMatcher<MethodDescription> {
 
         /**
          * A matcher for the ignored methods.
          */
-        private final ElementMatcher<? super MethodDescription> ignoredMethods;
+        private final LatentMatcher<? super MethodDescription> ignoredMethods;
 
         /**
          * Creates a latent method matcher that matches all methods that are to be instrumented by a {@link SubclassDynamicTypeBuilder}.
          *
          * @param ignoredMethods A matcher for the ignored methods.
          */
-        protected InstrumentableMatcher(ElementMatcher<? super MethodDescription> ignoredMethods) {
+        protected InstrumentableMatcher(LatentMatcher<? super MethodDescription> ignoredMethods) {
             this.ignoredMethods = ignoredMethods;
         }
 
@@ -311,7 +239,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
             // Casting is required by JDK 6.
             return (ElementMatcher<? super MethodDescription>) isVirtual().and(not(isFinal()))
                     .and(isVisibleTo(instrumentedType))
-                    .and(not(ignoredMethods))
+                    .and(not(ignoredMethods.resolve(instrumentedType)))
                     .or(isDeclaredBy(instrumentedType));
         }
 

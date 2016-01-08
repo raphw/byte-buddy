@@ -10,16 +10,11 @@ public class MethodListEmptyTest {
 
     @Test
     public void testTokenListWithFilter() throws Exception {
-        assertThat(new MethodList.Empty().asTokenList(none()).size(), is(0));
-    }
-
-    @Test
-    public void testTokenListWithoutFilter() throws Exception {
-        assertThat(new MethodList.Empty().asTokenList().size(), is(0));
+        assertThat(new MethodList.Empty<MethodDescription>().asTokenList(none()).size(), is(0));
     }
 
     @Test
     public void testDeclaredList() throws Exception {
-        assertThat(new MethodList.Empty().asDefined().size(), is(0));
+        assertThat(new MethodList.Empty<MethodDescription>().asDefined().size(), is(0));
     }
 }

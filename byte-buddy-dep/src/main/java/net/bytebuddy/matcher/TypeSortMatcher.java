@@ -1,25 +1,25 @@
 package net.bytebuddy.matcher;
 
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 
 /**
  * An element matcher that validates that a given generic type description represents a type of a given name.
  *
  * @param <T> The type of the matched entity.
  */
-public class TypeSortMatcher<T extends GenericTypeDescription> extends ElementMatcher.Junction.AbstractBase<T> {
+public class TypeSortMatcher<T extends TypeDefinition> extends ElementMatcher.Junction.AbstractBase<T> {
 
     /**
      * An element matcher to be applied to the type's sort.
      */
-    private final ElementMatcher<? super GenericTypeDescription.Sort> matcher;
+    private final ElementMatcher<? super TypeDefinition.Sort> matcher;
 
     /**
      * Creates a new type sort matcher.
      *
      * @param matcher An element matcher to be applied to the type's sort.
      */
-    public TypeSortMatcher(ElementMatcher<? super GenericTypeDescription.Sort> matcher) {
+    public TypeSortMatcher(ElementMatcher<? super TypeDefinition.Sort> matcher) {
         this.matcher = matcher;
     }
 

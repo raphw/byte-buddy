@@ -2,7 +2,7 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -11,7 +11,6 @@ import org.junit.Test;
 import org.mockito.Mock;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -25,7 +24,10 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     private TypeDescription targetParameterType, firstInterface, secondInterface;
 
     @Mock
-    private MethodDescription.Token methodToken;
+    private TypeDescription.Generic genericTargetParameterType, firstGenericInterface, secondGenericInterface;
+
+    @Mock
+    private MethodDescription.SignatureToken token;
 
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
@@ -38,11 +40,13 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetParameterType);
-        when(targetParameterType.asErasure()).thenReturn(targetParameterType);
-        when(implementationTarget.invokeDefault(any(TypeDescription.class), eq(methodToken))).thenReturn(specialMethodInvocation);
-        when(firstInterface.asErasure()).thenReturn(firstInterface);
-        when(secondInterface.asErasure()).thenReturn(secondInterface);
+        when(target.getType()).thenReturn(genericTargetParameterType);
+        when(genericTargetParameterType.asErasure()).thenReturn(targetParameterType);
+        when(implementationTarget.invokeDefault(any(TypeDescription.class), eq(token))).thenReturn(specialMethodInvocation);
+        when(firstGenericInterface.asErasure()).thenReturn(firstInterface);
+        when(secondGenericInterface.asErasure()).thenReturn(secondInterface);
+        when(firstInterface.asGenericType()).thenReturn(firstGenericInterface);
+        when(secondInterface.asGenericType()).thenReturn(secondGenericInterface);
     }
 
     @Override
@@ -55,14 +59,14 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true, false);
         doReturn(VOID_TYPE).when(annotation).targetType();
-        when(source.asToken()).thenReturn(methodToken);
+        when(source.asSignatureToken()).thenReturn(token);
         when(source.isSpecializableFor(firstInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Arrays.asList(firstInterface, secondInterface)));
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).getTypeDescription();
-        verify(implementationTarget).invokeDefault(firstInterface, methodToken);
+        verify(implementationTarget).getInstrumentedType();
+        verify(implementationTarget).invokeDefault(firstInterface, token);
         verifyNoMoreInteractions(implementationTarget);
     }
 
@@ -71,15 +75,15 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true, false);
         doReturn(VOID_TYPE).when(annotation).targetType();
-        when(source.asToken()).thenReturn(methodToken);
+        when(source.asSignatureToken()).thenReturn(token);
         when(source.isSpecializableFor(firstInterface)).thenReturn(true);
         when(source.isSpecializableFor(secondInterface)).thenReturn(true);
-        when(instrumentedType.getInterfaces()).thenReturn(new GenericTypeList.Explicit(Arrays.asList(firstInterface, secondInterface)));
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Explicit(firstInterface, secondInterface));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(false));
-        verify(implementationTarget).getTypeDescription();
-        verify(implementationTarget).invokeDefault(firstInterface, methodToken);
+        verify(implementationTarget).getInstrumentedType();
+        verify(implementationTarget).invokeDefault(firstInterface, token);
         verifyNoMoreInteractions(implementationTarget);
     }
 
@@ -88,11 +92,11 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
         when(targetParameterType.represents(any(Class.class))).thenReturn(true);
         when(specialMethodInvocation.isValid()).thenReturn(true);
         doReturn(INTERFACE_TYPE).when(annotation).targetType();
-        when(source.asToken()).thenReturn(methodToken);
+        when(source.asSignatureToken()).thenReturn(token);
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));
-        verify(implementationTarget).invokeDefault(new TypeDescription.ForLoadedType(INTERFACE_TYPE), methodToken);
+        verify(implementationTarget).invokeDefault(new TypeDescription.ForLoadedType(INTERFACE_TYPE), token);
         verifyNoMoreInteractions(implementationTarget);
     }
 

@@ -31,6 +31,9 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
     @Mock
     private TypeDescription leftType, rightType, superType;
 
+    @Mock
+    private TypeDescription.Generic genericSuperType;
+
     private TypeWriter.Default.FrameComputingClassWriter frameComputingClassWriter;
 
     @Before
@@ -40,8 +43,8 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
         when(typePool.describe(BAR.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(rightType));
         when(leftType.getInternalName()).thenReturn(QUX);
         when(rightType.getInternalName()).thenReturn(BAZ);
-        when(leftType.getSuperType()).thenReturn(superType);
-        when(superType.asErasure()).thenReturn(superType);
+        when(leftType.getSuperType()).thenReturn(genericSuperType);
+        when(genericSuperType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(FOOBAR);
     }
 

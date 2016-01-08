@@ -36,6 +36,9 @@ public class FieldConstantTest {
     private TypeDescription declaringType, cacheDeclaringType, cacheFieldType;
 
     @Mock
+    private TypeDescription.Generic genericCacheFieldType;
+
+    @Mock
     private MethodVisitor methodVisitor;
 
     @Mock
@@ -53,8 +56,9 @@ public class FieldConstantTest {
         when(cacheField.isStatic()).thenReturn(true);
         when(cacheDeclaringType.getInternalName()).thenReturn(BAZ);
         when(cacheField.getName()).thenReturn(FOO + BAR);
-        when(cacheField.getType()).thenReturn(cacheFieldType);
-        when(cacheFieldType.getStackSize()).thenReturn(StackSize.SINGLE);
+        when(cacheField.getType()).thenReturn(genericCacheFieldType);
+        when(genericCacheFieldType.asErasure()).thenReturn(cacheFieldType);
+        when(genericCacheFieldType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(cacheField.getInternalName()).thenReturn(FOO + BAR);
         when(cacheField.getDescriptor()).thenReturn(QUX + BAZ);
     }

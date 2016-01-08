@@ -32,6 +32,11 @@ public class MethodRebaseResolverDisabledTest {
     }
 
     @Test
+    public void testNoRebaseableMethods() throws Exception {
+        assertThat(MethodRebaseResolver.Disabled.INSTANCE.asTokenMap().size(), is(0));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(MethodRebaseResolver.Disabled.class).apply();
     }

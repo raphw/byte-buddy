@@ -8,12 +8,12 @@ public class PrimitiveWideningDelegateOtherTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalSourceTypeThrowsException() throws Exception {
-        PrimitiveWideningDelegate.forPrimitive(new TypeDescription.ForLoadedType(Object.class));
+        PrimitiveWideningDelegate.forPrimitive(TypeDescription.OBJECT);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalTargetTypeThrowsException() throws Exception {
-        PrimitiveWideningDelegate.forPrimitive(new TypeDescription.ForLoadedType(int.class)).widenTo(new TypeDescription.ForLoadedType(Object.class));
+        PrimitiveWideningDelegate.forPrimitive(new TypeDescription.ForLoadedType(int.class)).widenTo(TypeDescription.OBJECT);
     }
 
     @Test

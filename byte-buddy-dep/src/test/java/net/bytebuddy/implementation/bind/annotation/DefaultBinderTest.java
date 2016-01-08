@@ -2,7 +2,6 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -20,7 +19,10 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     private TypeDescription targetType;
 
     @Mock
-    private GenericTypeList interfaces;
+    private TypeDescription.Generic typeDescription;
+
+    @Mock
+    private TypeList.Generic interfaces;
 
     @Mock
     private TypeList rawInterfaces;
@@ -33,10 +35,10 @@ public class DefaultBinderTest extends AbstractAnnotationBinderTest<Default> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(typeDescription);
+        when(typeDescription.asErasure()).thenReturn(targetType);
         when(instrumentedType.getInterfaces()).thenReturn(interfaces);
         when(interfaces.asErasures()).thenReturn(rawInterfaces);
-        when(targetType.asErasure()).thenReturn(targetType);
     }
 
     @Override

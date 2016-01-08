@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
@@ -54,6 +55,9 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     private TypeDescription typeDescription, superType, returnType, declaringType;
 
     @Mock
+    private TypeDescription.Generic genericSuperType, genericReturnType;
+
+    @Mock
     private Implementation.Target implementationTarget;
 
     @Mock
@@ -66,15 +70,17 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private MethodDescription.Token methodToken;
+    private MethodDescription.SignatureToken token;
 
     @Mock
     private MethodList superTypeMethods;
 
     @Before
     public void setUp() throws Exception {
-        when(implementationTarget.getTypeDescription()).thenReturn(typeDescription);
-        when(methodDescription.asToken()).thenReturn(methodToken);
+        when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
+        when(methodDescription.asSignatureToken()).thenReturn(token);
+        when(genericReturnType.asErasure()).thenReturn(returnType);
+        when(genericSuperType.asErasure()).thenReturn(superType);
     }
 
     @Test
@@ -86,40 +92,40 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testConstructor() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
+        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
-        when(implementationTarget.invokeDominant(methodToken)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
+        when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testStaticMethod() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
+        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
         when(methodDescription.isStatic()).thenReturn(true);
-        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
-        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
+        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
-        when(implementationTarget.invokeDominant(methodToken)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
+        when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
 
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testNoSuper() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
-        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty());
-        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
+        when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
-        when(implementationTarget.invokeDominant(methodToken)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
+        when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
 

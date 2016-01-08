@@ -34,7 +34,7 @@ public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    private TypeDescription.Generic source, target;
 
     @Mock
     private Assigner chainedAssigner;
@@ -70,29 +70,31 @@ public class PrimitiveTypeAwareAssignerImplicitUnboxingTest {
 
     @Before
     public void setUp() throws Exception {
-        when(sourceTypeDescription.represents(sourceType)).thenReturn(true);
-        when(sourceTypeDescription.isPrimitive()).thenReturn(false);
-        when(targetTypeDescription.represents(targetType)).thenReturn(true);
-        when(targetTypeDescription.isPrimitive()).thenReturn(true);
+        when(source.represents(sourceType)).thenReturn(true);
+        when(source.isPrimitive()).thenReturn(false);
+        when(source.asGenericType()).thenReturn(source);
+        when(target.represents(targetType)).thenReturn(true);
+        when(target.isPrimitive()).thenReturn(true);
         when(chainedStackManipulation.isValid()).thenReturn(true);
-        when(chainedAssigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
+        when(chainedAssigner.assign(any(TypeDescription.Generic.class), any(TypeDescription.Generic.class), any(Assigner.Typing.class)))
                 .thenReturn(chainedStackManipulation);
         primitiveAssigner = new PrimitiveTypeAwareAssigner(chainedAssigner);
     }
 
     @Test
     public void testImplicitUnboxingAssignment() {
-        StackManipulation stackManipulation = primitiveAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.DYNAMIC);
+        StackManipulation stackManipulation = primitiveAssigner.assign(source, target, Assigner.Typing.DYNAMIC);
         assertThat(stackManipulation.isValid(), is(assignable));
         verify(chainedStackManipulation).isValid();
         verifyNoMoreInteractions(chainedStackManipulation);
-        verify(sourceTypeDescription, atLeast(0)).represents(any(Class.class));
-        verify(sourceTypeDescription, atLeast(1)).isPrimitive();
-        verifyNoMoreInteractions(sourceTypeDescription);
-        verify(targetTypeDescription, atLeast(0)).represents(any(Class.class));
-        verify(targetTypeDescription, atLeast(1)).isPrimitive();
-        verifyNoMoreInteractions(targetTypeDescription);
-        verify(chainedAssigner).assign(sourceTypeDescription, new TypeDescription.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
+        verify(source, atLeast(0)).represents(any(Class.class));
+        verify(source, atLeast(1)).isPrimitive();
+        verify(source).asGenericType();
+        verifyNoMoreInteractions(source);
+        verify(target, atLeast(0)).represents(any(Class.class));
+        verify(target, atLeast(1)).isPrimitive();
+        verifyNoMoreInteractions(target);
+        verify(chainedAssigner).assign(source, new TypeDescription.Generic.OfNonGenericType.ForLoadedType(wrapperType), Assigner.Typing.DYNAMIC);
         verifyNoMoreInteractions(chainedAssigner);
     }
 }

@@ -2,8 +2,8 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
 import net.bytebuddy.implementation.Implementation;
 
@@ -21,7 +21,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * The constructor of the super type, mapped by the constructor's method token.
      */
-    protected final Map<MethodDescription.Token, MethodDescription> superConstructors;
+    protected final Map<MethodDescription.SignatureToken, MethodDescription> superConstructors;
 
     /**
      * The origin type identifier to use.
@@ -37,32 +37,32 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      */
     protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeResolver originTypeResolver) {
         super(instrumentedType, methodGraph);
-        GenericTypeDescription superType = instrumentedType.getSuperType();
+        TypeDescription.Generic superType = instrumentedType.getSuperType();
         MethodList<?> superConstructors = superType == null
-                ? new MethodList.Empty()
+                ? new MethodList.Empty<MethodDescription.InGenericShape>()
                 : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
-        this.superConstructors = new HashMap<MethodDescription.Token, MethodDescription>();
+        this.superConstructors = new HashMap<MethodDescription.SignatureToken, MethodDescription>();
         for (MethodDescription superConstructor : superConstructors) {
-            this.superConstructors.put(superConstructor.asToken(), superConstructor);
+            this.superConstructors.put(superConstructor.asSignatureToken(), superConstructor);
         }
         this.originTypeResolver = originTypeResolver;
     }
 
     @Override
-    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken) {
-        return methodToken.getInternalName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
-                ? invokeConstructor(methodToken)
-                : invokeMethod(methodToken);
+    public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token) {
+        return token.getName().equals(MethodDescription.CONSTRUCTOR_INTERNAL_NAME)
+                ? invokeConstructor(token)
+                : invokeMethod(token);
     }
 
     /**
      * Resolves a special method invocation for a constructor invocation.
      *
-     * @param methodToken A token describing the constructor to be invoked.
+     * @param token A token describing the constructor to be invoked.
      * @return A special method invocation for a constructor representing the given method token, if available.
      */
-    private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.Token methodToken) {
-        MethodDescription methodDescription = superConstructors.get(methodToken);
+    private Implementation.SpecialMethodInvocation invokeConstructor(MethodDescription.SignatureToken token) {
+        MethodDescription methodDescription = superConstructors.get(token);
         return methodDescription == null
                 ? Implementation.SpecialMethodInvocation.Illegal.INSTANCE
                 : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asErasure());
@@ -71,18 +71,18 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * Resolves a special method invocation for a non-constructor invocation.
      *
-     * @param methodToken A token describing the method to be invoked.
+     * @param token A token describing the method to be invoked.
      * @return A special method invocation for a method representing the given method token, if available.
      */
-    private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.Token methodToken) {
-        MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(methodToken);
+    private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.SignatureToken token) {
+        MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(token);
         return methodNode.getSort().isUnique()
                 ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
     @Override
-    public TypeDescription getOriginType() {
+    public TypeDefinition getOriginType() {
         return originTypeResolver.identify(instrumentedType);
     }
 
@@ -123,8 +123,8 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          */
         SUPER_TYPE {
             @Override
-            protected TypeDescription identify(TypeDescription typeDescription) {
-                return typeDescription.getSuperType().asErasure();
+            protected TypeDefinition identify(TypeDescription typeDescription) {
+                return typeDescription.getSuperType();
             }
         },
 
@@ -133,7 +133,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          */
         LEVEL_TYPE {
             @Override
-            protected TypeDescription identify(TypeDescription typeDescription) {
+            protected TypeDefinition identify(TypeDescription typeDescription) {
                 return typeDescription;
             }
         };
@@ -144,7 +144,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
          * @param typeDescription The type description for which an origin type should be identified.
          * @return The origin type to the given type description.
          */
-        protected abstract TypeDescription identify(TypeDescription typeDescription);
+        protected abstract TypeDefinition identify(TypeDescription typeDescription);
 
         @Override
         public String toString() {
@@ -155,19 +155,29 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     /**
      * A factory for creating a {@link net.bytebuddy.dynamic.scaffold.subclass.SubclassImplementationTarget}.
      */
-    public static class Factory implements Implementation.Target.Factory {
+    public enum Factory implements Implementation.Target.Factory {
 
         /**
-         * The origin type identifier to use.
+         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#SUPER_TYPE}.
+         */
+        SUPER_TYPE(OriginTypeResolver.SUPER_TYPE),
+
+        /**
+         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#LEVEL_TYPE}.
+         */
+        LEVEL_TYPE(OriginTypeResolver.LEVEL_TYPE);
+
+        /**
+         * The origin type resolver that this factory hands to the created {@link SubclassImplementationTarget}.
          */
         private final OriginTypeResolver originTypeResolver;
 
         /**
-         * Creates a factory for creating a subclass implementation target.
+         * Creates a new factory.
          *
-         * @param originTypeResolver The origin type identifier to use.
+         * @param originTypeResolver The origin type resolver that this factory hands to the created {@link SubclassImplementationTarget}.
          */
-        public Factory(OriginTypeResolver originTypeResolver) {
+        Factory(OriginTypeResolver originTypeResolver) {
             this.originTypeResolver = originTypeResolver;
         }
 
@@ -177,21 +187,8 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         }
 
         @Override
-        public boolean equals(Object other) {
-            return this == other || !(other == null || getClass() != other.getClass())
-                    && originTypeResolver == ((Factory) other).originTypeResolver;
-        }
-
-        @Override
-        public int hashCode() {
-            return originTypeResolver.hashCode();
-        }
-
-        @Override
         public String toString() {
-            return "SubclassImplementationTarget.Factory{" +
-                    "originTypeResolver=" + originTypeResolver +
-                    '}';
+            return "SubclassImplementationTarget.Factory." + name();
         }
     }
 }

@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.bytecode.member;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -67,18 +68,18 @@ public enum MethodVariableAccess {
     /**
      * Locates the correct accessor for a variable of a given type.
      *
-     * @param typeDescription The type of the variable to be loaded.
+     * @param typeDefinition The type of the variable to be loaded.
      * @return An accessor for the given type.
      */
-    public static MethodVariableAccess forType(TypeDescription typeDescription) {
-        if (typeDescription.isPrimitive()) {
-            if (typeDescription.represents(long.class)) {
+    public static MethodVariableAccess of(TypeDefinition typeDefinition) {
+        if (typeDefinition.isPrimitive()) {
+            if (typeDefinition.represents(long.class)) {
                 return LONG;
-            } else if (typeDescription.represents(double.class)) {
+            } else if (typeDefinition.represents(double.class)) {
                 return DOUBLE;
-            } else if (typeDescription.represents(float.class)) {
+            } else if (typeDefinition.represents(float.class)) {
                 return FLOAT;
-            } else if (typeDescription.represents(void.class)) {
+            } else if (typeDefinition.represents(void.class)) {
                 throw new IllegalArgumentException("Variable type cannot be void");
             } else {
                 return INTEGER;
@@ -149,10 +150,10 @@ public enum MethodVariableAccess {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
-            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(methodDescription.getParameters().size() * 2);
+            List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>();
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
                 TypeDescription parameterType = parameterDescription.getType().asErasure();
-                stackManipulations.add(forType(parameterType).loadOffset(parameterDescription.getOffset()));
+                stackManipulations.add(of(parameterType).loadOffset(parameterDescription.getOffset()));
                 stackManipulations.add(typeCastingHandler.ofIndex(parameterType, parameterDescription.getIndex()));
             }
             return new Compound(stackManipulations).apply(methodVisitor, implementationContext);

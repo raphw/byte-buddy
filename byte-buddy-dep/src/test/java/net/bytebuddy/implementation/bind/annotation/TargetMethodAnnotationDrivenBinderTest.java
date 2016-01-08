@@ -61,7 +61,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     private MethodDescription sourceMethod, targetMethod;
 
     @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    private TypeDescription.Generic sourceTypeDescription, targetTypeDescription;
 
     @Mock
     private AnnotationDescription.ForLoadedAnnotation<FirstPseudoAnnotation> firstPseudoAnnotation;
@@ -121,7 +121,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
     public void setUp() throws Exception {
         when(assignmentBinding.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
                 .thenReturn(new StackManipulation.Size(0, 0));
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class)))
+        when(assigner.assign(any(TypeDescription.Generic.class), any(TypeDescription.Generic.class), any(Assigner.Typing.class)))
                 .thenReturn(assignmentBinding);
         when(methodInvoker.invoke(any(MethodDescription.class))).thenReturn(methodInvocation);
         when(methodInvocation.apply(any(MethodVisitor.class), any(Implementation.Context.class)))
@@ -140,7 +140,7 @@ public class TargetMethodAnnotationDrivenBinderTest {
         when(secondParameter.getDeclaringMethod()).thenReturn(targetMethod);
         when(secondParameter.getIndex()).thenReturn(1);
         when(targetMethod.getParameters())
-                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(Arrays.asList(firstParameter, secondParameter)));
+                .thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(firstParameter, secondParameter));
         when(firstPseudoAnnotation.getAnnotationType())
                 .thenReturn(new TypeDescription.ForLoadedType(FirstPseudoAnnotation.class));
         when(firstPseudoAnnotation.prepare(FirstPseudoAnnotation.class)).thenReturn(firstPseudoAnnotation);

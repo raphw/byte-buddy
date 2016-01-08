@@ -5,6 +5,7 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -18,7 +19,7 @@ import java.util.Collection;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 @RunWith(Parameterized.class)
 public class AssignerEqualTypesOnlyTest {
@@ -29,7 +30,10 @@ public class AssignerEqualTypesOnlyTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription first, second;
+    private TypeDescription.Generic first, second;
+
+    @Mock
+    private TypeDescription firstRaw, secondRaw;
 
     @Mock
     private MethodVisitor methodVisitor;
@@ -46,6 +50,12 @@ public class AssignerEqualTypesOnlyTest {
         return Arrays.asList(new Object[]{false}, new Object[]{true});
     }
 
+    @Before
+    public void setUp() throws Exception {
+        when(first.asErasure()).thenReturn(firstRaw);
+        when(second.asErasure()).thenReturn(secondRaw);
+    }
+
     @After
     public void tearDown() throws Exception {
         verifyZeroInteractions(methodVisitor);
@@ -53,17 +63,41 @@ public class AssignerEqualTypesOnlyTest {
     }
 
     @Test
-    public void testAssignmentEqual() throws Exception {
-        StackManipulation stackManipulation = Assigner.EqualTypesOnly.INSTANCE.assign(first, first, Assigner.Typing.of(dynamicallyTyped));
+    public void testAssignmentGenericEqual() throws Exception {
+        StackManipulation stackManipulation = Assigner.EqualTypesOnly.GENERIC.assign(first, first, Assigner.Typing.of(dynamicallyTyped));
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
+        verifyZeroInteractions(first);
     }
 
     @Test
-    public void testAssignmentNotEqual() throws Exception {
-        StackManipulation stackManipulation = Assigner.EqualTypesOnly.INSTANCE.assign(first, second, Assigner.Typing.of(dynamicallyTyped));
+    public void testAssignmentGenericNotEqual() throws Exception {
+        StackManipulation stackManipulation = Assigner.EqualTypesOnly.GENERIC.assign(first, second, Assigner.Typing.of(dynamicallyTyped));
         assertThat(stackManipulation.isValid(), is(false));
+        verifyZeroInteractions(first);
+        verifyZeroInteractions(second);
+    }
+
+    @Test
+    public void testAssignmentErausreEqual() throws Exception {
+        StackManipulation stackManipulation = Assigner.EqualTypesOnly.ERASURE.assign(first, first, Assigner.Typing.of(dynamicallyTyped));
+        assertThat(stackManipulation.isValid(), is(true));
+        StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
+        assertThat(size.getSizeImpact(), is(0));
+        assertThat(size.getMaximalSize(), is(0));
+        verify(first, times(2)).asErasure();
+        verifyNoMoreInteractions(first);
+    }
+
+    @Test
+    public void testAssignmentErasureNotEqual() throws Exception {
+        StackManipulation stackManipulation = Assigner.EqualTypesOnly.ERASURE.assign(first, second, Assigner.Typing.of(dynamicallyTyped));
+        assertThat(stackManipulation.isValid(), is(false));
+        verify(first).asErasure();
+        verifyNoMoreInteractions(first);
+        verify(second).asErasure();
+        verifyNoMoreInteractions(second);
     }
 }

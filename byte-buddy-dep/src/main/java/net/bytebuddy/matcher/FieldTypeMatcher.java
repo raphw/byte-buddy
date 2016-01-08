@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeDescription;
 
 /**
  * An element matcher that matches a field's type.
@@ -13,14 +13,14 @@ public class FieldTypeMatcher<T extends FieldDescription> extends ElementMatcher
     /**
      * The type matcher to apply to the field's type.
      */
-    private final ElementMatcher<? super GenericTypeDescription> typeMatcher;
+    private final ElementMatcher<? super TypeDescription.Generic> typeMatcher;
 
     /**
      * Creates a new matcher for a matched field's type.
      *
      * @param typeMatcher The type matcher to apply to the matched field's type.
      */
-    public FieldTypeMatcher(ElementMatcher<? super GenericTypeDescription> typeMatcher) {
+    public FieldTypeMatcher(ElementMatcher<? super TypeDescription.Generic> typeMatcher) {
         this.typeMatcher = typeMatcher;
     }
 

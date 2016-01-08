@@ -5,7 +5,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
-import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
+import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -96,7 +96,7 @@ public class AgentBuilderDefaultTest {
         when(typeStrategy.builder(any(TypeDescription.class),
                 eq(byteBuddy),
                 any(ClassFileLocator.class),
-                any(MethodRebaseResolver.MethodNameTransformer.class))).thenReturn((DynamicType.Builder) builder);
+                any(MethodNameTransformer.class))).thenReturn((DynamicType.Builder) builder);
         Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = new HashMap<TypeDescription, LoadedTypeInitializer>();
         loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);

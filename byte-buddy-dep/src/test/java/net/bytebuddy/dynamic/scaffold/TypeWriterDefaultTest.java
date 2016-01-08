@@ -4,10 +4,14 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.TypeConstantAdjustment;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
+import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.modifier.Ownership;
 import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
@@ -24,13 +28,15 @@ import org.junit.rules.MethodRule;
 import java.io.Serializable;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
+import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
-import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TypeWriterDefaultTest {
 
@@ -48,7 +54,7 @@ public class TypeWriterDefaultTest {
     public void testConstructorOnInterfaceAssertion() throws Exception {
         new ByteBuddy()
                 .makeInterface()
-                .defineConstructor(Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineConstructor(Visibility.PUBLIC)
                 .intercept(SuperMethodCall.INSTANCE)
                 .make();
     }
@@ -57,7 +63,7 @@ public class TypeWriterDefaultTest {
     public void testConstructorOnAnnotationAssertion() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineConstructor(Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineConstructor(Visibility.PUBLIC)
                 .intercept(SuperMethodCall.INSTANCE)
                 .make();
     }
@@ -66,7 +72,7 @@ public class TypeWriterDefaultTest {
     public void testAbstractConstructorAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class, ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .defineConstructor(Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineConstructor(Visibility.PUBLIC)
                 .withoutCode()
                 .make();
     }
@@ -75,7 +81,7 @@ public class TypeWriterDefaultTest {
     public void testStaticAbstractMethodAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList(), Ownership.STATIC)
+                .defineMethod(FOO, void.class, Ownership.STATIC)
                 .withoutCode()
                 .make();
     }
@@ -84,7 +90,7 @@ public class TypeWriterDefaultTest {
     public void testPrivateAbstractMethodAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList(), Visibility.PRIVATE)
+                .defineMethod(FOO, void.class, Visibility.PRIVATE)
                 .withoutCode()
                 .make();
     }
@@ -93,7 +99,7 @@ public class TypeWriterDefaultTest {
     public void testAbstractMethodOnNonAbstractClassAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, String.class)
                 .withoutCode()
                 .make();
     }
@@ -134,7 +140,7 @@ public class TypeWriterDefaultTest {
     public void testNonPublicMethodOnInterfaceAssertion() throws Exception {
         new ByteBuddy()
                 .makeInterface()
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, void.class)
                 .withoutCode()
                 .make();
     }
@@ -143,7 +149,7 @@ public class TypeWriterDefaultTest {
     public void testNonPublicMethodOnAnnotationAssertion() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, void.class)
                 .withoutCode()
                 .make();
     }
@@ -152,7 +158,7 @@ public class TypeWriterDefaultTest {
     public void testStaticMethodOnInterfaceAssertion() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V6)
                 .makeInterface()
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
                 .withoutCode()
                 .make();
     }
@@ -162,7 +168,7 @@ public class TypeWriterDefaultTest {
     public void testStaticMethodOnAnnotationAssertionJava8() throws Exception {
         new ByteBuddy()
                 .makeInterface()
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
                 .intercept(StubMethod.INSTANCE)
                 .make();
     }
@@ -171,7 +177,7 @@ public class TypeWriterDefaultTest {
     public void testStaticMethodOnAnnotationAssertion() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V6)
                 .makeAnnotation()
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
                 .intercept(StubMethod.INSTANCE)
                 .make();
     }
@@ -181,7 +187,7 @@ public class TypeWriterDefaultTest {
     public void testStaticMethodOnInterfaceAssertionJava8() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC, Ownership.STATIC)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC, Ownership.STATIC)
                 .intercept(StubMethod.INSTANCE)
                 .make();
     }
@@ -190,8 +196,8 @@ public class TypeWriterDefaultTest {
     public void testAnnotationDefaultValueOnClassAssertion() throws Exception {
         new ByteBuddy()
                 .subclass(Object.class)
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList())
-                .withDefaultValue(BAR)
+                .defineMethod(FOO, String.class)
+                .defaultValue(BAR)
                 .make();
     }
 
@@ -200,8 +206,8 @@ public class TypeWriterDefaultTest {
         new ByteBuddy()
                 .subclass(Object.class)
                 .modifiers(TypeManifestation.INTERFACE)
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList())
-                .withDefaultValue(BAR)
+                .defineMethod(FOO, String.class)
+                .defaultValue(BAR)
                 .make();
     }
 
@@ -209,7 +215,7 @@ public class TypeWriterDefaultTest {
     public void testAnnotationPropertyWithVoidReturnAssertion() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, void.class, Visibility.PUBLIC)
                 .withoutCode()
                 .make();
     }
@@ -218,7 +224,7 @@ public class TypeWriterDefaultTest {
     public void testAnnotationPropertyWithParametersAssertion() throws Exception {
         new ByteBuddy()
                 .makeAnnotation()
-                .defineMethod(FOO, String.class, Collections.<Class<?>>singletonList(Void.class), Visibility.PUBLIC)
+                .defineMethod(FOO, String.class, Visibility.PUBLIC).withParameters(Void.class)
                 .withoutCode()
                 .make();
     }
@@ -251,7 +257,7 @@ public class TypeWriterDefaultTest {
     public void testPackageDescriptionWithMethod() throws Exception {
         new ByteBuddy()
                 .makePackage(FOO)
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, void.class)
                 .withoutCode()
                 .make();
     }
@@ -284,7 +290,7 @@ public class TypeWriterDefaultTest {
     public void testAnnotationOnMethodPreJava5TypeAssertion() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
-                .defineMethod(FOO, void.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, void.class)
                 .intercept(StubMethod.INSTANCE)
                 .annotateMethod(AnnotationDescription.Builder.forType(Foo.class).make())
                 .make();
@@ -331,7 +337,7 @@ public class TypeWriterDefaultTest {
     public void testTypeInLegacyConstantPool() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, Object.class)
                 .intercept(FixedValue.value(Object.class))
                 .make();
     }
@@ -339,9 +345,9 @@ public class TypeWriterDefaultTest {
     @Test
     public void testTypeInLegacyConstantPoolRemapped() throws Exception {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
-                .withClassVisitor(TypeConstantAdjustment.INSTANCE)
                 .subclass(Object.class)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .visit(TypeConstantAdjustment.INSTANCE)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(Object.class))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -352,9 +358,9 @@ public class TypeWriterDefaultTest {
     @Test
     public void testArrayTypeInLegacyConstantPoolRemapped() throws Exception {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
-                .withClassVisitor(TypeConstantAdjustment.INSTANCE)
                 .subclass(Object.class)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .visit(TypeConstantAdjustment.INSTANCE)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(Object[].class))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -365,9 +371,9 @@ public class TypeWriterDefaultTest {
     @Test
     public void testPrimitiveTypeInLegacyConstantPoolRemapped() throws Exception {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
-                .withClassVisitor(TypeConstantAdjustment.INSTANCE)
                 .subclass(Object.class)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .visit(TypeConstantAdjustment.INSTANCE)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(int.class))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -379,7 +385,7 @@ public class TypeWriterDefaultTest {
     public void testMethodTypeInLegacyConstantPool() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, Object.class)
                 .intercept(FixedValue.value(JavaInstance.MethodType.of(Object.class, Object.class)))
                 .make();
     }
@@ -388,7 +394,7 @@ public class TypeWriterDefaultTest {
     public void testMethodHandleInLegacyConstantPool() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList())
+                .defineMethod(FOO, Object.class)
                 .intercept(FixedValue.value(JavaInstance.MethodHandle.of(new MethodDescription.ForLoadedMethod(Object.class.getDeclaredMethod("toString")))))
                 .make();
     }
@@ -408,6 +414,30 @@ public class TypeWriterDefaultTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeWriter.Default.ForCreation.class).apply();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.class).apply();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.class).create(new ObjectPropertyAssertion.Creator<TypeWriter.Default.ForInlining<?>>() {
+            @Override
+            @SuppressWarnings("unchecked")
+            public TypeWriter.Default.ForInlining<?> create() {
+                TypeWriter.Default.ForInlining<?> inlining = mock(TypeWriter.Default.ForInlining.class);
+                TypeDescription typeDescription = mock(TypeDescription.class);
+                when(typeDescription.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
+                try {
+                    Field instrumentedMethods = TypeWriter.Default.class.getDeclaredField("instrumentedMethods");
+                    Field instrumentedType = TypeWriter.Default.class.getDeclaredField("instrumentedType");
+                    instrumentedMethods.setAccessible(true);
+                    instrumentedType.setAccessible(true);
+                    instrumentedMethods.set(inlining, new MethodList.Empty<MethodDescription>());
+                    instrumentedType.set(inlining, typeDescription);
+                    return inlining;
+                } catch (Exception ignored) {
+                    throw new AssertionError();
+                }
+            }
+        }).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingFieldVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.AttributeObtainingMethodVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.CodePreservingMethodVisitor.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.RedefinitionClassVisitor.TypeInitializerInjection.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.FramePreservingRemapper.class).applyBasic();
         ObjectPropertyAssertion.of(TypeWriter.Default.ForInlining.FramePreservingRemapper.FramePreservingMethodRemapper.class)
                 .create(new ObjectPropertyAssertion.Creator<String>() {

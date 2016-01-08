@@ -8,8 +8,8 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
@@ -34,7 +34,6 @@ import java.lang.annotation.*;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * Using this annotation it is possible to access fields by getter and setter types. Before this annotation can be
@@ -150,7 +149,7 @@ public @interface FieldProxy {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(Class<?> getterType, Class<?> setterType) {
-            return install(new TypeDescription.ForLoadedType(nonNull(getterType)), new TypeDescription.ForLoadedType(nonNull(setterType)));
+            return install(new TypeDescription.ForLoadedType(getterType), new TypeDescription.ForLoadedType(setterType));
         }
 
         /**
@@ -170,13 +169,13 @@ public @interface FieldProxy {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> install(TypeDescription getterType, TypeDescription setterType) {
-            MethodDescription getterMethod = onlyMethod(nonNull(getterType));
+            MethodDescription getterMethod = onlyMethod(getterType);
             if (!getterMethod.getReturnType().asErasure().represents(Object.class)) {
                 throw new IllegalArgumentException(getterMethod + " must take a single Object-typed parameter");
             } else if (getterMethod.getParameters().size() != 0) {
                 throw new IllegalArgumentException(getterMethod + " must not declare parameters");
             }
-            MethodDescription setterMethod = onlyMethod(nonNull(setterType));
+            MethodDescription setterMethod = onlyMethod(setterType);
             if (!setterMethod.getReturnType().asErasure().represents(void.class)) {
                 throw new IllegalArgumentException(setterMethod + " must return void");
             } else if (setterMethod.getParameters().size() != 1 || !setterMethod.getParameters().get(0).getType().asErasure().represents(Object.class)) {
@@ -227,13 +226,13 @@ public @interface FieldProxy {
                 throw new IllegalStateException(target + " uses a @Field annotation on an non-installed type");
             }
             FieldLocator.Resolution resolution = FieldLocator.of(annotation.getValue(FIELD_NAME, String.class), source)
-                    .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getTypeDescription())
-                    .resolve(implementationTarget.getTypeDescription(), source.isStatic());
+                    .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getInstrumentedType())
+                    .resolve(implementationTarget.getInstrumentedType(), source.isStatic());
             return resolution.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(
                     resolution.getFieldDescription(),
                     assigner,
-                    implementationTarget.getTypeDescription(),
+                    implementationTarget.getInstrumentedType(),
                     accessType,
                     annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
@@ -458,7 +457,7 @@ public @interface FieldProxy {
                      * @param implementationTarget The implementation target of the current instrumentation.
                      */
                     protected Appender(Target implementationTarget) {
-                        typeDescription = implementationTarget.getTypeDescription();
+                        typeDescription = implementationTarget.getInstrumentedType();
                     }
 
                     @Override
@@ -474,9 +473,7 @@ public @interface FieldProxy {
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
                                 MethodInvocation.invoke(getterMethod),
-                                assigner.assign(getterMethod.getReturnType().asErasure(),
-                                        instrumentedMethod.getReturnType().asErasure(),
-                                        Assigner.Typing.DYNAMIC),
+                                assigner.assign(getterMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -601,14 +598,14 @@ public @interface FieldProxy {
                      * @param implementationTarget The implementation target of the current instrumentation.
                      */
                     protected Appender(Target implementationTarget) {
-                        typeDescription = implementationTarget.getTypeDescription();
+                        typeDescription = implementationTarget.getInstrumentedType();
                     }
 
                     @Override
                     public Size apply(MethodVisitor methodVisitor,
                                       Context implementationContext,
                                       MethodDescription instrumentedMethod) {
-                        TypeDescription parameterType = instrumentedMethod.getParameters().get(0).getType().asErasure();
+                        TypeDescription.Generic parameterType = instrumentedMethod.getParameters().get(0).getType();
                         MethodDescription setterMethod = methodAccessorFactory.registerSetterFor(accessedField);
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
                                 accessedField.isStatic()
@@ -617,8 +614,8 @@ public @interface FieldProxy {
                                         MethodVariableAccess.REFERENCE.loadOffset(0),
                                         FieldAccess.forField(typeDescription.getDeclaredFields()
                                                 .filter((named(AccessorProxy.FIELD_NAME))).getOnly()).getter()),
-                                MethodVariableAccess.forType(parameterType).loadOffset(1),
-                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getType().asErasure(), Assigner.Typing.DYNAMIC),
+                                MethodVariableAccess.of(parameterType).loadOffset(1),
+                                assigner.assign(parameterType, setterMethod.getParameters().get(0).getType(), Assigner.Typing.DYNAMIC),
                                 MethodInvocation.invoke(setterMethod),
                                 MethodReturn.VOID
                         ).apply(methodVisitor, implementationContext);
@@ -681,7 +678,7 @@ public @interface FieldProxy {
             public InstrumentedType prepare(InstrumentedType instrumentedType) {
                 return instrumentedType.withField(new FieldDescription.Token(AccessorProxy.FIELD_NAME,
                         Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE,
-                        this.instrumentedType));
+                        this.instrumentedType.asGenericType()));
             }
 
             @Override
@@ -724,7 +721,7 @@ public @interface FieldProxy {
                  * @param implementationTarget The implementation target of the current implementation.
                  */
                 protected Appender(Target implementationTarget) {
-                    fieldDescription = implementationTarget.getTypeDescription()
+                    fieldDescription = implementationTarget.getInstrumentedType()
                             .getDeclaredFields()
                             .filter((named(AccessorProxy.FIELD_NAME)))
                             .getOnly();
@@ -956,7 +953,7 @@ public @interface FieldProxy {
 
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
-                        for (GenericTypeDescription currentType : instrumentedType) {
+                        for (TypeDefinition currentType : instrumentedType) {
                             FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
                             if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                                 return new Resolution.Resolved(fieldList.getOnly());
@@ -1196,7 +1193,7 @@ public @interface FieldProxy {
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineConstructor(accessedField.isStatic()
+                        .defineConstructor().withParameters(accessedField.isStatic()
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(instrumentedType))
                         .intercept(accessedField.isStatic()

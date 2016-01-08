@@ -6,13 +6,15 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.TypeInitializer;
 import net.bytebuddy.dynamic.scaffold.TypeWriter;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -44,20 +46,7 @@ import java.util.*;
  * and {@link Object#hashCode()} if it wants to avoid to be used twice within the creation of a dynamic type. For two
  * equal implementations only one will be applied on the creation of a dynamic type.
  */
-public interface Implementation {
-
-    /**
-     * During the preparation phase of an implementation, implementations are eligible to adding fields or methods
-     * to the currently instrumented type. All methods that are added by this implementation are required to be
-     * implemented by the {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender} that is emitted
-     * on the call to
-     * {@link Implementation#appender(Implementation.Target)}
-     * call. On this method call, loaded type initializers can also be added to the instrumented type.
-     *
-     * @param instrumentedType The instrumented type that is the basis of the ongoing instrumentation.
-     * @return The instrumented type with any applied changes, if any.
-     */
-    InstrumentedType prepare(InstrumentedType instrumentedType);
+public interface Implementation extends InstrumentedType.Prepareable {
 
     /**
      * Creates a byte code appender that determines the implementation of the instrumented type's methods.
@@ -154,7 +143,7 @@ public interface Implementation {
 
             @Override
             public int hashCode() {
-                return 31 * getMethodDescription().asToken().hashCode() + getTypeDescription().hashCode();
+                return 31 * getMethodDescription().asSignatureToken().hashCode() + getTypeDescription().hashCode();
             }
 
             @Override
@@ -162,7 +151,7 @@ public interface Implementation {
                 if (this == other) return true;
                 if (!(other instanceof SpecialMethodInvocation)) return false;
                 SpecialMethodInvocation specialMethodInvocation = (SpecialMethodInvocation) other;
-                return getMethodDescription().asToken().equals(specialMethodInvocation.getMethodDescription().asToken())
+                return getMethodDescription().asSignatureToken().equals(specialMethodInvocation.getMethodDescription().asSignatureToken())
                         && getTypeDescription().equals(((SpecialMethodInvocation) other).getTypeDescription());
             }
         }
@@ -234,9 +223,10 @@ public interface Implementation {
 
             @Override
             public String toString() {
-                return "Instrumentation.SpecialMethodInvocation.Simple{" +
+                return "Implementation.SpecialMethodInvocation.Simple{" +
                         "typeDescription=" + typeDescription +
                         ", methodDescription=" + methodDescription +
+                        ", stackManipulation=" + stackManipulation +
                         '}';
             }
         }
@@ -255,7 +245,7 @@ public interface Implementation {
          *
          * @return A description of the instrumented type.
          */
-        TypeDescription getTypeDescription();
+        TypeDescription getInstrumentedType();
 
         /**
          * Identifies the origin type of an implementation. The origin type describes the type that is subject to
@@ -265,36 +255,36 @@ public interface Implementation {
          *
          * @return The origin type of this implementation.
          */
-        TypeDescription getOriginType();
+        TypeDefinition getOriginType();
 
         /**
          * Creates a special method invocation for invoking the super method of the given method.
          *
-         * @param methodToken A token of the method that is to be invoked as a super method.
+         * @param token A token of the method that is to be invoked as a super method.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeSuper(MethodDescription.Token methodToken);
+        SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token);
 
         /**
          * Creates a special method invocation for invoking a default method.
          *
-         * @param targetType  The interface on which the default method is to be invoked.
-         * @param methodToken A token that uniquely describes the method to invoke.
+         * @param targetType The interface on which the default method is to be invoked.
+         * @param token      A token that uniquely describes the method to invoke.
          * @return The corresponding special method invocation which might be illegal if the requested invocation is
          * not legal.
          */
-        SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken);
+        SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token);
 
         /**
          * Invokes a dominant method, i.e. if the method token can be invoked as a super method invocation, this invocation is considered dominant.
          * Alternatively, a method invocation is attempted on an interface type as a default method invocation only if this invocation is not ambiguous
          * for several interfaces.
          *
-         * @param methodToken The method token representing the method to be invoked.
+         * @param token The method token representing the method to be invoked.
          * @return A special method invocation for a method representing the method token.
          */
-        SpecialMethodInvocation invokeDominant(MethodDescription.Token methodToken);
+        SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token);
 
         /**
          * A factory for creating an {@link Implementation.Target}.
@@ -338,28 +328,28 @@ public interface Implementation {
             }
 
             @Override
-            public TypeDescription getTypeDescription() {
+            public TypeDescription getInstrumentedType() {
                 return instrumentedType;
             }
 
             @Override
-            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.Token methodToken) {
-                MethodGraph.Node node = methodGraph.getInterfaceGraph(targetType).locate(methodToken);
+            public Implementation.SpecialMethodInvocation invokeDefault(TypeDescription targetType, MethodDescription.SignatureToken token) {
+                MethodGraph.Node node = methodGraph.getInterfaceGraph(targetType).locate(token);
                 return node.getSort().isUnique()
                         ? SpecialMethodInvocation.Simple.of(node.getRepresentative(), targetType)
                         : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
             }
 
             @Override
-            public SpecialMethodInvocation invokeDominant(MethodDescription.Token methodToken) {
-                SpecialMethodInvocation specialMethodInvocation = invokeSuper(methodToken);
+            public SpecialMethodInvocation invokeDominant(MethodDescription.SignatureToken token) {
+                SpecialMethodInvocation specialMethodInvocation = invokeSuper(token);
                 if (!specialMethodInvocation.isValid()) {
                     Iterator<TypeDescription> iterator = instrumentedType.getInterfaces().asErasures().iterator();
                     while (!specialMethodInvocation.isValid() && iterator.hasNext()) {
-                        specialMethodInvocation = invokeDefault(iterator.next(), methodToken);
+                        specialMethodInvocation = invokeDefault(iterator.next(), token);
                     }
                     while (iterator.hasNext()) {
-                        if (invokeDefault(iterator.next(), methodToken).isValid()) {
+                        if (invokeDefault(iterator.next(), token).isValid()) {
                             return SpecialMethodInvocation.Illegal.INSTANCE;
                         }
                     }
@@ -443,11 +433,15 @@ public interface Implementation {
              * to the provided class visitor. This contains any fields for value caching, any accessor method and it
              * writes the type initializer. The type initializer must therefore never be written manually.
              *
-             * @param classVisitor The class visitor to which the extractable view is to be written.
-             * @param methodPool   A method pool which is queried for any user code to add to the type initializer.
-             * @param injectedCode Potential code that is to be injected into the type initializer.
+             * @param classVisitor                 The class visitor to which the extractable view is to be written.
+             * @param methodPool                   A method pool which is queried for any user code to add to the type initializer.
+             * @param injectedCode                 Potential code that is to be injected into the type initializer.
+             * @param annotationValueFilterFactory The annotation value filter factory to apply when writing annotation.
              */
-            void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode);
+            void drain(ClassVisitor classVisitor,
+                       TypeWriter.MethodPool methodPool,
+                       InjectedCode injectedCode,
+                       AnnotationValueFilter.Factory annotationValueFilterFactory);
 
             /**
              * Prohibits any instrumentation of an instrumented class's type initializer.
@@ -520,7 +514,7 @@ public interface Implementation {
              */
             ExtractableView make(TypeDescription instrumentedType,
                                  AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                 InstrumentedType.TypeInitializer typeInitializer,
+                                 TypeInitializer typeInitializer,
                                  ClassFileVersion classFileVersion);
         }
 
@@ -556,7 +550,10 @@ public interface Implementation {
             }
 
             @Override
-            public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
+            public void drain(ClassVisitor classVisitor,
+                              TypeWriter.MethodPool methodPool,
+                              InjectedCode injectedCode,
+                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 if (injectedCode.isDefined() || methodPool.target(new MethodDescription.Latent.TypeInitializer(instrumentedType)).getSort().isDefined()) {
                     throw new IllegalStateException("Type initializer interception is impossible or was disabled for " + instrumentedType);
                 }
@@ -608,7 +605,7 @@ public interface Implementation {
                 @Override
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                            InstrumentedType.TypeInitializer typeInitializer,
+                                            TypeInitializer typeInitializer,
                                             ClassFileVersion classFileVersion) {
                     if (typeInitializer.isDefined()) {
                         throw new IllegalStateException("Cannot define type initializer which was explicitly disabled: " + typeInitializer);
@@ -647,7 +644,7 @@ public interface Implementation {
             /**
              * The type initializer of the created instrumented type.
              */
-            private final InstrumentedType.TypeInitializer typeInitializer;
+            private final TypeInitializer typeInitializer;
 
             /**
              * The class file version that the instrumented type is written in.
@@ -715,7 +712,7 @@ public interface Implementation {
              */
             protected Default(TypeDescription instrumentedType,
                               AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                              InstrumentedType.TypeInitializer typeInitializer,
+                              TypeInitializer typeInitializer,
                               ClassFileVersion classFileVersion) {
                 this.instrumentedType = instrumentedType;
                 this.auxiliaryTypeNamingStrategy = auxiliaryTypeNamingStrategy;
@@ -724,7 +721,7 @@ public interface Implementation {
                 registeredAccessorMethods = new HashMap<Implementation.SpecialMethodInvocation, MethodDescription.InDefinedShape>();
                 registeredGetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
                 registeredSetters = new HashMap<FieldDescription, MethodDescription.InDefinedShape>();
-                accessorMethods = new LinkedList<TypeWriter.MethodPool.Record>();
+                accessorMethods = new ArrayList<TypeWriter.MethodPool.Record>();
                 auxiliaryTypes = new HashMap<AuxiliaryType, DynamicType>();
                 registeredFieldCacheEntries = new HashMap<FieldCacheEntry, FieldDescription.InDefinedShape>();
                 suffix = RandomString.make();
@@ -795,15 +792,18 @@ public interface Implementation {
                 if (!fieldCacheCanAppendEntries) {
                     throw new IllegalStateException("Cached values cannot be registered after defining the type initializer for " + instrumentedType);
                 }
-                fieldCache = new CacheValueField(instrumentedType, fieldType, suffix, fieldValue.hashCode());
+                fieldCache = new CacheValueField(instrumentedType, fieldType.asGenericType(), suffix, fieldValue.hashCode());
                 registeredFieldCacheEntries.put(fieldCacheEntry, fieldCache);
                 return fieldCache;
             }
 
             @Override
-            public void drain(ClassVisitor classVisitor, TypeWriter.MethodPool methodPool, InjectedCode injectedCode) {
+            public void drain(ClassVisitor classVisitor,
+                              TypeWriter.MethodPool methodPool,
+                              InjectedCode injectedCode,
+                              AnnotationValueFilter.Factory annotationValueFilterFactory) {
                 fieldCacheCanAppendEntries = false;
-                InstrumentedType.TypeInitializer typeInitializer = this.typeInitializer;
+                TypeInitializer typeInitializer = this.typeInitializer;
                 for (Map.Entry<FieldCacheEntry, FieldDescription.InDefinedShape> entry : registeredFieldCacheEntries.entrySet()) {
                     classVisitor.visitField(entry.getValue().getModifiers(),
                             entry.getValue().getInternalName(),
@@ -825,9 +825,9 @@ public interface Implementation {
                 if (prohibitTypeInitiailzer && initializerRecord.getSort().isDefined()) {
                     throw new IllegalStateException("It is impossible to define a class initializer or cached values for " + instrumentedType);
                 }
-                initializerRecord.apply(classVisitor, this);
+                initializerRecord.apply(classVisitor, this, annotationValueFilterFactory);
                 for (TypeWriter.MethodPool.Record record : accessorMethods) {
-                    record.apply(classVisitor, this);
+                    record.apply(classVisitor, this, annotationValueFilterFactory);
                 }
             }
 
@@ -868,7 +868,7 @@ public interface Implementation {
                 /**
                  * The type of the cache's field.
                  */
-                private final TypeDescription fieldType;
+                private final TypeDescription.Generic fieldType;
 
                 /**
                  * The suffix to use for the cache field's name.
@@ -888,7 +888,7 @@ public interface Implementation {
                  * @param suffix           The suffix to use for the cache field's name.
                  * @param valueHashCode    The hash value of the field's value for creating a unique field name.
                  */
-                protected CacheValueField(TypeDescription instrumentedType, TypeDescription fieldType, String suffix, int valueHashCode) {
+                protected CacheValueField(TypeDescription instrumentedType, TypeDescription.Generic fieldType, String suffix, int valueHashCode) {
                     this.instrumentedType = instrumentedType;
                     this.fieldType = fieldType;
                     this.suffix = suffix;
@@ -896,7 +896,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getType() {
+                public TypeDescription.Generic getType() {
                     return fieldType;
                 }
 
@@ -1054,18 +1054,18 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asErasure();
+                public TypeDescription.Generic getReturnType() {
+                    return methodDescription.getReturnType().asRawType();
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asErasures());
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return methodDescription.getExceptionTypes().asErasures().asGenericTypes();
+                public TypeList.Generic getExceptionTypes() {
+                    return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
                 @Override
@@ -1074,8 +1074,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1135,18 +1135,18 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return fieldDescription.getType().asErasure();
+                public TypeDescription.Generic getReturnType() {
+                    return fieldDescription.getType().asRawType();
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Empty();
+                    return new ParameterList.Empty<ParameterDescription.InDefinedShape>();
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getExceptionTypes() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1155,8 +1155,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1216,18 +1216,18 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return TypeDescription.VOID;
+                public TypeDescription.Generic getReturnType() {
+                    return TypeDescription.Generic.VOID;
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asErasure()));
+                    return new ParameterList.Explicit.ForTypes(this, Collections.singletonList(fieldDescription.getType().asRawType()));
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getExceptionTypes() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1236,8 +1236,8 @@ public interface Implementation {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -1283,7 +1283,7 @@ public interface Implementation {
                 }
 
                 @Override
-                public MethodDescription getImplementedMethod() {
+                public MethodDescription getMethod() {
                     return methodDescription;
                 }
 
@@ -1298,9 +1298,9 @@ public interface Implementation {
                 }
 
                 @Override
-                public void applyBody(MethodVisitor methodVisitor, Context implementationContext) {
+                public void applyBody(MethodVisitor methodVisitor, Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
                     methodVisitor.visitCode();
-                    Size size = apply(methodVisitor, implementationContext, getImplementedMethod());
+                    Size size = apply(methodVisitor, implementationContext, getMethod());
                     methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                 }
 
@@ -1494,7 +1494,7 @@ public interface Implementation {
                 @Override
                 public ExtractableView make(TypeDescription instrumentedType,
                                             AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                            InstrumentedType.TypeInitializer typeInitializer,
+                                            TypeInitializer typeInitializer,
                                             ClassFileVersion classFileVersion) {
                     return new Default(instrumentedType, auxiliaryTypeNamingStrategy, typeInitializer, classFileVersion);
                 }

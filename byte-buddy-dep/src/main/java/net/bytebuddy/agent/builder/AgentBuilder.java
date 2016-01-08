@@ -7,9 +7,10 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
-import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
+import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Removal;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -37,7 +38,6 @@ import java.security.ProtectionDomain;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * <p>
@@ -191,7 +191,7 @@ public interface AgentBuilder {
     /**
      * Disables injection of auxiliary classes into the bootstrap class path.
      *
-     * @return An agent builder with bootstrap class loader class injection disbaled.
+     * @return An agent builder with bootstrap class loader class injection disabled.
      */
     AgentBuilder disableBootstrapInjection();
 
@@ -291,9 +291,8 @@ public interface AgentBuilder {
 
             /**
              * Creates a new {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} that only matches the
-             * supplied {@link TypeDescription} and its
-             * {@link java.lang.ClassLoader} against two matcher in order to decied if an instrumentation should
-             * be conducted.
+             * supplied {@link TypeDescription} and its {@link java.lang.ClassLoader} against two matcher in order
+             * to decided if an instrumentation should be conducted.
              *
              * @param typeMatcher        The type matcher to apply to a
              *                           {@link TypeDescription}.
@@ -354,7 +353,7 @@ public interface AgentBuilder {
         DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                        ByteBuddy byteBuddy,
                                        ClassFileLocator classFileLocator,
-                                       MethodRebaseResolver.MethodNameTransformer methodNameTransformer);
+                                       MethodNameTransformer methodNameTransformer);
 
         /**
          * Default implementations of type strategies.
@@ -369,20 +368,20 @@ public interface AgentBuilder {
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
-                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                                      MethodNameTransformer methodNameTransformer) {
                     return byteBuddy.rebase(typeDescription, classFileLocator, methodNameTransformer);
                 }
             },
 
             /**
-             * A definition handler that performs a redefition for all types.
+             * A definition handler that performs a redefinition for all types.
              */
             REDEFINE {
                 @Override
                 public DynamicType.Builder<?> builder(TypeDescription typeDescription,
                                                       ByteBuddy byteBuddy,
                                                       ClassFileLocator classFileLocator,
-                                                      MethodRebaseResolver.MethodNameTransformer methodNameTransformer) {
+                                                      MethodNameTransformer methodNameTransformer) {
                     return byteBuddy.redefine(typeDescription, classFileLocator);
                 }
             };
@@ -842,7 +841,7 @@ public interface AgentBuilder {
             DynamicType.Builder<?> apply(DynamicType.Builder<?> builder);
 
             /**
-             * Registes a dynamic type for initialization and/or begins the initialization process.
+             * Registers a dynamic type for initialization and/or begins the initialization process.
              *
              * @param dynamicType     The dynamic type that is created.
              * @param classLoader     The class loader of the dynamic type.
@@ -902,7 +901,7 @@ public interface AgentBuilder {
         enum SelfInjection implements InitializationStrategy {
 
             /**
-             * A form of self-injection where auxiliary types that are a subtype of the instrumented type are loaded lazyly and
+             * A form of self-injection where auxiliary types that are a subtype of the instrumented type are loaded lazily and
              * any other auxiliary type is loaded eagerly.
              */
             SPLIT {
@@ -970,7 +969,7 @@ public interface AgentBuilder {
 
                 @Override
                 public DynamicType.Builder<?> apply(DynamicType.Builder<?> builder) {
-                    return builder.initialize(NexusAccessor.INSTANCE.identifiedBy(identification));
+                    return builder.initializer(NexusAccessor.INSTANCE.identifiedBy(identification));
                 }
 
                 @Override
@@ -1008,9 +1007,9 @@ public interface AgentBuilder {
                             Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             Map<TypeDescription, byte[]> dependentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                             for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                                (auxiliaryType.isAssignableTo(instrumentedType)
-                                        ? independentTypes
-                                        : dependentTypes).remove(auxiliaryType);
+                                (auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)
+                                        ? dependentTypes
+                                        : independentTypes).remove(auxiliaryType);
                             }
                             Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
                             if (!independentTypes.isEmpty()) {
@@ -1182,7 +1181,7 @@ public interface AgentBuilder {
 
                     @Override
                     public String toString() {
-                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitiailizer{" +
+                        return "AgentBuilder.InitializationStrategy.SelfInjection.Dispatcher.InjectingInitializer{" +
                                 "instrumentedType=" + instrumentedType +
                                 ", rawAuxiliaryTypes=" + rawAuxiliaryTypes +
                                 ", loadedTypeInitializers=" + loadedTypeInitializers +
@@ -1432,13 +1431,13 @@ public interface AgentBuilder {
                                 new TextConstant(Nexus.class.getName()),
                                 MethodInvocation.invoke(NexusAccessor.INSTANCE.loadClass),
                                 new TextConstant("initialize"),
-                                ArrayFactory.forType(TypeDescription.CLASS)
+                                ArrayFactory.forType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class))
                                         .withValues(Arrays.asList(
                                                 ClassConstant.of(TypeDescription.CLASS),
                                                 ClassConstant.of(new TypeDescription.ForLoadedType(int.class)))),
                                 MethodInvocation.invoke(NexusAccessor.INSTANCE.getDeclaredMethod),
                                 NullConstant.INSTANCE,
-                                ArrayFactory.forType(TypeDescription.OBJECT)
+                                ArrayFactory.forType(TypeDescription.Generic.OBJECT)
                                         .withValues(Arrays.asList(
                                                 ClassConstant.of(instrumentedMethod.getDeclaringType().asErasure()),
                                                 new StackManipulation.Compound(
@@ -1496,21 +1495,18 @@ public interface AgentBuilder {
 
             @Override
             public void register(DynamicType dynamicType, ClassLoader classLoader, InjectorFactory injectorFactory) {
-                TypeDescription instrumentedType = dynamicType.getTypeDescription();
                 Map<TypeDescription, byte[]> auxiliaryTypes = dynamicType.getAuxiliaryTypes();
                 Map<TypeDescription, byte[]> independentTypes = new LinkedHashMap<TypeDescription, byte[]>(auxiliaryTypes);
                 for (TypeDescription auxiliaryType : auxiliaryTypes.keySet()) {
-                    if (auxiliaryType.isAssignableTo(instrumentedType)) {
+                    if (!auxiliaryType.getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class)) {
                         independentTypes.remove(auxiliaryType);
                     }
                 }
-                if (!auxiliaryTypes.isEmpty()) {
+                if (!independentTypes.isEmpty()) {
                     ClassInjector classInjector = injectorFactory.resolve();
                     Map<TypeDescription, LoadedTypeInitializer> loadedTypeInitializers = dynamicType.getLoadedTypeInitializers();
-                    if (!independentTypes.isEmpty()) {
-                        for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
-                            loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
-                        }
+                    for (Map.Entry<TypeDescription, Class<?>> entry : classInjector.inject(independentTypes).entrySet()) {
+                        loadedTypeInitializers.get(entry.getKey()).onLoad(entry.getValue());
                     }
                 }
             }
@@ -1644,7 +1640,7 @@ public interface AgentBuilder {
              * @param nativeMethodStrategy       The native method strategy to apply.
              * @param accessControlContext       The access control context to use.
              * @param initializationStrategy     The initialization strategy to use.
-             * @param bootstrapInjectionStrategy The bootrstrap injection strategy to use.
+             * @param bootstrapInjectionStrategy The bootstrap injection strategy to use.
              * @throws UnmodifiableClassException If an unmodifiable class is attempted to be modified.
              * @throws ClassNotFoundException     If a class cannot be found while redefining another class.
              */
@@ -1680,7 +1676,7 @@ public interface AgentBuilder {
                  */
                 protected ForRedefinition(Default.Transformation transformation) {
                     this.transformation = transformation;
-                    entries = new LinkedList<Entry>();
+                    entries = new ArrayList<Entry>();
                 }
 
                 @Override
@@ -1844,7 +1840,7 @@ public interface AgentBuilder {
                  */
                 protected ForRetransformation(Default.Transformation transformation) {
                     this.transformation = transformation;
-                    types = new LinkedList<Class<?>>();
+                    types = new ArrayList<Class<?>>();
                 }
 
                 @Override
@@ -1969,7 +1965,7 @@ public interface AgentBuilder {
          * @param byteBuddy The Byte Buddy instance to be used.
          */
         public Default(ByteBuddy byteBuddy) {
-            this(nonNull(byteBuddy),
+            this(byteBuddy,
                     BinaryLocator.Default.FAST,
                     TypeStrategy.Default.REBASE,
                     Listener.NoOp.INSTANCE,
@@ -2019,7 +2015,7 @@ public interface AgentBuilder {
 
         @Override
         public Identified type(RawMatcher matcher) {
-            return new Matched(nonNull(matcher), Transformer.NoOp.INSTANCE);
+            return new Matched(matcher, Transformer.NoOp.INSTANCE);
         }
 
         @Override
@@ -2029,12 +2025,12 @@ public interface AgentBuilder {
 
         @Override
         public Identified type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-            return type(new RawMatcher.ForElementMatcherPair(nonNull(typeMatcher), nonNull(classLoaderMatcher)));
+            return type(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
         }
 
         @Override
         public AgentBuilder withByteBuddy(ByteBuddy byteBuddy) {
-            return new Default(nonNull(byteBuddy),
+            return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
                     listener,
@@ -2051,7 +2047,7 @@ public interface AgentBuilder {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
-                    new Listener.Compound(this.listener, nonNull(listener)),
+                    new Listener.Compound(this.listener, listener),
                     nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
@@ -2064,7 +2060,7 @@ public interface AgentBuilder {
         public AgentBuilder withTypeStrategy(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
-                    nonNull(typeStrategy),
+                    typeStrategy,
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
@@ -2077,7 +2073,7 @@ public interface AgentBuilder {
         @Override
         public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
             return new Default(byteBuddy,
-                    nonNull(binaryLocator),
+                    binaryLocator,
                     typeStrategy,
                     listener,
                     nativeMethodStrategy,
@@ -2139,7 +2135,7 @@ public interface AgentBuilder {
                     nativeMethodStrategy,
                     accessControlContext,
                     initializationStrategy,
-                    nonNull(redefinitionStrategy),
+                    redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     transformation);
         }
@@ -2152,7 +2148,7 @@ public interface AgentBuilder {
                     listener,
                     nativeMethodStrategy,
                     accessControlContext,
-                    nonNull(initializationStrategy),
+                    initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     transformation);
@@ -2168,7 +2164,7 @@ public interface AgentBuilder {
                     accessControlContext,
                     initializationStrategy,
                     redefinitionStrategy,
-                    new BootstrapInjectionStrategy.Enabled(nonNull(folder), nonNull(instrumentation)),
+                    new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     transformation);
         }
 
@@ -2428,7 +2424,7 @@ public interface AgentBuilder {
              *
              * @return A method name transformer for this strategy.
              */
-            MethodRebaseResolver.MethodNameTransformer resolve();
+            MethodNameTransformer resolve();
 
             /**
              * Returns the method prefix if the strategy is enabled. This method must only be called if this strategy enables prefixing.
@@ -2448,8 +2444,8 @@ public interface AgentBuilder {
                 INSTANCE;
 
                 @Override
-                public MethodRebaseResolver.MethodNameTransformer resolve() {
-                    return MethodRebaseResolver.MethodNameTransformer.Suffixing.withRandomSuffix();
+                public MethodNameTransformer resolve() {
+                    return MethodNameTransformer.Suffixing.withRandomSuffix();
                 }
 
                 @Override
@@ -2501,8 +2497,8 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public MethodRebaseResolver.MethodNameTransformer resolve() {
-                    return new MethodRebaseResolver.MethodNameTransformer.Prefixing(prefix);
+                public MethodNameTransformer resolve() {
+                    return new MethodNameTransformer.Prefixing(prefix);
                 }
 
                 @Override
@@ -3170,7 +3166,7 @@ public interface AgentBuilder {
 
             @Override
             public Identified.Extendable transform(Transformer transformer) {
-                return new Matched(rawMatcher, new Transformer.Compound(this.transformer, nonNull(transformer)));
+                return new Matched(rawMatcher, new Transformer.Compound(this.transformer, transformer));
             }
 
             @Override

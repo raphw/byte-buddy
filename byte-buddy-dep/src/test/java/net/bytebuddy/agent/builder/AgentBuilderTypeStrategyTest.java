@@ -4,7 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.inline.MethodRebaseResolver;
+import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -31,7 +31,7 @@ public class AgentBuilderTypeStrategyTest {
     private ClassFileLocator classFileLocator;
 
     @Mock
-    private MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+    private MethodNameTransformer methodNameTransformer;
 
     @Mock
     private DynamicType.Builder<?> dynamicTypeBuilder;

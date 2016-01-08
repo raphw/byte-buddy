@@ -1,5 +1,6 @@
 package net.bytebuddy.test.utility;
 
+import net.bytebuddy.utility.CompoundList;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.Description;
 import org.hamcrest.TypeSafeMatcher;
@@ -7,7 +8,6 @@ import org.hamcrest.TypeSafeMatcher;
 import java.lang.reflect.*;
 import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -301,7 +301,7 @@ public class ObjectPropertyAssertion<T> {
         }
 
         private ApplicableRefinement with(Refinement<?> refinement) {
-            return new ApplicableRefinement(join(refinements, refinement));
+            return new ApplicableRefinement(CompoundList.of(refinements, refinement));
         }
     }
 
@@ -333,7 +333,7 @@ public class ObjectPropertyAssertion<T> {
         }
 
         private ApplicableGenerator with(Generator<?> generator) {
-            return new ApplicableGenerator(join(generators, generator));
+            return new ApplicableGenerator(CompoundList.of(generators, generator));
         }
     }
 
@@ -363,7 +363,7 @@ public class ObjectPropertyAssertion<T> {
         }
 
         private ApplicableCreator with(Creator<?> creator) {
-            return new ApplicableCreator(join(creators, creator));
+            return new ApplicableCreator(CompoundList.of(creators, creator));
         }
     }
 

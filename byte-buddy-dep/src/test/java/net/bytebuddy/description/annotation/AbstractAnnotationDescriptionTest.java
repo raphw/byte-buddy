@@ -4,7 +4,7 @@ import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.utility.PropertyDispatcher;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
@@ -396,10 +396,10 @@ public abstract class AbstractAnnotationDescriptionTest {
         assertThat(describe(annotation).getValue(new MethodDescription.Latent(new TypeDescription.ForLoadedType(annotation.annotationType()),
                 methodName,
                 Opcodes.ACC_PUBLIC,
-                Collections.<GenericTypeDescription>emptyList(),
-                new TypeDescription.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
+                Collections.<TypeVariableToken>emptyList(),
+                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(annotation.annotationType().getDeclaredMethod(methodName).getReturnType()),
                 Collections.<ParameterDescription.Token>emptyList(),
-                Collections.<GenericTypeDescription>emptyList(),
+                Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
                 MethodDescription.NO_DEFAULT_VALUE)), is(rawValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName)

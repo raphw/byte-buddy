@@ -35,7 +35,7 @@ public class VoidAwareAssignerVoidToNonVoidTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription sourceTypeDescription, targetTypeDescription;
+    private TypeDescription.Generic source, target;
 
     @Mock
     private Assigner chainedAssigner;
@@ -67,11 +67,11 @@ public class VoidAwareAssignerVoidToNonVoidTest {
 
     @Before
     public void setUp() throws Exception {
-        when(sourceTypeDescription.represents(void.class)).thenReturn(true);
-        when(sourceTypeDescription.isPrimitive()).thenReturn(true);
-        when(targetTypeDescription.represents(targetType)).thenReturn(true);
+        when(source.represents(void.class)).thenReturn(true);
+        when(source.isPrimitive()).thenReturn(true);
+        when(target.represents(targetType)).thenReturn(true);
         if (targetType.isPrimitive()) {
-            when(targetTypeDescription.isPrimitive()).thenReturn(true);
+            when(target.isPrimitive()).thenReturn(true);
         }
     }
 
@@ -84,7 +84,7 @@ public class VoidAwareAssignerVoidToNonVoidTest {
     @Test
     public void testAssignDefaultValue() throws Exception {
         Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner);
-        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.DYNAMIC);
+        StackManipulation stackManipulation = voidAwareAssigner.assign(source, target, Assigner.Typing.DYNAMIC);
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(StackSize.of(targetType).getSize()));
@@ -96,7 +96,7 @@ public class VoidAwareAssignerVoidToNonVoidTest {
     @Test(expected = IllegalStateException.class)
     public void testAssignNoDefaultValue() throws Exception {
         Assigner voidAwareAssigner = new VoidAwareAssigner(chainedAssigner);
-        StackManipulation stackManipulation = voidAwareAssigner.assign(sourceTypeDescription, targetTypeDescription, Assigner.Typing.STATIC);
+        StackManipulation stackManipulation = voidAwareAssigner.assign(source, target, Assigner.Typing.STATIC);
         assertThat(stackManipulation.isValid(), is(false));
         stackManipulation.apply(methodVisitor, implementationContext);
     }

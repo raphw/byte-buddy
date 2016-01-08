@@ -69,7 +69,6 @@
         <module name="SimplifyBooleanReturn"/>
 
         <module name="HideUtilityClassConstructor"/>
-        <module name="InterfaceIsType"/>
 
         <module name="ArrayTypeStyle"/>
         <module name="UpperEll"/>

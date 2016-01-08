@@ -2,7 +2,7 @@ package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -12,467 +12,103 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
 import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class MethodDescriptionTokenTest {
 
-    private static final String FOO = "foo", BAR = "bar";
+    private static final String FOO = "foo";
 
-    private static final int MODIFIERS = 42, MASK = 12, UPDATE = 7;
+    private static final int MODIFIERS = 42;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private GenericTypeDescription first, second;
+    private TypeDescription.Generic returnType, visitedReturnType, exceptionType, visitedExceptionType;
 
     @Mock
-    private AnnotationDescription firstAnnotation, secondAnnotation;
+    private ParameterDescription.Token parameterToken, visitedParameterToken;
 
     @Mock
-    private TypeDescription firstRaw, secondRaw;
+    private TypeVariableToken typeVariableToken, visitedTypeVariableToken;
 
     @Mock
-    private ParameterDescription.Token firstParameter, secondParameter;
+    private AnnotationDescription annotation;
 
     @Mock
-    private Object firstDefault, secondDefault;
+    private Object defaultValue;
+
+    @Mock
+    private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
     @Before
     public void setUp() throws Exception {
-        when(first.asErasure()).thenReturn(firstRaw);
-        when(second.asErasure()).thenReturn(secondRaw);
-        when(firstParameter.getType()).thenReturn(first);
-        when(secondParameter.getType()).thenReturn(second);
+        when(typeVariableToken.accept(visitor)).thenReturn(visitedTypeVariableToken);
+        when(returnType.asGenericType()).thenReturn(returnType);
+        when(visitedReturnType.asGenericType()).thenReturn(visitedReturnType);
+        when(returnType.accept(visitor)).thenReturn(visitedReturnType);
+        when(exceptionType.asGenericType()).thenReturn(exceptionType);
+        when(visitedExceptionType.asGenericType()).thenReturn(visitedExceptionType);
+        when(exceptionType.accept(visitor)).thenReturn(visitedExceptionType);
+        when(parameterToken.accept(visitor)).thenReturn(visitedParameterToken);
     }
 
     @Test
-    public void testMethodEqualityHashCode() throws Exception {
+    public void testProperties() throws Exception {
+        MethodDescription.Token token = new MethodDescription.Token(FOO,
+                MODIFIERS,
+                Collections.singletonList(typeVariableToken),
+                returnType,
+                Collections.singletonList(parameterToken),
+                Collections.singletonList(exceptionType),
+                Collections.singletonList(annotation),
+                defaultValue);
+        assertThat(token.getName(), is(FOO));
+        assertThat(token.getModifiers(), is(MODIFIERS));
+        assertThat(token.getTypeVariableTokens(), is(Collections.singletonList(typeVariableToken)));
+        assertThat(token.getReturnType(), is(returnType));
+        assertThat(token.getParameterTokens(), is(Collections.singletonList(parameterToken)));
+        assertThat(token.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
+        assertThat(token.getAnnotations(), is(Collections.singletonList(annotation)));
+        assertThat(token.getDefaultValue(), is(defaultValue));
+    }
+
+    @Test
+    public void testVisitor() throws Exception {
         assertThat(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode(),
+                        Collections.singletonList(typeVariableToken),
+                        returnType,
+                        Collections.singletonList(parameterToken),
+                        Collections.singletonList(exceptionType),
+                        Collections.singletonList(annotation),
+                        defaultValue).accept(visitor),
                 is(new MethodDescription.Token(FOO,
                         MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode()));
-    }
-
-    @Test
-    public void testMethodNameInequalityHashCode() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode(),
-                not(new MethodDescription.Token(BAR,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode()));
-    }
-
-    @Test
-    public void testReturnTypeInequalityHashCode() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode(),
-                not(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        second,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode()));
-    }
-
-    @Test
-    public void testParameterTypeInequalityHashCode() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode(),
-                not(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(secondParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode()));
-    }
-
-    @Test
-    public void testParameterTypeLengthInequalityHashCode() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode(),
-                not(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE).hashCode()));
-    }
-
-    @Test
-    public void testMethodEquality() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE),
-                is(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)));
-    }
-
-    @Test
-    public void testMethodNameInequality() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE),
-                not(new MethodDescription.Token(BAR,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)));
-    }
-
-    @Test
-    public void testReturnTypeInequality() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE),
-                not(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        second,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)));
-    }
-
-    @Test
-    public void testParameterTypeInequality() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE),
-                not(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(secondParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)));
-    }
-
-    @Test
-    public void testParameterTypeLengthInequality() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE),
-                not(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        first,
-                        Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(mock(GenericTypeDescription.class)),
-                        Collections.singletonList(mock(AnnotationDescription.class)),
-                        MethodDescription.NO_DEFAULT_VALUE)));
-    }
-
-    @Test
-    public void testTokenIdentity() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(true));
-    }
-
-    @Test
-    public void testTokenNoIdentityName() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(BAR,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityModifiers() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS * 2,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityTypeVariables() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(second),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityReturnType() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        second,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityParameters() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(secondParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityExceptions() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(second),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityAnnotations() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(secondAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityDefaultValue() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                firstDefault)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        secondDefault)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityDefaultValueLeftNull() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                MethodDescription.NO_DEFAULT_VALUE)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        secondDefault)), is(false));
-    }
-
-    @Test
-    public void testTokenNoIdentityDefaultValueRightNull() throws Exception {
-        assertThat(new MethodDescription.Token(FOO,
-                MODIFIERS,
-                Collections.singletonList(first),
-                first,
-                Collections.singletonList(firstParameter),
-                Collections.singletonList(first),
-                Collections.singletonList(firstAnnotation),
-                firstDefault)
-                .isIdenticalTo(new MethodDescription.Token(FOO,
-                        MODIFIERS,
-                        Collections.singletonList(first),
-                        first,
-                        Collections.singletonList(firstParameter),
-                        Collections.singletonList(first),
-                        Collections.singletonList(firstAnnotation),
-                        MethodDescription.NO_DEFAULT_VALUE)), is(false));
+                        Collections.singletonList(visitedTypeVariableToken),
+                        visitedReturnType,
+                        Collections.singletonList(visitedParameterToken),
+                        Collections.singletonList(visitedExceptionType),
+                        Collections.singletonList(annotation),
+                        defaultValue)));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(MethodDescription.Token.class).applyBasic();
+        ObjectPropertyAssertion.of(MethodDescription.Token.class).create(new ObjectPropertyAssertion.Creator<List<?>>() {
+            @Override
+            public List<?> create() {
+                TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
+                when(typeDescription.asGenericType()).thenReturn(typeDescription);
+                return Collections.singletonList(typeDescription);
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(MethodDescription.SignatureToken.class).apply();
+        ObjectPropertyAssertion.of(MethodDescription.TypeToken.class).apply();
     }
 }

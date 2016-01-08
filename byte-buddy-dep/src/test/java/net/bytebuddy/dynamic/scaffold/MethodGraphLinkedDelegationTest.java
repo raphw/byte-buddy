@@ -29,7 +29,7 @@ public class MethodGraphLinkedDelegationTest {
     private MethodGraph methodGraph, superGraph, interfaceGraph;
 
     @Mock
-    private MethodDescription.Token methodToken;
+    private MethodDescription.SignatureToken token;
 
     @Mock
     private MethodGraph.Node node;
@@ -41,14 +41,14 @@ public class MethodGraphLinkedDelegationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(methodGraph.locate(methodToken)).thenReturn(node);
+        when(methodGraph.locate(token)).thenReturn(node);
         when(methodGraph.listNodes()).thenReturn(nodeList);
         linkedMethodGraph = new MethodGraph.Linked.Delegation(methodGraph, superGraph, Collections.singletonMap(typeDescription, interfaceGraph));
     }
 
     @Test
     public void testLocateNode() throws Exception {
-        assertThat(linkedMethodGraph.locate(methodToken), is(node));
+        assertThat(linkedMethodGraph.locate(token), is(node));
     }
 
     @Test

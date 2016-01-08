@@ -3,11 +3,8 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -55,15 +52,6 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
     @Mock
     protected StackManipulation stackManipulation;
 
-    @Mock
-    protected ParameterList<?> sourceParameterList;
-
-    @Mock
-    protected GenericTypeList sourceTypeList;
-
-    @Mock
-    protected TypeList rawSourceTypeList;
-
     protected AbstractAnnotationBinderTest(Class<T> annotationType) {
         super(annotationType);
     }
@@ -84,17 +72,14 @@ public abstract class AbstractAnnotationBinderTest<T extends Annotation> extends
         annotation = mock(annotationType);
         doReturn(annotationType).when(annotation).annotationType();
         annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
-        when(source.getParameters()).thenReturn((ParameterList) sourceParameterList);
-        when(sourceParameterList.asTypeList()).thenReturn(sourceTypeList);
-        when(sourceTypeList.asErasures()).thenReturn(rawSourceTypeList);
-        when(assigner.assign(any(TypeDescription.class), any(TypeDescription.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
-        when(implementationTarget.getTypeDescription()).thenReturn(instrumentedType);
+        when(assigner.assign(any(TypeDescription.Generic.class), any(TypeDescription.Generic.class), any(Assigner.Typing.class))).thenReturn(stackManipulation);
+        when(implementationTarget.getInstrumentedType()).thenReturn(instrumentedType);
         when(implementationTarget.getOriginType()).thenReturn(instrumentedType);
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
-        when(instrumentedType.iterator()).then(new Answer<Iterator<GenericTypeDescription>>() {
+        when(instrumentedType.iterator()).then(new Answer<Iterator<TypeDefinition>>() {
             @Override
-            public Iterator<GenericTypeDescription> answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return Collections.<GenericTypeDescription>singleton(instrumentedType).iterator();
+            public Iterator<TypeDefinition> answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return Collections.<TypeDefinition>singleton(instrumentedType).iterator();
             }
         });
     }

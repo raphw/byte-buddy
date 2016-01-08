@@ -65,7 +65,7 @@ public class MethodDelegationBinderProcessorTest {
                 .thenReturn(MethodDelegationBinder.AmbiguityResolver.Resolution.RIGHT);
         when(ambiguityResolver.resolve(source, boundDelegation, boundDelegation))
                 .thenReturn(MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
-        when(implementationTarget.getTypeDescription()).thenReturn(instrumentedType);
+        when(implementationTarget.getInstrumentedType()).thenReturn(instrumentedType);
         when(unbindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
         when(bindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
         when(dominantBindableTarget.isVisibleTo(instrumentedType)).thenReturn(true);
@@ -74,14 +74,14 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoBindableTarget() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(unbindableTarget, unbindableTarget, unbindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(unbindableTarget, unbindableTarget, unbindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         processor.process(implementationTarget, source, methodDescriptions);
     }
 
     @Test
     public void testOneBindableTarget() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(unbindableTarget, bindableTarget, unbindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(unbindableTarget, bindableTarget, unbindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         MethodDelegationBinder.MethodBinding result = processor.process(implementationTarget, source, methodDescriptions);
         assertThat(result, is(boundDelegation));
@@ -94,7 +94,7 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test
     public void testTwoBindableTargetsWithDominant() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(unbindableTarget, bindableTarget, dominantBindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(unbindableTarget, bindableTarget, dominantBindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         MethodDelegationBinder.MethodBinding result = processor.process(implementationTarget, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
@@ -110,14 +110,14 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testTwoBindableTargetsWithoutDominant() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(unbindableTarget, bindableTarget, bindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(unbindableTarget, bindableTarget, bindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         processor.process(implementationTarget, source, methodDescriptions);
     }
 
     @Test
     public void testThreeBindableTargetsDominantBindableFirst() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(dominantBindableTarget, bindableTarget, bindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(dominantBindableTarget, bindableTarget, bindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         MethodDelegationBinder.MethodBinding result = processor.process(implementationTarget, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
@@ -131,7 +131,7 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test
     public void testThreeBindableTargetsDominantBindableMid() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(bindableTarget, dominantBindableTarget, bindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(bindableTarget, dominantBindableTarget, bindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         MethodDelegationBinder.MethodBinding result = processor.process(implementationTarget, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
@@ -146,7 +146,7 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test
     public void testThreeBindableTargetsDominantBindableLast() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(bindableTarget, bindableTarget, dominantBindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(bindableTarget, bindableTarget, dominantBindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         MethodDelegationBinder.MethodBinding result = processor.process(implementationTarget, source, methodDescriptions);
         assertThat(result, is(dominantBoundDelegation));
@@ -161,14 +161,14 @@ public class MethodDelegationBinderProcessorTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testInvisibleDoesNotBind() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Collections.singletonList(invisibleTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(invisibleTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         processor.process(implementationTarget, source, methodDescriptions);
     }
 
     @Test
     public void testInvisibleDoesNotBindButBindable() throws Exception {
-        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(Arrays.asList(invisibleTarget, bindableTarget));
+        MethodList<?> methodDescriptions = new MethodList.Explicit<MethodDescription>(invisibleTarget, bindableTarget);
         MethodDelegationBinder.Processor processor = new MethodDelegationBinder.Processor(methodDelegationBinder, ambiguityResolver);
         MethodDelegationBinder.MethodBinding result = processor.process(implementationTarget, source, methodDescriptions);
         assertThat(result, is(boundDelegation));

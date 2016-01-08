@@ -3,12 +3,11 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
-import net.bytebuddy.matcher.LatentMethodMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 
 import java.util.Collections;
 import java.util.List;
@@ -38,12 +37,10 @@ public interface ConstructorStrategy {
      * {@link net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy#extractConstructors(TypeDescription)}
      * method of this instance.
      *
-     * @param methodRegistry                        The original method registry.
-     * @param defaultMethodAttributeAppenderFactory The default method attribute appender factory.
-     * @return A method registry that is capable of providing byte code for the constructors that were added by
-     * this strategy.
+     * @param methodRegistry The original method registry.
+     * @return A method registry that is capable of providing byte code for the constructors that were added by this strategy.
      */
-    MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory);
+    MethodRegistry inject(MethodRegistry methodRegistry);
 
     /**
      * Default implementations of constructor strategies.
@@ -62,7 +59,7 @@ public interface ConstructorStrategy {
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return methodRegistry;
             }
         },
@@ -75,22 +72,22 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription superType = instrumentedType.getSuperType().asErasure();
+                TypeDescription.Generic superType = instrumentedType.getSuperType();
                 MethodList<?> defaultConstructors = superType == null
-                        ? new MethodList.Empty()
+                        ? new MethodList.Empty<MethodDescription.InGenericShape>()
                         : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (defaultConstructors.size() == 1) {
-                    return defaultConstructors.asTokenList();
+                    return defaultConstructors.asTokenList(is(instrumentedType));
                 } else {
                     throw new IllegalArgumentException(instrumentedType.getSuperType() + " declares no constructor that is visible to " + instrumentedType);
                 }
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
+                return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        defaultMethodAttributeAppenderFactory,
+                        MethodAttributeAppender.NoOp.INSTANCE,
                         MethodTransformer.NoOp.INSTANCE);
             }
         },
@@ -104,17 +101,17 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                GenericTypeDescription superType = instrumentedType.getSuperType();
+                TypeDescription.Generic superType = instrumentedType.getSuperType();
                 return (superType == null
-                        ? new MethodList.Empty()
-                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList();
+                        ? new MethodList.Empty<MethodDescription.InGenericShape>()
+                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
+                return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        defaultMethodAttributeAppenderFactory,
+                        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE,
                         MethodTransformer.NoOp.INSTANCE);
             }
         },
@@ -127,17 +124,17 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE_PUBLIC {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                GenericTypeDescription superType = instrumentedType.getSuperType();
+                TypeDescription.Generic superType = instrumentedType.getSuperType();
                 return (superType == null
-                        ? new MethodList.Empty()
-                        : superType.asErasure().getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList();
+                        ? new MethodList.Empty<MethodDescription.InGenericShape>()
+                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList(is(instrumentedType));
             }
 
             @Override
-            public MethodRegistry inject(MethodRegistry methodRegistry, MethodAttributeAppender.Factory defaultMethodAttributeAppenderFactory) {
-                return methodRegistry.append(new LatentMethodMatcher.Resolved(isConstructor()),
+            public MethodRegistry inject(MethodRegistry methodRegistry) {
+                return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        defaultMethodAttributeAppenderFactory,
+                        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE,
                         MethodTransformer.NoOp.INSTANCE);
             }
         };

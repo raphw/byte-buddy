@@ -24,10 +24,10 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
     private final Class<?> secondType;
 
     @Mock
-    private TypeDescription firstPrimitive;
+    private TypeDescription.Generic firstPrimitive, secondPrimitive;
 
     @Mock
-    private TypeDescription secondPrimitive;
+    private TypeDescription firstRawPrimitive, secondRawPrimitive;
 
     public ArgumentTypeResolverPrimitiveTest(Class<?> firstType, Class<?> secondType) {
         this.firstType = firstType;
@@ -78,13 +78,13 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
     @Before
     public void setUp() throws Exception {
         super.setUp();
+        when(firstPrimitive.asErasure()).thenReturn(firstRawPrimitive);
+        when(secondPrimitive.asErasure()).thenReturn(secondRawPrimitive);
         when(sourceType.isPrimitive()).thenReturn(true);
-        when(firstPrimitive.isPrimitive()).thenReturn(true);
-        when(firstPrimitive.represents(firstType)).thenReturn(true);
-        when(secondPrimitive.isPrimitive()).thenReturn(true);
-        when(secondPrimitive.represents(secondType)).thenReturn(true);
-        when(firstPrimitive.asErasure()).thenReturn(firstPrimitive);
-        when(secondPrimitive.asErasure()).thenReturn(secondPrimitive);
+        when(firstRawPrimitive.isPrimitive()).thenReturn(true);
+        when(firstRawPrimitive.represents(firstType)).thenReturn(true);
+        when(secondRawPrimitive.isPrimitive()).thenReturn(true);
+        when(secondRawPrimitive.represents(secondType)).thenReturn(true);
     }
 
     @Test
@@ -112,8 +112,8 @@ public class ArgumentTypeResolverPrimitiveTest extends AbstractArgumentTypeResol
         testDominance(firstPrimitive, firstPrimitive, MethodDelegationBinder.AmbiguityResolver.Resolution.AMBIGUOUS);
     }
 
-    private void testDominance(TypeDescription leftPrimitive,
-                               TypeDescription rightPrimitive,
+    private void testDominance(TypeDescription.Generic leftPrimitive,
+                               TypeDescription.Generic rightPrimitive,
                                MethodDelegationBinder.AmbiguityResolver.Resolution expected) throws Exception {
         when(sourceParameterList.size()).thenReturn(2);
         when(sourceType.isPrimitive()).thenReturn(true);

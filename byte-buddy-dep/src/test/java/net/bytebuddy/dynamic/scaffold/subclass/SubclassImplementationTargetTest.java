@@ -2,6 +2,7 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
@@ -27,35 +28,47 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     private static final String BAR = "bar", BAZ = "baz";
 
     @Mock
-    private TypeDescription superType;
+    private TypeDescription.Generic superType;
 
     @Mock
-    private MethodDescription.InDefinedShape superTypeConstructor;
+    private TypeDescription rawSuperType;
 
     @Mock
-    private MethodDescription.Token superConstructorToken;
+    private MethodDescription.InGenericShape superTypeConstructor;
+
+    @Mock
+    private MethodDescription.InDefinedShape definedSuperTypeConstructor;
+
+    @Mock
+    private MethodDescription.SignatureToken superConstructorToken;
 
     @Override
     @Before
     public void setUp() throws Exception {
-        when(superGraph.locate(Mockito.any(MethodDescription.Token.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
+        when(superGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.asErasure()).thenReturn(superType);
-        when(superType.getInternalName()).thenReturn(BAR);
+        when(superType.asErasure()).thenReturn(rawSuperType);
+        when(superType.asGenericType()).thenReturn(superType);
+        when(rawSuperType.asGenericType()).thenReturn(superType);
+        when(rawSuperType.asErasure()).thenReturn(rawSuperType);
+        when(rawSuperType.getInternalName()).thenReturn(BAR);
         when(superType.getDeclaredMethods())
-                .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(superTypeConstructor)));
+                .thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(superTypeConstructor));
+        when(superTypeConstructor.asDefined()).thenReturn(definedSuperTypeConstructor);
+        when(definedSuperTypeConstructor.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(definedSuperTypeConstructor.getDeclaringType()).thenReturn(rawSuperType);
+        when(definedSuperTypeConstructor.isConstructor()).thenReturn(true);
         when(superTypeConstructor.isVisibleTo(instrumentedType)).thenReturn(true);
-        when(superTypeConstructor.asToken()).thenReturn(superConstructorToken);
-        when(superTypeConstructor.getInternalName()).thenReturn(QUX);
-        when(superTypeConstructor.getDescriptor()).thenReturn(BAZ);
-        when(superTypeConstructor.asDefined()).thenReturn(superTypeConstructor);
+        when(superTypeConstructor.asSignatureToken()).thenReturn(superConstructorToken);
+        when(definedSuperTypeConstructor.getInternalName()).thenReturn(QUX);
+        when(definedSuperTypeConstructor.getDescriptor()).thenReturn(BAZ);
         when(superTypeConstructor.isConstructor()).thenReturn(true);
         when(superTypeConstructor.getDeclaringType()).thenReturn(superType);
-        when(superTypeConstructor.getReturnType()).thenReturn(TypeDescription.VOID);
-        when(superTypeConstructor.getParameters()).thenReturn(new ParameterList.Empty());
-        when(invokableToken.getInternalName()).thenReturn(FOO);
-        when(superConstructorToken.getInternalName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
+        when(superTypeConstructor.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(superTypeConstructor.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
+        when(invokableToken.getName()).thenReturn(FOO);
+        when(superConstructorToken.getName()).thenReturn(MethodDescription.CONSTRUCTOR_INTERNAL_NAME);
         super.setUp();
     }
 
@@ -66,11 +79,11 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
 
     @Test
     public void testSuperTypeMethodIsInvokable() throws Exception {
-        when(invokableMethod.isSpecializableFor(superType)).thenReturn(true);
+        when(invokableMethod.isSpecializableFor(rawSuperType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
-        assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
+        assertThat(specialMethodInvocation.getTypeDescription(), is(rawSuperType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
@@ -83,7 +96,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
 
     @Test
     public void testNonSpecializableSuperTypeMethodIsNotInvokable() throws Exception {
-        when(invokableMethod.isSpecializableFor(superType)).thenReturn(false);
+        when(invokableMethod.isSpecializableFor(rawSuperType)).thenReturn(false);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(false));
     }
@@ -91,11 +104,11 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     @Test
     public void testSuperConstructorIsInvokable() throws Exception {
         when(invokableMethod.isConstructor()).thenReturn(true);
-        when(superTypeConstructor.isSpecializableFor(superType)).thenReturn(true);
+        when(definedSuperTypeConstructor.isSpecializableFor(rawSuperType)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(superConstructorToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) superTypeConstructor));
-        assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
+        assertThat(specialMethodInvocation.getTypeDescription(), is(rawSuperType));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
@@ -104,21 +117,6 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
         verifyZeroInteractions(implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getMaximalSize(), is(0));
-    }
-
-    @Test
-    public void testSuperTypeOrigin() throws Exception {
-        assertThat(new SubclassImplementationTarget(instrumentedType,
-                methodGraph,
-                SubclassImplementationTarget.OriginTypeResolver.SUPER_TYPE).getOriginType(), is(superType));
-    }
-
-    @Test
-    public void testLevelTypeOrigin() throws Exception {
-        assertThat(new SubclassImplementationTarget(instrumentedType,
-                        methodGraph,
-                        SubclassImplementationTarget.OriginTypeResolver.LEVEL_TYPE).getOriginType(),
-                is(instrumentedType));
     }
 
     @Test

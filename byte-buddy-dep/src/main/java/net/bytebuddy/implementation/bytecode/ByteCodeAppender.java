@@ -5,6 +5,7 @@ import net.bytebuddy.implementation.Implementation;
 import org.objectweb.asm.MethodVisitor;
 
 import java.util.Arrays;
+import java.util.List;
 
 /**
  * An appender that generates the byte code for a given method. This is done by writing the byte code instructions to
@@ -110,7 +111,7 @@ public interface ByteCodeAppender {
         /**
          * The byte code appenders that are represented by this compound appender in their application order.
          */
-        private final ByteCodeAppender[] byteCodeAppender;
+        private final List<? extends ByteCodeAppender> byteCodeAppenders;
 
         /**
          * Creates a new compound byte code appender.
@@ -118,7 +119,16 @@ public interface ByteCodeAppender {
          * @param byteCodeAppender The byte code appenders to combine in their order.
          */
         public Compound(ByteCodeAppender... byteCodeAppender) {
-            this.byteCodeAppender = byteCodeAppender;
+            this(Arrays.asList(byteCodeAppender));
+        }
+
+        /**
+         * Creates a new compound byte code appender.
+         *
+         * @param byteCodeAppenders The byte code appenders to combine in their order.
+         */
+        public Compound(List<? extends ByteCodeAppender> byteCodeAppenders) {
+            this.byteCodeAppenders = byteCodeAppenders;
         }
 
         @Override
@@ -126,7 +136,7 @@ public interface ByteCodeAppender {
                           Implementation.Context implementationContext,
                           MethodDescription instrumentedMethod) {
             Size size = new Size(0, instrumentedMethod.getStackSize());
-            for (ByteCodeAppender byteCodeAppender : this.byteCodeAppender) {
+            for (ByteCodeAppender byteCodeAppender : byteCodeAppenders) {
                 size = size.merge(byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod));
             }
             return size;
@@ -135,17 +145,17 @@ public interface ByteCodeAppender {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
-                    && Arrays.equals(byteCodeAppender, ((Compound) other).byteCodeAppender);
+                    && byteCodeAppenders.equals(((Compound) other).byteCodeAppenders);
         }
 
         @Override
         public int hashCode() {
-            return Arrays.hashCode(byteCodeAppender);
+            return byteCodeAppenders.hashCode();
         }
 
         @Override
         public String toString() {
-            return "ByteCodeAppender.Compound{byteCodeAppender=" + Arrays.toString(byteCodeAppender) + '}';
+            return "ByteCodeAppender.Compound{byteCodeAppenders=" + byteCodeAppenders + '}';
         }
     }
 

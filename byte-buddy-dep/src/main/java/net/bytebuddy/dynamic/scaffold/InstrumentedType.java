@@ -6,43 +6,73 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.modifier.ModifierContributor;
 import net.bytebuddy.description.type.PackageDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
-import net.bytebuddy.implementation.Implementation;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import org.objectweb.asm.MethodVisitor;
+import net.bytebuddy.utility.CompoundList;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.joinUnique;
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 /**
  * Implementations of this interface represent an instrumented type that is subject to change. Implementations
- * should however be immutable and return new instance when their mutator methods are called.
+ * should however be immutable and return new instance when its builder methods are invoked.
  */
 public interface InstrumentedType extends TypeDescription {
 
     /**
      * Creates a new instrumented type that includes a new field.
      *
-     * @param fieldToken A token that represents the field's shape. This token must represent types in their detached state.
+     * @param token A token that represents the field's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional field.
      */
-    InstrumentedType withField(FieldDescription.Token fieldToken);
+    InstrumentedType withField(FieldDescription.Token token);
 
     /**
      * Creates a new instrumented type that includes a new method or constructor.
      *
-     * @param methodToken A token that represents the method's shape. This token must represent types in their detached state.
+     * @param token A token that represents the method's shape. This token must represent types in their detached state.
      * @return A new instrumented type that is equal to this instrumented type but with the additional method.
      */
-    InstrumentedType withMethod(MethodDescription.Token methodToken);
+    InstrumentedType withMethod(MethodDescription.Token token);
+
+    /**
+     * Creates a new instrumented type with changed modifiers.
+     *
+     * @param modifiers The instrumented type's modifiers.
+     * @return A new instrumented type that is equal to this instrumented type but with the given modifiers.
+     */
+    InstrumentedType withModifiers(int modifiers);
+
+    /**
+     * Creates a new instrumented type with the given interfaces implemented.
+     *
+     * @param interfaceTypes The interface types to implement.
+     * @return A new instrumented type that is equal to this instrumented type but with the given interfaces implemented.
+     */
+    InstrumentedType withInterfaces(TypeList.Generic interfaceTypes);
+
+    /**
+     * Creates a new instrumented type with the given type variable defined.
+     *
+     * @param typeVariable The type variable to declare.
+     * @return A new instrumented type that is equal to this instrumented type but with the given type variable declared.
+     */
+    InstrumentedType withTypeVariable(TypeVariableToken typeVariable);
+
+    /**
+     * Creates a new instrumented type with the given annotations.
+     *
+     * @param annotationDescriptions The annotations to add to the instrumented type.
+     * @return A new instrumented type that is equal to this instrumented type but annotated with the given annotations
+     */
+    InstrumentedType withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
 
     /**
      * Creates a new instrumented type that includes the given {@link net.bytebuddy.implementation.LoadedTypeInitializer}.
@@ -78,133 +108,79 @@ public interface InstrumentedType extends TypeDescription {
     TypeInitializer getTypeInitializer();
 
     /**
-     * A type initializer is responsible for defining a type's static initialization block.
+     * Validates the instrumented type to define a legal Java type.
+     *
+     * @return This instrumented type as a non-modifiable type description.
      */
-    interface TypeInitializer extends ByteCodeAppender {
+    TypeDescription validated();
+
+    /**
+     * Implementations represent an {@link InstrumentedType} with a flexible name.
+     */
+    interface WithFlexibleName extends InstrumentedType {
+
+        @Override
+        WithFlexibleName withField(FieldDescription.Token token);
+
+        @Override
+        WithFlexibleName withMethod(MethodDescription.Token token);
+
+        @Override
+        WithFlexibleName withModifiers(int modifiers);
+
+        @Override
+        WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes);
+
+        @Override
+        WithFlexibleName withTypeVariable(TypeVariableToken typeVariable);
+
+        @Override
+        WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions);
+
+        @Override
+        WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer);
+
+        @Override
+        WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender);
 
         /**
-         * Indicates if this type initializer is defined.
+         * Creates a new instrumented type with a changed name.
          *
-         * @return {@code true} if this type initializer is defined.
+         * @param name The name of the instrumented type.
+         * @return A new instrumented type that has the given name.
          */
-        boolean isDefined();
+        WithFlexibleName withName(String name);
+    }
+
+    /**
+     * Implementations are able to prepare an {@link InstrumentedType}.
+     */
+    interface Prepareable {
 
         /**
-         * Expands this type initializer with another byte code appender. For this to be possible, this type initializer must
-         * be defined.
+         * Prepares a given instrumented type.
          *
-         * @param byteCodeAppender The byte code appender to apply within the type initializer.
-         * @return A defined type initializer.
+         * @param instrumentedType The instrumented type in its current form.
+         * @return The prepared instrumented type.
          */
-        TypeInitializer expandWith(ByteCodeAppender byteCodeAppender);
-
-        /**
-         * Returns this type initializer with an ending return statement. For this to be possible, this type initializer must
-         * be defined.
-         *
-         * @return This type initializer with an ending return statement.
-         */
-        ByteCodeAppender withReturn();
-
-        /**
-         * Canonical implementation of a non-defined type initializer.
-         */
-        enum None implements TypeInitializer {
-
-            /**
-             * The singleton instance.
-             */
-            INSTANCE;
-
-            @Override
-            public boolean isDefined() {
-                return false;
-            }
-
-            @Override
-            public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
-                return new TypeInitializer.Simple(byteCodeAppender);
-            }
-
-            @Override
-            public ByteCodeAppender withReturn() {
-                throw new IllegalStateException("Cannot append return to non-defined type initializer");
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                throw new IllegalStateException("Cannot apply a non-defined type initializer");
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.TypeInitializer.None." + name();
-            }
-        }
-
-        /**
-         * A simple, defined type initializer that executes a given {@link net.bytebuddy.implementation.bytecode.ByteCodeAppender}.
-         */
-        class Simple implements TypeInitializer {
-
-            /**
-             * The stack manipulation to apply within the type initializer.
-             */
-            private final ByteCodeAppender byteCodeAppender;
-
-            /**
-             * Creates a new simple type initializer.
-             *
-             * @param byteCodeAppender The byte code appender manipulation to apply within the type initializer.
-             */
-            public Simple(ByteCodeAppender byteCodeAppender) {
-                this.byteCodeAppender = byteCodeAppender;
-            }
-
-            @Override
-            public boolean isDefined() {
-                return true;
-            }
-
-            @Override
-            public TypeInitializer expandWith(ByteCodeAppender byteCodeAppender) {
-                return new TypeInitializer.Simple(new ByteCodeAppender.Compound(this.byteCodeAppender, byteCodeAppender));
-            }
-
-            @Override
-            public ByteCodeAppender withReturn() {
-                return new ByteCodeAppender.Compound(byteCodeAppender, new ByteCodeAppender.Simple(MethodReturn.VOID));
-            }
-
-            @Override
-            public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
-                return byteCodeAppender.apply(methodVisitor, implementationContext, instrumentedMethod);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && byteCodeAppender.equals(((TypeInitializer.Simple) other).byteCodeAppender);
-            }
-
-            @Override
-            public int hashCode() {
-                return byteCodeAppender.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "InstrumentedType.TypeInitializer.Simple{" +
-                        "byteCodeAppender=" + byteCodeAppender +
-                        '}';
-            }
-        }
+        InstrumentedType prepare(InstrumentedType instrumentedType);
     }
 
     /**
      * A default implementation of an instrumented type.
      */
-    class Default extends AbstractBase.OfSimpleType implements InstrumentedType {
+    class Default extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
+
+        /**
+         * A set containing all keywords of the Java programming language.
+         */
+        private static final Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(
+                "abstract", "continue", "for", "new", "switch", "assert", "default", "goto", "package", "synchronized", "boolean",
+                "do", "if", "private", "this", "break", "double", "implements", "protected", "throw", "byte", "else", "import",
+                "public", "throws", "case", "enum", "instanceof", "return", "transient", "catch", "extends", "int", "short",
+                "try", "char", "final", "interface", "static", "void", "class", "finally", "long", "strictfp", "volatile",
+                "const", "float", "native", "super", "while"
+        ));
 
         /**
          * The binary name of the instrumented type.
@@ -217,19 +193,19 @@ public interface InstrumentedType extends TypeDescription {
         private final int modifiers;
 
         /**
-         * A list of type variables of the instrumented type.
-         */
-        private final List<? extends GenericTypeDescription> typeVariables;
-
-        /**
          * The generic super type of the instrumented type.
          */
-        private final GenericTypeDescription superType;
+        private final Generic superType;
+
+        /**
+         * The instrumented type's type variables in their tokenized form.
+         */
+        private final List<? extends TypeVariableToken> typeVariables;
 
         /**
          * A list of interfaces of the instrumented type.
          */
-        private final List<? extends GenericTypeDescription> interfaceTypes;
+        private final List<? extends Generic> interfaceTypes;
 
         /**
          * A list of field tokens describing the fields of the instrumented type.
@@ -292,54 +268,11 @@ public interface InstrumentedType extends TypeDescription {
         private final boolean localClass;
 
         /**
-         * Creates a new instrumented type with default values for any properties that only exist for types that are declared within another type.
-         *
-         * @param name                   The binary name of the instrumented type.
-         * @param modifiers              The modifiers of the instrumented type.
-         * @param typeVariables          A list of type variables of the instrumented type.
-         * @param superType              The generic super type of the instrumented type.
-         * @param interfaceTypes         A list of interfaces of the instrumented type.
-         * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
-         * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
-         * @param annotationDescriptions A list of annotations of the annotated type.
-         * @param typeInitializer        The type initializer of the instrumented type.
-         * @param loadedTypeInitializer  The loaded type initializer of the instrumented type.
-         */
-        public Default(String name,
-                       int modifiers,
-                       List<? extends GenericTypeDescription> typeVariables,
-                       GenericTypeDescription superType,
-                       List<? extends GenericTypeDescription> interfaceTypes,
-                       List<? extends FieldDescription.Token> fieldTokens,
-                       List<? extends MethodDescription.Token> methodTokens,
-                       List<? extends AnnotationDescription> annotationDescriptions,
-                       TypeInitializer typeInitializer,
-                       LoadedTypeInitializer loadedTypeInitializer) {
-            this(name,
-                    modifiers,
-                    typeVariables,
-                    superType,
-                    interfaceTypes,
-                    fieldTokens,
-                    methodTokens,
-                    annotationDescriptions,
-                    typeInitializer,
-                    loadedTypeInitializer,
-                    null,
-                    null,
-                    null,
-                    Collections.<TypeDescription>emptyList(),
-                    false,
-                    false,
-                    false);
-        }
-
-        /**
          * Creates a new instrumented type.
          *
          * @param name                   The binary name of the instrumented type.
          * @param modifiers              The modifiers of the instrumented type.
-         * @param typeVariables          A list of type variables of the instrumented type.
+         * @param typeVariables          The instrumented type's type variables in their tokenized form.
          * @param superType              The generic super type of the instrumented type.
          * @param interfaceTypes         A list of interfaces of the instrumented type.
          * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
@@ -355,23 +288,23 @@ public interface InstrumentedType extends TypeDescription {
          * @param anonymousClass         {@code true} if this type is a anonymous class.
          * @param localClass             {@code true} if this type is a local class.
          */
-        public Default(String name,
-                       int modifiers,
-                       List<? extends GenericTypeDescription> typeVariables,
-                       GenericTypeDescription superType,
-                       List<? extends GenericTypeDescription> interfaceTypes,
-                       List<? extends FieldDescription.Token> fieldTokens,
-                       List<? extends MethodDescription.Token> methodTokens,
-                       List<? extends AnnotationDescription> annotationDescriptions,
-                       TypeInitializer typeInitializer,
-                       LoadedTypeInitializer loadedTypeInitializer,
-                       TypeDescription declaringType,
-                       MethodDescription enclosingMethod,
-                       TypeDescription enclosingType,
-                       List<? extends TypeDescription> declaredTypes,
-                       boolean memberClass,
-                       boolean anonymousClass,
-                       boolean localClass) {
+        protected Default(String name,
+                          int modifiers,
+                          Generic superType,
+                          List<? extends TypeVariableToken> typeVariables,
+                          List<? extends Generic> interfaceTypes,
+                          List<? extends FieldDescription.Token> fieldTokens,
+                          List<? extends MethodDescription.Token> methodTokens,
+                          List<? extends AnnotationDescription> annotationDescriptions,
+                          TypeInitializer typeInitializer,
+                          LoadedTypeInitializer loadedTypeInitializer,
+                          TypeDescription declaringType,
+                          MethodDescription enclosingMethod,
+                          TypeDescription enclosingType,
+                          List<? extends TypeDescription> declaredTypes,
+                          boolean memberClass,
+                          boolean anonymousClass,
+                          boolean localClass) {
             this.name = name;
             this.modifiers = modifiers;
             this.typeVariables = typeVariables;
@@ -391,60 +324,247 @@ public interface InstrumentedType extends TypeDescription {
             this.localClass = localClass;
         }
 
+        /**
+         * Creates an instrumented type that is a subclass of the given super type named as given and with the modifiers.
+         *
+         * @param name      The name of the instrumented type.
+         * @param modifiers The modifiers of the instrumented type.
+         * @param superType The super type of the instrumented type.
+         * @return An instrumented type as a subclass of the given type with the given name and modifiers.
+         */
+        public static InstrumentedType.WithFlexibleName subclass(String name, int modifiers, Generic superType) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    Collections.<TypeVariableToken>emptyList(),
+                    Collections.<Generic>emptyList(),
+                    Collections.<FieldDescription.Token>emptyList(),
+                    Collections.<MethodDescription.Token>emptyList(),
+                    Collections.<AnnotationDescription>emptyList(),
+                    TypeInitializer.None.INSTANCE,
+                    LoadedTypeInitializer.NoOp.INSTANCE,
+                    UNDEFINED,
+                    MethodDescription.UNDEFINED,
+                    UNDEFINED,
+                    Collections.<TypeDescription>emptyList(),
+                    false,
+                    false,
+                    false);
+        }
+
+        /**
+         * Creates an instrumented type that represents the given type description.
+         *
+         * @param typeDescription A description of the type to represent.
+         * @return An instrumented type of the given type.
+         */
+        public static InstrumentedType.WithFlexibleName of(TypeDescription typeDescription) {
+            return new Default(typeDescription.getName(),
+                    typeDescription.getModifiers(),
+                    typeDescription.getSuperType(),
+                    typeDescription.getTypeVariables().asTokenList(is(typeDescription)),
+                    typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
+                    typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
+                    typeDescription.getDeclaredMethods().asTokenList(is(typeDescription)),
+                    typeDescription.getDeclaredAnnotations(),
+                    TypeInitializer.None.INSTANCE,
+                    LoadedTypeInitializer.NoOp.INSTANCE,
+                    typeDescription.getDeclaringType(),
+                    typeDescription.getEnclosingMethod(),
+                    typeDescription.getEnclosingType(),
+                    typeDescription.getDeclaredTypes(),
+                    typeDescription.isMemberClass(),
+                    typeDescription.isAnonymousClass(),
+                    typeDescription.isLocalClass());
+        }
+
         @Override
-        public InstrumentedType withField(FieldDescription.Token fieldToken) {
+        public WithFlexibleName withModifiers(int modifiers) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withField(FieldDescription.Token token) {
             return new Default(this.name,
-                    this.modifiers,
-                    typeVariables,
+                    modifiers,
                     superType,
+                    typeVariables,
                     interfaceTypes,
-                    joinUnique(fieldTokens, fieldToken),
+                    CompoundList.of(fieldTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
-        public InstrumentedType withMethod(MethodDescription.Token methodToken) {
-            return new Default(name,
-                    this.modifiers,
-                    typeVariables,
-                    superType,
-                    interfaceTypes,
-                    fieldTokens,
-                    joinUnique(methodTokens, methodToken),
-                    annotationDescriptions,
-                    typeInitializer,
-                    loadedTypeInitializer);
-        }
-
-        @Override
-        public InstrumentedType withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
+        public WithFlexibleName withMethod(MethodDescription.Token token) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    CompoundList.of(methodTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    typeVariables,
+                    CompoundList.of(this.interfaceTypes, interfaceTypes.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    CompoundList.of(this.annotationDescriptions, annotationDescriptions),
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    CompoundList.of(typeVariables, typeVariable.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer,
-                    new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer));
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
-        public InstrumentedType withInitializer(ByteCodeAppender byteCodeAppender) {
+        public WithFlexibleName withName(String name) {
             return new Default(name,
                     modifiers,
-                    typeVariables,
                     superType,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    typeVariables,
+                    interfaceTypes,
+                    fieldTokens,
+                    methodTokens,
+                    annotationDescriptions,
+                    typeInitializer,
+                    new LoadedTypeInitializer.Compound(this.loadedTypeInitializer, loadedTypeInitializer),
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
+        }
+
+        @Override
+        public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
+            return new Default(name,
+                    modifiers,
+                    superType,
+                    typeVariables,
                     interfaceTypes,
                     fieldTokens,
                     methodTokens,
                     annotationDescriptions,
                     typeInitializer.expandWith(byteCodeAppender),
-                    loadedTypeInitializer);
+                    loadedTypeInitializer,
+                    declaringType,
+                    enclosingMethod,
+                    enclosingType,
+                    declaredTypes,
+                    memberClass,
+                    anonymousClass,
+                    localClass);
         }
 
         @Override
@@ -506,15 +626,15 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        protected GenericTypeDescription getDeclaredSuperType() {
+        public Generic getSuperType() {
             return superType == null
-                    ? TypeDescription.UNDEFINED
-                    : superType.accept(GenericTypeDescription.Visitor.Substitutor.ForAttachment.of(this));
+                    ? Generic.UNDEFINED
+                    : superType.accept(Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
-        protected GenericTypeList getDeclaredInterfaces() {
-            return GenericTypeList.ForDetachedTypes.attach(this, interfaceTypes);
+        public TypeList.Generic getInterfaces() {
+            return TypeList.Generic.ForDetachedTypes.attach(this, interfaceTypes);
         }
 
         @Override
@@ -528,8 +648,8 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public GenericTypeList getTypeVariables() {
-            return GenericTypeList.ForDetachedTypes.OfTypeVariable.attach(this, typeVariables);
+        public TypeList.Generic getTypeVariables() {
+            return TypeList.Generic.ForDetachedTypes.attachVariables(this, typeVariables);
         }
 
         @Override
@@ -540,6 +660,216 @@ public interface InstrumentedType extends TypeDescription {
         @Override
         public String getName() {
             return name;
+        }
+
+        @Override
+        public TypeDescription validated() {
+            if (!isValidIdentifier(getName().split("\\."))) {
+                throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
+            } else if ((getModifiers() & ~ModifierContributor.ForType.MASK) != EMPTY_MASK) {
+                throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for " + this);
+            }
+            TypeDescription.Generic superType = getSuperType();
+            if (superType != null && (!superType.accept(Generic.Visitor.Validator.SUPER_CLASS))) {
+                throw new IllegalStateException("Illegal super class " + getSuperType() + " for " + this);
+            } else if (superType != null && !superType.asErasure().isVisibleTo(this)) {
+                throw new IllegalStateException("Invisible super type " + superType + " for " + this);
+            }
+            Set<TypeDescription> interfaceErasures = new HashSet<TypeDescription>();
+            for (TypeDescription.Generic interfaceType : getInterfaces()) {
+                if (!interfaceType.accept(Generic.Visitor.Validator.INTERFACE)) {
+                    throw new IllegalStateException("Illegal interface " + interfaceType + " for " + this);
+                } else if (!interfaceErasures.add(interfaceType.asErasure())) {
+                    throw new IllegalStateException("Already implemented interface " + interfaceType + " for " + this);
+                } else if (!interfaceType.asErasure().isVisibleTo(this)) {
+                    throw new IllegalStateException("Illegal interface type " + interfaceType + " for " + this);
+                }
+            }
+            TypeList.Generic typeVariables = getTypeVariables();
+            if (!typeVariables.isEmpty() && isAssignableTo(Throwable.class)) {
+                throw new IllegalStateException("Cannot define throwable " + this + " to be generic");
+            }
+            Set<String> typeVariableNames = new HashSet<String>();
+            for (TypeDescription.Generic typeVariable : typeVariables) {
+                String variableSymbol = typeVariable.getSymbol();
+                if (!typeVariableNames.add(variableSymbol)) {
+                    throw new IllegalStateException("Duplicate type variable symbol pf " + typeVariable + " for " + this);
+                } else if (!isValidIdentifier(variableSymbol)) {
+                    throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + this);
+                }
+                boolean interfaceBound = false;
+                Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
+                for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                    if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
+                        throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + this);
+                    } else if (!bounds.add(bound)) {
+                        throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + this);
+                    } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
+                        throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + this);
+                    }
+                    interfaceBound = true;
+                }
+                if (!interfaceBound) {
+                    throw new IllegalStateException("Type variable " + typeVariable + " for " + this + " does not define at least one bound");
+                }
+            }
+            Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
+            for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
+                if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                    throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);
+                }
+            }
+            Set<String> fieldNames = new HashSet<String>();
+            for (FieldDescription.InDefinedShape fieldDescription : getDeclaredFields()) {
+                String fieldName = fieldDescription.getName();
+                if (!fieldNames.add(fieldName)) {
+                    throw new IllegalStateException("Duplicate field definition for " + fieldDescription);
+                } else if (!isValidIdentifier(fieldName)) {
+                    throw new IllegalStateException("Illegal field name for " + fieldDescription);
+                } else if ((fieldDescription.getModifiers() & ~ModifierContributor.ForField.MASK) != EMPTY_MASK) {
+                    throw new IllegalStateException("Illegal field modifiers " + fieldDescription.getModifiers() + " for " + fieldDescription);
+                }
+                if (!fieldDescription.getType().accept(Generic.Visitor.Validator.FIELD)) {
+                    throw new IllegalStateException("Illegal type variable bound " + fieldDescription.getType() + " for " + fieldDescription);
+                } else if (!fieldDescription.getType().asErasure().isVisibleTo(this)) {
+                    throw new IllegalStateException("Invisible field type " + fieldDescription.getType() + " for " + fieldDescription);
+                }
+                Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
+                for (AnnotationDescription annotationDescription : fieldDescription.getDeclaredAnnotations()) {
+                    if (!fieldAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                        throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + fieldDescription);
+                    }
+                }
+            }
+            Set<MethodDescription.SignatureToken> methodSignatureTokens = new HashSet<MethodDescription.SignatureToken>();
+            for (MethodDescription.InDefinedShape methodDescription : getDeclaredMethods()) {
+                if (!methodSignatureTokens.add(methodDescription.asSignatureToken())) {
+                    throw new IllegalStateException("Duplicate method signature for " + methodDescription);
+                } else if ((methodDescription.getModifiers() & ~ModifierContributor.ForMethod.MASK) != 0) {
+                    throw new IllegalStateException("Illegal modifiers " + methodDescription.getModifiers() + " for " + methodDescription);
+                }
+                Set<String> methodTypeVariableNames = new HashSet<String>();
+                for (TypeDescription.Generic typeVariable : methodDescription.getTypeVariables()) {
+                    String variableSymbol = typeVariable.getSymbol();
+                    if (!methodTypeVariableNames.add(variableSymbol)) {
+                        throw new IllegalStateException("Duplicate type variable symbol of " + typeVariable + " for " + methodDescription);
+                    } else if (!isValidIdentifier(variableSymbol)) {
+                        throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + methodDescription);
+                    }
+                    boolean interfaceBound = false;
+                    Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
+                    for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                        if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
+                            throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + methodDescription);
+                        } else if (!bounds.add(bound)) {
+                            throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + methodDescription);
+                        } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
+                            throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + methodDescription);
+                        }
+                        interfaceBound = true;
+                    }
+                    if (!interfaceBound) {
+                        throw new IllegalStateException("Type variable " + typeVariable + " for " + methodDescription + " does not define at least one bound");
+                    }
+                }
+                if (methodDescription.isTypeInitializer()) {
+                    throw new IllegalStateException("Illegal explicit declaration of a type initializer by " + this);
+                } else if (methodDescription.isConstructor()) {
+                    if (!methodDescription.getReturnType().represents(void.class)) {
+                        throw new IllegalStateException("A constructor must return void " + methodDescription);
+                    }
+                } else if (!isValidIdentifier(methodDescription.getInternalName())) {
+                        throw new IllegalStateException("Illegal method name " + methodDescription.getReturnType() + " for " + methodDescription);
+                } else if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
+                        throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                } else if (!methodDescription.getReturnType().asErasure().isVisibleTo(this)) {
+                        throw new IllegalStateException("Invisible return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                }
+                Set<String> parameterNames = new HashSet<String>();
+                for (ParameterDescription.InDefinedShape parameterDescription : methodDescription.getParameters()) {
+                    if (!parameterDescription.getType().accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
+                        throw new IllegalStateException("Illegal parameter type of " + parameterDescription + " for " + methodDescription);
+                    } else if (!parameterDescription.getType().asErasure().isVisibleTo(this)) {
+                        throw new IllegalStateException("Invisible parameter type of " + parameterDescription + " for " + methodDescription);
+                    }
+                    if (parameterDescription.isNamed()) {
+                        String parameterName = parameterDescription.getName();
+                        if (!parameterNames.add(parameterName)) {
+                        throw new IllegalStateException("Duplicate parameter name of " + parameterDescription + " for " + methodDescription);
+                        } else if (!isValidIdentifier(parameterName)) {
+                        throw new IllegalStateException("Illegal parameter name of " + parameterDescription + " for " + methodDescription);
+                        }
+                    }
+                    if (parameterDescription.hasModifiers() && (parameterDescription.getModifiers() & ~ModifierContributor.ForParameter.MASK) != EMPTY_MASK) {
+                        throw new IllegalStateException("Illegal modifiers of " + parameterDescription + " for " + methodDescription);
+                    }
+                    Set<TypeDescription> parameterAnnotationTypes = new HashSet<TypeDescription>();
+                    for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
+                        if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                            throw new IllegalStateException("Duplicate annotation " + annotationDescription + " of " + parameterDescription + " for " + methodDescription);
+                        }
+                    }
+                }
+                Set<TypeDescription.Generic> exceptionTypes = new HashSet<Generic>();
+                for (TypeDescription.Generic exceptionType : methodDescription.getExceptionTypes()) {
+                    if (!exceptionTypes.add(exceptionType)) {
+                        throw new IllegalStateException("Duplicate exception type " + exceptionType + " for " + methodDescription);
+                    } else if (!exceptionType.accept(Generic.Visitor.Validator.EXCEPTION)) {
+                        throw new IllegalStateException("Illegal exception type " + exceptionType + " for " + methodDescription);
+                    } else if (!exceptionType.asErasure().isVisibleTo(this)) {
+                        throw new IllegalStateException("Invisible exception type " + exceptionType + " for " + methodDescription);
+                    }
+                }
+                Set<TypeDescription> methodAnnotationTypes = new HashSet<TypeDescription>();
+                for (AnnotationDescription annotationDescription : methodDescription.getDeclaredAnnotations()) {
+                    if (!methodAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                        throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);
+                    }
+                }
+                Object defaultValue = methodDescription.getDefaultValue();
+                if (defaultValue != null && !methodDescription.isDefaultValue(defaultValue)) {
+                    throw new IllegalStateException("Illegal default value " + defaultValue + "for " + methodDescription);
+                }
+            }
+            return this;
+        }
+
+        /**
+         * Checks if an array of identifiers is a valid compound Java identifier.
+         *
+         * @param identifier an array of potentially invalid Java identifiers.
+         * @return {@code true} if all identifiers are valid and the array is not empty.
+         */
+        private static boolean isValidIdentifier(String[] identifier) {
+            if (identifier.length == 0) {
+                return false;
+            }
+            for (String part : identifier) {
+                if (!isValidIdentifier(part)) {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        /**
+         * Checks if a Java identifier is valid.
+         *
+         * @param identifier The identifier to check for validity.
+         * @return {@code true} if the given identifier is valid.
+         */
+        private static boolean isValidIdentifier(String identifier) {
+            if (KEYWORDS.contains(identifier) || identifier.isEmpty() || !Character.isJavaIdentifierStart(identifier.charAt(0))) {
+                return false;
+            } else if (identifier.equals(PackageDescription.PACKAGE_CLASS_NAME)) {
+                return true;
+            }
+            for (int index = 1; index < identifier.length(); index++) {
+                if (!Character.isJavaIdentifierPart(identifier.charAt(index))) {
+                    return false;
+                }
+            }
+            return true;
         }
     }
 }

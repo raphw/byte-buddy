@@ -17,6 +17,18 @@ public abstract class AbstractFilterableListTest<T, S extends FilterableList<T, 
 
     protected abstract S asList(List<U> elements);
 
+    protected S asList(U... element) {
+        return asList(Arrays.asList(element));
+    }
+
+    protected S asList(U element) {
+        return asList(Collections.singletonList(element));
+    };
+
+    protected S emptyList() {
+        return asList(Collections.<U>emptyList());
+    };
+
     protected abstract T asElement(U element);
 
     @Test(expected = IllegalStateException.class)

@@ -2,7 +2,6 @@ package net.bytebuddy.pool;
 
 import net.bytebuddy.description.type.AbstractTypeDescriptionTest;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 
 import java.lang.reflect.Field;
@@ -25,12 +24,12 @@ public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionT
     }
 
     @Override
-    protected GenericTypeDescription describe(Field field) {
+    protected TypeDescription.Generic describe(Field field) {
         return describe(field.getDeclaringClass()).getDeclaredFields().filter(is(field)).getOnly().getType();
     }
 
     @Override
-    protected GenericTypeDescription describe(Method method) {
+    protected TypeDescription.Generic describe(Method method) {
         return describe(method.getDeclaringClass()).getDeclaredMethods().filter(is(method)).getOnly().getReturnType();
     }
 }

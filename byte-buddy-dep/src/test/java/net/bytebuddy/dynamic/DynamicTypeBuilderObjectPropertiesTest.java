@@ -7,11 +7,15 @@ public class DynamicTypeBuilderObjectPropertiesTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultExceptionDeclarableMethodInterception.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultFieldValueTarget.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultMatchedMethodInterception.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultMethodAnnotationTarget.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.DefaultOptionalMatchedMethodInterception.class).skipSynthetic().apply();
-        ObjectPropertyAssertion.of(DynamicType.Builder.FieldValueTarget.NumericRangeValidator.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.FieldDefinitionAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.FieldMatchAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.AnnotationAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.ParameterAnnotationAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.SimpleParameterAnnotationAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.AnnotationAdapter.class).apply();
+        ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.OptionalMethodMatchAdapter.class).apply();
+
     }
 }

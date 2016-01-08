@@ -31,10 +31,13 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerDroppingTest {
     @Mock
     private TypeDescription targetType;
 
+    @Mock
+    private TypeDescription.Generic genericTargetType;
+
     @Before
     public void setUp() throws Exception {
-        when(target.getReturnType()).thenReturn(targetType);
-        when(targetType.asErasure()).thenReturn(targetType);
+        when(target.getReturnType()).thenReturn(genericTargetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType);
         when(targetType.getStackSize()).thenReturn(StackSize.SINGLE);
     }
 
@@ -43,7 +46,8 @@ public class TargetMethodAnnotationDrivenBinderTerminationHandlerDroppingTest {
         StackManipulation stackManipulation = TargetMethodAnnotationDrivenBinder.TerminationHandler.Dropping.INSTANCE.resolve(assigner, source, target);
         assertThat(stackManipulation, is((StackManipulation) Removal.SINGLE));
         verify(targetType).getStackSize();
-        verify(targetType).asErasure();
         verifyNoMoreInteractions(targetType);
+        verify(genericTargetType).asErasure();
+        verifyNoMoreInteractions(genericTargetType);
     }
 }

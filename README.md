@@ -118,20 +118,20 @@ that by Byte Buddy generates require Byte Buddy on the class path! Given the abo
 to implement the Java 8 `java.util.function.Function` interface and its abstract `apply` method:
 
 ```java
-Class<? extends Function> dynamicType = new ByteBuddy()
-  .subclass(Function.class)
+Class<? extends java.util.function.Function> dynamicType = new ByteBuddy()
+  .subclass(java.util.function.Function.class)
   .method(ElementMatchers.named("apply"))
   .intercept(MethodDelegation.to(new FunctionInterceptor()))
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
-assertThat(dynamicType.newInstance().apply("Byte Buddy"), is("Hello from Byte Buddy"));
+assertThat((String) dynamicType.newInstance().apply("Byte Buddy"), is("Hello from Byte Buddy"));
 ```
 
 Executing the above code, Byte Buddy implements Java's `Function` interface and implements the `apply` method
 as a delegation to an instance of the `FunctionInterceptor` POJO that we defined before. Now, every time that the
 `Function::apply` method is called, the control flow is dispatched to `Interceptor::intercept` and the latter
-method's return value is returned from the generated code.
+method's return value is returned from the interface's method.
 
 Interceptors can be defined to take with more generic inputs and outputs by annotating the interceptor's parameters. 
 When Byte Buddy discovers an annotation, the library injects the dependency that the interceptor parameter requires. 

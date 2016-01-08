@@ -28,11 +28,24 @@ public class TrivialTypeTest {
     private AuxiliaryType.MethodAccessorFactory methodAccessorFactory;
 
     @Test
-    public void testCreation() throws Exception {
+    public void testPlain() throws Exception {
         when(classFileVersion.getMinorMajorVersion()).thenReturn(ClassFileVersion.JAVA_V5.getMinorMajorVersion());
-        DynamicType dynamicType = TrivialType.INSTANCE.make(FOO, classFileVersion, methodAccessorFactory);
+        DynamicType dynamicType = TrivialType.PLAIN.make(FOO, classFileVersion, methodAccessorFactory);
         assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
         assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
+        assertThat(dynamicType.getTypeDescription().getDeclaredAnnotations().size(), is(0));
+        assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
+        assertThat(dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription()).isAlive(), is(false));
+    }
+
+    @Test
+    public void testEager() throws Exception {
+        when(classFileVersion.getMinorMajorVersion()).thenReturn(ClassFileVersion.JAVA_V5.getMinorMajorVersion());
+        DynamicType dynamicType = TrivialType.SIGNATURE_RELEVANT.make(FOO, classFileVersion, methodAccessorFactory);
+        assertThat(dynamicType.getTypeDescription().getName(), is(FOO));
+        assertThat(dynamicType.getTypeDescription().getModifiers(), is(Opcodes.ACC_SYNTHETIC));
+        assertThat(dynamicType.getTypeDescription().getDeclaredAnnotations().size(), is(1));
+        assertThat(dynamicType.getTypeDescription().getDeclaredAnnotations().isAnnotationPresent(AuxiliaryType.SignatureRelevant.class), is(true));
         assertThat(dynamicType.getAuxiliaryTypes().size(), is(0));
         assertThat(dynamicType.getLoadedTypeInitializers().get(dynamicType.getTypeDescription()).isAlive(), is(false));
     }

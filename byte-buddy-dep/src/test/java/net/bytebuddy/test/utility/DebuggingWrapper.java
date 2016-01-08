@@ -1,6 +1,7 @@
 package net.bytebuddy.test.utility;
 
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.util.Printer;
 import org.objectweb.asm.util.Textifier;
@@ -11,7 +12,7 @@ import java.io.PrintWriter;
 import java.io.Writer;
 
 @SuppressWarnings("unused")
-public class DebuggingWrapper implements ClassVisitorWrapper {
+public class DebuggingWrapper implements AsmVisitorWrapper {
 
     private final PrintWriter printWriter;
 
@@ -27,7 +28,7 @@ public class DebuggingWrapper implements ClassVisitorWrapper {
         this.printer = printer;
     }
 
-    public static ClassVisitorWrapper makeDefault() {
+    public static AsmVisitorWrapper makeDefault() {
         return new DebuggingWrapper(System.out, new Textifier());
     }
 
@@ -42,7 +43,7 @@ public class DebuggingWrapper implements ClassVisitorWrapper {
     }
 
     @Override
-    public ClassVisitor wrap(ClassVisitor classVisitor) {
+    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
         return new TraceClassVisitor(classVisitor, printer, printWriter);
     }
 }

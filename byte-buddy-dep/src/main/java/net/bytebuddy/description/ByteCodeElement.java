@@ -2,11 +2,11 @@ package net.bytebuddy.description;
 
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -70,51 +70,21 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
         T asDefined();
 
         /**
-         * Returns a token representative of this type dependant.
-         *
-         * @return A token representative of this type dependant.
-         */
-        S asToken();
-
-        /**
          * Returns a token representative of this type dependant. All types that are matched by the supplied matcher are replaced by
          * {@link net.bytebuddy.dynamic.TargetType} descriptions.
          *
-         * @param targetTypeMatcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions.
+         * @param matcher A matcher to identify types to be replaced by {@link net.bytebuddy.dynamic.TargetType} descriptions.
          * @return A token representative of this type dependant.
          */
-        S asToken(ElementMatcher<? super GenericTypeDescription> targetTypeMatcher);
+        S asToken(ElementMatcher<? super TypeDescription> matcher);
     }
 
     /**
-     * Describes a byte code element that can be accessed by another element.
-     */
-    interface Accessible extends ByteCodeElement {
-
-        /**
-         * Determines if this byte code element is considered accessible to the given type by the semantics
-         * of the Java reflection API.
-         *
-         * @param typeDescription The type for which the access is to be determined.
-         * @return {@code true} if this element is considered accessible to the given type.
-         */
-        boolean isAccessibleTo(TypeDescription typeDescription);
-    }
-
-    /**
-     * Representation of a tokenized, detached byte code element.
+     * A token representing a byte code element.
      *
-     * @param <T> The actual token type.
+     * @param <T> The type of the implementation.
      */
     interface Token<T extends Token<T>> {
-
-        /**
-         * Checks if this token is fully identical to the provided token.
-         *
-         * @param token The token to compare this token with.
-         * @return {@code true} if this token is identical to the given token.
-         */
-        boolean isIdenticalTo(T token);
 
         /**
          * Transforms the types represented by this token by applying the given visitor to them.
@@ -122,7 +92,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
          * @param visitor The visitor to transform all types that are represented by this token.
          * @return This token with all of its represented types transformed by the supplied visitor.
          */
-        T accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor);
+        T accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor);
 
         /**
          * A list of tokens.
@@ -139,6 +109,16 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
             /**
              * Creates a list of tokens.
              *
+             * @param token The tokens that this list represents.
+             */
+            @SuppressWarnings("unchecked")
+            public TokenList(S... token) {
+                this(Arrays.asList(token));
+            }
+
+            /**
+             * Creates a list of tokens.
+             *
              * @param tokens The tokens that this list represents.
              */
             public TokenList(List<? extends S> tokens) {
@@ -151,7 +131,7 @@ public interface ByteCodeElement extends NamedElement.WithRuntimeName, ModifierR
              * @param visitor The visitor to apply to all tokens.
              * @return A list containing the transformed tokens.
              */
-            public TokenList<S> accept(GenericTypeDescription.Visitor<? extends GenericTypeDescription> visitor) {
+            public TokenList<S> accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
                 List<S> tokens = new ArrayList<S>(this.tokens.size());
                 for (S token : this.tokens) {
                     tokens.add(token.accept(visitor));

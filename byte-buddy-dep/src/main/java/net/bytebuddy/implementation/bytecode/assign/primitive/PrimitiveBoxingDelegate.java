@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bytecode.assign.primitive;
 
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -94,28 +95,28 @@ public enum PrimitiveBoxingDelegate {
     /**
      * Locates a boxing delegate for a given primitive type.
      *
-     * @param typeDescription A non-void primitive type.
+     * @param typeDefinition A non-void primitive type.
      * @return A delegate capable of boxing the given primitve type.
      */
-    public static PrimitiveBoxingDelegate forPrimitive(TypeDescription typeDescription) {
-        if (typeDescription.represents(boolean.class)) {
+    public static PrimitiveBoxingDelegate forPrimitive(TypeDefinition typeDefinition) {
+        if (typeDefinition.represents(boolean.class)) {
             return BOOLEAN;
-        } else if (typeDescription.represents(byte.class)) {
+        } else if (typeDefinition.represents(byte.class)) {
             return BYTE;
-        } else if (typeDescription.represents(short.class)) {
+        } else if (typeDefinition.represents(short.class)) {
             return SHORT;
-        } else if (typeDescription.represents(char.class)) {
+        } else if (typeDefinition.represents(char.class)) {
             return CHARACTER;
-        } else if (typeDescription.represents(int.class)) {
+        } else if (typeDefinition.represents(int.class)) {
             return INTEGER;
-        } else if (typeDescription.represents(long.class)) {
+        } else if (typeDefinition.represents(long.class)) {
             return LONG;
-        } else if (typeDescription.represents(float.class)) {
+        } else if (typeDefinition.represents(float.class)) {
             return FLOAT;
-        } else if (typeDescription.represents(double.class)) {
+        } else if (typeDefinition.represents(double.class)) {
             return DOUBLE;
         } else {
-            throw new IllegalArgumentException("Not a non-void, primitive type: " + typeDescription);
+            throw new IllegalArgumentException("Not a non-void, primitive type: " + typeDefinition);
         }
     }
 
@@ -123,13 +124,13 @@ public enum PrimitiveBoxingDelegate {
      * Creates a stack manipulation that boxes the represented primitive type and applies a chained assignment
      * to the result of this boxing operation.
      *
-     * @param targetType      The type that is target of the assignment operation.
+     * @param target      The type that is target of the assignment operation.
      * @param chainedAssigner The assigner that is to be used to perform the chained assignment.
      * @param typing          Determines if an assignment to an incompatible type should be enforced by a casting.
      * @return A stack manipulation that represents the described assignment operation.
      */
-    public StackManipulation assignBoxedTo(TypeDescription targetType, Assigner chainedAssigner, Assigner.Typing typing) {
-        return new BoxingStackManipulation(chainedAssigner.assign(wrapperType, targetType, typing));
+    public StackManipulation assignBoxedTo(TypeDescription.Generic target, Assigner chainedAssigner, Assigner.Typing typing) {
+        return new BoxingStackManipulation(chainedAssigner.assign(wrapperType.asGenericType(), target, typing));
     }
 
     @Override

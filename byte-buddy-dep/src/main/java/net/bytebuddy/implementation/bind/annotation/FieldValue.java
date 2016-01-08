@@ -6,8 +6,8 @@ import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -90,7 +90,7 @@ public @interface FieldValue {
                                                                Implementation.Target implementationTarget,
                                                                Assigner assigner) {
             FieldLocator.Resolution resolution = FieldLocator
-                    .of(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getTypeDescription())
+                    .of(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getInstrumentedType())
                     .resolve(annotation.getValue(FIELD_NAME, String.class), source.isStatic());
             if (resolution.isResolved()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
@@ -98,9 +98,7 @@ public @interface FieldValue {
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(resolution.getFieldDescription()).getter(),
-                        assigner.assign(resolution.getFieldDescription().getType().asErasure(),
-                                target.getType().asErasure(),
-                                RuntimeType.Verifier.check(target))
+                        assigner.assign(resolution.getFieldDescription().getType(), target.getType(), RuntimeType.Verifier.check(target))
                 );
                 return stackManipulation.isValid()
                         ? new MethodDelegationBinder.ParameterBinding.Anonymous(stackManipulation)
@@ -261,7 +259,7 @@ public @interface FieldValue {
 
                 @Override
                 protected Resolution resolve(String fieldName, boolean staticMethod) {
-                    for (GenericTypeDescription currentType : instrumentedType) {
+                    for (TypeDefinition currentType : instrumentedType) {
                         FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName));
                         if (!fieldList.isEmpty() && fieldList.getOnly().isVisibleTo(instrumentedType) && (!staticMethod || fieldList.getOnly().isStatic())) {
                             return new Resolution.Resolved(fieldList.getOnly());

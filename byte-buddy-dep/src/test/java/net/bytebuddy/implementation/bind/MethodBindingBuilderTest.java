@@ -45,6 +45,9 @@ public class MethodBindingBuilderTest {
     @Mock
     private MethodVisitor methodVisitor;
 
+    @Mock
+    private TypeDescription.Generic returnType;
+
     @Mock(answer = Answers.RETURNS_MOCKS)
     private StackManipulation legalStackManipulation, illegalStackManipulation;
 
@@ -63,9 +66,8 @@ public class MethodBindingBuilderTest {
         when(methodDescription.getInternalName()).thenReturn(BAR);
         when(methodDescription.getDescriptor()).thenReturn(BAZ);
         when(methodDescription.getStackSize()).thenReturn(0);
-        TypeDescription returnTpeDescription = mock(TypeDescription.class);
-        when(methodDescription.getReturnType()).thenReturn(returnTpeDescription);
-        when(returnTpeDescription.getStackSize()).thenReturn(StackSize.ZERO);
+        when(methodDescription.getReturnType()).thenReturn(returnType);
+        when(returnType.getStackSize()).thenReturn(StackSize.ZERO);
         when(legalStackManipulation.isValid()).thenReturn(true);
         when(illegalStackManipulation.isValid()).thenReturn(false);
     }

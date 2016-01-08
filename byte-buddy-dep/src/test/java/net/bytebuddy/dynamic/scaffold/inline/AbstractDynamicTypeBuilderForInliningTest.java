@@ -1,13 +1,11 @@
 package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.modifier.MethodManifestation;
+import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.MethodTransformer;
+import net.bytebuddy.dynamic.*;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
@@ -16,6 +14,7 @@ import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
@@ -30,6 +29,7 @@ import org.mockito.stubbing.Answer;
 import org.objectweb.asm.*;
 import org.objectweb.asm.commons.LocalVariablesSorter;
 
+import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.*;
@@ -66,6 +66,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     @Before
     public void setUp() throws Exception {
+        super.setUp();
         typePool = TypePool.Default.ofClassPath();
     }
 
@@ -77,6 +78,10 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     protected abstract DynamicType.Builder<?> create(Class<?> type);
 
     protected abstract DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator);
+
+    protected abstract DynamicType.Builder<?> createDisabledContext();
+
+    protected abstract DynamicType.Builder<?> createDisabledRetention(Class<?> annotatedClass);
 
     @Test
     public void testTypeInitializerRetention() throws Exception {
@@ -93,7 +98,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     @Test
     public void testDefaultValue() throws Exception {
         Class<?> dynamicType = create(Baz.class)
-                .method(named(FOO)).withDefaultValue(FOO)
+                .method(named(FOO)).defaultValue(FOO)
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -343,8 +348,8 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     public void testMethodTransformationExistingMethod() throws Exception {
         Class<?> type = create(Transform.class)
                 .method(named(FOO))
-                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE),
-                        MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .transform(MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -354,12 +359,23 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
     }
 
     @Test
+    public void testFieldTransformationExistingField() throws Exception {
+        Class<?> type = create(Transform.class)
+                .field(named(FOO))
+                .transform(FieldTransformer.Simple.withModifiers(Visibility.PUBLIC))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredField(FOO).getModifiers(), is(Opcodes.ACC_PUBLIC));
+    }
+
+    @Test
     public void testReaderHint() throws Exception {
-        ClassVisitorWrapper classVisitorWrapper = mock(ClassVisitorWrapper.class);
-        when(classVisitorWrapper.wrap(any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
+        AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
+        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[0]) {
+                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
                     @Override
                     public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
                         return new LocalVariablesSorter(access, desc, super.visitMethod(access, name, desc, signature, exceptions));
@@ -367,26 +383,68 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 };
             }
         });
-        when(classVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
-        when(classVisitorWrapper.mergeReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
+        when(asmVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        when(asmVisitorWrapper.mergeReader(0)).thenReturn(ClassReader.EXPAND_FRAMES);
         Class<?> type = create(StackMapFrames.class)
-                .classVisitor(classVisitorWrapper)
+                .visit(asmVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
-        verify(classVisitorWrapper).mergeWriter(0);
-        verify(classVisitorWrapper).mergeReader(0);
-        verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
-        verifyNoMoreInteractions(classVisitorWrapper);
+        verify(asmVisitorWrapper).mergeWriter(0);
+        verify(asmVisitorWrapper).mergeReader(0);
+        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class));
+        verifyNoMoreInteractions(asmVisitorWrapper);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testForbidTypeInitilizerInterception() throws Exception {
-        createPlain()
-                .context(Implementation.Context.Disabled.Factory.INSTANCE)
+        createDisabledContext()
                 .invokable(isTypeInitializer()).intercept(StubMethod.INSTANCE)
                 .make();
+    }
+
+    @Test
+    public void testDisabledAnnotationRetention() throws Exception {
+        Class<?> type = createDisabledRetention(Annotated.class)
+                .field(ElementMatchers.any()).annotateField(new Annotation[0])
+                .method(ElementMatchers.any()).intercept(StubMethod.INSTANCE)
+                .make()
+                .load(new ByteArrayClassLoader(null,
+                        ClassFileExtraction.of(SampleAnnotation.class),
+                        null,
+                        AccessController.getContext(),
+                        ByteArrayClassLoader.PersistenceHandler.LATENT,
+                        PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        @SuppressWarnings("unchecked")
+        Class<? extends Annotation> sampleAnnotation = (Class<? extends Annotation>) type.getClassLoader().loadClass(SampleAnnotation.class.getName());
+        assertThat(type.isAnnotationPresent(sampleAnnotation), is(true));
+        assertThat(type.getDeclaredField(FOO).isAnnotationPresent(sampleAnnotation), is(false));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).isAnnotationPresent(sampleAnnotation), is(false));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(0));
+    }
+
+    @Test
+    public void testEnabledAnnotationRetention() throws Exception {
+        Class<?> type = create(Annotated.class)
+                .field(ElementMatchers.any()).annotateField(new Annotation[0])
+                .method(ElementMatchers.any()).intercept(StubMethod.INSTANCE)
+                .make()
+                .load(new ByteArrayClassLoader(null,
+                        ClassFileExtraction.of(SampleAnnotation.class),
+                        null,
+                        AccessController.getContext(),
+                        ByteArrayClassLoader.PersistenceHandler.LATENT,
+                        PackageDefinitionStrategy.NoOp.INSTANCE), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        @SuppressWarnings("unchecked")
+        Class<? extends Annotation> sampleAnnotation = (Class<? extends Annotation>) type.getClassLoader().loadClass(SampleAnnotation.class.getName());
+        assertThat(type.isAnnotationPresent(sampleAnnotation), is(true));
+        assertThat(type.getDeclaredField(FOO).isAnnotationPresent(sampleAnnotation), is(true));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).isAnnotationPresent(sampleAnnotation), is(true));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(1));
+        assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0][0].annotationType(), is((Object) sampleAnnotation));
     }
 
     public @interface Baz {
@@ -456,7 +514,10 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         /* empty */
     }
 
+    @SuppressWarnings("unused")
     public static class Transform {
+
+        Void foo;
 
         public String foo() {
             return null;
@@ -481,5 +542,23 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                     ? FOO
                     : BAR;
         }
+    }
+
+    @SampleAnnotation
+    @SuppressWarnings("unused")
+    public static class Annotated {
+
+        @SampleAnnotation
+        Void foo;
+
+        @SampleAnnotation
+        void foo(@SampleAnnotation Void v) {
+            /* empty */
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface SampleAnnotation {
+        /* empty */
     }
 }

@@ -33,7 +33,6 @@ import java.lang.annotation.*;
 import java.util.Collections;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This annotation instructs Byte Buddy to inject a proxy class that calls a method's super method with
@@ -131,7 +130,7 @@ public @interface Morph {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(Class<?> type) {
-            return install(new TypeDescription.ForLoadedType(nonNull(type)));
+            return install(new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -145,7 +144,7 @@ public @interface Morph {
          * annotation.
          */
         public static TargetMethodAnnotationDrivenBinder.ParameterBinder<Morph> install(TypeDescription typeDescription) {
-            return new Binder(onlyMethod(nonNull(typeDescription)));
+            return new Binder(onlyMethod(typeDescription));
         }
 
         /**
@@ -192,7 +191,7 @@ public @interface Morph {
             Implementation.SpecialMethodInvocation specialMethodInvocation;
             TypeDescription typeDescription = annotation.getValue(DEFAULT_TARGET, TypeDescription.class);
             if (typeDescription.represents(void.class) && !annotation.getValue(DEFAULT_METHOD, Boolean.class)) {
-                specialMethodInvocation = implementationTarget.invokeSuper(source.asToken());
+                specialMethodInvocation = implementationTarget.invokeSuper(source.asSignatureToken());
             } else {
                 specialMethodInvocation = (typeDescription.represents(void.class)
                         ? DefaultMethodLocator.Implicit.INSTANCE
@@ -200,7 +199,7 @@ public @interface Morph {
             }
             return specialMethodInvocation.isValid()
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new RedirectionProxy(forwardingMethod.getDeclaringType().asErasure(),
-                    implementationTarget.getTypeDescription(),
+                    implementationTarget.getInstrumentedType(),
                     specialMethodInvocation,
                     assigner,
                     annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
@@ -253,12 +252,12 @@ public @interface Morph {
                 @Override
                 public Implementation.SpecialMethodInvocation resolve(Implementation.Target implementationTarget, MethodDescription source) {
                     Implementation.SpecialMethodInvocation specialMethodInvocation = null;
-                    for (TypeDescription candidate : implementationTarget.getTypeDescription().getInterfaces().asErasures()) {
+                    for (TypeDescription candidate : implementationTarget.getInstrumentedType().getInterfaces().asErasures()) {
                         if (source.isSpecializableFor(candidate)) {
                             if (specialMethodInvocation != null) {
                                 return Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
                             }
-                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asToken());
+                            specialMethodInvocation = implementationTarget.invokeDefault(candidate, source.asSignatureToken());
                         }
                     }
                     return specialMethodInvocation != null
@@ -298,7 +297,7 @@ public @interface Morph {
                     if (!typeDescription.isInterface()) {
                         throw new IllegalStateException(source + " method carries default method call parameter on non-interface type");
                     }
-                    return implementationTarget.invokeDefault(typeDescription, source.asToken());
+                    return implementationTarget.invokeDefault(typeDescription, source.asSignatureToken());
                 }
 
                 @Override
@@ -386,7 +385,7 @@ public @interface Morph {
                         .name(auxiliaryTypeName)
                         .modifiers(DEFAULT_TYPE_MODIFIER)
                         .implement(serializableProxy ? new Class<?>[]{Serializable.class} : new Class<?>[0])
-                        .defineConstructor(specialMethodInvocation.getMethodDescription().isStatic()
+                        .defineConstructor().withParameters(specialMethodInvocation.getMethodDescription().isStatic()
                                 ? Collections.<TypeDescription>emptyList()
                                 : Collections.singletonList(instrumentedType))
                         .intercept(specialMethodInvocation.getMethodDescription().isStatic()
@@ -513,7 +512,7 @@ public @interface Morph {
                 public InstrumentedType prepare(InstrumentedType instrumentedType) {
                     return instrumentedType.withField(new FieldDescription.Token(RedirectionProxy.FIELD_NAME,
                             Opcodes.ACC_FINAL | Opcodes.ACC_PRIVATE,
-                            this.instrumentedType));
+                            this.instrumentedType.asGenericType()));
                 }
 
                 @Override
@@ -555,7 +554,7 @@ public @interface Morph {
                      * @param implementationTarget The current implementation target.
                      */
                     protected Appender(Target implementationTarget) {
-                        fieldDescription = implementationTarget.getTypeDescription()
+                        fieldDescription = implementationTarget.getInstrumentedType()
                                 .getDeclaredFields()
                                 .filter((named(RedirectionProxy.FIELD_NAME)))
                                 .getOnly();
@@ -667,7 +666,7 @@ public @interface Morph {
                      * @param implementationTarget The current implementation target.
                      */
                     protected Appender(Target implementationTarget) {
-                        typeDescription = implementationTarget.getTypeDescription();
+                        typeDescription = implementationTarget.getInstrumentedType();
                     }
 
                     @Override
@@ -677,11 +676,11 @@ public @interface Morph {
                         StackManipulation arrayReference = MethodVariableAccess.REFERENCE.loadOffset(1);
                         StackManipulation[] parameterLoading = new StackManipulation[accessorMethod.getParameters().size()];
                         int index = 0;
-                        for (TypeDescription parameterType : accessorMethod.getParameters().asTypeList().asErasures()) {
+                        for (TypeDescription.Generic parameterType : accessorMethod.getParameters().asTypeList()) {
                             parameterLoading[index] = new StackManipulation.Compound(arrayReference,
                                     IntegerConstant.forValue(index),
                                     ArrayAccess.REFERENCE.load(),
-                                    assigner.assign(TypeDescription.OBJECT, parameterType, Assigner.Typing.DYNAMIC));
+                                    assigner.assign(TypeDescription.Generic.OBJECT, parameterType, Assigner.Typing.DYNAMIC));
                             index++;
                         }
                         StackManipulation.Size stackSize = new StackManipulation.Compound(
@@ -694,9 +693,7 @@ public @interface Morph {
                                                 .getOnly()).getter()),
                                 new StackManipulation.Compound(parameterLoading),
                                 MethodInvocation.invoke(accessorMethod),
-                                assigner.assign(accessorMethod.getReturnType().asErasure(),
-                                        instrumentedMethod.getReturnType().asErasure(),
-                                        Assigner.Typing.DYNAMIC),
+                                assigner.assign(accessorMethod.getReturnType(), instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                                 MethodReturn.REFERENCE
                         ).apply(methodVisitor, implementationContext);
                         return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

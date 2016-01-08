@@ -2,7 +2,7 @@ package net.bytebuddy.utility;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -59,7 +59,7 @@ public class StreamDrainer {
      * @throws IOException If the stream reading causes an error.
      */
     public byte[] drain(InputStream inputStream) throws IOException {
-        List<byte[]> previousBytes = new LinkedList<byte[]>();
+        List<byte[]> previousBytes = new ArrayList<byte[]>();
         byte[] currentArray = new byte[bufferSize];
         int currentIndex = 0;
         int currentRead;

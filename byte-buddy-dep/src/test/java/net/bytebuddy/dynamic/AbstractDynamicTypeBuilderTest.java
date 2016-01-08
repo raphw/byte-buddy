@@ -1,22 +1,21 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.asm.ClassVisitorWrapper;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.modifier.MethodManifestation;
-import net.bytebuddy.description.modifier.Ownership;
-import net.bytebuddy.description.modifier.TypeManifestation;
-import net.bytebuddy.description.modifier.Visibility;
+import net.bytebuddy.description.modifier.*;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bind.annotation.SuperCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -26,8 +25,13 @@ import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
+import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TestRule;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.objectweb.asm.ClassVisitor;
@@ -38,15 +42,13 @@ import org.objectweb.asm.Opcodes;
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
+import java.lang.reflect.*;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.Collections;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.isTypeInitializer;
@@ -93,12 +95,25 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     private static final String STRING_FIELD = "stringField";
 
+    @Rule
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    private Type list, fooVariable;
+
     protected abstract DynamicType.Builder<?> createPlain();
+
+    protected abstract DynamicType.Builder<?> createPlainWithoutValidation();
+
+    @Before
+    public void setUp() throws Exception {
+        list = Holder.class.getDeclaredField("list").getGenericType();
+        fooVariable = ((ParameterizedType) Holder.class.getDeclaredField("fooList").getGenericType()).getActualTypeArguments()[0];
+    }
 
     @Test
     public void testMethodDefinition() throws Exception {
         Class<?> type = createPlain()
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .throwing(Exception.class)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
@@ -115,7 +130,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testAbstractMethodDefinition() throws Exception {
         Class<?> type = createPlain()
                 .modifiers(Visibility.PUBLIC, TypeManifestation.ABSTRACT)
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .throwing(Exception.class)
                 .withoutCode()
                 .make()
@@ -130,7 +145,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testConstructorDefinition() throws Exception {
         Class<?> type = createPlain()
-                .defineConstructor(Collections.<Class<?>>singletonList(Void.class), Visibility.PUBLIC)
+                .defineConstructor(Visibility.PUBLIC).withParameters(Void.class)
                 .throwing(Exception.class)
                 .intercept(MethodCall.invoke(Object.class.getDeclaredConstructor()))
                 .make()
@@ -213,7 +228,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testConstructorInvokingMethod() throws Exception {
         Class<?> type = createPlain()
-                .defineMethod(FOO, Object.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
@@ -226,8 +241,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     public void testMethodTransformation() throws Exception {
         Class<?> type = createPlain()
                 .method(named(TO_STRING))
-                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE),
-                        MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .transform(MethodTransformer.Simple.withModifiers(MethodManifestation.FINAL))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -236,10 +251,23 @@ public abstract class AbstractDynamicTypeBuilderTest {
     }
 
     @Test
+    public void testFieldTransformation() throws Exception {
+        Class<?> type = createPlain()
+                .defineField(FOO, Void.class)
+                .field(named(FOO))
+                .transform(FieldTransformer.Simple.withModifiers(Visibility.PUBLIC))
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredField(FOO).getModifiers(), is(Opcodes.ACC_PUBLIC));
+    }
+
+    @Test
     public void testIgnoredMethod() throws Exception {
         Class<?> type = createPlain()
-                .ignoreMethods(named(TO_STRING))
-                .method(named(TO_STRING)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
+                .ignoreAlso(named(TO_STRING))
+                .method(named(TO_STRING))
+                .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -249,8 +277,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testIgnoredMethodDoesNotApplyForDefined() throws Exception {
         Class<?> type = createPlain()
-                .ignoreMethods(named(FOO))
-                .defineMethod(FOO, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .ignoreAlso(named(FOO))
+                .defineMethod(FOO, String.class, Visibility.PUBLIC)
                 .intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
@@ -267,7 +295,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
-                .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedField())
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
@@ -292,7 +320,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 ByteArrayClassLoader.PersistenceHandler.LATENT,
                 PackageDefinitionStrategy.NoOp.INSTANCE);
         Class<?> type = createPlain()
-                .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(BAR, String.class, Visibility.PUBLIC)
                 .intercept(new PreparedMethod())
                 .make()
                 .load(classLoader, ClassLoadingStrategy.Default.WRAPPER)
@@ -317,11 +345,11 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     @Test
     public void testWriterHint() throws Exception {
-        ClassVisitorWrapper classVisitorWrapper = mock(ClassVisitorWrapper.class);
-        when(classVisitorWrapper.wrap(any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
+        AsmVisitorWrapper asmVisitorWrapper = mock(AsmVisitorWrapper.class);
+        when(asmVisitorWrapper.wrap(any(TypeDescription.class), any(ClassVisitor.class))).then(new Answer<ClassVisitor>() {
             @Override
             public ClassVisitor answer(InvocationOnMock invocationOnMock) throws Throwable {
-                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[0]) {
+                return new ClassVisitor(Opcodes.ASM5, (ClassVisitor) invocationOnMock.getArguments()[1]) {
                     @Override
                     public void visitEnd() {
                         MethodVisitor mv = visitMethod(Opcodes.ACC_PUBLIC, FOO, "()Ljava/lang/String;", null, null);
@@ -334,24 +362,24 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 };
             }
         });
-        when(classVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
+        when(asmVisitorWrapper.mergeWriter(0)).thenReturn(ClassWriter.COMPUTE_MAXS);
         Class<?> type = createPlain()
-                .classVisitor(classVisitorWrapper)
+                .visit(asmVisitorWrapper)
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-        verify(classVisitorWrapper).mergeWriter(0);
-        verify(classVisitorWrapper, atMost(1)).mergeReader(0);
-        verify(classVisitorWrapper).wrap(any(ClassVisitor.class));
-        verifyNoMoreInteractions(classVisitorWrapper);
+        verify(asmVisitorWrapper).mergeWriter(0);
+        verify(asmVisitorWrapper, atMost(1)).mergeReader(0);
+        verify(asmVisitorWrapper).wrap(any(TypeDescription.class), any(ClassVisitor.class));
+        verifyNoMoreInteractions(asmVisitorWrapper);
     }
 
     @Test
     public void testExplicitTypeInitializer() throws Exception {
         assertThat(createPlain()
                 .defineField(FOO, String.class, Ownership.STATIC, Visibility.PUBLIC)
-                .initialize(new ByteCodeAppender() {
+                .initializer(new ByteCodeAppender() {
                     @Override
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new Size(new StackManipulation.Compound(
@@ -360,10 +388,97 @@ public abstract class AbstractDynamicTypeBuilderTest {
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
                 }).make()
-        .load(null, ClassLoadingStrategy.Default.WRAPPER)
-        .getLoaded()
-        .getDeclaredField(FOO)
-        .get(null), is((Object) FOO));
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .getDeclaredField(FOO)
+                .get(null), is((Object) FOO));
+    }
+
+    @Test
+    public void testSerialVersionUid() throws Exception {
+        Class<?> type = createPlain()
+                .serialVersionUid(42L)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        Field field = type.getDeclaredField("serialVersionUID");
+        field.setAccessible(true);
+        assertThat((Long) field.get(null), is(42L));
+        assertThat(field.getType(), is((Object) long.class));
+        assertThat(field.getModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_FINAL));
+    }
+
+    @Test
+    public void testTypeVariable() throws Exception {
+        Class<?> type = createPlain()
+                .typeVariable(FOO)
+                .typeVariable(BAR, String.class)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getTypeParameters().length, is(2));
+        assertThat(type.getTypeParameters()[0].getName(), is(FOO));
+        assertThat(type.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
+        assertThat(type.getTypeParameters()[1].getName(), is(BAR));
+        assertThat(type.getTypeParameters()[1].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[1].getBounds()[0], is((Object) String.class));
+    }
+
+    @Test
+    public void testGenericFieldDefinition() throws Exception {
+        Class<?> type = createPlain()
+                .defineField(QUX, list)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredField(QUX).getGenericType(), is(list));
+    }
+
+    @Test
+    public void testGenericMethodDefinition() throws Exception {
+        Class<?> type = createPlain()
+                .defineMethod(QUX, list)
+                .withParameter(list, BAR, ProvisioningState.MANDATED)
+                .throwing(fooVariable)
+                .typeVariable(FOO, Exception.class)
+                .intercept(StubMethod.INSTANCE)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters().length, is(1));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0].getName(), is(FOO));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0].getBounds()[0], is((Object) Exception.class));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericReturnType(), is(list));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericExceptionTypes()[0], is((Type) type.getDeclaredMethod(QUX, List.class).getTypeParameters()[0]));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericParameterTypes().length, is(1));
+        assertThat(type.getDeclaredMethod(QUX, List.class).getGenericParameterTypes()[0], is(list));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    public void testGenericMethodDefinitionMetaDataParameter() throws Exception {
+        Class<?> type = createPlain()
+                .defineMethod(QUX, list)
+                .withParameter(list, BAR, ProvisioningState.MANDATED)
+                .throwing(fooVariable)
+                .typeVariable(FOO, Exception.class)
+                .intercept(StubMethod.INSTANCE)
+                .make()
+                .load(new URLClassLoader(new URL[0], null), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getName(), is(BAR));
+        assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getModifiers(),
+                is(ProvisioningState.MANDATED.getMask()));
+    }
+
+    @Test(expected = ClassFormatError.class)
+    public void testUnvalidated() throws Exception {
+        createPlainWithoutValidation()
+                .defineField(FOO, void.class)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER);
     }
 
     @Retention(RetentionPolicy.RUNTIME)
@@ -415,7 +530,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withField(new FieldDescription.Token(FOO,
                     MODIFIERS,
-                    TypeDescription.OBJECT,
+                    TypeDescription.Generic.OBJECT,
                     Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make())));
         }
 
@@ -431,11 +546,11 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public InstrumentedType prepare(InstrumentedType instrumentedType) {
             return instrumentedType.withMethod(new MethodDescription.Token(FOO,
                     MODIFIERS,
-                    Collections.<GenericTypeDescription>emptyList(),
-                    TypeDescription.OBJECT,
-                    Collections.singletonList(new ParameterDescription.Token(TypeDescription.OBJECT,
+                    Collections.<TypeVariableToken>emptyList(),
+                    TypeDescription.Generic.OBJECT,
+                    Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT,
                             Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, QUX).make()))),
-                    Collections.singletonList(new TypeDescription.ForLoadedType(Exception.class)),
+                    Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make()),
                     MethodDescription.NO_DEFAULT_VALUE));
         }
@@ -451,5 +566,12 @@ public abstract class AbstractDynamicTypeBuilderTest {
         public static String intercept(@SuperCall Callable<String> zuper) throws Exception {
             return zuper.call() + BAR;
         }
+    }
+
+    private static class Holder<foo> {
+
+        List<?> list;
+
+        List<foo> fooList;
     }
 }

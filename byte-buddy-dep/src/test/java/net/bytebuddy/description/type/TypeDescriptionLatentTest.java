@@ -1,6 +1,5 @@
 package net.bytebuddy.description.type;
 
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -11,7 +10,6 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.when;
 
 public class TypeDescriptionLatentTest {
@@ -24,13 +22,12 @@ public class TypeDescriptionLatentTest {
     public MockitoRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private GenericTypeDescription superType, interfaceType;
+    private TypeDescription.Generic superType, interfaceType;
 
     @Before
-    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(superType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(superType);
-        when(interfaceType.accept(any(GenericTypeDescription.Visitor.class))).thenReturn(interfaceType);
+        when(superType.asGenericType()).thenReturn(superType);
+        when(interfaceType.asGenericType()).thenReturn(interfaceType);
     }
 
     @Test

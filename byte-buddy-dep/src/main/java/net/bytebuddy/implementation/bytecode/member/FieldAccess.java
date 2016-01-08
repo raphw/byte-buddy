@@ -3,7 +3,7 @@ package net.bytebuddy.implementation.bytecode.member;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
-import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -132,7 +132,7 @@ public enum FieldAccess {
         /**
          * The resolved generic field type.
          */
-        private final TypeDescription targetType;
+        private final TypeDefinition targetType;
 
         /**
          * An accessor for the field in its defined shape.
@@ -145,7 +145,7 @@ public enum FieldAccess {
          * @param targetType The resolved generic field type.
          * @param defined    An accessor for the field in its defined shape.
          */
-        protected OfGenericField(TypeDescription targetType, Defined defined) {
+        protected OfGenericField(TypeDefinition targetType, Defined defined) {
             this.targetType = targetType;
             this.defined = defined;
         }
@@ -158,7 +158,7 @@ public enum FieldAccess {
          * @return A field access dispatcher for the given field.
          */
         protected static Defined of(FieldDescription fieldDescription, Defined fieldAccess) {
-            return new OfGenericField(fieldDescription.getType().asErasure(), fieldAccess);
+            return new OfGenericField(fieldDescription.getType(), fieldAccess);
         }
 
         @Override

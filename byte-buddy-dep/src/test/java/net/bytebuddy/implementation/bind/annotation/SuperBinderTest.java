@@ -17,6 +17,9 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     private TypeDescription targetType;
 
     @Mock
+    private TypeDescription.Generic genericTargetType;
+
+    @Mock
     private Super.Instantiation instantiation;
 
     public SuperBinderTest() {
@@ -27,7 +30,8 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
     @Before
     public void setUp() throws Exception {
         super.setUp();
-        when(target.getType()).thenReturn(targetType);
+        when(target.getType()).thenReturn(genericTargetType);
+        when(genericTargetType.asErasure()).thenReturn(targetType);
         when(annotation.strategy()).thenReturn(instantiation);
         when(instantiation.proxyFor(targetType, implementationTarget, annotationDescription)).thenReturn(stackManipulation);
         when(annotation.constructorParameters()).thenReturn(new Class<?>[0]);
@@ -69,13 +73,13 @@ public class SuperBinderTest extends AbstractAnnotationBinderTest<Super> {
 
     @Test(expected = IllegalStateException.class)
     public void testPrimitiveParameterType() throws Exception {
-        when(targetType.isPrimitive()).thenReturn(true);
+        when(genericTargetType.isPrimitive()).thenReturn(true);
         Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testArrayParameterType() throws Exception {
-        when(targetType.isArray()).thenReturn(true);
+        when(genericTargetType.isArray()).thenReturn(true);
         Super.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 

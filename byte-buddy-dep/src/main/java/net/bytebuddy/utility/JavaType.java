@@ -59,8 +59,8 @@ public enum JavaType {
         } catch (Exception ignored) {
             typeDescription = new TypeDescription.Latent(typeName,
                     modifiers,
-                    new TypeDescription.ForLoadedType(superType),
-                    new TypeList.ForLoadedType(interfaces));
+                    new TypeDescription.Generic.OfNonGenericType.ForLoadedType(superType),
+                    new TypeList.Generic.ForLoadedTypes(interfaces));
         }
         this.typeDescription = typeDescription;
     }

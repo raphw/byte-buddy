@@ -3,8 +3,8 @@ package net.bytebuddy.dynamic.scaffold;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -22,10 +22,10 @@ public interface MethodGraph {
     /**
      * Locates a node in this graph which represents the provided method token.
      *
-     * @param methodToken A method token that represents the method to be located.
+     * @param token A method token that represents the method to be located.
      * @return The node representing the given token.
      */
-    Node locate(MethodDescription.Token methodToken);
+    Node locate(MethodDescription.SignatureToken token);
 
     /**
      * Lists all nodes of this method graph.
@@ -45,7 +45,7 @@ public interface MethodGraph {
         INSTANCE;
 
         @Override
-        public Node locate(MethodDescription.Token methodToken) {
+        public Node locate(MethodDescription.SignatureToken token) {
             return Node.Unresolved.INSTANCE;
         }
 
@@ -70,7 +70,7 @@ public interface MethodGraph {
         }
 
         @Override
-        public Linked compile(TypeDescription typeDescription, TypeDescription viewPoint) {
+        public Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
             return this;
         }
 
@@ -148,8 +148,8 @@ public interface MethodGraph {
             }
 
             @Override
-            public Node locate(MethodDescription.Token methodToken) {
-                return methodGraph.locate(methodToken);
+            public Node locate(MethodDescription.SignatureToken token) {
+                return methodGraph.locate(token);
             }
 
             @Override
@@ -407,11 +407,11 @@ public interface MethodGraph {
         /**
          * Compiles the given type into a method graph.
          *
-         * @param typeDescription The type to be compiled.
-         * @param viewPoint       The view point that determines the method's visibility.
+         * @param typeDefinition The type to be compiled.
+         * @param viewPoint      The view point that determines the method's visibility.
          * @return A linked method graph representing the given type.
          */
-        MethodGraph.Linked compile(TypeDescription typeDescription, TypeDescription viewPoint);
+        MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint);
 
         /**
          * An abstract base implementation of a method graph compiler.
@@ -497,13 +497,13 @@ public interface MethodGraph {
             }
 
             @Override
-            public MethodGraph.Linked compile(TypeDescription typeDescription, TypeDescription viewPoint) {
-                Map<GenericTypeDescription, Key.Store<T>> snapshots = new HashMap<GenericTypeDescription, Key.Store<T>>();
-                Key.Store<?> rootStore = doAnalyze(typeDescription, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
-                GenericTypeDescription superType = typeDescription.getSuperType();
-                List<GenericTypeDescription> interfaceTypes = typeDescription.getInterfaces();
+            public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
+                Map<TypeDefinition, Key.Store<T>> snapshots = new HashMap<TypeDefinition, Key.Store<T>>();
+                Key.Store<?> rootStore = doAnalyze(typeDefinition, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
+                TypeDescription.Generic superType = typeDefinition.getSuperType();
+                List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
-                for (GenericTypeDescription interfaceType : interfaceTypes) {
+                for (TypeDescription.Generic interfaceType : interfaceTypes) {
                     interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
@@ -516,18 +516,18 @@ public interface MethodGraph {
             /**
              * Analyzes the given type description without checking if the end of the type hierarchy was reached.
              *
-             * @param typeDescription  The type to analyze.
+             * @param typeDefinition   The type to analyze.
              * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
-            protected Key.Store<T> analyze(GenericTypeDescription typeDescription,
-                                           Map<GenericTypeDescription, Key.Store<T>> snapshots,
+            protected Key.Store<T> analyze(TypeDefinition typeDefinition,
+                                           Map<TypeDefinition, Key.Store<T>> snapshots,
                                            ElementMatcher<? super MethodDescription> relevanceMatcher) {
-                Key.Store<T> store = snapshots.get(typeDescription);
+                Key.Store<T> store = snapshots.get(typeDefinition);
                 if (store == null) {
-                    store = doAnalyze(typeDescription, snapshots, relevanceMatcher);
-                    snapshots.put(typeDescription, store);
+                    store = doAnalyze(typeDefinition, snapshots, relevanceMatcher);
+                    snapshots.put(typeDefinition, store);
                 }
                 return store;
             }
@@ -535,37 +535,37 @@ public interface MethodGraph {
             /**
              * Analyzes the given type description.
              *
-             * @param typeDescription  The type to analyze.
+             * @param typeDefinition   The type to analyze.
              * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
-            protected Key.Store<T> analyzeNullable(GenericTypeDescription typeDescription,
-                                                   Map<GenericTypeDescription, Key.Store<T>> snapshots,
+            protected Key.Store<T> analyzeNullable(TypeDefinition typeDefinition,
+                                                   Map<TypeDefinition, Key.Store<T>> snapshots,
                                                    ElementMatcher<? super MethodDescription> relevanceMatcher) {
-                return typeDescription == null
+                return typeDefinition == null
                         ? new Key.Store<T>()
-                        : analyze(typeDescription, snapshots, relevanceMatcher);
+                        : analyze(typeDefinition, snapshots, relevanceMatcher);
             }
 
             /**
              * Analyzes the given type description without checking if it is already presented in the key store.
              *
-             * @param typeDescription  The type to analyze.
+             * @param typeDefinition   The type to analyze.
              * @param snapshots        A map containing snapshots of key stores for previously analyzed types.
              * @param relevanceMatcher A matcher for filtering methods that should be included in the graph.
              * @return A key store describing the provided type.
              */
-            protected Key.Store<T> doAnalyze(GenericTypeDescription typeDescription,
-                                             Map<GenericTypeDescription, Key.Store<T>> snapshots,
+            protected Key.Store<T> doAnalyze(TypeDefinition typeDefinition,
+                                             Map<TypeDefinition, Key.Store<T>> snapshots,
                                              ElementMatcher<? super MethodDescription> relevanceMatcher) {
-                Key.Store<T> store = analyzeNullable(typeDescription.getSuperType(), snapshots, relevanceMatcher);
+                Key.Store<T> store = analyzeNullable(typeDefinition.getSuperType(), snapshots, relevanceMatcher);
                 Key.Store<T> interfaceStore = new Key.Store<T>();
-                for (GenericTypeDescription interfaceType : typeDescription.getInterfaces()) {
+                for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces()) {
                     interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, relevanceMatcher));
                 }
                 store = store.inject(interfaceStore);
-                for (MethodDescription methodDescription : typeDescription.getDeclaredMethods().filter(relevanceMatcher)) {
+                for (MethodDescription methodDescription : typeDefinition.getDeclaredMethods().filter(relevanceMatcher)) {
                     store = store.registerTopLevel(methodDescription, harmonizer);
                 }
                 return store;
@@ -741,31 +741,6 @@ public interface MethodGraph {
                  * @return A method description compatible to both method's types that is used as a representative.
                  */
                 MethodDescription merge(MethodDescription left, MethodDescription right);
-
-                /**
-                 * A merger that returns the left node only if both methods are fully identical and throws an exception otherwise.
-                 */
-                enum Strict implements Merger {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public MethodDescription merge(MethodDescription left, MethodDescription right) {
-                        if (left.asToken().isIdenticalTo(right.asToken())) {
-                            return left;
-                        } else {
-                            throw new IllegalArgumentException("Discovered conflicting methods: " + left + " and " + right);
-                        }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "MethodGraph.Compiler.Default.Merger.Strict." + name();
-                    }
-                }
 
                 /**
                  * A directional merger that always returns either the left or right method description.
@@ -985,11 +960,11 @@ public interface MethodGraph {
                     /**
                      * Creates a new detached key of the given method token.
                      *
-                     * @param methodToken The method token to represent as a key.
+                     * @param token The method token to represent as a key.
                      * @return A detached key representing the given method token..
                      */
-                    protected static Detached of(MethodDescription.Token methodToken) {
-                        return new Detached(methodToken.getInternalName(), Collections.singleton(methodToken.asTypeToken()));
+                    protected static Detached of(MethodDescription.SignatureToken token) {
+                        return new Detached(token.getName(), Collections.singleton(token.asTypeToken()));
                     }
 
                     @Override
@@ -1519,10 +1494,10 @@ public interface MethodGraph {
                             public Entry<U> extendBy(MethodDescription methodDescription, Harmonizer<U> harmonizer) {
                                 Harmonized<U> key = this.key.extend(methodDescription.asDefined(), harmonizer);
                                 LinkedHashSet<MethodDescription> methodDescriptions = new LinkedHashSet<MethodDescription>(this.methodDescriptions.size() + 1);
-                                GenericTypeDescription declaringType = methodDescription.getDeclaringType();
+                                TypeDescription declaringType = methodDescription.getDeclaringType().asErasure();
                                 boolean bridge = methodDescription.isBridge();
                                 for (MethodDescription extendedMethod : this.methodDescriptions) {
-                                    if (extendedMethod.getDeclaringType().equals(declaringType)) {
+                                    if (extendedMethod.getDeclaringType().asErasure().equals(declaringType)) {
                                         if (extendedMethod.isBridge() ^ bridge) {
                                             methodDescriptions.add(bridge ? extendedMethod : methodDescription);
                                         } else {
@@ -1663,8 +1638,8 @@ public interface MethodGraph {
                         }
 
                         @Override
-                        public Node locate(MethodDescription.Token methodToken) {
-                            Node node = entries.get(Detached.of(methodToken));
+                        public Node locate(MethodDescription.SignatureToken token) {
+                            Node node = entries.get(Detached.of(token));
                             return node == null
                                     ? Node.Unresolved.INSTANCE
                                     : node;
@@ -1754,14 +1729,14 @@ public interface MethodGraph {
         /**
          * The nodes represented by this method graph.
          */
-        private final LinkedHashMap<MethodDescription.Token, Node> nodes;
+        private final LinkedHashMap<MethodDescription.SignatureToken, Node> nodes;
 
         /**
          * Creates a new simple method graph.
          *
          * @param nodes The nodes represented by this method graph.
          */
-        public Simple(LinkedHashMap<MethodDescription.Token, Node> nodes) {
+        public Simple(LinkedHashMap<MethodDescription.SignatureToken, Node> nodes) {
             this.nodes = nodes;
         }
 
@@ -1772,16 +1747,16 @@ public interface MethodGraph {
          * @return A method graph that represents all of the provided methods as simple nodes.
          */
         public static MethodGraph of(List<? extends MethodDescription> methodDescriptions) {
-            LinkedHashMap<MethodDescription.Token, Node> nodes = new LinkedHashMap<MethodDescription.Token, Node>();
+            LinkedHashMap<MethodDescription.SignatureToken, Node> nodes = new LinkedHashMap<MethodDescription.SignatureToken, Node>();
             for (MethodDescription methodDescription : methodDescriptions) {
-                nodes.put(methodDescription.asToken(), new Node.Simple(methodDescription));
+                nodes.put(methodDescription.asSignatureToken(), new Node.Simple(methodDescription));
             }
             return new Simple(nodes);
         }
 
         @Override
-        public Node locate(MethodDescription.Token methodToken) {
-            Node node = nodes.get(methodToken);
+        public Node locate(MethodDescription.SignatureToken token) {
+            Node node = nodes.get(token);
             return node == null
                     ? Node.Unresolved.INSTANCE
                     : node;

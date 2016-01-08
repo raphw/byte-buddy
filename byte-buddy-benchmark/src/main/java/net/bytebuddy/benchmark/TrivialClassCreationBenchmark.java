@@ -65,7 +65,7 @@ public class TrivialClassCreationBenchmark {
     @Benchmark
     public Class<?> benchmarkByteBuddy() {
         return new ByteBuddy()
-                .withIgnoredMethods(any())
+                .ignore(any())
                 .subclass(baseClass)
                 .make()
                 .load(newClassLoader(), ClassLoadingStrategy.Default.INJECTION)

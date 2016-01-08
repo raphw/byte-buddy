@@ -3,14 +3,10 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.generic.AbstractGenericTypeDescriptionTest;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.*;
@@ -33,7 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDescriptionTest {
+public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptionGenericTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -66,27 +62,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     }
 
     protected abstract TypeDescription describe(Class<?> type);
-
-    @Test
-    public void testGenericTypeProperties() throws Exception {
-        assertThat(describe(Object.class).getOwnerType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(Object.class).getParameters().size(), is(0));
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNoUpperBounds() throws Exception {
-        describe(Object.class).getUpperBounds();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNoLowerBounds() throws Exception {
-        describe(Object.class).getLowerBounds();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testNoSymbol() throws Exception {
-        describe(Object.class).getSymbol();
-    }
 
     @Test
     public void testPrecondition() throws Exception {
@@ -245,19 +220,19 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         TypeDescription identical = describe(SampleClass.class);
         assertThat(identical, is(identical));
         TypeDescription equalFirst = mock(TypeDescription.class);
-        when(equalFirst.getSort()).thenReturn(GenericTypeDescription.Sort.NON_GENERIC);
+        when(equalFirst.getSort()).thenReturn(TypeDefinition.Sort.NON_GENERIC);
         when(equalFirst.asErasure()).thenReturn(equalFirst);
         when(equalFirst.getInternalName()).thenReturn(Type.getInternalName(SampleClass.class));
         assertThat(describe(SampleClass.class), is(equalFirst));
         assertThat(describe(SampleClass.class), not(describe(SampleInterface.class)));
         assertThat(describe(SampleClass.class), not((TypeDescription) new TypeDescription.ForLoadedType(SampleInterface.class)));
-        GenericTypeDescription nonRawType = mock(GenericTypeDescription.class);
-        when(nonRawType.getSort()).thenReturn(GenericTypeDescription.Sort.VARIABLE);
+        TypeDefinition nonRawType = mock(TypeDescription.Generic.class);
+        when(nonRawType.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
         assertThat(describe(SampleClass.class), not(nonRawType));
         assertThat(describe(SampleClass.class), not(new Object()));
         assertThat(describe(SampleClass.class), not(equalTo(null)));
         assertThat(describe(Object[].class), is((TypeDescription) new TypeDescription.ForLoadedType(Object[].class)));
-        assertThat(describe(Object[].class), not((TypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(describe(Object[].class), not(TypeDescription.OBJECT));
     }
 
     @Test
@@ -298,27 +273,27 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testSuperType() throws Exception {
-        assertThat(describe(Object.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(SampleInterface.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(SampleAnnotation.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(void.class).getSuperType(), nullValue(GenericTypeDescription.class));
-        assertThat(describe(SampleClass.class).getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+        assertThat(describe(Object.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleInterface.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleAnnotation.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(void.class).getSuperType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleClass.class).getSuperType(), is(TypeDescription.Generic.OBJECT));
         assertThat(describe(SampleIndirectInterfaceImplementation.class).getSuperType(),
-                is((GenericTypeDescription) new TypeDescription.ForLoadedType(SampleInterfaceImplementation.class)));
-        assertThat(describe(Object[].class).getSuperType(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Object.class)));
+                is((TypeDefinition) new TypeDescription.ForLoadedType(SampleInterfaceImplementation.class)));
+        assertThat(describe(Object[].class).getSuperType(), is(TypeDescription.Generic.OBJECT));
     }
 
     @Test
     public void testInterfaces() throws Exception {
-        assertThat(describe(Object.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
-        assertThat(describe(SampleInterface.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
-        assertThat(describe(SampleAnnotation.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedType(Annotation.class)));
+        assertThat(describe(Object.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
+        assertThat(describe(SampleInterface.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
+        assertThat(describe(SampleAnnotation.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(Annotation.class)));
         assertThat(describe(SampleInterfaceImplementation.class).getInterfaces(),
-                is((GenericTypeList) new GenericTypeList.ForLoadedType(SampleInterface.class)));
-        assertThat(describe(SampleIndirectInterfaceImplementation.class).getInterfaces(), is((GenericTypeList) new GenericTypeList.Empty()));
+                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(SampleInterface.class)));
+        assertThat(describe(SampleIndirectInterfaceImplementation.class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.Empty()));
         assertThat(describe(SampleTransitiveInterfaceImplementation.class).getInterfaces(),
-                is((GenericTypeList) new GenericTypeList.ForLoadedType(SampleTransitiveInterface.class)));
-        assertThat(describe(Object[].class).getInterfaces(), is((GenericTypeList) new GenericTypeList.ForLoadedType(Cloneable.class, Serializable.class)));
+                is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(SampleTransitiveInterface.class)));
+        assertThat(describe(Object[].class).getInterfaces(), is((TypeList.Generic) new TypeList.Generic.ForLoadedTypes(Cloneable.class, Serializable.class)));
     }
 
     @Test
@@ -391,12 +366,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
         assertThat(describe(SamplePackagePrivate.class).isVisibleTo(new TypeDescription.ForLoadedType(SampleClass.class)), is(true));
         assertThat(describe(SampleInterface.class).isVisibleTo(new TypeDescription.ForLoadedType(SampleClass.class)), is(true));
         assertThat(describe(SampleAnnotation.class).isVisibleTo(new TypeDescription.ForLoadedType(SampleClass.class)), is(true));
-        assertThat(describe(SamplePackagePrivate.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(describe(SampleInterface.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(describe(SampleAnnotation.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
-        assertThat(describe(int.class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(describe(SampleInterface[].class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(true));
-        assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(new TypeDescription.ForLoadedType(Object.class)), is(false));
+        assertThat(describe(SamplePackagePrivate.class).isVisibleTo(TypeDescription.OBJECT), is(false));
+        assertThat(describe(SampleInterface.class).isVisibleTo(TypeDescription.OBJECT), is(true));
+        assertThat(describe(SampleAnnotation.class).isVisibleTo(TypeDescription.OBJECT), is(false));
+        assertThat(describe(int.class).isVisibleTo(TypeDescription.OBJECT), is(true));
+        assertThat(describe(SampleInterface[].class).isVisibleTo(TypeDescription.OBJECT), is(true));
+        assertThat(describe(SamplePackagePrivate[].class).isVisibleTo(TypeDescription.OBJECT), is(false));
     }
 
     @Test
@@ -442,7 +417,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     public void testDeclaredTypes() throws Exception {
         assertThat(describe(SampleClass.class).getDeclaredTypes().size(), is(0));
         assertThat(describe(AbstractTypeDescriptionTest.class).getDeclaredTypes(),
-                is((TypeList) new TypeList.ForLoadedType(AbstractTypeDescriptionTest.class.getDeclaredClasses())));
+                is((TypeList) new TypeList.ForLoadedTypes(AbstractTypeDescriptionTest.class.getDeclaredClasses())));
     }
 
     @Test
@@ -484,19 +459,19 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
 
     @Test
     public void testHierarchyIteration() throws Exception {
-        Iterator<GenericTypeDescription> iterator = describe(Traversal.class).iterator();
+        Iterator<TypeDefinition> iterator = describe(Traversal.class).iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) new TypeDescription.ForLoadedType(Traversal.class)));
+        assertThat(iterator.next(), is((TypeDefinition) new TypeDescription.ForLoadedType(Traversal.class)));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
         assertThat(iterator.hasNext(), is(false));
     }
 
     @Test(expected = NoSuchElementException.class)
     public void testHierarchyEnds() throws Exception {
-        Iterator<GenericTypeDescription> iterator = describe(Object.class).iterator();
+        Iterator<TypeDefinition> iterator = describe(Object.class).iterator();
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((GenericTypeDescription) TypeDescription.OBJECT));
+        assertThat(iterator.next(), is((TypeDefinition) TypeDescription.OBJECT));
         assertThat(iterator.hasNext(), is(false));
         iterator.next();
     }
@@ -523,8 +498,28 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     }
 
     @Test
-    public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.AbstractBase.SuperTypeIterator.class).applyBasic();
+    public void testRepresents() throws Exception {
+        assertThat(describe(Object.class).represents(Object.class), is(true));
+        assertThat(describe(Object.class).represents(Serializable.class), is(false));
+        assertThat(describe(List.class).represents(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType()), is(false));
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void testRepresentsNullPointer() throws Exception {
+        describe(Object.class).represents(null);
+    }
+
+    @Test
+    public void testNonAvailableAnnotations() throws Exception {
+        TypeDescription typeDescription = describe(new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(MissingAnnotations.class),
+                null,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE).loadClass(MissingAnnotations.class.getName()));
+        assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
+        assertThat(typeDescription.getDeclaredFields().getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
+        assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
     }
 
     protected interface SampleInterface {
@@ -643,6 +638,18 @@ public abstract class AbstractTypeDescriptionTest extends AbstractGenericTypeDes
     public static class InnerInnerClass {
 
         public static class Foo {
+            /* empty */
+        }
+    }
+
+    @SampleAnnotation
+    public static class MissingAnnotations {
+
+        @SampleAnnotation
+        Void foo;
+
+        @SampleAnnotation
+        void foo(@SampleAnnotation  Void foo) {
             /* empty */
         }
     }

@@ -1,9 +1,13 @@
 package net.bytebuddy.agent.builder;
 
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
+import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
+import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -12,24 +16,24 @@ import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.security.AccessController;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.Map;
+import java.util.*;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyZeroInteractions;
+import static org.mockito.Mockito.*;
 
 public class AgentBuilderInitializationStrategyTest {
 
     private static final String FOO = "foo";
+
+    private static final byte[] QUX = new byte[]{1, 2, 3}, BAZ = new byte[]{4, 5, 6};
 
     private static final int BAR = 42;
 
@@ -82,8 +86,37 @@ public class AgentBuilderInitializationStrategyTest {
     }
 
     @Test
-    public void testPrematureRegistration() throws Exception {
-        AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(dynamicType, classLoader, injectorFactory); // TODO
+    @SuppressWarnings("unchecked")
+    public void testMinimalRegistrationIndependentType() throws Exception {
+        Annotation eagerAnnotation = mock(AuxiliaryType.SignatureRelevant.class);
+        when(eagerAnnotation.annotationType()).thenReturn((Class) AuxiliaryType.SignatureRelevant.class);
+        TypeDescription independent = mock(TypeDescription.class), dependent = mock(TypeDescription.class);
+        when(independent.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(eagerAnnotation));
+        when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        Map<TypeDescription, byte[]> map = new HashMap<TypeDescription, byte[]>();
+        map.put(independent, QUX);
+        map.put(dependent, BAZ);
+        when(dynamicType.getAuxiliaryTypes()).thenReturn(map);
+        ClassInjector classInjector = mock(ClassInjector.class);
+        when(injectorFactory.resolve()).thenReturn(classInjector);
+        when(classInjector.inject(Collections.singletonMap(independent, QUX)))
+                .thenReturn(Collections.<TypeDescription, Class<?>>singletonMap(independent, Foo.class));
+        LoadedTypeInitializer loadedTypeInitializer = mock(LoadedTypeInitializer.class);
+        when(dynamicType.getLoadedTypeInitializers()).thenReturn(Collections.singletonMap(independent, loadedTypeInitializer));
+        AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(dynamicType, classLoader, injectorFactory);
+        verify(classInjector).inject(Collections.singletonMap(independent, QUX));
+        verifyNoMoreInteractions(classInjector);
+        verify(loadedTypeInitializer).onLoad(Foo.class);
+        verifyNoMoreInteractions(loadedTypeInitializer);
+    }
+
+    @Test
+    public void testMinimalRegistrationDependentType() throws Exception {
+        TypeDescription dependent = mock(TypeDescription.class);
+        when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(dynamicType.getAuxiliaryTypes()).thenReturn(Collections.singletonMap(dependent, BAZ));
+        AgentBuilder.InitializationStrategy.Minimal.INSTANCE.register(dynamicType, classLoader, injectorFactory);
+        verifyZeroInteractions(injectorFactory);
     }
 
     @Test
@@ -198,5 +231,9 @@ public class AgentBuilderInitializationStrategyTest {
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.Dispatcher.Unavailable.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.SelfInjection.NexusAccessor.InitializationAppender.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.InitializationStrategy.Minimal.class).apply();
+    }
+
+    private static class Foo {
+        /* empty */
     }
 }

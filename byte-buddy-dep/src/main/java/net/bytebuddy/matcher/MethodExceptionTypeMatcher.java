@@ -1,7 +1,7 @@
 package net.bytebuddy.matcher;
 
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 
 /**
  * An element matcher that matches the exceptions that are declared by a method.
@@ -13,14 +13,14 @@ public class MethodExceptionTypeMatcher<T extends MethodDescription> extends Ele
     /**
      * The matcher to apply to the matched method's exceptions.
      */
-    private final ElementMatcher<? super GenericTypeList> exceptionMatcher;
+    private final ElementMatcher<? super TypeList.Generic> exceptionMatcher;
 
     /**
      * Creates a new matcher for a method's exceptions.
      *
      * @param exceptionMatcher The matcher to apply to the matched method's exceptions.
      */
-    public MethodExceptionTypeMatcher(ElementMatcher<? super GenericTypeList> exceptionMatcher) {
+    public MethodExceptionTypeMatcher(ElementMatcher<? super TypeList.Generic> exceptionMatcher) {
         this.exceptionMatcher = exceptionMatcher;
     }
 

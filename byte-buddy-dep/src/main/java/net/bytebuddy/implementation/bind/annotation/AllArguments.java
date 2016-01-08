@@ -10,12 +10,11 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
+import net.bytebuddy.utility.CompoundList;
 
 import java.lang.annotation.*;
 import java.util.ArrayList;
 import java.util.List;
-
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
 
 /**
  * Parameters that are annotated with this annotation will be assigned a collection (or an array) containing
@@ -135,15 +134,15 @@ public @interface AllArguments {
             if (!target.getType().isArray()) {
                 throw new IllegalStateException("Expected an array type for all argument annotation on " + source);
             }
-            ArrayFactory arrayFactory = ArrayFactory.forType(target.getType().asErasure().getComponentType());
+            ArrayFactory arrayFactory = ArrayFactory.forType(target.getType().getComponentType());
             boolean includeThis = !source.isStatic() && annotation.loadSilent().includeSelf();
             List<StackManipulation> stackManipulations = new ArrayList<StackManipulation>(source.getParameters().size() + (includeThis ? 1 : 0));
             int offset = source.isStatic() || includeThis ? 0 : 1;
-            for (TypeDescription sourceParameter : includeThis
-                    ? join(implementationTarget.getTypeDescription(), source.getParameters().asTypeList().asErasures())
-                    : source.getParameters().asTypeList().asErasures()) {
+            for (TypeDescription.Generic sourceParameter : includeThis
+                    ? CompoundList.of(implementationTarget.getInstrumentedType().asGenericType(), source.getParameters().asTypeList())
+                    : source.getParameters().asTypeList()) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
-                        MethodVariableAccess.forType(sourceParameter).loadOffset(offset),
+                        MethodVariableAccess.of(sourceParameter).loadOffset(offset),
                         assigner.assign(sourceParameter, arrayFactory.getComponentType(), RuntimeType.Verifier.check(target)));
                 if (stackManipulation.isValid()) {
                     stackManipulations.add(stackManipulation);

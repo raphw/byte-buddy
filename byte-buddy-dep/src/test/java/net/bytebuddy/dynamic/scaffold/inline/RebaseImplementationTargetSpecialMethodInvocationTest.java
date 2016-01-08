@@ -23,7 +23,7 @@ public class RebaseImplementationTargetSpecialMethodInvocationTest extends Abstr
         ObjectPropertyAssertion.of(RebaseImplementationTarget.RebasedMethodInvocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {
-                when(mock.asToken()).thenReturn(mock(MethodDescription.Token.class));
+                when(mock.asSignatureToken()).thenReturn(mock(MethodDescription.SignatureToken.class));
             }
         }).applyBasic();
     }

@@ -1,6 +1,5 @@
 package net.bytebuddy.dynamic;
 
-import net.bytebuddy.utility.ByteBuddyCommons;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
@@ -30,6 +29,6 @@ public class TargetTypeTest {
 
     @Test
     public void testTypeIsFinal() throws Exception {
-        assertThat(Modifier.isFinal(ByteBuddyCommons.class.getModifiers()), is(true));
+        assertThat(Modifier.isFinal(TargetType.class.getModifiers()), is(true));
     }
 }

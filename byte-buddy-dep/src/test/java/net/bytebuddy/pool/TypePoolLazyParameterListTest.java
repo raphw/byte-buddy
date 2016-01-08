@@ -7,7 +7,7 @@ import net.bytebuddy.description.method.ParameterList;
 import org.junit.After;
 import org.junit.Before;
 
-import java.util.LinkedList;
+import java.util.ArrayList;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -38,7 +38,7 @@ public class TypePoolLazyParameterListTest extends AbstractParameterListTest<Par
 
     @Override
     protected ParameterList<ParameterDescription.InDefinedShape> asList(List<ParameterDescription> elements) {
-        List<ParameterDescription.InDefinedShape> parameterDescriptions = new LinkedList<ParameterDescription.InDefinedShape>();
+        List<ParameterDescription.InDefinedShape> parameterDescriptions = new ArrayList<ParameterDescription.InDefinedShape>(elements.size());
         for (ParameterDescription element : elements) {
             parameterDescriptions.add(typePool.describe(Foo.class.getName()).resolve()
                     .getDeclaredMethods()

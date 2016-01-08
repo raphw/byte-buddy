@@ -3,10 +3,12 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -34,6 +36,12 @@ public class MethodRebaseResolverDefaultTest {
     private MethodDescription.InDefinedShape methodDescription, otherMethod;
 
     @Mock
+    private MethodDescription.Token token, otherToken;
+
+    @Mock
+    private MethodDescription.SignatureToken signatureToken;
+
+    @Mock
     private MethodRebaseResolver.Resolution resolution;
 
     @Mock
@@ -49,14 +57,18 @@ public class MethodRebaseResolverDefaultTest {
     private AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy;
 
     @Mock
-    private MethodRebaseResolver.MethodNameTransformer methodNameTransformer;
+    private MethodNameTransformer methodNameTransformer;
 
     @Before
     public void setUp() throws Exception {
         when(methodDescription.asDefined()).thenReturn(methodDescription);
-        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty());
-        when(methodDescription.getReturnType()).thenReturn(TypeDescription.VOID);
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+        when(methodDescription.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
         when(methodDescription.getInternalName()).thenReturn(FOO);
+        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(methodDescription.asSignatureToken()).thenReturn(signatureToken);
+        when(instrumentedType.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
+        when(otherMethod.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
         when(methodNameTransformer.transform(methodDescription)).thenReturn(BAR);
         when(auxiliaryTypeNamingStrategy.name(instrumentedType)).thenReturn(QUX);
         when(classFileVersion.getMinorMajorVersion()).thenReturn(Opcodes.V1_6);
@@ -80,9 +92,17 @@ public class MethodRebaseResolverDefaultTest {
     }
 
     @Test
+    public void testTokenMap() throws Exception {
+        MethodRebaseResolver methodRebaseResolver = new MethodRebaseResolver.Default(Collections.singletonMap(methodDescription, resolution),
+                Collections.singletonList(dynamicType));
+        assertThat(methodRebaseResolver.asTokenMap().size(), is(1));
+        assertThat(methodRebaseResolver.asTokenMap().get(signatureToken), is(resolution));
+    }
+
+    @Test
     public void testCreationWithoutConstructor() throws Exception {
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
-                new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)),
+                Collections.singleton(token),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);
@@ -97,7 +117,7 @@ public class MethodRebaseResolverDefaultTest {
     public void testCreationWithConstructor() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
         MethodRebaseResolver methodRebaseResolver = MethodRebaseResolver.Default.make(instrumentedType,
-                new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)),
+                Collections.singleton(token),
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
                 methodNameTransformer);

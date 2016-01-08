@@ -29,15 +29,15 @@ public class TypePoolDefaultComponentTypeLocatorTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typePool.describe(BAR)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
-        when(typeDescription.getDeclaredMethods())
-                .thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Collections.singletonList(methodDescription)));
+        when(typeDescription.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(methodDescription));
         when(methodDescription.getSourceCodeName()).thenReturn(FOO);
-        TypeDescription returnType = mock(TypeDescription.class);
-        when(returnType.asErasure()).thenReturn(returnType);
+        TypeDescription.Generic returnType = mock(TypeDescription.Generic.class);
+        TypeDescription rawReturnType = mock(TypeDescription.class);
+        when(returnType.asErasure()).thenReturn(rawReturnType);
         when(methodDescription.getReturnType()).thenReturn(returnType);
-        TypeDescription componentType = mock(TypeDescription.class);
-        when(returnType.getComponentType()).thenReturn(componentType);
-        when(componentType.getName()).thenReturn(QUX);
+        TypeDescription rawComponentType = mock(TypeDescription.class);
+        when(rawReturnType.getComponentType()).thenReturn(rawComponentType);
+        when(rawComponentType.getName()).thenReturn(QUX);
         assertThat(new TypePool.Default.ComponentTypeLocator.ForAnnotationProperty(typePool, BAR_DESCRIPTOR).bind(FOO).lookup(), is(QUX));
     }
 

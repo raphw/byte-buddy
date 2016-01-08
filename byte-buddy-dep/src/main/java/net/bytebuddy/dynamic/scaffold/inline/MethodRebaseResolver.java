@@ -3,26 +3,21 @@ package net.bytebuddy.dynamic.scaffold.inline;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.auxiliary.TrivialType;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
-import net.bytebuddy.utility.RandomString;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.join;
+import static net.bytebuddy.matcher.ElementMatchers.is;
 
 /**
  * A method rebase resolver is responsible for mapping methods of an instrumented type to an alternative signature.
@@ -50,6 +45,13 @@ public interface MethodRebaseResolver {
     List<DynamicType> getAuxiliaryTypes();
 
     /**
+     * Returns a map of all rebasable methods' signature tokens to their resolution.
+     *
+     * @return A map of all rebasable methods' signature tokens to their resolution.
+     */
+    Map<MethodDescription.SignatureToken, Resolution> asTokenMap();
+
+    /**
      * A method rebase resolver that preserves any method in its original form.
      */
     enum Disabled implements MethodRebaseResolver {
@@ -70,139 +72,15 @@ public interface MethodRebaseResolver {
         }
 
         @Override
+        public Map<MethodDescription.SignatureToken, Resolution> asTokenMap() {
+            return Collections.emptyMap();
+        }
+
+        @Override
         public String toString() {
             return "MethodRebaseResolver.Disabled." + name();
         }
 
-    }
-
-    /**
-     * A method name transformer provides a unique mapping of a method's name to an alternative name.
-     *
-     * @see MethodRebaseResolver
-     */
-    interface MethodNameTransformer {
-
-        /**
-         * Transforms a method's name to an alternative name. This name must not be equal to any existing method of the
-         * created class.
-         *
-         * @param methodDescription The original method.
-         * @return The alternative name.
-         */
-        String transform(MethodDescription methodDescription);
-
-        /**
-         * A method name transformer that adds a fixed suffix to an original method name, separated by a {@code $}.
-         */
-        class Suffixing implements MethodNameTransformer {
-
-            /**
-             * The default suffix to add to an original method name.
-             */
-            private static final String DEFAULT_SUFFIX = "original$";
-
-            /**
-             * The suffix to append to a method name.
-             */
-            private final String suffix;
-
-            /**
-             * Creates a new suffixing method name transformer which adds a default suffix with a random name component.
-             *
-             * @return A method name transformer that adds a randomized suffix to the original method name.
-             */
-            public static MethodNameTransformer withRandomSuffix() {
-                return new Suffixing(DEFAULT_SUFFIX + RandomString.make());
-            }
-
-            /**
-             * Creates a new suffixing method name transformer.
-             *
-             * @param suffix The suffix to add to the method name before the seed.
-             */
-            public Suffixing(String suffix) {
-                this.suffix = suffix;
-            }
-
-            @Override
-            public String transform(MethodDescription methodDescription) {
-                return String.format("%s$%s", methodDescription.getInternalName(), suffix);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && suffix.equals(((Suffixing) other).suffix);
-            }
-
-            @Override
-            public int hashCode() {
-                return suffix.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRebaseResolver.MethodNameTransformer.Suffixing{" +
-                        "suffix='" + suffix + '\'' +
-                        '}';
-            }
-        }
-
-        /**
-         * A method name transformer that adds a fixed prefix to an original method name.
-         */
-        class Prefixing implements MethodNameTransformer {
-
-            /**
-             * The default prefix to add to an original method name.
-             */
-            private static final String DEFAULT_PREFIX = "original";
-
-            /**
-             * The prefix that is appended.
-             */
-            private final String prefix;
-
-            /**
-             * Creates a new prefixing method name transformer using a default prefix.
-             */
-            public Prefixing() {
-                this(DEFAULT_PREFIX);
-            }
-
-            /**
-             * Creates a new prefixing method name transformer.
-             *
-             * @param prefix The prefix being used.
-             */
-            public Prefixing(String prefix) {
-                this.prefix = prefix;
-            }
-
-            @Override
-            public String transform(MethodDescription methodDescription) {
-                return String.format("%s%s", prefix, methodDescription.getInternalName());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && prefix.equals(((Prefixing) other).prefix);
-            }
-
-            @Override
-            public int hashCode() {
-                return prefix.hashCode();
-            }
-
-            @Override
-            public String toString() {
-                return "MethodRebaseResolver.MethodNameTransformer.Prefixing{" +
-                        "prefix='" + prefix + '\'' +
-                        '}';
-            }
-        }
     }
 
     /**
@@ -373,18 +251,18 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return methodDescription.getReturnType().asErasure();
+                public TypeDescription.Generic getReturnType() {
+                    return methodDescription.getReturnType().asRawType();
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asErasures());
+                    return new ParameterList.Explicit.ForTypes(this, methodDescription.getParameters().asTypeList().asRawTypes());
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return methodDescription.getExceptionTypes().asErasures().asGenericTypes();
+                public TypeList.Generic getExceptionTypes() {
+                    return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
                 @Override
@@ -393,8 +271,8 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -510,18 +388,18 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeDescription getReturnType() {
-                    return TypeDescription.VOID;
+                public TypeDescription.Generic getReturnType() {
+                    return TypeDescription.Generic.VOID;
                 }
 
                 @Override
                 public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                    return new ParameterList.Explicit.ForTypes(this, join(methodDescription.getParameters().asTypeList().asErasures(), placeholderType));
+                    return new ParameterList.Explicit.ForTypes(this, CompoundList.of(methodDescription.getParameters().asTypeList().asErasures(), placeholderType));
                 }
 
                 @Override
-                public GenericTypeList getExceptionTypes() {
-                    return methodDescription.getExceptionTypes().asErasures().asGenericTypes();
+                public TypeList.Generic getExceptionTypes() {
+                    return methodDescription.getExceptionTypes().asRawTypes();
                 }
 
                 @Override
@@ -530,8 +408,8 @@ public interface MethodRebaseResolver {
                 }
 
                 @Override
-                public GenericTypeList getTypeVariables() {
-                    return new GenericTypeList.Empty();
+                public TypeList.Generic getTypeVariables() {
+                    return new TypeList.Generic.Empty();
                 }
 
                 @Override
@@ -587,32 +465,34 @@ public interface MethodRebaseResolver {
          * Creates a new method rebase resolver.
          *
          * @param instrumentedType            The instrumented type.
-         * @param rebaseableMethods           The methods that are possible to rebase.
+         * @param rebaseableMethodTokens      Tokens describing all methods that can possibly be rebased.
          * @param classFileVersion            The class file version for the instrumentation.
          * @param auxiliaryTypeNamingStrategy The naming strategy for naming a potential auxiliary type.
          * @param methodNameTransformer       A transformer for method names.
          * @return A method rebase resolver that is capable of rebasing any of the provided methods.
          */
         public static MethodRebaseResolver make(TypeDescription instrumentedType,
-                                                MethodList<MethodDescription.InDefinedShape> rebaseableMethods,
+                                                Set<? extends MethodDescription.Token> rebaseableMethodTokens,
                                                 ClassFileVersion classFileVersion,
                                                 AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                 MethodNameTransformer methodNameTransformer) {
             DynamicType placeholderType = null;
-            Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>(rebaseableMethods.size());
-            for (MethodDescription.InDefinedShape instrumentedMethod : rebaseableMethods) {
-                Resolution resolution;
-                if (instrumentedMethod.isConstructor()) {
-                    if (placeholderType == null) {
-                        placeholderType = TrivialType.INSTANCE.make(auxiliaryTypeNamingStrategy.name(instrumentedType),
-                                classFileVersion,
-                                AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
+            Map<MethodDescription.InDefinedShape, Resolution> resolutions = new HashMap<MethodDescription.InDefinedShape, Resolution>();
+            for (MethodDescription.InDefinedShape instrumentedMethod : instrumentedType.getDeclaredMethods()) {
+                if (rebaseableMethodTokens.contains(instrumentedMethod.asToken(is(instrumentedType)))) {
+                    Resolution resolution;
+                    if (instrumentedMethod.isConstructor()) {
+                        if (placeholderType == null) {
+                            placeholderType = TrivialType.SIGNATURE_RELEVANT.make(auxiliaryTypeNamingStrategy.name(instrumentedType),
+                                    classFileVersion,
+                                    AuxiliaryType.MethodAccessorFactory.Illegal.INSTANCE);
+                        }
+                        resolution = Resolution.ForRebasedConstructor.of(instrumentedMethod, placeholderType.getTypeDescription());
+                    } else {
+                        resolution = Resolution.ForRebasedMethod.of(instrumentedMethod, methodNameTransformer);
                     }
-                    resolution = Resolution.ForRebasedConstructor.of(instrumentedMethod, placeholderType.getTypeDescription());
-                } else {
-                    resolution = Resolution.ForRebasedMethod.of(instrumentedMethod, methodNameTransformer);
+                    resolutions.put(instrumentedMethod, resolution);
                 }
-                resolutions.put(instrumentedMethod, resolution);
             }
             return placeholderType == null
                     ? new Default(resolutions, Collections.<DynamicType>emptyList())
@@ -630,6 +510,15 @@ public interface MethodRebaseResolver {
         @Override
         public List<DynamicType> getAuxiliaryTypes() {
             return dynamicTypes;
+        }
+
+        @Override
+        public Map<MethodDescription.SignatureToken, Resolution> asTokenMap() {
+            Map<MethodDescription.SignatureToken, Resolution> tokenMap = new HashMap<MethodDescription.SignatureToken, Resolution>();
+            for (Map.Entry<MethodDescription.InDefinedShape, Resolution> entry : resolutions.entrySet()) {
+                tokenMap.put(entry.getKey().asSignatureToken(), entry.getValue());
+            }
+            return tokenMap;
         }
 
         @Override

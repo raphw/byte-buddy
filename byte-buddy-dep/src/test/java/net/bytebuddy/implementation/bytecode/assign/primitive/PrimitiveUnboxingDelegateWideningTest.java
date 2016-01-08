@@ -45,7 +45,7 @@ public class PrimitiveUnboxingDelegateWideningTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription referenceTypeDescription, primitiveTypeDescription;
+    private TypeDescription.Generic referenceTypeDescription, primitiveTypeDescription;
 
     @Mock
     private Assigner chainedAssigner;

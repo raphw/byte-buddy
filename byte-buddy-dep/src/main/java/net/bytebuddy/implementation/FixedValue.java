@@ -16,8 +16,6 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * This implementation returns a fixed value for a method. Other than the
@@ -49,47 +47,21 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
-     * Creates a fixed value implementation that returns {@code null} as a fixed value. This value is inlined into
-     * the method and does not create a field.
+     * <p>
+     * Returns a fixed value from any intercepted method. The fixed value is stored in the constant pool if this is possible.
+     * Java is capable of storing any primitive value, {@link String} values and {@link Class} references in the constant pool.
+     * Since Java 7, {@code MethodHandle} as well as {@code MethodType} references are also supported. Alternatively, the fixed
+     * value is stored in a static field.
+     * </p>
+     * <p>
+     * When a value is stored in the class's constant pool, its identity is lost. If an object's identity is important, the
+     * {@link FixedValue#reference(Object)} method should be used instead.
+     * </p>
      *
-     * @return An implementation that represents the {@code null} value.
-     */
-    public static Implementation nullValue() {
-        return value((Object) null);
-    }
-
-    /**
-     * Creates a fixed value implementation that returns a fixed value. If the value can be inlined into the created
-     * class, i.e. can be added to the constant pool of a class, no explicit type initialization will be required for
-     * the created dynamic class. Otherwise, a static field will be created in the dynamic type which will be initialized
-     * with the given value. The following Java types can be inlined:
-     * <ul>
-     * <li>The {@link java.lang.String} type.</li>
-     * <li>The {@link java.lang.Class} type.</li>
-     * <li>All primitive types and their wrapper type, i.e. {@link java.lang.Boolean}, {@link java.lang.Byte},
-     * {@link java.lang.Short}, {@link java.lang.Character}, {@link java.lang.Integer}, {@link java.lang.Long},
-     * {@link java.lang.Float} and {@link java.lang.Double}.</li>
-     * <li>A {@code null} reference.</li>
-     * <li>From Java 7 on, instances of {@code java.lang.invoke.MethodType} and {@code java.lang.invoke.MethodHandle}.</li>
-     * </ul>
-     * <p>&nbsp;</p>
-     * If possible, the constant pool value is substituted by a byte code instruction that creates the value. (This is
-     * possible for integer types and types that are presented by integers inside the JVM ({@code boolean}, {@code byte},
-     * {@code short}, {@code char}) and for the {@code null} value. Additionally, several common constants of
-     * the {@code float}, {@code double} and {@code long} types can be represented by opcode constants.
-     * <p>&nbsp;</p>
-     * Note that method handles or (method) types require to be visible to a class's class loader.
-     *
-     * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
+     * @param fixedValue The fixed value to return from the method.
      * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable value(Object fixedValue) {
-        if (fixedValue == null) {
-            return new ForPoolValue(NullConstant.INSTANCE,
-                    TypeDescription.OBJECT,
-                    Assigner.DEFAULT,
-                    Assigner.Typing.DYNAMIC);
-        }
         Class<?> type = fixedValue.getClass();
         if (type == String.class) {
             return new ForPoolValue(new TextConstant((String) fixedValue),
@@ -160,18 +132,14 @@ public abstract class FixedValue implements Implementation {
      * Other than {@link net.bytebuddy.implementation.FixedValue#value(Object)}, this function
      * will create a fixed value implementation that will always defined a field in the instrumented class. As a result,
      * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
-     * instrumented methods.
-     * <p>&nbsp;</p>
-     * As an exception, the {@code null} value is always presented by a constant value and is never stored in a static
-     * field.
+     * instrumented methods. The field name can be explicitly determined. The field name is generated from the fixed value's
+     * hash code.
      *
      * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
      * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable reference(Object fixedValue) {
-        return fixedValue == null
-                ? new ForPoolValue(NullConstant.INSTANCE, TypeDescription.OBJECT, Assigner.DEFAULT, Assigner.Typing.DYNAMIC)
-                : new ForStaticField(fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
+        return new ForStaticField(fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
     }
 
     /**
@@ -179,18 +147,13 @@ public abstract class FixedValue implements Implementation {
      * will create a fixed value implementation that will always defined a field in the instrumented class. As a result,
      * object identity will be preserved between the given {@code fixedValue} and the value that is returned by
      * instrumented methods. The field name can be explicitly determined.
-     * <p>&nbsp;</p>
-     * As an exception, the {@code null} value cannot be used for this implementation but will cause an exception.
      *
      * @param fixedValue The fixed value to be returned by methods that are instrumented by this implementation.
      * @param fieldName  The name of the field for storing the fixed value.
      * @return An implementation for the given {@code fixedValue}.
      */
     public static AssignerConfigurable reference(Object fixedValue, String fieldName) {
-        if (fixedValue == null) {
-            throw new IllegalArgumentException("The fixed value must not be null");
-        }
-        return new ForStaticField(isValidIdentifier(fieldName), fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
+        return new ForStaticField(fieldName, fixedValue, Assigner.DEFAULT, Assigner.Typing.STATIC);
     }
 
     /**
@@ -220,6 +183,24 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
+     * Returns a null value from an instrumented method.
+     *
+     * @return An implementation that returns {@code null} from a method.
+     */
+    public static Implementation nullValue() {
+        return ForNullValue.INSTANCE;
+    }
+
+    /**
+     * Returns the origin type from an instrumented method.
+     *
+     * @return An implementation that returns the origin type of the current instrumented type.
+     */
+    public static AssignerConfigurable originType() {
+        return new ForOriginType(Assigner.DEFAULT, Assigner.Typing.STATIC);
+    }
+
+    /**
      * Blueprint method that for applying the actual implementation.
      *
      * @param methodVisitor           The method visitor to which the implementation is applied to.
@@ -234,9 +215,9 @@ public abstract class FixedValue implements Implementation {
     protected ByteCodeAppender.Size apply(MethodVisitor methodVisitor,
                                           Context implementationContext,
                                           MethodDescription instrumentedMethod,
-                                          TypeDescription fixedValueType,
+                                          TypeDescription.Generic fixedValueType,
                                           StackManipulation valueLoadingInstruction) {
-        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType().asErasure(), typing);
+        StackManipulation assignment = assigner.assign(fixedValueType, instrumentedMethod.getReturnType(), typing);
         if (!assignment.isValid()) {
             throw new IllegalArgumentException("Cannot return value of type " + fixedValueType + " for " + instrumentedMethod);
         }
@@ -278,6 +259,142 @@ public abstract class FixedValue implements Implementation {
     }
 
     /**
+     * A fixed value that appends the origin type of the instrumented type.
+     */
+    protected static class ForOriginType extends FixedValue implements AssignerConfigurable {
+
+        /**
+         * Creates a new fixed value appender for the origin type.
+         *
+         * @param assigner The assigner to use for assigning the fixed value to the return type of the instrumented value.
+         * @param typing   Indicates if dynamic type castings should be attempted for incompatible assignments.
+         */
+        protected ForOriginType(Assigner assigner, Assigner.Typing typing) {
+            super(assigner, typing);
+        }
+
+        @Override
+        public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
+            return new ForOriginType(assigner, typing);
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new Appender(implementationTarget.getOriginType().asErasure());
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public String toString() {
+            return "FixedValue.ForOriginType{" +
+                    "assigner=" + assigner +
+                    ", typing=" + typing +
+                    '}';
+        }
+
+        /**
+         * An appender for writing the origin type.
+         */
+        protected class Appender implements ByteCodeAppender {
+
+            /**
+             * The instrumented type.
+             */
+            private final TypeDescription originType;
+
+            /**
+             * Creates a new appender.
+             *
+             * @param originType The instrumented type.
+             */
+            protected Appender(TypeDescription originType) {
+                this.originType = originType;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                return ForOriginType.this.apply(methodVisitor,
+                        implementationContext,
+                        instrumentedMethod,
+                        TypeDescription.CLASS.asGenericType(),
+                        ClassConstant.of(originType));
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private ForOriginType getOuter() {
+                return ForOriginType.this;
+            }
+
+            @Override
+            public boolean equals(Object o) {
+                if (this == o) return true;
+                if (o == null || getClass() != o.getClass()) return false;
+                Appender appender = (Appender) o;
+                return originType.equals(appender.originType)
+                        && getOuter().equals(appender.getOuter());
+            }
+
+            @Override
+            public int hashCode() {
+                return 31 * getOuter().hashCode() + originType.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FixedValue.ForOriginType.Appender{" +
+                        "outer=" + getOuter() +
+                        ", originType=" + originType +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * A fixed value of {@code null}.
+     */
+    protected enum ForNullValue implements Implementation, ByteCodeAppender {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return this;
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        @Override
+        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+            if (instrumentedMethod.getReturnType().isPrimitive()) {
+                throw new IllegalStateException("Cannot return null from " + instrumentedMethod);
+            }
+            return new ByteCodeAppender.Simple(
+                    NullConstant.INSTANCE,
+                    MethodReturn.REFERENCE
+            ).apply(methodVisitor, implementationContext, instrumentedMethod);
+        }
+
+        @Override
+        public String toString() {
+            return "FixedValue.ForNullValue." + name();
+        }
+    }
+
+    /**
      * A fixed value implementation that represents its fixed value as a value that is written to the instrumented
      * class's constant pool.
      */
@@ -311,7 +428,7 @@ public abstract class FixedValue implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForPoolValue(valueLoadInstruction, loadedType, nonNull(assigner), nonNull(typing));
+            return new ForPoolValue(valueLoadInstruction, loadedType, assigner, typing);
         }
 
         @Override
@@ -326,7 +443,7 @@ public abstract class FixedValue implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            return apply(methodVisitor, implementationContext, instrumentedMethod, loadedType, valueLoadInstruction);
+            return apply(methodVisitor, implementationContext, instrumentedMethod, loadedType.asGenericType(), valueLoadInstruction);
         }
 
         @Override
@@ -379,15 +496,14 @@ public abstract class FixedValue implements Implementation {
         /**
          * The type if the field for storing the fixed value.
          */
-        private final TypeDescription fieldType;
+        private final TypeDescription.Generic fieldType;
 
         /**
          * Creates a new static field fixed value implementation with a random name for the field containing the fixed
          * value.
          *
          * @param fixedValue The fixed value to be returned.
-         * @param assigner   The assigner to use for assigning the fixed value to the return type of the
-         *                   instrumented value.
+         * @param assigner   The assigner to use for assigning the fixed value to the return type of the instrumented value.
          * @param typing     Indicates if dynamic type castings should be attempted for incompatible assignments.
          */
         protected ForStaticField(Object fixedValue, Assigner assigner, Assigner.Typing typing) {
@@ -407,12 +523,12 @@ public abstract class FixedValue implements Implementation {
             super(assigner, typing);
             this.fieldName = fieldName;
             this.fixedValue = fixedValue;
-            fieldType = new TypeDescription.ForLoadedType(fixedValue.getClass());
+            fieldType = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(fixedValue.getClass());
         }
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForStaticField(fieldName, fixedValue, nonNull(assigner), typing);
+            return new ForStaticField(fieldName, fixedValue, assigner, typing);
         }
 
         @Override
@@ -424,7 +540,7 @@ public abstract class FixedValue implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new StaticFieldByteCodeAppender(implementationTarget.getTypeDescription());
+            return new StaticFieldByteCodeAppender(implementationTarget.getInstrumentedType());
         }
 
         @Override

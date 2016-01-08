@@ -4,8 +4,8 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.generic.GenericTypeDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -14,12 +14,12 @@ import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
-import net.bytebuddy.utility.ByteBuddyCommons;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.reflect.Type;
+
 import static net.bytebuddy.matcher.ElementMatchers.*;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * Defines a method to access a given field by following the Java bean conventions for getters and setters:
@@ -61,7 +61,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor for a field of a given name.
      */
     public static FieldDefinable ofField(String name) {
-        return new ForNamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, isValidIdentifier(name));
+        return new ForNamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, name);
     }
 
     /**
@@ -82,7 +82,7 @@ public abstract class FieldAccessor implements Implementation {
      * @return A field accessor using the given field name extractor.
      */
     public static OwnerTypeLocatable of(FieldNameExtractor fieldNameExtractor) {
-        return new ForUnnamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, nonNull(fieldNameExtractor));
+        return new ForUnnamedField(Assigner.DEFAULT, Assigner.Typing.STATIC, fieldNameExtractor);
     }
 
     /**
@@ -98,7 +98,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType().asErasure(), methodDescription.getReturnType().asErasure(), typing);
+        StackManipulation stackManipulation = assigner.assign(fieldDescription.getType(), methodDescription.getReturnType(), typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Getter type of " + methodDescription + " is not compatible with " + fieldDescription);
         }
@@ -126,9 +126,7 @@ public abstract class FieldAccessor implements Implementation {
                                                 Implementation.Context implementationContext,
                                                 FieldDescription fieldDescription,
                                                 MethodDescription methodDescription) {
-        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType().asErasure(),
-                fieldDescription.getType().asErasure(),
-                typing);
+        StackManipulation stackManipulation = assigner.assign(methodDescription.getParameters().get(0).getType(), fieldDescription.getType(), typing);
         if (!stackManipulation.isValid()) {
             throw new IllegalStateException("Setter type of " + methodDescription + " is not compatible with " + fieldDescription);
         } else if (fieldDescription.isFinal()) {
@@ -139,7 +137,7 @@ public abstract class FieldAccessor implements Implementation {
                 fieldDescription,
                 methodDescription,
                 new StackManipulation.Compound(
-                        MethodVariableAccess.forType(fieldDescription.getType().asErasure())
+                        MethodVariableAccess.of(fieldDescription.getType().asErasure())
                                 .loadOffset(methodDescription.getParameters().get(0).getOffset()),
                         stackManipulation,
                         FieldAccess.forField(fieldDescription).putter()
@@ -269,7 +267,7 @@ public abstract class FieldAccessor implements Implementation {
 
             @Override
             public FieldDescription locate(String name, boolean staticMethod) {
-                for (GenericTypeDescription currentType : instrumentedType) {
+                for (TypeDefinition currentType : instrumentedType) {
                     FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
                     if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                         return fieldList.getOnly();
@@ -526,16 +524,16 @@ public abstract class FieldAccessor implements Implementation {
          * @param modifier The modifiers for the field.
          * @return A field accessor that defines a field of the given type.
          */
-        AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier);
+        AssignerConfigurable defineAs(Type type, ModifierContributor.ForField... modifier);
 
         /**
          * Defines a field with the given name in the instrumented type.
          *
-         * @param typeDescription The type of the field.
-         * @param modifier        The modifiers for the field.
+         * @param typeDefinition The type of the field.
+         * @param modifier       The modifiers for the field.
          * @return A field accessor that defines a field of the given type.
          */
-        AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier);
+        AssignerConfigurable defineAs(TypeDefinition typeDefinition, ModifierContributor.ForField... modifier);
     }
 
     /**
@@ -585,12 +583,12 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public AssignerConfigurable in(FieldLocator.Factory fieldLocatorFactory) {
-            return new ForUnnamedField(assigner, typing, fieldNameExtractor, nonNull(fieldLocatorFactory));
+            return new ForUnnamedField(assigner, typing, fieldNameExtractor, fieldLocatorFactory);
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(nonNull(type)));
+            return in(new TypeDescription.ForLoadedType(type));
         }
 
         @Override
@@ -602,7 +600,7 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForUnnamedField(nonNull(assigner), typing, fieldNameExtractor, fieldLocatorFactory);
+            return new ForUnnamedField(assigner, typing, fieldNameExtractor, fieldLocatorFactory);
         }
 
         @Override
@@ -612,7 +610,7 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(fieldLocatorFactory.make(implementationTarget.getTypeDescription()));
+            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
         }
 
         @Override
@@ -700,16 +698,16 @@ public abstract class FieldAccessor implements Implementation {
         }
 
         @Override
-        public AssignerConfigurable defineAs(Class<?> type, ModifierContributor.ForField... modifier) {
-            return defineAs(new TypeDescription.ForLoadedType(nonNull(type)), modifier);
+        public AssignerConfigurable defineAs(Type type, ModifierContributor.ForField... modifier) {
+            return defineAs(TypeDefinition.Sort.describe(type), modifier);
         }
 
         @Override
-        public AssignerConfigurable defineAs(TypeDescription typeDescription, ModifierContributor.ForField... modifier) {
+        public AssignerConfigurable defineAs(TypeDefinition typeDefinition, ModifierContributor.ForField... modifier) {
             return new ForNamedField(assigner,
                     typing,
                     fieldName,
-                    PreparationHandler.FieldDefiner.of(fieldName, isActualType(typeDescription), nonNull(modifier)),
+                    PreparationHandler.FieldDefiner.of(fieldName, typeDefinition.asGenericType(), modifier),
                     FieldLocator.ForInstrumentedType.INSTANCE);
         }
 
@@ -719,12 +717,12 @@ public abstract class FieldAccessor implements Implementation {
                     typing,
                     fieldName,
                     preparationHandler,
-                    nonNull(fieldLocatorFactory));
+                    fieldLocatorFactory);
         }
 
         @Override
         public AssignerConfigurable in(Class<?> type) {
-            return in(new TypeDescription.ForLoadedType(nonNull(type)));
+            return in(new TypeDescription.ForLoadedType(type));
         }
 
         @Override
@@ -736,8 +734,8 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner, Assigner.Typing typing) {
-            return new ForNamedField(nonNull(assigner),
-                    nonNull(typing),
+            return new ForNamedField(assigner,
+                    typing,
                     fieldName,
                     preparationHandler,
                     fieldLocatorFactory);
@@ -750,7 +748,7 @@ public abstract class FieldAccessor implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(fieldLocatorFactory.make(implementationTarget.getTypeDescription()));
+            return new Appender(fieldLocatorFactory.make(implementationTarget.getInstrumentedType()));
         }
 
         @Override
@@ -836,7 +834,7 @@ public abstract class FieldAccessor implements Implementation {
                 /**
                  * The type of the field that is to be defined.
                  */
-                private final TypeDescription typeDescription;
+                private final TypeDescription.Generic typeDescription;
 
                 /**
                  * The modifier of the field that is to be defined.
@@ -850,7 +848,7 @@ public abstract class FieldAccessor implements Implementation {
                  * @param typeDescription The type of the field that is to be defined.
                  * @param modifiers       The modifiers of the field that is to be defined.
                  */
-                protected FieldDefiner(String name, TypeDescription typeDescription, int modifiers) {
+                protected FieldDefiner(String name, TypeDescription.Generic typeDescription, int modifiers) {
                     this.name = name;
                     this.typeDescription = typeDescription;
                     this.modifiers = modifiers;
@@ -864,8 +862,8 @@ public abstract class FieldAccessor implements Implementation {
                  * @param contributor     The modifiers of the field that is to be defined.
                  * @return A corresponding preparation handler.
                  */
-                public static PreparationHandler of(String name, TypeDescription typeDescription, ModifierContributor.ForField... contributor) {
-                    return new FieldDefiner(name, typeDescription, resolveModifierContributors(ByteBuddyCommons.FIELD_MODIFIER_MASK, contributor));
+                public static PreparationHandler of(String name, TypeDescription.Generic typeDescription, ModifierContributor.ForField... contributor) {
+                    return new FieldDefiner(name, typeDescription, ModifierContributor.Resolver.of(contributor).resolve());
                 }
 
                 @Override

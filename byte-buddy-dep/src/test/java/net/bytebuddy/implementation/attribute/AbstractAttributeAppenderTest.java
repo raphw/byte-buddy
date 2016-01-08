@@ -2,6 +2,7 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -21,11 +22,14 @@ public abstract class AbstractAttributeAppenderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    protected AnnotationAppender.ValueFilter valueFilter;
+    protected TypeDescription instrumentedType;
+
+    @Mock
+    protected AnnotationValueFilter annotationValueFilter;
 
     @Before
     public void setUp() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
+        when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
     }
 
     protected @interface Qux {

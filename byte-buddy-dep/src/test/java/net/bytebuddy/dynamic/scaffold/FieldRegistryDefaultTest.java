@@ -1,8 +1,11 @@
 package net.bytebuddy.dynamic.scaffold;
 
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.implementation.attribute.AnnotationAppender;
+import net.bytebuddy.dynamic.FieldTransformer;
+import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.attribute.FieldAttributeAppender;
+import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.LatentMatcher;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -10,9 +13,11 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.objectweb.asm.FieldVisitor;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 public class FieldRegistryDefaultTest {
@@ -30,46 +35,72 @@ public class FieldRegistryDefaultTest {
     private FieldAttributeAppender distinct;
 
     @Mock
-    private FieldDescription knownField, unknownField;
+    private FieldDescription knownField, unknownField, instrumentedField;
 
     @Mock
-    private FieldDescription.Token knownFieldToken;
+    private LatentMatcher<FieldDescription> latentMatcher;
 
     @Mock
-    private Object defaultValue;
+    private ElementMatcher<FieldDescription> matcher;
+
+    @Mock
+    private Object defaultValue, otherDefaultValue;
+
+    @Mock
+    private FieldTransformer fieldTransformer;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(distinctFactory.make(instrumentedType)).thenReturn(distinct);
-        when(knownField.asToken()).thenReturn(knownFieldToken);
+        when(latentMatcher.resolve(instrumentedType)).thenReturn((ElementMatcher) matcher);
+        when(matcher.matches(knownField)).thenReturn(true);
+        when(fieldTransformer.transform(instrumentedType, knownField)).thenReturn(instrumentedField);
     }
 
-    @Test
-    public void testNoFieldsRegistered() throws Exception {
-        TypeWriter.FieldPool.Record record = new FieldRegistry.Default()
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldCannotResolveDefaultValue() throws Exception {
+        new FieldRegistry.Default()
                 .compile(instrumentedType)
-                .target(unknownField);
-        assertThat(record.getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
-        assertThat(record.getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(unknownField,
-                AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
+                .target(unknownField)
+                .resolveDefault(defaultValue);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldCannotReceiveAppender() throws Exception {
+        new FieldRegistry.Default()
+                .compile(instrumentedType)
+                .target(unknownField)
+                .getFieldAppender();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testImplicitFieldCannotRApplyPartially() throws Exception {
+        new FieldRegistry.Default()
+                .compile(instrumentedType)
+                .target(unknownField)
+                .apply(mock(FieldVisitor.class), mock(AnnotationValueFilter.Factory.class));
     }
 
     @Test
     public void testKnownFieldRegistered() throws Exception {
         TypeWriter.FieldPool fieldPool = new FieldRegistry.Default()
-                .include(knownFieldToken, distinctFactory, defaultValue)
+                .prepend(latentMatcher, distinctFactory, defaultValue, fieldTransformer)
                 .compile(instrumentedType);
+        assertThat(fieldPool.target(knownField).isImplicit(), is(false));
+        assertThat(fieldPool.target(knownField).getField(), is(instrumentedField));
         assertThat(fieldPool.target(knownField).getFieldAppender(), is(distinct));
-        assertThat(fieldPool.target(knownField).getDefaultValue(), is(defaultValue));
-        assertThat(fieldPool.target(unknownField).getDefaultValue(), is(FieldDescription.NO_DEFAULT_VALUE));
-        assertThat(fieldPool.target(unknownField).getFieldAppender(), is((FieldAttributeAppender) new FieldAttributeAppender.ForField(unknownField,
-                AnnotationAppender.ValueFilter.AppendDefaults.INSTANCE)));
+        assertThat(fieldPool.target(knownField).resolveDefault(otherDefaultValue), is(defaultValue));
+        assertThat(fieldPool.target(unknownField).isImplicit(), is(true));
+        assertThat(fieldPool.target(unknownField).getField(), is(unknownField));
+
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldRegistry.Default.class).apply();
         ObjectPropertyAssertion.of(FieldRegistry.Default.Entry.class).apply();
+        ObjectPropertyAssertion.of(FieldRegistry.Default.Compiled.class).apply();
         ObjectPropertyAssertion.of(FieldRegistry.Default.Compiled.Entry.class).apply();
     }
 }

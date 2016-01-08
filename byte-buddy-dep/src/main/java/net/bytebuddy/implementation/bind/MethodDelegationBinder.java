@@ -892,8 +892,8 @@ public interface MethodDelegationBinder {
          * @return A list of valid method bindings representing a subset of the given target methods.
          */
         private List<MethodBinding> bind(Implementation.Target implementationTarget, MethodDescription source, MethodList<?> targetCandidates) {
-            List<MethodBinding> possibleDelegations = new LinkedList<MethodBinding>();
-            for (MethodDescription targetCandidate : targetCandidates.filter(isVisibleTo(implementationTarget.getTypeDescription()))) {
+            List<MethodBinding> possibleDelegations = new ArrayList<MethodBinding>();
+            for (MethodDescription targetCandidate : targetCandidates.filter(isVisibleTo(implementationTarget.getInstrumentedType()))) {
                 MethodBinding methodBinding = methodDelegationBinder.bind(implementationTarget, source, targetCandidate);
                 if (methodBinding.isValid()) {
                     possibleDelegations.add(methodBinding);

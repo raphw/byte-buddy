@@ -2,6 +2,7 @@ package net.bytebuddy.implementation;
 
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -13,8 +14,9 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.lang.reflect.Type;
+
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.*;
 
 /**
  * This implementation forwards method invocations to another instance. For this, the intercepted method must be
@@ -38,7 +40,7 @@ public class Forwarding implements Implementation {
     /**
      * The type of the field.
      */
-    protected final TypeDescription fieldType;
+    protected final TypeDescription.Generic fieldType;
 
     /**
      * A handler for preparing the instrumented type and the field invocation operation.
@@ -52,7 +54,7 @@ public class Forwarding implements Implementation {
      * @param fieldType          The type of the field.
      * @param preparationHandler A handler for preparing the instrumented type and the field invocation operation.
      */
-    protected Forwarding(String fieldName, TypeDescription fieldType, PreparationHandler preparationHandler) {
+    protected Forwarding(String fieldName, TypeDescription.Generic fieldType, PreparationHandler preparationHandler) {
         this.fieldName = fieldName;
         this.fieldType = fieldType;
         this.preparationHandler = preparationHandler;
@@ -78,8 +80,8 @@ public class Forwarding implements Implementation {
      * @return A corresponding implementation.
      */
     public static Implementation to(Object delegate, String fieldName) {
-        return new Forwarding(isValidIdentifier(fieldName),
-                new TypeDescription.ForLoadedType(nonNull(delegate).getClass()),
+        return new Forwarding(fieldName,
+                new TypeDescription.Generic.OfNonGenericType.ForLoadedType(delegate.getClass()),
                 new PreparationHandler.ForStaticInstance(delegate));
     }
 
@@ -91,8 +93,8 @@ public class Forwarding implements Implementation {
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
      * @return A corresponding implementation.
      */
-    public static Implementation toStaticField(String fieldName, Class<?> fieldType) {
-        return toStaticField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
+    public static Implementation toStaticField(String fieldName, Type fieldType) {
+        return toStaticField(fieldName, TypeDefinition.Sort.describe(fieldType));
     }
 
     /**
@@ -103,10 +105,8 @@ public class Forwarding implements Implementation {
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
      * @return A corresponding implementation.
      */
-    public static Implementation toStaticField(String fieldName, TypeDescription fieldType) {
-        return new Forwarding(isValidIdentifier(fieldName),
-                isActualType(fieldType),
-                PreparationHandler.ForStaticField.INSTANCE);
+    public static Implementation toStaticField(String fieldName, TypeDefinition fieldType) {
+        return new Forwarding(fieldName, fieldType.asGenericType(), PreparationHandler.ForStaticField.INSTANCE);
     }
 
     /**
@@ -117,8 +117,8 @@ public class Forwarding implements Implementation {
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
      * @return A corresponding implementation.
      */
-    public static Implementation toInstanceField(String fieldName, Class<?> fieldType) {
-        return toInstanceField(fieldName, new TypeDescription.ForLoadedType(nonNull(fieldType)));
+    public static Implementation toInstanceField(String fieldName, Type fieldType) {
+        return toInstanceField(fieldName, TypeDefinition.Sort.describe(fieldType));
     }
 
     /**
@@ -129,15 +129,13 @@ public class Forwarding implements Implementation {
      * @param fieldType The type of the field and thus the type of which the delegate is assumed to be of.
      * @return A corresponding implementation.
      */
-    public static Implementation toInstanceField(String fieldName, TypeDescription fieldType) {
-        return new Forwarding(isValidIdentifier(fieldName),
-                nonNull(fieldType),
-                PreparationHandler.ForInstanceField.INSTANCE);
+    public static Implementation toInstanceField(String fieldName, TypeDefinition fieldType) {
+        return new Forwarding(fieldName, fieldType.asGenericType(), PreparationHandler.ForInstanceField.INSTANCE);
     }
 
     @Override
     public ByteCodeAppender appender(Target implementationTarget) {
-        return new Appender(loadDelegate(implementationTarget.getTypeDescription()));
+        return new Appender(loadDelegate(implementationTarget.getInstrumentedType()));
     }
 
     /**
@@ -196,7 +194,7 @@ public class Forwarding implements Implementation {
          * @param fieldType        The type of the field.
          * @return The prepared instrumented type.
          */
-        InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType);
+        InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType);
 
         /**
          * Creates a stack manipulation for loading the field owner onto the operand stack.
@@ -216,7 +214,7 @@ public class Forwarding implements Implementation {
             INSTANCE;
 
             @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
+            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
                 if (instrumentedType.isInterface()) {
                     throw new IllegalStateException("Cannot define instance field '" + fieldName + "' for " + instrumentedType);
                 }
@@ -245,10 +243,8 @@ public class Forwarding implements Implementation {
             INSTANCE;
 
             @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
-                return instrumentedType.withField(new FieldDescription.Token(fieldName,
-                        Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC,
-                        fieldType));
+            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
+                return instrumentedType.withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType));
             }
 
             @Override
@@ -282,7 +278,7 @@ public class Forwarding implements Implementation {
             }
 
             @Override
-            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription fieldType) {
+            public InstrumentedType prepare(InstrumentedType instrumentedType, String fieldName, TypeDescription.Generic fieldType) {
                 return instrumentedType
                         .withField(new FieldDescription.Token(fieldName, Opcodes.ACC_SYNTHETIC | Opcodes.ACC_PUBLIC | Opcodes.ACC_STATIC, fieldType))
                         .withInitializer(new LoadedTypeInitializer.ForStaticField(fieldName, target));
@@ -333,7 +329,7 @@ public class Forwarding implements Implementation {
 
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-            if (!instrumentedMethod.isInvokableOn(fieldType)) {
+            if (!instrumentedMethod.isInvokableOn(fieldType.asErasure())) {
                 throw new IllegalArgumentException("Cannot forward " + instrumentedMethod + " to " + fieldType);
             } else if (instrumentedMethod.isStatic()) {
                 throw new IllegalArgumentException("Cannot forward the static method " + instrumentedMethod);
@@ -341,7 +337,7 @@ public class Forwarding implements Implementation {
             StackManipulation.Size stackSize = new StackManipulation.Compound(
                     delegateLoadingInstruction,
                     MethodVariableAccess.allArgumentsOf(instrumentedMethod),
-                    MethodInvocation.invoke(instrumentedMethod).virtual(fieldType),
+                    MethodInvocation.invoke(instrumentedMethod).virtual(fieldType.asErasure()),
                     MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
             ).apply(methodVisitor, implementationContext);
             return new Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());

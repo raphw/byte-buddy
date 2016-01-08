@@ -49,13 +49,13 @@ public class AnnotationAppenderDefaultTest {
     private AnnotationAppender.Target target;
 
     @Mock
-    private AnnotationAppender.ValueFilter valueFilter;
+    private AnnotationValueFilter valueFilter;
 
     private AnnotationAppender annotationAppender;
 
     @Before
     public void setUp() throws Exception {
-        annotationAppender = new AnnotationAppender.Default(target, valueFilter);
+        annotationAppender = new AnnotationAppender.Default(target);
     }
 
     @Test
@@ -117,7 +117,7 @@ public class AnnotationAppenderDefaultTest {
         when(target.visit(any(String.class), anyBoolean())).thenReturn(annotationVisitor);
         AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
         AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotationDescription);
-        annotationAppender.append(annotationDescription, annotationVisibility);
+        annotationAppender.append(annotationDescription, annotationVisibility, valueFilter);
         switch (annotationVisibility) {
             case RUNTIME:
             case CLASS_FILE:
@@ -153,12 +153,12 @@ public class AnnotationAppenderDefaultTest {
         MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         TypeDescription annotationType = mock(TypeDescription.class);
         when(annotationType.getDeclaredMethods())
-                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(Collections.singletonList(methodDescription)));
+                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(methodDescription));
         AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
         when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
         AnnotationVisitor annotationVisitor = mock(AnnotationVisitor.class);
         when(target.visit(anyString(), anyBoolean())).thenReturn(annotationVisitor);
-        annotationAppender.append(annotationDescription, AnnotationAppender.AnnotationVisibility.RUNTIME);
+        annotationAppender.append(annotationDescription, AnnotationAppender.AnnotationVisibility.RUNTIME, valueFilter);
         verify(valueFilter).isRelevant(annotationDescription, methodDescription);
         verifyNoMoreInteractions(valueFilter);
         verify(annotationVisitor).visitEnd();

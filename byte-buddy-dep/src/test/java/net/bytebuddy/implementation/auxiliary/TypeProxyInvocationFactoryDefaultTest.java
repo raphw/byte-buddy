@@ -29,31 +29,31 @@ public class TypeProxyInvocationFactoryDefaultTest {
     private MethodDescription methodDescription;
 
     @Mock
-    private MethodDescription.Token methodToken;
+    private MethodDescription.SignatureToken token;
 
     @Mock
     private Implementation.SpecialMethodInvocation specialMethodInvocation;
 
     @Before
     public void setUp() throws Exception {
-        when(methodDescription.asToken()).thenReturn(methodToken);
+        when(methodDescription.asSignatureToken()).thenReturn(token);
     }
 
     @Test
     public void testSuperMethod() throws Exception {
-        when(implementationTarget.invokeDominant(methodToken)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDominant(token)).thenReturn(specialMethodInvocation);
         assertThat(TypeProxy.InvocationFactory.Default.SUPER_METHOD.invoke(implementationTarget, typeDescription, methodDescription),
                 is(specialMethodInvocation));
-        verify(implementationTarget).invokeDominant(methodToken);
+        verify(implementationTarget).invokeDominant(token);
         verifyNoMoreInteractions(implementationTarget);
     }
 
     @Test
     public void testDefaultMethod() throws Exception {
-        when(implementationTarget.invokeDefault(typeDescription, methodToken)).thenReturn(specialMethodInvocation);
+        when(implementationTarget.invokeDefault(typeDescription, token)).thenReturn(specialMethodInvocation);
         assertThat(TypeProxy.InvocationFactory.Default.DEFAULT_METHOD.invoke(implementationTarget, typeDescription, methodDescription),
                 is(specialMethodInvocation));
-        verify(implementationTarget).invokeDefault(typeDescription, methodToken);
+        verify(implementationTarget).invokeDefault(typeDescription, token);
         verifyNoMoreInteractions(implementationTarget);
     }
 }

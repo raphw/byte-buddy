@@ -1,6 +1,7 @@
 package net.bytebuddy.description.annotation;
 
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.matcher.FilterableList;
 
@@ -15,7 +16,6 @@ import java.util.Set;
  * Defines a list of annotation instances.
  */
 public interface AnnotationList extends FilterableList<AnnotationDescription, AnnotationList> {
-
 
     /**
      * Checks if this list contains an annotation of the given type.
@@ -58,6 +58,13 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      * @return A of annotations only with elements
      */
     AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher);
+
+    /**
+     * Returns a list of the annotation types of this list.
+     *
+     * @return A list of the annotation types of this list.
+     */
+    TypeList asTypeList();
 
     /**
      * An abstract base implementation of an annotation list.
@@ -114,6 +121,15 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
                 }
             }
             return wrap(annotationDescriptions);
+        }
+
+        @Override
+        public TypeList asTypeList() {
+            List<TypeDescription> annotationTypes = new ArrayList<TypeDescription>(size());
+            for (AnnotationDescription annotation : this) {
+                annotationTypes.add(annotation.getAnnotationType());
+            }
+            return new TypeList.Explicit(annotationTypes);
         }
 
         @Override
@@ -184,6 +200,15 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          * The list of represented annotation descriptions.
          */
         private final List<? extends AnnotationDescription> annotationDescriptions;
+
+        /**
+         * Creates a new list of annotation descriptions.
+         *
+         * @param annotationDescription The list of represented annotation descriptions.
+         */
+        public Explicit(AnnotationDescription... annotationDescription) {
+            this(Arrays.asList(annotationDescription));
+        }
 
         /**
          * Creates a new list of annotation descriptions.
@@ -261,6 +286,11 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         @Override
         public AnnotationList visibility(ElementMatcher<? super RetentionPolicy> matcher) {
             return this;
+        }
+
+        @Override
+        public TypeList asTypeList() {
+            return new TypeList.Empty();
         }
     }
 }

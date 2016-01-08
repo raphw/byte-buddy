@@ -10,6 +10,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodDelegation;
@@ -66,6 +67,11 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     protected DynamicType.Builder<?> create(Class<?> type) {
         return new ByteBuddy().subclass(type);
+    }
+
+    @Override
+    protected DynamicType.Builder<?> createPlainWithoutValidation() {
+        return new ByteBuddy().with(TypeValidation.DISABLED).subclass(Object.class);
     }
 
     @Test
@@ -126,7 +132,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     public void testInterfaceDefinition() throws Exception {
         Class<? extends SimpleInterface> type = new ByteBuddy()
                 .makeInterface(SimpleInterface.class)
-                .defineMethod(FOO, void.class, Collections.<Class<?>>singletonList(Void.class), Visibility.PUBLIC)
+                .defineMethod(FOO, void.class, Visibility.PUBLIC).withParameters(Void.class)
                 .withoutCode()
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
@@ -144,12 +150,12 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     public void testAnnotationDefinition() throws Exception {
         Class<? extends Annotation> type = new ByteBuddy()
                 .makeAnnotation()
-                .defineMethod(FOO, int.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
+                .defineMethod(FOO, int.class, Visibility.PUBLIC)
                 .withoutCode()
-                .defineMethod(BAR, String.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
-                .withDefaultValue(FOO)
-                .defineMethod(QUX, SimpleEnum.class, Collections.<Class<?>>emptyList(), Visibility.PUBLIC)
-                .withDefaultValue(SimpleEnum.FIRST, SimpleEnum.class)
+                .defineMethod(BAR, String.class, Visibility.PUBLIC)
+                .defaultValue(FOO)
+                .defineMethod(QUX, SimpleEnum.class, Visibility.PUBLIC)
+                .defaultValue(SimpleEnum.FIRST, SimpleEnum.class)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

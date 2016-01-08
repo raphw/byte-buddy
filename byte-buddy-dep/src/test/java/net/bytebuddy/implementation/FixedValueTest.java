@@ -4,6 +4,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.test.utility.CallTraceable;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.JavaInstance;
 import net.bytebuddy.utility.JavaType;
 import org.hamcrest.CoreMatchers;
@@ -17,7 +18,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class FixedValueTest extends AbstractImplementationTest {
 
-    private static final String BAR = "bar";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -41,7 +42,7 @@ public class FixedValueTest extends AbstractImplementationTest {
 
     @Test
     public void testTypeDescriptionConstantPool() throws Exception {
-        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(new TypeDescription.ForLoadedType(Object.class))).getLoaded();
+        Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(TypeDescription.OBJECT)).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
         assertThat(qux.newInstance().bar(), is((Object) Object.class));
     }
@@ -95,6 +96,59 @@ public class FixedValueTest extends AbstractImplementationTest {
         assertType(implement(Foo.class, FixedValue.value(bar)));
     }
 
+    @Test
+    public void testNullValue() throws Exception {
+        Class<?> type = implement(Foo.class, FixedValue.nullValue()).getLoaded();
+        assertThat(type.getDeclaredFields().length, is(0));
+        assertThat(type.getDeclaredMethods().length, is(1));
+        assertThat(type.getDeclaredMethod(BAR).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testOriginType() throws Exception {
+        Class<?> type = implement(Baz.class, FixedValue.originType()).getLoaded();
+        assertThat(type.getDeclaredFields().length, is(0));
+        assertThat(type.getDeclaredMethods().length, is(1));
+        assertThat(type.getDeclaredMethod(BAR).invoke(type.newInstance()), is((Object) Baz.class));
+    }
+
+    @Test
+    public void testConstantPoolValue() throws Exception {
+        assertThat(FixedValue.value(FOO).hashCode(), is(FixedValue.value(FOO).hashCode()));
+        assertThat(FixedValue.value(FOO), is(FixedValue.value(FOO)));
+        assertThat(FixedValue.value(FOO).hashCode(), not(FixedValue.value(BAR).hashCode()));
+        assertThat(FixedValue.value(FOO), not(FixedValue.value(BAR)));
+        assertThat(FixedValue.value(FOO).hashCode(), not(FixedValue.reference(FOO).hashCode()));
+        assertThat(FixedValue.value(FOO), not(FixedValue.reference(FOO)));
+    }
+
+    @Test
+    public void testReferenceValue() throws Exception {
+        assertThat(FixedValue.reference(FOO).hashCode(), is(FixedValue.reference(FOO).hashCode()));
+        assertThat(FixedValue.reference(FOO), is(FixedValue.reference(FOO)));
+        assertThat(FixedValue.reference(FOO).hashCode(), not(FixedValue.value(FOO).hashCode()));
+        assertThat(FixedValue.reference(FOO), not(FixedValue.value(FOO)));
+        assertThat(FixedValue.reference(FOO).hashCode(), not(FixedValue.reference(BAR).hashCode()));
+        assertThat(FixedValue.reference(FOO), not(FixedValue.reference(BAR)));
+    }
+
+    @Test
+    public void testReferenceValueWithExplicitFieldName() throws Exception {
+        assertThat(FixedValue.reference(FOO, QUX).hashCode(), is(FixedValue.reference(FOO, QUX).hashCode()));
+        assertThat(FixedValue.reference(FOO, QUX), is(FixedValue.reference(FOO, QUX)));
+        assertThat(FixedValue.reference(FOO, QUX).hashCode(), not(FixedValue.reference(BAR, QUX).hashCode()));
+        assertThat(FixedValue.reference(FOO, QUX), not(FixedValue.reference(BAR, QUX)));
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(FixedValue.ForPoolValue.class).skipSynthetic().apply();
+        ObjectPropertyAssertion.of(FixedValue.ForStaticField.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForOriginType.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForOriginType.Appender.class).apply();
+        ObjectPropertyAssertion.of(FixedValue.ForNullValue.class).apply();
+    }
+
     private void assertType(DynamicType.Loaded<Foo> loaded) throws Exception {
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
@@ -122,6 +176,13 @@ public class FixedValueTest extends AbstractImplementationTest {
 
         public Object bar() {
             register(BAR);
+            return null;
+        }
+    }
+
+    public static class Baz {
+
+        public Class<?> bar() {
             return null;
         }
     }

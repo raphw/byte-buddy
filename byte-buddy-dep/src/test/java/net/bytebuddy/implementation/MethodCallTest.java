@@ -63,7 +63,7 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Before
     public void setUp() throws Exception {
-        when(nonAssigner.assign(Mockito.any(TypeDescription.class), Mockito.any(TypeDescription.class), Mockito.any(Assigner.Typing.class)))
+        when(nonAssigner.assign(Mockito.any(TypeDescription.Generic.class), Mockito.any(TypeDescription.Generic.class), Mockito.any(Assigner.Typing.class)))
                 .thenReturn(StackManipulation.Illegal.INSTANCE);
     }
 
@@ -389,7 +389,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     public void testUnloadedType() throws Exception {
         DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
                 MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
-                        .with(new TypeDescription.ForLoadedType(Object.class), new TypeDescription.ForLoadedType(String.class)),
+                        .with(TypeDescription.OBJECT, TypeDescription.STRING),
                 SimpleMethod.class.getClassLoader(),
                 named(FOO));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));

@@ -22,8 +22,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static net.bytebuddy.utility.ByteBuddyCommons.isValidIdentifier;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
 
 /**
  * An adapter for adapting an {@link java.lang.reflect.InvocationHandler}. The adapter allows the invocation handler
@@ -49,7 +47,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
     /**
      * A type description of the {@link InvocationHandler}.
      */
-    private static final TypeDescription INVOCATION_HANDLER_TYPE = new TypeDescription.ForLoadedType(InvocationHandler.class);
+    private static final TypeDescription.Generic INVOCATION_HANDLER_TYPE = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(InvocationHandler.class);
 
     /**
      * The name of the field for storing an invocation handler.
@@ -102,7 +100,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to the given invocation handler.
      */
     public static InvocationHandlerAdapter of(InvocationHandler invocationHandler, String fieldName) {
-        return new ForStaticDelegation(isValidIdentifier(fieldName), NO_CACHING, Assigner.DEFAULT, nonNull(invocationHandler));
+        return new ForStaticDelegation(fieldName, NO_CACHING, Assigner.DEFAULT, invocationHandler);
     }
 
     /**
@@ -115,7 +113,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return An implementation that delegates all method interceptions to an instance field of the given name.
      */
     public static InvocationHandlerAdapter toInstanceField(String fieldName) {
-        return new ForInstanceDelegation(isValidIdentifier(fieldName), NO_CACHING, Assigner.DEFAULT);
+        return new ForInstanceDelegation(fieldName, NO_CACHING, Assigner.DEFAULT);
     }
 
     /**
@@ -125,14 +123,13 @@ public abstract class InvocationHandlerAdapter implements Implementation {
      * @return A list of stack manipulation that loads all arguments of an instrumented method.
      */
     private List<StackManipulation> argumentValuesOf(MethodDescription instrumentedMethod) {
-        TypeList parameterTypes = instrumentedMethod.getParameters().asTypeList().asErasures();
+        TypeList.Generic parameterTypes = instrumentedMethod.getParameters().asTypeList();
         List<StackManipulation> instruction = new ArrayList<StackManipulation>(parameterTypes.size());
-        TypeDescription objectType = TypeDescription.OBJECT;
         int currentIndex = 1;
-        for (TypeDescription parameterType : parameterTypes) {
+        for (TypeDescription.Generic parameterType : parameterTypes) {
             instruction.add(new StackManipulation.Compound(
-                    MethodVariableAccess.forType(parameterType).loadOffset(currentIndex),
-                    assigner.assign(parameterType, objectType, Assigner.Typing.STATIC)));
+                    MethodVariableAccess.of(parameterType).loadOffset(currentIndex),
+                    assigner.assign(parameterType, TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
             currentIndex += parameterType.getStackSize().getSize();
         }
         return instruction;
@@ -173,13 +170,13 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                 preparingManipulation,
                 FieldAccess.forField(instrumentedType.getDeclaredFields()
                         .filter((named(fieldName))).getOnly()).getter(),
-                MethodVariableAccess.forType(TypeDescription.OBJECT).loadOffset(0),
+                MethodVariableAccess.REFERENCE.loadOffset(0),
                 cacheMethods
                         ? MethodConstant.forMethod(instrumentedMethod.asDefined()).cached()
                         : MethodConstant.forMethod(instrumentedMethod.asDefined()),
-                ArrayFactory.forType(TypeDescription.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
+                ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(argumentValuesOf(instrumentedMethod)),
                 MethodInvocation.invoke(INVOCATION_HANDLER_TYPE.getDeclaredMethods().getOnly()),
-                assigner.assign(TypeDescription.OBJECT, instrumentedMethod.getReturnType().asErasure(), Assigner.Typing.DYNAMIC),
+                assigner.assign(TypeDescription.Generic.OBJECT, instrumentedMethod.getReturnType(), Assigner.Typing.DYNAMIC),
                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
         ).apply(methodVisitor, implementationContext);
         return new ByteCodeAppender.Size(stackSize.getMaximalSize(), instrumentedMethod.getStackSize());
@@ -251,7 +248,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
-            return new ForStaticDelegation(fieldName, cacheMethods, nonNull(assigner), invocationHandler);
+            return new ForStaticDelegation(fieldName, cacheMethods, assigner, invocationHandler);
         }
 
         @Override
@@ -263,7 +260,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         @Override
@@ -372,7 +369,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public Implementation withAssigner(Assigner assigner) {
-            return new ForInstanceDelegation(fieldName, cacheMethods, nonNull(assigner));
+            return new ForInstanceDelegation(fieldName, cacheMethods, assigner);
         }
 
         @Override
@@ -382,7 +379,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getTypeDescription());
+            return new Appender(implementationTarget.getInstrumentedType());
         }
 
         @Override
@@ -418,7 +415,7 @@ public abstract class InvocationHandlerAdapter implements Implementation {
                         implementationContext,
                         instrumentedMethod,
                         instrumentedType,
-                        MethodVariableAccess.forType(instrumentedType).loadOffset(0));
+                        MethodVariableAccess.of(instrumentedType).loadOffset(0));
             }
 
             @Override

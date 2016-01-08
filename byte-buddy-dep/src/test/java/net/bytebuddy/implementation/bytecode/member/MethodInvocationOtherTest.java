@@ -41,7 +41,7 @@ public class MethodInvocationOtherTest {
         ObjectPropertyAssertion.of(MethodInvocation.Invocation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
             @Override
             public void apply(MethodDescription mock) {
-                when(mock.asToken()).thenReturn(mock(MethodDescription.Token.class));
+                when(mock.asSignatureToken()).thenReturn(mock(MethodDescription.SignatureToken.class));
                 TypeDescription declaringType = mock(TypeDescription.class);
                 when(declaringType.asErasure()).thenReturn(declaringType);
                 when(mock.getDeclaringType()).thenReturn(declaringType);

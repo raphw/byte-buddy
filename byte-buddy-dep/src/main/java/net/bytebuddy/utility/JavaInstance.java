@@ -23,9 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.utility.ByteBuddyCommons.isActualType;
-import static net.bytebuddy.utility.ByteBuddyCommons.nonNull;
-
 /**
  * Returns a Java instance of an object that has a special meaning to the Java virtual machine and that is not
  * available to Java in versions 6.
@@ -108,7 +105,7 @@ public interface JavaInstance {
          */
         public static MethodType of(Object methodType) {
             if (!JavaType.METHOD_TYPE.getTypeStub().isInstance(methodType)) {
-                throw new IllegalArgumentException("Excpected method type object: " + methodType);
+                throw new IllegalArgumentException("Expected method type object: " + methodType);
             }
             return of(DISPATCHER.returnType(methodType), DISPATCHER.parameterArray(methodType));
         }
@@ -121,7 +118,7 @@ public interface JavaInstance {
          * @return A method type of the given return type and parameter types.
          */
         public static MethodType of(Class<?> returnType, Class<?>... parameterType) {
-            return of(new TypeDescription.ForLoadedType(nonNull(returnType)), new TypeList.ForLoadedType(nonNull(parameterType)));
+            return of(new TypeDescription.ForLoadedType(returnType), new TypeList.ForLoadedTypes(parameterType));
         }
 
         /**
@@ -132,7 +129,7 @@ public interface JavaInstance {
          * @return A method type of the given return type and parameter types.
          */
         public static MethodType of(TypeDescription returnType, List<? extends TypeDescription> parameterTypes) {
-            return new MethodType(nonNull(returnType), isActualType(parameterTypes));
+            return new MethodType(returnType, parameterTypes);
         }
 
         /**
@@ -142,7 +139,7 @@ public interface JavaInstance {
          * @return The method type of the given method.
          */
         public static MethodType of(Method method) {
-            return of(new MethodDescription.ForLoadedMethod(nonNull(method)));
+            return of(new MethodDescription.ForLoadedMethod(method));
         }
 
         /**
@@ -152,7 +149,7 @@ public interface JavaInstance {
          * @return The method type of the given constructor.
          */
         public static MethodType of(Constructor<?> constructor) {
-            return of(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
+            return of(new MethodDescription.ForLoadedConstructor(constructor));
         }
 
         /**
@@ -172,7 +169,7 @@ public interface JavaInstance {
          * @return The type of a setter for the given field.
          */
         public static MethodType ofSetter(Field field) {
-            return ofSetter(new FieldDescription.ForLoadedField(nonNull(field)));
+            return ofSetter(new FieldDescription.ForLoadedField(field));
         }
 
         /**
@@ -192,7 +189,7 @@ public interface JavaInstance {
          * @return The type of a getter for the given field.
          */
         public static MethodType ofGetter(Field field) {
-            return ofGetter(new FieldDescription.ForLoadedField(nonNull(field)));
+            return ofGetter(new FieldDescription.ForLoadedField(field));
         }
 
         /**
@@ -222,7 +219,7 @@ public interface JavaInstance {
          * @return A method type for the given constant type.
          */
         public static MethodType ofConstant(Class<?> type) {
-            return ofConstant(new TypeDescription.ForLoadedType(nonNull(type)));
+            return ofConstant(new TypeDescription.ForLoadedType(type));
         }
 
         /**
@@ -573,7 +570,7 @@ public interface JavaInstance {
                     new TypeDescription.ForLoadedType(dispatcher.getDeclaringClass(methodHandleInfo)),
                     dispatcher.getName(methodHandleInfo),
                     new TypeDescription.ForLoadedType(dispatcher.returnType(methodType)),
-                    new TypeList.ForLoadedType(dispatcher.parameterArray(methodType)));
+                    new TypeList.ForLoadedTypes(dispatcher.parameterArray(methodType)));
         }
 
         /**
@@ -583,7 +580,7 @@ public interface JavaInstance {
          * @return A method handle representing the given method.
          */
         public static MethodHandle of(Method method) {
-            return of(new MethodDescription.ForLoadedMethod(nonNull(method)));
+            return of(new MethodDescription.ForLoadedMethod(method));
         }
 
         /**
@@ -593,7 +590,7 @@ public interface JavaInstance {
          * @return A method handle representing the given constructor.
          */
         public static MethodHandle of(Constructor<?> constructor) {
-            return of(new MethodDescription.ForLoadedConstructor(nonNull(constructor)));
+            return of(new MethodDescription.ForLoadedConstructor(constructor));
         }
 
         /**
@@ -618,7 +615,7 @@ public interface JavaInstance {
          * @return A method handle representing the given method as special method invocation.
          */
         public static MethodHandle ofSpecial(Method method, Class<?> type) {
-            return ofSpecial(new MethodDescription.ForLoadedMethod(nonNull(method)), new TypeDescription.ForLoadedType(nonNull(type)));
+            return ofSpecial(new MethodDescription.ForLoadedMethod(method), new TypeDescription.ForLoadedType(type));
         }
 
         /**

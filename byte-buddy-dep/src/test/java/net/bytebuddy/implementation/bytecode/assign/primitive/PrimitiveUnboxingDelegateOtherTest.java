@@ -8,12 +8,12 @@ public class PrimitiveUnboxingDelegateOtherTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalSourceTypeThrowsException() throws Exception {
-        PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.ForLoadedType(int.class));
+        PrimitiveUnboxingDelegate.forReferenceType(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testVoidIllegal() throws Exception {
-        PrimitiveUnboxingDelegate.forPrimitive(new TypeDescription.ForLoadedType(void.class));
+        PrimitiveUnboxingDelegate.forPrimitive(TypeDescription.Generic.VOID);
     }
 
     @Test
