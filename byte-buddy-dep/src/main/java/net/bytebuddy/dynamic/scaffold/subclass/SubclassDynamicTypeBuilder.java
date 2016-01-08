@@ -38,6 +38,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
      */
@@ -48,6 +49,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                       AnnotationRetention annotationRetention,
                                       Implementation.Context.Factory implementationContextFactory,
                                       MethodGraph.Compiler methodGraphCompiler,
+                                      TypeValidation typeValidation,
                                       LatentMatcher<? super MethodDescription> ignoredMethods,
                                       ConstructorStrategy constructorStrategy) {
         this(instrumentedType,
@@ -61,6 +63,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 constructorStrategy);
     }
@@ -79,6 +82,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param constructorStrategy          The constructor strategy to apply onto the instrumented type.
      */
@@ -93,6 +97,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                          AnnotationRetention annotationRetention,
                                          Implementation.Context.Factory implementationContextFactory,
                                          MethodGraph.Compiler methodGraphCompiler,
+                                         TypeValidation typeValidation,
                                          LatentMatcher<? super MethodDescription> ignoredMethods,
                                          ConstructorStrategy constructorStrategy) {
         super(instrumentedType,
@@ -106,6 +111,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
         this.constructorStrategy = constructorStrategy;
     }
@@ -122,6 +128,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                                                  AnnotationRetention annotationRetention,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
+                                                 TypeValidation typeValidation,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new SubclassDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
@@ -134,6 +141,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 constructorStrategy);
     }
@@ -142,7 +150,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Compiled compiledMethodRegistry = constructorStrategy
                 .inject(methodRegistry)
-                .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, new InstrumentableMatcher(ignoredMethods))
+                .prepare(applyConstructorStrategy(instrumentedType), methodGraphCompiler, typeValidation, new InstrumentableMatcher(ignoredMethods))
                 .compile(SubclassImplementationTarget.Factory.SUPER_TYPE);
         return TypeWriter.Default.<T>forCreation(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
@@ -152,7 +160,8 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 annotationValueFilterFactory,
                 annotationRetention,
                 auxiliaryTypeNamingStrategy,
-                implementationContextFactory).make();
+                implementationContextFactory,
+                typeValidation).make();
     }
 
     /**
@@ -200,6 +209,7 @@ public class SubclassDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractB
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", implementationContextFactory=" + implementationContextFactory +
                 ", methodGraphCompiler=" + methodGraphCompiler +
+                ", typeValidation=" + typeValidation +
                 ", ignoredMethods=" + ignoredMethods +
                 ", constructorStrategy=" + constructorStrategy +
                 '}';

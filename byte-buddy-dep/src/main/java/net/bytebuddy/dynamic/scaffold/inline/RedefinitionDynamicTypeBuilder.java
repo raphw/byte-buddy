@@ -41,6 +41,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param annotationValueFilterFactory The annotation value filter factory to use.
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
      * @param methodGraphCompiler          The method graph compiler to use.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param originalType                 The original type that is being redefined or rebased.
@@ -53,6 +54,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                           AnnotationRetention annotationRetention,
                                           Implementation.Context.Factory implementationContextFactory,
                                           MethodGraph.Compiler methodGraphCompiler,
+                                          TypeValidation typeValidation,
                                           LatentMatcher<? super MethodDescription> ignoredMethods,
                                           TypeDescription originalType,
                                           ClassFileLocator classFileLocator) {
@@ -67,6 +69,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 originalType,
                 classFileLocator);
@@ -86,6 +89,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      * @param originalType                 The original type that is being redefined or rebased.
      * @param classFileLocator             The class file locator for locating the original type's class file.
@@ -101,6 +105,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                              AnnotationRetention annotationRetention,
                                              Implementation.Context.Factory implementationContextFactory,
                                              MethodGraph.Compiler methodGraphCompiler,
+                                             TypeValidation typeValidation,
                                              LatentMatcher<? super MethodDescription> ignoredMethods,
                                              TypeDescription originalType,
                                              ClassFileLocator classFileLocator) {
@@ -115,6 +120,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
         this.originalType = originalType;
         this.classFileLocator = classFileLocator;
@@ -132,6 +138,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                                                  AnnotationRetention annotationRetention,
                                                  Implementation.Context.Factory implementationContextFactory,
                                                  MethodGraph.Compiler methodGraphCompiler,
+                                                 TypeValidation typeValidation,
                                                  LatentMatcher<? super MethodDescription> ignoredMethods) {
         return new RedefinitionDynamicTypeBuilder<T>(instrumentedType,
                 fieldRegistry,
@@ -144,6 +151,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 originalType,
                 classFileLocator);
@@ -153,6 +161,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
     public DynamicType.Unloaded<T> make() {
         MethodRegistry.Compiled compiledMethodRegistry = methodRegistry.prepare(instrumentedType,
                 methodGraphCompiler,
+                typeValidation,
                 InliningImplementationMatcher.of(ignoredMethods, originalType)).compile(SubclassImplementationTarget.Factory.LEVEL_TYPE);
         return TypeWriter.Default.<T>forRedefinition(compiledMethodRegistry,
                 fieldRegistry.compile(compiledMethodRegistry.getInstrumentedType()),
@@ -163,6 +172,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 annotationRetention,
                 auxiliaryTypeNamingStrategy,
                 implementationContextFactory,
+                typeValidation,
                 originalType,
                 classFileLocator).make();
     }
@@ -199,6 +209,7 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", implementationContextFactory=" + implementationContextFactory +
                 ", methodGraphCompiler=" + methodGraphCompiler +
+                ", typeValidation=" + typeValidation +
                 ", ignoredMethods=" + ignoredMethods +
                 ", originalType=" + originalType +
                 ", classFileLocator=" + classFileLocator +

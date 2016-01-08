@@ -15,10 +15,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.dynamic.scaffold.FieldRegistry;
-import net.bytebuddy.dynamic.scaffold.InstrumentedType;
-import net.bytebuddy.dynamic.scaffold.MethodGraph;
-import net.bytebuddy.dynamic.scaffold.MethodRegistry;
+import net.bytebuddy.dynamic.scaffold.*;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.*;
@@ -2371,6 +2368,11 @@ public interface DynamicType {
                 protected final MethodGraph.Compiler methodGraphCompiler;
 
                 /**
+                 * Determines if a type should be explicitly validated.
+                 */
+                protected final TypeValidation typeValidation;
+
+                /**
                  * A matcher for identifying methods that should be excluded from instrumentation.
                  */
                 protected final LatentMatcher<? super MethodDescription> ignoredMethods;
@@ -2389,6 +2391,7 @@ public interface DynamicType {
                  * @param annotationRetention          The annotation retention to apply.
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
+                 * @param typeValidation               Determines if a type should be explicitly validated.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  */
                 protected Adapter(InstrumentedType.WithFlexibleName instrumentedType,
@@ -2402,6 +2405,7 @@ public interface DynamicType {
                                   AnnotationRetention annotationRetention,
                                   Implementation.Context.Factory implementationContextFactory,
                                   MethodGraph.Compiler methodGraphCompiler,
+                                  TypeValidation typeValidation,
                                   LatentMatcher<? super MethodDescription> ignoredMethods) {
                     this.instrumentedType = instrumentedType;
                     this.fieldRegistry = fieldRegistry;
@@ -2414,6 +2418,7 @@ public interface DynamicType {
                     this.annotationRetention = annotationRetention;
                     this.implementationContextFactory = implementationContextFactory;
                     this.methodGraphCompiler = methodGraphCompiler;
+                    this.typeValidation = typeValidation;
                     this.ignoredMethods = ignoredMethods;
                 }
 
@@ -2461,6 +2466,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             new LatentMatcher.Compound(this.ignoredMethods, ignoredMethods));
                 }
 
@@ -2477,6 +2483,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2493,6 +2500,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2509,6 +2517,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2525,6 +2534,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2541,6 +2551,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2557,6 +2568,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2573,6 +2585,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2589,6 +2602,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2605,6 +2619,7 @@ public interface DynamicType {
                             annotationRetention,
                             implementationContextFactory,
                             methodGraphCompiler,
+                            typeValidation,
                             ignoredMethods);
                 }
 
@@ -2622,6 +2637,7 @@ public interface DynamicType {
                  * @param annotationRetention          The annotation retention to apply.
                  * @param implementationContextFactory The implementation context factory to apply.
                  * @param methodGraphCompiler          The method graph compiler to use.
+                 * @param typeValidation               The type validation state.
                  * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
                  * @return A type builder that represents the supplied arguments.
                  */
@@ -2636,6 +2652,7 @@ public interface DynamicType {
                                                           AnnotationRetention annotationRetention,
                                                           Implementation.Context.Factory implementationContextFactory,
                                                           MethodGraph.Compiler methodGraphCompiler,
+                                                          TypeValidation typeValidation,
                                                           LatentMatcher<? super MethodDescription> ignoredMethods);
 
                 @Override
@@ -2654,6 +2671,7 @@ public interface DynamicType {
                             && auxiliaryTypeNamingStrategy.equals(adapter.auxiliaryTypeNamingStrategy)
                             && implementationContextFactory.equals(adapter.implementationContextFactory)
                             && methodGraphCompiler.equals(adapter.methodGraphCompiler)
+                            && typeValidation.equals(adapter.typeValidation)
                             && ignoredMethods.equals(adapter.ignoredMethods);
                 }
 
@@ -2670,6 +2688,7 @@ public interface DynamicType {
                     result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
                     result = 31 * result + implementationContextFactory.hashCode();
                     result = 31 * result + methodGraphCompiler.hashCode();
+                    result = 31 * result + typeValidation.hashCode();
                     result = 31 * result + ignoredMethods.hashCode();
                     return result;
                 }
@@ -2730,6 +2749,7 @@ public interface DynamicType {
                                 annotationRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
+                                typeValidation,
                                 ignoredMethods);
                     }
 
@@ -2831,6 +2851,7 @@ public interface DynamicType {
                                 annotationRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
+                                typeValidation,
                                 ignoredMethods);
                     }
 
@@ -3214,6 +3235,7 @@ public interface DynamicType {
                                     annotationRetention,
                                     implementationContextFactory,
                                     methodGraphCompiler,
+                                    typeValidation,
                                     ignoredMethods);
                         }
 
@@ -3382,6 +3404,7 @@ public interface DynamicType {
                                     annotationRetention,
                                     implementationContextFactory,
                                     methodGraphCompiler,
+                                    typeValidation,
                                     ignoredMethods);
                         }
 
@@ -3451,6 +3474,7 @@ public interface DynamicType {
                                 annotationRetention,
                                 implementationContextFactory,
                                 methodGraphCompiler,
+                                typeValidation,
                                 ignoredMethods);
                     }
 

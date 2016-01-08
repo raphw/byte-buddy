@@ -102,6 +102,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
 
     protected abstract DynamicType.Builder<?> createPlain();
 
+    protected abstract DynamicType.Builder<?> createPlainWithoutValidation();
+
     @Before
     public void setUp() throws Exception {
         list = Holder.class.getDeclaredField("list").getGenericType();
@@ -469,6 +471,14 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getName(), is(BAR));
         assertThat(TypeDefinition.Sort.describe(type).getDeclaredMethods().filter(named(QUX)).getOnly().getParameters().getOnly().getModifiers(),
                 is(ProvisioningState.MANDATED.getMask()));
+    }
+
+    @Test(expected = ClassFormatError.class)
+    public void testUnvalidated() throws Exception {
+        createPlainWithoutValidation()
+                .defineField(FOO, void.class)
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER);
     }
 
     @Retention(RetentionPolicy.RUNTIME)

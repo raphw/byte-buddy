@@ -1364,6 +1364,11 @@ public interface TypeWriter<T> {
         protected final Implementation.Context.Factory implementationContextFactory;
 
         /**
+         * Determines if a type should be explicitly validated.
+         */
+        protected final TypeValidation typeValidation;
+
+        /**
          * Creates a new default type writer.
          *
          * @param instrumentedType             The instrumented type to be created.
@@ -1380,6 +1385,7 @@ public interface TypeWriter<T> {
          * @param annotationRetention          The annotation retention to apply.
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
+         * @param typeValidation               Determines if a type should be explicitly validated.
          */
         protected Default(TypeDescription instrumentedType,
                           FieldPool fieldPool,
@@ -1394,7 +1400,8 @@ public interface TypeWriter<T> {
                           AnnotationValueFilter.Factory annotationValueFilterFactory,
                           AnnotationRetention annotationRetention,
                           AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                          Implementation.Context.Factory implementationContextFactory) {
+                          Implementation.Context.Factory implementationContextFactory,
+                          TypeValidation typeValidation) {
             this.instrumentedType = instrumentedType;
             this.fieldPool = fieldPool;
             this.methodPool = methodPool;
@@ -1409,6 +1416,7 @@ public interface TypeWriter<T> {
             this.annotationValueFilterFactory = annotationValueFilterFactory;
             this.annotationRetention = annotationRetention;
             this.implementationContextFactory = implementationContextFactory;
+            this.typeValidation = typeValidation;
         }
 
         /**
@@ -1423,6 +1431,7 @@ public interface TypeWriter<T> {
          * @param annotationRetention          The annotation retention to apply.
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
+         * @param typeValidation               Determines if a type should be explicitly validated.
          * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
          * @return A suitable type writer.
          */
@@ -1434,7 +1443,8 @@ public interface TypeWriter<T> {
                                                     AnnotationValueFilter.Factory annotationValueFilterFactory,
                                                     AnnotationRetention annotationRetention,
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                                    Implementation.Context.Factory implementationContextFactory) {
+                                                    Implementation.Context.Factory implementationContextFactory,
+                                                    TypeValidation typeValidation) {
             return new ForCreation<U>(methodRegistry.getInstrumentedType(),
                     fieldPool,
                     methodRegistry,
@@ -1448,7 +1458,8 @@ public interface TypeWriter<T> {
                     annotationValueFilterFactory,
                     annotationRetention,
                     auxiliaryTypeNamingStrategy,
-                    implementationContextFactory);
+                    implementationContextFactory,
+                    typeValidation);
         }
 
         /**
@@ -1463,6 +1474,7 @@ public interface TypeWriter<T> {
          * @param annotationRetention          The annotation retention to apply.
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
+         * @param typeValidation               Determines if a type should be explicitly validated.
          * @param originalType                 The original type that is being redefined or rebased.
          * @param classFileLocator             The class file locator for locating the original type's class file.
          * @param <U>                          A loaded type that the instrumented type guarantees to subclass.
@@ -1477,6 +1489,7 @@ public interface TypeWriter<T> {
                                                         AnnotationRetention annotationRetention,
                                                         AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                         Implementation.Context.Factory implementationContextFactory,
+                                                        TypeValidation typeValidation,
                                                         TypeDescription originalType,
                                                         ClassFileLocator classFileLocator) {
             return new ForInlining<U>(methodRegistry.getInstrumentedType(),
@@ -1493,6 +1506,7 @@ public interface TypeWriter<T> {
                     annotationRetention,
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
+                    typeValidation,
                     originalType,
                     classFileLocator,
                     MethodRebaseResolver.Disabled.INSTANCE);
@@ -1510,6 +1524,7 @@ public interface TypeWriter<T> {
          * @param annotationRetention          The annotation retention to apply.
          * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
          * @param implementationContextFactory The implementation context factory to apply.
+         * @param typeValidation               Determines if a type should be explicitly validated.
          * @param originalType                 The original type that is being redefined or rebased.
          * @param classFileLocator             The class file locator for locating the original type's class file.
          * @param methodRebaseResolver         The method rebase resolver to use for rebasing names.
@@ -1525,6 +1540,7 @@ public interface TypeWriter<T> {
                                                     AnnotationRetention annotationRetention,
                                                     AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                                     Implementation.Context.Factory implementationContextFactory,
+                                                    TypeValidation typeValidation,
                                                     TypeDescription originalType,
                                                     ClassFileLocator classFileLocator,
                                                     MethodRebaseResolver methodRebaseResolver) {
@@ -1542,6 +1558,7 @@ public interface TypeWriter<T> {
                     annotationRetention,
                     auxiliaryTypeNamingStrategy,
                     implementationContextFactory,
+                    typeValidation,
                     originalType,
                     classFileLocator,
                     methodRebaseResolver);
@@ -1585,7 +1602,8 @@ public interface TypeWriter<T> {
                     && annotationValueFilterFactory.equals(aDefault.annotationValueFilterFactory)
                     && annotationRetention == aDefault.annotationRetention
                     && auxiliaryTypeNamingStrategy.equals(aDefault.auxiliaryTypeNamingStrategy)
-                    && implementationContextFactory.equals(aDefault.implementationContextFactory);
+                    && implementationContextFactory.equals(aDefault.implementationContextFactory)
+                    && typeValidation.equals(aDefault.typeValidation);
         }
 
         @Override
@@ -1604,6 +1622,7 @@ public interface TypeWriter<T> {
             result = 31 * result + annotationRetention.hashCode();
             result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
             result = 31 * result + implementationContextFactory.hashCode();
+            result = 31 * result + typeValidation.hashCode();
             return result;
         }
 
@@ -1634,6 +1653,19 @@ public interface TypeWriter<T> {
              */
             protected ValidatingClassVisitor(ClassVisitor classVisitor) {
                 super(Opcodes.ASM5, classVisitor);
+            }
+
+            /**
+             * Adds a validating visitor if type validation is enabled.
+             *
+             * @param classVisitor   The original class visitor.
+             * @param typeValidation The type validation state.
+             * @return A class visitor that applies type validation if this is required.
+             */
+            protected static ClassVisitor of(ClassVisitor classVisitor, TypeValidation typeValidation) {
+                return typeValidation.isEnabled()
+                        ? new ValidatingClassVisitor(classVisitor)
+                        : classVisitor;
             }
 
             @Override
@@ -2555,6 +2587,7 @@ public interface TypeWriter<T> {
              * @param annotationRetention          The annotation retention to apply.
              * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
              * @param implementationContextFactory The implementation context factory to apply.
+             * @param typeValidation               Determines if a type should be explicitly validated.
              * @param originalType                 The original type that is being redefined or rebased.
              * @param classFileLocator             The class file locator for locating the original type's class file.
              * @param methodRebaseResolver         The method rebase resolver to use for rebasing methods.
@@ -2573,6 +2606,7 @@ public interface TypeWriter<T> {
                                   AnnotationRetention annotationRetention,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
                                   Implementation.Context.Factory implementationContextFactory,
+                                  TypeValidation typeValidation,
                                   TypeDescription originalType,
                                   ClassFileLocator classFileLocator,
                                   MethodRebaseResolver methodRebaseResolver) {
@@ -2589,7 +2623,8 @@ public interface TypeWriter<T> {
                         annotationValueFilterFactory,
                         annotationRetention,
                         auxiliaryTypeNamingStrategy,
-                        implementationContextFactory);
+                        implementationContextFactory,
+                        typeValidation);
                 this.originalType = originalType;
                 this.classFileLocator = classFileLocator;
                 this.methodRebaseResolver = methodRebaseResolver;
@@ -2618,9 +2653,8 @@ public interface TypeWriter<T> {
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
                 ClassReader classReader = new ClassReader(binaryRepresentation);
                 ClassWriter classWriter = FrameComputingClassWriter.of(classReader, asmVisitorWrapper.mergeWriter(ASM_MANUAL_FLAGS), classFileLocator);
-                classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
-                        new ValidatingClassVisitor(classWriter)),
-                        implementationContext), asmVisitorWrapper.mergeReader(ASM_MANUAL_FLAGS));
+                classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType, ValidatingClassVisitor.of(classWriter, typeValidation)), implementationContext),
+                        asmVisitorWrapper.mergeReader(ASM_MANUAL_FLAGS));
                 return classWriter.toByteArray();
             }
 
@@ -2674,6 +2708,7 @@ public interface TypeWriter<T> {
                         ", annotationRetention=" + annotationRetention +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", implementationContextFactory=" + implementationContextFactory +
+                        ", typeValidation=" + typeValidation +
                         ", originalType=" + originalType +
                         ", classFileLocator=" + classFileLocator +
                         ", methodRebaseResolver=" + methodRebaseResolver +
@@ -3323,6 +3358,7 @@ public interface TypeWriter<T> {
              * @param annotationRetention          The annotation retention to apply.
              * @param auxiliaryTypeNamingStrategy  The naming strategy for auxiliary types to apply.
              * @param implementationContextFactory The implementation context factory to apply.
+             * @param typeValidation               Determines if a type should be explicitly validated.
              */
             protected ForCreation(TypeDescription instrumentedType,
                                   FieldPool fieldPool,
@@ -3337,7 +3373,8 @@ public interface TypeWriter<T> {
                                   AnnotationValueFilter.Factory annotationValueFilterFactory,
                                   AnnotationRetention annotationRetention,
                                   AuxiliaryType.NamingStrategy auxiliaryTypeNamingStrategy,
-                                  Implementation.Context.Factory implementationContextFactory) {
+                                  Implementation.Context.Factory implementationContextFactory,
+                                  TypeValidation typeValidation) {
                 super(instrumentedType,
                         fieldPool,
                         methodPool,
@@ -3351,13 +3388,14 @@ public interface TypeWriter<T> {
                         annotationValueFilterFactory,
                         annotationRetention,
                         auxiliaryTypeNamingStrategy,
-                        implementationContextFactory);
+                        implementationContextFactory,
+                        typeValidation);
             }
 
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
                 ClassWriter classWriter = new ClassWriter(asmVisitorWrapper.mergeWriter(ASM_MANUAL_FLAGS));
-                ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType, new ValidatingClassVisitor(classWriter));
+                ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType, ValidatingClassVisitor.of(classWriter, typeValidation));
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
@@ -3395,6 +3433,7 @@ public interface TypeWriter<T> {
                         ", annotationRetention=" + annotationRetention +
                         ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                         ", implementationContextFactory=" + implementationContextFactory +
+                        ", typeValidation=" + typeValidation +
                         '}';
             }
         }

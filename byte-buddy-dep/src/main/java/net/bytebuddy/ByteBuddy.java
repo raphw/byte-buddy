@@ -12,6 +12,7 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.dynamic.scaffold.inline.RebaseDynamicTypeBuilder;
 import net.bytebuddy.dynamic.scaffold.inline.RedefinitionDynamicTypeBuilder;
@@ -131,6 +132,11 @@ public class ByteBuddy {
     protected final LatentMatcher<? super MethodDescription> ignoredMethods;
 
     /**
+     * Determines if a type should be explicitly validated.
+     */
+    protected final TypeValidation typeValidation;
+
+    /**
      * <p>
      * Creates a new Byte Buddy instance with a default configuration that is suitable for most use cases.
      * </p>
@@ -158,6 +164,7 @@ public class ByteBuddy {
                 AnnotationRetention.ENABLED,
                 Implementation.Context.Default.Factory.INSTANCE,
                 MethodGraph.Compiler.DEFAULT,
+                TypeValidation.ENABLED,
                 new LatentMatcher.Resolved<MethodDescription>(isSynthetic().or(isDefaultFinalizer())));
     }
 
@@ -171,6 +178,7 @@ public class ByteBuddy {
      * @param annotationRetention          The annotation retention strategy to use.
      * @param implementationContextFactory The implementation context factory to use.
      * @param methodGraphCompiler          The method graph compiler to use.
+     * @param typeValidation               Determines if a type should be explicitly validated.
      * @param ignoredMethods               A matcher for identifying methods that should be excluded from instrumentation.
      */
     protected ByteBuddy(ClassFileVersion classFileVersion,
@@ -180,6 +188,7 @@ public class ByteBuddy {
                         AnnotationRetention annotationRetention,
                         Implementation.Context.Factory implementationContextFactory,
                         MethodGraph.Compiler methodGraphCompiler,
+                        TypeValidation typeValidation,
                         LatentMatcher<? super MethodDescription> ignoredMethods) {
         this.classFileVersion = classFileVersion;
         this.namingStrategy = namingStrategy;
@@ -188,6 +197,7 @@ public class ByteBuddy {
         this.annotationRetention = annotationRetention;
         this.implementationContextFactory = implementationContextFactory;
         this.ignoredMethods = ignoredMethods;
+        this.typeValidation = typeValidation;
         this.methodGraphCompiler = methodGraphCompiler;
     }
 
@@ -312,6 +322,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 constructorStrategy);
     }
@@ -334,7 +345,7 @@ public class ByteBuddy {
      */
     @SuppressWarnings("unchecked")
     public <T> DynamicType.Builder<T> makeInterface(Class<T> interfaceType) {
-        return (DynamicType.Builder<T>) makeInterface(Collections.<TypeDescription>singletonList(new TypeDescription.ForLoadedType(interfaceType)));
+        return (DynamicType.Builder<T>) makeInterface(Collections.<Type>singletonList(interfaceType));
     }
 
     /**
@@ -403,6 +414,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
@@ -423,6 +435,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS);
     }
@@ -457,6 +470,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Visibility.PRIVATE).withParameters(String.class, int.class)
@@ -526,6 +540,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 type,
                 classFileLocator);
@@ -626,6 +641,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods,
                 type,
                 classFileLocator,
@@ -675,6 +691,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -695,6 +712,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -714,6 +732,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -734,6 +753,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -761,6 +781,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -783,6 +804,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -805,6 +827,28 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
+                ignoredMethods);
+    }
+
+    /**
+     * Creates a new configuration that applies the supplied type validation. By default, explicitly type validation is applied
+     * by Byte Buddy but it might be disabled for performance reason or for voluntarily creating illegal types. The Java virtual
+     * machine applies its own type validation where some {@link Error} is thrown if a type is invalid, while Byte Buddy throws
+     * some {@link RuntimeException}.
+     *
+     * @param typeValidation The type validation to apply during type creation.
+     * @return A new Byte Buddy instance that applies the supplied type validation.
+     */
+    public ByteBuddy with(TypeValidation typeValidation) {
+        return new ByteBuddy(classFileVersion,
+                namingStrategy,
+                auxiliaryTypeNamingStrategy,
+                annotationValueFilterFactory,
+                annotationRetention,
+                implementationContextFactory,
+                methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -839,6 +883,7 @@ public class ByteBuddy {
                 annotationRetention,
                 implementationContextFactory,
                 methodGraphCompiler,
+                typeValidation,
                 ignoredMethods);
     }
 
@@ -854,6 +899,7 @@ public class ByteBuddy {
                 && auxiliaryTypeNamingStrategy.equals(byteBuddy.auxiliaryTypeNamingStrategy)
                 && implementationContextFactory.equals(byteBuddy.implementationContextFactory)
                 && methodGraphCompiler.equals(byteBuddy.methodGraphCompiler)
+                && typeValidation.equals(byteBuddy.typeValidation)
                 && ignoredMethods.equals(byteBuddy.ignoredMethods);
     }
 
@@ -866,6 +912,7 @@ public class ByteBuddy {
         result = 31 * result + auxiliaryTypeNamingStrategy.hashCode();
         result = 31 * result + implementationContextFactory.hashCode();
         result = 31 * result + methodGraphCompiler.hashCode();
+        result = 31 * result + typeValidation.hashCode();
         result = 31 * result + ignoredMethods.hashCode();
         return result;
     }
@@ -880,6 +927,7 @@ public class ByteBuddy {
                 ", auxiliaryTypeNamingStrategy=" + auxiliaryTypeNamingStrategy +
                 ", implementationContextFactory=" + implementationContextFactory +
                 ", methodGraphCompiler=" + methodGraphCompiler +
+                ", typeValidation=" + typeValidation +
                 ", ignoredMethods=" + ignoredMethods +
                 '}';
     }

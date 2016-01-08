@@ -13,6 +13,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
@@ -69,6 +70,11 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
     @Override
     protected DynamicType.Builder<?> create(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         return new ByteBuddy().rebase(typeDescription, classFileLocator);
+    }
+
+    @Override
+    protected DynamicType.Builder<?> createPlainWithoutValidation() {
+        return new ByteBuddy().with(TypeValidation.DISABLED).redefine(Foo.class);
     }
 
     @Test

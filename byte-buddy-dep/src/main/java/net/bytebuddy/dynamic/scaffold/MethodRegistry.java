@@ -54,10 +54,14 @@ public interface MethodRegistry {
      *
      * @param instrumentedType    The instrumented type that should be created.
      * @param methodGraphCompiler The method graph compiler to be used for analyzing the fully assembled instrumented type.
-     * @param ignoredMethods        A filter that only matches methods that should be instrumented.
+     * @param typeValidation      Determines if a type should be explicitly validated.
+     * @param ignoredMethods      A filter that only matches methods that should be instrumented.
      * @return A prepared version of this method registry.
      */
-    Prepared prepare(InstrumentedType instrumentedType, MethodGraph.Compiler methodGraphCompiler, LatentMatcher<? super MethodDescription> ignoredMethods);
+    Prepared prepare(InstrumentedType instrumentedType,
+                     MethodGraph.Compiler methodGraphCompiler,
+                     TypeValidation typeValidation,
+                     LatentMatcher<? super MethodDescription> ignoredMethods);
 
     /**
      * A handler for implementing a method.
@@ -467,6 +471,7 @@ public interface MethodRegistry {
         @Override
         public MethodRegistry.Prepared prepare(InstrumentedType instrumentedType,
                                                MethodGraph.Compiler methodGraphCompiler,
+                                               TypeValidation typeValidation,
                                                LatentMatcher<? super MethodDescription> ignoredMethods) {
             LinkedHashMap<MethodDescription, Prepared.Entry> implementations = new LinkedHashMap<MethodDescription, Prepared.Entry>();
             Set<Handler> handlers = new HashSet<Handler>();
@@ -521,7 +526,9 @@ public interface MethodRegistry {
             return new Prepared(implementations,
                     instrumentedType.getLoadedTypeInitializer(),
                     instrumentedType.getTypeInitializer(),
-                    instrumentedType.validated(),
+                    typeValidation.isEnabled()
+                            ? instrumentedType.validated()
+                            : instrumentedType,
                     methodGraph);
         }
 

@@ -10,13 +10,13 @@ import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -67,6 +67,11 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     protected DynamicType.Builder<?> create(Class<?> type) {
         return new ByteBuddy().subclass(type);
+    }
+
+    @Override
+    protected DynamicType.Builder<?> createPlainWithoutValidation() {
+        return new ByteBuddy().with(TypeValidation.DISABLED).subclass(Object.class);
     }
 
     @Test
