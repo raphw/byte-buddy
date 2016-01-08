@@ -297,6 +297,9 @@ public interface InstrumentedType extends TypeDescription {
      */
     class Default extends AbstractBase.OfSimpleType implements InstrumentedType.WithFlexibleName {
 
+        /**
+         * A set containing all keywords of the Java programming language.
+         */
         private static final Set<String> KEYWORDS = new HashSet<String>(Arrays.asList(
                 "abstract", "continue", "for", "new", "switch", "assert", "default", "goto", "package", "synchronized", "boolean",
                 "do", "if", "private", "this", "break", "double", "implements", "protected", "throw", "byte", "else", "import",
@@ -872,7 +875,7 @@ public interface InstrumentedType extends TypeDescription {
                     for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                         if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                             throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + methodDescription);
-                        } else if(!bounds.add(bound)) {
+                        } else if (!bounds.add(bound)) {
                             throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
                             throw new IllegalStateException("Illegal interface bound " + bound + " of " + typeVariable + " for " + methodDescription);
