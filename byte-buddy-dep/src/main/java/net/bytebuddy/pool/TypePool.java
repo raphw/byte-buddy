@@ -1090,7 +1090,7 @@ public interface TypePool {
                             Map<String, List<LazyTypeDescription.AnnotationToken>> map = getMap();
                             List<LazyTypeDescription.AnnotationToken> list = map.get(typePath);
                             if (list == null) {
-                                list = new ArrayList<>();
+                                list = new ArrayList<LazyTypeDescription.AnnotationToken>();
                                 map.put(typePath, list);
                             }
                             return list;
@@ -1135,7 +1135,7 @@ public interface TypePool {
                         protected List<LazyTypeDescription.AnnotationToken> getList() {
                             List<LazyTypeDescription.AnnotationToken> list = annotationTokens.get(typePath);
                             if (list == null) {
-                                list = new ArrayList<>();
+                                list = new ArrayList<LazyTypeDescription.AnnotationToken>();
                                 annotationTokens.put(typePath, list);
                             }
                             return list;
@@ -2932,11 +2932,11 @@ public interface TypePool {
                     this.genericSignature = genericSignature;
                     this.exceptionName = exceptionName;
                     annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
-                    typeVariableAnnotationTokens = new HashMap<>();
-                    typeVariableBoundAnnotationTokens = new HashMap<>();
-                    returnTypeAnnotationTokens = new HashMap<>();
-                    parameterTypeAnnotationTokens = new HashMap<>();
-                    exceptionTypeAnnotationTokens = new HashMap<>();
+                    typeVariableAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
+                    typeVariableBoundAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
+                    returnTypeAnnotationTokens = new HashMap<String, List<LazyTypeDescription.AnnotationToken>>();
+                    parameterTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
+                    exceptionTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
                     Type[] parameterTypes = Type.getMethodType(descriptor).getArgumentTypes();
                     parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>();
                     for (int i = 0; i < parameterTypes.length; i++) { // TODO: Not very robust!
