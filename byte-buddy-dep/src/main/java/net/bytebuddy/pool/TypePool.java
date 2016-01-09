@@ -2552,6 +2552,9 @@ public interface TypePool {
                         declarationContext,
                         declaredTypes,
                         anonymousType,
+                        superTypeAnnotationTokens,
+                        typeVariableAnnotationTokens,
+                        typeVariableBoundsAnnotationTokens,
                         annotationTokens,
                         fieldTokens,
                         methodTokens);
@@ -2815,6 +2818,7 @@ public interface TypePool {
                             modifiers,
                             descriptor,
                             GenericTypeExtractor.ForSignature.OfField.extract(genericSignature),
+                            typeAnnotationTokens,
                             annotationTokens));
                 }
 
@@ -3035,6 +3039,11 @@ public interface TypePool {
                             descriptor,
                             GenericTypeExtractor.ForSignature.OfMethod.extract(genericSignature),
                             exceptionName,
+                            typeVariableAnnotationTokens,
+                            typeVariableBoundAnnotationTokens,
+                            returnTypeAnnotationTokens,
+                            parameterTypeAnnotationTokens,
+                            exceptionTypeAnnotationTokens,
                             annotationTokens,
                             parameterAnnotationTokens,
                             parameterTokens.isEmpty()
@@ -3553,6 +3562,12 @@ public interface TypePool {
          */
         private final boolean anonymousType;
 
+        private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> superTypeAnnotationTokens;
+
+        private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
+
+        private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableBoundsAnnotationTokens;
+
         /**
          * A list of tokens that represent the annotations of this type.
          */
@@ -3570,8 +3585,7 @@ public interface TypePool {
 
         /**
          * Creates a new lazy type description.
-         *
-         * @param typePool              The type pool to be used for looking up linked types.
+         *  @param typePool              The type pool to be used for looking up linked types.
          * @param modifiers             The modifiers of this type.
          * @param name                  The binary name of this type.
          * @param superTypeInternalName The internal name of this type's super type or {@code null} if no such super type is defined.
@@ -3580,6 +3594,9 @@ public interface TypePool {
          * @param declarationContext    The declaration context of this type.
          * @param declaredTypes         A list of descriptors representing the types that are declared by this type.
          * @param anonymousType         {@code true} if this type is an anonymous type.
+         * @param superTypeAnnotationTokens
+         * @param typeVariableAnnotationTokens
+         * @param typeVariableBoundsAnnotationTokens
          * @param annotationTokens      A list of tokens that represent the annotations of this type.
          * @param fieldTokens           A list of field tokens describing the field's of this type.
          * @param methodTokens          A list of method tokens describing the method's of this type.
@@ -3593,6 +3610,9 @@ public interface TypePool {
                                       DeclarationContext declarationContext,
                                       List<String> declaredTypes,
                                       boolean anonymousType,
+                                      Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens,
+                                      Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
+                                      Map<Integer, Map<String, List<AnnotationToken>>> typeVariableBoundsAnnotationTokens,
                                       List<AnnotationToken> annotationTokens,
                                       List<FieldToken> fieldTokens,
                                       List<MethodToken> methodTokens) {
@@ -3614,6 +3634,9 @@ public interface TypePool {
             this.declarationContext = declarationContext;
             this.declaredTypes = declaredTypes;
             this.anonymousType = anonymousType;
+            this.superTypeAnnotationTokens = superTypeAnnotationTokens;
+            this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
+            this.typeVariableBoundsAnnotationTokens = typeVariableBoundsAnnotationTokens;
             this.annotationTokens = annotationTokens;
             declaredFields = new ArrayList<FieldDescription.InDefinedShape>(fieldTokens.size());
             for (FieldToken fieldToken : fieldTokens) {
@@ -5409,6 +5432,8 @@ public interface TypePool {
              */
             private final GenericTypeToken.Resolution.ForField signatureResolution;
 
+            private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
+
             /**
              * A list of annotation tokens representing the annotations of the represented field.
              */
@@ -5416,22 +5441,24 @@ public interface TypePool {
 
             /**
              * Creates a new field token.
-             *
-             * @param name                The name of the field.
+             *  @param name                The name of the field.
              * @param modifiers           The modifiers of the represented field.
              * @param descriptor          The descriptor of the field.
              * @param signatureResolution The resolution of this field's generic type.
+             * @param typeAnnotationTokens
              * @param annotationTokens    A list of annotation tokens representing the annotations of the represented field.
              */
             protected FieldToken(String name,
                                  int modifiers,
                                  String descriptor,
                                  GenericTypeToken.Resolution.ForField signatureResolution,
+                                 Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                  List<AnnotationToken> annotationTokens) {
                 this.modifiers = modifiers;
                 this.name = name;
                 this.descriptor = descriptor;
                 this.signatureResolution = signatureResolution;
+                this.typeAnnotationTokens = typeAnnotationTokens;
                 this.annotationTokens = annotationTokens;
             }
 
@@ -5471,6 +5498,10 @@ public interface TypePool {
                 return signatureResolution;
             }
 
+            protected Map<String, List<AnnotationToken>> getTypeAnnotationTokens() {
+                return typeAnnotationTokens;
+            }
+
             /**
              * Returns a list of annotation tokens of the represented field.
              *
@@ -5486,11 +5517,12 @@ public interface TypePool {
              * @param lazyTypeDescription The lazy type description to attach this field description to.
              * @return A field description resembling this field token.
              */
-            private FieldDescription.InDefinedShape toFieldDescription(LazyTypeDescription lazyTypeDescription) {
+            private LazyFieldDescription toFieldDescription(LazyTypeDescription lazyTypeDescription) {
                 return lazyTypeDescription.new LazyFieldDescription(getName(),
                         getModifiers(),
                         getDescriptor(),
                         getSignatureResolution(),
+                        getTypeAnnotationTokens(),
                         getAnnotationTokens());
             }
 
@@ -5559,6 +5591,16 @@ public interface TypePool {
              */
             private final String[] exceptionName;
 
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
+
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableBoundAnnotationTokens;
+
+            private final Map<String, List<LazyTypeDescription.AnnotationToken>> returnTypeAnnotationTokens;
+
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> parameterTypeAnnotationTokens;
+
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
+
             /**
              * A list of annotation tokens that are present on the represented method.
              */
@@ -5581,13 +5623,17 @@ public interface TypePool {
 
             /**
              * Creates a new method token.
-             *
-             * @param name                      The name of the method.
+             *  @param name                      The name of the method.
              * @param modifiers                 The modifiers of the represented method.
              * @param descriptor                The descriptor of the represented method.
              * @param signatureResolution       The generic type resolution of this method.
              * @param exceptionName             An array of internal names of the exceptions of the represented method or {@code null} if
-             *                                  there are no such exceptions.
+*                                  there are no such exceptions.
+             * @param typeVariableAnnotationTokens
+             * @param typeVariableBoundAnnotationTokens
+             * @param returnTypeAnnotationTokens
+             * @param parameterTypeAnnotationTokens
+             * @param exceptionTypeAnnotationTokens
              * @param annotationTokens          A list of annotation tokens that are present on the represented method.
              * @param parameterAnnotationTokens A map of parameter indices to tokens that represent their annotations.
              * @param parameterTokens           A list of tokens describing meta data of the method's parameters.
@@ -5598,6 +5644,11 @@ public interface TypePool {
                                   String descriptor,
                                   GenericTypeToken.Resolution.ForMethod signatureResolution,
                                   String[] exceptionName,
+                                  Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
+                                  Map<Integer, Map<String, List<AnnotationToken>>> typeVariableBoundAnnotationTokens,
+                                  Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
+                                  Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
+                                  Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
                                   List<AnnotationToken> annotationTokens,
                                   Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                   List<ParameterToken> parameterTokens,
@@ -5607,6 +5658,11 @@ public interface TypePool {
                 this.descriptor = descriptor;
                 this.signatureResolution = signatureResolution;
                 this.exceptionName = exceptionName;
+                this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
+                this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
+                this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
+                this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
+                this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
                 this.annotationTokens = annotationTokens;
                 this.parameterAnnotationTokens = parameterAnnotationTokens;
                 this.parameterTokens = parameterTokens;
@@ -5667,6 +5723,26 @@ public interface TypePool {
                 return annotationTokens;
             }
 
+            protected Map<Integer, Map<String, List<AnnotationToken>>> getTypeVariableAnnotationTokens() {
+                return typeVariableAnnotationTokens;
+            }
+
+            protected Map<Integer, Map<String, List<AnnotationToken>>> getTypeVariableBoundAnnotationTokens() {
+                return typeVariableBoundAnnotationTokens;
+            }
+
+            protected Map<String, List<AnnotationToken>> getReturnTypeAnnotationTokens() {
+                return returnTypeAnnotationTokens;
+            }
+
+            protected Map<Integer, Map<String, List<AnnotationToken>>> getParameterTypeAnnotationTokens() {
+                return parameterTypeAnnotationTokens;
+            }
+
+            protected Map<Integer, Map<String, List<AnnotationToken>>> getExceptionTypeAnnotationTokens() {
+                return exceptionTypeAnnotationTokens;
+            }
+
             /**
              * Returns a map of parameter type indices to a list of annotation tokens representing these annotations.
              *
@@ -5707,6 +5783,11 @@ public interface TypePool {
                         getDescriptor(),
                         getSignatureResolution(),
                         getExceptionName(),
+                        getTypeVariableAnnotationTokens(),
+                        getTypeVariableBoundAnnotationTokens(),
+                        getReturnTypeAnnotationTokens(),
+                        getParameterTypeAnnotationTokens(),
+                        getExceptionTypeAnnotationTokens(),
                         getAnnotationTokens(),
                         getParameterAnnotationTokens(),
                         getParameterTokens(),
@@ -6429,6 +6510,8 @@ public interface TypePool {
              */
             private final GenericTypeToken.Resolution.ForField signatureResolution;
 
+            private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
+
             /**
              * A list of annotation descriptions of this field.
              */
@@ -6436,22 +6519,24 @@ public interface TypePool {
 
             /**
              * Creates a new lazy field description.
-             *
-             * @param name                The name of the field.
+             *  @param name                The name of the field.
              * @param modifiers           The modifiers of the field.
              * @param descriptor          The descriptor of this field's type.
              * @param signatureResolution A resolution of this field's generic type.
+             * @param typeAnnotationTokens
              * @param annotationTokens    A list of annotation descriptions of this field.
              */
             private LazyFieldDescription(String name,
                                          int modifiers,
                                          String descriptor,
                                          GenericTypeToken.Resolution.ForField signatureResolution,
+                                         Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                          List<AnnotationToken> annotationTokens) {
                 this.modifiers = modifiers;
                 this.name = name;
                 this.descriptor = descriptor;
                 this.signatureResolution = signatureResolution;
+                this.typeAnnotationTokens = typeAnnotationTokens;
                 this.annotationTokens = annotationTokens;
             }
 
@@ -6516,6 +6601,16 @@ public interface TypePool {
              */
             private final List<String> exceptionTypeDescriptors;
 
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
+
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableBoundAnnotationTokens;
+
+            private final Map<String, List<LazyTypeDescription.AnnotationToken>> returnTypeAnnotationTokens;
+
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> parameterTypeAnnotationTokens;
+
+            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
+
             /**
              * The annotation tokens representing the method's annotations.
              */
@@ -6544,28 +6639,36 @@ public interface TypePool {
 
             /**
              * Creates a new lazy method description.
-             *
-             * @param internalName              The internal name of this method.
+             *  @param internalName              The internal name of this method.
              * @param modifiers                 The modifiers of the represented method.
              * @param methodDescriptor          The method descriptor of this method.
              * @param signatureResolution       The generic type token of this method.
              * @param exceptionTypeInternalName The internal names of the exceptions that are declared by this
-             *                                  method or {@code null} if no exceptions are declared by this
-             *                                  method.
+*                                  method or {@code null} if no exceptions are declared by this
+*                                  method.
+             * @param typeVariableAnnotationTokens
+             * @param typeVariableBoundAnnotationTokens
+             * @param returnTypeAnnotationTokens
+             * @param parameterTypeAnnotationTokens
+             * @param exceptionTypeAnnotationTokens
              * @param annotationTokens          The annotation tokens representing the method's annotations.
              * @param parameterAnnotationTokens The annotation tokens representing the parameter's annotation. Every
-             *                                  index can contain {@code null} if a parameter does not define any annotations.
+ *                                  index can contain {@code null} if a parameter does not define any annotations.
              * @param parameterTokens           A list of parameter tokens which might be empty or even out of sync
-             *                                  with the actual parameters if the debugging information found in a
-             *                                  class was corrupt.
+*                                  with the actual parameters if the debugging information found in a
+*                                  class was corrupt.
              * @param defaultValue              The default value of this method or {@code null} if there is no
-             *                                  such value.
              */
             private LazyMethodDescription(String internalName,
                                           int modifiers,
                                           String methodDescriptor,
                                           GenericTypeToken.Resolution.ForMethod signatureResolution,
                                           String[] exceptionTypeInternalName,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> typeVariableBoundAnnotationTokens,
+                                          Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
                                           List<AnnotationToken> annotationTokens,
                                           Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                           List<MethodToken.ParameterToken> parameterTokens,
@@ -6589,6 +6692,11 @@ public interface TypePool {
                         exceptionTypeDescriptors.add(Type.getObjectType(anExceptionTypeInternalName).getDescriptor());
                     }
                 }
+                this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
+                this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
+                this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
+                this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
+                this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
                 this.annotationTokens = annotationTokens;
                 this.parameterAnnotationTokens = parameterAnnotationTokens;
                 parameterNames = new String[parameterType.length];
