@@ -9,6 +9,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -372,6 +373,7 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    @Ignore("Java 8 tests")
     public void testGenericInterfaceMultipleEvolution() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
@@ -392,6 +394,7 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    @Ignore("Java 8 tests")
     public void testReturnTypeInterfaceSingleEvolution() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
@@ -407,6 +410,7 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    @Ignore("Java 8 tests")
     public void testReturnTypeInterfaceMultipleEvolution() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
@@ -477,6 +481,7 @@ public class MethodGraphCompilerDefaultTest {
     }
 
     @Test
+    @Ignore("Java 8 tests")
     public void testGenericWithReturnTypeInterfaceMultipleEvolution() throws Exception {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);

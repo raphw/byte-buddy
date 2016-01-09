@@ -1,6 +1,7 @@
 package net.bytebuddy.pool;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -38,6 +39,7 @@ public class TypePoolLazyObjectPropertiesTest {
     }
 
     @Test
+    @Ignore("Java 8 tests")
     public void testGenericTypeTokenObjectPropertiesTest() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForRawType.class).apply();
