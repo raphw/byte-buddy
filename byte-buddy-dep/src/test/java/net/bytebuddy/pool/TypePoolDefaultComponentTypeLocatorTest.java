@@ -7,8 +7,6 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
 import org.junit.Test;
 
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
@@ -57,7 +55,6 @@ public class TypePoolDefaultComponentTypeLocatorTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(TypePool.Default.ComponentTypeLocator.Illegal.class).apply();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.OnTypeCollector.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.class).create(new ObjectPropertyAssertion.Creator<String>() {
             @Override
             public String create() {
@@ -65,10 +62,7 @@ public class TypePoolDefaultComponentTypeLocatorTest {
             }
         }).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.ParameterBag.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodCollector.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.MethodExtractor.OnMethodParameterCollector.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.class).applyBasic();
-        ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.FieldExtractor.OnFieldCollector.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.ArrayLookup.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup.class).applyBasic();
