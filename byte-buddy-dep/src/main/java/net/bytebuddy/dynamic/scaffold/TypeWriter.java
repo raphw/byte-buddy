@@ -2954,7 +2954,7 @@ public interface TypeWriter<T> {
                                   String superTypeInternalName,
                                   String[] interfaceTypeInternalName) {
                     super.visit(classFileVersionNumber,
-                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
+                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
                             (instrumentedType.getSuperType() == null ?
