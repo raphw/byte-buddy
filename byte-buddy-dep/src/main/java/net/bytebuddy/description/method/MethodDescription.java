@@ -1230,7 +1230,8 @@ public interface MethodDescription extends TypeVariableSource,
                         ownerType == null
                                 ? TypeDescription.Generic.UNDEFINED
                                 : ownerType.accept(this),
-                        parameters, declaredAnnotations);
+                        parameters,
+                        parameterizedType.getDeclaredAnnotations());
             }
 
             @Override
@@ -1307,6 +1308,11 @@ public interface MethodDescription extends TypeVariableSource,
                 @Override
                 public String getSymbol() {
                     return typeVariable.getSymbol();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return typeVariable.getDeclaredAnnotations();
                 }
             }
         }

@@ -1,8 +1,11 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.matcher.ElementMatcher;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -20,15 +23,22 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      */
     private final List<? extends TypeDescription.Generic> bounds;
 
+    private final List<? extends AnnotationDescription> annotations;
+
+    public TypeVariableToken(String symbol, List<? extends TypeDescription.Generic> bounds) {
+        this(symbol, bounds, Collections.<AnnotationDescription>emptyList());
+    }
+
     /**
      * Creates a new type variable token.
      *
      * @param symbol The type variable's symbol.
      * @param bounds The type variable's upper bounds.
      */
-    public TypeVariableToken(String symbol, List<? extends TypeDescription.Generic> bounds) {
+    public TypeVariableToken(String symbol, List<? extends TypeDescription.Generic> bounds, List<? extends AnnotationDescription> annotations) {
         this.symbol = symbol;
         this.bounds = bounds;
+        this.annotations = annotations;
     }
 
     /**
@@ -39,7 +49,9 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      * @return A token representing the detached type variable.
      */
     public static TypeVariableToken of(TypeDescription.Generic typeVariable, ElementMatcher<? super TypeDescription> matcher) {
-        return new TypeVariableToken(typeVariable.getSymbol(), typeVariable.getUpperBounds().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)));
+        return new TypeVariableToken(typeVariable.getSymbol(),
+                typeVariable.getUpperBounds().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
+                typeVariable.getDeclaredAnnotations());
     }
 
     /**
@@ -60,9 +72,13 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         return new TypeList.Generic.Explicit(bounds);
     }
 
+    public AnnotationList getAnnotations() {
+        return new AnnotationList.Explicit(annotations);
+    }
+
     @Override
     public TypeVariableToken accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-        return new TypeVariableToken(getSymbol(), getBounds().accept(visitor));
+        return new TypeVariableToken(getSymbol(), getBounds().accept(visitor), getAnnotations());
     }
 
     @Override
@@ -70,13 +86,14 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         TypeVariableToken that = (TypeVariableToken) other;
-        return symbol.equals(that.symbol) && bounds.equals(that.bounds);
+        return symbol.equals(that.symbol) && bounds.equals(that.bounds) && annotations.equals(that.annotations);
     }
 
     @Override
     public int hashCode() {
         int result = symbol.hashCode();
         result = 31 * result + bounds.hashCode();
+        result = 31 * result + annotations.hashCode();
         return result;
     }
 
@@ -85,6 +102,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         return "TypeVariableToken{" +
                 "symbol='" + symbol + '\'' +
                 ", bounds=" + bounds +
+                ", annotations=" + annotations +
                 '}';
     }
 }

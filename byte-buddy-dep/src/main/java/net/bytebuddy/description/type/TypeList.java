@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -560,6 +561,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                     public String getSymbol() {
                         return typeVariableToken.getSymbol();
                     }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return typeVariableToken.getAnnotations();
+                    }
                 }
             }
         }
@@ -643,6 +649,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
         }
 
@@ -725,6 +736,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
         }
 
@@ -806,6 +822,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 @Override
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
                 }
             }
         }
