@@ -6507,6 +6507,8 @@ public interface TypePool {
          */
         private static class TokenizedGenericType extends Generic.LazyProjection {
 
+            private static final String EMPTY_TYPE_PATH = "";
+
             /**
              * The type pool to use for locating referenced types.
              */
@@ -6521,8 +6523,6 @@ public interface TypePool {
              * A descriptor of the generic type's raw type.
              */
             private final String rawTypeDescriptor;
-
-            private final String typePath;
 
             private final Map<String, List<AnnotationToken>> annotationTokens;
 
@@ -6543,14 +6543,12 @@ public interface TypePool {
             protected TokenizedGenericType(TypePool typePool,
                                            GenericTypeToken genericTypeToken,
                                            String rawTypeDescriptor,
-                                           // String typePath, TODO
                                            Map<String, List<AnnotationToken>> annotationTokens,
                                            TypeVariableSource typeVariableSource) {
                 this.typePool = typePool;
                 this.genericTypeToken = genericTypeToken;
                 this.rawTypeDescriptor = rawTypeDescriptor;
-                this.typePath = ""; //typePath;
-                this.annotationTokens = annotationTokens == null
+                this.annotationTokens = annotationTokens == null // TODO: Nicer?
                         ? Collections.<String, List<AnnotationToken>>emptyMap()
                         : annotationTokens;
                 this.typeVariableSource = typeVariableSource;
@@ -6577,7 +6575,7 @@ public interface TypePool {
 
             @Override
             protected Generic resolve() {
-                return genericTypeToken.toGenericType(typePool, typeVariableSource, typePath, annotationTokens);
+                return genericTypeToken.toGenericType(typePool, typeVariableSource, EMPTY_TYPE_PATH, annotationTokens);
             }
 
             @Override
@@ -6587,7 +6585,7 @@ public interface TypePool {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
             }
 
             /**
