@@ -3,16 +3,14 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import org.junit.Test;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 public class TypeDescriptionGenericOfTypeVariableSymbolic {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private TypeDescription.Generic typeVariable = new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO);
+    private TypeDescription.Generic typeVariable = new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, declaredAnnotations);
 
     @Test
     public void testSymbol() throws Exception {
@@ -52,8 +50,8 @@ public class TypeDescriptionGenericOfTypeVariableSymbolic {
     @Test
     public void testEquals() throws Exception {
         assertThat(typeVariable, is(typeVariable));
-        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO)));
-        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR)));
+        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, declaredAnnotations)));
+        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR, declaredAnnotations)));
         assertThat(typeVariable, not(TypeDescription.Generic.OBJECT));
         assertThat(typeVariable, not(new Object()));
         assertThat(typeVariable, not(equalTo(null)));

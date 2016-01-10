@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -282,7 +283,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
      */
-    interface Generic extends TypeDefinition {
+    interface Generic extends TypeDefinition, AnnotatedCodeElement {
 
         /**
          * A representation of the {@link Object} type.
@@ -551,16 +552,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onWildcard(Generic wildcard) {
                     // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    TypeList.Generic lowerBounds = wildcard.getLowerBounds();
-                    return lowerBounds.isEmpty()
-                            ? OfWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
-                            : OfWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+                    // TODO: Okay?
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -577,17 +576,19 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             ownerType == null
                                     ? UNDEFINED
                                     : ownerType.accept(this),
-                            parameters);
+                            parameters,
+                            parameterizedType.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onTypeVariable(Generic typeVariable) {
-                    return typeVariable.asRawType();
+                    return typeVariable.asRawType(); // TODO: As raw type: Retain type variables?
                 }
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    return new OfNonGenericType.Latent(typeDescription.asErasure());
+                    return new OfNonGenericType.Latent(typeDescription.asErasure(), typeDescription.getDeclaredAnnotations());
+                    // TODO: return typeDescription?
                 }
 
                 @Override
@@ -815,30 +816,28 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             ownerType == null
                                     ? UNDEFINED
                                     : ownerType.accept(this),
-                            parameters);
+                            parameters,
+                            parameterizedType.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onWildcard(Generic wildcard) {
-                    TypeList.Generic lowerBounds = wildcard.getLowerBounds();
-                    return lowerBounds.isEmpty()
-                            ? OfWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
-                            : OfWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    int arity = 0;
+                    int arity = 0; // TODO: Should be recursive to retain annotations?
                     while (typeDescription.isArray()) {
                         typeDescription = typeDescription.getComponentType();
                         arity++;
                     }
-                    return OfGenericArray.Latent.of(onSimpleType(typeDescription), arity);
+                    return OfGenericArray.Latent.of(onSimpleType(typeDescription), arity, typeDescription.getDeclaredAnnotations());
                 }
 
                 /**
@@ -991,7 +990,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
-                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol());
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
                     }
 
                     @Override
@@ -1141,7 +1140,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
-                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol());
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
                     }
 
                     @Override
@@ -1983,7 +1982,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 TypeDescription componentType = asErasure().getComponentType();
                 return componentType == null
                         ? UNDEFINED
-                        : new OfNonGenericType.Latent(componentType);
+                        : new OfNonGenericType.Latent(componentType, Collections.<AnnotationDescription>emptyList()); // TODO
             }
 
             @Override
@@ -2065,6 +2064,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(type);
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
 
             /**
@@ -2077,18 +2081,27 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final TypeDescription typeDescription;
 
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
                 /**
                  * Creates a new raw type representation.
                  *
                  * @param typeDescription The represented non-generic type.
+                 * @param declaredAnnotations
                  */
-                public Latent(TypeDescription typeDescription) {
+                public Latent(TypeDescription typeDescription, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.typeDescription = typeDescription;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return typeDescription;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2250,6 +2263,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public Generic getComponentType() {
                     return Sort.describe(genericArrayType.getGenericComponentType());
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
 
             /**
@@ -2267,15 +2285,22 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final int arity;
 
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
                 /**
                  * Creates a latent representation of a generic array type.
-                 *
-                 * @param componentType The component type.
+                 *  @param componentType The component type.
                  * @param arity         The arity of this array.
+                 * @param declaredAnnotations
                  */
-                protected Latent(Generic componentType, int arity) {
+                protected Latent(Generic componentType, int arity, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.componentType = componentType;
                     this.arity = arity;
+                    this.declaredAnnotations = declaredAnnotations;
+                }
+
+                public static Generic of(Generic componentType, List<? extends AnnotationDescription> declaredAnnotations) {
+                    return of(componentType, 1, declaredAnnotations);
                 }
 
                 /**
@@ -2285,24 +2310,25 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param arity         The arity of the generic array to create.
                  * @return A description of the requested array. If the component type is non-generic, a non-generic array type is returned.
                  */
-                public static Generic of(Generic componentType, int arity) {
+                public static Generic of(Generic componentType, int arity, List<? extends AnnotationDescription> declaredAnnotations) {
                     if (arity < 0) {
                         throw new IllegalArgumentException("Arrays cannot have a negative arity");
                     }
-                    while (componentType.getSort().isGenericArray()) {
-                        componentType = componentType.getComponentType();
-                        arity++;
-                    }
                     return arity == 0
                             ? componentType
-                            : new Latent(componentType, arity);
+                            : new Latent(componentType, arity, declaredAnnotations);
                 }
 
                 @Override
                 public Generic getComponentType() {
                     return arity == 1
                             ? componentType
-                            : new Latent(componentType, arity - 1);
+                            : new Latent(componentType, arity - 1, declaredAnnotations);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2477,6 +2503,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeList.Generic getUpperBounds() {
                     return new TypeList.Generic.ForLoadedTypes(wildcardType.getUpperBounds());
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
 
             /**
@@ -2494,15 +2525,18 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final List<? extends Generic> lowerBounds;
 
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
                 /**
                  * Creates a description of a latent wildcard.
-                 *
-                 * @param upperBounds The wildcard's upper bounds.
+                 *  @param upperBounds The wildcard's upper bounds.
                  * @param lowerBounds The wildcard's lower bounds.
+                 * @param declaredAnnotations
                  */
-                protected Latent(List<? extends Generic> upperBounds, List<? extends Generic> lowerBounds) {
+                protected Latent(List<? extends Generic> upperBounds, List<? extends Generic> lowerBounds, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.upperBounds = upperBounds;
                     this.lowerBounds = lowerBounds;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 /**
@@ -2510,8 +2544,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @return A description of an unbounded wildcard.
                  */
-                public static Generic unbounded() {
-                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.<Generic>emptyList());
+                public static Generic unbounded(List<? extends AnnotationDescription> declaredAnnotations) {
+                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.<Generic>emptyList(), declaredAnnotations);
                 }
 
                 /**
@@ -2520,8 +2554,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param upperBound The upper bound of the wildcard.
                  * @return A wildcard with the given upper bound.
                  */
-                public static Generic boundedAbove(Generic upperBound) {
-                    return new Latent(Collections.singletonList(upperBound), Collections.<Generic>emptyList());
+                public static Generic boundedAbove(Generic upperBound, List<? extends AnnotationDescription> declaredAnnotations) {
+                    return new Latent(Collections.singletonList(upperBound), Collections.<Generic>emptyList(), declaredAnnotations);
                 }
 
                 /**
@@ -2530,8 +2564,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param lowerBound The lower bound of the wildcard.
                  * @return A wildcard with the given lower bound.
                  */
-                public static Generic boundedBelow(Generic lowerBound) {
-                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.singletonList(lowerBound));
+                public static Generic boundedBelow(Generic lowerBound, List<? extends AnnotationDescription> declaredAnnotations) {
+                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.singletonList(lowerBound), declaredAnnotations);
                 }
 
                 @Override
@@ -2542,6 +2576,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeList.Generic getLowerBounds() {
                     return new TypeList.Generic.Explicit(lowerBounds);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2732,6 +2771,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType());
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
 
             /**
@@ -2754,17 +2798,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final List<? extends Generic> parameters;
 
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
                 /**
                  * Creates a description of a latent parameterized type.
-                 *
-                 * @param rawType    The raw type of the described parameterized type.
-                 * @param parameters The parameters of this parameterized type.
+                 *  @param rawType    The raw type of the described parameterized type.
                  * @param ownerType  This parameterized type's owner type or {@code null} if no owner type exists.
+                 * @param parameters The parameters of this parameterized type.
+                 * @param declaredAnnotations
                  */
-                public Latent(TypeDescription rawType, Generic ownerType, List<? extends Generic> parameters) {
+                public Latent(TypeDescription rawType, Generic ownerType, List<? extends Generic> parameters, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.rawType = rawType;
                     this.ownerType = ownerType;
                     this.parameters = parameters;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
@@ -2780,6 +2827,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeList.Generic getParameters() {
                     return new TypeList.Generic.Explicit(parameters);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2911,13 +2963,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final String symbol;
 
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
                 /**
                  * Creates a symbolic type variable.
                  *
                  * @param symbol The symbol of the symbolic type variable.
+                 * @param declaredAnnotations
                  */
-                public Symbolic(String symbol) {
+                public Symbolic(String symbol, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.symbol = symbol;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
@@ -2928,6 +2984,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public String getSymbol() {
                     return symbol;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
 
                 @Override
@@ -3088,6 +3149,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public String getSymbol() {
                     return typeVariable.getName();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
                 }
             }
         }
@@ -3255,6 +3321,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             ? TypeDescription.UNDEFINED
                             : new ForLoadedType(superClass);
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
 
             /**
@@ -3285,6 +3356,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeDescription asErasure() {
                     return new ForLoadedType(field.getType());
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
 
             /**
@@ -3314,6 +3390,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeDescription asErasure() {
                     return new ForLoadedType(method.getReturnType());
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
                 }
             }
 
@@ -3362,6 +3443,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
                 }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
+                }
             }
 
             /**
@@ -3408,6 +3494,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty(); // TODO
                 }
             }
         }
@@ -3462,7 +3553,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A description of an unbound wildcard.
              */
             public static Generic unboundWildcard() {
-                return OfWildcardType.Latent.unbounded();
+                return OfWildcardType.Latent.unbounded(Collections.<AnnotationDescription>emptyList()); // TODO
             }
 
             /**
@@ -3472,7 +3563,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A detached description of the given type variable.
              */
             public static Generic typeVariable(String symbol) {
-                return new OfTypeVariable.Symbolic(symbol);
+                return new OfTypeVariable.Symbolic(symbol, Collections.<AnnotationDescription>emptyList()); // TODO
             }
 
             /**
@@ -3557,7 +3648,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 } else if (rawType.getTypeVariables().size() != parameters.size()) {
                     throw new IllegalArgumentException(parameters + " does not contain number of required parameters for " + rawType);
                 }
-                return new Builder(new OfParameterizedType.Latent(rawType, ownerType, new TypeList.Generic.Explicit(parameters)));
+                return new Builder(new OfParameterizedType.Latent(rawType, ownerType, new TypeList.Generic.Explicit(parameters), Collections.<AnnotationDescription>emptyList())); // TODO
             }
 
             /**
@@ -3566,7 +3657,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A generic type description of a wildcard type with this builder's type as an upper bound.
              */
             public Generic asWildcardUpperBound() {
-                return OfWildcardType.Latent.boundedAbove(typeDescription);
+                return OfWildcardType.Latent.boundedAbove(typeDescription, Collections.<AnnotationDescription>emptyList()); // TODO
             }
 
             /**
@@ -3575,7 +3666,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A generic type description of a wildcard type with this builder's type as an lower bound.
              */
             public Generic asWildcardLowerBound() {
-                return OfWildcardType.Latent.boundedBelow(typeDescription);
+                return OfWildcardType.Latent.boundedBelow(typeDescription, Collections.<AnnotationDescription>emptyList()); // TODO
             }
 
             /**
@@ -3594,7 +3685,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A builder for creating an array of the currently built type.
              */
             public Builder asArray(int arity) {
-                return new Builder(OfGenericArray.Latent.of(typeDescription, arity));
+                return new Builder(OfGenericArray.Latent.of(typeDescription, arity, Collections.<AnnotationDescription>emptyList())); // TODO
             }
 
             /**
@@ -3701,7 +3792,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public Generic asGenericType() {
-            return new Generic.OfNonGenericType.Latent(this);
+            return new Generic.OfNonGenericType.Latent(this, Collections.<AnnotationDescription>emptyList()); // TODO
         }
 
         @Override

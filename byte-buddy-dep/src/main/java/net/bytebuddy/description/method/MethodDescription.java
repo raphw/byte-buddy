@@ -1230,7 +1230,7 @@ public interface MethodDescription extends TypeVariableSource,
                         ownerType == null
                                 ? TypeDescription.Generic.UNDEFINED
                                 : ownerType.accept(this),
-                        parameters);
+                        parameters, declaredAnnotations);
             }
 
             @Override

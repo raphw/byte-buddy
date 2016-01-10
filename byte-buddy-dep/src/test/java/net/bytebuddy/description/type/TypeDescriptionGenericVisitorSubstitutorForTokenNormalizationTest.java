@@ -42,7 +42,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     @Test
     public void testTypeVariable() throws Exception {
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onTypeVariable(source),
-                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO)));
+                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, declaredAnnotations)));
     }
 
     @Test
