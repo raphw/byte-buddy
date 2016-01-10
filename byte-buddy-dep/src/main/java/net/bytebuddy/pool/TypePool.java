@@ -4424,7 +4424,7 @@ public interface TypePool {
                                                         TypePool typePool,
                                                         Map<String, List<AnnotationToken>> annotationTokens,
                                                         TypeDescription definingType) {
-                            return new TokenizedGenericType(typePool, superTypeToken, superTypeDescriptor, annotationTokens, definingType);
+                            return TokenizedGenericType.of(typePool, superTypeToken, superTypeDescriptor, annotationTokens, definingType);
                         }
 
                         @Override
@@ -4718,7 +4718,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return typePool.describe(name).resolve().asGenericType();
+                    return new LazyNonGenericType(typePool, typePath, annotationTokens, name);
                 }
 
                 @Override
@@ -4736,6 +4736,37 @@ public interface TypePool {
                     return "TypePool.LazyTypeDescription.GenericTypeToken.ForRawType{" +
                             "name='" + name + '\'' +
                             '}';
+                }
+
+                protected static class LazyNonGenericType extends Generic.OfNonGenericType {
+
+                    private final TypePool typePool;
+
+                    private final String typePath;
+
+                    private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                    /**
+                     * The name of the represented type.
+                     */
+                    private final String name;
+
+                    public LazyNonGenericType(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens, String name) {
+                        this.typePool = typePool;
+                        this.typePath = typePath;
+                        this.annotationTokens = annotationTokens;
+                        this.name = name;
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return typePool.describe(name).resolve();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                    }
                 }
             }
 
@@ -5084,7 +5115,7 @@ public interface TypePool {
 
                     @Override
                     public TypeList.Generic getLowerBounds() {
-                        return new LazyTokenList(typePool, typeVariableSource, typePath + PATH_ELEMENT, annotationTokens, Collections.singletonList(boundTypeToken));
+                        return new LazyTokenList.ForWildcardElement(typePool, typeVariableSource, typePath + PATH_ELEMENT, annotationTokens, boundTypeToken);
                         // TODO: Type path not indexed, i.e. lazy token list does not work
                     }
 
@@ -5170,7 +5201,7 @@ public interface TypePool {
 
                     @Override
                     public TypeList.Generic getUpperBounds() {
-                        return new LazyTokenList(typePool, typeVariableSource, typePath + PATH_ELEMENT, annotationTokens, Collections.singletonList(boundTypeToken));
+                        return new LazyTokenList.ForWildcardElement(typePool, typeVariableSource, typePath + PATH_ELEMENT, annotationTokens, boundTypeToken);
                     }
 
                     @Override
@@ -5460,6 +5491,47 @@ public interface TypePool {
                 @Override
                 public int size() {
                     return genericTypeTokens.size();
+                }
+
+                protected static class ForWildcardElement extends TypeList.Generic.AbstractBase {
+
+                    private static final char PATH_ELEMENT = '*';
+
+                    private final TypePool typePool;
+
+                    private final TypeVariableSource typeVariableSource;
+
+                    private final String typePath;
+
+                    private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                    private final GenericTypeToken genericTypeToken;
+
+                    public ForWildcardElement(TypePool typePool,
+                                              TypeVariableSource typeVariableSource,
+                                              String typePath,
+                                              Map<String, List<AnnotationToken>> annotationTokens,
+                                              GenericTypeToken genericTypeToken) {
+                        this.typePool = typePool;
+                        this.typeVariableSource = typeVariableSource;
+                        this.typePath = typePath;
+                        this.annotationTokens = annotationTokens;
+                        this.genericTypeToken = genericTypeToken;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        if (index == 0) {
+                            return genericTypeToken.toGenericType(typePool, typeVariableSource, typePath + index + PATH_ELEMENT, annotationTokens);
+                        } else {
+                            throw new IndexOutOfBoundsException(); // TODO: Check semantics
+                        }
+                    }
+
+                    @Override
+                    public int size() {
+                        return 1;
+                    }
                 }
             }
         }
@@ -6548,10 +6620,22 @@ public interface TypePool {
                 this.typePool = typePool;
                 this.genericTypeToken = genericTypeToken;
                 this.rawTypeDescriptor = rawTypeDescriptor;
-                this.annotationTokens = annotationTokens == null // TODO: Nicer?
-                        ? Collections.<String, List<AnnotationToken>>emptyMap()
-                        : annotationTokens;
+                this.annotationTokens = annotationTokens;
                 this.typeVariableSource = typeVariableSource;
+            }
+
+            protected static Generic of(TypePool typePool,
+                                        GenericTypeToken genericTypeToken,
+                                        String rawTypeDescriptor,
+                                        Map<String, List<AnnotationToken>> annotationTokens,
+                                        TypeVariableSource typeVariableSource) {
+                return new TokenizedGenericType(typePool,
+                        genericTypeToken,
+                        rawTypeDescriptor,
+                        annotationTokens == null
+                                ? Collections.<String, List<AnnotationToken>>emptyMap()
+                                : annotationTokens,
+                        typeVariableSource);
             }
 
             /**
@@ -6638,7 +6722,7 @@ public interface TypePool {
                 @Override
                 public Generic get(int index) {
                     return index < genericTypeTokens.size()
-                            ? new TokenizedGenericType(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), annotationTokens.get(index), typeVariableSource)
+                            ? TokenizedGenericType.of(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), annotationTokens.get(index), typeVariableSource)
                             : TokenizedGenericType.toErasure(typePool, rawTypeDescriptors.get(index)).asGenericType();
                 }
 
