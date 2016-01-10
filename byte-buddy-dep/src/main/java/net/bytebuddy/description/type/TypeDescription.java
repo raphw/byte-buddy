@@ -756,8 +756,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public SignatureVisitor onWildcard(Generic wildcard) {
-                        TypeList.Generic upperBounds = wildcard.getUpperBounds();
-                        TypeList.Generic lowerBounds = wildcard.getLowerBounds();
+                        TypeList.Generic upperBounds = wildcard.getUpperBounds(), lowerBounds = wildcard.getLowerBounds();
                         if (lowerBounds.isEmpty() && upperBounds.getOnly().represents(Object.class)) {
                             signatureVisitor.visitTypeArgument();
                         } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
@@ -2315,7 +2314,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         throw new IllegalArgumentException("Arrays cannot have a negative arity");
                     }
                     return arity == 0
-                            ? componentType
+                            ? componentType // TODO: What about the annotations?
                             : new Latent(componentType, arity, declaredAnnotations);
                 }
 
@@ -2323,7 +2322,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public Generic getComponentType() {
                     return arity == 1
                             ? componentType
-                            : new Latent(componentType, arity - 1, declaredAnnotations);
+                            : new Latent(componentType, arity - 1, Collections.emptyList()); // TODO: Incorrect!
                 }
 
                 @Override

@@ -12,7 +12,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.PackageDescription;
-import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -1929,7 +1928,7 @@ public interface TypePool {
                 /**
                  * The resolved type variable tokens.
                  */
-                protected final List<LazyTypeDescription.GenericTypeToken> typeVariableTokens;
+                protected final List<LazyTypeDescription.GenericTypeToken.OfFormalTypeVariable> typeVariableTokens;
 
                 /**
                  * The name of the currently constructed type.
@@ -1945,7 +1944,7 @@ public interface TypePool {
                  * Creates a new signature visitor.
                  */
                 public ForSignature() {
-                    typeVariableTokens = new ArrayList<LazyTypeDescription.GenericTypeToken>();
+                    typeVariableTokens = new ArrayList<LazyTypeDescription.GenericTypeToken.OfFormalTypeVariable>();
                 }
 
                 /**
@@ -4006,13 +4005,6 @@ public interface TypePool {
         protected interface GenericTypeToken {
 
             /**
-             * Returns the sort of the generic type this token represents.
-             *
-             * @return The sort of the generic type this token represents.
-             */
-            TypeDefinition.Sort getSort();
-
-            /**
              * Transforms this token into a generic type representation.
              *
              * @param typePool           The type pool to be used for locating non-generic type descriptions.
@@ -4021,6 +4013,14 @@ public interface TypePool {
              * @param annotationTokens   @return A description of the represented generic type.
              */
             Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens);
+
+            interface OfFormalTypeVariable {
+
+                Generic toGenericType(TypePool typePool,
+                                      TypeVariableSource typeVariableSource,
+                                      Map<String, List<AnnotationToken>> annotationTokens,
+                                      Map<String, List<AnnotationToken>> boundaryAnnotationTokens);
+            }
 
             /**
              * A generic type token that represents a primitive type.
@@ -4118,11 +4118,6 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.NON_GENERIC;
-                }
-
-                @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                     return typeDescription;
                 }
@@ -4142,11 +4137,6 @@ public interface TypePool {
                  * The singleton instance.
                  */
                 INSTANCE;
-
-                @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.WILDCARD;
-                }
 
                 @Override
                 public Generic toGenericType(TypePool typePool,
@@ -4402,7 +4392,7 @@ public interface TypePool {
                         /**
                          * The type variables generic type tokens.
                          */
-                        private final List<GenericTypeToken> typeVariableTokens;
+                        private final List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens;
 
                         /**
                          * Creates a new tokenized resolution of a {@link TypeDescription}'s generic signatures.
@@ -4413,7 +4403,7 @@ public interface TypePool {
                          */
                         public Tokenized(GenericTypeToken superTypeToken,
                                          List<GenericTypeToken> interfaceTypeTokens,
-                                         List<GenericTypeToken> typeVariableTokens) {
+                                         List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens) {
                             this.superTypeToken = superTypeToken;
                             this.interfaceTypeTokens = interfaceTypeTokens;
                             this.typeVariableTokens = typeVariableTokens;
@@ -4539,7 +4529,7 @@ public interface TypePool {
                         /**
                          * A token describing the represented method's type variables.
                          */
-                        private final List<GenericTypeToken> typeVariableTokens;
+                        private final List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens;
 
                         /**
                          * Creates a new tokenized resolution of a {@link MethodDescription}'s generic signatures.
@@ -4552,7 +4542,7 @@ public interface TypePool {
                         public Tokenized(GenericTypeToken returnTypeToken,
                                          List<GenericTypeToken> parameterTypeTokens,
                                          List<GenericTypeToken> exceptionTypeTokens,
-                                         List<GenericTypeToken> typeVariableTokens) {
+                                         List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens) {
                             this.returnTypeToken = returnTypeToken;
                             this.parameterTypeTokens = parameterTypeTokens;
                             this.exceptionTypeTokens = exceptionTypeTokens;
@@ -4712,11 +4702,6 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.NON_GENERIC;
-                }
-
-                @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                     return new LazyNonGenericType(typePool, typePath, annotationTokens, name);
                 }
@@ -4790,11 +4775,6 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.VARIABLE;
-                }
-
-                @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                     Generic typeVariable = typeVariableSource.findVariable(symbol);
                     if (typeVariable == null) {
@@ -4824,7 +4804,7 @@ public interface TypePool {
                 /**
                  * A generic type token that represent a formal type variable, i.e. a type variable including its upper bounds.
                  */
-                public static class Formal implements GenericTypeToken {
+                public static class Formal implements GenericTypeToken.OfFormalTypeVariable {
 
                     /**
                      * This type variable's nominal symbol.
@@ -4848,16 +4828,11 @@ public interface TypePool {
                     }
 
                     @Override
-                    public TypeDefinition.Sort getSort() {
-                        return TypeDefinition.Sort.VARIABLE;
-                    }
-
-                    @Override
                     public Generic toGenericType(TypePool typePool,
                                                  TypeVariableSource typeVariableSource,
-                                                 String typePath,
-                                                 Map<String, List<AnnotationToken>> annotationTokens) {
-                        return new LazyTypeVariable(typePool, typeVariableSource, typePath, annotationTokens, symbol, boundTypeTokens);
+                                                 Map<String, List<AnnotationToken>> annotationTokens,
+                                                 Map<String, List<AnnotationToken>> boundaryAnnotationTokens) {
+                        return new LazyTypeVariable(typePool, typeVariableSource, annotationTokens, symbol, boundTypeTokens);
                     }
 
                     @Override
@@ -4895,8 +4870,6 @@ public interface TypePool {
                          */
                         private final TypeVariableSource typeVariableSource;
 
-                        private final String typePath;
-
                         private final Map<String, List<AnnotationToken>> annotationTokens;
 
                         private final String symbol;
@@ -4908,17 +4881,14 @@ public interface TypePool {
                          *
                          * @param typePool           The type pool to use for locating type descriptions.
                          * @param typeVariableSource The type variable source to use for locating type variables.
-                         * @param typePath
                          */
                         protected LazyTypeVariable(TypePool typePool,
                                                    TypeVariableSource typeVariableSource,
-                                                   String typePath,
                                                    Map<String, List<AnnotationToken>> annotationTokens,
                                                    String symbol,
                                                    List<GenericTypeToken> boundTypeTokens) {
                             this.typePool = typePool;
                             this.typeVariableSource = typeVariableSource;
-                            this.typePath = typePath;
                             this.annotationTokens = annotationTokens;
                             this.symbol = symbol;
                             this.boundTypeTokens = boundTypeTokens;
@@ -4927,7 +4897,7 @@ public interface TypePool {
                         @Override
                         public TypeList.Generic getUpperBounds() {
                             // TODO: Type path index?
-                            return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, boundTypeTokens);
+                            return new LazyTokenList(typePool, typeVariableSource, "", annotationTokens, boundTypeTokens);
                         }
 
                         @Override
@@ -4942,7 +4912,7 @@ public interface TypePool {
 
                         @Override
                         public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get("")); // TODO
                         }
                     }
                 }
@@ -4965,11 +4935,6 @@ public interface TypePool {
                  */
                 public ForGenericArray(GenericTypeToken componentTypeToken) {
                     this.componentTypeToken = componentTypeToken;
-                }
-
-                @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.GENERIC_ARRAY;
                 }
 
                 @Override
@@ -5052,11 +5017,6 @@ public interface TypePool {
                  */
                 public ForLowerBoundWildcard(GenericTypeToken boundTypeToken) {
                     this.boundTypeToken = boundTypeToken;
-                }
-
-                @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.WILDCARD;
                 }
 
                 @Override
@@ -5143,11 +5103,6 @@ public interface TypePool {
                  */
                 public ForUpperBoundWildcard(GenericTypeToken boundTypeToken) {
                     this.boundTypeToken = boundTypeToken;
-                }
-
-                @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.WILDCARD;
                 }
 
                 @Override
@@ -5243,11 +5198,6 @@ public interface TypePool {
                 }
 
                 @Override
-                public TypeDefinition.Sort getSort() {
-                    return TypeDefinition.Sort.PARAMETERIZED;
-                }
-
-                @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                     return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens);
                 }
@@ -5303,11 +5253,6 @@ public interface TypePool {
                         this.name = name;
                         this.parameterTypeTokens = parameterTypeTokens;
                         this.ownerTypeToken = ownerTypeToken;
-                    }
-
-                    @Override
-                    public TypeDefinition.Sort getSort() {
-                        return TypeDefinition.Sort.PARAMETERIZED;
                     }
 
                     @Override
@@ -6653,11 +6598,6 @@ public interface TypePool {
             }
 
             @Override
-            public Sort getSort() {
-                return genericTypeToken.getSort();
-            }
-
-            @Override
             protected Generic resolve() {
                 return genericTypeToken.toGenericType(typePool, typeVariableSource, EMPTY_TYPE_PATH, annotationTokens);
             }
@@ -6750,7 +6690,7 @@ public interface TypePool {
                 /**
                  * Type tokens that describe the represented type variables.
                  */
-                private final List<GenericTypeToken> typeVariables;
+                private final List<GenericTypeToken.OfFormalTypeVariable> typeVariables;
 
                 /**
                  * The type variable source of the represented type variables.
@@ -6769,7 +6709,7 @@ public interface TypePool {
                  * @param typeVariableSource The type variable source of the represented type variables.
                  */
                 protected TypeVariableList(TypePool typePool,
-                                           List<GenericTypeToken> typeVariables,
+                                           List<GenericTypeToken.OfFormalTypeVariable> typeVariables,
                                            TypeVariableSource typeVariableSource,
                                            Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                            Map<Integer, Map<String, List<AnnotationToken>>> boundAnnotationTokens) {
@@ -6783,7 +6723,7 @@ public interface TypePool {
                 @Override
                 public Generic get(int index) {
                     // TODO!
-                    return typeVariables.get(index).toGenericType(typePool, typeVariableSource, "", boundAnnotationTokens.get(index));
+                    return typeVariables.get(index).toGenericType(typePool, typeVariableSource, annotationTokens.get(index), boundAnnotationTokens.get(index));
                 }
 
                 @Override

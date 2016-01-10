@@ -10,6 +10,8 @@ import org.junit.rules.TestRule;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 
+import java.util.Collections;
+
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
@@ -42,7 +44,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     @Test
     public void testTypeVariable() throws Exception {
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onTypeVariable(source),
-                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, declaredAnnotations)));
+                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.emptyList()))); // TODO
     }
 
     @Test
