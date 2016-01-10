@@ -1,5 +1,6 @@
 package net.bytebuddy.dynamic.scaffold;
 
+import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -38,7 +39,7 @@ public class InstrumentedTypeDefaultTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz", ILLEGAL_NAME = "<>";
 
-    private static final int MODIFIERS = 42, ILLEGAL_MODIFIERS = -1;
+    private static final int ILLEGAL_MODIFIERS = -1, OTHER_MODIFIERS = 42;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -60,7 +61,7 @@ public class InstrumentedTypeDefaultTest {
 
     protected static InstrumentedType.WithFlexibleName makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
-                MODIFIERS,
+                ModifierReviewable.EMPTY_MASK,
                 TypeDescription.Generic.OBJECT,
                 Collections.<TypeVariableToken>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),
@@ -274,9 +275,9 @@ public class InstrumentedTypeDefaultTest {
     @Test
     public void testModifiers() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
-        assertThat(instrumentedType.getModifiers(), is(MODIFIERS));
-        instrumentedType = instrumentedType.withModifiers(MODIFIERS);
-        assertThat(instrumentedType.getModifiers(), is(MODIFIERS));
+        assertThat(instrumentedType.getModifiers(), is(ModifierContributor.EMPTY_MASK));
+        instrumentedType = instrumentedType.withModifiers(OTHER_MODIFIERS);
+        assertThat(instrumentedType.getModifiers(), is(OTHER_MODIFIERS));
     }
 
     @Test
@@ -671,6 +672,13 @@ public class InstrumentedTypeDefaultTest {
                 .validated();
     }
 
+    @Test
+    public void testMethodInvisibleReturnTypeSynthetic() throws Exception {
+        assertThat(makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_SYNTHETIC, packagePrivateType))
+                .validated(), is(TypeDescription.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testMethodIllegalName() throws Exception {
         makePlainInstrumentedType().withMethod(new MethodDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT)).validated();
@@ -827,6 +835,20 @@ public class InstrumentedTypeDefaultTest {
                 .validated();
     }
 
+    @Test
+    public void testMethodParameterInvisibleTypeSynthetic() throws Exception {
+        assertThat(makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        Opcodes.ACC_SYNTHETIC,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.singletonList(new ParameterDescription.Token(packagePrivateType)),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated(), notNullValue(TypeDescription.class));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testMethodParameterDuplicateName() throws Exception {
         makePlainInstrumentedType()
@@ -899,6 +921,20 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
                 .validated();
+    }
+
+    @Test
+    public void testMethodInvisibleExceptionSynthetic() throws Exception {
+        assertThat(makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        Opcodes.ACC_SYNTHETIC,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.singletonList(packagePrivateExceptionType),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated(), notNullValue(TypeDescription.class));
     }
 
     @Test(expected = IllegalStateException.class)
