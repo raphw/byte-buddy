@@ -1157,6 +1157,29 @@ public interface TypePool {
                         annotationTokens.add(new LazyTypeDescription.AnnotationToken(descriptor, values));
                     }
                 }
+
+                protected static class IndexedAdapter extends AbstractBase {
+
+                    private final int index;
+
+                    private final Map<Integer, List<LazyTypeDescription.AnnotationToken>> annotationTokens;
+
+                    protected IndexedAdapter(String descriptor, int index, Map<Integer, List<LazyTypeDescription.AnnotationToken>> annotationTokens) {
+                        super(descriptor);
+                        this.index = index;
+                        this.annotationTokens = annotationTokens;
+                    }
+
+                    @Override
+                    public void onComplete() {
+                        List<LazyTypeDescription.AnnotationToken> annotationTokens = this.annotationTokens.get(index);
+                        if (annotationTokens == null) {
+                            annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
+                            this.annotationTokens.put(index, annotationTokens);
+                        }
+                        annotationTokens.add(new LazyTypeDescription.AnnotationToken(descriptor, values));
+                    }
+                }
             }
         }
 
@@ -2597,6 +2620,13 @@ public interface TypePool {
                     this(new AnnotationRegistrant.AbstractBase.Adapter(descriptor, annotationTokens), componentTypeLocator);
                 }
 
+                protected AnnotationExtractor(String descriptor,
+                                              int index,
+                                              Map<Integer, List<LazyTypeDescription.AnnotationToken>> annotationTokens,
+                                              ComponentTypeLocator componentTypeLocator) {
+                    this(new AnnotationRegistrant.AbstractBase.IndexedAdapter(descriptor, index, annotationTokens), componentTypeLocator);
+                }
+
                 /**
                  * Creates a new annotation extractor.
                  *
@@ -2937,13 +2967,9 @@ public interface TypePool {
                     returnTypeAnnotationTokens = new HashMap<String, List<LazyTypeDescription.AnnotationToken>>();
                     parameterTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
                     exceptionTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
-                    Type[] parameterTypes = Type.getMethodType(descriptor).getArgumentTypes();
                     parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>();
-                    for (int i = 0; i < parameterTypes.length; i++) { // TODO: Not very robust!
-                        parameterAnnotationTokens.put(i, new ArrayList<LazyTypeDescription.AnnotationToken>());
-                    }
-                    parameterTokens = new ArrayList<LazyTypeDescription.MethodToken.ParameterToken>(parameterTypes.length);
-                    legacyParameterBag = new ParameterBag(parameterTypes);
+                    parameterTokens = new ArrayList<LazyTypeDescription.MethodToken.ParameterToken>();
+                    legacyParameterBag = new ParameterBag(Type.getMethodType(descriptor).getArgumentTypes());
                 }
 
                 @Override
@@ -2995,7 +3021,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
-                    return new AnnotationExtractor(descriptor, parameterAnnotationTokens.get(index), new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
+                    return new AnnotationExtractor(descriptor, index, parameterAnnotationTokens, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
                 @Override
@@ -4123,13 +4149,46 @@ public interface TypePool {
                 }
 
                 @Override
-                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return Generic.OfWildcardType.Latent.unbounded(null); // TODO: Needs own lazy type!
+                public Generic toGenericType(TypePool typePool,
+                                             TypeVariableSource typeVariableSource,
+                                             String typePath,
+                                             Map<String, List<AnnotationToken>> annotationTokens) {
+                    return new LazyUnboundWildcard(typePool, typePath, annotationTokens);
                 }
 
                 @Override
                 public String toString() {
                     return "TypePool.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard." + name();
+                }
+
+                protected static class LazyUnboundWildcard extends Generic.OfWildcardType {
+
+                    private final TypePool typePool;
+
+                    private final String typePath;
+
+                    private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                    protected LazyUnboundWildcard(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                        this.typePool = typePool;
+                        this.typePath = typePath;
+                        this.annotationTokens = annotationTokens;
+                    }
+
+                    @Override
+                    public TypeList.Generic getUpperBounds() {
+                        return new TypeList.Generic.Explicit(Generic.OBJECT);
+                    }
+
+                    @Override
+                    public TypeList.Generic getLowerBounds() {
+                        return new TypeList.Generic.Empty();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                    }
                 }
             }
 
@@ -4815,7 +4874,8 @@ public interface TypePool {
 
                         /**
                          * Creates a lazy type description of a type variables.
-                         *  @param typePool           The type pool to use for locating type descriptions.
+                         *
+                         * @param typePool           The type pool to use for locating type descriptions.
                          * @param typeVariableSource The type variable source to use for locating type variables.
                          * @param typePath
                          */
@@ -4851,7 +4911,7 @@ public interface TypePool {
 
                         @Override
                         public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asList(typePool, annotationTokens.get(typePath)); // TODO: null check
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                         }
                     }
                 }
@@ -4937,7 +4997,7 @@ public interface TypePool {
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asList(typePool, annotationTokens.get(typePath)); // TODO: Null check
+                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                     }
                 }
             }
@@ -5030,7 +5090,7 @@ public interface TypePool {
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asList(typePool, annotationTokens.get(typePath));
+                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                     }
                 }
             }
@@ -5120,7 +5180,7 @@ public interface TypePool {
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asList(typePool, annotationTokens.get(typePath)); // TODO: Null check
+                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                     }
                 }
             }
@@ -5293,7 +5353,7 @@ public interface TypePool {
 
                         @Override
                         public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asList(typePool, annotationTokens.get(typePath)); // TODO: Null check
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                         }
                     }
                 }
@@ -5361,7 +5421,7 @@ public interface TypePool {
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asList(typePool, annotationTokens.get(typePath)); // TODO: Null check
+                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                     }
                 }
             }
@@ -6177,6 +6237,12 @@ public interface TypePool {
                 this.values = values;
             }
 
+            protected static AnnotationList asListOfNullable(TypePool typePool, List<? extends AnnotationToken> tokens) {
+                return tokens == null
+                        ? new AnnotationList.Empty()
+                        : asList(typePool, tokens);
+            }
+
             /**
              * Represents a list of annotation tokens in form of a list of lazy type annotations. Any annotation with
              * a type that cannot be loaded from the type pool is ignored and not included in the list.
@@ -6484,7 +6550,9 @@ public interface TypePool {
                 this.genericTypeToken = genericTypeToken;
                 this.rawTypeDescriptor = rawTypeDescriptor;
                 this.typePath = ""; //typePath;
-                this.annotationTokens = annotationTokens;
+                this.annotationTokens = annotationTokens == null
+                        ? Collections.<String, List<AnnotationToken>>emptyMap()
+                        : annotationTokens;
                 this.typeVariableSource = typeVariableSource;
             }
 
@@ -6519,7 +6587,7 @@ public interface TypePool {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return LazyAnnotationDescription.asList(typePool, annotationTokens.get(typePath));
+                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
             }
 
             /**
@@ -6792,7 +6860,7 @@ public interface TypePool {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return LazyAnnotationDescription.asList(typePool, annotationTokens);
+                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
             }
 
             @Override
@@ -7096,10 +7164,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    List<AnnotationToken> annotationTokens = parameterAnnotationTokens.get(index);
-                    return annotationTokens == null
-                            ? new AnnotationList.Empty()
-                            : LazyAnnotationDescription.asList(typePool, annotationTokens);
+                    return LazyAnnotationDescription.asListOfNullable(typePool, parameterAnnotationTokens.get(index));
                 }
             }
         }
