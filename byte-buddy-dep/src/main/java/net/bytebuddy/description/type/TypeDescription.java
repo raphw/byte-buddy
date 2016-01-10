@@ -552,7 +552,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -821,7 +821,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -831,12 +831,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    int arity = 0; // TODO: Should be recursive to retain annotations?
-                    while (typeDescription.isArray()) {
-                        typeDescription = typeDescription.getComponentType();
-                        arity++;
-                    }
-                    return OfGenericArray.Latent.of(onSimpleType(typeDescription), arity, typeDescription.getDeclaredAnnotations());
+                    return typeDescription.isArray()
+                            ? new OfGenericArray.Latent(typeDescription.getComponentType().accept(this), typeDescription.getDeclaredAnnotations())
+                            : onSimpleType(typeDescription);
                 }
 
                 /**
@@ -2279,50 +2276,21 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final Generic componentType;
 
-                /**
-                 * The arity of the generic array.
-                 */
-                private final int arity;
-
                 private final List<? extends AnnotationDescription> declaredAnnotations;
 
                 /**
                  * Creates a latent representation of a generic array type.
                  *  @param componentType The component type.
-                 * @param arity         The arity of this array.
                  * @param declaredAnnotations
                  */
-                protected Latent(Generic componentType, int arity, List<? extends AnnotationDescription> declaredAnnotations) {
+                public Latent(Generic componentType, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.componentType = componentType;
-                    this.arity = arity;
                     this.declaredAnnotations = declaredAnnotations;
-                }
-
-                public static Generic of(Generic componentType, List<? extends AnnotationDescription> declaredAnnotations) {
-                    return of(componentType, 1, declaredAnnotations);
-                }
-
-                /**
-                 * Returns a description of the given component type.
-                 *
-                 * @param componentType The component type of the array type to create.
-                 * @param arity         The arity of the generic array to create.
-                 * @return A description of the requested array. If the component type is non-generic, a non-generic array type is returned.
-                 */
-                public static Generic of(Generic componentType, int arity, List<? extends AnnotationDescription> declaredAnnotations) {
-                    if (arity < 0) {
-                        throw new IllegalArgumentException("Arrays cannot have a negative arity");
-                    }
-                    return arity == 0
-                            ? componentType // TODO: What about the annotations?
-                            : new Latent(componentType, arity, declaredAnnotations);
                 }
 
                 @Override
                 public Generic getComponentType() {
-                    return arity == 1
-                            ? componentType
-                            : new Latent(componentType, arity - 1, Collections.emptyList()); // TODO: Incorrect!
+                    return componentType;
                 }
 
                 @Override
@@ -3684,7 +3652,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A builder for creating an array of the currently built type.
              */
             public Builder asArray(int arity) {
-                return new Builder(OfGenericArray.Latent.of(typeDescription, arity, Collections.<AnnotationDescription>emptyList())); // TODO
+                if (arity < 1) {
+                    throw new IllegalArgumentException(); // TODO
+                }
+                TypeDescription.Generic typeDescription = this.typeDescription;
+                while (arity-- > 1) {
+                    typeDescription = new OfGenericArray.Latent(typeDescription, Collections.emptyList());
+                }
+                return new Builder(new OfGenericArray.Latent(typeDescription, Collections.<AnnotationDescription>emptyList()));
             }
 
             /**
