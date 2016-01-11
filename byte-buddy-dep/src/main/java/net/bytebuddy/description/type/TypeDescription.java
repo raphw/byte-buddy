@@ -1906,8 +1906,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable);
 
-                AnnotationReader resolveTypeVariable(GenericDeclaration genericDeclaration, int index);
-
                 AnnotationReader resolveSuperType(Class<?> type);
 
                 AnnotationReader resolveInterface(Class<?> type, int index);
@@ -1926,11 +1924,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    @Override
-                    public AnnotationReader resolveTypeVariable(GenericDeclaration genericDeclaration, int index) {
                         return NoOp.INSTANCE;
                     }
 
@@ -2012,12 +2005,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
-                        return new Resolved((AnnotatedElement) typeVariable);
-                    }
-
-                    @Override
-                    public AnnotationReader resolveTypeVariable(GenericDeclaration genericDeclaration, int index) {
-                        return new AnnotatedTypeVariableType(genericDeclaration, index);
+                        return new AnnotatedTypeVariableType(typeVariable);
                     }
 
                     @Override
@@ -2066,18 +2054,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     protected static class AnnotatedTypeVariableType extends Delegator {
 
-                        private final GenericDeclaration genericDeclaration;
+                        private final TypeVariable<?> typeVariable;
 
-                        private final int index;
-
-                        protected AnnotatedTypeVariableType(GenericDeclaration genericDeclaration, int index) {
-                            this.genericDeclaration = genericDeclaration;
-                            this.index = index;
+                        protected AnnotatedTypeVariableType(TypeVariable<?> typeVariable) {
+                            this.typeVariable = typeVariable;
                         }
 
                         @Override
                         public AnnotatedElement resolve() {
-                            return (AnnotatedElement) genericDeclaration.getTypeParameters()[index];
+                            return (AnnotatedElement) typeVariable;
+                        }
+
+                        @Override
+                        public AnnotationReader ofTypeVariableBoundType(int index) {
+                            return new ForTypeVariableBoundType.OfFormalVariable(typeVariable, index);
                         }
                     }
 
@@ -2335,8 +2325,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     Method getAnnotatedUpperBounds;
                     try {
                         getAnnotatedUpperBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedUpperBounds");
-                    } catch (RuntimeException excetion) {
-                        throw excetion;
+                    } catch (RuntimeException exception) {
+                        throw exception;
                     } catch (Exception exception) {
                         getAnnotatedUpperBounds = null;
                     }
@@ -2376,8 +2366,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     Method getAnnotatedLowerBounds;
                     try {
                         getAnnotatedLowerBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedLowerBounds");
-                    } catch (RuntimeException excetion) {
-                        throw excetion;
+                    } catch (RuntimeException exception) {
+                        throw exception;
                     } catch (Exception exception) {
                         getAnnotatedLowerBounds = null;
                     }
@@ -2410,9 +2400,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 static {
                     Method getAnnotatedBounds;
                     try {
-                        getAnnotatedBounds = TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
-                    } catch (RuntimeException excetion) {
-                        throw excetion;
+                        getAnnotatedBounds = Class.forName("java.lang.reflect.AnnotatedTypeVariable").getDeclaredMethod("getAnnotatedBounds");
+                    } catch (RuntimeException exception) {
+                        throw exception;
                     } catch (Exception exception) {
                         getAnnotatedBounds = null;
                     }
@@ -2431,9 +2421,46 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement), index);
                     } catch (IllegalAccessException exception) {
-                        throw new IllegalStateException("Cannot access java.lang.reflect.TypeVariable#getAnnotatedBounds", exception);
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds", exception);
                     } catch (InvocationTargetException exception) {
-                        throw new IllegalStateException("Error invoking java.lang.reflect.TypeVariable#getAnnotatedBounds", exception.getCause());
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds", exception.getCause());
+                    }
+                }
+
+                protected static class OfFormalVariable extends Delegator {
+
+                    private static final Method GET_ANNOTATED_BOUNDS;
+
+                    static {
+                        Method getAnnotatedBounds;
+                        try {
+                            getAnnotatedBounds = TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
+                        } catch (RuntimeException exception) {
+                            throw exception;
+                        } catch (Exception exception) {
+                            getAnnotatedBounds = null;
+                        }
+                        GET_ANNOTATED_BOUNDS = getAnnotatedBounds;
+                    }
+
+                    private final TypeVariable<?> typeVariable;
+
+                    private final int index;
+
+                    protected OfFormalVariable(TypeVariable<?> typeVariable, int index) {
+                        this.typeVariable = typeVariable;
+                        this.index = index;
+                    }
+
+                    @Override
+                    public AnnotatedElement resolve() {
+                        try {
+                            return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable), index);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access java.lang.reflect.TypeVariable#getAnnotatedBounds", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.reflect.TypeVariable#getAnnotatedBounds", exception.getCause());
+                        }
                     }
                 }
             }
@@ -2446,8 +2473,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     Method getAnnotatedActualTypeArguments;
                     try {
                         getAnnotatedActualTypeArguments = Class.forName("java.lang.reflect.AnnotatedParameterizedType").getDeclaredMethod("getAnnotatedActualTypeArguments");
-                    } catch (RuntimeException excetion) {
-                        throw excetion;
+                    } catch (RuntimeException exception) {
+                        throw exception;
                     } catch (Exception exception) {
                         getAnnotatedActualTypeArguments = null;
                     }
@@ -2481,8 +2508,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     Method getAnnotatedGenericComponentType;
                     try {
                         getAnnotatedGenericComponentType = Class.forName("java.lang.reflect.AnnotatedArrayType").getDeclaredMethod("getAnnotatedGenericComponentType");
-                    } catch (RuntimeException excetion) {
-                        throw excetion;
+                    } catch (RuntimeException exception) {
+                        throw exception;
                     } catch (Exception exception) {
                         getAnnotatedGenericComponentType = null;
                     }
@@ -3136,7 +3163,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     private final AnnotationReader annotationReader;
 
-                    public WildcardUpperBoundTypeList(java.lang.reflect.Type[] upperBound, AnnotationReader annotationReader) {
+                    protected WildcardUpperBoundTypeList(java.lang.reflect.Type[] upperBound, AnnotationReader annotationReader) {
                         this.upperBound = upperBound;
                         this.annotationReader = annotationReader;
                     }

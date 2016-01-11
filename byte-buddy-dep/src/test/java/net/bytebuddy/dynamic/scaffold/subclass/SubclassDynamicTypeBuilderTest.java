@@ -5,7 +5,6 @@ import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -18,7 +17,6 @@ import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.scope.GenericType;
 import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -381,13 +379,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(foo.getGenericExceptionTypes()[0], is((Type) foo.getTypeParameters()[1]));
         Method call = dynamicType.getDeclaredMethod("call");
         assertThat(call.getGenericReturnType(), is(((ParameterizedType) GenericType.Inner.class.getGenericInterfaces()[0]).getActualTypeArguments()[0]));
-    }
-
-    @Test
-    public void testFoo() throws Exception {
-        TypeDescription.Generic returnType = new TypeDescription.ForLoadedType(GenericType.Inner.class).getDeclaredMethods()
-                .filter(named("call").and(ElementMatchers.not(ElementMatchers.isSynthetic()))).getOnly().getReturnType();
-        System.out.println(returnType);
     }
 
     @Test
