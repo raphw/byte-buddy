@@ -360,7 +360,7 @@ public interface DynamicType {
          * @param symbol The type variable's symbol.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
-        Builder<T> typeVariable(String symbol);
+        TypeVariableDefinition<T> typeVariable(String symbol);
 
         /**
          * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
@@ -370,7 +370,7 @@ public interface DynamicType {
          *               should be equal to the currently instrumented type.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
-        Builder<T> typeVariable(String symbol, Type... bound);
+        TypeVariableDefinition<T> typeVariable(String symbol, Type... bound);
 
         /**
          * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
@@ -380,7 +380,7 @@ public interface DynamicType {
          *               should be equal to the currently instrumented type.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
-        Builder<T> typeVariable(String symbol, List<? extends Type> bounds);
+        TypeVariableDefinition<T> typeVariable(String symbol, List<? extends Type> bounds);
 
         /**
          * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
@@ -390,7 +390,7 @@ public interface DynamicType {
          *               should be equal to the currently instrumented type.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
-        Builder<T> typeVariable(String symbol, TypeDefinition... bound);
+        TypeVariableDefinition<T> typeVariable(String symbol, TypeDefinition... bound);
 
         /**
          * Defines the supplied type variable with the given bound as a type variable of the instrumented type.
@@ -400,7 +400,7 @@ public interface DynamicType {
          *               should be equal to the currently instrumented type.
          * @return A new builder that is equal to this builder but with the given type variable defined for the instrumented type.
          */
-        Builder<T> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
+        TypeVariableDefinition<T> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
 
         /**
          * Defines the specified field as a field of the built dynamic type.
@@ -797,6 +797,35 @@ public interface DynamicType {
          * @return An unloaded dynamic type represesenting the type specified by this builder.
          */
         DynamicType.Unloaded<T> make();
+
+        interface TypeVariableDefinition<S> extends Builder<S> {
+
+            TypeVariableDefinition<S> annotateTypeVariable(Annotation... annotation);
+
+            TypeVariableDefinition<S> annotateTypeVariable(List<? extends Annotation> annotations);
+
+            TypeVariableDefinition<S> annotateTypeVariable(AnnotationDescription... annotation);
+
+            TypeVariableDefinition<S> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations);
+
+            abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements TypeVariableDefinition<U> {
+
+                @Override
+                public TypeVariableDefinition<U> annotateTypeVariable(Annotation... annotation) {
+                    return annotateTypeVariable(Arrays.asList(annotation));
+                }
+
+                @Override
+                public TypeVariableDefinition<U> annotateTypeVariable(List<? extends Annotation> annotations) {
+                    return annotateTypeVariable(new AnnotationList.ForLoadedAnnotations(annotations));
+                }
+
+                @Override
+                public TypeVariableDefinition<U> annotateTypeVariable(AnnotationDescription... annotation) {
+                    return annotateTypeVariable(Arrays.asList(annotation));
+                }
+            }
+        }
 
         /**
          * A builder for a field definition.
@@ -1284,7 +1313,7 @@ public interface DynamicType {
                  * @param symbol The symbol of the type variable.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
-                TypeVariableDefinition<U> typeVariable(String symbol);
+                Annotatable<U> typeVariable(String symbol);
 
                 /**
                  * Defines a method variable to be declared by the currently defined method.
@@ -1294,7 +1323,7 @@ public interface DynamicType {
                  *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
-                TypeVariableDefinition<U> typeVariable(String symbol, Type... bound);
+                Annotatable<U> typeVariable(String symbol, Type... bound);
 
                 /**
                  * Defines a method variable to be declared by the currently defined method.
@@ -1304,7 +1333,7 @@ public interface DynamicType {
                  *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
-                TypeVariableDefinition<U> typeVariable(String symbol, List<? extends Type> bounds);
+                Annotatable<U> typeVariable(String symbol, List<? extends Type> bounds);
 
                 /**
                  * Defines a method variable to be declared by the currently defined method.
@@ -1314,7 +1343,7 @@ public interface DynamicType {
                  *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
-                TypeVariableDefinition<U> typeVariable(String symbol, TypeDefinition... bound);
+                Annotatable<U> typeVariable(String symbol, TypeDefinition... bound);
 
                 /**
                  * Defines a method variable to be declared by the currently defined method.
@@ -1324,7 +1353,77 @@ public interface DynamicType {
                  *               if a bound type should be equal to the currently instrumented type.
                  * @return A new builder that is equal to the current builder but where the currently defined method declares the specified type variable.
                  */
-                TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
+                Annotatable<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
+
+                interface Annotatable<V> extends TypeVariableDefinition<V> {
+
+                    Annotatable<V> annotateTypeVariable(Annotation... annotation);
+
+                    Annotatable<V> annotateTypeVariable(List<? extends Annotation> annotations);
+
+                    Annotatable<V> annotateTypeVariable(AnnotationDescription... annotation);
+
+                    Annotatable<V> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations);
+
+                    /**
+                     * An abstract base implementation for defining an annotation on a parameter.
+                     *
+                     * @param <W> A loaded type that the built type is guaranteed to be a subclass of.
+                     */
+                    abstract class AbstractBase<W> extends TypeVariableDefinition.AbstractBase<W> implements Annotatable<W> {
+
+                        @Override
+                        public TypeVariableDefinition.Annotatable<W> annotateTypeVariable(Annotation... annotation) {
+                            return annotateTypeVariable(Arrays.asList(annotation));
+                        }
+
+                        @Override
+                        public TypeVariableDefinition.Annotatable<W> annotateTypeVariable(List<? extends Annotation> annotations) {
+                            return annotateTypeVariable(new AnnotationList.ForLoadedAnnotations(annotations));
+                        }
+
+                        @Override
+                        public TypeVariableDefinition.Annotatable<W> annotateTypeVariable(AnnotationDescription... annotation) {
+                            return annotateTypeVariable(Arrays.asList(annotation));
+                        }
+
+                        protected abstract static class Adapter<X> extends TypeVariableDefinition.Annotatable.AbstractBase<X> {
+
+                            @Override
+                            public TypeVariableDefinition.Annotatable<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                                return materialize().typeVariable(symbol, bounds);
+                            }
+
+                            @Override
+                            public MethodDefinition<X> intercept(Implementation implementation) {
+                                return materialize().intercept(implementation);
+                            }
+
+                            @Override
+                            public MethodDefinition<X> withoutCode() {
+                                return materialize().withoutCode();
+                            }
+
+                            @Override
+                            public MethodDefinition<X> defaultValue(Object value) {
+                                return materialize().defaultValue(value);
+                            }
+
+                            @Override
+                            public MethodDefinition<X> defaultValue(Object value, Class<?> type) {
+                                return materialize().defaultValue(value, type);
+                            }
+
+                            /**
+                             * Materializes this instance as a parameter definition with the currently defined properties.
+                             *
+                             * @return A parameter definition with the currently defined properties.
+                             */
+                            protected abstract MethodDefinition.ParameterDefinition<X> materialize();
+                        }
+
+                    }
+                }
 
                 /**
                  * An abstract base implementation for defining an implementation of a method and optionally definign a type variable.
@@ -1334,22 +1433,22 @@ public interface DynamicType {
                 abstract class AbstractBase<V> extends ImplementationDefinition.AbstractBase<V> implements TypeVariableDefinition<V> {
 
                     @Override
-                    public TypeVariableDefinition<V> typeVariable(String symbol) {
+                    public Annotatable<V> typeVariable(String symbol) {
                         return typeVariable(symbol, Collections.<TypeDefinition>emptyList());
                     }
 
                     @Override
-                    public TypeVariableDefinition<V> typeVariable(String symbol, Type... bound) {
+                    public Annotatable<V> typeVariable(String symbol, Type... bound) {
                         return typeVariable(symbol, Arrays.asList(bound));
                     }
 
                     @Override
-                    public TypeVariableDefinition<V> typeVariable(String symbol, List<? extends Type> bounds) {
+                    public Annotatable<V> typeVariable(String symbol, List<? extends Type> bounds) {
                         return typeVariable(symbol, new TypeList.Generic.ForLoadedTypes(bounds));
                     }
 
                     @Override
-                    public TypeVariableDefinition<V> typeVariable(String symbol, TypeDefinition... bound) {
+                    public Annotatable<V> typeVariable(String symbol, TypeDefinition... bound) {
                         return typeVariable(symbol, Arrays.asList(bound));
                     }
                 }
@@ -1542,17 +1641,17 @@ public interface DynamicType {
                     abstract class AbstractBase<W> extends ParameterDefinition.AbstractBase<W> implements Annotatable<W> {
 
                         @Override
-                        public Annotatable<W> annotateParameter(Annotation... annotation) {
+                        public ParameterDefinition.Annotatable<W> annotateParameter(Annotation... annotation) {
                             return annotateParameter(Arrays.asList(annotation));
                         }
 
                         @Override
-                        public Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
+                        public ParameterDefinition.Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
                             return annotateParameter(new AnnotationList.ForLoadedAnnotations(annotations));
                         }
 
                         @Override
-                        public Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
+                        public ParameterDefinition.Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
                             return annotateParameter(Arrays.asList(annotation));
                         }
 
@@ -1561,20 +1660,20 @@ public interface DynamicType {
                          *
                          * @param <X> A loaded type that the built type is guaranteed to be a subclass of.
                          */
-                        protected abstract static class Adapter<X> extends Annotatable.AbstractBase<X> {
+                        protected abstract static class Adapter<X> extends ParameterDefinition.Annotatable.AbstractBase<X> {
 
                             @Override
-                            public Annotatable<X> withParameter(TypeDefinition type, String name, int modifiers) {
+                            public ParameterDefinition.Annotatable<X> withParameter(TypeDefinition type, String name, int modifiers) {
                                 return materialize().withParameter(type, name, modifiers);
                             }
 
                             @Override
-                            public MethodDefinition.ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
+                            public ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
                                 return materialize().throwing(types);
                             }
 
                             @Override
-                            public MethodDefinition.TypeVariableDefinition<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                            public TypeVariableDefinition.Annotatable<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                                 return materialize().typeVariable(symbol, bounds);
                             }
 
@@ -1681,20 +1780,20 @@ public interface DynamicType {
                          *
                          * @param <W> A loaded type that the built type is guaranteed to be a subclass of.
                          */
-                        abstract class AbstractBase<W> extends ParameterDefinition.Simple.AbstractBase<W> implements Annotatable<W> {
+                        abstract class AbstractBase<W> extends Simple.AbstractBase<W> implements Annotatable<W> {
 
                             @Override
-                            public Annotatable<W> annotateParameter(Annotation... annotation) {
+                            public Simple.Annotatable<W> annotateParameter(Annotation... annotation) {
                                 return annotateParameter(Arrays.asList(annotation));
                             }
 
                             @Override
-                            public Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
+                            public Simple.Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
                                 return annotateParameter(new AnnotationList.ForLoadedAnnotations(annotations));
                             }
 
                             @Override
-                            public Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
+                            public Simple.Annotatable<W> annotateParameter(AnnotationDescription... annotation) {
                                 return annotateParameter(Arrays.asList(annotation));
                             }
 
@@ -1703,20 +1802,20 @@ public interface DynamicType {
                              *
                              * @param <X> A loaded type that the built type is guaranteed to be a subclass of.
                              */
-                            protected abstract static class Adapter<X> extends Annotatable.AbstractBase<X> {
+                            protected abstract static class Adapter<X> extends Simple.Annotatable.AbstractBase<X> {
 
                                 @Override
-                                public Annotatable<X> withParameter(TypeDefinition type) {
+                                public Simple.Annotatable<X> withParameter(TypeDefinition type) {
                                     return materialize().withParameter(type);
                                 }
 
                                 @Override
-                                public MethodDefinition.ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
+                                public ExceptionDefinition<X> throwing(Collection<? extends TypeDefinition> types) {
                                     return materialize().throwing(types);
                                 }
 
                                 @Override
-                                public MethodDefinition.TypeVariableDefinition<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                                public TypeVariableDefinition.Annotatable<X> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                                     return materialize().typeVariable(symbol, bounds);
                                 }
 
@@ -1758,7 +1857,7 @@ public interface DynamicType {
                     abstract class AbstractBase<W> extends ExceptionDefinition.AbstractBase<W> implements Simple<W> {
 
                         @Override
-                        public Annotatable<W> withParameter(Type type) {
+                        public Simple.Annotatable<W> withParameter(Type type) {
                             return withParameter(TypeDefinition.Sort.describe(type));
                         }
                     }
@@ -1856,27 +1955,27 @@ public interface DynamicType {
                 abstract class AbstractBase<V> extends ExceptionDefinition.AbstractBase<V> implements ParameterDefinition<V> {
 
                     @Override
-                    public Annotatable<V> withParameter(Type type, String name, ModifierContributor.ForParameter... modifierContributor) {
+                    public ParameterDefinition.Annotatable<V> withParameter(Type type, String name, ModifierContributor.ForParameter... modifierContributor) {
                         return withParameter(type, name, Arrays.asList(modifierContributor));
                     }
 
                     @Override
-                    public Annotatable<V> withParameter(Type type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors) {
+                    public ParameterDefinition.Annotatable<V> withParameter(Type type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors) {
                         return withParameter(type, name, ModifierContributor.Resolver.of(modifierContributors).resolve());
                     }
 
                     @Override
-                    public Annotatable<V> withParameter(Type type, String name, int modifiers) {
+                    public ParameterDefinition.Annotatable<V> withParameter(Type type, String name, int modifiers) {
                         return withParameter(TypeDefinition.Sort.describe(type), name, modifiers);
                     }
 
                     @Override
-                    public Annotatable<V> withParameter(TypeDefinition type, String name, ModifierContributor.ForParameter... modifierContributor) {
+                    public ParameterDefinition.Annotatable<V> withParameter(TypeDefinition type, String name, ModifierContributor.ForParameter... modifierContributor) {
                         return withParameter(type, name, Arrays.asList(modifierContributor));
                     }
 
                     @Override
-                    public Annotatable<V> withParameter(TypeDefinition type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors) {
+                    public ParameterDefinition.Annotatable<V> withParameter(TypeDefinition type, String name, Collection<? extends ModifierContributor.ForParameter> modifierContributors) {
                         return withParameter(type, name, ModifierContributor.Resolver.of(modifierContributors).resolve());
                     }
                 }
@@ -2048,22 +2147,22 @@ public interface DynamicType {
             }
 
             @Override
-            public Builder<S> typeVariable(String symbol) {
+            public TypeVariableDefinition<S> typeVariable(String symbol) {
                 return typeVariable(symbol, TypeDescription.Generic.OBJECT);
             }
 
             @Override
-            public Builder<S> typeVariable(String symbol, Type... bound) {
+            public TypeVariableDefinition<S> typeVariable(String symbol, Type... bound) {
                 return typeVariable(symbol, Arrays.asList(bound));
             }
 
             @Override
-            public Builder<S> typeVariable(String symbol, List<? extends Type> bounds) {
+            public TypeVariableDefinition<S> typeVariable(String symbol, List<? extends Type> bounds) {
                 return typeVariable(symbol, new TypeList.Generic.ForLoadedTypes(bounds));
             }
 
             @Override
-            public Builder<S> typeVariable(String symbol, TypeDefinition... bound) {
+            public TypeVariableDefinition<S> typeVariable(String symbol, TypeDefinition... bound) {
                 return typeVariable(symbol, Arrays.asList(bound));
             }
 
@@ -2263,7 +2362,7 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                public TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
                     return materialize().typeVariable(symbol, bounds);
                 }
 
@@ -2556,20 +2655,8 @@ public interface DynamicType {
                 }
 
                 @Override
-                public Builder<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
-                    return materialize(instrumentedType.withTypeVariable(new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)))),
-                            fieldRegistry,
-                            methodRegistry,
-                            typeAttributeAppender,
-                            asmVisitorWrapper,
-                            classFileVersion,
-                            auxiliaryTypeNamingStrategy,
-                            annotationValueFilterFactory,
-                            annotationRetention,
-                            implementationContextFactory,
-                            methodGraphCompiler,
-                            typeValidation,
-                            ignoredMethods);
+                public TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                    return new TypeVariableDefinitionAdapter(new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<>(bounds))));
                 }
 
                 @Override
@@ -2691,6 +2778,39 @@ public interface DynamicType {
                     result = 31 * result + typeValidation.hashCode();
                     result = 31 * result + ignoredMethods.hashCode();
                     return result;
+                }
+
+                protected class TypeVariableDefinitionAdapter extends TypeVariableDefinition.AbstractBase<U> {
+
+                    private final TypeVariableToken token;
+
+                    protected TypeVariableDefinitionAdapter(TypeVariableToken token) {
+                        this.token = token;
+                    }
+
+                    @Override
+                    public TypeVariableDefinition<U> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations) {
+                        return new TypeVariableDefinitionAdapter(new TypeVariableToken(token.getSymbol(),
+                                token.getBounds(),
+                                CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
+                    }
+
+                    @Override
+                    protected Builder<U> materialize() {
+                        return Adapter.this.materialize(instrumentedType.withTypeVariable(token),
+                                fieldRegistry,
+                                methodRegistry,
+                                typeAttributeAppender,
+                                asmVisitorWrapper,
+                                classFileVersion,
+                                auxiliaryTypeNamingStrategy,
+                                annotationValueFilterFactory,
+                                annotationRetention,
+                                implementationContextFactory,
+                                methodGraphCompiler,
+                                typeValidation,
+                                ignoredMethods);
+                    }
                 }
 
                 /**
@@ -2940,15 +3060,8 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition.TypeVariableDefinition<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
-                        return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
-                                token.getModifiers(),
-                                CompoundList.of(token.getTypeVariableTokens(), new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds)))),
-                                token.getReturnType(),
-                                token.getParameterTokens(),
-                                token.getExceptionTypes(),
-                                token.getAnnotations(),
-                                token.getDefaultValue()));
+                    public MethodDefinition.TypeVariableDefinition.Annotatable<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds) {
+                        return new TypeVariableAnnotationAdapter(new TypeVariableToken(symbol, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(bounds))));
                     }
 
                     @Override
@@ -3020,6 +3133,34 @@ public interface DynamicType {
                                 '}';
                     }
 
+                    protected class TypeVariableAnnotationAdapter extends MethodDefinition.TypeVariableDefinition.Annotatable.AbstractBase.Adapter<U> {
+
+                        private final TypeVariableToken token;
+
+                        protected TypeVariableAnnotationAdapter(TypeVariableToken token) {
+                            this.token = token;
+                        }
+
+                        @Override
+                        protected MethodDefinition.ParameterDefinition<U> materialize() {
+                            return new MethodDefinitionAdapter(new MethodDescription.Token(MethodDefinitionAdapter.this.token.getName(),
+                                    MethodDefinitionAdapter.this.token.getModifiers(),
+                                    CompoundList.of(MethodDefinitionAdapter.this.token.getTypeVariableTokens(), token),
+                                    MethodDefinitionAdapter.this.token.getReturnType(),
+                                    MethodDefinitionAdapter.this.token.getParameterTokens(),
+                                    MethodDefinitionAdapter.this.token.getExceptionTypes(),
+                                    MethodDefinitionAdapter.this.token.getAnnotations(),
+                                    MethodDefinitionAdapter.this.token.getDefaultValue()));
+                        }
+
+                        @Override
+                        public Annotatable<U> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations) {
+                            return new TypeVariableAnnotationAdapter(new TypeVariableToken(token.getSymbol(),
+                                    token.getBounds(),
+                                    CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
+                        }
+                    }
+
                     /**
                      * An annotation adapter for a parameter definition.
                      */
@@ -3040,7 +3181,7 @@ public interface DynamicType {
                         }
 
                         @Override
-                        public Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
+                        public MethodDefinition.ParameterDefinition.Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
                             return new ParameterAnnotationAdapter(new ParameterDescription.Token(token.getType(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
                                     token.getName(),
@@ -3110,7 +3251,7 @@ public interface DynamicType {
                         }
 
                         @Override
-                        public Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
+                        public MethodDefinition.ParameterDefinition.Simple.Annotatable<U> annotateParameter(Collection<? extends AnnotationDescription> annotations) {
                             return new SimpleParameterAnnotationAdapter(new ParameterDescription.Token(token.getType(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
                                     token.getName(),
