@@ -25,8 +25,23 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     }
 
     @Override
-    protected TypeDescription.Generic describeParameterType(Method method) {
-        return TypeDefinition.Sort.describe(method.getGenericParameterTypes()[0]);
+    protected TypeDescription.Generic describeParameterType(Method method, int index) {
+        return TypeDefinition.Sort.describe(method.getGenericParameterTypes()[index]);
+    }
+
+    @Override
+    protected TypeDescription.Generic describeExceptionType(Method method, int index) {
+        return TypeDefinition.Sort.describe(method.getGenericExceptionTypes()[index]);
+    }
+
+    @Override
+    protected TypeDescription.Generic describeSuperType(Class<?> type) {
+        return TypeDefinition.Sort.describe(type.getGenericSuperclass());
+    }
+
+    @Override
+    protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
+        return TypeDefinition.Sort.describe(type.getGenericInterfaces()[index]);
     }
 
     @Test(expected = IllegalArgumentException.class)

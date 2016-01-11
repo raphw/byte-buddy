@@ -25,8 +25,23 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     }
 
     @Override
-    protected TypeDescription.Generic describeParameterType(Method method) {
-        return describe(method.getGenericParameterTypes()[0]).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
+    protected TypeDescription.Generic describeParameterType(Method method, int index) {
+        return describe(method.getGenericParameterTypes()[index]).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
+    }
+
+    @Override
+    protected TypeDescription.Generic describeExceptionType(Method method, int index) {
+        return describe(method.getExceptionTypes()[index]).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
+    }
+
+    @Override
+    protected TypeDescription.Generic describeSuperType(Class<?> type) {
+        return describe(type.getGenericSuperclass()).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new TypeDescription.ForLoadedType(type)));
+    }
+
+    @Override
+    protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
+        return describe(type.getGenericInterfaces()[0]).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new TypeDescription.ForLoadedType(type)));
     }
 
     @Test(expected = IllegalArgumentException.class)

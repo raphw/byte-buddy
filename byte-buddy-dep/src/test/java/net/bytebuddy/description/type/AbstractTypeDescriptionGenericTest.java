@@ -46,7 +46,13 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     protected abstract TypeDescription.Generic describeReturnType(Method method);
 
-    protected abstract TypeDescription.Generic describeParameterType(Method method);
+    protected abstract TypeDescription.Generic describeParameterType(Method method, int index);
+
+    protected abstract TypeDescription.Generic describeExceptionType(Method method, int index);
+
+    protected abstract TypeDescription.Generic describeSuperType(Class<?> type);
+
+    protected abstract TypeDescription.Generic describeInterfaceType(Class<?> type, int index);
 
     @Test(expected = IllegalStateException.class)
     public void testNonGenericTypeNoOwnerType() throws Exception {
@@ -1278,7 +1284,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
         Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
-        TypeDescription.Generic parameterType = describeParameterType(samples.getDeclaredMethod(FOO, Exception[][].class));
+        TypeDescription.Generic parameterType = describeParameterType(samples.getDeclaredMethod(FOO, Exception[][].class), 0);
         assertThat(parameterType.getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(parameterType.getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
@@ -1291,6 +1297,47 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(23));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeAnnotationsSuperType() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
+        TypeDescription.Generic superType = describeSuperType(samples);
+        assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superType.getDeclaredAnnotations().size(), is(1));
+        assertThat(superType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(superType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(12));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeAnnotationsInterfaceType() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
+        TypeDescription.Generic firstInterfaceType = describeInterfaceType(samples, 0);
+        assertThat(firstInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(firstInterfaceType.getDeclaredAnnotations().size(), is(1));
+        assertThat(firstInterfaceType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(firstInterfaceType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(13));
+        assertThat(firstInterfaceType.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(14));
+        TypeDescription.Generic secondInterfaceType = describeInterfaceType(samples, 1);
+        assertThat(secondInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(secondInterfaceType.getDeclaredAnnotations().size(), is(0));
+        assertThat(secondInterfaceType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().size(), is(1));
+        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(15));
+        assertThat(secondInterfaceType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(secondInterfaceType.getParameters().get(1).getDeclaredAnnotations().size(), is(0));
     }
 
     @SuppressWarnings("unused")

@@ -23,7 +23,22 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
     }
 
     @Override
-    protected TypeDescription.Generic describeParameterType(Method method) {
-        return new MethodDescription.ForLoadedMethod(method).getParameters().getOnly().getType();
+    protected TypeDescription.Generic describeParameterType(Method method, int index) {
+        return new MethodDescription.ForLoadedMethod(method).getParameters().get(index).getType();
+    }
+
+    @Override
+    protected TypeDescription.Generic describeExceptionType(Method method, int index) {
+        return new MethodDescription.ForLoadedMethod(method).getExceptionTypes().get(index);
+    }
+
+    @Override
+    protected TypeDescription.Generic describeSuperType(Class<?> type) {
+        return new TypeDescription.ForLoadedType(type).getSuperType();
+    }
+
+    @Override
+    protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
+        return new TypeDescription.ForLoadedType(type).getInterfaces().get(index);
     }
 }

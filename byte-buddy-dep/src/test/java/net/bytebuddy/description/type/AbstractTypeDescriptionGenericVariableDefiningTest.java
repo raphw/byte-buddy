@@ -42,7 +42,6 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @SuppressWarnings("unchecked")
     public void testTypeVariableS() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
-        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
         TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
         TypeDescription.Generic t = typeDescription.getTypeVariables().filter(named(S)).getOnly();
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
