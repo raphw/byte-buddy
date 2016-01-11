@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 
 import java.lang.reflect.Field;
@@ -14,7 +15,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     protected TypeDescription.Generic describeType(Field field) {
-        return TypeDefinition.Sort.describe(field.getGenericType());
+        return new FieldDescription.ForLoadedField(field).getType();
     }
 
     @Override

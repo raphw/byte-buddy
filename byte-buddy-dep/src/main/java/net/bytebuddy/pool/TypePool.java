@@ -4199,6 +4199,11 @@ public interface TypePool {
                     }
 
                     @Override
+                    public Generic getComponentType() {
+                        return UNDEFINED;
+                    }
+
+                    @Override
                     public AnnotationList getDeclaredAnnotations() {
                         return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                     }
@@ -4357,27 +4362,39 @@ public interface TypePool {
 
                         private final TypePool typePool;
 
+                        private final String typePath;
+
                         private final Map<String, List<AnnotationToken>> annotationTokens;
 
-                        private final String descriptor;
+                        private final TypeDescription typeDescription;
 
-                        protected RawAnnotatedType(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
+                        protected RawAnnotatedType(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens, TypeDescription typeDescription) {
                             this.typePool = typePool;
+                            this.typePath = typePath;
                             this.annotationTokens = annotationTokens;
-                            this.descriptor = descriptor;
+                            this.typeDescription = typeDescription;
                         }
 
                         protected static Generic of(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
                             return new RawAnnotatedType(typePool,
+                                    "", // TODO
                                     annotationTokens == null
                                             ? Collections.emptyMap()
                                             : annotationTokens,
-                                    descriptor);
+                                    TokenizedGenericType.toErasure(typePool, descriptor));
                         }
 
                         @Override
                         public TypeDescription asErasure() {
-                            return TokenizedGenericType.toErasure(typePool, descriptor);
+                            return typeDescription;
+                        }
+
+                        @Override
+                        public Generic getComponentType() {
+                            TypeDescription componentType = typeDescription.getComponentType();
+                            return componentType == null
+                                    ? UNDEFINED
+                                    : new RawAnnotatedType(typePool, typePath + '[', annotationTokens, componentType); // TODO
                         }
 
                         @Override
@@ -4895,7 +4912,7 @@ public interface TypePool {
                             annotationTokens == null
                                     ? Collections.emptyMap()
                                     : annotationTokens,
-                            name);
+                            typePool.describe(name).resolve());
                 }
 
                 @Override
@@ -4923,21 +4940,26 @@ public interface TypePool {
 
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
-                    /**
-                     * The name of the represented type.
-                     */
-                    private final String name;
+                    private final TypeDescription typeDescription;
 
-                    public LazyNonGenericType(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens, String name) {
+                    public LazyNonGenericType(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens, TypeDescription typeDescription) {
                         this.typePool = typePool;
                         this.typePath = typePath;
                         this.annotationTokens = annotationTokens;
-                        this.name = name;
+                        this.typeDescription = typeDescription;
                     }
 
                     @Override
                     public TypeDescription asErasure() {
-                        return typePool.describe(name).resolve();
+                        return typeDescription;
+                    }
+
+                    @Override
+                    public Generic getComponentType() {
+                        TypeDescription componentType = typeDescription.getComponentType();
+                        return componentType == null
+                                ? UNDEFINED
+                                : new LazyNonGenericType(typePool, typePath + '[', annotationTokens, componentType); // TODO
                     }
 
                     @Override
