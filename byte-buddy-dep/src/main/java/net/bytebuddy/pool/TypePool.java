@@ -4780,7 +4780,7 @@ public interface TypePool {
                     if (typeVariable == null) {
                         throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + typeVariableSource);
                     } else {
-                        return typeVariable;
+                        return new AnnotatedTypeVariable(typePool, annotationTokens.get(typePath), typeVariable);
                     }
                 }
 
@@ -4799,6 +4799,41 @@ public interface TypePool {
                     return "TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable{" +
                             "symbol='" + symbol + '\'' +
                             '}';
+                }
+
+                protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
+
+                    private final TypePool typePool;
+
+                    private final List<AnnotationToken> annotationTokens;
+
+                    private final Generic typeVariable;
+
+                    protected AnnotatedTypeVariable(TypePool typePool, List<AnnotationToken> annotationTokens, Generic typeVariable) {
+                        this.typePool = typePool;
+                        this.annotationTokens = annotationTokens;
+                        this.typeVariable = typeVariable;
+                    }
+
+                    @Override
+                    public TypeList.Generic getUpperBounds() {
+                        return typeVariable.getUpperBounds();
+                    }
+
+                    @Override
+                    public TypeVariableSource getVariableSource() {
+                        return typeVariable.getVariableSource();
+                    }
+
+                    @Override
+                    public String getSymbol() {
+                        return typeVariable.getSymbol();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
+                    }
                 }
 
                 /**

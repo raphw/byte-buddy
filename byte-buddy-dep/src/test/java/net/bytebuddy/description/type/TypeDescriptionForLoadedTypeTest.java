@@ -13,12 +13,17 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
     }
 
     @Override
-    protected TypeDescription.Generic describe(Field field) {
+    protected TypeDescription.Generic describeType(Field field) {
         return TypeDefinition.Sort.describe(field.getGenericType());
     }
 
     @Override
-    protected TypeDescription.Generic describe(Method method) {
+    protected TypeDescription.Generic describeReturnType(Method method) {
         return new MethodDescription.ForLoadedMethod(method).getReturnType();
+    }
+
+    @Override
+    protected TypeDescription.Generic describeParameterType(Method method) {
+        return new MethodDescription.ForLoadedMethod(method).getParameters().getOnly().getType();
     }
 }

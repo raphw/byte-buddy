@@ -24,12 +24,17 @@ public class TypePoolLazyFacadeTypeDescriptionTest extends AbstractTypeDescripti
     }
 
     @Override
-    protected TypeDescription.Generic describe(Field field) {
+    protected TypeDescription.Generic describeType(Field field) {
         return describe(field.getDeclaringClass()).getDeclaredFields().filter(is(field)).getOnly().getType();
     }
 
     @Override
-    protected TypeDescription.Generic describe(Method method) {
+    protected TypeDescription.Generic describeReturnType(Method method) {
         return describe(method.getDeclaringClass()).getDeclaredMethods().filter(is(method)).getOnly().getReturnType();
+    }
+
+    @Override
+    protected TypeDescription.Generic describeParameterType(Method method) {
+        return describe(method.getDeclaringClass()).getDeclaredMethods().filter(is(method)).getOnly().getParameters().getOnly().getType();
     }
 }

@@ -15,13 +15,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGenericTest {
 
     @Override
-    protected TypeDescription.Generic describe(Field field) {
+    protected TypeDescription.Generic describeType(Field field) {
         return describe(field.getGenericType()).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new FieldDescription.ForLoadedField(field)));
     }
 
     @Override
-    protected TypeDescription.Generic describe(Method method) {
+    protected TypeDescription.Generic describeReturnType(Method method) {
         return describe(method.getGenericReturnType()).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
+    }
+
+    @Override
+    protected TypeDescription.Generic describeParameterType(Method method) {
+        return describe(method.getGenericParameterTypes()[0]).accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
     @Test(expected = IllegalArgumentException.class)
