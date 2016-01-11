@@ -783,7 +783,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForLoadedTypes(constructor.getTypeParameters());
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(constructor);
         }
     }
 
@@ -900,7 +900,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForLoadedTypes(method.getTypeParameters());
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(method);
         }
     }
 

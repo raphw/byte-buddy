@@ -1902,11 +1902,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             interface Dispatcher {
 
+                AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable);
+
+                AnnotationReader resolveTypeVariable(GenericDeclaration genericDeclaration, int index);
+
                 AnnotationReader resolveSuperType(Class<?> type);
 
                 AnnotationReader resolveInterface(Class<?> type, int index);
-
-                AnnotationReader resolveTypeVariable(Class<?> type, int index);
 
                 AnnotationReader resolve(Field field);
 
@@ -1921,17 +1923,22 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     INSTANCE;
 
                     @Override
+                    public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveTypeVariable(GenericDeclaration genericDeclaration, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
                     public AnnotationReader resolveSuperType(Class<?> type) {
                         return NoOp.INSTANCE;
                     }
 
                     @Override
                     public AnnotationReader resolveInterface(Class<?> type, int index) {
-                        return NoOp.INSTANCE;
-                    }
-
-                    @Override
-                    public AnnotationReader resolveTypeVariable(Class<?> type, int index) {
                         return NoOp.INSTANCE;
                     }
 
@@ -2002,6 +2009,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
+                    public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
+                        return new Resolved((AnnotatedElement) typeVariable);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveTypeVariable(GenericDeclaration genericDeclaration, int index) {
+                        return new AnnotatedTypeVariableType(genericDeclaration, index);
+                    }
+
+                    @Override
                     public AnnotationReader resolveSuperType(Class<?> type) {
                         return new AnnotatedSuperType(type);
                     }
@@ -2009,11 +2026,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public AnnotationReader resolveInterface(Class<?> type, int index) {
                         return new AnnotatedInterfaceType(type, index);
-                    }
-
-                    @Override
-                    public AnnotationReader resolveTypeVariable(Class<?> type, int index) {
-                        return new AnnotatedTypeVariableType(type, index);
                     }
 
                     @Override
@@ -2034,6 +2046,37 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
                         return new AnnotatedExceptionType(executable, index);
+                    }
+
+                    protected static class Resolved extends Delegator {
+
+                        private final AnnotatedElement annotatedElement;
+
+                        protected Resolved(AnnotatedElement annotatedElement) {
+                            this.annotatedElement = annotatedElement;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            return annotatedElement;
+                        }
+                    }
+
+                    protected static class AnnotatedTypeVariableType extends Delegator {
+
+                        private final GenericDeclaration genericDeclaration;
+
+                        private final int index;
+
+                        protected AnnotatedTypeVariableType(GenericDeclaration genericDeclaration, int index) {
+                            this.genericDeclaration = genericDeclaration;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            return (AnnotatedElement) genericDeclaration.getTypeParameters()[index];
+                        }
                     }
 
                     protected class AnnotatedSuperType extends Delegator {
@@ -2076,23 +2119,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             } catch (InvocationTargetException exception) {
                                 throw new IllegalStateException("Error invoking xxx", exception.getCause());
                             }
-                        }
-                    }
-
-                    protected class AnnotatedTypeVariableType extends Delegator {
-
-                        private final Class<?> type;
-
-                        private final int index;
-
-                        protected AnnotatedTypeVariableType(Class<?> type, int index) {
-                            this.type = type;
-                            this.index = index;
-                        }
-
-                        @Override
-                        public AnnotatedElement resolve() {
-                            return (AnnotatedElement) type.getTypeParameters()[index];
                         }
                     }
 
@@ -3056,13 +3082,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public TypeList.Generic getLowerBounds() {
-                    return new WildcardUpperBoundTypeList(wildcardType.getLowerBounds(), annotationReader);
+                public TypeList.Generic getUpperBounds() {
+                    return new WildcardUpperBoundTypeList(wildcardType.getUpperBounds(), annotationReader);
                 }
 
                 @Override
-                public TypeList.Generic getUpperBounds() {
-                    return new WildcardLowerBoundTypeList(wildcardType.getUpperBounds(), annotationReader);
+                public TypeList.Generic getLowerBounds() {
+                    return new WildcardLowerBoundTypeList(wildcardType.getLowerBounds(), annotationReader);
                 }
 
                 @Override
@@ -5268,7 +5294,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForLoadedTypes(type.getTypeParameters());
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(type);
         }
 
         @Override

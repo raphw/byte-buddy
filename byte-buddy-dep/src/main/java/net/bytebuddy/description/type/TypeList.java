@@ -13,7 +13,9 @@ import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -361,6 +363,34 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             @Override
             public int size() {
                 return types.size();
+            }
+
+            public static class OfTypeVariables extends Generic.AbstractBase {
+
+                private final List<TypeVariable<?>> typeVariables;
+
+                protected OfTypeVariables(TypeVariable<?>... typeVariable) {
+                    this(Arrays.asList(typeVariable));
+                }
+
+                protected OfTypeVariables(List<TypeVariable<?>> typeVariables) {
+                    this.typeVariables = typeVariables;
+                }
+
+                public static Generic of(GenericDeclaration genericDeclaration) {
+                    return new OfTypeVariables(genericDeclaration.getTypeParameters());
+                }
+
+                @Override
+                public TypeDescription.Generic get(int index) {
+                    TypeVariable<?> typeVariable = typeVariables.get(index);
+                    return TypeDefinition.Sort.describe(typeVariable, TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(typeVariable));
+                }
+
+                @Override
+                public int size() {
+                    return typeVariables.size();
+                }
             }
         }
 
