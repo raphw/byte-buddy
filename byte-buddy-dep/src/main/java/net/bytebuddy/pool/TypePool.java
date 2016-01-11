@@ -345,7 +345,9 @@ public interface TypePool {
             }
             if (arity > 0) {
                 String primitiveName = PRIMITIVE_DESCRIPTORS.get(name);
-                name = primitiveName == null ? name.substring(1, name.length() - 1) : primitiveName;
+                name = primitiveName == null
+                        ? name.substring(1, name.length() - 1)
+                        : primitiveName;
             }
             TypeDescription typeDescription = PRIMITIVE_TYPES.get(name);
             Resolution resolution = typeDescription == null
@@ -5029,12 +5031,7 @@ public interface TypePool {
 
                         @Override
                         public TypeList.Generic getUpperBounds() {
-                            return new LazyBoundTokenList(typePool,
-                                    typeVariableSource,
-                                    boundaryAnnotationTokens == null
-                                            ? Collections.emptyMap()
-                                            : boundaryAnnotationTokens,
-                                    boundTypeTokens);
+                            return new LazyBoundTokenList(typePool, typeVariableSource,boundaryAnnotationTokens, boundTypeTokens);
                         }
 
                         @Override
@@ -5107,13 +5104,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyGenericArray(typePool,
-                            typeVariableSource,
-                            typePath,
-                            annotationTokens == null
-                                    ? Collections.emptyMap()
-                                    : annotationTokens,
-                            componentTypeToken);
+                    return new LazyGenericArray(typePool, typeVariableSource, typePath,annotationTokens, componentTypeToken);
                 }
 
                 @Override
@@ -5193,13 +5184,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyLowerBoundWildcard(typePool,
-                            typeVariableSource,
-                            typePath,
-                            annotationTokens == null
-                                    ? Collections.emptyMap()
-                                    : annotationTokens,
-                            boundTypeToken);
+                    return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
                 }
 
                 @Override
@@ -5285,13 +5270,7 @@ public interface TypePool {
                                              TypeVariableSource typeVariableSource,
                                              String typePath,
                                              Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyLowerBoundWildcard(typePool,
-                            typeVariableSource,
-                            typePath,
-                            annotationTokens == null
-                                    ? Collections.emptyMap()
-                                    : annotationTokens,
-                            boundTypeToken);
+                    return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
                 }
 
                 @Override
@@ -5381,14 +5360,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyParameterizedType(typePool,
-                            typeVariableSource,
-                            typePath,
-                            annotationTokens == null
-                                    ? Collections.emptyMap()
-                                    : annotationTokens,
-                            name,
-                            parameterTypeTokens);
+                    return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens);
                 }
 
                 @Override
@@ -5449,15 +5421,7 @@ public interface TypePool {
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  Map<String, List<AnnotationToken>> annotationTokens) {
-                        return new LazyParameterizedType(typePool,
-                                typeVariableSource,
-                                typePath,
-                                annotationTokens == null
-                                        ? Collections.emptyMap()
-                                        : annotationTokens,
-                                name,
-                                parameterTypeTokens,
-                                ownerTypeToken);
+                        return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens, ownerTypeToken);
                     }
 
                     /**
@@ -6771,13 +6735,7 @@ public interface TypePool {
                                         String rawTypeDescriptor,
                                         Map<String, List<AnnotationToken>> annotationTokens,
                                         TypeVariableSource typeVariableSource) {
-                return new TokenizedGenericType(typePool,
-                        genericTypeToken,
-                        rawTypeDescriptor,
-                        annotationTokens == null
-                                ? Collections.<String, List<AnnotationToken>>emptyMap()
-                                : annotationTokens,
-                        typeVariableSource);
+                return new TokenizedGenericType(typePool, genericTypeToken, rawTypeDescriptor, annotationTokens, typeVariableSource);
             }
 
             /**
