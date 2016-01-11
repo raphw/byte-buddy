@@ -103,9 +103,9 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         } else if (type instanceof WildcardType) {
             WildcardType wildcardType = (WildcardType) type;
             if (wildcardType.getLowerBounds().length > 0) {
-                return builder(wildcardType.getLowerBounds()[0], annotationReader.ofWildcardLowerBound(0)).asWildcardLowerBound(annotationReader.asList());
+                return builder(wildcardType.getLowerBounds()[0], annotationReader.ofWildcardLowerBoundType(0)).asWildcardLowerBound(annotationReader.asList());
             } else if (wildcardType.getUpperBounds().length > 0) {
-                return builder(wildcardType.getUpperBounds()[0], annotationReader.ofWildcardUpperBound(0)).asWildcardUpperBound(annotationReader.asList());
+                return builder(wildcardType.getUpperBounds()[0], annotationReader.ofWildcardUpperBoundType(0)).asWildcardUpperBound(annotationReader.asList());
             } else {
                 return TypeDescription.Generic.Builder.unboundWildcard(annotationReader.asList()); // TODO: Remove?
             }

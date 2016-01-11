@@ -1890,13 +1890,15 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             AnnotationList asList();
 
-            AnnotationReader ofWildcardUpperBound(int index);
+            AnnotationReader ofWildcardUpperBoundType(int index);
 
-            AnnotationReader ofWildcardLowerBound(int index);
+            AnnotationReader ofWildcardLowerBoundType(int index);
 
-            AnnotationReader ofTypeVariableBound(int index);
+            AnnotationReader ofTypeVariableBoundType(int index);
 
-            AnnotationReader ofParameter(int index);
+            AnnotationReader ofParameterType(int index);
+
+            AnnotationReader ofOwnerType();
 
             AnnotationReader ofComponentType();
 
@@ -2092,9 +2094,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             try {
                                 return (AnnotatedElement) getAnnotatedSuperclass.invoke(type);
                             } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access xxx", exception);
+                                throw new IllegalStateException("Cannot access java.lang.Class#getAnnotatedSuperclass", exception);
                             } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                                throw new IllegalStateException("Error invoking java.lang.Class#getAnnotatedSuperclass", exception.getCause());
                             }
                         }
                     }
@@ -2115,9 +2117,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             try {
                                 return (AnnotatedElement) Array.get(getAnnotatedInterfaces.invoke(type), index);
                             } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access xxx", exception);
+                                throw new IllegalStateException("Cannot access java.lang.Class#getAnnotatedInterfaces", exception);
                             } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                                throw new IllegalStateException("Error invoking java.lang.Class#getAnnotatedInterfaces", exception.getCause());
                             }
                         }
                     }
@@ -2135,9 +2137,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             try {
                                 return (AnnotatedElement) getAnnotatedType.invoke(field);
                             } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access xxx", exception);
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Field#getAnnotatedType", exception);
                             } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Field#getAnnotatedType", exception.getCause());
                             }
                         }
                     }
@@ -2155,9 +2157,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             try {
                                 return (AnnotatedElement) getAnnotatedReturnType.invoke(executable);
                             } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access xxx", exception);
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Method#getAnnotatedReturnType", exception);
                             } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Method#getAnnotatedReturnType", exception.getCause());
                             }
                         }
                     }
@@ -2178,9 +2180,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             try {
                                 return (AnnotatedElement) Array.get(getAnnotatedParameterTypes.invoke(executable), index);
                             } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access xxx", exception);
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedParameterTypes", exception);
                             } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedParameterTypes", exception.getCause());
                             }
                         }
                     }
@@ -2201,9 +2203,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             try {
                                 return (AnnotatedElement) Array.get(getAnnotatedExceptionTypes.invoke(executable), index);
                             } catch (IllegalAccessException exception) {
-                                throw new IllegalStateException("Cannot access xxx", exception);
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedExceptionTypes", exception);
                             } catch (InvocationTargetException exception) {
-                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedExceptionTypes", exception.getCause());
                             }
                         }
                     }
@@ -2216,7 +2218,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotatedElement resolve() {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot resolve an annotation for a non-operational annotation reader");
                 }
 
                 @Override
@@ -2225,22 +2227,27 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public AnnotationReader ofWildcardUpperBound(int index) {
+                public AnnotationReader ofWildcardUpperBoundType(int index) {
                     return this;
                 }
 
                 @Override
-                public AnnotationReader ofWildcardLowerBound(int index) {
+                public AnnotationReader ofWildcardLowerBoundType(int index) {
                     return this;
                 }
 
                 @Override
-                public AnnotationReader ofTypeVariableBound(int index) {
+                public AnnotationReader ofTypeVariableBoundType(int index) {
                     return this;
                 }
 
                 @Override
-                public AnnotationReader ofParameter(int index) {
+                public AnnotationReader ofParameterType(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofOwnerType() {
                     return this;
                 }
 
@@ -2253,23 +2260,28 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             abstract class Delegator implements AnnotationReader {
 
                 @Override
-                public AnnotationReader ofWildcardUpperBound(int index) {
+                public AnnotationReader ofWildcardUpperBoundType(int index) {
                     return new ForWildcardUpperBoundType(this, index);
                 }
 
                 @Override
-                public AnnotationReader ofWildcardLowerBound(int index) {
+                public AnnotationReader ofWildcardLowerBoundType(int index) {
                     return new ForWildcardLowerBoundType(this, index);
                 }
 
                 @Override
-                public AnnotationReader ofTypeVariableBound(int index) {
+                public AnnotationReader ofTypeVariableBoundType(int index) {
                     return new ForTypeVariableBoundType(this, index);
                 }
 
                 @Override
-                public AnnotationReader ofParameter(int index) {
+                public AnnotationReader ofParameterType(int index) {
                     return new ForParameterType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofOwnerType() {
+                    return NoOp.INSTANCE;
                 }
 
                 @Override
@@ -2326,10 +2338,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement), index);
-                    } catch (InvocationTargetException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
-                    } catch (IllegalAccessException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception.getCause());
                     }
                 }
             }
@@ -2361,10 +2373,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement), index);
-                    } catch (InvocationTargetException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
-                    } catch (IllegalAccessException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds", exception.getCause());
                     }
                 }
             }
@@ -2396,10 +2408,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement), index);
-                    } catch (InvocationTargetException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
-                    } catch (IllegalAccessException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.TypeVariable#getAnnotatedBounds", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.TypeVariable#getAnnotatedBounds", exception.getCause());
                     }
                 }
             }
@@ -2431,10 +2443,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement), index);
-                    } catch (InvocationTargetException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
-                    } catch (IllegalAccessException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments", exception.getCause());
                     }
                 }
             }
@@ -2463,10 +2475,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
                         return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement);
-                    } catch (InvocationTargetException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
-                    } catch (IllegalAccessException e) {
-                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType", exception.getCause());
                     }
                 }
             }
@@ -3109,7 +3121,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic get(int index) {
-                        return Sort.describe(upperBound[index], annotationReader.ofWildcardUpperBound(index));
+                        return Sort.describe(upperBound[index], annotationReader.ofWildcardUpperBoundType(index));
                     }
 
                     @Override
@@ -3131,7 +3143,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic get(int index) {
-                        return Sort.describe(lowerBound[index], annotationReader.ofWildcardLowerBound(index));
+                        return Sort.describe(lowerBound[index], annotationReader.ofWildcardLowerBoundType(index));
                     }
 
                     @Override
@@ -3403,7 +3415,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     java.lang.reflect.Type ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
                             ? UNDEFINED
-                            : Sort.describe(ownerType);
+                            : Sort.describe(ownerType, annotationReader.ofOwnerType());
                 }
 
                 @Override
@@ -3429,7 +3441,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic get(int index) {
-                        return Sort.describe(parameterType[index], annotationReader.ofParameter(index));
+                        return Sort.describe(parameterType[index], annotationReader.ofParameterType(index));
                     }
 
                     @Override
@@ -3838,7 +3850,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic get(int index) {
-                        return Sort.describe(bound[index], annotationReader.ofTypeVariableBound(index));
+                        return Sort.describe(bound[index], annotationReader.ofTypeVariableBoundType(index));
                     }
 
                     @Override
