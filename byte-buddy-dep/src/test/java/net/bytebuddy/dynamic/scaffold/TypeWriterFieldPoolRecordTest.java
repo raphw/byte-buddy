@@ -83,7 +83,7 @@ public class TypeWriterFieldPoolRecordTest {
         when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
         when(annotationType.getDescriptor()).thenReturn(BAZ);
         when(annotationType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
-        when(annotationType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(retention));
+        when(annotationType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(retention));
         when(retention.value()).thenReturn(RetentionPolicy.RUNTIME);
         when(retention.annotationType()).thenReturn((Class) Retention.class);
     }

@@ -1078,7 +1078,7 @@ public interface DynamicType {
 
                     @Override
                     public FieldDefinition.Optional<U> annotateField(List<? extends Annotation> annotations) {
-                        return annotateField(new AnnotationList.ForLoadedAnnotation(annotations));
+                        return annotateField(new AnnotationList.ForLoadedAnnotations(annotations));
                     }
 
                     @Override
@@ -1548,7 +1548,7 @@ public interface DynamicType {
 
                         @Override
                         public Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
-                            return annotateParameter(new AnnotationList.ForLoadedAnnotation(annotations));
+                            return annotateParameter(new AnnotationList.ForLoadedAnnotations(annotations));
                         }
 
                         @Override
@@ -1690,7 +1690,7 @@ public interface DynamicType {
 
                             @Override
                             public Annotatable<W> annotateParameter(List<? extends Annotation> annotations) {
-                                return annotateParameter(new AnnotationList.ForLoadedAnnotation(annotations));
+                                return annotateParameter(new AnnotationList.ForLoadedAnnotations(annotations));
                             }
 
                             @Override
@@ -1896,7 +1896,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodDefinition<U> annotateMethod(List<? extends Annotation> annotations) {
-                    return annotateMethod(new AnnotationList.ForLoadedAnnotation(annotations));
+                    return annotateMethod(new AnnotationList.ForLoadedAnnotations(annotations));
                 }
 
                 @Override
@@ -1911,7 +1911,7 @@ public interface DynamicType {
 
                 @Override
                 public MethodDefinition<U> annotateParameter(int index, List<? extends Annotation> annotations) {
-                    return annotateParameter(index, new AnnotationList.ForLoadedAnnotation(annotations));
+                    return annotateParameter(index, new AnnotationList.ForLoadedAnnotations(annotations));
                 }
 
                 @Override
@@ -2009,7 +2009,7 @@ public interface DynamicType {
 
             @Override
             public Builder<S> annotateType(List<? extends Annotation> annotations) {
-                return annotateType(new AnnotationList.ForLoadedAnnotation(annotations));
+                return annotateType(new AnnotationList.ForLoadedAnnotations(annotations));
             }
 
             @Override

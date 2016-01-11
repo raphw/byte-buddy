@@ -3,7 +3,7 @@ package net.bytebuddy.description.annotation;
 import java.lang.annotation.Annotation;
 import java.util.List;
 
-public class AnnotationListForLoadedAnnotationTest extends AbstractAnnotationListTest<Annotation> {
+public class AnnotationListForLoadedAnnotationsTest extends AbstractAnnotationListTest<Annotation> {
 
     @Override
     protected Annotation getFirst() throws Exception {
@@ -17,7 +17,7 @@ public class AnnotationListForLoadedAnnotationTest extends AbstractAnnotationLis
 
     @Override
     protected AnnotationList asList(List<Annotation> elements) {
-        return new AnnotationList.ForLoadedAnnotation(elements);
+        return new AnnotationList.ForLoadedAnnotations(elements);
     }
 
     @Override

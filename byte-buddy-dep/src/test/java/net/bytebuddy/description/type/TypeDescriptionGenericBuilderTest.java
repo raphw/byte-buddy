@@ -36,7 +36,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Test
     public void testImplicitOwnerTypeWhenRequired() throws Exception {
-        assertThat(TypeDescription.Generic.Builder.parameterizedType(Foo.class, Object.class).asType().getOwnerType(),
+        assertThat(TypeDescription.Generic.Builder.parameterizedType(Foo.class, Object.class).build().getOwnerType(),
                 is(TypeDefinition.Sort.describe(getClass())));
     }
 
@@ -58,7 +58,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     @Test(expected = IllegalArgumentException.class)
     public void testGenericOwnerType() throws Exception {
         TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Foo.Qux.class),
-                TypeDescription.Generic.Builder.parameterizedType(Foo.class, Object.class).asType(),
+                TypeDescription.Generic.Builder.parameterizedType(Foo.class, Object.class).build(),
                 Collections.<TypeDefinition>singletonList(TypeDescription.OBJECT));
     }
 
@@ -74,7 +74,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     private TypeDescription.Generic describe(Type type) {
         if (type instanceof Class) {
-            return builder(type).asType();
+            return builder(type).build();
         } else if (type instanceof TypeVariable) {
             return TypeDescription.Generic.Builder.typeVariable(((TypeVariable) type).getName());
         } else if (type instanceof WildcardType) {
@@ -87,9 +87,9 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
                 return TypeDescription.Generic.Builder.unboundWildcard();
             }
         } else if (type instanceof GenericArrayType) {
-            return builder(type).asType();
+            return builder(type).build();
         } else if (type instanceof ParameterizedType) {
-            return builder(type).asType();
+            return builder(type).build();
         } else {
             throw new AssertionError("Unknown type: " + type);
         }

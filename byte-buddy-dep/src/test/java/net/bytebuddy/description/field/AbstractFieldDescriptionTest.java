@@ -170,7 +170,7 @@ public abstract class AbstractFieldDescriptionTest {
     public void testAnnotations() throws Exception {
         assertThat(describe(first).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(second).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(second.getDeclaredAnnotations())));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(second.getDeclaredAnnotations())));
     }
 
     @Test

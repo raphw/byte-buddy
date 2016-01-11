@@ -18,7 +18,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()));
+        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verifyZeroInteractions(fieldVisitor);
         verify(fieldDescription).getDeclaredAnnotations();
@@ -27,7 +27,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()));
+        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(fieldVisitor);
@@ -37,7 +37,7 @@ public class FieldAttributeAppenderForInstrumentedFieldTest extends AbstractFiel
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()));
+        when(fieldDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()));
         FieldAttributeAppender.ForInstrumentedField.INSTANCE.apply(fieldVisitor, fieldDescription, annotationValueFilter);
         verify(fieldVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(fieldVisitor);

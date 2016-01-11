@@ -13,7 +13,7 @@ public class TypeAttributeAppenderExplicitTest extends AbstractTypeAttributeAppe
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()))
                 .apply(classVisitor, instrumentedType, annotationValueFilter);
         verifyZeroInteractions(classVisitor);
         verifyZeroInteractions(instrumentedType);
@@ -21,7 +21,7 @@ public class TypeAttributeAppenderExplicitTest extends AbstractTypeAttributeAppe
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()))
                 .apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyZeroInteractions(classVisitor);
@@ -30,7 +30,7 @@ public class TypeAttributeAppenderExplicitTest extends AbstractTypeAttributeAppe
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()))
                 .apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(classVisitor);

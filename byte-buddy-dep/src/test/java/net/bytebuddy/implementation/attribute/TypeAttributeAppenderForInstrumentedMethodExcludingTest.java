@@ -16,7 +16,7 @@ public class TypeAttributeAppenderForInstrumentedMethodExcludingTest extends Abs
     @Test
     public void testApplicationExcludedAnnotation() throws Exception {
         when(instrumentedType.getDeclaredAnnotations())
-                .thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
+                .thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         new TypeAttributeAppender.ForInstrumentedType.Excluding(Collections.singleton(AnnotationDescription.ForLoadedAnnotation.of(new Baz.Instance())))
                 .apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
@@ -27,7 +27,7 @@ public class TypeAttributeAppenderForInstrumentedMethodExcludingTest extends Abs
     @Test
     public void testApplicationNoExcludedAnnotation() throws Exception {
         when(instrumentedType.getDeclaredAnnotations())
-                .thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
+                .thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         new TypeAttributeAppender.ForInstrumentedType.Excluding(Collections.<AnnotationDescription>emptySet())
                 .apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);

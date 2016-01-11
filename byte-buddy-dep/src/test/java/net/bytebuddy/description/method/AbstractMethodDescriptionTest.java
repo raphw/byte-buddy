@@ -506,10 +506,10 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(secondMethod).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(thirdMethod).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(thirdMethod.getDeclaredAnnotations())));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(thirdMethod.getDeclaredAnnotations())));
         assertThat(describe(firstConstructor).getDeclaredAnnotations(), is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(secondConstructor).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getDeclaredAnnotations())));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(secondConstructor.getDeclaredAnnotations())));
     }
 
     @Test
@@ -519,15 +519,15 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(secondMethod).getParameters().get(1).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(thirdMethod).getParameters().get(0).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(thirdMethod.getParameterAnnotations()[0])));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(thirdMethod.getParameterAnnotations()[0])));
         assertThat(describe(thirdMethod).getParameters().get(1).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(thirdMethod.getParameterAnnotations()[1])));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(thirdMethod.getParameterAnnotations()[1])));
         assertThat(describe(firstConstructor).getParameters().get(0).getDeclaredAnnotations(),
                 is((AnnotationList) new AnnotationList.Empty()));
         assertThat(describe(secondConstructor).getParameters().get(0).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getParameterAnnotations()[0])));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(secondConstructor.getParameterAnnotations()[0])));
         assertThat(describe(secondConstructor).getParameters().get(1).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(secondConstructor.getParameterAnnotations()[1])));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(secondConstructor.getParameterAnnotations()[1])));
     }
 
     @Test

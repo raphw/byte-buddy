@@ -778,7 +778,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(constructor.getDeclaredAnnotations());
         }
 
         @Override
@@ -887,7 +887,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(method.getDeclaredAnnotations());
         }
 
         @Override

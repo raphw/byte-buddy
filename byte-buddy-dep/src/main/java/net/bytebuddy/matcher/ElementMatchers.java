@@ -294,7 +294,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> anyOf(Annotation... value) {
-        return anyOf(new AnnotationList.ForLoadedAnnotation(value));
+        return anyOf(new AnnotationList.ForLoadedAnnotations(value));
     }
 
     /**
@@ -382,7 +382,7 @@ public final class ElementMatchers {
      * @return A matcher that checks for the equality with any of the given objects.
      */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> noneOf(Annotation... value) {
-        return noneOf(new AnnotationList.ForLoadedAnnotation(value));
+        return noneOf(new AnnotationList.ForLoadedAnnotations(value));
     }
 
     /**

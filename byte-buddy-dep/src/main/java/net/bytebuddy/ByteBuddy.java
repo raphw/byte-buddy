@@ -461,7 +461,7 @@ public class ByteBuddy {
         if (values.isEmpty()) {
             throw new IllegalArgumentException("Require at least one enumeration constant");
         }
-        TypeDescription.Generic enumType = TypeDescription.Generic.Builder.parameterizedType(Enum.class, TargetType.class).asType();
+        TypeDescription.Generic enumType = TypeDescription.Generic.Builder.parameterizedType(Enum.class, TargetType.class).build();
         return new SubclassDynamicTypeBuilder<Enum<?>>(InstrumentedType.Default.subclass(namingStrategy.subclass(enumType),
                 ModifierContributor.Resolver.of(Visibility.PUBLIC, TypeManifestation.FINAL, EnumerationState.ENUMERATION).resolve(),
                 enumType),

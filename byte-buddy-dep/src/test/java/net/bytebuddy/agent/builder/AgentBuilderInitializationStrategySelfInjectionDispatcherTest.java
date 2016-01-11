@@ -89,7 +89,7 @@ public class AgentBuilderInitializationStrategySelfInjectionDispatcherTest {
         });
         Annotation eagerAnnotation = mock(AuxiliaryType.SignatureRelevant.class);
         when(eagerAnnotation.annotationType()).thenReturn((Class) AuxiliaryType.SignatureRelevant.class);
-        when(independent.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(eagerAnnotation));
+        when(independent.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(eagerAnnotation));
         when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(instrumentedInitializer.isAlive()).thenReturn(true);
     }
