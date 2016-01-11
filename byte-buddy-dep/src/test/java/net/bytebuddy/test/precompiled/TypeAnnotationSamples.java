@@ -6,7 +6,7 @@ import java.util.concurrent.Callable;
 
 public abstract class TypeAnnotationSamples<@TypeAnnotation(0) T,
         S,
-        @TypeAnnotation(2) U extends @TypeAnnotation(3) Callable<@TypeAnnotation(4) ?> & @TypeAnnotation(5) List<@TypeAnnotation(6) ?>,
+        @TypeAnnotation(2) U extends String & @TypeAnnotation(3) Callable<@TypeAnnotation(4) ?> & @TypeAnnotation(5) List<@TypeAnnotation(6) ?>,
         @TypeAnnotation(7) V extends Map<@TypeAnnotation(8) ? extends @TypeAnnotation(9) String, @TypeAnnotation(10) Callable<@TypeAnnotation(11) ? super @TypeAnnotation(12) U>>>
         extends @TypeAnnotation(12) Object
         implements @TypeAnnotation(13) Callable<@TypeAnnotation(14) Object>, Map<@TypeAnnotation(15) String, Object> {

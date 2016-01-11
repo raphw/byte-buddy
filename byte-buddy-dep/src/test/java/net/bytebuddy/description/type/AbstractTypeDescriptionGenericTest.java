@@ -10,7 +10,6 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.objectweb.asm.*;
 
@@ -213,7 +212,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
-    @Ignore("Java 8 tests")
     public void testLowerBoundWildcardParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));

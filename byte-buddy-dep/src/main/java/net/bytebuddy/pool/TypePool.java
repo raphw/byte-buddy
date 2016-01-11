@@ -2574,7 +2574,7 @@ public interface TypePool {
                     case TypeReference.CLASS_TYPE_PARAMETER_BOUND:
                         annotationRegistrant = new AnnotationRegistrant.ForTypeVariable.WithIndex.DoubleIndexed(descriptor,
                                 typePath,
-                                typeReference.getTypeParameterBoundIndex() - 1,
+                                typeReference.getTypeParameterBoundIndex(),
                                 typeReference.getTypeParameterIndex(),
                                 typeVariableBoundsAnnotationTokens);
                         break;
@@ -5239,7 +5239,7 @@ public interface TypePool {
 
                     @Override
                     public TypeList.Generic getUpperBounds() {
-                        return new TypeList.Generic.Empty();
+                        return new TypeList.Generic.Explicit(Generic.OBJECT);
                     }
 
                     @Override
