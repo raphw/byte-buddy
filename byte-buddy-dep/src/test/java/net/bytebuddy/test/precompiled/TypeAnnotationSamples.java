@@ -14,5 +14,5 @@ public abstract class TypeAnnotationSamples<@TypeAnnotation(0) T,
     @TypeAnnotation(16) Callable<@TypeAnnotation(17) ?> @TypeAnnotation(18) [] @TypeAnnotation(19) [] foo;
 
     abstract <@TypeAnnotation(20) T extends @TypeAnnotation(21) Exception> @TypeAnnotation(22) int foo(@TypeAnnotation(23) T @TypeAnnotation(24) [] @TypeAnnotation(25) [] v)
-            throws @TypeAnnotation(26) T;
+            throws @TypeAnnotation(26) T, @TypeAnnotation(27) RuntimeException;
 }

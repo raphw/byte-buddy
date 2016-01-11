@@ -1340,6 +1340,25 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(secondInterfaceType.getParameters().get(1).getDeclaredAnnotations().size(), is(0));
     }
 
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeAnnotationExceptionType() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
+        TypeDescription.Generic firstExceptionType = describeExceptionType(samples.getDeclaredMethod(FOO, Exception[][].class), 0);
+        assertThat(firstExceptionType.getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(firstExceptionType.getDeclaredAnnotations().size(), is(1));
+        assertThat(firstExceptionType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(firstExceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(26));
+        TypeDescription.Generic secondExceptionType = describeExceptionType(samples.getDeclaredMethod(FOO, Exception[][].class), 1);
+        assertThat(secondExceptionType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(secondExceptionType.getDeclaredAnnotations().size(), is(1));
+        assertThat(secondExceptionType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(secondExceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(27));
+    }
+
     @SuppressWarnings("unused")
     public interface Foo {
         /* empty */
