@@ -4635,7 +4635,7 @@ public interface TypePool {
                                                          TypePool typePool,
                                                          Map<String, List<AnnotationToken>> annotationTokens,
                                                          MethodDescription.InDefinedShape definingMethod) {
-                            return new TokenizedGenericType(typePool, returnTypeToken, returnTypeDescriptor, annotationTokens, definingMethod);
+                            return TokenizedGenericType.of(typePool, returnTypeToken, returnTypeDescriptor, annotationTokens, definingMethod);
                         }
 
                         @Override
@@ -4739,7 +4739,7 @@ public interface TypePool {
                                                         TypePool typePool,
                                                         Map<String, List<AnnotationToken>> annotationTokens,
                                                         FieldDescription.InDefinedShape definingField) {
-                            return new TokenizedGenericType(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
+                            return TokenizedGenericType.of(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
                         }
 
                         @Override
@@ -4990,6 +4990,8 @@ public interface TypePool {
                      */
                     protected static class LazyTypeVariable extends Generic.OfTypeVariable {
 
+                        protected static final String EMPTY_TYPE_PATH = "";
+
                         /**
                          * The type pool to use for locating type descriptions.
                          */
@@ -5031,7 +5033,7 @@ public interface TypePool {
 
                         @Override
                         public TypeList.Generic getUpperBounds() {
-                            return new LazyBoundTokenList(typePool, typeVariableSource,boundaryAnnotationTokens, boundTypeTokens);
+                            return new LazyBoundTokenList(typePool, typeVariableSource, boundaryAnnotationTokens, boundTypeTokens);
                         }
 
                         @Override
@@ -5046,7 +5048,7 @@ public interface TypePool {
 
                         @Override
                         public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get("")); // TODO
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
                         }
 
                         protected static class LazyBoundTokenList extends TypeList.Generic.AbstractBase {
@@ -5071,7 +5073,13 @@ public interface TypePool {
 
                             @Override
                             public Generic get(int index) {
-                                return boundTypeTokens.get(index).toGenericType(typePool, typeVariableSource, "", annotationTokens.get(index));
+                                Map<String, List<AnnotationToken>> annotationTokens = this.annotationTokens.get(index);
+                                return boundTypeTokens.get(index).toGenericType(typePool,
+                                        typeVariableSource,
+                                        EMPTY_TYPE_PATH,
+                                        annotationTokens == null
+                                                ? Collections.emptyMap()
+                                                : annotationTokens);
                             }
 
                             @Override
@@ -5104,7 +5112,7 @@ public interface TypePool {
 
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyGenericArray(typePool, typeVariableSource, typePath,annotationTokens, componentTypeToken);
+                    return new LazyGenericArray(typePool, typeVariableSource, typePath, annotationTokens, componentTypeToken);
                 }
 
                 @Override
@@ -6735,7 +6743,13 @@ public interface TypePool {
                                         String rawTypeDescriptor,
                                         Map<String, List<AnnotationToken>> annotationTokens,
                                         TypeVariableSource typeVariableSource) {
-                return new TokenizedGenericType(typePool, genericTypeToken, rawTypeDescriptor, annotationTokens, typeVariableSource);
+                return new TokenizedGenericType(typePool,
+                        genericTypeToken,
+                        rawTypeDescriptor,
+                        annotationTokens == null
+                                ? Collections.emptyMap()
+                                : annotationTokens,
+                        typeVariableSource);
             }
 
             /**
