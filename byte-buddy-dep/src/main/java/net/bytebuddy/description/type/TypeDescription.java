@@ -1898,7 +1898,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             AnnotationReader ofParameter(int index);
 
-            AnnotationReader ofComponent();
+            AnnotationReader ofComponentType();
 
             interface Dispatcher {
 
@@ -2188,7 +2188,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 INSTANCE;
 
-
                 @Override
                 public AnnotatedElement resolve() {
                     throw new IllegalStateException();
@@ -2220,7 +2219,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public AnnotationReader ofComponent() {
+                public AnnotationReader ofComponentType() {
                     return this;
                 }
             }
@@ -2248,7 +2247,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public AnnotationReader ofComponent() {
+                public AnnotationReader ofComponentType() {
                     return new ForComponentType(this);
                 }
 
@@ -2284,7 +2283,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         getAnnotatedUpperBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedUpperBounds");
                     } catch (RuntimeException excetion) {
                         throw excetion;
-                    } catch(Exception exception) {
+                    } catch (Exception exception) {
                         getAnnotatedUpperBounds = null;
                     }
                     GET_ANNOTATED_UPPER_BOUNDS = getAnnotatedUpperBounds;
@@ -2300,7 +2299,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                    return (AnnotatedElement) Array.get(GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement), index);
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement), index);
                     } catch (InvocationTargetException e) {
                         throw new UnsupportedOperationException("Not yet implemented");
                     } catch (IllegalAccessException e) {
@@ -2319,7 +2318,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         getAnnotatedLowerBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedLowerBounds");
                     } catch (RuntimeException excetion) {
                         throw excetion;
-                    } catch(Exception exception) {
+                    } catch (Exception exception) {
                         getAnnotatedLowerBounds = null;
                     }
                     GET_ANNOTATED_LOWER_BOUNDS = getAnnotatedLowerBounds;
@@ -2354,7 +2353,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         getAnnotatedBounds = TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
                     } catch (RuntimeException excetion) {
                         throw excetion;
-                    } catch(Exception exception) {
+                    } catch (Exception exception) {
                         getAnnotatedBounds = null;
                     }
                     GET_ANNOTATED_BOUNDS = getAnnotatedBounds;
@@ -2389,7 +2388,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         getAnnotatedActualTypeArguments = Class.forName("java.lang.reflect.AnnotatedParameterizedType").getDeclaredMethod("getAnnotatedActualTypeArguments");
                     } catch (RuntimeException excetion) {
                         throw excetion;
-                    } catch(Exception exception) {
+                    } catch (Exception exception) {
                         getAnnotatedActualTypeArguments = null;
                     }
                     GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = getAnnotatedActualTypeArguments;
@@ -2424,7 +2423,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         getAnnotatedGenericComponentType = Class.forName("java.lang.reflect.AnnotatedArrayType").getDeclaredMethod("getAnnotatedGenericComponentType");
                     } catch (RuntimeException excetion) {
                         throw excetion;
-                    } catch(Exception exception) {
+                    } catch (Exception exception) {
                         getAnnotatedGenericComponentType = null;
                     }
                     GET_ANNOTATED_GENERIC_COMPONENT_TYPE = getAnnotatedGenericComponentType;
@@ -2539,14 +2538,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getComponentType() {
-                TypeDescription componentType = asErasure().getComponentType();
-                return componentType == null
-                        ? UNDEFINED
-                        : new OfNonGenericType.Latent(componentType, Collections.<AnnotationDescription>emptyList()); // TODO
-            }
-
-            @Override
             public TypeVariableSource getVariableSource() {
                 throw new IllegalStateException("A non-generic type does not imply a type variable source: " + this);
             }
@@ -2634,6 +2625,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
+                public Generic getComponentType() {
+                    Class<?> componentType = this.type.getComponentType();
+                    return componentType == null
+                            ? UNDEFINED
+                            : new ForLoadedType(componentType, annotationReader.ofComponentType());
+                }
+
+                @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
                 }
@@ -2665,6 +2664,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeDescription asErasure() {
                     return typeDescription;
+                }
+
+                @Override
+                public Generic getComponentType() {
+                    TypeDescription componentType = typeDescription.getComponentType();
+                    return componentType == null
+                            ? UNDEFINED
+                            : componentType.asGenericType();
                 }
 
                 @Override
@@ -2836,7 +2843,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic getComponentType() {
-                    return Sort.describe(genericArrayType.getGenericComponentType());
+                    return Sort.describe(genericArrayType.getGenericComponentType(), annotationReader.ofComponentType());
                 }
 
                 @Override
@@ -3050,17 +3057,61 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public TypeList.Generic getLowerBounds() {
-                    return new TypeList.Generic.ForLoadedTypes(wildcardType.getLowerBounds());
+                    return new WildcardUpperBoundTypeList(wildcardType.getLowerBounds(), annotationReader);
                 }
 
                 @Override
                 public TypeList.Generic getUpperBounds() {
-                    return new TypeList.Generic.ForLoadedTypes(wildcardType.getUpperBounds());
+                    return new WildcardLowerBoundTypeList(wildcardType.getUpperBounds(), annotationReader);
                 }
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                protected static class WildcardUpperBoundTypeList extends TypeList.Generic.AbstractBase {
+
+                    private final java.lang.reflect.Type[] upperBound;
+
+                    private final AnnotationReader annotationReader;
+
+                    public WildcardUpperBoundTypeList(java.lang.reflect.Type[] upperBound, AnnotationReader annotationReader) {
+                        this.upperBound = upperBound;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(upperBound[index], annotationReader.ofWildcardUpperBound(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return upperBound.length;
+                    }
+                }
+
+                protected static class WildcardLowerBoundTypeList extends TypeList.Generic.AbstractBase {
+
+                    private final java.lang.reflect.Type[] lowerBound;
+
+                    private final AnnotationReader annotationReader;
+
+                    public WildcardLowerBoundTypeList(java.lang.reflect.Type[] lowerBound, AnnotationReader annotationReader) {
+                        this.lowerBound = lowerBound;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(lowerBound[index], annotationReader.ofWildcardLowerBound(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return lowerBound.length;
+                    }
                 }
             }
 
@@ -3308,7 +3359,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param parameterizedType The represented parameterized type.
                  */
                 public ForLoadedType(ParameterizedType parameterizedType) {
-                    this(parameterizedType, AnnotationReader.NoOp.INSTANCE)
+                    this(parameterizedType, AnnotationReader.NoOp.INSTANCE);
                 }
 
                 protected ForLoadedType(ParameterizedType parameterizedType, AnnotationReader annotationReader) {
@@ -3318,7 +3369,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public TypeList.Generic getParameters() {
-                    return new TypeList.Generic.ForLoadedTypes(parameterizedType.getActualTypeArguments());
+                    return new ParameterArgumentTypeList(parameterizedType.getActualTypeArguments(), annotationReader);
                 }
 
                 @Override
@@ -3337,6 +3388,28 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                protected static class ParameterArgumentTypeList extends TypeList.Generic.AbstractBase {
+
+                    private final java.lang.reflect.Type[] parameterType;
+
+                    private final AnnotationReader annotationReader;
+
+                    public ParameterArgumentTypeList(java.lang.reflect.Type[] parameterType, AnnotationReader annotationReader) {
+                        this.parameterType = parameterType;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(parameterType[index], annotationReader.ofParameter(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return parameterType.length;
+                    }
                 }
             }
 
@@ -3713,7 +3786,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public TypeList.Generic getUpperBounds() {
-                    return new TypeList.Generic.ForLoadedTypes(typeVariable.getBounds());
+                    return new TypeVariableBoundList(typeVariable.getBounds(), annotationReader);
                 }
 
                 @Override
@@ -3724,6 +3797,28 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
                     return annotationReader.asList();
+                }
+
+                protected static class TypeVariableBoundList extends TypeList.Generic.AbstractBase {
+
+                    private final java.lang.reflect.Type[] bound;
+
+                    private final AnnotationReader annotationReader;
+
+                    public TypeVariableBoundList(java.lang.reflect.Type[] bound, AnnotationReader annotationReader) {
+                        this.bound = bound;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(bound[index], annotationReader.ofParameter(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return bound.length;
+                    }
                 }
             }
         }
