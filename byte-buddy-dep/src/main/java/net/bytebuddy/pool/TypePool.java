@@ -1112,20 +1112,20 @@ public interface TypePool {
 
                         protected static abstract class DoubleIndexed extends WithIndex {
 
-                            private final int secondIndex;
+                            private final int preIndex;
 
-                            public DoubleIndexed(String descriptor, TypePath typePath, int index, int secondIndex) {
+                            public DoubleIndexed(String descriptor, TypePath typePath, int index, int preIndex) {
                                 super(descriptor, typePath, index);
-                                this.secondIndex = secondIndex;
+                                this.preIndex = preIndex;
                             }
 
                             @Override
                             protected Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> getIndexedPathMap() {
                                 Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> doubleIndexPathMap = getDoubleIndexedPathMap();
-                                Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap = doubleIndexPathMap.get(secondIndex);
+                                Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap = doubleIndexPathMap.get(preIndex);
                                 if (indexedPathMap == null) {
                                     indexedPathMap = new HashMap<>();
-                                    doubleIndexPathMap.put(secondIndex, indexedPathMap);
+                                    doubleIndexPathMap.put(preIndex, indexedPathMap);
                                 }
                                 return indexedPathMap;
                             }
@@ -2574,8 +2574,8 @@ public interface TypePool {
                     case TypeReference.CLASS_TYPE_PARAMETER_BOUND:
                         annotationRegistrant = new AnnotationRegistrant.ForTypeVariable.WithIndex.DoubleIndexed(descriptor,
                                 typePath,
+                                typeReference.getTypeParameterBoundIndex() - 1,
                                 typeReference.getTypeParameterIndex(),
-                                typeReference.getTypeParameterBoundIndex(),
                                 typeVariableBoundsAnnotationTokens);
                         break;
                     default:
@@ -3028,8 +3028,8 @@ public interface TypePool {
                         case TypeReference.METHOD_TYPE_PARAMETER_BOUND:
                             annotationRegistrant = new ForTypeVariable.WithIndex.DoubleIndexed(descriptor,
                                     typePath,
-                                    typeReference.getTypeParameterIndex(),
                                     typeReference.getTypeParameterBoundIndex(),
+                                    typeReference.getTypeParameterIndex(),
                                     typeVariableBoundAnnotationTokens);
                             break;
                         case TypeReference.METHOD_RETURN:

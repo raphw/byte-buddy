@@ -1241,20 +1241,20 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(fieldType.getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(fieldType.getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(13));
+        assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(18));
         assertThat(fieldType.getComponentType().getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(fieldType.getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(14));
+        assertThat(fieldType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(19));
         assertThat(fieldType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(11));
+        assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(16));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations()
-                .ofType(typeAnnotation).getValue(value, Integer.class), is(12));
+                .ofType(typeAnnotation).getValue(value, Integer.class), is(17));
     }
 
     @Test
@@ -1264,11 +1264,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
         Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
-        TypeDescription.Generic returnType = describeReturnType(samples.getDeclaredMethod(FOO, Object[][].class));
+        TypeDescription.Generic returnType = describeReturnType(samples.getDeclaredMethod(FOO, Exception[][].class));
         assertThat(returnType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(returnType.getDeclaredAnnotations().size(), is(1));
         assertThat(returnType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(17));
+        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(22));
     }
 
     @Test
@@ -1278,19 +1278,19 @@ public abstract class AbstractTypeDescriptionGenericTest {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
         Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
-        TypeDescription.Generic parameterType = describeParameterType(samples.getDeclaredMethod(FOO, Object[][].class));
+        TypeDescription.Generic parameterType = describeParameterType(samples.getDeclaredMethod(FOO, Exception[][].class));
         assertThat(parameterType.getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(parameterType.getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(19));
+        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(24));
         assertThat(parameterType.getComponentType().getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(parameterType.getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(parameterType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(20));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(25));
         assertThat(parameterType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(18));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(23));
     }
 
     @SuppressWarnings("unused")
