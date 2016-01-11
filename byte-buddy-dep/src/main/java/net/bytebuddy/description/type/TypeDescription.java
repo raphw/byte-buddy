@@ -3838,7 +3838,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic get(int index) {
-                        return Sort.describe(bound[index], annotationReader.ofParameter(index));
+                        return Sort.describe(bound[index], annotationReader.ofTypeVariableBound(index));
                     }
 
                     @Override
