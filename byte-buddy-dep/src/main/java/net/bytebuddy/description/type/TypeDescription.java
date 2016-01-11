@@ -1882,6 +1882,571 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
         }
 
+        interface AnnotationReader {
+
+            Dispatcher DISPATCHER = Dispatcher.ForModernVm.make();
+
+            AnnotatedElement resolve();
+
+            AnnotationList asList();
+
+            AnnotationReader ofWildcardUpperBound(int index);
+
+            AnnotationReader ofWildcardLowerBound(int index);
+
+            AnnotationReader ofTypeVariableBound(int index);
+
+            AnnotationReader ofParameter(int index);
+
+            AnnotationReader ofComponent();
+
+            interface Dispatcher {
+
+                AnnotationReader resolveSuperType(Class<?> type);
+
+                AnnotationReader resolveInterface(Class<?> type, int index);
+
+                AnnotationReader resolveTypeVariable(Class<?> type, int index);
+
+                AnnotationReader resolve(Field field);
+
+                AnnotationReader resolveReturnType(AccessibleObject executable);
+
+                AnnotationReader resolveParameterType(AccessibleObject executable, int index);
+
+                AnnotationReader resolveExceptionType(AccessibleObject executable, int index);
+
+                enum ForLegacyVm implements Dispatcher {
+
+                    INSTANCE;
+
+                    @Override
+                    public AnnotationReader resolveSuperType(Class<?> type) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveInterface(Class<?> type, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveTypeVariable(Class<?> type, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolve(Field field) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveReturnType(AccessibleObject executable) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+
+                }
+
+                class ForModernVm implements Dispatcher {
+
+                    private final Method getAnnotatedSuperclass;
+
+                    private final Method getAnnotatedInterfaces;
+
+                    private final Method getAnnotatedType;
+
+                    private final Method getAnnotatedReturnType;
+
+                    private final Method getAnnotatedParameterTypes;
+
+                    private final Method getAnnotatedExceptionTypes;
+
+                    protected ForModernVm(Method getAnnotatedSuperclass,
+                                          Method getAnnotatedInterfaces,
+                                          Method getAnnotatedType,
+                                          Method getAnnotatedReturnType,
+                                          Method getAnnotatedParameterTypes,
+                                          Method getAnnotatedExceptionTypes) {
+                        this.getAnnotatedSuperclass = getAnnotatedSuperclass;
+                        this.getAnnotatedInterfaces = getAnnotatedInterfaces;
+                        this.getAnnotatedType = getAnnotatedType;
+                        this.getAnnotatedReturnType = getAnnotatedReturnType;
+                        this.getAnnotatedParameterTypes = getAnnotatedParameterTypes;
+                        this.getAnnotatedExceptionTypes = getAnnotatedExceptionTypes;
+                    }
+
+                    protected static Dispatcher make() {
+                        try {
+                            return new Dispatcher.ForModernVm(Class.class.getDeclaredMethod("getAnnotatedSuperclass"),
+                                    Class.class.getDeclaredMethod("getAnnotatedInterfaces"),
+                                    Field.class.getDeclaredMethod("getAnnotatedType"),
+                                    Method.class.getDeclaredMethod("getAnnotatedReturnType"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedParameterTypes"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedExceptionTypes"));
+                        } catch (RuntimeException exception) {
+                            throw exception;
+                        } catch (Exception ignored) {
+                            return Dispatcher.ForLegacyVm.INSTANCE;
+                        }
+                    }
+
+                    @Override
+                    public AnnotationReader resolveSuperType(Class<?> type) {
+                        return new AnnotatedSuperType(type);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveInterface(Class<?> type, int index) {
+                        return new AnnotatedInterfaceType(type, index);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveTypeVariable(Class<?> type, int index) {
+                        return new AnnotatedTypeVariableType(type, index);
+                    }
+
+                    @Override
+                    public AnnotationReader resolve(Field field) {
+                        return new AnnotatedFieldType(field);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveReturnType(AccessibleObject executable) {
+                        return new AnnotatedReturnType(executable);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
+                        return new AnnotatedParameterType(executable, index);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
+                        return new AnnotatedExceptionType(executable, index);
+                    }
+
+                    protected class AnnotatedSuperType extends Delegator {
+
+                        private final Class<?> type;
+
+                        protected AnnotatedSuperType(Class<?> type) {
+                            this.type = type;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) getAnnotatedSuperclass.invoke(type);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access xxx", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                            }
+                        }
+                    }
+
+                    protected class AnnotatedInterfaceType extends Delegator {
+
+                        private final Class<?> type;
+
+                        private final int index;
+
+                        protected AnnotatedInterfaceType(Class<?> type, int index) {
+                            this.type = type;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) Array.get(getAnnotatedInterfaces.invoke(type), index);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access xxx", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                            }
+                        }
+                    }
+
+                    protected class AnnotatedTypeVariableType extends Delegator {
+
+                        private final Class<?> type;
+
+                        private final int index;
+
+                        protected AnnotatedTypeVariableType(Class<?> type, int index) {
+                            this.type = type;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            return (AnnotatedElement) type.getTypeParameters()[index];
+                        }
+                    }
+
+                    protected class AnnotatedFieldType extends Delegator {
+
+                        private final Field field;
+
+                        protected AnnotatedFieldType(Field field) {
+                            this.field = field;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) getAnnotatedType.invoke(field);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access xxx", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                            }
+                        }
+                    }
+
+                    protected class AnnotatedReturnType extends Delegator {
+
+                        private final AccessibleObject executable;
+
+                        protected AnnotatedReturnType(AccessibleObject executable) {
+                            this.executable = executable;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) getAnnotatedReturnType.invoke(executable);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access xxx", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                            }
+                        }
+                    }
+
+                    protected class AnnotatedParameterType extends Delegator {
+
+                        private final AccessibleObject executable;
+
+                        private final int index;
+
+                        protected AnnotatedParameterType(AccessibleObject executable, int index) {
+                            this.executable = executable;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) Array.get(getAnnotatedParameterTypes.invoke(executable), index);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access xxx", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                            }
+                        }
+                    }
+
+                    protected class AnnotatedExceptionType extends Delegator {
+
+                        private final AccessibleObject executable;
+
+                        private final int index;
+
+                        protected AnnotatedExceptionType(AccessibleObject executable, int index) {
+                            this.executable = executable;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) Array.get(getAnnotatedExceptionTypes.invoke(executable), index);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access xxx", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking xxx", exception.getCause());
+                            }
+                        }
+                    }
+                }
+            }
+
+            enum NoOp implements AnnotationReader {
+
+                INSTANCE;
+
+
+                @Override
+                public AnnotatedElement resolve() {
+                    throw new IllegalStateException();
+                }
+
+                @Override
+                public AnnotationList asList() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public AnnotationReader ofWildcardUpperBound(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofWildcardLowerBound(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofTypeVariableBound(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofParameter(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofComponent() {
+                    return this;
+                }
+            }
+
+            abstract class Delegator implements AnnotationReader {
+
+                @Override
+                public AnnotationReader ofWildcardUpperBound(int index) {
+                    return new ForWildcardUpperBoundType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofWildcardLowerBound(int index) {
+                    return new ForWildcardLowerBoundType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofTypeVariableBound(int index) {
+                    return new ForTypeVariableBoundType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofParameter(int index) {
+                    return new ForParameterType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofComponent() {
+                    return new ForComponentType(this);
+                }
+
+                @Override
+                public AnnotationList asList() {
+                    return new AnnotationList.ForLoadedAnnotations(resolve().getDeclaredAnnotations());
+                }
+
+                protected abstract static class Chained extends Delegator {
+
+                    private final AnnotationReader annotationReader;
+
+                    protected Chained(AnnotationReader annotationReader) {
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public AnnotatedElement resolve() {
+                        return resolve(annotationReader.resolve());
+                    }
+
+                    protected abstract AnnotatedElement resolve(AnnotatedElement annotatedElement);
+                }
+            }
+
+            class ForWildcardUpperBoundType extends Delegator.Chained {
+
+                private static final Method GET_ANNOTATED_UPPER_BOUNDS;
+
+                static {
+                    Method getAnnotatedUpperBounds;
+                    try {
+                        getAnnotatedUpperBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedUpperBounds");
+                    } catch (RuntimeException excetion) {
+                        throw excetion;
+                    } catch(Exception exception) {
+                        getAnnotatedUpperBounds = null;
+                    }
+                    GET_ANNOTATED_UPPER_BOUNDS = getAnnotatedUpperBounds;
+                }
+
+                private final int index;
+
+                protected ForWildcardUpperBoundType(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                    return (AnnotatedElement) Array.get(GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement), index);
+                    } catch (InvocationTargetException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    }
+                }
+            }
+
+            class ForWildcardLowerBoundType extends Delegator.Chained {
+
+                private static final Method GET_ANNOTATED_LOWER_BOUNDS;
+
+                static {
+                    Method getAnnotatedLowerBounds;
+                    try {
+                        getAnnotatedLowerBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedLowerBounds");
+                    } catch (RuntimeException excetion) {
+                        throw excetion;
+                    } catch(Exception exception) {
+                        getAnnotatedLowerBounds = null;
+                    }
+                    GET_ANNOTATED_LOWER_BOUNDS = getAnnotatedLowerBounds;
+                }
+
+                private final int index;
+
+                protected ForWildcardLowerBoundType(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement), index);
+                    } catch (InvocationTargetException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    }
+                }
+            }
+
+            class ForTypeVariableBoundType extends Delegator.Chained {
+
+                private static final Method GET_ANNOTATED_BOUNDS;
+
+                static {
+                    Method getAnnotatedBounds;
+                    try {
+                        getAnnotatedBounds = TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
+                    } catch (RuntimeException excetion) {
+                        throw excetion;
+                    } catch(Exception exception) {
+                        getAnnotatedBounds = null;
+                    }
+                    GET_ANNOTATED_BOUNDS = getAnnotatedBounds;
+                }
+
+                private final int index;
+
+                protected ForTypeVariableBoundType(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement), index);
+                    } catch (InvocationTargetException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    }
+                }
+            }
+
+            class ForParameterType extends Delegator.Chained {
+
+                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS;
+
+                static {
+                    Method getAnnotatedActualTypeArguments;
+                    try {
+                        getAnnotatedActualTypeArguments = Class.forName("java.lang.reflect.AnnotatedParameterizedType").getDeclaredMethod("getAnnotatedActualTypeArguments");
+                    } catch (RuntimeException excetion) {
+                        throw excetion;
+                    } catch(Exception exception) {
+                        getAnnotatedActualTypeArguments = null;
+                    }
+                    GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = getAnnotatedActualTypeArguments;
+                }
+
+                private final int index;
+
+                protected ForParameterType(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement), index);
+                    } catch (InvocationTargetException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    }
+                }
+            }
+
+            class ForComponentType extends Delegator.Chained {
+
+                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE;
+
+                static {
+                    Method getAnnotatedGenericComponentType;
+                    try {
+                        getAnnotatedGenericComponentType = Class.forName("java.lang.reflect.AnnotatedArrayType").getDeclaredMethod("getAnnotatedGenericComponentType");
+                    } catch (RuntimeException excetion) {
+                        throw excetion;
+                    } catch(Exception exception) {
+                        getAnnotatedGenericComponentType = null;
+                    }
+                    GET_ANNOTATED_GENERIC_COMPONENT_TYPE = getAnnotatedGenericComponentType;
+                }
+
+                protected ForComponentType(AnnotationReader annotationReader) {
+                    super(annotationReader);
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement);
+                    } catch (InvocationTargetException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    } catch (IllegalAccessException e) {
+                        throw new UnsupportedOperationException("Not yet implemented");
+                    }
+                }
+            }
+        }
+
         /**
          * An abstract base implementation of a generic type description.
          */
@@ -2047,13 +2612,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final Class<?> type;
 
+                private final AnnotationReader annotationReader;
+
                 /**
                  * Creates a new description of a generic type of a loaded type.
                  *
                  * @param type The represented type.
                  */
                 public ForLoadedType(Class<?> type) {
+                    this(type, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                protected ForLoadedType(Class<?> type, AnnotationReader annotationReader) {
                     this.type = type;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
@@ -2063,7 +2635,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                    return annotationReader.asList();
                 }
             }
 
@@ -2246,13 +2818,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final GenericArrayType genericArrayType;
 
+                private final AnnotationReader annotationReader;
+
                 /**
                  * Creates a type description of the given generic array type.
                  *
                  * @param genericArrayType The loaded generic array type.
                  */
                 public ForLoadedType(GenericArrayType genericArrayType) {
+                    this(genericArrayType, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                public ForLoadedType(GenericArrayType genericArrayType, AnnotationReader annotationReader) {
                     this.genericArrayType = genericArrayType;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
@@ -2262,7 +2841,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                    return annotationReader.asList();
                 }
             }
 
@@ -2453,13 +3032,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final WildcardType wildcardType;
 
+                private final AnnotationReader annotationReader;
+
                 /**
                  * Creates a description of a loaded wildcard.
                  *
                  * @param wildcardType The represented loaded wildcard type.
                  */
                 public ForLoadedType(WildcardType wildcardType) {
+                    this(wildcardType, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                protected ForLoadedType(WildcardType wildcardType, AnnotationReader annotationReader) {
                     this.wildcardType = wildcardType;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
@@ -2474,7 +3060,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                    return annotationReader.asList();
                 }
             }
 
@@ -2714,13 +3300,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final ParameterizedType parameterizedType;
 
+                private final AnnotationReader annotationReader;
+
                 /**
                  * Creates a description of the loaded parameterized type.
                  *
                  * @param parameterizedType The represented parameterized type.
                  */
                 public ForLoadedType(ParameterizedType parameterizedType) {
+                    this(parameterizedType, AnnotationReader.NoOp.INSTANCE)
+                }
+
+                protected ForLoadedType(ParameterizedType parameterizedType, AnnotationReader annotationReader) {
                     this.parameterizedType = parameterizedType;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
@@ -2743,7 +3336,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                    return annotationReader.asList();
                 }
             }
 
@@ -3088,13 +3681,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 private final TypeVariable<?> typeVariable;
 
+                private final AnnotationReader annotationReader;
+
                 /**
                  * Creates a description of a loaded type variable.
                  *
                  * @param typeVariable The represented type variable.
                  */
                 public ForLoadedType(TypeVariable<?> typeVariable) {
+                    this(typeVariable, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                public ForLoadedType(TypeVariable<?> typeVariable, AnnotationReader annotationReader) {
                     this.typeVariable = typeVariable;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
@@ -3123,7 +3723,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                    return annotationReader.asList();
                 }
             }
         }
@@ -3257,10 +3857,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 return resolve().toString();
             }
 
+            protected abstract static class OfAnnotatedElement extends LazyProjection {
+
+                protected abstract AnnotationReader getAnnotationReader();
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return getAnnotationReader().asList();
+                }
+            }
+
             /**
              * A lazy projection of a generic super type.
              */
-            public static class ForLoadedSuperType extends LazyProjection {
+            public static class ForLoadedSuperType extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The type of which the super class is represented.
@@ -3278,30 +3888,30 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic resolve() {
-                    java.lang.reflect.Type superClass = type.getGenericSuperclass();
-                    return superClass == null
+                    java.lang.reflect.Type superType = type.getGenericSuperclass();
+                    return superType == null
                             ? UNDEFINED
-                            : Sort.describe(superClass);
+                            : Sort.describe(superType, getAnnotationReader());
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    Class<?> superClass = type.getSuperclass();
-                    return superClass == null
+                    Class<?> superType = type.getSuperclass();
+                    return superType == null
                             ? TypeDescription.UNDEFINED
-                            : new ForLoadedType(superClass);
+                            : new ForLoadedType(superType);
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveSuperType(type);
                 }
             }
 
             /**
              * A lazy projection of a field's type.
              */
-            public static class ForLoadedFieldType extends LazyProjection {
+            public static class ForLoadedFieldType extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The field of which the type is represented.
@@ -3319,7 +3929,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic resolve() {
-                    return Sort.describe(field.getGenericType());
+                    return Sort.describe(field.getGenericType(), getAnnotationReader());
                 }
 
                 @Override
@@ -3328,15 +3938,15 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolve(field);
                 }
             }
 
             /**
              * A lazy projection of a method's generic return type.
              */
-            public static class ForLoadedReturnType extends LazyProjection {
+            public static class ForLoadedReturnType extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The method which defines the return type.
@@ -3354,7 +3964,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic resolve() {
-                    return Sort.describe(method.getGenericReturnType());
+                    return Sort.describe(method.getGenericReturnType(), getAnnotationReader());
                 }
 
                 @Override
@@ -3363,15 +3973,15 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveReturnType(method);
                 }
             }
 
             /**
              * A lazy projection of the parameter type of a {@link Constructor}.
              */
-            public static class OfConstructorParameter extends LazyProjection {
+            public static class OfConstructorParameter extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The constructor of which a parameter type is represented.
@@ -3405,7 +4015,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : new OfNonGenericType.ForLoadedType(erasure);
                 }
 
@@ -3415,15 +4025,15 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveParameterType(constructor, index);
                 }
             }
 
             /**
              * A lazy projection of the parameter type of a {@link Method}.
              */
-            public static class OfMethodParameter extends LazyProjection {
+            public static class OfMethodParameter extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The method of which a parameter type is represented.
@@ -3457,7 +4067,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericParameterTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : new OfNonGenericType.ForLoadedType(erasure);
                 }
 
@@ -3467,8 +4077,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveParameterType(method, index);
                 }
             }
         }
