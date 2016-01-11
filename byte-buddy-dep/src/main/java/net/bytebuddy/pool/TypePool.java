@@ -4295,7 +4295,7 @@ public interface TypePool {
                                                     TypePool typePool,
                                                     Map<String, List<AnnotationToken>> annotationTokens,
                                                     FieldDescription.InDefinedShape definingField) {
-                        return TokenizedGenericType.toErasure(typePool, fieldTypeDescriptor).asGenericType();
+                        return RawAnnotatedType.of(typePool, annotationTokens, fieldTypeDescriptor);
                     }
 
                     @Override
@@ -4303,7 +4303,7 @@ public interface TypePool {
                                                      TypePool typePool,
                                                      Map<String, List<AnnotationToken>> annotationTokens,
                                                      MethodDescription.InDefinedShape definingMethod) {
-                        return TokenizedGenericType.toErasure(typePool, returnTypeDescriptor).asGenericType();
+                        return RawAnnotatedType.of(typePool, annotationTokens, returnTypeDescriptor);
                     }
 
                     @Override
@@ -4311,7 +4311,7 @@ public interface TypePool {
                                                                   TypePool typePool,
                                                                   Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                                                   MethodDescription.InDefinedShape definingMethod) {
-                        return new LazyTypeList.Generic(typePool, parameterTypeDescriptors);
+                        return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, parameterTypeDescriptors);
                     }
 
                     @Override
@@ -4319,7 +4319,7 @@ public interface TypePool {
                                                                   TypePool typePool,
                                                                   Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                                                   MethodDescription.InDefinedShape definingMethod) {
-                        return new LazyTypeList.Generic(typePool, exceptionTypeDescriptors);
+                        return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, exceptionTypeDescriptors);
                     }
 
                     @Override
@@ -4327,7 +4327,7 @@ public interface TypePool {
                                                     TypePool typePool,
                                                     Map<String, List<AnnotationToken>> annotationTokens,
                                                     TypeDescription definingType) {
-                        return TokenizedGenericType.toErasure(typePool, superTypeDescriptor).asGenericType();
+                        return RawAnnotatedType.of(typePool, annotationTokens, superTypeDescriptor);
                     }
 
                     @Override
@@ -4335,7 +4335,7 @@ public interface TypePool {
                                                                   TypePool typePool,
                                                                   Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                                                   TypeDescription definingType) {
-                        return new LazyTypeList.Generic(typePool, interfaceTypeDescriptors);
+                        return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, interfaceTypeDescriptors);
                     }
 
                     @Override
@@ -4349,6 +4349,112 @@ public interface TypePool {
                     @Override
                     public String toString() {
                         return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Raw." + name();
+                    }
+
+                    protected static class RawAnnotatedType extends Generic.OfNonGenericType {
+
+                        private static final String EMPTY_TYPE_PATH = "";
+
+                        private final TypePool typePool;
+
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        private final String descriptor;
+
+                        protected RawAnnotatedType(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
+                            this.typePool = typePool;
+                            this.annotationTokens = annotationTokens;
+                            this.descriptor = descriptor;
+                        }
+
+                        protected static Generic of(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
+                            return new RawAnnotatedType(typePool,
+                                    annotationTokens == null
+                                            ? Collections.emptyMap()
+                                            : annotationTokens,
+                                    descriptor);
+                        }
+
+                        @Override
+                        public TypeDescription asErasure() {
+                            return TokenizedGenericType.toErasure(typePool, descriptor);
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
+                        }
+
+                        /**
+                         * A generic type list representing raw types.
+                         */
+                        protected static class LazyRawAnnotatedTypeList extends TypeList.Generic.AbstractBase {
+
+                            /**
+                             * The type pool to use for locating types.
+                             */
+                            private final TypePool typePool;
+
+                            private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
+
+                            /**
+                             * A list of type descriptors that this list represents.
+                             */
+                            private final List<String> descriptors;
+
+                            /**
+                             * A generic type list only representing raw types.
+                             *
+                             * @param typePool    The type pool to use for locating types.
+                             * @param descriptors A list of type descriptors that this list represents.
+                             */
+                            protected LazyRawAnnotatedTypeList(TypePool typePool,
+                                                               Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                               List<String> descriptors) {
+                                this.typePool = typePool;
+                                this.annotationTokens = annotationTokens;
+                                this.descriptors = descriptors;
+                            }
+
+                            protected static TypeList.Generic of(TypePool typePool,
+                                                                 Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                 List<String> descriptors) {
+                                return new LazyRawAnnotatedTypeList(typePool,
+                                        annotationTokens == null
+                                                ? Collections.emptyMap()
+                                                : annotationTokens,
+                                        descriptors);
+                            }
+
+                            @Override
+                            public TypeDescription.Generic get(int index) {
+                                return RawAnnotatedType.of(typePool, annotationTokens.get(index), descriptors.get(index));
+                            }
+
+                            @Override
+                            public int size() {
+                                return descriptors.size();
+                            }
+
+                            @Override
+                            public TypeList asErasures() {
+                                return new LazyTypeList(typePool, descriptors);
+                            }
+
+                            @Override
+                            public TypeList.Generic asRawTypes() {
+                                return this;
+                            }
+
+                            @Override
+                            public int getStackSize() {
+                                int stackSize = 0;
+                                for (String descriptor : descriptors) {
+                                    stackSize += Type.getType(descriptor).getSize();
+                                }
+                                return stackSize;
+                            }
+                        }
                     }
                 }
 
@@ -6629,62 +6735,6 @@ public interface TypePool {
                     stackSize += Type.getType(descriptor).getSize();
                 }
                 return stackSize;
-            }
-
-            /**
-             * A generic type list representing raw types.
-             */
-            protected static class Generic extends TypeList.Generic.AbstractBase {
-
-                /**
-                 * The type pool to use for locating types.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * A list of type descriptors that this list represents.
-                 */
-                private final List<String> descriptors;
-
-                /**
-                 * A generic type list only representing raw types.
-                 *
-                 * @param typePool    The type pool to use for locating types.
-                 * @param descriptors A list of type descriptors that this list represents.
-                 */
-                protected Generic(TypePool typePool, List<String> descriptors) {
-                    this.typePool = typePool;
-                    this.descriptors = descriptors;
-                }
-
-                @Override
-                public TypeDescription.Generic get(int index) {
-                    return TokenizedGenericType.toErasure(typePool, descriptors.get(index)).asGenericType();
-                }
-
-                @Override
-                public int size() {
-                    return descriptors.size();
-                }
-
-                @Override
-                public TypeList asErasures() {
-                    return new LazyTypeList(typePool, descriptors);
-                }
-
-                @Override
-                public TypeList.Generic asRawTypes() {
-                    return this;
-                }
-
-                @Override
-                public int getStackSize() {
-                    int stackSize = 0;
-                    for (String descriptor : descriptors) {
-                        stackSize += Type.getType(descriptor).getSize();
-                    }
-                    return stackSize;
-                }
             }
         }
 
