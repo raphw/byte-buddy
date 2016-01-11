@@ -2212,13 +2212,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
-            enum NoOp implements AnnotationReader {
+            enum NoOp implements AnnotationReader, AnnotatedElement {
 
                 INSTANCE;
 
                 @Override
                 public AnnotatedElement resolve() {
-                    throw new IllegalStateException("Cannot resolve an annotation for a non-operational annotation reader");
+                    return this;
                 }
 
                 @Override
@@ -2254,6 +2254,22 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public AnnotationReader ofComponentType() {
                     return this;
+                }
+
+
+                @Override
+                public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+                    throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
+                }
+
+                @Override
+                public Annotation[] getAnnotations() {
+                    throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
+                }
+
+                @Override
+                public Annotation[] getDeclaredAnnotations() {
+                    return new Annotation[0];
                 }
             }
 
@@ -2337,11 +2353,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
                     try {
-                        return (AnnotatedElement) Array.get(GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement), index);
+                        Object annotatedUpperBounds = GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement);
+                        return Array.getLength(annotatedUpperBounds) == 0 // Wildcards with a lower bound do not define annotations for their implicit upper bound.
+                                ? NoOp.INSTANCE
+                                : (AnnotatedElement) Array.get(annotatedUpperBounds, index);
                     } catch (IllegalAccessException exception) {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception.getCause());
+                    } catch (ArrayIndexOutOfBoundsException e) {
+                        System.out.println(((AnnotatedType) annotatedElement).getType().getTypeName() + " has no upper bounds");
+                        throw e;
                     }
                 }
             }
