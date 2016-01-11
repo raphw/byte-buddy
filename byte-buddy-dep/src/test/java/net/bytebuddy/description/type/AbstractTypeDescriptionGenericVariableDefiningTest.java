@@ -117,12 +117,16 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getDeclaredAnnotations()
                 .ofType(typeAnnotation).getValue(value, Integer.class), is(12));
         assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
+                .getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
+                .getDeclaredAnnotations().size(), is(0));
+        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
+        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getDeclaredAnnotations().size(), is(1));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
+        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
+        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value, Integer.class), is(3));
     }
 
@@ -135,10 +139,10 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(t.getDeclaredAnnotations().size(), is(1));
         assertThat(t.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(t.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(20));
+        assertThat(t.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(23));
         assertThat(t.getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(21));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(24));
     }
 }

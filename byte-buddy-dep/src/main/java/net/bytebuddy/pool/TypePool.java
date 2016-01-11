@@ -4058,6 +4058,8 @@ public interface TypePool {
              */
             Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens);
 
+            boolean isPrimaryBound(TypePool typePool);
+
             interface OfFormalTypeVariable {
 
                 Generic toGenericType(TypePool typePool,
@@ -4172,6 +4174,11 @@ public interface TypePool {
                 }
 
                 @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    throw new IllegalStateException("A primitive type cannot be a type variable bound: " + this);
+                }
+
+                @Override
                 public String toString() {
                     return "TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType." + name();
                 }
@@ -4230,6 +4237,11 @@ public interface TypePool {
                             annotationTokens == null
                                     ? Collections.emptyMap()
                                     : annotationTokens);
+                }
+
+                @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
                 }
 
                 @Override
@@ -4916,6 +4928,11 @@ public interface TypePool {
                 }
 
                 @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    return !typePool.describe(name).resolve().isInterface();
+                }
+
+                @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass()) && name.equals(((ForRawType) other).name);
                 }
@@ -4996,6 +5013,11 @@ public interface TypePool {
                     } else {
                         return new AnnotatedTypeVariable(typePool, annotationTokens.get(typePath), typeVariable);
                     }
+                }
+
+                @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    return true;
                 }
 
                 @Override
@@ -5201,7 +5223,9 @@ public interface TypePool {
 
                             @Override
                             public Generic get(int index) {
-                                Map<String, List<AnnotationToken>> annotationTokens = this.annotationTokens.get(index);
+                                Map<String, List<AnnotationToken>> annotationTokens = this.annotationTokens.get(index + (boundTypeTokens.get(0).isPrimaryBound(typePool)
+                                        ? 0
+                                        : 1));
                                 return boundTypeTokens.get(index).toGenericType(typePool,
                                         typeVariableSource,
                                         EMPTY_TYPE_PATH,
@@ -5241,6 +5265,11 @@ public interface TypePool {
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                     return new LazyGenericArray(typePool, typeVariableSource, typePath, annotationTokens, componentTypeToken);
+                }
+
+                @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    throw new IllegalStateException("A generic array type cannot be a type variable bound: " + this);
                 }
 
                 @Override
@@ -5321,6 +5350,11 @@ public interface TypePool {
                 @Override
                 public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                     return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                }
+
+                @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
                 }
 
                 @Override
@@ -5407,6 +5441,11 @@ public interface TypePool {
                                              String typePath,
                                              Map<String, List<AnnotationToken>> annotationTokens) {
                     return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                }
+
+                @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
                 }
 
                 @Override
@@ -5500,6 +5539,11 @@ public interface TypePool {
                 }
 
                 @Override
+                public boolean isPrimaryBound(TypePool typePool) {
+                    return !typePool.describe(name).resolve().isInterface();
+                }
+
+                @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && name.equals(((ForParameterizedType) other).name)
@@ -5558,6 +5602,11 @@ public interface TypePool {
                                                  String typePath,
                                                  Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens, ownerTypeToken);
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        return !typePool.describe(name).resolve().isInterface();
                     }
 
                     /**

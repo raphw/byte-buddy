@@ -1249,20 +1249,20 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(fieldType.getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(fieldType.getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(18));
+        assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(21));
         assertThat(fieldType.getComponentType().getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(fieldType.getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(19));
+        assertThat(fieldType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(22));
         assertThat(fieldType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(16));
+        assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(19));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations()
-                .ofType(typeAnnotation).getValue(value, Integer.class), is(17));
+                .ofType(typeAnnotation).getValue(value, Integer.class), is(20));
     }
 
     @Test
@@ -1276,7 +1276,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(returnType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(returnType.getDeclaredAnnotations().size(), is(1));
         assertThat(returnType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(22));
+        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(25));
     }
 
     @Test
@@ -1290,15 +1290,15 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(parameterType.getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(parameterType.getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(24));
+        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(27));
         assertThat(parameterType.getComponentType().getSort(), is(TypeDefinition.Sort.GENERIC_ARRAY));
         assertThat(parameterType.getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(parameterType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(25));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(28));
         assertThat(parameterType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(23));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(26));
     }
 
     @Test
@@ -1312,7 +1312,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superType.getDeclaredAnnotations().size(), is(1));
         assertThat(superType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(superType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(12));
+        assertThat(superType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(15));
     }
 
     @Test
@@ -1326,18 +1326,18 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(firstInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(firstInterfaceType.getDeclaredAnnotations().size(), is(1));
         assertThat(firstInterfaceType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(firstInterfaceType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(13));
+        assertThat(firstInterfaceType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(16));
         assertThat(firstInterfaceType.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(14));
+        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(17));
         TypeDescription.Generic secondInterfaceType = describeInterfaceType(samples, 1);
         assertThat(secondInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(secondInterfaceType.getDeclaredAnnotations().size(), is(0));
         assertThat(secondInterfaceType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().size(), is(1));
         assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(15));
+        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(18));
         assertThat(secondInterfaceType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(secondInterfaceType.getParameters().get(1).getDeclaredAnnotations().size(), is(0));
     }
@@ -1353,12 +1353,12 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(firstExceptionType.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(firstExceptionType.getDeclaredAnnotations().size(), is(1));
         assertThat(firstExceptionType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(firstExceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(26));
+        assertThat(firstExceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(29));
         TypeDescription.Generic secondExceptionType = describeExceptionType(samples.getDeclaredMethod(FOO, Exception[][].class), 1);
         assertThat(secondExceptionType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(secondExceptionType.getDeclaredAnnotations().size(), is(1));
         assertThat(secondExceptionType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(secondExceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(27));
+        assertThat(secondExceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(30));
     }
 
     @Test
