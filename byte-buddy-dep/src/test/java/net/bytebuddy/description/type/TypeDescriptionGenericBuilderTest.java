@@ -126,7 +126,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
             List<TypeDescription.Generic> parameters = new ArrayList<>(parameterizedType.getActualTypeArguments().length);
             int index = 0;
             for (Type parameter : parameterizedType.getActualTypeArguments()) {
-                parameters.add(describe(parameter, annotationReader.ofParameterType(index)));
+                parameters.add(describe(parameter, annotationReader.ofParameterType(index++)));
             }
             return TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType()),
                     parameterizedType.getOwnerType() == null
