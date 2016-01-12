@@ -18,6 +18,5 @@ public class DynamicTypeBuilderObjectPropertiesTest {
         ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.class).apply();
         ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.MethodMatchAdapter.AnnotationAdapter.class).apply();
         ObjectPropertyAssertion.of(DynamicType.Builder.AbstractBase.Adapter.OptionalMethodMatchAdapter.class).apply();
-
     }
 }

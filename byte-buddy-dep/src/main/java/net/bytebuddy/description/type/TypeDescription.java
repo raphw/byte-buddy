@@ -2299,7 +2299,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         @Override
                         public String toString() {
                             return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.Resolved{" +
-                                    "annotatedElement=" + annotatedElement +
+                                    ", annotatedElement=" + annotatedElement +
                                     '}';
                         }
                     }
@@ -2347,7 +2347,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         @Override
                         public String toString() {
                             return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedTypeVariableType{" +
-                                    "typeVariable=" + typeVariable +
+                                    ", typeVariable=" + typeVariable +
                                     '}';
                         }
                     }
@@ -2382,21 +2382,32 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             }
                         }
 
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedSuperType) other).getOuter())
                                     && type.equals(((AnnotatedSuperType) other).type);
                         }
 
                         @Override
                         public int hashCode() {
-                            return type.hashCode();
+                            return getOuter().hashCode() + type.hashCode() * 31;
                         }
 
                         @Override
                         public String toString() {
                             return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperType{" +
-                                    "type=" + type +
+                                    "dispatcher=" + getOuter() +
+                                    ", type=" + type +
                                     '}';
                         }
                     }
@@ -2438,22 +2449,34 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             }
                         }
 
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedInterfaceType) other).getOuter())
                                     && type.equals(((AnnotatedInterfaceType) other).type)
                                     && index == ((AnnotatedInterfaceType) other).index;
                         }
 
                         @Override
                         public int hashCode() {
-                            return type.hashCode();
+                            return 31 * (type.hashCode() + 31 * getOuter().hashCode()) + index;
                         }
 
                         @Override
                         public String toString() {
                             return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedInterfaceType{" +
-                                    "type=" + type +
+                                    "dispatcher=" + getOuter() +
+                                    ", type=" + type +
+                                    ", index=" + index +
                                     '}';
                         }
                     }
@@ -2488,21 +2511,32 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             }
                         }
 
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedFieldType) other).getOuter())
                                     && field.equals(((AnnotatedFieldType) other).field);
                         }
 
                         @Override
                         public int hashCode() {
-                            return field.hashCode();
+                            return field.hashCode() + getOuter().hashCode() * 31;
                         }
 
                         @Override
                         public String toString() {
                             return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedFieldType{" +
-                                    "field=" + field +
+                                    "dispatcher=" + getOuter() +
+                                    ", field=" + field +
                                     '}';
                         }
                     }
@@ -2537,21 +2571,32 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             }
                         }
 
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedReturnType) other).getOuter())
                                     && method.equals(((AnnotatedReturnType) other).method);
                         }
 
                         @Override
                         public int hashCode() {
-                            return method.hashCode();
+                            return 31 * method.hashCode() + getOuter().hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedReturnType{" +
-                                    "method=" + method +
+                                    "dispatcher=" + getOuter() +
+                                    ", method=" + method +
                                     '}';
                         }
                     }
@@ -2593,22 +2638,33 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             }
                         }
 
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedParameterizedType) other).getOuter())
                                     && executable.equals(((AnnotatedParameterizedType) other).executable)
                                     && index == ((AnnotatedParameterizedType) other).index;
                         }
 
                         @Override
                         public int hashCode() {
-                            return executable.hashCode() + 31 * index;
+                            return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
                         }
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedParameterType{" +
-                                    "executable=" + executable +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedParameterizedType{" +
+                                    "dispatcher=" + getOuter() +
+                                    ", executable=" + executable +
                                     ", index=" + index +
                                     '}';
                         }
@@ -2651,22 +2707,33 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             }
                         }
 
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedExceptionType) other).getOuter())
                                     && executable.equals(((AnnotatedExceptionType) other).executable)
                                     && index == ((AnnotatedExceptionType) other).index;
                         }
 
                         @Override
                         public int hashCode() {
-                            return executable.hashCode() + 31 * index;
+                            return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedExceptionType{" +
-                                    "executable=" + executable +
+                                    "dispatcher=" + getOuter() +
+                                    ", executable=" + executable +
                                     ", index=" + index +
                                     '}';
                         }
@@ -2892,7 +2959,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
                             && super.equals(other)
-                            && index == ((ForWildcardLowerBoundType) other).index;
+                            && index == ((ForWildcardUpperBoundType) other).index;
                 }
 
                 @Override
@@ -2904,7 +2971,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForWildcardLowerBoundType{"
+                    return "TypeDescription.Generic.AnnotationReader.ForWildcardUpperBoundType{"
                             + "annotationReader=" + annotationReader
                             + ", index=" + index
                             + '}';
@@ -3207,7 +3274,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public String toString() {
-                    return "TypeDescription.Generic.AnnotationReader.ForParameterType{"
+                    return "TypeDescription.Generic.AnnotationReader.ForTypeArgument{"
                             + "annotationReader=" + annotationReader
                             + ", index=" + index
                             + '}';

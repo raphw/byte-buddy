@@ -2912,15 +2912,13 @@ public interface DynamicType {
                     @SuppressWarnings("unchecked")
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
-                                && super.equals(other)
                                 && getOuter().equals(((TypeVariableDefinitionAdapter) other).getOuter())
                                 && token.equals(((TypeVariableDefinitionAdapter) other).token);
                     }
 
                     @Override
                     public int hashCode() {
-                        int result = super.hashCode();
-                        result = 31 * result + getOuter().hashCode();
+                        int result = getOuter().hashCode();
                         result = 31 * result + token.hashCode();
                         return result;
                     }
