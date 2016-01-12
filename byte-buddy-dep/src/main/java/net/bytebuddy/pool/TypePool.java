@@ -5093,7 +5093,7 @@ public interface TypePool {
                             }
 
                             @Override
-                            public TypeList.Generic getParameters() {
+                            public TypeList.Generic getTypeArguments() {
                                 return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
                             }
 
@@ -5174,7 +5174,7 @@ public interface TypePool {
                         }
 
                         @Override
-                        public TypeList.Generic getParameters() {
+                        public TypeList.Generic getTypeArguments() {
                             return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
                         }
 

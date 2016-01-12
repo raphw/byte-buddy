@@ -325,7 +325,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 /**
                  * Creates a new dispatcher for a modern VM.
                  *
-                 * @param getParameters A reference to {@code java.lang.reflect.Executable#getParameters}.
+                 * @param getParameters A reference to {@code java.lang.reflect.Executable#getTypeArguments}.
                  * @param getName       A reference to {@code java.lang.reflect.Parameter#getName}.
                  * @param isNamePresent A reference to {@code java.lang.reflect.Parameter#isNamePresent}.
                  * @param getModifiers  A reference to {@code java.lang.reflect.Parameter#getModifiers}.

@@ -1212,8 +1212,8 @@ public interface MethodDescription extends TypeVariableSource,
 
             @Override
             public TypeDescription.Generic onParameterizedType(TypeDescription.Generic parameterizedType) {
-                List<TypeDescription.Generic> parameters = new ArrayList<TypeDescription.Generic>(parameterizedType.getParameters().size());
-                for (TypeDescription.Generic parameter : parameterizedType.getParameters()) {
+                List<TypeDescription.Generic> parameters = new ArrayList<TypeDescription.Generic>(parameterizedType.getTypeArguments().size());
+                for (TypeDescription.Generic parameter : parameterizedType.getTypeArguments()) {
                     if (parameter.getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
                         return visitor.onParameterizedType(parameterizedType);
                     } else if (parameter.getSort().isWildcard()) {

@@ -21,29 +21,29 @@ public class TypeDescriptionGenericVisitorSubstitutorForDetachmentTest {
         assertThat(detached, not(sameInstance(original)));
         assertThat(detached.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(detached.asErasure(), is(TargetType.DESCRIPTION));
-        assertThat(detached.getParameters().size(), is(4));
-        assertThat(detached.getParameters().get(0).getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
-        assertThat(detached.getParameters().get(0).getSymbol(), is("T"));
-        assertThat(detached.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(detached.getParameters().get(1).asErasure().represents(String.class), is(true));
-        assertThat(detached.getParameters().get(2).getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
-        assertThat(detached.getParameters().get(2).getSymbol(), is("U"));
-        assertThat(detached.getParameters().get(3).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(detached.getParameters().get(3).getParameters().size(), is(1));
-        assertThat(detached.getParameters().get(3).getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
-        assertThat(detached.getParameters().get(3).getParameters().getOnly().getSymbol(), is("S"));
+        assertThat(detached.getTypeArguments().size(), is(4));
+        assertThat(detached.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
+        assertThat(detached.getTypeArguments().get(0).getSymbol(), is("T"));
+        assertThat(detached.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(detached.getTypeArguments().get(1).asErasure().represents(String.class), is(true));
+        assertThat(detached.getTypeArguments().get(2).getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
+        assertThat(detached.getTypeArguments().get(2).getSymbol(), is("U"));
+        assertThat(detached.getTypeArguments().get(3).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(detached.getTypeArguments().get(3).getTypeArguments().size(), is(1));
+        assertThat(detached.getTypeArguments().get(3).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
+        assertThat(detached.getTypeArguments().get(3).getTypeArguments().getOnly().getSymbol(), is("S"));
         assertThat(detached.getOwnerType(), notNullValue(TypeDescription.Generic.class));
         assertThat(detached.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(detached.getOwnerType().getParameters().size(), is(1));
-        assertThat(detached.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
-        assertThat(detached.getOwnerType().getParameters().getOnly().getSymbol(), is("T"));
+        assertThat(detached.getOwnerType().getTypeArguments().size(), is(1));
+        assertThat(detached.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE_SYMBOLIC));
+        assertThat(detached.getOwnerType().getTypeArguments().getOnly().getSymbol(), is("T"));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testDetachedNoSource() throws Exception {
         TypeDescription.Generic original = TypeDefinition.Sort.describe(Foo.Inner.class.getDeclaredField(FOO).getGenericType());
         TypeDescription.Generic detached = original.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(ElementMatchers.is(Foo.Inner.class)));
-        detached.getParameters().get(0).getVariableSource();
+        detached.getTypeArguments().get(0).getVariableSource();
     }
 
     @Test
