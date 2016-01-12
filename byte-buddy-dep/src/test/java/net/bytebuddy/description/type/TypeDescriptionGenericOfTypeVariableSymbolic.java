@@ -68,8 +68,8 @@ public class TypeDescriptionGenericOfTypeVariableSymbolic {
     public void testEquals() throws Exception {
         assertThat(typeVariable, is(typeVariable));
         assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription))));
-        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.emptyList())));
-        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR, Collections.emptyList())));
+        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.<AnnotationDescription>emptyList())));
+        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR, Collections.<AnnotationDescription>emptyList())));
         assertThat(typeVariable, not(TypeDescription.Generic.OBJECT));
         assertThat(typeVariable, not(new Object()));
         assertThat(typeVariable, not(equalTo(null)));

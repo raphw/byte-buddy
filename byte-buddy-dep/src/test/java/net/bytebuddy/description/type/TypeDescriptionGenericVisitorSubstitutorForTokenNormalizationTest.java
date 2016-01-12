@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -44,7 +45,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     @Test
     public void testTypeVariable() throws Exception {
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onTypeVariable(source),
-                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.emptyList()))); // TODO: Variables
+                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.<AnnotationDescription>emptyList()))); // TODO: Variables
     }
 
     @Test

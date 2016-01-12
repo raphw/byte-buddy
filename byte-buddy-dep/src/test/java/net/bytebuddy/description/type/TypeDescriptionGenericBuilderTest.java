@@ -143,7 +143,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
             return builder(((GenericArrayType) type).getGenericComponentType(), annotationReader.ofComponentType()).asArray().annotate(annotationReader.asList());
         } else if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
-            List<TypeDescription.Generic> parameters = new ArrayList<>(parameterizedType.getActualTypeArguments().length);
+            List<TypeDescription.Generic> parameters = new ArrayList<TypeDescription.Generic>(parameterizedType.getActualTypeArguments().length);
             int index = 0;
             for (Type parameter : parameterizedType.getActualTypeArguments()) {
                 parameters.add(describe(parameter, annotationReader.ofTypeArgument(index++)));

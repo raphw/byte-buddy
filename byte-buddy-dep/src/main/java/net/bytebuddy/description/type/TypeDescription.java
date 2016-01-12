@@ -2957,9 +2957,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception);
                     } catch (InvocationTargetException exception) {
                         throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception.getCause());
-                    } catch (ArrayIndexOutOfBoundsException e) {
-                        System.out.println(((AnnotatedType) annotatedElement).getType().getTypeName() + " has no upper bounds");
-                        throw e;
                     }
                 }
 
@@ -5261,7 +5258,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A description of an unbound wildcard without type annotations.
              */
             public static Generic unboundWildcard() {
-                return unboundWildcard(Collections.emptySet());
+                return unboundWildcard(Collections.<AnnotationDescription>emptySet());
             }
 
             /**
