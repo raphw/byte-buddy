@@ -10,7 +10,9 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -32,6 +34,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractTypeDescriptionGenericTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 

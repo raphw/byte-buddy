@@ -175,6 +175,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
 
     @Test
     @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
     public void testMethodVariableT() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
