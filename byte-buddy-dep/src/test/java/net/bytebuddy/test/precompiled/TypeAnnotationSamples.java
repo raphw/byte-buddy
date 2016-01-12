@@ -18,4 +18,8 @@ public abstract class TypeAnnotationSamples<@TypeAnnotation(0) T,
 
     abstract <@TypeAnnotation(26) T extends @TypeAnnotation(27) Exception> @TypeAnnotation(28) int foo(@TypeAnnotation(29) T @TypeAnnotation(30) [] @TypeAnnotation(31) [] v)
             throws @TypeAnnotation(32) T, @TypeAnnotation(33) RuntimeException;
+
+    abstract @TypeAnnotation(34) int @TypeAnnotation(35) [] @TypeAnnotation(36) [] bar(@TypeAnnotation(37) Void @TypeAnnotation(38) [] @TypeAnnotation(39) [] v);
+
+    abstract <T> @TypeAnnotation(40) int @TypeAnnotation(41) [] @TypeAnnotation(42) [] qux(@TypeAnnotation(43) Void @TypeAnnotation(44) [] @TypeAnnotation(45) [] v);
 }

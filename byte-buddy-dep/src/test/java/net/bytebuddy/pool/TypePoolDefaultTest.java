@@ -62,6 +62,15 @@ public class TypePoolDefaultTest {
     }
 
     @Test
+    public void testAnnotationRegistrantObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForByteCodeElement.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForByteCodeElement.WithIndex.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForTypeVariable.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex.class).applyBasic();
+        ObjectPropertyAssertion.of(TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex.DoubleIndexed.class).applyBasic();
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.Default.class).apply();
     }

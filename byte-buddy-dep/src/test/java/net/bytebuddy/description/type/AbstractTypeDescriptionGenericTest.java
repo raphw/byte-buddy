@@ -1396,11 +1396,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
         Class<?> samples = Class.forName(TYPE_ANNOTATION_OTHER_SAMPLES);
-        TypeDescription.Generic oarameterType = describeParameterType(samples.getDeclaredMethod(FOO, Void.class), 0);
-        assertThat(oarameterType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(oarameterType.getDeclaredAnnotations().size(), is(1));
-        assertThat(oarameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(oarameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(8));
+        TypeDescription.Generic parameterType = describeParameterType(samples.getDeclaredMethod(FOO, Void.class), 0);
+        assertThat(parameterType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterType.getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(8));
     }
 
     @Test
@@ -1415,6 +1415,76 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(exceptionType.getDeclaredAnnotations().size(), is(1));
         assertThat(exceptionType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(exceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(9));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeAnnotationOnNonGenericArrayType() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
+        TypeDescription.Generic returnType = describeReturnType(samples.getDeclaredMethod(BAR, Void[][].class));
+        assertThat(returnType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(returnType.getDeclaredAnnotations().size(), is(1));
+        assertThat(returnType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(35));
+        assertThat(returnType.getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(returnType.getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(returnType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(returnType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(36));
+        assertThat(returnType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(returnType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(returnType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(returnType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(34));
+        TypeDescription.Generic parameterType = describeParameterType(samples.getDeclaredMethod(BAR, Void[][].class), 0);
+        assertThat(parameterType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterType.getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(38));
+        assertThat(parameterType.getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(39));
+        assertThat(parameterType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(37));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeAnnotationOnNonGenericArrayTypeWithGenericSignature() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
+        TypeDescription.Generic returnType = describeReturnType(samples.getDeclaredMethod(QUX, Void[][].class));
+        assertThat(returnType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(returnType.getDeclaredAnnotations().size(), is(1));
+        assertThat(returnType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(41));
+        assertThat(returnType.getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(returnType.getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(returnType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(returnType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(42));
+        assertThat(returnType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(returnType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(returnType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(returnType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(40));
+        TypeDescription.Generic parameterType = describeParameterType(samples.getDeclaredMethod(QUX, Void[][].class), 0);
+        assertThat(parameterType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterType.getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(44));
+        assertThat(parameterType.getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(parameterType.getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(45));
+        assertThat(parameterType.getComponentType().getComponentType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(parameterType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(43));
     }
 
     @Test

@@ -1035,6 +1035,9 @@ public interface TypePool {
              */
             void onComplete();
 
+            /**
+             * An abstract base implementation of an annotation registrant.
+             */
             abstract class AbstractBase implements AnnotationRegistrant {
 
                 /**
@@ -1047,6 +1050,11 @@ public interface TypePool {
                  */
                 private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
+                /**
+                 * Creates a new annotation registrant.
+                 *
+                 * @param descriptor The annotation descriptor.
+                 */
                 protected AbstractBase(String descriptor) {
                     this.descriptor = descriptor;
                     values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
@@ -1062,12 +1070,29 @@ public interface TypePool {
                     getTokens().add(new LazyTypeDescription.AnnotationToken(descriptor, values));
                 }
 
+                /**
+                 * Returns the token list for this collector.
+                 *
+                 * @return The token list for this collector.
+                 */
                 protected abstract List<LazyTypeDescription.AnnotationToken> getTokens();
 
+                /**
+                 * A base implementation for a collector for a type variable.
+                 */
                 protected abstract static class ForTypeVariable extends AbstractBase {
 
+                    /**
+                     * The type variable's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * Creates a new annotation collector.
+                     *
+                     * @param descriptor The annotation descriptor.
+                     * @param typePath   The type variable's type path.
+                     */
                     protected ForTypeVariable(String descriptor, TypePath typePath) {
                         super(descriptor);
                         this.typePath = typePath == null
@@ -1086,12 +1111,30 @@ public interface TypePool {
                         return tokens;
                     }
 
+                    /**
+                     * Returns this collector's path map.
+                     *
+                     * @return This collector's path map.
+                     */
                     protected abstract Map<String, List<LazyTypeDescription.AnnotationToken>> getPathMap();
 
-                    protected static abstract class WithIndex extends AbstractBase.ForTypeVariable {
+                    /**
+                     * A base implementation for a collector for a type variable with an index.
+                     */
+                    protected abstract static class WithIndex extends AbstractBase.ForTypeVariable {
 
+                        /**
+                         * The type variable's index.
+                         */
                         private final int index;
 
+                        /**
+                         * Creates a new annotation collector.
+                         *
+                         * @param descriptor The annotation descriptor.
+                         * @param typePath   The type variable's type path.
+                         * @param index      The type variable's index.
+                         */
                         protected WithIndex(String descriptor, TypePath typePath, int index) {
                             super(descriptor, typePath);
                             this.index = index;
@@ -1108,13 +1151,32 @@ public interface TypePool {
                             return pathMap;
                         }
 
+                        /**
+                         * Returns this collector's indexed path map.
+                         *
+                         * @return This collector's indexed path map.
+                         */
                         protected abstract Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> getIndexedPathMap();
 
-                        protected static abstract class DoubleIndexed extends WithIndex {
+                        /**
+                         * A base implementation for a collector for a type variable with two indices.
+                         */
+                        protected abstract static class DoubleIndexed extends WithIndex {
 
+                            /**
+                             * The type variable's first index.
+                             */
                             private final int preIndex;
 
-                            public DoubleIndexed(String descriptor, TypePath typePath, int index, int preIndex) {
+                            /**
+                             * Creates a new annotation collector.
+                             *
+                             * @param descriptor The annotation descriptor.
+                             * @param typePath   The type variable's type path.
+                             * @param index      The type variable's index.
+                             * @param preIndex   The type variable's first index.
+                             */
+                            protected DoubleIndexed(String descriptor, TypePath typePath, int index, int preIndex) {
                                 super(descriptor, typePath, index);
                                 this.preIndex = preIndex;
                             }
@@ -1130,16 +1192,33 @@ public interface TypePool {
                                 return indexedPathMap;
                             }
 
+                            /**
+                             * Returns this collector's double indexed path map.
+                             *
+                             * @return This collector's double indexed path map.
+                             */
                             protected abstract Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> getDoubleIndexedPathMap();
                         }
                     }
                 }
             }
 
+            /**
+             * An annotation collector for a byte code element.
+             */
             class ForByteCodeElement extends AbstractBase {
 
+                /**
+                 * The target collection.
+                 */
                 private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
 
+                /**
+                 * Creates a new annotation collector for a byte code element.
+                 *
+                 * @param descriptor       The annotation descriptor.
+                 * @param annotationTokens The target collection.
+                 */
                 protected ForByteCodeElement(String descriptor, List<LazyTypeDescription.AnnotationToken> annotationTokens) {
                     super(descriptor);
                     this.annotationTokens = annotationTokens;
@@ -1150,12 +1229,35 @@ public interface TypePool {
                     return annotationTokens;
                 }
 
+                @Override
+                public String toString() {
+                    return "TypePool.Default.AnnotationRegistrant.ForByteCodeElement{" +
+                            "annotationTokens=" + annotationTokens +
+                            '}';
+                }
+
+                /**
+                 * An annotation collector for a byte code element with an index.
+                 */
                 public static class WithIndex extends AbstractBase {
 
+                    /**
+                     * The byte code element's index.
+                     */
                     private final int index;
 
+                    /**
+                     * The target collection.
+                     */
                     private final Map<Integer, List<LazyTypeDescription.AnnotationToken>> annotationTokens;
 
+                    /**
+                     * Creates a new annotation collector for a byte code element with an index.
+                     *
+                     * @param descriptor       The annotation descriptor.
+                     * @param index            The byte code element's index.
+                     * @param annotationTokens The target collection.
+                     */
                     protected WithIndex(String descriptor, int index, Map<Integer, List<LazyTypeDescription.AnnotationToken>> annotationTokens) {
                         super(descriptor);
                         this.index = index;
@@ -1171,13 +1273,34 @@ public interface TypePool {
                         }
                         return annotationTokens;
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.AnnotationRegistrant.ForByteCodeElement.WithIndex{" +
+                                "index=" + index +
+                                ", annotationTokens=" + annotationTokens +
+                                '}';
+                    }
                 }
             }
 
+            /**
+             * An annotation collector for a type variable.
+             */
             class ForTypeVariable extends AbstractBase.ForTypeVariable {
 
+                /**
+                 * The target collection.
+                 */
                 private final Map<String, List<LazyTypeDescription.AnnotationToken>> pathMap;
 
+                /**
+                 * Creates a new annotation collector.
+                 *
+                 * @param descriptor The annotation descriptor.
+                 * @param typePath   The type variable's type path.
+                 * @param pathMap    The target collection.
+                 */
                 protected ForTypeVariable(String descriptor, TypePath typePath, Map<String, List<LazyTypeDescription.AnnotationToken>> pathMap) {
                     super(descriptor, typePath);
                     this.pathMap = pathMap;
@@ -1188,11 +1311,35 @@ public interface TypePool {
                     return pathMap;
                 }
 
+                @Override
+                public String toString() {
+                    return "TypePool.Default.AnnotationRegistrant.ForTypeVariable{" +
+                            ", pathMap=" + pathMap +
+                            '}';
+                }
+
+                /**
+                 * An annotation collector for a type variable with an index.
+                 */
                 public static class WithIndex extends AbstractBase.ForTypeVariable.WithIndex {
 
+                    /**
+                     * The target collection.
+                     */
                     private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap;
 
-                    public WithIndex(String descriptor, TypePath typePath, int index, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap) {
+                    /**
+                     * Creates a new annotation collector.
+                     *
+                     * @param descriptor     The annotation descriptor.
+                     * @param typePath       The type variable's type path.
+                     * @param index          The target index.
+                     * @param indexedPathMap The target collection.
+                     */
+                    protected WithIndex(String descriptor,
+                                        TypePath typePath,
+                                        int index,
+                                        Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap) {
                         super(descriptor, typePath, index);
                         this.indexedPathMap = indexedPathMap;
                     }
@@ -1202,22 +1349,51 @@ public interface TypePool {
                         return indexedPathMap;
                     }
 
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex{" +
+                                ", indexedPathMap=" + indexedPathMap +
+                                '}';
+                    }
+
+                    /**
+                     * An annotation collector for a type variable with two indices.
+                     */
                     public static class DoubleIndexed extends AbstractBase.ForTypeVariable.WithIndex.DoubleIndexed {
 
+                        /**
+                         * The target collection.
+                         */
                         private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> doubleIndexedPathMap;
 
-                        public DoubleIndexed(String descriptor,
-                                             TypePath typePath,
-                                             int index,
-                                             int secondIndex,
-                                             Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> doubleIndexedPathMap) {
-                            super(descriptor, typePath, index, secondIndex);
+                        /**
+                         * Creates a new annotation collector.
+                         *
+                         * @param descriptor           The annotation descriptor.
+                         * @param typePath             The type variable's type path.
+                         * @param index                The target index.
+                         * @param preIndex             The initial target index.
+                         * @param doubleIndexedPathMap The target collection.
+                         */
+                        protected DoubleIndexed(String descriptor,
+                                                TypePath typePath,
+                                                int index,
+                                                int preIndex,
+                                                Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> doubleIndexedPathMap) {
+                            super(descriptor, typePath, index, preIndex);
                             this.doubleIndexedPathMap = doubleIndexedPathMap;
                         }
 
                         @Override
                         protected Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> getDoubleIndexedPathMap() {
                             return doubleIndexedPathMap;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.AnnotationRegistrant.ForTypeVariable.WithIndex.DoubleIndexed{" +
+                                    ", doubleIndexedPathMap=" + doubleIndexedPathMap +
+                                    '}';
                         }
                     }
                 }
@@ -2436,10 +2612,19 @@ public interface TypePool {
          */
         protected class TypeExtractor extends ClassVisitor {
 
+            /**
+             * A mapping of the super types' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> superTypeAnnotationTokens;
 
+            /**
+             * A mapping of the type variables' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
 
+            /**
+             * A mapping of the type variables' bounds' type annotation tokens by their indices and each variables index.
+             */
             private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundsAnnotationTokens;
 
             /**
@@ -2658,10 +2843,25 @@ public interface TypePool {
                  */
                 private final ComponentTypeLocator componentTypeLocator;
 
+                /**
+                 * Creates a new annotation extractor for a byte code element without an index.
+                 *
+                 * @param descriptor           The annotation descriptor.
+                 * @param annotationTokens     The collection for storing any discovered annotation tokens.
+                 * @param componentTypeLocator The component type locator to use.
+                 */
                 protected AnnotationExtractor(String descriptor, List<LazyTypeDescription.AnnotationToken> annotationTokens, ComponentTypeLocator componentTypeLocator) {
                     this(new AnnotationRegistrant.ForByteCodeElement(descriptor, annotationTokens), componentTypeLocator);
                 }
 
+                /**
+                 * Creates a new annotation extractor for a byte code element with an index.
+                 *
+                 * @param descriptor           The annotation descriptor.
+                 * @param index                The index of the element for which the annotations are collected.
+                 * @param annotationTokens     The collection for storing any discovered annotation tokens.
+                 * @param componentTypeLocator The component type locator to use.
+                 */
                 protected AnnotationExtractor(String descriptor,
                                               int index,
                                               Map<Integer, List<LazyTypeDescription.AnnotationToken>> annotationTokens,
@@ -2776,9 +2976,10 @@ public interface TypePool {
                  */
                 protected class AnnotationLookup implements AnnotationRegistrant {
 
+                    /**
+                     * The descriptor of the original annotation for which the annotation values are looked up.
+                     */
                     private final String descriptor;
-
-                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
 
                     /**
                      * The name of the original annotation for which the annotation values are looked up.
@@ -2786,17 +2987,20 @@ public interface TypePool {
                     private final String name;
 
                     /**
+                     * This annotation's values mapped by their attribute name.
+                     */
+                    private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+
+                    /**
                      * Creates a new annotation registrant for a recursive annotation lookup.
                      *
-                     * @param name       The name of the original annotation for which the annotation values are
-                     *                   looked up.
-                     * @param descriptor The descriptor of the original annotation for which the annotation values are
-                     *                   looked up.
+                     * @param name       The name of the original annotation for which the annotation values are looked up.
+                     * @param descriptor The descriptor of the original annotation for which the annotation values are looked up.
                      */
                     protected AnnotationLookup(String descriptor, String name) {
                         this.descriptor = descriptor;
-                        values = new HashMap<>();
                         this.name = name;
+                        values = new HashMap<>();
                     }
 
                     @Override
@@ -2837,6 +3041,9 @@ public interface TypePool {
                  */
                 private final String genericSignature;
 
+                /**
+                 * A mapping of the field type's type annotations.
+                 */
                 private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
 
                 /**
@@ -2939,14 +3146,29 @@ public interface TypePool {
                  */
                 private final String[] exceptionName;
 
+                /**
+                 * A mapping of the method's type variables' type annotations by their indices.
+                 */
                 private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
 
+                /**
+                 * A mapping of the method's type variables' bounds' type annotations by their indices and each variable's index.
+                 */
                 private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundAnnotationTokens;
 
+                /**
+                 * A mapping of the method's return type's type annotations.
+                 */
                 private final Map<String, List<LazyTypeDescription.AnnotationToken>> returnTypeAnnotationTokens;
 
+                /**
+                 * A mapping of the parameters' type annotations by their indices.
+                 */
                 private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> parameterTypeAnnotationTokens;
 
+                /**
+                 * A mapping of the exception types' type annotations by their indices.
+                 */
                 private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
 
                 /**
@@ -3582,7 +3804,12 @@ public interface TypePool {
     class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
         /**
-         * Specifies a type without a super type definition, i.e. the {@link Object} type.
+         * The index of a super type's type annotations.
+         */
+        private static final int SUPER_TYPE_INDEX = -1;
+
+        /**
+         * Indicates that a type does not define a super type.
          */
         private static final String NO_SUPER_TYPE = null;
 
@@ -3631,10 +3858,19 @@ public interface TypePool {
          */
         private final boolean anonymousType;
 
+        /**
+         * A mapping of type annotations for this type's super type and interface types by their indices.
+         */
         private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> superTypeAnnotationTokens;
 
+        /**
+         * A mapping of type annotations of the type variables' type annotations by their indices.
+         */
         private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
 
+        /**
+         * A mapping of type annotations of the type variables' bounds' type annotations by their indices and each variable's index.
+         */
         private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundsAnnotationTokens;
 
         /**
@@ -3643,14 +3879,14 @@ public interface TypePool {
         private final List<AnnotationToken> annotationTokens;
 
         /**
-         * A list of field descriptions that are declared by this type.
+         * A list of field tokens describing the field's of this type.
          */
-        private final List<FieldDescription.InDefinedShape> declaredFields;
+        private final List<FieldToken> fieldTokens;
 
         /**
-         * A list of method descriptions that are declared by this type.
+         * A list of method tokens describing the method's of this type.
          */
-        private final List<MethodDescription.InDefinedShape> declaredMethods;
+        private final List<MethodToken> methodTokens;
 
         /**
          * Creates a new lazy type description.
@@ -3664,9 +3900,10 @@ public interface TypePool {
          * @param declarationContext                 The declaration context of this type.
          * @param declaredTypes                      A list of descriptors representing the types that are declared by this type.
          * @param anonymousType                      {@code true} if this type is an anonymous type.
-         * @param superTypeAnnotationTokens
-         * @param typeVariableAnnotationTokens
-         * @param typeVariableBoundsAnnotationTokens
+         * @param superTypeAnnotationTokens          A mapping of type annotations for this type's super type and interface types by their indices.
+         * @param typeVariableAnnotationTokens       A mapping of type annotations of the type variables' type annotations by their indices.
+         * @param typeVariableBoundsAnnotationTokens A mapping of type annotations of the type variables' bounds' type annotations by their indices
+         *                                           and each variable's index.
          * @param annotationTokens                   A list of tokens that represent the annotations of this type.
          * @param fieldTokens                        A list of field tokens describing the field's of this type.
          * @param methodTokens                       A list of method tokens describing the method's of this type.
@@ -3708,21 +3945,15 @@ public interface TypePool {
             this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
             this.typeVariableBoundsAnnotationTokens = typeVariableBoundsAnnotationTokens;
             this.annotationTokens = annotationTokens;
-            declaredFields = new ArrayList<FieldDescription.InDefinedShape>(fieldTokens.size());
-            for (FieldToken fieldToken : fieldTokens) {
-                declaredFields.add(fieldToken.toFieldDescription(this));
-            }
-            declaredMethods = new ArrayList<MethodDescription.InDefinedShape>(methodTokens.size());
-            for (MethodToken methodToken : methodTokens) {
-                declaredMethods.add(methodToken.toMethodDescription(this));
-            }
+            this.fieldTokens = fieldTokens;
+            this.methodTokens = methodTokens;
         }
 
         @Override
         public Generic getSuperType() {
             return superTypeDescriptor == null || isInterface()
                     ? TypeDescription.Generic.UNDEFINED
-                    : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, superTypeAnnotationTokens.get(-1), this);
+                    : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, superTypeAnnotationTokens.get(SUPER_TYPE_INDEX), this);
         }
 
         @Override
@@ -3762,12 +3993,12 @@ public interface TypePool {
 
         @Override
         public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-            return new FieldList.Explicit<FieldDescription.InDefinedShape>(declaredFields);
+            return new FieldTokenList();
         }
 
         @Override
         public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-            return new MethodList.Explicit<MethodDescription.InDefinedShape>(declaredMethods);
+            return new MethodTokenList();
         }
 
         @Override
@@ -3804,6 +4035,38 @@ public interface TypePool {
         @Override
         public TypeList.Generic getTypeVariables() {
             return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundsAnnotationTokens);
+        }
+
+        /**
+         * A list of field tokens representing each entry as a field description.
+         */
+        protected class FieldTokenList extends FieldList.AbstractBase<FieldDescription.InDefinedShape> {
+
+            @Override
+            public FieldDescription.InDefinedShape get(int index) {
+                return fieldTokens.get(index).toFieldDescription(LazyTypeDescription.this);
+            }
+
+            @Override
+            public int size() {
+                return fieldTokens.size();
+            }
+        }
+
+        /**
+         * A list of method tokens representing each entry as a method description.
+         */
+        protected class MethodTokenList extends MethodList.AbstractBase<MethodDescription.InDefinedShape> {
+
+            @Override
+            public MethodDescription.InDefinedShape get(int index) {
+                return methodTokens.get(index).toMethodDescription(LazyTypeDescription.this);
+            }
+
+            @Override
+            public int size() {
+                return methodTokens.size();
+            }
         }
 
         /**
@@ -4048,12 +4311,29 @@ public interface TypePool {
          */
         protected interface GenericTypeToken {
 
+            /**
+             * Represents an empty type path.
+             */
             String EMPTY_TYPE_PATH = "";
 
+            /**
+             * Represents a step to a component type within a type path.
+             */
             char COMPONENT_TYPE_PATH = '[';
 
+            /**
+             * Represents a wildcard type step within a type path.
+             */
             char WILDCARD_TYPE_PATH = '*';
 
+            /**
+             * Represents a owner type step within a type path.
+             */
+            char OWNER_TYPE_PATH = '.';
+
+            /**
+             * Represents an index tzpe delimiter within a type path.
+             */
             char INDEXED_TYPE_DELIMITER = ';';
 
             /**
@@ -4061,15 +4341,36 @@ public interface TypePool {
              *
              * @param typePool           The type pool to be used for locating non-generic type descriptions.
              * @param typeVariableSource The type variable source.
-             * @param typePath
-             * @param annotationTokens   @return A description of the represented generic type.
+             * @param typePath           The type path of the resolved generic type.
+             * @param annotationTokens   A mapping of the type's annotation tokens by their type path.
+             * @return A description of the represented generic type.
              */
             Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens);
 
+            /**
+             * Determines if a generic type tokens represents a primary bound of a type variable. This method must only be invoked on types
+             * that represent a {@link net.bytebuddy.description.type.TypeDefinition.Sort#NON_GENERIC},
+             * {@link net.bytebuddy.description.type.TypeDefinition.Sort#PARAMETERIZED} or {@link net.bytebuddy.description.type.TypeDefinition.Sort#VARIABLE}.
+             *
+             * @param typePool The type pool to use.
+             * @return {@code true} if this token represents a primary bound.
+             */
             boolean isPrimaryBound(TypePool typePool);
 
+            /**
+             * Represents a generic type token for a formal type variable.
+             */
             interface OfFormalTypeVariable {
 
+                /**
+                 * Transforms this token into a generic type representation.
+                 *
+                 * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                 * @param typeVariableSource       The type variable source.
+                 * @param annotationTokens         A mapping of the type variables' type annotations.
+                 * @param boundaryAnnotationTokens A mapping of the type variables' bounds' type annotation by their bound index.
+                 * @return A generic type representation of this formal type variable.
+                 */
                 Generic toGenericType(TypePool typePool,
                                       TypeVariableSource typeVariableSource,
                                       Map<String, List<AnnotationToken>> annotationTokens,
@@ -4172,7 +4473,10 @@ public interface TypePool {
                 }
 
                 @Override
-                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                public Generic toGenericType(TypePool typePool,
+                                             TypeVariableSource typeVariableSource,
+                                             String typePath,
+                                             Map<String, List<AnnotationToken>> annotationTokens) {
                     return new LazyPrimitiveType(typePool,
                             typePath,
                             annotationTokens == null
@@ -4191,17 +4495,43 @@ public interface TypePool {
                     return "TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType." + name();
                 }
 
+                /**
+                 * A representation of a lazy primitive type.
+                 */
                 protected static class LazyPrimitiveType extends Generic.OfNonGenericType {
 
+                    /**
+                     * The type pool to use.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * This type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * This type's type annotation tokens.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * The represented type's description.
+                     */
                     private final TypeDescription typeDescription;
 
-                    public LazyPrimitiveType(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens, TypeDescription typeDescription) {
+                    /**
+                     * Creates a new lazy primitive type.
+                     *
+                     * @param typePool         The type pool to use.
+                     * @param typePath         This type's type path.
+                     * @param annotationTokens This type's type annotation tokens.
+                     * @param typeDescription  The represented type's description.
+                     */
+                    protected LazyPrimitiveType(TypePool typePool,
+                                                String typePath,
+                                                Map<String, List<AnnotationToken>> annotationTokens,
+                                                TypeDescription typeDescription) {
                         this.typePool = typePool;
                         this.typePath = typePath;
                         this.annotationTokens = annotationTokens;
@@ -4257,14 +4587,33 @@ public interface TypePool {
                     return "TypePool.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard." + name();
                 }
 
+                /**
+                 * A generic type representation of a generic unbound wildcard.
+                 */
                 protected static class LazyUnboundWildcard extends Generic.OfWildcardType {
 
+                    /**
+                     * The type pool to use.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * This type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * The type's type annotations.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * Creates a new lazy unbound wildcard.
+                     *
+                     * @param typePool         The type pool to use.
+                     * @param typePath         This type's type path.
+                     * @param annotationTokens The type's type annotations.
+                     */
                     protected LazyUnboundWildcard(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
                         this.typePool = typePool;
                         this.typePath = typePath;
@@ -4296,8 +4645,11 @@ public interface TypePool {
                 /**
                  * Resolves the type variables of the represented element.
                  *
-                 * @param typePool           The type pool to be used for locating non-generic type descriptions.
-                 * @param typeVariableSource The type variable source to use for resolving type variables.
+                 * @param typePool              The type pool to be used for locating non-generic type descriptions.
+                 * @param typeVariableSource    The type variable source to use for resolving type variables.
+                 * @param annotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+                 * @param boundAnnotationTokens A mapping of the type variables' bounds' type annotation tokens by their indices
+                 *                              and each type variable's index.
                  * @return A list describing the resolved generic types.
                  */
                 TypeList.Generic resolveTypeVariables(TypePool typePool,
@@ -4376,23 +4728,57 @@ public interface TypePool {
                         return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Raw." + name();
                     }
 
+                    /**
+                     * Represents a non-generic type that defines type annotations.
+                     */
                     protected static class RawAnnotatedType extends Generic.OfNonGenericType {
 
+                        /**
+                         * The type pool to use.
+                         */
                         private final TypePool typePool;
 
+                        /**
+                         * The type's type path.
+                         */
                         private final String typePath;
 
+                        /**
+                         * A mapping of this type's type annotations.
+                         */
                         private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                        /**
+                         * The represented non-generic type.
+                         */
                         private final TypeDescription typeDescription;
 
-                        protected RawAnnotatedType(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens, TypeDescription typeDescription) {
+                        /**
+                         * Creates a new raw annotated type.
+                         *
+                         * @param typePool         The type pool to use.
+                         * @param typePath         The type's type path.
+                         * @param annotationTokens A mapping of this type's type annotations.
+                         * @param typeDescription  The represented non-generic type.
+                         */
+                        protected RawAnnotatedType(TypePool typePool,
+                                                   String typePath,
+                                                   Map<String, List<AnnotationToken>> annotationTokens,
+                                                   TypeDescription typeDescription) {
                             this.typePool = typePool;
                             this.typePath = typePath;
                             this.annotationTokens = annotationTokens;
                             this.typeDescription = typeDescription;
                         }
 
+                        /**
+                         * Creates a new raw annotated type.
+                         *
+                         * @param typePool         The type pool to use.
+                         * @param annotationTokens A mapping of this type's type annotations.
+                         * @param descriptor       The descriptor of the represented non-generic type.
+                         * @return An annotated non-generic type.
+                         */
                         protected static Generic of(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
                             return new RawAnnotatedType(typePool,
                                     EMPTY_TYPE_PATH,
@@ -4417,7 +4803,7 @@ public interface TypePool {
 
                         @Override
                         public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
                         }
 
                         /**
@@ -4430,6 +4816,9 @@ public interface TypePool {
                              */
                             private final TypePool typePool;
 
+                            /**
+                             * A mapping of the represented types' type annotation tokens by their indices.
+                             */
                             private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
 
                             /**
@@ -4438,10 +4827,11 @@ public interface TypePool {
                             private final List<String> descriptors;
 
                             /**
-                             * A generic type list only representing raw types.
+                             * Creates a generic type list only representing raw types.
                              *
-                             * @param typePool    The type pool to use for locating types.
-                             * @param descriptors A list of type descriptors that this list represents.
+                             * @param typePool         The type pool to use for locating types.
+                             * @param annotationTokens A mapping of the represented types' type annotation tokens by their indices.
+                             * @param descriptors      A list of type descriptors that this list represents.
                              */
                             protected LazyRawAnnotatedTypeList(TypePool typePool,
                                                                Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
@@ -4451,6 +4841,15 @@ public interface TypePool {
                                 this.descriptors = descriptors;
                             }
 
+                            /**
+                             * Creates generic type list only representing raw types.
+                             *
+                             * @param typePool         The type pool to use for locating types.
+                             * @param annotationTokens A mapping of the represented types' type annotation tokens by their indices or
+                             *                         {@code null} if no type annotations are defined for any type.
+                             * @param descriptors      A list of type descriptors that this list represents.
+                             * @return A generic type list representing the raw types this list represents.
+                             */
                             protected static TypeList.Generic of(TypePool typePool,
                                                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
                                                                  List<String> descriptors) {
@@ -4575,6 +4974,7 @@ public interface TypePool {
                      *
                      * @param superTypeDescriptor The descriptor of the raw super type.
                      * @param typePool            The type pool to be used for locating non-generic type descriptions.
+                     * @param annotationTokens    A mapping of the super type's type annotation tokens.
                      * @param definingType        The type that defines this super type.
                      * @return A description of this type's generic super type.
                      */
@@ -4588,6 +4988,7 @@ public interface TypePool {
                      *
                      * @param interfaceTypeDescriptors The descriptor of the raw interface types.
                      * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                     * @param annotationTokens         A mapping of the interface types' type annotation tokens by their indices.
                      * @param definingType             The type that defines these interface type.
                      * @return A description of this type's generic interface types.
                      */
@@ -4694,6 +5095,7 @@ public interface TypePool {
                      *
                      * @param returnTypeDescriptor The descriptor of the raw return type.
                      * @param typePool             The type pool to be used for locating non-generic type descriptions.
+                     * @param annotationTokens     A mapping of the return type's type annotation tokens.
                      * @param definingMethod       The method that defines this return type.
                      * @return A description of this type's generic return type.
                      */
@@ -4707,6 +5109,7 @@ public interface TypePool {
                      *
                      * @param parameterTypeDescriptors The descriptor of the raw parameter types.
                      * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                     * @param annotationTokens         A mapping of the parameter types' type annotation tokens by their indices.
                      * @param definingMethod           The method that defines these parameter types.
                      * @return A description of this type's generic interface types.
                      */
@@ -4720,6 +5123,7 @@ public interface TypePool {
                      *
                      * @param exceptionTypeDescriptors The descriptor of the raw exception types.
                      * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                     * @param annotationTokens         A mapping of the execption types' type annotation tokens by their indices.
                      * @param definingMethod           The method that defines these exception types.
                      * @return A description of this type's generic interface types.
                      */
@@ -4847,9 +5251,10 @@ public interface TypePool {
                      * Resolves the field type of the represented field.
                      *
                      * @param fieldTypeDescriptor The descriptor of the raw field type.
-                     * @param annotationTokens
+                     * @param annotationTokens    A mapping of the represented types' type annotation tokens.
                      * @param typePool            The type pool to be used for locating non-generic type descriptions.
                      * @param definingField       The field that defines this type.   @return A description of this field's type.
+                     * @return A generic type representation of the field's type.
                      */
                     Generic resolveFieldType(String fieldTypeDescriptor,
                                              TypePool typePool,
@@ -4955,17 +5360,43 @@ public interface TypePool {
                             '}';
                 }
 
+                /**
+                 * A representation of an annotated non-generic type.
+                 */
                 protected static class LazyNonGenericType extends Generic.OfNonGenericType {
 
+                    /**
+                     * The type pool to use.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * This type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * A mapping of this type's type annotation tokens.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * The represented type description.
+                     */
                     private final TypeDescription typeDescription;
 
-                    public LazyNonGenericType(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens, TypeDescription typeDescription) {
+                    /**
+                     * Creates a new lazy non-generic type.
+                     *
+                     * @param typePool         The type pool to use.
+                     * @param typePath         This type's type path.
+                     * @param annotationTokens A mapping of this type's type annotation tokens.
+                     * @param typeDescription  The represented type description.
+                     */
+                    protected LazyNonGenericType(TypePool typePool,
+                                                 String typePath,
+                                                 Map<String, List<AnnotationToken>> annotationTokens,
+                                                 TypeDescription typeDescription) {
                         this.typePool = typePool;
                         this.typePath = typePath;
                         this.annotationTokens = annotationTokens;
@@ -5043,14 +5474,33 @@ public interface TypePool {
                             '}';
                 }
 
+                /**
+                 * An annotated representation of a formal type variable.
+                 */
                 protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
 
+                    /**
+                     * The type pool to use.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * The represented annotation tokens.
+                     */
                     private final List<AnnotationToken> annotationTokens;
 
+                    /**
+                     * The represented type variable.
+                     */
                     private final Generic typeVariable;
 
+                    /**
+                     * Creates a new annotated type variable.
+                     *
+                     * @param typePool         The type pool to use.
+                     * @param annotationTokens The represented annotation tokens.
+                     * @param typeVariable     The represented type variable.
+                     */
                     protected AnnotatedTypeVariable(TypePool typePool, List<AnnotationToken> annotationTokens, Generic typeVariable) {
                         this.typePool = typePool;
                         this.annotationTokens = annotationTokens;
@@ -5156,12 +5606,24 @@ public interface TypePool {
                          */
                         private final TypeVariableSource typeVariableSource;
 
+                        /**
+                         * The type variable's type annotation tokens.
+                         */
                         private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                        /**
+                         * A mapping of the type variable boundss type annotation tokens by their indices.
+                         */
                         private final Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens;
 
+                        /**
+                         * The type variable's symbol.
+                         */
                         private final String symbol;
 
+                        /**
+                         * Tokenized representations of the type variables bound types.
+                         */
                         private final List<GenericTypeToken> boundTypeTokens;
 
                         /**
@@ -5169,7 +5631,10 @@ public interface TypePool {
                          *
                          * @param typePool                 The type pool to use for locating type descriptions.
                          * @param typeVariableSource       The type variable source to use for locating type variables.
-                         * @param boundaryAnnotationTokens
+                         * @param annotationTokens         The type variable's type annotation tokens.
+                         * @param boundaryAnnotationTokens A mapping of the type variable boundss type annotation tokens by their indices.
+                         * @param symbol                   The type variable's symbol.
+                         * @param boundTypeTokens          Tokenized representations of the type variables bound types.
                          */
                         protected LazyTypeVariable(TypePool typePool,
                                                    TypeVariableSource typeVariableSource,
@@ -5205,16 +5670,39 @@ public interface TypePool {
                             return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
                         }
 
+                        /**
+                         * A list representing a formal type variable's bounds.
+                         */
                         protected static class LazyBoundTokenList extends TypeList.Generic.AbstractBase {
 
+                            /**
+                             * The type pool to use.
+                             */
                             private final TypePool typePool;
 
+                            /**
+                             * The type variable source for locating type variables.
+                             */
                             private final TypeVariableSource typeVariableSource;
 
+                            /**
+                             * A mapping of the bound type's type annotations by their bound index.
+                             */
                             private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
 
+                            /**
+                             * The bound types in their tokenized form.
+                             */
                             private final List<GenericTypeToken> boundTypeTokens;
 
+                            /**
+                             * Creates a new lazy bound token list for a type variable.
+                             *
+                             * @param typePool           The type pool to use.
+                             * @param typeVariableSource The type variable source for locating type variables.
+                             * @param annotationTokens   A mapping of the bound type's type annotations by their bound index.
+                             * @param boundTypeTokens    The bound types in their tokenized form.
+                             */
                             protected LazyBoundTokenList(TypePool typePool,
                                                          TypeVariableSource typeVariableSource,
                                                          Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
@@ -5294,18 +5782,45 @@ public interface TypePool {
                             '}';
                 }
 
+                /**
+                 * A generic type representation of a generic array.
+                 */
                 protected static class LazyGenericArray extends Generic.OfGenericArray {
 
+                    /**
+                     * The type pool to use.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * The type variable source for locating type variables.
+                     */
                     private final TypeVariableSource typeVariableSource;
 
+                    /**
+                     * This type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * This type's type annotations.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * A tokenized representation of this generic arrays's component type.
+                     */
                     private final GenericTypeToken componentTypeToken;
 
+                    /**
+                     * Creates a new lazy generic array.
+                     *
+                     * @param typePool           The type pool to use.
+                     * @param typeVariableSource The type variable source for locating type variables.
+                     * @param typePath           This type's type path.
+                     * @param annotationTokens   This type's type annotations.
+                     * @param componentTypeToken A tokenized representation of this generic arrays's component type.
+                     */
                     protected LazyGenericArray(TypePool typePool,
                                                TypeVariableSource typeVariableSource,
                                                String typePath,
@@ -5377,18 +5892,45 @@ public interface TypePool {
                             '}';
                 }
 
+                /**
+                 * A generic type representation of a lower bound wildcard.
+                 */
                 protected static class LazyLowerBoundWildcard extends Generic.OfWildcardType {
 
+                    /**
+                     * The type pool to use.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * The type variable source for locating type variables.
+                     */
                     private final TypeVariableSource typeVariableSource;
 
+                    /**
+                     * This type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * This type's type annotations.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * A tokenized representation of this wildcard's bound.
+                     */
                     private final GenericTypeToken boundTypeToken;
 
+                    /**
+                     * Creates a new lazy lower bound wildcard.
+                     *
+                     * @param typePool           The type pool to use.
+                     * @param typeVariableSource The type variable source for locating type variables.
+                     * @param typePath           This type's type path.
+                     * @param annotationTokens   This type's type annotations.
+                     * @param boundTypeToken     A tokenized representation of this wildcard's bound.
+                     */
                     protected LazyLowerBoundWildcard(TypePool typePool,
                                                      TypeVariableSource typeVariableSource,
                                                      String typePath,
@@ -5408,7 +5950,7 @@ public interface TypePool {
 
                     @Override
                     public TypeList.Generic getLowerBounds() {
-                        return new LazyTokenList.ForWildcardElement(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                        return new LazyTokenList.ForWildcardBound(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
                     }
 
                     @Override
@@ -5442,7 +5984,7 @@ public interface TypePool {
                                              TypeVariableSource typeVariableSource,
                                              String typePath,
                                              Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                    return new LazyUpperBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
                 }
 
                 @Override
@@ -5468,19 +6010,46 @@ public interface TypePool {
                             '}';
                 }
 
-                protected static class LazyLowerBoundWildcard extends Generic.OfWildcardType {
+                /**
+                 * A generic type representation of a tokenized wildcard with an upper bound.
+                 */
+                protected static class LazyUpperBoundWildcard extends Generic.OfWildcardType {
 
+                    /**
+                     * The type pool to use.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * The type variable source for locating type variables.
+                     */
                     private final TypeVariableSource typeVariableSource;
 
+                    /**
+                     * This type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * This type's type annotations.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * A tokenized representation of this wildcard's bound.
+                     */
                     private final GenericTypeToken boundTypeToken;
 
-                    protected LazyLowerBoundWildcard(TypePool typePool,
+                    /**
+                     * Creates a new lazy upper bound wildcard.
+                     *
+                     * @param typePool           The type pool to use.
+                     * @param typeVariableSource The type variable source for locating type variables.
+                     * @param typePath           This type's type path.
+                     * @param annotationTokens   This type's type annotations.
+                     * @param boundTypeToken     A tokenized representation of this wildcard's bound.
+                     */
+                    protected LazyUpperBoundWildcard(TypePool typePool,
                                                      TypeVariableSource typeVariableSource,
                                                      String typePath,
                                                      Map<String, List<AnnotationToken>> annotationTokens,
@@ -5494,7 +6063,7 @@ public interface TypePool {
 
                     @Override
                     public TypeList.Generic getUpperBounds() {
-                        return new LazyTokenList.ForWildcardElement(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                        return new LazyTokenList.ForWildcardBound(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
                     }
 
                     @Override
@@ -5616,8 +6185,6 @@ public interface TypePool {
                      */
                     protected static class LazyParameterizedType extends Generic.OfParameterizedType {
 
-                        private static final char OWNER_TYPE = '.';
-
                         /**
                          * The type pool that is used for locating a generic type.
                          */
@@ -5628,21 +6195,41 @@ public interface TypePool {
                          */
                         private final TypeVariableSource typeVariableSource;
 
+                        /**
+                         * This type's type path.
+                         */
                         private final String typePath;
 
+                        /**
+                         * A mapping of type annotations for this type.
+                         */
                         private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                        /**
+                         * The binary name of this parameterized type's raw type.
+                         */
                         private final String name;
 
+                        /**
+                         * Tokens that represent this parameterized type's parameters.
+                         */
                         private final List<GenericTypeToken> parameterTypeTokens;
 
+                        /**
+                         * A token that represents this type's owner type.
+                         */
                         private final GenericTypeToken ownerTypeToken;
 
                         /**
-                         * Creates a new description of a parameterized type.
+                         * Creates a new lazy parameterized type.
                          *
-                         * @param typePool           The type pool that is used for locating a generic type.
-                         * @param typeVariableSource The type variable source to use for resolving type variables.
+                         * @param typePool            The type pool that is used for locating a generic type.
+                         * @param typeVariableSource  The type variable source to use for resolving type variables.
+                         * @param typePath            This type's type path.
+                         * @param annotationTokens    A mapping of type annotations for this type.
+                         * @param name                The binary name of this parameterized type's raw type.
+                         * @param parameterTypeTokens Tokens that represent this parameterized type's parameters.
+                         * @param ownerTypeToken      A token that represents this type's owner type.
                          */
                         protected LazyParameterizedType(TypePool typePool,
                                                         TypeVariableSource typeVariableSource,
@@ -5672,7 +6259,7 @@ public interface TypePool {
 
                         @Override
                         public Generic getOwnerType() {
-                            return ownerTypeToken.toGenericType(typePool, typeVariableSource, typePath + OWNER_TYPE, annotationTokens);
+                            return ownerTypeToken.toGenericType(typePool, typeVariableSource, typePath + OWNER_TYPE_PATH, annotationTokens);
                         }
 
                         @Override
@@ -5697,19 +6284,35 @@ public interface TypePool {
                      */
                     private final TypeVariableSource typeVariableSource;
 
+                    /**
+                     * This type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * A mapping of the represent type's annotation tokens.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * The binary name of the raw type.
+                     */
                     private final String name;
 
+                    /**
+                     * A list of type tokens representing this type's bounds.
+                     */
                     private final List<GenericTypeToken> parameterTypeTokens;
 
                     /**
                      * Creates a new description of a parameterized type.
                      *
-                     * @param typePool           The type pool that is used for locating a generic type.
-                     * @param typeVariableSource The type variable source to use for resolving type variables.
+                     * @param typePool            The type pool that is used for locating a generic type.
+                     * @param typeVariableSource  The type variable source to use for resolving type variables.
+                     * @param typePath            This type's type path.
+                     * @param annotationTokens    A mapping of the represent type's annotation tokens,
+                     * @param name                The binary name of the raw type.
+                     * @param parameterTypeTokens A list of type tokens representing this type's bounds.
                      */
                     protected LazyParameterizedType(TypePool typePool,
                                                     TypeVariableSource typeVariableSource,
@@ -5750,18 +6353,45 @@ public interface TypePool {
                 }
             }
 
+            /**
+             * A lazy list of type tokens.
+             */
             class LazyTokenList extends TypeList.Generic.AbstractBase {
 
+                /**
+                 * The type pool that is used for locating a generic type.
+                 */
                 private final TypePool typePool;
 
+                /**
+                 * The type variable source to use for resolving type variables.
+                 */
                 private final TypeVariableSource typeVariableSource;
 
+                /**
+                 * The represented types' type path to which an index step is added upon resolution.
+                 */
                 private final String typePath;
 
+                /**
+                 * A mapping of the represent types' annotation tokens.
+                 */
                 private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                /**
+                 * A list of type tokens this list represents.
+                 */
                 private final List<GenericTypeToken> genericTypeTokens;
 
+                /**
+                 * Creates a new type list that represents a list of tokenized types.
+                 *
+                 * @param typePool           The type pool that is used for locating a generic type.
+                 * @param typeVariableSource The type variable source to use for resolving type variables.
+                 * @param typePath           The represented types' type path to which an index step is added upon resolution.
+                 * @param annotationTokens   A mapping of the represent types' annotation tokens,
+                 * @param genericTypeTokens  A list of type tokens this list represents.
+                 */
                 protected LazyTokenList(TypePool typePool,
                                         TypeVariableSource typeVariableSource,
                                         String typePath,
@@ -5784,23 +6414,48 @@ public interface TypePool {
                     return genericTypeTokens.size();
                 }
 
-                protected static class ForWildcardElement extends TypeList.Generic.AbstractBase {
+                /**
+                 * A generic type description representing a tokenized wildcard bound.
+                 */
+                protected static class ForWildcardBound extends TypeList.Generic.AbstractBase {
 
+                    /**
+                     * The type pool that is used for locating a generic type.
+                     */
                     private final TypePool typePool;
 
+                    /**
+                     * The type variable source to use for resolving type variables.
+                     */
                     private final TypeVariableSource typeVariableSource;
 
+                    /**
+                     * The represented types' type path to which a wildcard step is added upon resolution.
+                     */
                     private final String typePath;
 
+                    /**
+                     * A mapping of the represent types' annotation tokens.
+                     */
                     private final Map<String, List<AnnotationToken>> annotationTokens;
 
+                    /**
+                     * A token representing the wildcard's bound.
+                     */
                     private final GenericTypeToken genericTypeToken;
 
-                    public ForWildcardElement(TypePool typePool,
-                                              TypeVariableSource typeVariableSource,
-                                              String typePath,
-                                              Map<String, List<AnnotationToken>> annotationTokens,
-                                              GenericTypeToken genericTypeToken) {
+                    /**
+                     * @param typePool           The type pool that is used for locating a generic type.
+                     * @param typeVariableSource The type variable source to use for resolving type variables.
+                     * @param typePath           The represented types' type path to which a wildcard step is added upon resolution.
+                     * @param annotationTokens   A mapping of the represent types' annotation tokens,
+                     * @param genericTypeToken   A token representing the wildcard's bound.
+                     */
+                    protected ForWildcardBound(TypePool typePool,
+                                               TypeVariableSource typeVariableSource,
+                                               String typePath,
+                                               Map<String, List<AnnotationToken>> annotationTokens,
+                                               GenericTypeToken genericTypeToken) {
                         this.typePool = typePool;
                         this.typeVariableSource = typeVariableSource;
                         this.typePath = typePath;
@@ -5823,17 +6478,6 @@ public interface TypePool {
                     }
                 }
             }
-        }
-
-        protected interface TypeVariableToken {
-
-            TypeVariableToken getComponentToken();
-
-            TypeVariableToken getIndex();
-
-            TypeVariableToken with(AnnotationToken annotationToken);
-
-            List<AnnotationToken> getAnnotationTokens();
         }
 
         /**
@@ -6060,6 +6704,9 @@ public interface TypePool {
              */
             private final GenericTypeToken.Resolution.ForField signatureResolution;
 
+            /**
+             * A mapping of the field type's type annotation tokens.
+             */
             private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
 
             /**
@@ -6074,7 +6721,7 @@ public interface TypePool {
              * @param modifiers            The modifiers of the represented field.
              * @param descriptor           The descriptor of the field.
              * @param signatureResolution  The resolution of this field's generic type.
-             * @param typeAnnotationTokens
+             * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
              * @param annotationTokens     A list of annotation tokens representing the annotations of the represented field.
              */
             protected FieldToken(String name,
@@ -6092,67 +6739,18 @@ public interface TypePool {
             }
 
             /**
-             * Returns the modifiers of the represented field.
-             *
-             * @return The modifiers of the represented field.
-             */
-            protected int getModifiers() {
-                return modifiers;
-            }
-
-            /**
-             * Returns the name of the represented field.
-             *
-             * @return The name of the represented field.
-             */
-            protected String getName() {
-                return name;
-            }
-
-            /**
-             * Returns the descriptor of the represented field.
-             *
-             * @return The descriptor of the represented field.
-             */
-            protected String getDescriptor() {
-                return descriptor;
-            }
-
-            /**
-             * Returns the resolution of this field's generic type.
-             *
-             * @return The resolution of this field's generic type.
-             */
-            protected GenericTypeToken.Resolution.ForField getSignatureResolution() {
-                return signatureResolution;
-            }
-
-            protected Map<String, List<AnnotationToken>> getTypeAnnotationTokens() {
-                return typeAnnotationTokens;
-            }
-
-            /**
-             * Returns a list of annotation tokens of the represented field.
-             *
-             * @return A list of annotation tokens of the represented field.
-             */
-            protected List<AnnotationToken> getAnnotationTokens() {
-                return annotationTokens;
-            }
-
-            /**
              * Transforms this token into a lazy field description.
              *
              * @param lazyTypeDescription The lazy type description to attach this field description to.
              * @return A field description resembling this field token.
              */
             private LazyFieldDescription toFieldDescription(LazyTypeDescription lazyTypeDescription) {
-                return lazyTypeDescription.new LazyFieldDescription(getName(),
-                        getModifiers(),
-                        getDescriptor(),
-                        getSignatureResolution(),
-                        getTypeAnnotationTokens(),
-                        getAnnotationTokens());
+                return lazyTypeDescription.new LazyFieldDescription(name,
+                        modifiers,
+                        descriptor,
+                        signatureResolution,
+                        typeAnnotationTokens,
+                        annotationTokens);
             }
 
             @Override
@@ -6220,14 +6818,29 @@ public interface TypePool {
              */
             private final String[] exceptionName;
 
+            /**
+             * A mapping of the type variables' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
 
+            /**
+             * A mapping of the type variables' type bounds' type annotation tokens by their indices and each variable's index.
+             */
             private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundAnnotationTokens;
 
+            /**
+             * A mapping of the return type's type variable tokens.
+             */
             private final Map<String, List<LazyTypeDescription.AnnotationToken>> returnTypeAnnotationTokens;
 
+            /**
+             * A mapping of the parameter types' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> parameterTypeAnnotationTokens;
 
+            /**
+             * A mapping of the exception types' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
 
             /**
@@ -6259,11 +6872,12 @@ public interface TypePool {
              * @param signatureResolution               The generic type resolution of this method.
              * @param exceptionName                     An array of internal names of the exceptions of the represented method or {@code null} if
              *                                          there are no such exceptions.
-             * @param typeVariableAnnotationTokens
-             * @param typeVariableBoundAnnotationTokens
-             * @param returnTypeAnnotationTokens
-             * @param parameterTypeAnnotationTokens
-             * @param exceptionTypeAnnotationTokens
+             * @param typeVariableAnnotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+             * @param typeVariableBoundAnnotationTokens A mapping of the type variables' type bounds' type annotation tokens by their
+             *                                          index and each variable's index.
+             * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
+             * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
+             * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
              * @param annotationTokens                  A list of annotation tokens that are present on the represented method.
              * @param parameterAnnotationTokens         A map of parameter indices to tokens that represent their annotations.
              * @param parameterTokens                   A list of tokens describing meta data of the method's parameters.
@@ -6300,128 +6914,26 @@ public interface TypePool {
             }
 
             /**
-             * Returns the modifiers of the represented method.
-             *
-             * @return The modifiers of the represented method.
-             */
-            protected int getModifiers() {
-                return modifiers;
-            }
-
-            /**
-             * Returns the internal name of the represented method.
-             *
-             * @return The internal name of the represented method.
-             */
-            protected String getName() {
-                return name;
-            }
-
-            /**
-             * Returns the descriptor of the represented method.
-             *
-             * @return The descriptor of the represented method.
-             */
-            protected String getDescriptor() {
-                return descriptor;
-            }
-
-            /**
-             * Returns the generic type resolution of this method.
-             *
-             * @return The generic type resolution of this method.
-             */
-            protected GenericTypeToken.Resolution.ForMethod getSignatureResolution() {
-                return signatureResolution;
-            }
-
-            /**
-             * Returns the internal names of the exception type declared of the represented method.
-             *
-             * @return The internal names of the exception type declared of the represented method.
-             */
-            protected String[] getExceptionName() {
-                return exceptionName;
-            }
-
-            /**
-             * Returns a list of annotation tokens declared by the represented method.
-             *
-             * @return A list of annotation tokens declared by the represented method.
-             */
-            protected List<AnnotationToken> getAnnotationTokens() {
-                return annotationTokens;
-            }
-
-            protected Map<Integer, Map<String, List<AnnotationToken>>> getTypeVariableAnnotationTokens() {
-                return typeVariableAnnotationTokens;
-            }
-
-            protected Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> getTypeVariableBoundAnnotationTokens() {
-                return typeVariableBoundAnnotationTokens;
-            }
-
-            protected Map<String, List<AnnotationToken>> getReturnTypeAnnotationTokens() {
-                return returnTypeAnnotationTokens;
-            }
-
-            protected Map<Integer, Map<String, List<AnnotationToken>>> getParameterTypeAnnotationTokens() {
-                return parameterTypeAnnotationTokens;
-            }
-
-            protected Map<Integer, Map<String, List<AnnotationToken>>> getExceptionTypeAnnotationTokens() {
-                return exceptionTypeAnnotationTokens;
-            }
-
-            /**
-             * Returns a map of parameter type indices to a list of annotation tokens representing these annotations.
-             *
-             * @return A map of parameter type indices to a list of annotation tokens representing these annotations.
-             */
-            protected Map<Integer, List<AnnotationToken>> getParameterAnnotationTokens() {
-                return parameterAnnotationTokens;
-            }
-
-            /**
-             * Returns the parameter tokens for this type. These tokens might be out of sync with the method's
-             * parameters if the meta information attached to a method is not available or corrupt.
-             *
-             * @return A list of parameter tokens to the described method.
-             */
-            protected List<ParameterToken> getParameterTokens() {
-                return parameterTokens;
-            }
-
-            /**
-             * Returns the default value of the represented method or {@code null} if no such values exists.
-             *
-             * @return The default value of the represented method or {@code null} if no such values exists.
-             */
-            protected AnnotationDescription.AnnotationValue<?, ?> getDefaultValue() {
-                return defaultValue;
-            }
-
-            /**
              * Transforms this method token to a method description that is attached to a lazy type description.
              *
              * @param lazyTypeDescription The lazy type description to attach this method description to.
              * @return A method description representing this field token.
              */
             private MethodDescription.InDefinedShape toMethodDescription(LazyTypeDescription lazyTypeDescription) {
-                return lazyTypeDescription.new LazyMethodDescription(getName(),
-                        getModifiers(),
-                        getDescriptor(),
-                        getSignatureResolution(),
-                        getExceptionName(),
-                        getTypeVariableAnnotationTokens(),
-                        getTypeVariableBoundAnnotationTokens(),
-                        getReturnTypeAnnotationTokens(),
-                        getParameterTypeAnnotationTokens(),
-                        getExceptionTypeAnnotationTokens(),
-                        getAnnotationTokens(),
-                        getParameterAnnotationTokens(),
-                        getParameterTokens(),
-                        getDefaultValue());
+                return lazyTypeDescription.new LazyMethodDescription(name,
+                        modifiers,
+                        descriptor,
+                        signatureResolution,
+                        exceptionName,
+                        typeVariableAnnotationTokens,
+                        typeVariableBoundAnnotationTokens,
+                        returnTypeAnnotationTokens,
+                        parameterTypeAnnotationTokens,
+                        exceptionTypeAnnotationTokens,
+                        annotationTokens,
+                        parameterAnnotationTokens,
+                        parameterTokens,
+                        defaultValue);
             }
 
             @Override
@@ -6598,6 +7110,15 @@ public interface TypePool {
                 this.values = values;
             }
 
+            /**
+             * Represents a list of annotation tokens in form of a list of lazy type annotations. Any annotation with
+             * a type that cannot be loaded from the type pool is ignored and not included in the list. If the provided
+             * {@code tokens} are {@code null}, an empty list is returned.
+             *
+             * @param typePool The type pool to be used for looking up linked types.
+             * @param tokens   The tokens to represent in the list.
+             * @return A list of the loadable annotations.
+             */
             protected static AnnotationList asListOfNullable(TypePool typePool, List<? extends AnnotationToken> tokens) {
                 return tokens == null
                         ? new AnnotationList.Empty()
@@ -6827,6 +7348,9 @@ public interface TypePool {
              */
             private final String rawTypeDescriptor;
 
+            /**
+             * The tokenized type's type annotation tokens.
+             */
             private final Map<String, List<AnnotationToken>> annotationTokens;
 
             /**
@@ -6840,7 +7364,7 @@ public interface TypePool {
              * @param typePool           The type pool to use for locating referenced types.
              * @param genericTypeToken   The token that describes the represented generic type.
              * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
-             * @param annotationTokens
+             * @param annotationTokens   The tokenized type's type annotation tokens.
              * @param typeVariableSource The closest type variable source of this generic type's declaration context.
              */
             protected TokenizedGenericType(TypePool typePool,
@@ -6855,6 +7379,16 @@ public interface TypePool {
                 this.typeVariableSource = typeVariableSource;
             }
 
+            /**
+             * Creates a new generic type description for a tokenized generic type.
+             *
+             * @param typePool           The type pool to use for locating referenced types.
+             * @param genericTypeToken   The token that describes the represented generic type.
+             * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
+             * @param annotationTokens   The tokenized type's type annotation tokens or {@code null} if no such annotations are defined.
+             * @param typeVariableSource The closest type variable source of this generic type's declaration context.
+             * @return A suitable genric type.
+             */
             protected static Generic of(TypePool typePool,
                                         GenericTypeToken genericTypeToken,
                                         String rawTypeDescriptor,
@@ -6923,6 +7457,9 @@ public interface TypePool {
                  */
                 private final TypeVariableSource typeVariableSource;
 
+                /**
+                 * A mapping of each type's type annotation tokens by its index.
+                 */
                 private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
 
                 /**
@@ -6930,6 +7467,7 @@ public interface TypePool {
                  *
                  * @param typePool           The type pool to use for locating type descriptions.
                  * @param genericTypeTokens  A list of tokens describing the represented generic types.
+                 * @param annotationTokens   A mapping of each type's type annotation tokens by its index.
                  * @param rawTypeDescriptors A list of the generic types' erasures.
                  * @param typeVariableSource The closest type variable source of this generic type's declaration context.
                  */
@@ -6983,16 +7521,25 @@ public interface TypePool {
                  */
                 private final TypeVariableSource typeVariableSource;
 
+                /**
+                 * A mapping of the type variables' type annotation tokens by their indices.
+                 */
                 private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
 
+                /**
+                 * A mapping of the type variables' bound types' annotation tokens by their indices and each type variable's index..
+                 */
                 private final Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens;
 
                 /**
                  * Creates a list of type variables.
                  *
-                 * @param typePool           The type pool to use for locating types.
-                 * @param typeVariables      Type tokens that describe the represented generic types.
-                 * @param typeVariableSource The type variable source of the represented type variables.
+                 * @param typePool              The type pool to use for locating types.
+                 * @param typeVariables         Type tokens that describe the represented generic types.
+                 * @param typeVariableSource    The type variable source of the represented type variables.
+                 * @param annotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+                 * @param boundAnnotationTokens A mapping of the type variables' bound types' annotation tokens by their indices
+                 *                              and each type variable's index.
                  */
                 protected TypeVariableList(TypePool typePool,
                                            List<GenericTypeToken.OfFormalTypeVariable> typeVariables,
@@ -7128,6 +7675,9 @@ public interface TypePool {
              */
             private final GenericTypeToken.Resolution.ForField signatureResolution;
 
+            /**
+             * A mapping of the field type's type annotation tokens.
+             */
             private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
 
             /**
@@ -7142,7 +7692,7 @@ public interface TypePool {
              * @param modifiers            The modifiers of the field.
              * @param descriptor           The descriptor of this field's type.
              * @param signatureResolution  A resolution of this field's generic type.
-             * @param typeAnnotationTokens
+             * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
              * @param annotationTokens     A list of annotation descriptions of this field.
              */
             private LazyFieldDescription(String name,
@@ -7220,14 +7770,29 @@ public interface TypePool {
              */
             private final List<String> exceptionTypeDescriptors;
 
+            /**
+             * A mapping of the type variables' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
 
+            /**
+             * A mapping of the type variables' type bounds' type annotation tokens by their indices and each variable's index.
+             */
             private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundAnnotationTokens;
 
+            /**
+             * A mapping of the return type's type variable tokens.
+             */
             private final Map<String, List<LazyTypeDescription.AnnotationToken>> returnTypeAnnotationTokens;
 
+            /**
+             * A mapping of the parameter types' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> parameterTypeAnnotationTokens;
 
+            /**
+             * A mapping of the exception types' type annotation tokens by their indices.
+             */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
 
             /**
@@ -7266,11 +7831,12 @@ public interface TypePool {
              * @param exceptionTypeInternalName         The internal names of the exceptions that are declared by this
              *                                          method or {@code null} if no exceptions are declared by this
              *                                          method.
-             * @param typeVariableAnnotationTokens
-             * @param typeVariableBoundAnnotationTokens
-             * @param returnTypeAnnotationTokens
-             * @param parameterTypeAnnotationTokens
-             * @param exceptionTypeAnnotationTokens
+             * @param typeVariableAnnotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+             * @param typeVariableBoundAnnotationTokens A mapping of the type variables' type bounds' type annotation tokens by their
+             *                                          index and each variable's index.
+             * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
+             * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
+             * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
              * @param annotationTokens                  The annotation tokens representing the method's annotations.
              * @param parameterAnnotationTokens         The annotation tokens representing the parameter's annotation. Every
              *                                          index can contain {@code null} if a parameter does not define any annotations.

@@ -118,7 +118,10 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         if (type instanceof TypeVariable) {
             return TypeDescription.Generic.Builder.typeVariable(((TypeVariable<?>) type).getName()).annotate(annotationReader.asList());
         } else if (type instanceof Class) {
-            return TypeDescription.Generic.Builder.rawType((Class<?>) type).annotate(annotationReader.asList());
+            Class<?> rawType = (Class<?>) type;
+            return (rawType.isArray()
+                    ? builder(rawType.getComponentType(), annotationReader.ofComponentType()).asArray()
+                    : TypeDescription.Generic.Builder.rawType((Class<?>) type)).annotate(annotationReader.asList());
         } else if (type instanceof GenericArrayType) {
             return builder(((GenericArrayType) type).getGenericComponentType(), annotationReader.ofComponentType()).asArray().annotate(annotationReader.asList());
         } else if (type instanceof ParameterizedType) {

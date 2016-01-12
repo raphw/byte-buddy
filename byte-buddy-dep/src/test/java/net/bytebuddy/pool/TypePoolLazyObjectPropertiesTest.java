@@ -40,7 +40,6 @@ public class TypePoolLazyObjectPropertiesTest {
     }
 
     @Test
-    @Ignore("Java 8 tests")
     public void testGenericTypeTokenObjectPropertiesTest() throws Exception {
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType.class).apply();
         ObjectPropertyAssertion.of(TypePool.LazyTypeDescription.GenericTypeToken.ForRawType.class).apply();
