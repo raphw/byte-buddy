@@ -11,6 +11,7 @@ import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -822,6 +823,41 @@ public class MethodCall implements Implementation.Composable {
                         "fieldName='" + fieldName + '\'' +
                         ", fieldType=" + fieldType +
                         '}';
+            }
+        }
+
+        /**
+         * Invokes a method on a parameter of the intercepted method.
+         */
+        class ForMethodParameter implements TargetHandler {
+
+            private final int variableOffset;
+
+            /**
+             * Creates a target handler for getting the invocation target from a parameter
+             * of the intercepted method.
+             *
+             * @param offset The index of the parameter, starting with 0
+             */
+            public ForMethodParameter(int offset) {
+                this.variableOffset = offset + 1;
+            }
+
+            @Override
+            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
+                return new StackManipulation.Compound(
+                        MethodVariableAccess.REFERENCE.loadOffset(variableOffset),
+                        TypeCasting.to(methodDescription.getDeclaringType().asErasure()));
+            }
+
+            @Override
+            public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                return instrumentedType;
+            }
+
+            @Override
+            public String toString() {
+                return "MethodCall.TargetHandler.ForMethodParameter{" + variableOffset +"}";
             }
         }
     }
@@ -2247,6 +2283,20 @@ public class MethodCall implements Implementation.Composable {
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
+        }
+
+        public MethodCall onArgument(int offset) {
+            if (!(methodLocator instanceof MethodLocator.ForExplicitMethod)) {
+                throw new IllegalStateException("Only explicit methods supported for onArgument, called on " + methodLocator);
+            }
+            TypeDescription.Generic type = methodLocator.resolve(null).getDeclaringType().asGenericType();
+            return new MethodCall(methodLocator,
+                new TargetHandler.ForMethodParameter(offset),
+                argumentLoaders,
+                new MethodInvoker.ForVirtualInvocation(type),
+                TerminationHandler.ForMethodReturn.INSTANCE,
+                assigner,
+                typing);
         }
 
         /**

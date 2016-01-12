@@ -113,6 +113,114 @@ public class MethodCallTest extends AbstractImplementationTest {
     }
 
     @Test
+    public void testInstancePrimitiveGetterInvocationOnArgument() throws ReflectiveOperationException {
+        Method getInt = Pojo.class.getDeclaredMethod("getInt");
+        DynamicType.Loaded<Getters> loaded = implement(Getters.class,
+            MethodCall.invoke(getInt).onArgument(0),
+            Getters.class.getClassLoader(),
+            named("getInt"));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Getters instance = loaded.getLoaded().newInstance();
+        Pojo pojo = new Pojo();
+        pojo.anInt = 42;
+        assertThat(instance.getInt(pojo), is(42));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Getters.class)));
+        assertThat(instance, instanceOf(Getters.class));
+    }
+
+    @Test
+    public void testInstanceObjectGetterInvocationOnArgument() throws ReflectiveOperationException {
+        Method getObject = Pojo.class.getDeclaredMethod("getObject");
+        DynamicType.Loaded<Getters> loaded = implement(Getters.class,
+            MethodCall.invoke(getObject).onArgument(0),
+            Getters.class.getClassLoader(),
+            named("get"));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Getters instance = loaded.getLoaded().newInstance();
+        Pojo pojo = new Pojo();
+        pojo.object = BAR;
+        assertThat(instance.get(pojo), is((Object)BAR));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Getters.class)));
+        assertThat(instance, instanceOf(Getters.class));
+    }
+
+    @Test
+    public void testInstanceStringGetterInvocationOnArgument() throws ReflectiveOperationException {
+        Method getString = Pojo.class.getDeclaredMethod("getString");
+        DynamicType.Loaded<Getters> loaded = implement(Getters.class,
+            MethodCall.invoke(getString).onArgument(0),
+            Getters.class.getClassLoader(),
+            named("get"));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Getters instance = loaded.getLoaded().newInstance();
+        Pojo pojo = new Pojo();
+        pojo.string = BAR;
+        assertThat((String)instance.get(pojo), is(BAR));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Getters.class)));
+        assertThat(instance, instanceOf(Getters.class));
+    }
+
+    @Test
+    public void testInstancePrimitiveSetterInvocationOnArgument() throws ReflectiveOperationException {
+        Method setInt = Pojo.class.getDeclaredMethod("setInt", int.class);
+        DynamicType.Loaded<Setters> loaded = implement(Setters.class,
+            MethodCall.invoke(setInt).onArgument(0).withArgument(1),
+            Setters.class.getClassLoader(),
+            named("setInt"));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Setters instance = loaded.getLoaded().newInstance();
+        Pojo pojo = new Pojo();
+        instance.setInt(pojo, 42);
+        assertThat(pojo.anInt, is(42));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Setters.class)));
+        assertThat(instance, instanceOf(Setters.class));
+    }
+
+    @Test
+    public void testInstanceObjectSetterInvocationOnArgument() throws ReflectiveOperationException {
+        Method setObject = Pojo.class.getDeclaredMethod("setObject", Object.class);
+        DynamicType.Loaded<Setters> loaded = implement(Setters.class,
+            MethodCall.invoke(setObject).onArgument(0).withArgument(1),
+            Setters.class.getClassLoader(),
+            named("set"));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Setters instance = loaded.getLoaded().newInstance();
+        Pojo pojo = new Pojo();
+        instance.set(pojo, BAR);
+        assertThat(pojo.object, is((Object)BAR));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Setters.class)));
+        assertThat(instance, instanceOf(Setters.class));
+    }
+
+    @Test
+    public void testInstanceStringSetterInvocationOnArgument() throws ReflectiveOperationException {
+        Method setString = Pojo.class.getDeclaredMethod("setString", String.class);
+        DynamicType.Loaded<Setters> loaded = implement(Setters.class,
+            MethodCall.invoke(setString).onArgument(0).withArgument(1),
+            Setters.class.getClassLoader(),
+            named("set"));
+        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
+        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
+        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
+        Setters instance = loaded.getLoaded().newInstance();
+        Pojo pojo = new Pojo();
+        instance.set(pojo, BAR);
+        assertThat(pojo.string, is(BAR));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Setters.class)));
+        assertThat(instance, instanceOf(Setters.class));
+    }
+
+    @Test
     public void testSuperConstructorInvocationWithoutArguments() throws Exception {
         DynamicType.Loaded<Object> loaded = implement(Object.class,
                 MethodCall.invoke(Object.class.getDeclaredConstructor()).onSuper(),
@@ -622,6 +730,33 @@ public class MethodCallTest extends AbstractImplementationTest {
         public String bar() {
             return BAR;
         }
+    }
+
+    public static class Pojo {
+        int anInt;
+        Object object;
+        String string;
+
+        public int getInt() { return this.anInt; }
+        public void setInt(int anInt) { this.anInt = anInt; }
+
+        public Object getObject() { return this.object; }
+        public void setObject(Object object) { this.object = object; }
+
+        public String getString() { return this.string; }
+        public void setString(String string) {
+            this.string = string;
+        }
+    }
+
+    public static class Getters {
+        public Object get(Object obj) { throw new IllegalArgumentException(); }
+        public int getInt(Object obj) { throw new IllegalArgumentException(); }
+    }
+
+    public static abstract class Setters {
+        public void setInt(Object obj, int val) { throw new IllegalArgumentException(); }
+        public void set(Object obj, String val) { throw new IllegalArgumentException(); }
     }
 
     public static class SelfReference {
