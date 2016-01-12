@@ -2113,6 +2113,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                 }
 
+                /**
+                 * A dispatcher for a modern JVM that supports type annotations.
+                 */
                 class ForModernVm implements Dispatcher {
 
                     /**
