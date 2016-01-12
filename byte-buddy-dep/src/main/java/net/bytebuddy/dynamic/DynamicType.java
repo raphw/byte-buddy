@@ -798,16 +798,54 @@ public interface DynamicType {
          */
         DynamicType.Unloaded<T> make();
 
+        /**
+         * A builder for a type variable definition.
+         *
+         * @param <S> A loaded type that the built type is guaranteed to be a subclass of.
+         */
         interface TypeVariableDefinition<S> extends Builder<S> {
 
+            /**
+             * Annotates the previously defined type variable with the supplied annotations.
+             *
+             * @param annotation The annotations to declare on the previously defined type variable.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined type variable.
+             */
             TypeVariableDefinition<S> annotateTypeVariable(Annotation... annotation);
 
+            /**
+             * Annotates the previously defined type variable with the supplied annotations.
+             *
+             * @param annotations The annotations to declare on the previously defined type variable.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined type variable.
+             */
             TypeVariableDefinition<S> annotateTypeVariable(List<? extends Annotation> annotations);
 
+            /**
+             * Annotates the previously defined type variable with the supplied annotations.
+             *
+             * @param annotation The annotations to declare on the previously defined type variable.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined type variable.
+             */
             TypeVariableDefinition<S> annotateTypeVariable(AnnotationDescription... annotation);
 
+            /**
+             * Annotates the previously defined type variable with the supplied annotations.
+             *
+             * @param annotations The annotations to declare on the previously defined type variable.
+             * @return A new builder that is equal to this builder but with the given annotations declared
+             * on the previously defined type variable.
+             */
             TypeVariableDefinition<S> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations);
 
+            /**
+             * An abstract base implementation of a type variable definition.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
             abstract class AbstractBase<U> extends Builder.AbstractBase.Delegator<U> implements TypeVariableDefinition<U> {
 
                 @Override
@@ -1355,14 +1393,47 @@ public interface DynamicType {
                  */
                 Annotatable<U> typeVariable(String symbol, Collection<? extends TypeDefinition> bounds);
 
+                /**
+                 * A builder for optionally defining an annotation for a type variable.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
                 interface Annotatable<V> extends TypeVariableDefinition<V> {
 
+                    /**
+                     * Annotates the previously defined type variable with the supplied annotations.
+                     *
+                     * @param annotation The annotations to declare on the previously defined type variable.
+                     * @return A new builder that is equal to this builder but with the given annotations declared
+                     * on the previously defined type variable.
+                     */
                     Annotatable<V> annotateTypeVariable(Annotation... annotation);
 
+                    /**
+                     * Annotates the previously defined type variable with the supplied annotations.
+                     *
+                     * @param annotations The annotations to declare on the previously defined type variable.
+                     * @return A new builder that is equal to this builder but with the given annotations declared
+                     * on the previously defined type variable.
+                     */
                     Annotatable<V> annotateTypeVariable(List<? extends Annotation> annotations);
 
+                    /**
+                     * Annotates the previously defined type variable with the supplied annotations.
+                     *
+                     * @param annotation The annotations to declare on the previously defined type variable.
+                     * @return A new builder that is equal to this builder but with the given annotations declared
+                     * on the previously defined type variable.
+                     */
                     Annotatable<V> annotateTypeVariable(AnnotationDescription... annotation);
 
+                    /**
+                     * Annotates the previously defined type variable with the supplied annotations.
+                     *
+                     * @param annotations The annotations to declare on the previously defined type variable.
+                     * @return A new builder that is equal to this builder but with the given annotations declared
+                     * on the previously defined type variable.
+                     */
                     Annotatable<V> annotateTypeVariable(Collection<? extends AnnotationDescription> annotations);
 
                     /**
@@ -1387,6 +1458,11 @@ public interface DynamicType {
                             return annotateTypeVariable(Arrays.asList(annotation));
                         }
 
+                        /**
+                         * An adapter implementation for an annotatable type variable definition.
+                         *
+                         * @param <X> A loaded type that the built type is guaranteed to be a subclass of.
+                         */
                         protected abstract static class Adapter<X> extends TypeVariableDefinition.Annotatable.AbstractBase<X> {
 
                             @Override
@@ -2780,10 +2856,21 @@ public interface DynamicType {
                     return result;
                 }
 
+                /**
+                 * An adapter for defining a new type variable for the instrumented type.
+                 */
                 protected class TypeVariableDefinitionAdapter extends TypeVariableDefinition.AbstractBase<U> {
 
+                    /**
+                     * The current definition of the type variable.
+                     */
                     private final TypeVariableToken token;
 
+                    /**
+                     * Creates a new type variable definition adapter.
+                     *
+                     * @param token The current definition of the type variable.
+                     */
                     protected TypeVariableDefinitionAdapter(TypeVariableToken token) {
                         this.token = token;
                     }
@@ -2810,6 +2897,40 @@ public interface DynamicType {
                                 methodGraphCompiler,
                                 typeValidation,
                                 ignoredMethods);
+                    }
+
+                    /**
+                     * Returns the outer instance.
+                     *
+                     * @return The outer instance.
+                     */
+                    private Builder.AbstractBase.Adapter<?> getOuter() {
+                        return Builder.AbstractBase.Adapter.this;
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && super.equals(other)
+                                && getOuter().equals(((TypeVariableDefinitionAdapter) other).getOuter())
+                                && token.equals(((TypeVariableDefinitionAdapter) other).token);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + getOuter().hashCode();
+                        result = 31 * result + token.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "DynamicType.Builder.AbstractBase.Adapter.TypeVariableDefinitionAdapter{" +
+                                "adapter=" + getOuter() +
+                                ", token=" + token +
+                                '}';
                     }
                 }
 
@@ -3133,10 +3254,21 @@ public interface DynamicType {
                                 '}';
                     }
 
+                    /**
+                     * An adapter for defining a new type variable for the currently defined method.
+                     */
                     protected class TypeVariableAnnotationAdapter extends MethodDefinition.TypeVariableDefinition.Annotatable.AbstractBase.Adapter<U> {
 
+                        /**
+                         * The currently defined type variable.
+                         */
                         private final TypeVariableToken token;
 
+                        /**
+                         * Creates a new type variable annotation adapter.
+                         *
+                         * @param token The currently defined type variable.
+                         */
                         protected TypeVariableAnnotationAdapter(TypeVariableToken token) {
                             this.token = token;
                         }
@@ -3158,6 +3290,36 @@ public interface DynamicType {
                             return new TypeVariableAnnotationAdapter(new TypeVariableToken(token.getSymbol(),
                                     token.getBounds(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations))));
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private MethodDefinitionAdapter getOuter() {
+                            return MethodDefinitionAdapter.this;
+                        }
+
+                        @Override
+                        @SuppressWarnings("unchecked")
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && token.equals(((TypeVariableAnnotationAdapter) other).token)
+                                    && getOuter().equals(((TypeVariableAnnotationAdapter) other).getOuter());
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 31 * getOuter().hashCode() + token.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "DynamicType.Builder.AbstractBase.Adapter.MethodDefinitionAdapter.TypeVariableAnnotationAdapter{" +
+                                    "adapter=" + getOuter() +
+                                    ", token=" + token +
+                                    '}';
                         }
                     }
 

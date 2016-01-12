@@ -169,6 +169,14 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
             return describe(type, TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE);
         }
 
+        /**
+         * Describes the generic type while using the supplied annotation reader for resolving type annotations if this
+         * language feature is available on the current JVM.
+         *
+         * @param type             The type to describe.
+         * @param annotationReader The annotation reader for extracting type annotations.
+         * @return A description of the provided generic annotated type.
+         */
         protected static TypeDescription.Generic describe(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
             if (type instanceof Class<?>) {
                 return new TypeDescription.Generic.OfNonGenericType.ForLoadedType((Class<?>) type, annotationReader);
