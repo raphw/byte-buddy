@@ -45,7 +45,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.NoOp.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForComponentType.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForParameterType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForTypeArgument.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForTypeVariableBoundType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForWildcardLowerBoundType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForWildcardUpperBoundType.class).apply();
@@ -55,7 +55,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedExceptionType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedFieldType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedInterfaceType.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedParameterType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedParameterizedType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedReturnType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedTypeVariableType.class).apply();
