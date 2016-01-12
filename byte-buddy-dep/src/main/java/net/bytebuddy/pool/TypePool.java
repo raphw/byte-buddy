@@ -1105,7 +1105,7 @@ public interface TypePool {
                         Map<String, List<LazyTypeDescription.AnnotationToken>> pathMap = getPathMap();
                         List<LazyTypeDescription.AnnotationToken> tokens = pathMap.get(typePath);
                         if (tokens == null) {
-                            tokens = new ArrayList<>();
+                            tokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
                             pathMap.put(typePath, tokens);
                         }
                         return tokens;
@@ -1145,7 +1145,7 @@ public interface TypePool {
                             Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap = getIndexedPathMap();
                             Map<String, List<LazyTypeDescription.AnnotationToken>> pathMap = indexedPathMap.get(index);
                             if (pathMap == null) {
-                                pathMap = new HashMap<>();
+                                pathMap = new HashMap<String, List<LazyTypeDescription.AnnotationToken>>();
                                 indexedPathMap.put(index, pathMap);
                             }
                             return pathMap;
@@ -1186,7 +1186,7 @@ public interface TypePool {
                                 Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> doubleIndexPathMap = getDoubleIndexedPathMap();
                                 Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> indexedPathMap = doubleIndexPathMap.get(preIndex);
                                 if (indexedPathMap == null) {
-                                    indexedPathMap = new HashMap<>();
+                                    indexedPathMap = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
                                     doubleIndexPathMap.put(preIndex, indexedPathMap);
                                 }
                                 return indexedPathMap;
@@ -3290,7 +3290,7 @@ public interface TypePool {
                         return new LazyPrimitiveType(typePool,
                                 typePath,
                                 annotationTokens == null
-                                        ? Collections.emptyMap()
+                                        ? Collections.<String, List<AnnotationToken>>emptyMap()
                                         : annotationTokens,
                                 typeDescription);
                     }
@@ -3383,7 +3383,7 @@ public interface TypePool {
                         return new LazyUnboundWildcard(typePool,
                                 typePath,
                                 annotationTokens == null
-                                        ? Collections.emptyMap()
+                                        ? Collections.<String, List<AnnotationToken>>emptyMap()
                                         : annotationTokens);
                     }
 
@@ -3593,7 +3593,7 @@ public interface TypePool {
                                 return new RawAnnotatedType(typePool,
                                         EMPTY_TYPE_PATH,
                                         annotationTokens == null
-                                                ? Collections.emptyMap()
+                                                ? Collections.<String, List<AnnotationToken>>emptyMap()
                                                 : annotationTokens,
                                         TokenizedGenericType.toErasure(typePool, descriptor));
                             }
@@ -3665,7 +3665,7 @@ public interface TypePool {
                                                                      List<String> descriptors) {
                                     return new LazyRawAnnotatedTypeList(typePool,
                                             annotationTokens == null
-                                                    ? Collections.emptyMap()
+                                                    ? Collections.<Integer, Map<String, List<AnnotationToken>>>emptyMap()
                                                     : annotationTokens,
                                             descriptors);
                                 }
@@ -4139,11 +4139,14 @@ public interface TypePool {
                     }
 
                     @Override
-                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                    public Generic toGenericType(TypePool typePool,
+                                                 TypeVariableSource typeVariableSource,
+                                                 String typePath,
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
                         return new LazyNonGenericType(typePool,
                                 typePath,
                                 annotationTokens == null
-                                        ? Collections.emptyMap()
+                                        ? Collections.<String, List<AnnotationToken>>emptyMap()
                                         : annotationTokens,
                                 typePool.describe(name).resolve());
                     }
@@ -4372,10 +4375,10 @@ public interface TypePool {
                             return new LazyTypeVariable(typePool,
                                     typeVariableSource,
                                     annotationTokens == null
-                                            ? Collections.emptyMap()
+                                            ? Collections.<String, List<AnnotationToken>>emptyMap()
                                             : annotationTokens,
                                     boundaryAnnotationTokens == null
-                                            ? Collections.emptyMap()
+                                            ? Collections.<Integer, Map<String, List<AnnotationToken>>>emptyMap()
                                             : boundaryAnnotationTokens,
                                     symbol,
                                     boundTypeTokens);
@@ -4532,7 +4535,7 @@ public interface TypePool {
                                             typeVariableSource,
                                             EMPTY_TYPE_PATH,
                                             annotationTokens == null
-                                                    ? Collections.emptyMap()
+                                                    ? Collections.<String, List<AnnotationToken>>emptyMap()
                                                     : annotationTokens);
                                 }
 
@@ -5007,6 +5010,7 @@ public interface TypePool {
                             result = 31 * result + ownerTypeToken.hashCode();
                             return result;
                         }
+
                         @Override
                         public String toString() {
                             return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForParameterizedType.Nested{" +
@@ -6252,7 +6256,7 @@ public interface TypePool {
                             genericTypeToken,
                             rawTypeDescriptor,
                             annotationTokens == null
-                                    ? Collections.emptyMap()
+                                    ? Collections.<String, List<AnnotationToken>>emptyMap()
                                     : annotationTokens,
                             typeVariableSource);
                 }
@@ -7289,7 +7293,7 @@ public interface TypePool {
                     protected AnnotationLookup(String descriptor, String name) {
                         this.descriptor = descriptor;
                         this.name = name;
-                        values = new HashMap<>();
+                        values = new HashMap<String, AnnotationDescription.AnnotationValue<?, ?>>();
                     }
 
                     @Override

@@ -16,19 +16,19 @@ public class TypeDescriptionGenericAnnotationReaderTest {
     @Test
     public void testLegacyVmReturnsNoOpReaders() throws Exception {
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolve(null),
-                is(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveSuperType(null),
-                is(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveInterface(null, 0),
-                is(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveReturnType(null),
-                is(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveParameterType(null, 0),
-                is(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveExceptionType(null, 0),
-                is(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveTypeVariable(null),
-                is(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+                is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
     }
 
     @Test
@@ -44,6 +44,11 @@ public class TypeDescriptionGenericAnnotationReaderTest {
     @Test(expected = IllegalStateException.class)
     public void testNoOpReaderNoSpecificAnnotations() throws Exception {
         TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.getAnnotation(null);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNoOpReaderNoSpecificAnnotationPresent() throws Exception {
+        TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.isAnnotationPresent(null);
     }
 
     @Test
@@ -72,7 +77,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                         return fields.next();
                     }
                 }).apply();
-        final Iterator<Class<?>> types = Arrays.asList(Object.class, String.class, Integer.class, Number.class).iterator();
+        final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Number.class).iterator();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedInterfaceType.class)
                 .create(new ObjectPropertyAssertion.Creator<Class<?>>() {
                     @Override
@@ -89,7 +94,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                         return methods2.next();
                     }
                 }).apply();
-        final Iterator<Class<?>> types2 = Arrays.asList(Object.class, String.class, Integer.class, Number.class).iterator();
+        final Iterator<Class<?>> types2 = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Number.class).iterator();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperType.class)
                 .create(new ObjectPropertyAssertion.Creator<Class<?>>() {
                     @Override
