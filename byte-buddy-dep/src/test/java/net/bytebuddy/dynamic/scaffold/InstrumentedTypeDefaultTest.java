@@ -50,6 +50,9 @@ public class InstrumentedTypeDefaultTest {
     @Mock
     private Implementation.Context implementationContext;
 
+    @Mock
+    private AnnotationDescription annotationDescription;
+
     protected static InstrumentedType.WithFlexibleName makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
                 ModifierReviewable.EMPTY_MASK,
@@ -138,7 +141,7 @@ public class InstrumentedTypeDefaultTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.<AnnotationDescription>emptyList()))); // TODO: variables
+                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.singletonList(annotationDescription))));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -146,6 +149,8 @@ public class InstrumentedTypeDefaultTest {
         assertThat(fieldDescription.getType().asErasure().getComponentType(), sameInstance((TypeDescription) instrumentedType));
         assertThat(fieldDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(fieldDescription.getName(), is(BAR));
+        assertThat(fieldDescription.getType().getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldDescription.getType().getDeclaredAnnotations().getOnly(), is(annotationDescription));
         assertThat(fieldDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));
     }
 
@@ -206,8 +211,8 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.<AnnotationDescription>emptyList()), // TODO: variables
-                Collections.singletonList(new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.<AnnotationDescription>emptyList()))));
+                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.singletonList(annotationDescription)),
+                Collections.singletonList(new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.singletonList(annotationDescription)))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asErasure().isArray(), is(true));
@@ -216,6 +221,10 @@ public class InstrumentedTypeDefaultTest {
         assertThat(methodDescription.getParameters().asTypeList().asErasures().get(0).isArray(), is(true));
         assertThat(methodDescription.getParameters().asTypeList().get(0).getComponentType().asErasure(), sameInstance((TypeDescription) instrumentedType));
         assertThat(methodDescription.getExceptionTypes().size(), is(0));
+        assertThat(methodDescription.getReturnType().getDeclaredAnnotations().size(), is(1));
+        assertThat(methodDescription.getReturnType().getDeclaredAnnotations().getOnly(), is(annotationDescription));
+        assertThat(methodDescription.getParameters().getOnly().getType().getDeclaredAnnotations().size(), is(1));
+        assertThat(methodDescription.getParameters().getOnly().getType().getDeclaredAnnotations().getOnly(), is(annotationDescription));
         assertThat(methodDescription.getModifiers(), is(Opcodes.ACC_PUBLIC));
         assertThat(methodDescription.getName(), is(BAR));
         assertThat(methodDescription.getDeclaringType(), sameInstance((TypeDescription) instrumentedType));

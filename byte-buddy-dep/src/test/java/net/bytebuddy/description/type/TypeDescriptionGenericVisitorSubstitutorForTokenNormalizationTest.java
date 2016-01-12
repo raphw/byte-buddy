@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -27,9 +28,13 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     @Mock
     private TypeDescription.Generic source, target;
 
+    @Mock
+    private AnnotationDescription annotationDescription;
+
     @Before
     public void setUp() throws Exception {
         when(source.getSymbol()).thenReturn(FOO);
+        when(source.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
     }
 
     @Test
@@ -45,7 +50,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     @Test
     public void testTypeVariable() throws Exception {
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onTypeVariable(source),
-                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.<AnnotationDescription>emptyList()))); // TODO: Variables
+                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription))));
     }
 
     @Test
