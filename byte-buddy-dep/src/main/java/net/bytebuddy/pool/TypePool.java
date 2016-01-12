@@ -3003,12 +3003,12 @@ public interface TypePool {
                     this.descriptor = descriptor;
                     this.genericSignature = genericSignature;
                     this.exceptionName = exceptionName;
-                    annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
                     typeVariableAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
                     typeVariableBoundAnnotationTokens = new HashMap<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>>();
                     returnTypeAnnotationTokens = new HashMap<String, List<LazyTypeDescription.AnnotationToken>>();
                     parameterTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
                     exceptionTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
+                    annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
                     parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>();
                     parameterTokens = new ArrayList<LazyTypeDescription.MethodToken.ParameterToken>();
                     legacyParameterBag = new ParameterBag(Type.getMethodType(descriptor).getArgumentTypes());
@@ -3058,7 +3058,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public AnnotationVisitor visitAnnotation(String descriptorcoo, boolean visible) {
+                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                     return new AnnotationExtractor(descriptor, annotationTokens, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
