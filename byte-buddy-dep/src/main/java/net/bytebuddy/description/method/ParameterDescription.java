@@ -478,7 +478,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(executable.getParameterAnnotations()[index]);
+                return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
             }
         }
 
@@ -509,7 +509,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(executable.getParameterAnnotations()[index]);
+                return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
             }
         }
 
@@ -581,7 +581,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(parameterAnnotation);
+                return new AnnotationList.ForLoadedAnnotations(parameterAnnotation);
             }
         }
 
@@ -653,7 +653,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(parameterAnnotation);
+                return new AnnotationList.ForLoadedAnnotations(parameterAnnotation);
             }
         }
     }

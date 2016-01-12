@@ -91,7 +91,7 @@ public class AgentBuilderInitializationStrategyTest {
         Annotation eagerAnnotation = mock(AuxiliaryType.SignatureRelevant.class);
         when(eagerAnnotation.annotationType()).thenReturn((Class) AuxiliaryType.SignatureRelevant.class);
         TypeDescription independent = mock(TypeDescription.class), dependent = mock(TypeDescription.class);
-        when(independent.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(eagerAnnotation));
+        when(independent.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(eagerAnnotation));
         when(dependent.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         Map<TypeDescription, byte[]> map = new HashMap<TypeDescription, byte[]>();
         map.put(independent, QUX);

@@ -174,7 +174,7 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(field.getDeclaredAnnotations());
         }
 
         @Override

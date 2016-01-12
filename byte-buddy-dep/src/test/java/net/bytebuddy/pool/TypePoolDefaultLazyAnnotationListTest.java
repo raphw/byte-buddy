@@ -11,7 +11,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 
-public class TypePoolLazyAnnotationListTest extends AbstractAnnotationListTest<Annotation> {
+public class TypePoolDefaultLazyAnnotationListTest extends AbstractAnnotationListTest<Annotation> {
 
     private TypePool typePool;
 

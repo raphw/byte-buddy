@@ -91,7 +91,7 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         Argument indexZeroArgument = mock(Argument.class);
         when(indexZeroArgument.value()).thenReturn(0);
         doReturn(Argument.class).when(indexZeroArgument).annotationType();
-        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexZeroArgument));
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(indexZeroArgument));
         when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(implementationTarget, source, target);
@@ -106,7 +106,7 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         Argument indexOneArgument = mock(Argument.class);
         when(indexOneArgument.value()).thenReturn(1);
         doReturn(Argument.class).when(indexOneArgument).annotationType();
-        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexOneArgument));
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(indexOneArgument));
         when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(implementationTarget, source, target);
@@ -124,8 +124,8 @@ public class ArgumentNextUnboundAsDefaultBinderTest {
         Argument indexOneArgument = mock(Argument.class);
         when(indexOneArgument.value()).thenReturn(1);
         doReturn(Argument.class).when(indexOneArgument).annotationType();
-        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexOneArgument));
-        when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(indexZeroArgument));
+        when(firstTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(indexOneArgument));
+        when(secondTargetParameter.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(indexZeroArgument));
         Iterator<AnnotationDescription> iterator = Argument.NextUnboundAsDefaultsProvider.INSTANCE
                 .makeIterator(implementationTarget, source, target);
         assertThat(iterator.hasNext(), is(false));

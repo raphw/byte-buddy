@@ -1587,7 +1587,7 @@ public interface AnnotationDescription {
             } else if (typeDescription.isAssignableTo(Annotation.class)) {
                 value = ForLoadedAnnotation.of((Annotation) value);
             } else if (typeDescription.isAssignableTo(Annotation[].class)) {
-                value = new AnnotationList.ForLoadedAnnotation((Annotation[]) value).toArray(new AnnotationDescription[((Annotation[]) value).length]);
+                value = new AnnotationList.ForLoadedAnnotations((Annotation[]) value).toArray(new AnnotationDescription[((Annotation[]) value).length]);
             }
             return value;
         }
@@ -1970,7 +1970,7 @@ public interface AnnotationDescription {
         public <T extends Annotation> Builder defineAnnotationArray(String property, Class<T> annotationType, T... annotation) {
             return defineAnnotationArray(property,
                     new TypeDescription.ForLoadedType(annotationType),
-                    new AnnotationList.ForLoadedAnnotation(annotation).toArray(new AnnotationDescription[annotation.length]));
+                    new AnnotationList.ForLoadedAnnotations(annotation).toArray(new AnnotationDescription[annotation.length]));
         }
 
         /**

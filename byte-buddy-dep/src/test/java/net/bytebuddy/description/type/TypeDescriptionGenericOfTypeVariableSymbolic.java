@@ -1,18 +1,33 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.utility.MockitoRule;
+import org.junit.Before;
 import org.junit.Test;
+import org.junit.rules.TestRule;
+import org.mockito.Mock;
 
-import static org.hamcrest.CoreMatchers.equalTo;
-import static org.hamcrest.CoreMatchers.is;
-import static org.hamcrest.CoreMatchers.not;
+import java.util.Collections;
+
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.assertThat;
 
 public class TypeDescriptionGenericOfTypeVariableSymbolic {
 
     private static final String FOO = "foo", BAR = "bar";
 
-    private TypeDescription.Generic typeVariable = new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO);
+    public TestRule mockitoRule = new MockitoRule(this);
+
+    private TypeDescription.Generic typeVariable;
+
+    @Mock
+    private AnnotationDescription annotationDescription;
+
+    @Before
+    public void setUp() throws Exception {
+        typeVariable = new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription));
+    }
 
     @Test
     public void testSymbol() throws Exception {
@@ -52,11 +67,18 @@ public class TypeDescriptionGenericOfTypeVariableSymbolic {
     @Test
     public void testEquals() throws Exception {
         assertThat(typeVariable, is(typeVariable));
-        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO)));
-        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR)));
+        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription))));
+        assertThat(typeVariable, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.<AnnotationDescription>emptyList())));
+        assertThat(typeVariable, not((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(BAR, Collections.<AnnotationDescription>emptyList())));
         assertThat(typeVariable, not(TypeDescription.Generic.OBJECT));
         assertThat(typeVariable, not(new Object()));
         assertThat(typeVariable, not(equalTo(null)));
+    }
+
+    @Test
+    public void testAnnotaitions() throws Exception {
+        assertThat(typeVariable.getDeclaredAnnotations().size(), is(1));
+        assertThat(typeVariable.getDeclaredAnnotations().contains(annotationDescription), is(true));
     }
 
     @Test

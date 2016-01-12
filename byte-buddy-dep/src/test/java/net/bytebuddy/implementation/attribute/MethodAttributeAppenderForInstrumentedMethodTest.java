@@ -20,8 +20,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
     @SuppressWarnings("unchecked")
     public void testMethodAnnotations() throws Exception {
         when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
-        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList
-                .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
+        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getDeclaringType()).thenReturn(mock(TypeDescription.Generic.class));
         MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription, annotationValueFilter);
@@ -40,7 +39,7 @@ public class MethodAttributeAppenderForInstrumentedMethodTest extends AbstractMe
         when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         ParameterDescription parameterDescription = mock(ParameterDescription.class);
         when(parameterDescription.getDeclaredAnnotations())
-                .thenReturn(new AnnotationList.ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
+                .thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Explicit<ParameterDescription>(parameterDescription));
         when(methodDescription.getDeclaringType()).thenReturn(mock(TypeDescription.Generic.class));
         MethodAttributeAppender.ForInstrumentedMethod.INSTANCE.apply(methodVisitor, methodDescription, annotationValueFilter);

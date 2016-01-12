@@ -70,7 +70,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(target.getIndex()).thenReturn(1);
         RuntimeType runtimeType = mock(RuntimeType.class);
         doReturn(RuntimeType.class).when(runtimeType).annotationType();
-        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
+        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(runtimeType));
         testLegalStrictBinding(true, runtimeType);
     }
 
@@ -83,7 +83,7 @@ public class AllArgumentsBinderTest extends AbstractAnnotationBinderTest<AllArgu
         when(targetType.getComponentType()).thenReturn(componentType);
         when(componentType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(target.getType()).thenReturn(targetType);
-        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(targetAnnotation));
+        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(targetAnnotation));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = AllArguments.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));

@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.enumeration.EnumerationDescription;
@@ -282,7 +283,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
      */
-    interface Generic extends TypeDefinition {
+    interface Generic extends TypeDefinition, AnnotatedCodeElement {
 
         /**
          * A representation of the {@link Object} type.
@@ -551,16 +552,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onWildcard(Generic wildcard) {
                     // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    TypeList.Generic lowerBounds = wildcard.getLowerBounds();
-                    return lowerBounds.isEmpty()
-                            ? OfWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
-                            : OfWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -577,17 +575,18 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             ownerType == null
                                     ? UNDEFINED
                                     : ownerType.accept(this),
-                            parameters);
+                            parameters,
+                            parameterizedType.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onTypeVariable(Generic typeVariable) {
-                    return typeVariable.asRawType();
+                    return new OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    return new OfNonGenericType.Latent(typeDescription.asErasure());
+                    return new OfNonGenericType.Latent(typeDescription.asErasure(), typeDescription.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -755,8 +754,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public SignatureVisitor onWildcard(Generic wildcard) {
-                        TypeList.Generic upperBounds = wildcard.getUpperBounds();
-                        TypeList.Generic lowerBounds = wildcard.getLowerBounds();
+                        TypeList.Generic upperBounds = wildcard.getUpperBounds(), lowerBounds = wildcard.getLowerBounds();
                         if (lowerBounds.isEmpty() && upperBounds.getOnly().represents(Object.class)) {
                             signatureVisitor.visitTypeArgument();
                         } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
@@ -815,30 +813,25 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             ownerType == null
                                     ? UNDEFINED
                                     : ownerType.accept(this),
-                            parameters);
+                            parameters,
+                            parameterizedType.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onGenericArray(Generic genericArray) {
-                    return OfGenericArray.Latent.of(genericArray.getComponentType().accept(this), 1);
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onWildcard(Generic wildcard) {
-                    TypeList.Generic lowerBounds = wildcard.getLowerBounds();
-                    return lowerBounds.isEmpty()
-                            ? OfWildcardType.Latent.boundedAbove(wildcard.getUpperBounds().getOnly().accept(this))
-                            : OfWildcardType.Latent.boundedBelow(lowerBounds.getOnly().accept(this));
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    int arity = 0;
-                    while (typeDescription.isArray()) {
-                        typeDescription = typeDescription.getComponentType();
-                        arity++;
-                    }
-                    return OfGenericArray.Latent.of(onSimpleType(typeDescription), arity);
+                    return typeDescription.isArray()
+                            ? new OfGenericArray.Latent(typeDescription.getComponentType().accept(this), typeDescription.getDeclaredAnnotations())
+                            : onSimpleType(typeDescription);
                 }
 
                 /**
@@ -922,7 +915,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         if (attachedVariable == null) {
                             throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
                         } else {
-                            return attachedVariable;
+                            return new AnnotatedTypeVariable(attachedVariable, typeVariable.getDeclaredAnnotations());
                         }
                     }
 
@@ -955,6 +948,53 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 "declaringType=" + declaringType +
                                 ", typeVariableSource=" + typeVariableSource +
                                 '}';
+                    }
+
+                    /**
+                     * Wraps a formal type variable to allow for representing type annotations.
+                     */
+                    protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
+
+                        /**
+                         * The represented type variable.
+                         */
+                        private final Generic typeVariable;
+
+                        /**
+                         * The variable's type annotations.
+                         */
+                        private final List<AnnotationDescription> annotations;
+
+                        /**
+                         * Creates a new annotated type variable.
+                         *
+                         * @param typeVariable The represented type variable.
+                         * @param annotations  The variable's type annotations.
+                         */
+                        protected AnnotatedTypeVariable(Generic typeVariable, List<AnnotationDescription> annotations) {
+                            this.typeVariable = typeVariable;
+                            this.annotations = annotations;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return typeVariable.getUpperBounds();
+                        }
+
+                        @Override
+                        public TypeVariableSource getVariableSource() {
+                            return typeVariable.getVariableSource();
+                        }
+
+                        @Override
+                        public String getSymbol() {
+                            return typeVariable.getSymbol();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return new AnnotationList.Explicit(annotations);
+                        }
                     }
                 }
 
@@ -991,7 +1031,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
-                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol());
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
                     }
 
                     @Override
@@ -1141,7 +1181,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
-                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol());
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
                     }
 
                     @Override
@@ -1888,6 +1928,1419 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         /**
+         * An annotation reader is responsible for lazily evaluting type annotations if this language
+         * feature is available on the current JVM.
+         */
+        interface AnnotationReader {
+
+            /**
+             * The dispatcher to use.
+             */
+            Dispatcher DISPATCHER = Dispatcher.ForModernVm.make();
+
+            /**
+             * Resolves the underlying {@link AnnotatedElement}.
+             *
+             * @return The underlying annotated element.
+             */
+            AnnotatedElement resolve();
+
+            /**
+             * Returns the underlying type annotations as a list.
+             *
+             * @return The underlying type annotations as a list.
+             */
+            AnnotationList asList();
+
+            /**
+             * Returns a reader for type annotations of an represented element's wildcard upper bound.
+             *
+             * @param index The wildcard bound's index.
+             * @return An annotation reader for the underlying annotated upper bound.
+             */
+            AnnotationReader ofWildcardUpperBoundType(int index);
+
+            /**
+             * Returns a reader for type annotations of an represented element's wildcard lower bound.
+             *
+             * @param index The wildcard bound's index.
+             * @return An annotation reader for the underlying annotated lower bound.
+             */
+            AnnotationReader ofWildcardLowerBoundType(int index);
+
+            /**
+             * Returns a reader for type annotations of a type variable's bound.
+             *
+             * @param index The bound's index.
+             * @return An annotation reader for the underlying annotated bound.
+             */
+            AnnotationReader ofTypeVariableBoundType(int index);
+
+            /**
+             * Returns a reader for type annotations of a parameterized type's type argument.
+             *
+             * @param index The bound's index.
+             * @return An annotation reader for the underlying annotated bound..
+             */
+            AnnotationReader ofTypeArgument(int index);
+
+            /**
+             * Returns a reader for type annotations of a parameterized type's owner type.
+             *
+             * @return An annotation reader for the underlying owner type.
+             */
+            AnnotationReader ofOwnerType();
+
+            /**
+             * Returns a reader for type annotations of an array's component type.
+             *
+             * @return An annotation reader for the underlying component type.
+             */
+            AnnotationReader ofComponentType();
+
+            /**
+             * A dispatcher that represents the type annotation API via reflective calls if the language feature is available on the current JVM.
+             */
+            interface Dispatcher {
+
+                /**
+                 * Resolves a formal type variable's type annotations.
+                 *
+                 * @param typeVariable The type variable to represent.
+                 * @return A suitable annotation reader.
+                 */
+                AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable);
+
+                /**
+                 * Resolves a loaded type's super class's type annotations.
+                 *
+                 * @param type The type to represent.
+                 * @return A suitable annotation reader.
+                 */
+                AnnotationReader resolveSuperType(Class<?> type);
+
+                /**
+                 * Resolves a loaded type's interface type's type annotations.
+                 *
+                 * @param type  The type to represent.
+                 * @param index The index of the interface.
+                 * @return A suitable annotation reader.
+                 */
+                AnnotationReader resolveInterface(Class<?> type, int index);
+
+                /**
+                 * Resolves a loaded field's type's type annotations.
+                 *
+                 * @param field The field to represent.
+                 * @return A suitable annotation reader.
+                 */
+                AnnotationReader resolve(Field field);
+
+                /**
+                 * Resolves a loaded method's return type's type annotations.
+                 *
+                 * @param method The method to represent.
+                 * @return A suitable annotation reader.
+                 */
+                AnnotationReader resolveReturnType(Method method);
+
+                /**
+                 * Resolves a loaded executable's type argument type's type annotations.
+                 *
+                 * @param executable The executable to represent.
+                 * @param index      The type argument's index.
+                 * @return A suitable annotation reader.
+                 */
+                AnnotationReader resolveParameterType(AccessibleObject executable, int index);
+
+                /**
+                 * Resolves a loaded executable's exception type's type annotations.
+                 *
+                 * @param executable The executable to represent.
+                 * @param index      The type argument's index.
+                 * @return A suitable annotation reader.
+                 */
+                AnnotationReader resolveExceptionType(AccessibleObject executable, int index);
+
+                /**
+                 * A dispatcher for {@link AnnotationReader}s on a legacy VM that does not support type annotations.
+                 */
+                enum ForLegacyVm implements Dispatcher {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveSuperType(Class<?> type) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveInterface(Class<?> type, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolve(Field field) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveReturnType(Method method) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
+                        return NoOp.INSTANCE;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm." + name();
+                    }
+                }
+
+                /**
+                 * A dispatcher for a modern JVM that supports type annotations.
+                 */
+                class ForModernVm implements Dispatcher {
+
+                    /**
+                     * The {@code java.lang.Class#getAnnotatedSuperclass} method.
+                     */
+                    private final Method getAnnotatedSuperclass;
+
+                    /**
+                     * The {@code java.lang.Class#getAnnotatedInterfaces} method.
+                     */
+                    private final Method getAnnotatedInterfaces;
+
+                    /**
+                     * The {@code java.lang.reflect.Field#getAnnotatedType} method.
+                     */
+                    private final Method getAnnotatedType;
+
+                    /**
+                     * The {@code java.lang.reflect.Method#getAnnotatedReturnType} method.
+                     */
+                    private final Method getAnnotatedReturnType;
+
+                    /**
+                     * The {@code java.lang.reflect.Executable#getAnnotatedParameterTypes} method.
+                     */
+                    private final Method getAnnotatedParameterTypes;
+
+                    /**
+                     * The {@code java.lang.reflect.Executable#getAnnotatedExceptionTypes} method.
+                     */
+                    private final Method getAnnotatedExceptionTypes;
+
+                    /**
+                     * Creates a new dispatcher for a VM that supports type annotations.
+                     *
+                     * @param getAnnotatedSuperclass     The {@code java.lang.Class#getAnnotatedSuperclass} method.
+                     * @param getAnnotatedInterfaces     The {@code java.lang.Class#getAnnotatedInterfaces} method.
+                     * @param getAnnotatedType           The {@code java.lang.reflect.Field#getAnnotatedType} method.
+                     * @param getAnnotatedReturnType     The {@code java.lang.reflect.Method#getAnnotatedReturnType} method.
+                     * @param getAnnotatedParameterTypes The {@code java.lang.reflect.Executable#getAnnotatedParameterTypes} method.
+                     * @param getAnnotatedExceptionTypes The {@code java.lang.reflect.Executable#getAnnotatedExceptionTypes} method.
+                     */
+                    protected ForModernVm(Method getAnnotatedSuperclass,
+                                          Method getAnnotatedInterfaces,
+                                          Method getAnnotatedType,
+                                          Method getAnnotatedReturnType,
+                                          Method getAnnotatedParameterTypes,
+                                          Method getAnnotatedExceptionTypes) {
+                        this.getAnnotatedSuperclass = getAnnotatedSuperclass;
+                        this.getAnnotatedInterfaces = getAnnotatedInterfaces;
+                        this.getAnnotatedType = getAnnotatedType;
+                        this.getAnnotatedReturnType = getAnnotatedReturnType;
+                        this.getAnnotatedParameterTypes = getAnnotatedParameterTypes;
+                        this.getAnnotatedExceptionTypes = getAnnotatedExceptionTypes;
+                    }
+
+                    /**
+                     * Creates a new annotation reader dispatcher if this is possible or falls back to a no-op version if the
+                     * current JVM does not support this feature.
+                     *
+                     * @return A suitable dispatcher for the current JVM.
+                     */
+                    protected static Dispatcher make() {
+                        try {
+                            return new Dispatcher.ForModernVm(Class.class.getDeclaredMethod("getAnnotatedSuperclass"),
+                                    Class.class.getDeclaredMethod("getAnnotatedInterfaces"),
+                                    Field.class.getDeclaredMethod("getAnnotatedType"),
+                                    Method.class.getDeclaredMethod("getAnnotatedReturnType"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedParameterTypes"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedExceptionTypes"));
+                        } catch (RuntimeException exception) {
+                            throw exception;
+                        } catch (Exception ignored) {
+                            return Dispatcher.ForLegacyVm.INSTANCE;
+                        }
+                    }
+
+                    @Override
+                    public AnnotationReader resolveTypeVariable(TypeVariable<?> typeVariable) {
+                        return new AnnotatedTypeVariableType(typeVariable);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveSuperType(Class<?> type) {
+                        return new AnnotatedSuperType(type);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveInterface(Class<?> type, int index) {
+                        return new AnnotatedInterfaceType(type, index);
+                    }
+
+                    @Override
+                    public AnnotationReader resolve(Field field) {
+                        return new AnnotatedFieldType(field);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveReturnType(Method method) {
+                        return new AnnotatedReturnType(method);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveParameterType(AccessibleObject executable, int index) {
+                        return new AnnotatedParameterizedType(executable, index);
+                    }
+
+                    @Override
+                    public AnnotationReader resolveExceptionType(AccessibleObject executable, int index) {
+                        return new AnnotatedExceptionType(executable, index);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ForModernVm that = (ForModernVm) other;
+                        return getAnnotatedSuperclass.equals(that.getAnnotatedSuperclass)
+                                && getAnnotatedInterfaces.equals(that.getAnnotatedInterfaces)
+                                && getAnnotatedType.equals(that.getAnnotatedType)
+                                && getAnnotatedReturnType.equals(that.getAnnotatedReturnType)
+                                && getAnnotatedParameterTypes.equals(that.getAnnotatedParameterTypes)
+                                && getAnnotatedExceptionTypes.equals(that.getAnnotatedExceptionTypes);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = getAnnotatedSuperclass.hashCode();
+                        result = 31 * result + getAnnotatedInterfaces.hashCode();
+                        result = 31 * result + getAnnotatedType.hashCode();
+                        result = 31 * result + getAnnotatedReturnType.hashCode();
+                        result = 31 * result + getAnnotatedParameterTypes.hashCode();
+                        result = 31 * result + getAnnotatedExceptionTypes.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm{" +
+                                "getAnnotatedSuperclass=" + getAnnotatedSuperclass +
+                                ", getAnnotatedInterfaces=" + getAnnotatedInterfaces +
+                                ", getAnnotatedType=" + getAnnotatedType +
+                                ", getAnnotatedReturnType=" + getAnnotatedReturnType +
+                                ", getAnnotatedParameterTypes=" + getAnnotatedParameterTypes +
+                                ", getAnnotatedExceptionTypes=" + getAnnotatedExceptionTypes +
+                                '}';
+                    }
+
+                    /**
+                     * A delegator for an existing {@code java.lang.reflect.Annotatedelement}.
+                     */
+                    protected static class Resolved extends Delegator {
+
+                        /**
+                         * The represented annotated element.
+                         */
+                        private final AnnotatedElement annotatedElement;
+
+                        /**
+                         * Creates a new resolved delegator.
+                         *
+                         * @param annotatedElement The represented annotated element.
+                         */
+                        protected Resolved(AnnotatedElement annotatedElement) {
+                            this.annotatedElement = annotatedElement;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            return annotatedElement;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && annotatedElement.equals(((Resolved) other).annotatedElement);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return annotatedElement.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.Resolved{" +
+                                    ", annotatedElement=" + annotatedElement +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A delegating annotation reader for an annotated type variable.
+                     */
+                    protected static class AnnotatedTypeVariableType extends Delegator {
+
+                        /**
+                         * The represented type variable.
+                         */
+                        private final TypeVariable<?> typeVariable;
+
+                        /**
+                         * Creates a new annotation reader for the given type variable.
+                         *
+                         * @param typeVariable The represented type variable.
+                         */
+                        protected AnnotatedTypeVariableType(TypeVariable<?> typeVariable) {
+                            this.typeVariable = typeVariable;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            return (AnnotatedElement) typeVariable;
+                        }
+
+                        @Override
+                        public AnnotationReader ofTypeVariableBoundType(int index) {
+                            return new ForTypeVariableBoundType.OfFormalTypeVariable(typeVariable, index);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && typeVariable.equals(((AnnotatedTypeVariableType) other).typeVariable);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return typeVariable.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedTypeVariableType{" +
+                                    ", typeVariable=" + typeVariable +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A delegating annotation reader for an annotated super type.
+                     */
+                    protected class AnnotatedSuperType extends Delegator {
+
+                        /**
+                         * The represented type.
+                         */
+                        private final Class<?> type;
+
+                        /**
+                         * Creates a new annotation reader for an annotated super type.
+                         *
+                         * @param type The represented type.
+                         */
+                        protected AnnotatedSuperType(Class<?> type) {
+                            this.type = type;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) getAnnotatedSuperclass.invoke(type);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access java.lang.Class#getAnnotatedSuperclass", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking java.lang.Class#getAnnotatedSuperclass", exception.getCause());
+                            }
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedSuperType) other).getOuter())
+                                    && type.equals(((AnnotatedSuperType) other).type);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return getOuter().hashCode() + type.hashCode() * 31;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperType{" +
+                                    "dispatcher=" + getOuter() +
+                                    ", type=" + type +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A delegating annotation reader for an annotated interface type.
+                     */
+                    protected class AnnotatedInterfaceType extends Delegator {
+
+                        /**
+                         * The represented interface type.
+                         */
+                        private final Class<?> type;
+
+                        /**
+                         * The interface type's index.
+                         */
+                        private final int index;
+
+                        /**
+                         * Creates a new annotation reader for an annotated interface type.
+                         *
+                         * @param type  The represented interface type.
+                         * @param index The interface type's index.
+                         */
+                        protected AnnotatedInterfaceType(Class<?> type, int index) {
+                            this.type = type;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) Array.get(getAnnotatedInterfaces.invoke(type), index);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access java.lang.Class#getAnnotatedInterfaces", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking java.lang.Class#getAnnotatedInterfaces", exception.getCause());
+                            }
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedInterfaceType) other).getOuter())
+                                    && type.equals(((AnnotatedInterfaceType) other).type)
+                                    && index == ((AnnotatedInterfaceType) other).index;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 31 * (type.hashCode() + 31 * getOuter().hashCode()) + index;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedInterfaceType{" +
+                                    "dispatcher=" + getOuter() +
+                                    ", type=" + type +
+                                    ", index=" + index +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A delegating annotation reader for an annotated field variable.
+                     */
+                    protected class AnnotatedFieldType extends Delegator {
+
+                        /**
+                         * The represented field.
+                         */
+                        private final Field field;
+
+                        /**
+                         * Creates a new annotation reader for an annotated field type.
+                         *
+                         * @param field The represented field.
+                         */
+                        protected AnnotatedFieldType(Field field) {
+                            this.field = field;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) getAnnotatedType.invoke(field);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Field#getAnnotatedType", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Field#getAnnotatedType", exception.getCause());
+                            }
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedFieldType) other).getOuter())
+                                    && field.equals(((AnnotatedFieldType) other).field);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return field.hashCode() + getOuter().hashCode() * 31;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedFieldType{" +
+                                    "dispatcher=" + getOuter() +
+                                    ", field=" + field +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A delegating annotation reader for an annotated return variable.
+                     */
+                    protected class AnnotatedReturnType extends Delegator {
+
+                        /**
+                         * The represented method.
+                         */
+                        private final Method method;
+
+                        /**
+                         * Creates a new annotation reader for an annotated return type.
+                         *
+                         * @param method The represented method.
+                         */
+                        protected AnnotatedReturnType(Method method) {
+                            this.method = method;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) getAnnotatedReturnType.invoke(method);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Method#getAnnotatedReturnType", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Method#getAnnotatedReturnType", exception.getCause());
+                            }
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedReturnType) other).getOuter())
+                                    && method.equals(((AnnotatedReturnType) other).method);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 31 * method.hashCode() + getOuter().hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedReturnType{" +
+                                    "dispatcher=" + getOuter() +
+                                    ", method=" + method +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A delegating annotation reader for an annotated parameter variable.
+                     */
+                    protected class AnnotatedParameterizedType extends Delegator {
+
+                        /**
+                         * The represented executable.
+                         */
+                        private final AccessibleObject executable;
+
+                        /**
+                         * The type argument's index.
+                         */
+                        private final int index;
+
+                        /**
+                         * Creates a new annotation reader for an annotated type argument type.
+                         *
+                         * @param executable The represented executable.
+                         * @param index      The type argument's index.
+                         */
+                        protected AnnotatedParameterizedType(AccessibleObject executable, int index) {
+                            this.executable = executable;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) Array.get(getAnnotatedParameterTypes.invoke(executable), index);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedParameterTypes", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedParameterTypes", exception.getCause());
+                            }
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedParameterizedType) other).getOuter())
+                                    && executable.equals(((AnnotatedParameterizedType) other).executable)
+                                    && index == ((AnnotatedParameterizedType) other).index;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedParameterizedType{" +
+                                    "dispatcher=" + getOuter() +
+                                    ", executable=" + executable +
+                                    ", index=" + index +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A delegating annotation reader for an annotated exception variable.
+                     */
+                    protected class AnnotatedExceptionType extends Delegator {
+
+                        /**
+                         * The represented executable.
+                         */
+                        private final AccessibleObject executable;
+
+                        /**
+                         * The exception type's index.
+                         */
+                        private final int index;
+
+                        /**
+                         * Creates a new annotation reader for an annotated exception type.
+                         *
+                         * @param executable The represented executable.
+                         * @param index      The exception type's index.
+                         */
+                        protected AnnotatedExceptionType(AccessibleObject executable, int index) {
+                            this.executable = executable;
+                            this.index = index;
+                        }
+
+                        @Override
+                        public AnnotatedElement resolve() {
+                            try {
+                                return (AnnotatedElement) Array.get(getAnnotatedExceptionTypes.invoke(executable), index);
+                            } catch (IllegalAccessException exception) {
+                                throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedExceptionTypes", exception);
+                            } catch (InvocationTargetException exception) {
+                                throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedExceptionTypes", exception.getCause());
+                            }
+                        }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForModernVm getOuter() {
+                            return ForModernVm.this;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((AnnotatedExceptionType) other).getOuter())
+                                    && executable.equals(((AnnotatedExceptionType) other).executable)
+                                    && index == ((AnnotatedExceptionType) other).index;
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return 31 * (executable.hashCode() + 31 * index) + getOuter().hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedExceptionType{" +
+                                    "dispatcher=" + getOuter() +
+                                    ", executable=" + executable +
+                                    ", index=" + index +
+                                    '}';
+                        }
+                    }
+                }
+            }
+
+            /**
+             * A non-operational annotation reader.
+             */
+            enum NoOp implements AnnotationReader, AnnotatedElement {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public AnnotatedElement resolve() {
+                    return this;
+                }
+
+                @Override
+                public AnnotationList asList() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public AnnotationReader ofWildcardUpperBoundType(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofWildcardLowerBoundType(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofTypeVariableBoundType(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofTypeArgument(int index) {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofOwnerType() {
+                    return this;
+                }
+
+                @Override
+                public AnnotationReader ofComponentType() {
+                    return this;
+                }
+
+                @Override
+                public boolean isAnnotationPresent(Class<? extends Annotation> annotationClass) {
+                    throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
+                }
+
+                @Override
+                public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+                    throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
+                }
+
+                @Override
+                public Annotation[] getAnnotations() {
+                    throw new IllegalStateException("Cannot resolve annotations for no-op reader: " + this);
+                }
+
+                @Override
+                public Annotation[] getDeclaredAnnotations() {
+                    return new Annotation[0];
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.AnnotationReader.NoOp." + name();
+                }
+            }
+
+            /**
+             * A delegating annotation reader that delegates all invocations to an annotation reader that wraps the previous one.
+             */
+            abstract class Delegator implements AnnotationReader {
+
+                @Override
+                public AnnotationReader ofWildcardUpperBoundType(int index) {
+                    return new ForWildcardUpperBoundType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofWildcardLowerBoundType(int index) {
+                    return new ForWildcardLowerBoundType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofTypeVariableBoundType(int index) {
+                    return new ForTypeVariableBoundType(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofTypeArgument(int index) {
+                    return new ForTypeArgument(this, index);
+                }
+
+                @Override
+                public AnnotationReader ofOwnerType() {
+                    return NoOp.INSTANCE;
+                }
+
+                @Override
+                public AnnotationReader ofComponentType() {
+                    return new ForComponentType(this);
+                }
+
+                @Override
+                public AnnotationList asList() {
+                    return new AnnotationList.ForLoadedAnnotations(resolve().getDeclaredAnnotations());
+                }
+
+                /**
+                 * A chained delegator that bases its result on an underlying annotation reader.
+                 */
+                protected abstract static class Chained extends Delegator {
+
+                    /**
+                     * The underlying annotation reader.
+                     */
+                    protected final AnnotationReader annotationReader;
+
+                    /**
+                     * Creates a new chained annotation reader.
+                     *
+                     * @param annotationReader The underlying annotation reader.
+                     */
+                    protected Chained(AnnotationReader annotationReader) {
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public AnnotatedElement resolve() {
+                        return resolve(annotationReader.resolve());
+                    }
+
+                    /**
+                     * Resolves the type annotations from a given annotated element into the annotated element that this instance represents.
+                     *
+                     * @param annotatedElement The original annotated element.
+                     * @return The resolved annotated element.
+                     */
+                    protected abstract AnnotatedElement resolve(AnnotatedElement annotatedElement);
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && annotationReader.equals(((Chained) other).annotationReader);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return annotationReader.hashCode();
+                    }
+                }
+            }
+
+            /**
+             * A chained annotation reader for reading a wildcard type's upper bound type.
+             */
+            class ForWildcardUpperBoundType extends Delegator.Chained {
+
+                /**
+                 * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds} method.
+                 */
+                private static final Method GET_ANNOTATED_UPPER_BOUNDS;
+
+                /*
+                 * Reads the {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds} method.
+                 */
+                static {
+                    Method getAnnotatedUpperBounds;
+                    try {
+                        getAnnotatedUpperBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedUpperBounds");
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        getAnnotatedUpperBounds = null;
+                    }
+                    GET_ANNOTATED_UPPER_BOUNDS = getAnnotatedUpperBounds;
+                }
+
+                /**
+                 * The wildcard bound's index.
+                 */
+                private final int index;
+
+                /**
+                 * Creates a chained annotation reader for reading a upper-bound wildcard's bound type.
+                 *
+                 * @param annotationReader The annotation reader from which to delegate.
+                 * @param index            The wildcard bound's index.
+                 */
+                protected ForWildcardUpperBoundType(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        Object annotatedUpperBounds = GET_ANNOTATED_UPPER_BOUNDS.invoke(annotatedElement);
+                        return Array.getLength(annotatedUpperBounds) == 0 // Wildcards with a lower bound do not define annotations for their implicit upper bound.
+                                ? NoOp.INSTANCE
+                                : (AnnotatedElement) Array.get(annotatedUpperBounds, index);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedUpperBounds", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && index == ((ForWildcardUpperBoundType) other).index;
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + index;
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.AnnotationReader.ForWildcardUpperBoundType{"
+                            + "annotationReader=" + annotationReader
+                            + ", index=" + index
+                            + '}';
+                }
+            }
+
+            /**
+             * A chained annotation reader for reading a wildcard type's lower bound type.
+             */
+            class ForWildcardLowerBoundType extends Delegator.Chained {
+
+                /**
+                 * The {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds} method.
+                 */
+                private static final Method GET_ANNOTATED_LOWER_BOUNDS;
+
+                /*
+                 * Reads the {@code java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds} method.
+                 */
+                static {
+                    Method getAnnotatedLowerBounds;
+                    try {
+                        getAnnotatedLowerBounds = Class.forName("java.lang.reflect.AnnotatedWildcardType").getDeclaredMethod("getAnnotatedLowerBounds");
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        getAnnotatedLowerBounds = null;
+                    }
+                    GET_ANNOTATED_LOWER_BOUNDS = getAnnotatedLowerBounds;
+                }
+
+                /**
+                 * The wildcard bound's index.
+                 */
+                private final int index;
+
+                /**
+                 * Creates a chained annotation reader for reading a lower-bound wildcard's bound type.
+                 *
+                 * @param annotationReader The annotation reader from which to delegate.
+                 * @param index            The wildcard bound's index.
+                 */
+                protected ForWildcardLowerBoundType(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_LOWER_BOUNDS.invoke(annotatedElement), index);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedWildcardType#getAnnotatedLowerBounds", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && index == ((ForWildcardLowerBoundType) other).index;
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + index;
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.AnnotationReader.ForWildcardLowerBoundType{"
+                            + "annotationReader=" + annotationReader
+                            + ", index=" + index
+                            + '}';
+                }
+            }
+
+            /**
+             * A chained annotation reader for reading a type variable's type argument.
+             */
+            class ForTypeVariableBoundType extends Delegator.Chained {
+
+                /**
+                 * The {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
+                 */
+                private static final Method GET_ANNOTATED_BOUNDS;
+
+                /*
+                 * Reads the {@code java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds} method.
+                 */
+                static {
+                    Method getAnnotatedBounds;
+                    try {
+                        getAnnotatedBounds = Class.forName("java.lang.reflect.AnnotatedTypeVariable").getDeclaredMethod("getAnnotatedBounds");
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        getAnnotatedBounds = null;
+                    }
+                    GET_ANNOTATED_BOUNDS = getAnnotatedBounds;
+                }
+
+                /**
+                 * The type variable's index.
+                 */
+                private final int index;
+
+                /**
+                 * Creates a chained annotation reader for reading a type variable's bound type.
+                 *
+                 * @param annotationReader The annotation reader from which to delegate.
+                 * @param index            The type variable's index.
+                 */
+                protected ForTypeVariableBoundType(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(annotatedElement), index);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedTypeVariable#getAnnotatedBounds", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && index == ((ForTypeVariableBoundType) other).index;
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + index;
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.AnnotationReader.ForTypeVariableBoundType{"
+                            + "annotationReader=" + annotationReader
+                            + ", index=" + index
+                            + '}';
+                }
+
+                /**
+                 * A chained annotation reader for reading a formal type variable's type argument.
+                 */
+                protected static class OfFormalTypeVariable extends Delegator {
+
+                    /**
+                     * The {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
+                     */
+                    private static final Method GET_ANNOTATED_BOUNDS;
+
+                    /*
+                     * Reads the {@code java.lang.reflect.TypeVariable#getAnnotatedBounds} method.
+                     */
+                    static {
+                        Method getAnnotatedBounds;
+                        try {
+                            getAnnotatedBounds = TypeVariable.class.getDeclaredMethod("getAnnotatedBounds");
+                        } catch (RuntimeException exception) {
+                            throw exception;
+                        } catch (Exception exception) {
+                            getAnnotatedBounds = null;
+                        }
+                        GET_ANNOTATED_BOUNDS = getAnnotatedBounds;
+                    }
+
+                    /**
+                     * The represented type variable.
+                     */
+                    private final TypeVariable<?> typeVariable;
+
+                    /**
+                     * The type variable's index.
+                     */
+                    private final int index;
+
+                    /**
+                     * Creates a chained annotation reader for reading a formal type variable's bound type.
+                     *
+                     * @param typeVariable The represented type variable.
+                     * @param index        The type variable's index.
+                     */
+                    protected OfFormalTypeVariable(TypeVariable<?> typeVariable, int index) {
+                        this.typeVariable = typeVariable;
+                        this.index = index;
+                    }
+
+                    @Override
+                    public AnnotatedElement resolve() {
+                        try {
+                            return (AnnotatedElement) Array.get(GET_ANNOTATED_BOUNDS.invoke(typeVariable), index);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access java.lang.reflect.TypeVariable#getAnnotatedBounds", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.reflect.TypeVariable#getAnnotatedBounds", exception.getCause());
+                        }
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeVariable == ((OfFormalTypeVariable) other).typeVariable
+                                && index == ((OfFormalTypeVariable) other).index;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return index + 31 * typeVariable.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.AnnotationReader.OfFormalTypeVariable{"
+                                + "typeVariable=" + typeVariable
+                                + ", index=" + index
+                                + '}';
+                    }
+                }
+            }
+
+            /**
+             * A chained annotation reader for reading a parameterized type's type argument.
+             */
+            class ForTypeArgument extends Delegator.Chained {
+
+                /**
+                 * The {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
+                 */
+                private static final Method GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS;
+
+                /*
+                 * Reads the {@code java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments} method.
+                 */
+                static {
+                    Method getAnnotatedActualTypeArguments;
+                    try {
+                        getAnnotatedActualTypeArguments = Class.forName("java.lang.reflect.AnnotatedParameterizedType").getDeclaredMethod("getAnnotatedActualTypeArguments");
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        getAnnotatedActualTypeArguments = null;
+                    }
+                    GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS = getAnnotatedActualTypeArguments;
+                }
+
+                /**
+                 * The type argument's index.
+                 */
+                private final int index;
+
+                /**
+                 * Creates a chained annotation reader for reading a component type.
+                 *
+                 * @param annotationReader The annotation reader from which to delegate.
+                 * @param index            The type argument's index.
+                 */
+                protected ForTypeArgument(AnnotationReader annotationReader, int index) {
+                    super(annotationReader);
+                    this.index = index;
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) Array.get(GET_ANNOTATED_ACTUAL_TYPE_ARGUMENTS.invoke(annotatedElement), index);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedParameterizedType#getAnnotatedActualTypeArguments", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && index == ((ForTypeArgument) other).index;
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + index;
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.AnnotationReader.ForTypeArgument{"
+                            + "annotationReader=" + annotationReader
+                            + ", index=" + index
+                            + '}';
+                }
+            }
+
+            /**
+             * A chained annotation reader for reading a component type.
+             */
+            class ForComponentType extends Delegator.Chained {
+
+                /**
+                 * The {@code java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType} method.
+                 */
+                private static final Method GET_ANNOTATED_GENERIC_COMPONENT_TYPE;
+
+                /*
+                 * Reads the {@code java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType} method.
+                 */
+                static {
+                    Method getAnnotatedGenericComponentType;
+                    try {
+                        getAnnotatedGenericComponentType = Class.forName("java.lang.reflect.AnnotatedArrayType").getDeclaredMethod("getAnnotatedGenericComponentType");
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        getAnnotatedGenericComponentType = null;
+                    }
+                    GET_ANNOTATED_GENERIC_COMPONENT_TYPE = getAnnotatedGenericComponentType;
+                }
+
+                /**
+                 * Creates a chained annotation reader for reading a component type.
+                 *
+                 * @param annotationReader The annotation reader from which to delegate.
+                 */
+                protected ForComponentType(AnnotationReader annotationReader) {
+                    super(annotationReader);
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        return (AnnotatedElement) GET_ANNOTATED_GENERIC_COMPONENT_TYPE.invoke(annotatedElement);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedArrayType#getAnnotatedGenericComponentType", exception.getCause());
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.AnnotationReader.ForComponentType{"
+                            + "annotationReader=" + annotationReader
+                            + '}';
+                }
+            }
+        }
+
+        /**
          * An abstract base implementation of a generic type description.
          */
         abstract class AbstractBase implements Generic {
@@ -1979,14 +3432,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getComponentType() {
-                TypeDescription componentType = asErasure().getComponentType();
-                return componentType == null
-                        ? UNDEFINED
-                        : new OfNonGenericType.Latent(componentType);
-            }
-
-            @Override
             public TypeVariableSource getVariableSource() {
                 throw new IllegalStateException("A non-generic type does not imply a type variable source: " + this);
             }
@@ -2053,17 +3498,47 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final Class<?> type;
 
                 /**
+                 * The annotation reader to query for the non-generic type's annotations.
+                 */
+                private final AnnotationReader annotationReader;
+
+                /**
                  * Creates a new description of a generic type of a loaded type.
                  *
                  * @param type The represented type.
                  */
                 public ForLoadedType(Class<?> type) {
+                    this(type, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                /**
+                 * /**
+                 * Creates a new description of a generic type of a loaded type.
+                 *
+                 * @param type             The represented type.
+                 * @param annotationReader The annotation reader to query for the non-generic type's annotations.
+                 */
+                protected ForLoadedType(Class<?> type, AnnotationReader annotationReader) {
                     this.type = type;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(type);
+                }
+
+                @Override
+                public Generic getComponentType() {
+                    Class<?> componentType = this.type.getComponentType();
+                    return componentType == null
+                            ? UNDEFINED
+                            : new ForLoadedType(componentType, annotationReader.ofComponentType());
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return annotationReader.asList();
                 }
             }
 
@@ -2078,17 +3553,37 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final TypeDescription typeDescription;
 
                 /**
+                 * This type's type annotations.
+                 */
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
+                /**
                  * Creates a new raw type representation.
                  *
-                 * @param typeDescription The represented non-generic type.
+                 * @param typeDescription     The represented non-generic type.
+                 * @param declaredAnnotations This type's type annotations.
                  */
-                public Latent(TypeDescription typeDescription) {
+                public Latent(TypeDescription typeDescription, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.typeDescription = typeDescription;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return typeDescription;
+                }
+
+                @Override
+                public Generic getComponentType() {
+                    TypeDescription componentType = typeDescription.getComponentType();
+                    return componentType == null
+                            ? UNDEFINED
+                            : componentType.asGenericType();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2238,17 +3733,38 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final GenericArrayType genericArrayType;
 
                 /**
+                 * The annotation reader to query for the generic array type's annotations.
+                 */
+                private final AnnotationReader annotationReader;
+
+                /**
                  * Creates a type description of the given generic array type.
                  *
                  * @param genericArrayType The loaded generic array type.
                  */
                 public ForLoadedType(GenericArrayType genericArrayType) {
+                    this(genericArrayType, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                /**
+                 * Creates a type description of the given generic array type.
+                 *
+                 * @param genericArrayType The loaded generic array type.
+                 * @param annotationReader The annotation reader to query for the generic array type's annotations.
+                 */
+                protected ForLoadedType(GenericArrayType genericArrayType, AnnotationReader annotationReader) {
                     this.genericArrayType = genericArrayType;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
                 public Generic getComponentType() {
-                    return Sort.describe(genericArrayType.getGenericComponentType());
+                    return Sort.describe(genericArrayType.getGenericComponentType(), annotationReader.ofComponentType());
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return annotationReader.asList();
                 }
             }
 
@@ -2263,46 +3779,29 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final Generic componentType;
 
                 /**
-                 * The arity of the generic array.
+                 * This type's type annotations.
                  */
-                private final int arity;
+                private final List<? extends AnnotationDescription> declaredAnnotations;
 
                 /**
                  * Creates a latent representation of a generic array type.
                  *
-                 * @param componentType The component type.
-                 * @param arity         The arity of this array.
+                 * @param componentType       The component type.
+                 * @param declaredAnnotations This type's type annotations.
                  */
-                protected Latent(Generic componentType, int arity) {
+                public Latent(Generic componentType, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.componentType = componentType;
-                    this.arity = arity;
-                }
-
-                /**
-                 * Returns a description of the given component type.
-                 *
-                 * @param componentType The component type of the array type to create.
-                 * @param arity         The arity of the generic array to create.
-                 * @return A description of the requested array. If the component type is non-generic, a non-generic array type is returned.
-                 */
-                public static Generic of(Generic componentType, int arity) {
-                    if (arity < 0) {
-                        throw new IllegalArgumentException("Arrays cannot have a negative arity");
-                    }
-                    while (componentType.getSort().isGenericArray()) {
-                        componentType = componentType.getComponentType();
-                        arity++;
-                    }
-                    return arity == 0
-                            ? componentType
-                            : new Latent(componentType, arity);
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
                 public Generic getComponentType() {
-                    return arity == 1
-                            ? componentType
-                            : new Latent(componentType, arity - 1);
+                    return componentType;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2460,22 +3959,117 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final WildcardType wildcardType;
 
                 /**
+                 * The annotation reader to query for the wildcard type's annotations.
+                 */
+                private final AnnotationReader annotationReader;
+
+                /**
                  * Creates a description of a loaded wildcard.
                  *
                  * @param wildcardType The represented loaded wildcard type.
                  */
                 public ForLoadedType(WildcardType wildcardType) {
-                    this.wildcardType = wildcardType;
+                    this(wildcardType, AnnotationReader.NoOp.INSTANCE);
                 }
 
-                @Override
-                public TypeList.Generic getLowerBounds() {
-                    return new TypeList.Generic.ForLoadedTypes(wildcardType.getLowerBounds());
+                /**
+                 * Creates a description of a loaded wildcard.
+                 *
+                 * @param wildcardType     The represented loaded wildcard type.
+                 * @param annotationReader The annotation reader to query for the wildcard type's annotations.
+                 */
+                protected ForLoadedType(WildcardType wildcardType, AnnotationReader annotationReader) {
+                    this.wildcardType = wildcardType;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
                 public TypeList.Generic getUpperBounds() {
-                    return new TypeList.Generic.ForLoadedTypes(wildcardType.getUpperBounds());
+                    return new WildcardUpperBoundTypeList(wildcardType.getUpperBounds(), annotationReader);
+                }
+
+                @Override
+                public TypeList.Generic getLowerBounds() {
+                    return new WildcardLowerBoundTypeList(wildcardType.getLowerBounds(), annotationReader);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return annotationReader.asList();
+                }
+
+                /**
+                 * A type list representing an upper-bound type variable's bound types.
+                 */
+                protected static class WildcardUpperBoundTypeList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The represented upper bounds.
+                     */
+                    private final java.lang.reflect.Type[] upperBound;
+
+                    /**
+                     * The annotation reader to query for type annotations.
+                     */
+                    private final AnnotationReader annotationReader;
+
+                    /**
+                     * Creates a type list for a wildcard type's upper bounds.
+                     *
+                     * @param upperBound       The represented upper bounds.
+                     * @param annotationReader The annotation reader to query for type annotations.
+                     */
+                    protected WildcardUpperBoundTypeList(java.lang.reflect.Type[] upperBound, AnnotationReader annotationReader) {
+                        this.upperBound = upperBound;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(upperBound[index], annotationReader.ofWildcardUpperBoundType(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return upperBound.length;
+                    }
+                }
+
+                /**
+                 * A type list representing an upper-bound type variable's bound types.
+                 */
+                protected static class WildcardLowerBoundTypeList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The represented lower bounds.
+                     */
+                    private final java.lang.reflect.Type[] lowerBound;
+
+                    /**
+                     * The annotation reader to query for type annotations.
+                     */
+                    private final AnnotationReader annotationReader;
+
+                    /**
+                     * Creates a type list for a wildcard type's lower bounds.
+                     *
+                     * @param lowerBound       The represented lower bounds.
+                     * @param annotationReader The annotation reader to query for type annotations.
+                     */
+                    protected WildcardLowerBoundTypeList(java.lang.reflect.Type[] lowerBound, AnnotationReader annotationReader) {
+                        this.lowerBound = lowerBound;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(lowerBound[index], annotationReader.ofWildcardLowerBoundType(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return lowerBound.length;
+                    }
                 }
             }
 
@@ -2495,43 +4089,53 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final List<? extends Generic> lowerBounds;
 
                 /**
+                 * This type's type annotations.
+                 */
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
+                /**
                  * Creates a description of a latent wildcard.
                  *
-                 * @param upperBounds The wildcard's upper bounds.
-                 * @param lowerBounds The wildcard's lower bounds.
+                 * @param upperBounds         The wildcard's upper bounds.
+                 * @param lowerBounds         The wildcard's lower bounds.
+                 * @param declaredAnnotations This type's type annotations.
                  */
-                protected Latent(List<? extends Generic> upperBounds, List<? extends Generic> lowerBounds) {
+                protected Latent(List<? extends Generic> upperBounds, List<? extends Generic> lowerBounds, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.upperBounds = upperBounds;
                     this.lowerBounds = lowerBounds;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 /**
                  * Creates an unbounded wildcard. Such a wildcard is implicitly bound above by the {@link Object} type.
                  *
+                 * @param declaredAnnotations This type's type annotations.
                  * @return A description of an unbounded wildcard.
                  */
-                public static Generic unbounded() {
-                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.<Generic>emptyList());
+                public static Generic unbounded(List<? extends AnnotationDescription> declaredAnnotations) {
+                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.<Generic>emptyList(), declaredAnnotations);
                 }
 
                 /**
                  * Creates a wildcard with an upper bound.
                  *
-                 * @param upperBound The upper bound of the wildcard.
+                 * @param upperBound          The upper bound of the wildcard.
+                 * @param declaredAnnotations This type's type annotations.
                  * @return A wildcard with the given upper bound.
                  */
-                public static Generic boundedAbove(Generic upperBound) {
-                    return new Latent(Collections.singletonList(upperBound), Collections.<Generic>emptyList());
+                public static Generic boundedAbove(Generic upperBound, List<? extends AnnotationDescription> declaredAnnotations) {
+                    return new Latent(Collections.singletonList(upperBound), Collections.<Generic>emptyList(), declaredAnnotations);
                 }
 
                 /**
                  * Creates a wildcard with a lower bound. Such a wildcard is implicitly bounded above by the {@link Object} type.
                  *
-                 * @param lowerBound The lower bound of the wildcard.
+                 * @param lowerBound          The lower bound of the wildcard.
+                 * @param declaredAnnotations This type's type annotations.
                  * @return A wildcard with the given lower bound.
                  */
-                public static Generic boundedBelow(Generic lowerBound) {
-                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.singletonList(lowerBound));
+                public static Generic boundedBelow(Generic lowerBound, List<? extends AnnotationDescription> declaredAnnotations) {
+                    return new Latent(Collections.singletonList(TypeDescription.Generic.OBJECT), Collections.singletonList(lowerBound), declaredAnnotations);
                 }
 
                 @Override
@@ -2542,6 +4146,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeList.Generic getLowerBounds() {
                     return new TypeList.Generic.Explicit(lowerBounds);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2707,17 +4316,33 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final ParameterizedType parameterizedType;
 
                 /**
+                 * The annotation reader to query for the parameterized type's annotations.
+                 */
+                private final AnnotationReader annotationReader;
+
+                /**
                  * Creates a description of the loaded parameterized type.
                  *
                  * @param parameterizedType The represented parameterized type.
                  */
                 public ForLoadedType(ParameterizedType parameterizedType) {
+                    this(parameterizedType, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                /**
+                 * Creates a description of the loaded parameterized type.
+                 *
+                 * @param parameterizedType The represented parameterized type.
+                 * @param annotationReader  The annotation reader to query for the parameterized type's annotations.
+                 */
+                protected ForLoadedType(ParameterizedType parameterizedType, AnnotationReader annotationReader) {
                     this.parameterizedType = parameterizedType;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
                 public TypeList.Generic getParameters() {
-                    return new TypeList.Generic.ForLoadedTypes(parameterizedType.getActualTypeArguments());
+                    return new ParameterArgumentTypeList(parameterizedType.getActualTypeArguments(), annotationReader);
                 }
 
                 @Override
@@ -2725,12 +4350,54 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     java.lang.reflect.Type ownerType = parameterizedType.getOwnerType();
                     return ownerType == null
                             ? UNDEFINED
-                            : Sort.describe(ownerType);
+                            : Sort.describe(ownerType, annotationReader.ofOwnerType());
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType());
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return annotationReader.asList();
+                }
+
+                /**
+                 * A type list that represents a loaded parameterized type's parameter types.
+                 */
+                protected static class ParameterArgumentTypeList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The represented argument types.
+                     */
+                    private final java.lang.reflect.Type[] argumentType;
+
+                    /**
+                     * The annotation reader to query for type annotations.
+                     */
+                    private final AnnotationReader annotationReader;
+
+                    /**
+                     * Creates a list representing a parameterized type's type arguments.
+                     *
+                     * @param argumentType     The represented argument types.
+                     * @param annotationReader The annotation reader to query for type annotations.
+                     */
+                    protected ParameterArgumentTypeList(java.lang.reflect.Type[] argumentType, AnnotationReader annotationReader) {
+                        this.argumentType = argumentType;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(argumentType[index], annotationReader.ofTypeArgument(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return argumentType.length;
+                    }
                 }
             }
 
@@ -2755,16 +4422,26 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final List<? extends Generic> parameters;
 
                 /**
+                 * This type's type annotations.
+                 */
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
+                /**
                  * Creates a description of a latent parameterized type.
                  *
-                 * @param rawType    The raw type of the described parameterized type.
-                 * @param parameters The parameters of this parameterized type.
-                 * @param ownerType  This parameterized type's owner type or {@code null} if no owner type exists.
+                 * @param rawType             The raw type of the described parameterized type.
+                 * @param ownerType           This parameterized type's owner type or {@code null} if no owner type exists.
+                 * @param parameters          The parameters of this parameterized type.
+                 * @param declaredAnnotations This type's type annotations.
                  */
-                public Latent(TypeDescription rawType, Generic ownerType, List<? extends Generic> parameters) {
+                public Latent(TypeDescription rawType,
+                              Generic ownerType,
+                              List<? extends Generic> parameters,
+                              List<? extends AnnotationDescription> declaredAnnotations) {
                     this.rawType = rawType;
                     this.ownerType = ownerType;
                     this.parameters = parameters;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
@@ -2780,6 +4457,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeList.Generic getParameters() {
                     return new TypeList.Generic.Explicit(parameters);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
         }
@@ -2912,12 +4594,19 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final String symbol;
 
                 /**
+                 * The type variable's type annotations.
+                 */
+                private final List<? extends AnnotationDescription> declaredAnnotations;
+
+                /**
                  * Creates a symbolic type variable.
                  *
-                 * @param symbol The symbol of the symbolic type variable.
+                 * @param symbol              The symbol of the symbolic type variable.
+                 * @param declaredAnnotations The type variable's type annotations.
                  */
-                public Symbolic(String symbol) {
+                public Symbolic(String symbol, List<? extends AnnotationDescription> declaredAnnotations) {
                     this.symbol = symbol;
+                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
@@ -2928,6 +4617,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public String getSymbol() {
                     return symbol;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(declaredAnnotations);
                 }
 
                 @Override
@@ -3058,12 +4752,28 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final TypeVariable<?> typeVariable;
 
                 /**
+                 * The annotation reader to query for the variable's annotations.
+                 */
+                private final AnnotationReader annotationReader;
+
+                /**
                  * Creates a description of a loaded type variable.
                  *
                  * @param typeVariable The represented type variable.
                  */
                 public ForLoadedType(TypeVariable<?> typeVariable) {
+                    this(typeVariable, AnnotationReader.NoOp.INSTANCE);
+                }
+
+                /**
+                 * Creates a description of a loaded type variable with an annotation.
+                 *
+                 * @param typeVariable     The represented type variable.
+                 * @param annotationReader The annotation reader to query for the variable's annotations.
+                 */
+                protected ForLoadedType(TypeVariable<?> typeVariable, AnnotationReader annotationReader) {
                     this.typeVariable = typeVariable;
+                    this.annotationReader = annotationReader;
                 }
 
                 @Override
@@ -3082,12 +4792,54 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public TypeList.Generic getUpperBounds() {
-                    return new TypeList.Generic.ForLoadedTypes(typeVariable.getBounds());
+                    return new TypeVariableBoundList(typeVariable.getBounds(), annotationReader);
                 }
 
                 @Override
                 public String getSymbol() {
                     return typeVariable.getName();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return annotationReader.asList();
+                }
+
+                /**
+                 * A list of type variable bounds for a loaded {@link TypeVariable} that resolves annotations..
+                 */
+                protected static class TypeVariableBoundList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The type variable bounds.
+                     */
+                    private final java.lang.reflect.Type[] bound;
+
+                    /**
+                     * The annotation reader to query for the type bounds.
+                     */
+                    private final AnnotationReader annotationReader;
+
+                    /**
+                     * Creates a new list for a {@link TypeVariable}'s bound.
+                     *
+                     * @param bound            The type variable bounds.
+                     * @param annotationReader The annotation reader to query for the type bounds.
+                     */
+                    protected TypeVariableBoundList(java.lang.reflect.Type[] bound, AnnotationReader annotationReader) {
+                        this.bound = bound;
+                        this.annotationReader = annotationReader;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return Sort.describe(bound[index], annotationReader.ofTypeVariableBoundType(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return bound.length;
+                    }
                 }
             }
         }
@@ -3222,9 +4974,28 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             /**
+             * A base implementation of a lazy type projection of an annotated element that resolves its type annotations
+             * via an {@link AnnotationReader}.
+             */
+            protected abstract static class OfAnnotatedElement extends LazyProjection {
+
+                /**
+                 * Returns the current type's annotation reader.
+                 *
+                 * @return The current type's annotation reader.
+                 */
+                protected abstract AnnotationReader getAnnotationReader();
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return getAnnotationReader().asList();
+                }
+            }
+
+            /**
              * A lazy projection of a generic super type.
              */
-            public static class ForLoadedSuperType extends LazyProjection {
+            public static class ForLoadedSuperType extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The type of which the super class is represented.
@@ -3242,25 +5013,30 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic resolve() {
-                    java.lang.reflect.Type superClass = type.getGenericSuperclass();
-                    return superClass == null
+                    java.lang.reflect.Type superType = type.getGenericSuperclass();
+                    return superType == null
                             ? UNDEFINED
-                            : Sort.describe(superClass);
+                            : Sort.describe(superType, getAnnotationReader());
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    Class<?> superClass = type.getSuperclass();
-                    return superClass == null
+                    Class<?> superType = type.getSuperclass();
+                    return superType == null
                             ? TypeDescription.UNDEFINED
-                            : new ForLoadedType(superClass);
+                            : new ForLoadedType(superType);
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveSuperType(type);
                 }
             }
 
             /**
              * A lazy projection of a field's type.
              */
-            public static class ForLoadedFieldType extends LazyProjection {
+            public static class ForLoadedFieldType extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The field of which the type is represented.
@@ -3278,19 +5054,24 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic resolve() {
-                    return Sort.describe(field.getGenericType());
+                    return Sort.describe(field.getGenericType(), getAnnotationReader());
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return new ForLoadedType(field.getType());
                 }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolve(field);
+                }
             }
 
             /**
              * A lazy projection of a method's generic return type.
              */
-            public static class ForLoadedReturnType extends LazyProjection {
+            public static class ForLoadedReturnType extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The method which defines the return type.
@@ -3308,19 +5089,24 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic resolve() {
-                    return Sort.describe(method.getGenericReturnType());
+                    return Sort.describe(method.getGenericReturnType(), getAnnotationReader());
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return new ForLoadedType(method.getReturnType());
                 }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveReturnType(method);
+                }
             }
 
             /**
              * A lazy projection of the parameter type of a {@link Constructor}.
              */
-            public static class OfConstructorParameter extends LazyProjection {
+            public static class OfConstructorParameter extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The constructor of which a parameter type is represented.
@@ -3354,7 +5140,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : new OfNonGenericType.ForLoadedType(erasure);
                 }
 
@@ -3362,12 +5148,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
                 }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveParameterType(constructor, index);
+                }
             }
 
             /**
              * A lazy projection of the parameter type of a {@link Method}.
              */
-            public static class OfMethodParameter extends LazyProjection {
+            public static class OfMethodParameter extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The method of which a parameter type is represented.
@@ -3401,7 +5192,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericParameterTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : new OfNonGenericType.ForLoadedType(erasure);
                 }
 
@@ -3409,13 +5200,18 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
                 }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveParameterType(method, index);
+                }
             }
         }
 
         /**
          * A builder for creating describing a generic type as a {@link Generic}.
          */
-        class Builder {
+        abstract class Builder {
 
             /**
              * Represents an undefined {@link java.lang.reflect.Type} within a build step.
@@ -3423,17 +5219,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             private static final java.lang.reflect.Type UNDEFINED = null;
 
             /**
-             * The type description this builder is currently assembling.
+             * The type annotations of the current annotated type.
              */
-            private final Generic typeDescription;
+            protected final List<? extends AnnotationDescription> annotations;
 
             /**
-             * Creates a new builder.
+             * Creates a new builder for a generic type description.
              *
-             * @param typeDescription The type description this builder is currently assembling.
+             * @param annotations The type annotations of the current annotated type.
              */
-            protected Builder(Generic typeDescription) {
-                this.typeDescription = typeDescription;
+            protected Builder(List<? extends AnnotationDescription> annotations) {
+                this.annotations = annotations;
             }
 
             /**
@@ -3453,26 +5249,66 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A builder for creating a raw type.
              */
             public static Builder rawType(TypeDescription type) {
-                return new Builder(type.asGenericType());
+                return new Builder.OfNonGenericType(type);
+            }
+
+            /**
+             * Creates an unbound wildcard without type annotations.
+             *
+             * @return A description of an unbound wildcard without type annotations.
+             */
+            public static Generic unboundWildcard() {
+                return unboundWildcard(Collections.<AnnotationDescription>emptySet());
             }
 
             /**
              * Creates an unbound wildcard.
              *
+             * @param annotation The type annotations of the unbound wildcard.
              * @return A description of an unbound wildcard.
              */
-            public static Generic unboundWildcard() {
-                return OfWildcardType.Latent.unbounded();
+            public static Generic unboundWildcard(Annotation... annotation) {
+                return unboundWildcard(Arrays.asList(annotation));
             }
 
             /**
-             * Creates a description of a type variable in detached state.
+             * Creates an unbound wildcard.
              *
-             * @param symbol The symbol of the type variable.
-             * @return A detached description of the given type variable.
+             * @param annotations The type annotations of the unbound wildcard.
+             * @return A description of an unbound wildcard.
              */
-            public static Generic typeVariable(String symbol) {
-                return new OfTypeVariable.Symbolic(symbol);
+            public static Generic unboundWildcard(List<? extends Annotation> annotations) {
+                return unboundWildcard(new AnnotationList.ForLoadedAnnotations(annotations));
+            }
+
+            /**
+             * Creates an unbound wildcard.
+             *
+             * @param annotation The type annotations of the unbound wildcard.
+             * @return A description of an unbound wildcard.
+             */
+            public static Generic unboundWildcard(AnnotationDescription... annotation) {
+                return unboundWildcard(Arrays.asList(annotation));
+            }
+
+            /**
+             * Creates an unbound wildcard.
+             *
+             * @param annotations The type annotations of the unbound wildcard.
+             * @return A description of an unbound wildcard.
+             */
+            public static Generic unboundWildcard(Collection<? extends AnnotationDescription> annotations) {
+                return OfWildcardType.Latent.unbounded(new ArrayList<AnnotationDescription>(annotations));
+            }
+
+            /**
+             * Creates a symolic type variable of the given name.
+             *
+             * @param symbol The symbolic name of the type variable.
+             * @return A builder for creating a type variable.
+             */
+            public static Builder typeVariable(String symbol) {
+                return new OfTypeVariable(symbol);
             }
 
             /**
@@ -3531,7 +5367,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @param parameters The type arguments to attach to the raw type as parameters.
              * @return A builder for creating a parameterized type.
              */
-            public static Builder parameterizedType(TypeDescription rawType, List<? extends TypeDefinition> parameters) {
+            public static Builder parameterizedType(TypeDescription rawType, Collection<? extends TypeDefinition> parameters) {
                 return parameterizedType(rawType, Generic.UNDEFINED, parameters);
             }
 
@@ -3543,7 +5379,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @param parameters The type arguments to attach to the raw type as parameters.
              * @return A builder for creating a parameterized type.
              */
-            public static Builder parameterizedType(TypeDescription rawType, Generic ownerType, List<? extends TypeDefinition> parameters) {
+            public static Builder parameterizedType(TypeDescription rawType, Generic ownerType, Collection<? extends TypeDefinition> parameters) {
                 TypeDescription declaringType = rawType.getDeclaringType();
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
                     ownerType = declaringType.asGenericType();
@@ -3557,7 +5393,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 } else if (rawType.getTypeVariables().size() != parameters.size()) {
                     throw new IllegalArgumentException(parameters + " does not contain number of required parameters for " + rawType);
                 }
-                return new Builder(new OfParameterizedType.Latent(rawType, ownerType, new TypeList.Generic.Explicit(parameters)));
+                return new Builder.OfParameterizedType(rawType, ownerType, new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(parameters)));
             }
 
             /**
@@ -3566,7 +5402,47 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A generic type description of a wildcard type with this builder's type as an upper bound.
              */
             public Generic asWildcardUpperBound() {
-                return OfWildcardType.Latent.boundedAbove(typeDescription);
+                return asWildcardUpperBound(Collections.<AnnotationDescription>emptySet());
+            }
+
+            /**
+             * Transforms this type into the upper bound of a wildcard type.
+             *
+             * @param annotation Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an upper bound.
+             */
+            public Generic asWildcardUpperBound(Annotation... annotation) {
+                return asWildcardUpperBound(Arrays.asList(annotation));
+            }
+
+            /**
+             * Transforms this type into the upper bound of a wildcard type.
+             *
+             * @param annotations Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an upper bound.
+             */
+            public Generic asWildcardUpperBound(List<? extends Annotation> annotations) {
+                return asWildcardUpperBound(new AnnotationList.ForLoadedAnnotations(annotations));
+            }
+
+            /**
+             * Transforms this type into the upper bound of a wildcard type.
+             *
+             * @param annotation Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an upper bound.
+             */
+            public Generic asWildcardUpperBound(AnnotationDescription... annotation) {
+                return asWildcardUpperBound(Arrays.asList(annotation));
+            }
+
+            /**
+             * Transforms this type into the upper bound of a wildcard type.
+             *
+             * @param annotations Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an upper bound.
+             */
+            public Generic asWildcardUpperBound(Collection<? extends AnnotationDescription> annotations) {
+                return OfWildcardType.Latent.boundedAbove(build(), new ArrayList<AnnotationDescription>(annotations));
             }
 
             /**
@@ -3575,7 +5451,47 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A generic type description of a wildcard type with this builder's type as an lower bound.
              */
             public Generic asWildcardLowerBound() {
-                return OfWildcardType.Latent.boundedBelow(typeDescription);
+                return asWildcardLowerBound(Collections.<AnnotationDescription>emptySet());
+            }
+
+            /**
+             * Transforms this type into the lower bound of a wildcard type.
+             *
+             * @param annotation Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an lower bound.
+             */
+            public Generic asWildcardLowerBound(Annotation... annotation) {
+                return asWildcardLowerBound(Arrays.asList(annotation));
+            }
+
+            /**
+             * Transforms this type into the lower bound of a wildcard type.
+             *
+             * @param annotations Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an lower bound.
+             */
+            public Generic asWildcardLowerBound(List<? extends Annotation> annotations) {
+                return asWildcardLowerBound(new AnnotationList.ForLoadedAnnotations(annotations));
+            }
+
+            /**
+             * Transforms this type into the lower bound of a wildcard type.
+             *
+             * @param annotation Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an lower bound.
+             */
+            public Generic asWildcardLowerBound(AnnotationDescription... annotation) {
+                return asWildcardLowerBound(Arrays.asList(annotation));
+            }
+
+            /**
+             * Transforms this type into the lower bound of a wildcard type.
+             *
+             * @param annotations Type annotations to be declared by the wildcard type.
+             * @return A generic type description of a wildcard type with this builder's type as an lower bound.
+             */
+            public Generic asWildcardLowerBound(Collection<? extends AnnotationDescription> annotations) {
+                return OfWildcardType.Latent.boundedBelow(build(), new ArrayList<AnnotationDescription>(annotations));
             }
 
             /**
@@ -3594,36 +5510,406 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              * @return A builder for creating an array of the currently built type.
              */
             public Builder asArray(int arity) {
-                return new Builder(OfGenericArray.Latent.of(typeDescription, arity));
+                if (arity < 1) {
+                    throw new IllegalArgumentException("Cannot define an array of a non-positive arity: " + arity);
+                }
+                TypeDescription.Generic typeDescription = build();
+                while (--arity > 0) {
+                    typeDescription = new OfGenericArray.Latent(typeDescription, Collections.<AnnotationDescription>emptyList());
+                }
+                return new Builder.OfGenericArrayType(typeDescription);
             }
+
+            /**
+             * Defines type annotations to be declared by the current type.
+             *
+             * @param annotation Type annotations to be declared by the current type.
+             * @return A new builder where the current type declares the supplied type annotations.
+             */
+            public Builder annotate(Annotation... annotation) {
+                return annotate(Arrays.asList(annotation));
+            }
+
+            /**
+             * Defines type annotations to be declared by the current type.
+             *
+             * @param annotations Type annotations to be declared by the current type.
+             * @return A new builder where the current type declares the supplied type annotations.
+             */
+            public Builder annotate(List<? extends Annotation> annotations) {
+                return annotate(new AnnotationList.ForLoadedAnnotations(annotations));
+            }
+
+            /**
+             * Defines type annotations to be declared by the current type.
+             *
+             * @param annotation Type annotations to be declared by the current type.
+             * @return A new builder where the current type declares the supplied type annotations.
+             */
+            public Builder annotate(AnnotationDescription... annotation) {
+                return annotate(Arrays.asList(annotation));
+            }
+
+            /**
+             * Defines type annotations to be declared by the current type.
+             *
+             * @param annotations Type annotations to be declared by the current type.
+             * @return A new builder where the current type declares the supplied type annotations.
+             */
+            public Builder annotate(Collection<? extends AnnotationDescription> annotations) {
+                return doAnnotate(new ArrayList<AnnotationDescription>(annotations));
+            }
+
+            /**
+             * Creates a new builder for the current type and the spplied type annotations.
+             *
+             * @param annotations Type annotations to be declared by the current type.
+             * @return A new builder where the current type declares the supplied type annotations.
+             */
+            protected abstract Builder doAnnotate(List<? extends AnnotationDescription> annotations);
 
             /**
              * Finalizes the build and finalizes the created type as a generic type description.
              *
              * @return A generic type description of the built type.
              */
-            public Generic asType() {
-                return typeDescription;
+            public Generic build() {
+                return doBuild();
             }
+
+            /**
+             * Finalizes the build and finalizes the created type as a generic type description.
+             *
+             * @param annotation Type annotations place for the built generic type to declare.
+             * @return A generic type description of the built type.
+             */
+            public Generic build(Annotation... annotation) {
+                return build(Arrays.asList(annotation));
+            }
+
+            /**
+             * Finalizes the build and finalizes the created type as a generic type description.
+             *
+             * @param annotations Type annotations place for the built generic type to declare.
+             * @return A generic type description of the built type.
+             */
+            public Generic build(List<? extends Annotation> annotations) {
+                return build(new AnnotationList.ForLoadedAnnotations(annotations));
+            }
+
+            /**
+             * Finalizes the build and finalizes the created type as a generic type description.
+             *
+             * @param annotation Type annotations place for the built generic type to declare.
+             * @return A generic type description of the built type.
+             */
+            public Generic build(AnnotationDescription... annotation) {
+                return build(Arrays.asList(annotation));
+            }
+
+            /**
+             * Finalizes the build and finalizes the created type as a generic type description.
+             *
+             * @param annotations Type annotations place for the built generic type to declare.
+             * @return A generic type description of the built type.
+             */
+            public Generic build(Collection<? extends AnnotationDescription> annotations) {
+                return doAnnotate(new ArrayList<AnnotationDescription>(annotations)).doBuild();
+            }
+
+            /**
+             * Builds the generic type.
+             *
+             * @return The generic type.
+             */
+            protected abstract Generic doBuild();
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                Builder builder = (Builder) other;
-                return typeDescription.equals(builder.typeDescription);
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && annotations.equals(((Builder) other).annotations);
             }
 
             @Override
             public int hashCode() {
-                return typeDescription.hashCode();
+                return annotations.hashCode();
             }
 
-            @Override
-            public String toString() {
-                return "TypeDescription.Generic.Builder{" +
-                        "typeDescription=" + typeDescription +
-                        '}';
+            /**
+             * A generic type builder for building a non-generic type.
+             */
+            protected static class OfNonGenericType extends Builder {
+
+                /**
+                 * The type's erasure.
+                 */
+                private final TypeDescription typeDescription;
+
+                /**
+                 * Creates a builder for a non-generic type.
+                 *
+                 * @param typeDescription The type's erasure.
+                 */
+                protected OfNonGenericType(TypeDescription typeDescription) {
+                    this(typeDescription, Collections.<AnnotationDescription>emptyList());
+                }
+
+                /**
+                 * Creates a builder for a non-generic type.
+                 *
+                 * @param typeDescription The type's erasure.
+                 * @param annotations     The type's type annotations.
+                 */
+                protected OfNonGenericType(TypeDescription typeDescription, List<? extends AnnotationDescription> annotations) {
+                    super(annotations);
+                    this.typeDescription = typeDescription;
+                }
+
+                @Override
+                protected Builder doAnnotate(List<? extends AnnotationDescription> annotations) {
+                    return new OfNonGenericType(typeDescription, CompoundList.of(this.annotations, annotations));
+                }
+
+                @Override
+                protected Generic doBuild() {
+                    return new Generic.OfNonGenericType.Latent(typeDescription, annotations);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && typeDescription.equals(((OfNonGenericType) other).typeDescription);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + typeDescription.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Builder.OfNonGenericType{" +
+                            "annotations=" + annotations +
+                            ", typeDescription=" + typeDescription +
+                            '}';
+                }
+            }
+
+            /**
+             * A generic type builder for building a parameterized type.
+             */
+            protected static class OfParameterizedType extends Builder {
+
+                /**
+                 * The raw base type.
+                 */
+                private final TypeDescription rawType;
+
+                /**
+                 * The generic owner type.
+                 */
+                private final Generic ownerType;
+
+                /**
+                 * The parameter types.
+                 */
+                private final List<? extends Generic> parameterTypes;
+
+                /**
+                 * Creates a builder for a parameterized type.
+                 *
+                 * @param rawType        The raw base type.
+                 * @param ownerType      The generic owner type.
+                 * @param parameterTypes The parameter types.
+                 */
+                protected OfParameterizedType(TypeDescription rawType, Generic ownerType, List<? extends Generic> parameterTypes) {
+                    this(rawType, ownerType, parameterTypes, Collections.<AnnotationDescription>emptyList());
+                }
+
+                /**
+                 * Creates a builder for a parameterized type.
+                 *
+                 * @param rawType        The raw base type.
+                 * @param ownerType      The generic owner type.
+                 * @param parameterTypes The parameter types.
+                 * @param annotations    The type's type annotations.
+                 */
+                protected OfParameterizedType(TypeDescription rawType,
+                                              Generic ownerType,
+                                              List<? extends Generic> parameterTypes,
+                                              List<? extends AnnotationDescription> annotations) {
+                    super(annotations);
+                    this.rawType = rawType;
+                    this.ownerType = ownerType;
+                    this.parameterTypes = parameterTypes;
+                }
+
+                @Override
+                protected Builder doAnnotate(List<? extends AnnotationDescription> annotations) {
+                    return new OfParameterizedType(rawType, ownerType, parameterTypes, CompoundList.of(this.annotations, annotations));
+                }
+
+                @Override
+                protected Generic doBuild() {
+                    return new Generic.OfParameterizedType.Latent(rawType, ownerType, parameterTypes, annotations);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && rawType.equals(((OfParameterizedType) other).rawType)
+                            && ownerType.equals(((OfParameterizedType) other).ownerType)
+                            && parameterTypes.equals(((OfParameterizedType) other).parameterTypes);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + rawType.hashCode();
+                    result = 31 * result + ownerType.hashCode();
+                    result = 31 * result + parameterTypes.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Builder.OfParameterizedType{" +
+                            "annotations=" + annotations +
+                            ", rawType=" + rawType +
+                            ", ownerType=" + ownerType +
+                            ", parameterTypes=" + parameterTypes +
+                            '}';
+                }
+            }
+
+            /**
+             * A generic type builder building a generic array type.
+             */
+            protected static class OfGenericArrayType extends Builder {
+
+                /**
+                 * The generic component type.
+                 */
+                private final Generic componentType;
+
+                /**
+                 * Creates a type builder for building a generic array type.
+                 *
+                 * @param componentType The generic component type.
+                 */
+                protected OfGenericArrayType(Generic componentType) {
+                    this(componentType, Collections.<AnnotationDescription>emptyList());
+                }
+
+                /**
+                 * Creates a type builder for building a generic array type.
+                 *
+                 * @param componentType The generic component type.
+                 * @param annotations   The type's type annotations.
+                 */
+                protected OfGenericArrayType(Generic componentType, List<? extends AnnotationDescription> annotations) {
+                    super(annotations);
+                    this.componentType = componentType;
+                }
+
+                @Override
+                protected Builder doAnnotate(List<? extends AnnotationDescription> annotations) {
+                    return new OfGenericArrayType(componentType, CompoundList.of(this.annotations, annotations));
+                }
+
+                @Override
+                protected Generic doBuild() {
+                    return new Generic.OfGenericArray.Latent(componentType, annotations);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && componentType.equals(((OfGenericArrayType) other).componentType);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + componentType.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Builder.OfGenericArrayType{" +
+                            "annotations=" + annotations +
+                            ", componentType=" + componentType +
+                            '}';
+                }
+            }
+
+            /**
+             * A generic type builder building a symbolic type variable.
+             */
+            protected static class OfTypeVariable extends Builder {
+
+                /**
+                 * The variable's symbol.
+                 */
+                private final String symbol;
+
+                /**
+                 * Creates a new builder for a symbolic type variable.
+                 *
+                 * @param symbol The variable's symbol.
+                 */
+                protected OfTypeVariable(String symbol) {
+                    this(symbol, Collections.<AnnotationDescription>emptyList());
+                }
+
+                /**
+                 * Creates a new builder for a symbolic type variable.
+                 *
+                 * @param symbol      The variable's symbol.
+                 * @param annotations The type's type annotations.
+                 */
+                protected OfTypeVariable(String symbol, List<? extends AnnotationDescription> annotations) {
+                    super(annotations);
+                    this.symbol = symbol;
+                }
+
+                @Override
+                protected Builder doAnnotate(List<? extends AnnotationDescription> annotations) {
+                    return new OfTypeVariable(symbol, CompoundList.of(this.annotations, annotations));
+                }
+
+                @Override
+                protected Generic doBuild() {
+                    return new Generic.OfTypeVariable.Symbolic(symbol, annotations);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && super.equals(other)
+                            && symbol.equals(((OfTypeVariable) other).symbol);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = super.hashCode();
+                    result = 31 * result + symbol.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Builder.OfTypeVariable{" +
+                            "annotations=" + annotations +
+                            ", symbol=" + symbol +
+                            '}';
+                }
             }
         }
     }
@@ -3701,7 +5987,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public Generic asGenericType() {
-            return new Generic.OfNonGenericType.Latent(this);
+            return new Generic.OfNonGenericType.Latent(this, Collections.<AnnotationDescription>emptyList());
         }
 
         @Override
@@ -4241,12 +6527,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForLoadedTypes(type.getTypeParameters());
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(type);
         }
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(type.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations());
         }
     }
 

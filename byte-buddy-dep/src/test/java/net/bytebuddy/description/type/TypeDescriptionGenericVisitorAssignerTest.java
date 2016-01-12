@@ -496,8 +496,6 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         new TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType(target).onParameterizedType(source);
     }
 
-    // TODO: assignParameterizedTypeFromXXX
-
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Assigner.class).apply();

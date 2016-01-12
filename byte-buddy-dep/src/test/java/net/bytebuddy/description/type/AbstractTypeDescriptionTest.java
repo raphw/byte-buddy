@@ -29,7 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptionGenericTest {
+public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptionGenericVariableDefiningTest {
 
     private static final String FOO = "foo", BAR = "bar";
 
@@ -60,8 +60,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
                     /* empty */
                 }.getClass());
     }
-
-    protected abstract TypeDescription describe(Class<?> type);
 
     @Test
     public void testPrecondition() throws Exception {
@@ -384,11 +382,11 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     private void assertAnnotations(Class<?> type) {
         assertThat(describe(type).getDeclaredAnnotations(),
-                hasItems(new AnnotationList.ForLoadedAnnotation(type.getDeclaredAnnotations())
+                hasItems(new AnnotationList.ForLoadedAnnotations(type.getDeclaredAnnotations())
                         .toArray(new AnnotationDescription[type.getDeclaredAnnotations().length])));
         assertThat(describe(type).getDeclaredAnnotations().size(), is(type.getDeclaredAnnotations().length));
         assertThat(describe(type).getInheritedAnnotations(),
-                hasItems(new AnnotationList.ForLoadedAnnotation(type.getAnnotations())
+                hasItems(new AnnotationList.ForLoadedAnnotations(type.getAnnotations())
                         .toArray(new AnnotationDescription[type.getAnnotations().length])));
         assertThat(describe(type).getInheritedAnnotations().size(), is(type.getAnnotations().length));
     }

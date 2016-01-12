@@ -38,7 +38,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
 
     @Test
     public void testAnnotationAppenderNoRetention() throws Exception {
-        new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
+        new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()))
                 .apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyZeroInteractions(methodVisitor);
         verifyZeroInteractions(methodDescription);
@@ -46,7 +46,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
 
     @Test
     public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+        new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()))
                 .apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(methodVisitor);
@@ -55,7 +55,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
 
     @Test
     public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
+        new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()))
                 .apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
@@ -64,7 +64,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
 
     @Test
     public void testAnnotationAppenderForParameterNoRetention() throws Exception {
-        new MethodAttributeAppender.Explicit(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
+        new MethodAttributeAppender.Explicit(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotations(new Qux.Instance()))
                 .apply(methodVisitor, methodDescription, annotationValueFilter);
         verifyZeroInteractions(methodVisitor);
         verify(methodDescription).getParameters();
@@ -73,7 +73,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
 
     @Test
     public void testAnnotationAppenderForParameterRuntimeRetention() throws Exception {
-        new MethodAttributeAppender.Explicit(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+        new MethodAttributeAppender.Explicit(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotations(new Baz.Instance()))
                 .apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(Baz.class), true);
         verifyNoMoreInteractions(methodVisitor);
@@ -83,7 +83,7 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
 
     @Test
     public void testAnnotationAppenderForParameterByteCodeRetention() throws Exception {
-        new MethodAttributeAppender.Explicit(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
+        new MethodAttributeAppender.Explicit(PARAMETER_INDEX, new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()))
                 .apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitParameterAnnotation(PARAMETER_INDEX, Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(methodVisitor);
@@ -93,21 +93,21 @@ public class MethodAttributeAppenderExplicitTest extends AbstractMethodAttribute
 
     @Test(expected = IllegalArgumentException.class)
     public void testAnnotationAppenderNotEnoughParameters() throws Exception {
-        new MethodAttributeAppender.Explicit(PARAMETER_INDEX + 1, new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
+        new MethodAttributeAppender.Explicit(PARAMETER_INDEX + 1, new AnnotationList.ForLoadedAnnotations(new Baz.Instance()))
                 .apply(methodVisitor, methodDescription, annotationValueFilter);
     }
 
     @Test
     public void testFactory() throws Exception {
-        MethodAttributeAppender.Explicit methodAttributeAppender = new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()));
+        MethodAttributeAppender.Explicit methodAttributeAppender = new MethodAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
         assertThat(methodAttributeAppender.make(instrumentedType), sameInstance((MethodAttributeAppender) methodAttributeAppender));
         verifyZeroInteractions(instrumentedType);
     }
 
     @Test
     public void testOfMethod() throws Exception {
-        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()));
-        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()));
+        when(methodDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
+        when(parameterDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
         MethodAttributeAppender methodAttributeAppender = MethodAttributeAppender.Explicit.of(methodDescription).make(instrumentedType);
         methodAttributeAppender.apply(methodVisitor, methodDescription, annotationValueFilter);
         verify(methodVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);

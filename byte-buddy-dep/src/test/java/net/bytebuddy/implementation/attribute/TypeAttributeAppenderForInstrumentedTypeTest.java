@@ -11,8 +11,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
 
     @Test
     public void testApplication() throws Exception {
-        when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList
-                .ForLoadedAnnotation(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
+        when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance(), new Baz.Instance(), new QuxBaz.Instance()));
         TypeAttributeAppender.ForInstrumentedType.INSTANCE.apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);

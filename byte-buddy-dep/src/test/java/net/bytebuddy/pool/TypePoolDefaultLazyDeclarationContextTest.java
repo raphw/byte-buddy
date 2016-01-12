@@ -5,47 +5,45 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
 import org.junit.Test;
 
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class TypePoolLazyDeclarationContextTest {
+public class TypePoolDefaultLazyDeclarationContextTest {
 
     private static final String FOO = "baz.foo", FOO_INTERNAL = "baz/foo", BAR = "bar", QUX = "qux";
 
     @Test
     public void testSelfDeclared() throws Exception {
-        assertThat(TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
+        assertThat(TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
                 .isDeclaredInMethod(), is(false));
-        assertThat(TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
+        assertThat(TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
                 .isDeclaredInType(), is(false));
-        assertThat(TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
+        assertThat(TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
                 .isSelfDeclared(), is(true));
     }
 
     @Test
     public void testSelfDeclaredGetTypeIsNull() throws Exception {
-        assertThat(TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
+        assertThat(TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
                 .getEnclosingType(mock(TypePool.class)), nullValue(TypeDescription.class));
     }
 
     @Test
     public void testSelfDeclaredGetMethodIsNull() throws Exception {
-        assertThat(TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
+        assertThat(TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared.INSTANCE
                 .getEnclosingMethod(mock(TypePool.class)), nullValue(MethodDescription.class));
     }
 
     @Test
     public void testDeclaredInType() throws Exception {
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
                 .isDeclaredInMethod(), is(false));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
                 .isDeclaredInType(), is(true));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
                 .isSelfDeclared(), is(false));
     }
 
@@ -54,23 +52,23 @@ public class TypePoolLazyDeclarationContextTest {
         TypePool typePool = mock(TypePool.class);
         TypeDescription typeDescription = mock(TypeDescription.class);
         when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
                 .getEnclosingType(typePool), is(typeDescription));
     }
 
     @Test
     public void testDeclaredInTypeGetMethodIsNull() throws Exception {
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType(FOO_INTERNAL)
                 .getEnclosingMethod(mock(TypePool.class)), nullValue(MethodDescription.class));
     }
 
     @Test
     public void testDeclaredInMethod() throws Exception {
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
                 .isDeclaredInMethod(), is(true));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
                 .isDeclaredInType(), is(false));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
                 .isSelfDeclared(), is(false));
     }
 
@@ -79,7 +77,7 @@ public class TypePoolLazyDeclarationContextTest {
         TypeDescription typeDescription = mock(TypeDescription.class);
         TypePool typePool = mock(TypePool.class);
         when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX)
                 .getEnclosingType(typePool), is(typeDescription));
     }
 
@@ -93,7 +91,7 @@ public class TypePoolLazyDeclarationContextTest {
         TypePool typePool = mock(TypePool.class);
         when(typePool.describe(FOO)).thenReturn(new TypePool.Resolution.Simple(typeDescription));
         when(typeDescription.getDeclaredMethods()).thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(methodDescription));
-        assertThat(new TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX).getEnclosingMethod(typePool),
+        assertThat(new TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod(FOO_INTERNAL, BAR, QUX).getEnclosingMethod(typePool),
                 is(methodDescription));
     }
 }

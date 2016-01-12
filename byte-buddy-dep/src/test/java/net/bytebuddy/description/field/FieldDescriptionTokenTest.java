@@ -35,10 +35,11 @@ public class FieldDescriptionTokenTest {
     private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(type.asGenericType()).thenReturn(type);
         when(visitedType.asGenericType()).thenReturn(visitedType);
-        when(type.accept(visitor)).thenReturn(visitedType);
+        when(type.accept((TypeDescription.Generic.Visitor) visitor)).thenReturn(visitedType);
     }
 
     @Test

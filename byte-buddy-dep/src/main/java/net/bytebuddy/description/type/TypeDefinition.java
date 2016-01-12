@@ -166,16 +166,28 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
          * @return A description of the provided generic type.
          */
         public static TypeDescription.Generic describe(Type type) {
+            return describe(type, TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE);
+        }
+
+        /**
+         * Describes the generic type while using the supplied annotation reader for resolving type annotations if this
+         * language feature is available on the current JVM.
+         *
+         * @param type             The type to describe.
+         * @param annotationReader The annotation reader for extracting type annotations.
+         * @return A description of the provided generic annotated type.
+         */
+        protected static TypeDescription.Generic describe(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
             if (type instanceof Class<?>) {
-                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType((Class<?>) type);
+                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType((Class<?>) type, annotationReader);
             } else if (type instanceof GenericArrayType) {
-                return new TypeDescription.Generic.OfGenericArray.ForLoadedType((GenericArrayType) type);
+                return new TypeDescription.Generic.OfGenericArray.ForLoadedType((GenericArrayType) type, annotationReader);
             } else if (type instanceof ParameterizedType) {
-                return new TypeDescription.Generic.OfParameterizedType.ForLoadedType((ParameterizedType) type);
+                return new TypeDescription.Generic.OfParameterizedType.ForLoadedType((ParameterizedType) type, annotationReader);
             } else if (type instanceof TypeVariable) {
-                return new TypeDescription.Generic.OfTypeVariable.ForLoadedType((TypeVariable<?>) type);
+                return new TypeDescription.Generic.OfTypeVariable.ForLoadedType((TypeVariable<?>) type, annotationReader);
             } else if (type instanceof WildcardType) {
-                return new TypeDescription.Generic.OfWildcardType.ForLoadedType((WildcardType) type);
+                return new TypeDescription.Generic.OfWildcardType.ForLoadedType((WildcardType) type, annotationReader);
             } else {
                 throw new IllegalArgumentException("Unknown type: " + type);
             }

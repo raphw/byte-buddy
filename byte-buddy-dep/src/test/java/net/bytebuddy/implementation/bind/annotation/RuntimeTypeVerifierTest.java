@@ -41,7 +41,7 @@ public class RuntimeTypeVerifierTest extends AbstractAnnotationTest<RuntimeType>
 
     @Test
     public void testCheckElementValid() throws Exception {
-        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(runtimeType));
+        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(runtimeType));
         assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(Assigner.Typing.DYNAMIC));
         verify(annotatedCodeElement).getDeclaredAnnotations();
         verifyNoMoreInteractions(annotatedCodeElement);
@@ -49,7 +49,7 @@ public class RuntimeTypeVerifierTest extends AbstractAnnotationTest<RuntimeType>
 
     @Test
     public void testCheckElementInvalid() throws Exception {
-        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation());
+        when(annotatedCodeElement.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations());
         assertThat(RuntimeType.Verifier.check(annotatedCodeElement), is(Assigner.Typing.STATIC));
         verify(annotatedCodeElement).getDeclaredAnnotations();
         verifyNoMoreInteractions(annotatedCodeElement);

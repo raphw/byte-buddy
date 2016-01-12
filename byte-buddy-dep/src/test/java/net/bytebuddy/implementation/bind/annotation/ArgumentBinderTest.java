@@ -94,7 +94,7 @@ public class ArgumentBinderTest extends AbstractAnnotationBinderTest<Argument> {
         when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, typeDescriptions));
         when(source.isStatic()).thenReturn(false);
         when(target.getType()).thenReturn(genericTargetType);
-        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotation(annotations));
+        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(annotations));
         MethodDelegationBinder.ParameterBinding<?> parameterBinding = Argument.Binder.INSTANCE
                 .bind(annotationDescription, source, target, implementationTarget, assigner);
         assertThat(parameterBinding.isValid(), is(true));

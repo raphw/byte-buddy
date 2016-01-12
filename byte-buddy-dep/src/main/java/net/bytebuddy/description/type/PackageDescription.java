@@ -123,7 +123,7 @@ public interface PackageDescription extends NamedElement.WithRuntimeName, Annota
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(aPackage.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(aPackage.getDeclaredAnnotations());
         }
 
         @Override

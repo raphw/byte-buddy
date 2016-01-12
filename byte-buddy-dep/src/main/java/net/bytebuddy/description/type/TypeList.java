@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -12,7 +13,9 @@ import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -361,6 +364,56 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             public int size() {
                 return types.size();
             }
+
+            /**
+             * A type list that represents loaded type variables.
+             */
+            public static class OfTypeVariables extends Generic.AbstractBase {
+
+                /**
+                 * The type variables this list represents.
+                 */
+                private final List<TypeVariable<?>> typeVariables;
+
+                /**
+                 * Creates a new type list for loaded type variables.
+                 *
+                 * @param typeVariable The type variables this list represents.
+                 */
+                protected OfTypeVariables(TypeVariable<?>... typeVariable) {
+                    this(Arrays.asList(typeVariable));
+                }
+
+                /**
+                 * Creates a new type list for loaded type variables.
+                 *
+                 * @param typeVariables The type variables this list represents.
+                 */
+                protected OfTypeVariables(List<TypeVariable<?>> typeVariables) {
+                    this.typeVariables = typeVariables;
+                }
+
+                /**
+                 * Creates a list of the type variables of the supplied generic declaration.
+                 *
+                 * @param genericDeclaration The generic declaration to represent.
+                 * @return A genric type list for the returned generic declaration.
+                 */
+                public static Generic of(GenericDeclaration genericDeclaration) {
+                    return new OfTypeVariables(genericDeclaration.getTypeParameters());
+                }
+
+                @Override
+                public TypeDescription.Generic get(int index) {
+                    TypeVariable<?> typeVariable = typeVariables.get(index);
+                    return TypeDefinition.Sort.describe(typeVariable, TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(typeVariable));
+                }
+
+                @Override
+                public int size() {
+                    return typeVariables.size();
+                }
+            }
         }
 
         /**
@@ -560,6 +613,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                     public String getSymbol() {
                         return typeVariableToken.getSymbol();
                     }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return typeVariableToken.getAnnotations();
+                    }
                 }
             }
         }
@@ -601,7 +659,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A type projection of an interface type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The type of which an interface type is represented.
@@ -635,13 +693,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = this.type.getGenericInterfaces();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveInterface(type, index);
                 }
             }
         }
@@ -683,7 +746,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The constructor of which the exception types are represented.
@@ -717,13 +780,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericExceptionTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveExceptionType(constructor, index);
                 }
             }
         }
@@ -765,7 +833,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The method of which the exception types are represented.
@@ -799,13 +867,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericExceptionTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
                 @Override
                 public TypeDescription asErasure() {
                     return new TypeDescription.ForLoadedType(erasure);
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveExceptionType(method, index);
                 }
             }
         }

@@ -9,7 +9,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class TypePoolParameterBagTest {
+public class TypePoolDefaultParameterBagTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
@@ -23,7 +23,7 @@ public class TypePoolParameterBagTest {
         parameterBag.register(0, FOO);
         parameterBag.register(1, BAR);
         parameterBag.register(3, QUX);
-        List<TypePool.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(true);
+        List<TypePool.Default.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(true);
         assertThat(tokens.size(), is(3));
         assertThat(tokens.get(0).getName(), is(FOO));
         assertThat(tokens.get(1).getName(), is(BAR));
@@ -43,7 +43,7 @@ public class TypePoolParameterBagTest {
         parameterBag.register(1, FOO);
         parameterBag.register(2, BAR);
         parameterBag.register(4, QUX);
-        List<TypePool.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(false);
+        List<TypePool.Default.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(false);
         assertThat(tokens.size(), is(3));
         assertThat(tokens.get(0).getName(), is(FOO));
         assertThat(tokens.get(1).getName(), is(BAR));
@@ -62,7 +62,7 @@ public class TypePoolParameterBagTest {
         TypePool.Default.ParameterBag parameterBag = new TypePool.Default.ParameterBag(type);
         parameterBag.register(0, FOO);
         parameterBag.register(3, QUX);
-        List<TypePool.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(true);
+        List<TypePool.Default.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(true);
         assertThat(tokens.size(), is(3));
         assertThat(tokens.get(0).getName(), is(FOO));
         assertThat(tokens.get(1).getName(), nullValue(String.class));
@@ -79,7 +79,7 @@ public class TypePoolParameterBagTest {
         type[1] = Type.getType(long.class);
         type[2] = Type.getType(String.class);
         TypePool.Default.ParameterBag parameterBag = new TypePool.Default.ParameterBag(type);
-        List<TypePool.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(true);
+        List<TypePool.Default.LazyTypeDescription.MethodToken.ParameterToken> tokens = parameterBag.resolve(true);
         assertThat(tokens.size(), is(3));
         assertThat(tokens.get(0).getName(), nullValue(String.class));
         assertThat(tokens.get(1).getName(), nullValue(String.class));
