@@ -915,7 +915,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         if (attachedVariable == null) {
                             throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
                         } else {
-                            return attachedVariable;
+                            return new AnnotatedTypeVariable(attachedVariable, typeVariable.getDeclaredAnnotations());
                         }
                     }
 
@@ -948,6 +948,38 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 "declaringType=" + declaringType +
                                 ", typeVariableSource=" + typeVariableSource +
                                 '}';
+                    }
+
+                    protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
+
+                        private final Generic typeVariable;
+
+                        private final List<AnnotationDescription> annotations;
+
+                        protected AnnotatedTypeVariable(Generic typeVariable, List<AnnotationDescription> annotations) {
+                            this.typeVariable = typeVariable;
+                            this.annotations = annotations;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return typeVariable.getUpperBounds();
+                        }
+
+                        @Override
+                        public TypeVariableSource getVariableSource() {
+                            return typeVariable.getVariableSource();
+                        }
+
+                        @Override
+                        public String getSymbol() {
+                            return typeVariable.getSymbol();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return new AnnotationList.Explicit(annotations);
+                        }
                     }
                 }
 
