@@ -123,7 +123,7 @@ public class TypeDescriptionGenericOfTypeVariableSymbolic {
 
     @Test(expected = IllegalStateException.class)
     public void testParametersThrowsException() throws Exception {
-        typeVariable.getParameters();
+        typeVariable.getTypeArguments();
     }
 
     @Test(expected = IllegalStateException.class)

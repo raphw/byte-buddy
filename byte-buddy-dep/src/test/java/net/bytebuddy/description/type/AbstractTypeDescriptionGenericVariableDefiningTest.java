@@ -66,18 +66,18 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(u.getUpperBounds().get(1).getDeclaredAnnotations().size(), is(1));
         assertThat(u.getUpperBounds().get(1).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(u.getUpperBounds().get(1).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));
-        assertThat(u.getUpperBounds().get(1).getParameters().get(0).getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(u.getUpperBounds().get(1).getParameters().get(0).getDeclaredAnnotations().size(), is(1));
-        assertThat(u.getUpperBounds().get(1).getParameters().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(u.getUpperBounds().get(1).getParameters().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(4));
+        assertThat(u.getUpperBounds().get(1).getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(u.getUpperBounds().get(1).getTypeArguments().get(0).getDeclaredAnnotations().size(), is(1));
+        assertThat(u.getUpperBounds().get(1).getTypeArguments().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(u.getUpperBounds().get(1).getTypeArguments().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(4));
         assertThat(u.getUpperBounds().get(2).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(u.getUpperBounds().get(2).getDeclaredAnnotations().size(), is(1));
         assertThat(u.getUpperBounds().get(2).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(u.getUpperBounds().get(2).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(5));
-        assertThat(u.getUpperBounds().get(2).getParameters().get(0).getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(u.getUpperBounds().get(2).getParameters().get(0).getDeclaredAnnotations().size(), is(1));
-        assertThat(u.getUpperBounds().get(2).getParameters().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(u.getUpperBounds().get(2).getParameters().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(6));
+        assertThat(u.getUpperBounds().get(2).getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(u.getUpperBounds().get(2).getTypeArguments().get(0).getDeclaredAnnotations().size(), is(1));
+        assertThat(u.getUpperBounds().get(2).getTypeArguments().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(u.getUpperBounds().get(2).getTypeArguments().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(6));
     }
 
     @Test
@@ -94,40 +94,40 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(v.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(7));
         assertThat(v.getUpperBounds().get(0).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(v.getUpperBounds().get(0).getDeclaredAnnotations().size(), is(0));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getDeclaredAnnotations().size(), is(1));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(8));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(0).getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(9));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getDeclaredAnnotations().size(), is(1));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(10));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation)
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getDeclaredAnnotations().size(), is(1));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(8));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(0).getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(9));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getDeclaredAnnotations().size(), is(1));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(10));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation)
                 .getValue(value, Integer.class), is(11));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getDeclaredAnnotations()
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getDeclaredAnnotations()
                 .isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getDeclaredAnnotations()
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getDeclaredAnnotations()
                 .ofType(typeAnnotation).getValue(value, Integer.class), is(12));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
                 .getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getUpperBounds().get(0)
                 .getDeclaredAnnotations().size(), is(0));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getDeclaredAnnotations().size(), is(1));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(v.getUpperBounds().get(0).getParameters().get(1).getParameters().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
+        assertThat(v.getUpperBounds().get(0).getTypeArguments().get(1).getTypeArguments().getOnly().getLowerBounds().getOnly().getUpperBounds().get(1)
                 .getDeclaredAnnotations().getOnly().prepare(typeAnnotation).getValue(value, Integer.class), is(3));
     }
 
@@ -167,14 +167,15 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(16));
-        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(17));
+        assertThat(t.getUpperBounds().getOnly().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(t.getUpperBounds().getOnly().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(t.getUpperBounds().getOnly().getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(t.getUpperBounds().getOnly().getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(17));
     }
 
     @Test
     @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
     public void testMethodVariableT() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();

@@ -79,11 +79,11 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         stringArray = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String[].class);
         objectArray = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Object[].class);
         objectNestedArray = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Object[][].class);
-        unboundWildcard = listWildcard.getParameters().getOnly();
-        typeVariableT = arrayListTypeVariableT.getParameters().getOnly();
-        typeVariableS = arrayListTypeVariableS.getParameters().getOnly();
-        typeVariableU = arrayListTypeVariableU.getParameters().getOnly();
-        typeVariableV = arrayListTypeVariableV.getParameters().getOnly();
+        unboundWildcard = listWildcard.getTypeArguments().getOnly();
+        typeVariableT = arrayListTypeVariableT.getTypeArguments().getOnly();
+        typeVariableS = arrayListTypeVariableS.getTypeArguments().getOnly();
+        typeVariableU = arrayListTypeVariableU.getTypeArguments().getOnly();
+        typeVariableV = arrayListTypeVariableV.getTypeArguments().getOnly();
         arrayTypeVariableT = fields.filter(named("arrayTypeVariableT")).getOnly().getType();
         arrayTypeVariableS = fields.filter(named("arrayTypeVariableS")).getOnly().getType();
         arrayTypeVariableU = fields.filter(named("arrayTypeVariableU")).getOnly().getType();
@@ -491,8 +491,8 @@ public class TypeDescriptionGenericVisitorAssignerTest {
         TypeDescription erasure = mock(TypeDescription.class);
         when(source.asErasure()).thenReturn(erasure);
         when(target.asErasure()).thenReturn(erasure);
-        when(source.getParameters()).thenReturn(new TypeList.Generic.Empty());
-        when(target.getParameters()).thenReturn(new TypeList.Generic.Explicit(mock(TypeDescription.Generic.class)));
+        when(source.getTypeArguments()).thenReturn(new TypeList.Generic.Empty());
+        when(target.getTypeArguments()).thenReturn(new TypeList.Generic.Explicit(mock(TypeDescription.Generic.class)));
         new TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType(target).onParameterizedType(source);
     }
 

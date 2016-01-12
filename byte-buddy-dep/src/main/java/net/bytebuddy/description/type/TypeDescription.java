@@ -343,7 +343,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         /**
          * <p>
-         * Returns the type parameters of this type.
+         * Returns the type arguments of this type.
          * </p>
          * <p>
          * Parameters are only well-defined for parameterized types ({@link Sort#PARAMETERIZED}).
@@ -352,7 +352,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          *
          * @return A list of this type's type parameters.
          */
-        TypeList.Generic getParameters();
+        TypeList.Generic getTypeArguments();
 
         /**
          * <p>
@@ -563,19 +563,19 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onParameterizedType(Generic parameterizedType) {
-                    List<Generic> parameters = new ArrayList<Generic>(parameterizedType.getParameters().size());
-                    for (Generic parameter : parameterizedType.getParameters()) {
-                        if (parameter.accept(TypeVariableErasing.PartialErasureReviser.INSTANCE)) {
+                    List<Generic> typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
+                    for (Generic typeArgument : parameterizedType.getTypeArguments()) {
+                        if (typeArgument.accept(TypeVariableErasing.PartialErasureReviser.INSTANCE)) {
                             return parameterizedType.asRawType();
                         }
-                        parameters.add(parameter.accept(this));
+                        typeArguments.add(typeArgument.accept(this));
                     }
                     Generic ownerType = parameterizedType.getOwnerType();
                     return new OfParameterizedType.Latent(parameterizedType.asErasure(),
                             ownerType == null
                                     ? UNDEFINED
                                     : ownerType.accept(this),
-                            parameters,
+                            typeArguments,
                             parameterizedType.getDeclaredAnnotations());
                 }
 
@@ -696,8 +696,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     } else {
                         signatureVisitor.visitClassType(ownableType.asErasure().getInternalName());
                     }
-                    for (Generic upperBound : ownableType.getParameters()) {
-                        upperBound.accept(new ForSignatureVisitor.OfParameter(signatureVisitor));
+                    for (Generic typeArgument : ownableType.getTypeArguments()) {
+                        typeArgument.accept(new OfTypeArgument(signatureVisitor));
                     }
                 }
 
@@ -741,14 +741,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * Visits a parameter while visiting a generic type for delegating discoveries to a signature visitor.
                  */
-                protected static class OfParameter extends ForSignatureVisitor {
+                protected static class OfTypeArgument extends ForSignatureVisitor {
 
                     /**
                      * Creates a new parameter visitor.
                      *
                      * @param signatureVisitor The signature visitor which is notified over visited types.
                      */
-                    protected OfParameter(SignatureVisitor signatureVisitor) {
+                    protected OfTypeArgument(SignatureVisitor signatureVisitor) {
                         super(signatureVisitor);
                     }
 
@@ -791,7 +791,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public String toString() {
-                        return "TypeDescription.Generic.Visitor.ForSignatureVisitor.OfParameter{}";
+                        return "TypeDescription.Generic.Visitor.ForSignatureVisitor.OfTypeArgument{}";
                     }
                 }
             }
@@ -805,15 +805,15 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public Generic onParameterizedType(Generic parameterizedType) {
                     Generic ownerType = parameterizedType.getOwnerType();
-                    List<Generic> parameters = new ArrayList<Generic>(parameterizedType.getParameters().size());
-                    for (Generic parameter : parameterizedType.getParameters()) {
-                        parameters.add(parameter.accept(this));
+                    List<Generic> typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
+                    for (Generic typeArgument : parameterizedType.getTypeArguments()) {
+                        typeArguments.add(typeArgument.accept(this));
                     }
                     return new OfParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
                             ownerType == null
                                     ? UNDEFINED
                                     : ownerType.accept(this),
-                            parameters,
+                            typeArguments,
                             parameterizedType.getDeclaredAnnotations());
                 }
 
@@ -1090,13 +1090,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     public static Visitor<Generic> bind(Generic typeDescription) {
                         Map<Generic, Generic> bindings = new HashMap<Generic, Generic>();
                         do {
-                            TypeList.Generic parameters = typeDescription.getParameters();
-                            TypeList.Generic typeVariables = typeDescription.asErasure().getTypeVariables();
-                            if (parameters.size() != typeVariables.size()) {
+                            TypeList.Generic typeArguments = typeDescription.getTypeArguments(), typeVariables = typeDescription.asErasure().getTypeVariables();
+                            if (typeArguments.size() != typeVariables.size()) {
                                 return TypeVariableErasing.INSTANCE;
                             }
                             for (int index = 0; index < typeVariables.size(); index++) {
-                                bindings.put(typeVariables.get(index), parameters.get(index));
+                                bindings.put(typeVariables.get(index), typeArguments.get(index));
                             }
                             typeDescription = typeDescription.getOwnerType();
                         } while (typeDescription != null && typeDescription.getSort().isParameterized());
@@ -1459,10 +1458,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 if (fromOwner != null && toOwner != null && !fromOwner.accept(Assigner.INSTANCE).isAssignableFrom(toOwner)) {
                                     return false;
                                 }
-                                TypeList.Generic fromParameters = this.parameterizedType.getParameters(), toParameters = parameterizedType.getParameters();
-                                if (fromParameters.size() == toParameters.size()) {
-                                    for (int index = 0; index < fromParameters.size(); index++) {
-                                        if (!fromParameters.get(index).accept(ParameterAssigner.INSTANCE).isAssignableFrom(toParameters.get(index))) {
+                                TypeList.Generic fromArguments = this.parameterizedType.getTypeArguments(), toArguments = parameterizedType.getTypeArguments();
+                                if (fromArguments.size() == toArguments.size()) {
+                                    for (int index = 0; index < fromArguments.size(); index++) {
+                                        if (!fromArguments.get(index).accept(ParameterAssigner.INSTANCE).isAssignableFrom(toArguments.get(index))) {
                                             return false;
                                         }
                                     }
@@ -3407,7 +3406,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public TypeList.Generic getParameters() {
+            public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A non-generic type does not imply an parameter types: " + this);
             }
 
@@ -3642,7 +3641,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public TypeList.Generic getParameters() {
+            public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A generic array type does not imply type parameters: " + this);
             }
 
@@ -3857,7 +3856,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public TypeList.Generic getParameters() {
+            public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A wildcard does not imply type parameters: " + this);
             }
 
@@ -4256,8 +4255,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             @Override
             public int hashCode() {
                 int result = 1;
-                for (Generic parameterType : getParameters()) {
-                    result = 31 * result + parameterType.hashCode();
+                for (Generic typeArgument : getTypeArguments()) {
+                    result = 31 * result + typeArgument.hashCode();
                 }
                 Generic ownerType = getOwnerType();
                 return result ^ (ownerType == null
@@ -4273,7 +4272,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 Generic ownerType = getOwnerType(), otherOwnerType = typeDescription.getOwnerType();
                 return asErasure().equals(typeDescription.asErasure())
                         && !(ownerType == null && otherOwnerType != null) && !(ownerType != null && !ownerType.equals(otherOwnerType))
-                        && getParameters().equals(typeDescription.getParameters());
+                        && getTypeArguments().equals(typeDescription.getTypeArguments());
             }
 
             @Override
@@ -4289,7 +4288,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 } else {
                     stringBuilder.append(asErasure().getName());
                 }
-                TypeList.Generic actualTypeArguments = getParameters();
+                TypeList.Generic actualTypeArguments = getTypeArguments();
                 if (!actualTypeArguments.isEmpty()) {
                     stringBuilder.append("<");
                     boolean multiple = false;
@@ -4341,7 +4340,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public TypeList.Generic getParameters() {
+                public TypeList.Generic getTypeArguments() {
                     return new ParameterArgumentTypeList(parameterizedType.getActualTypeArguments(), annotationReader);
                 }
 
@@ -4455,7 +4454,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public TypeList.Generic getParameters() {
+                public TypeList.Generic getTypeArguments() {
                     return new TypeList.Generic.Explicit(parameters);
                 }
 
@@ -4510,7 +4509,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public TypeList.Generic getParameters() {
+            public TypeList.Generic getTypeArguments() {
                 throw new IllegalStateException("A type variable does not imply type parameters: " + this);
             }
 
@@ -4665,7 +4664,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public TypeList.Generic getParameters() {
+                public TypeList.Generic getTypeArguments() {
                     throw new IllegalStateException("A symbolic type variable does not imply type parameters: " + this);
                 }
 
@@ -4899,8 +4898,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public TypeList.Generic getParameters() {
-                return resolve().getParameters();
+            public TypeList.Generic getTypeArguments() {
+                return resolve().getTypeArguments();
             }
 
             @Override

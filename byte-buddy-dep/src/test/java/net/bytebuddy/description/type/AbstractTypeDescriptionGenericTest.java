@@ -10,7 +10,9 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import org.hamcrest.CoreMatchers;
 import org.hamcrest.MatcherAssert;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.MethodRule;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -32,6 +34,9 @@ import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractTypeDescriptionGenericTest {
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -64,7 +69,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testNonGenericTypeNoParameters() throws Exception {
-        describeType(NonGeneric.class.getDeclaredField(FOO)).getParameters();
+        describeType(NonGeneric.class.getDeclaredField(FOO)).getTypeArguments();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -95,9 +100,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription, CoreMatchers.not(TypeDefinition.Sort.describe(SimpleGenericArrayType.class.getDeclaredField(FOO).getType())));
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
-        assertThat(typeDescription.getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
         assertThat(typeDescription.getTypeName(), is(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getOwnerType(), nullValue(TypeDescription.Generic.class));
     }
@@ -151,68 +156,68 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 CoreMatchers.not(TypeDefinition.Sort.describe(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO).getType())));
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
-        assertThat(typeDescription.getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().getOnly().asErasure().represents(String.class), is(true));
-        assertThat(typeDescription.getParameters().getOnly().getLowerBounds().size(), is(0));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(typeDescription.getTypeArguments().getOnly().getLowerBounds().size(), is(0));
         assertThat(typeDescription.getTypeName(), is(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoComponentType() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getComponentType();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getComponentType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoOwnerType() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getOwnerType();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getOwnerType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getVariableSource();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoSymbol() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSymbol();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSymbol();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoErasure() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().asErasure();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().asErasure();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoStackSize() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getStackSize();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getStackSize();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoSuperType() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperType();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSuperType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoInterfaces() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getInterfaces();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getInterfaces();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoFields() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredFields();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredFields();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundWildcardParameterizedTypeNoMethods() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredMethods();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUpperBoundsWildcardParameterizedTypeNoIterator() throws Exception {
-        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
+        describeType(UpperBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
     @Test
@@ -230,69 +235,69 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 CoreMatchers.not(TypeDefinition.Sort.describe(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO).getType())));
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
-        assertThat(typeDescription.getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().getOnly().getLowerBounds().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getLowerBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().getOnly().getLowerBounds().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().getOnly().getLowerBounds().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getLowerBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().getOnly().getLowerBounds().getOnly().asErasure().represents(String.class), is(true));
         assertThat(typeDescription.getTypeName(), is(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoComponentType() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getComponentType();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getComponentType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoOwnerType() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getOwnerType();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getOwnerType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getVariableSource();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoSymbol() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSymbol();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSymbol();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoErasure() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().asErasure();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().asErasure();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoStackSize() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getStackSize();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getStackSize();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoSuperType() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperType();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSuperType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoInterfaces() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getInterfaces();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getInterfaces();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoFields() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredFields();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredFields();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoMethods() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredMethods();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testLowerBoundWildcardParameterizedTypeNoIterator() throws Exception {
-        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
+        describeType(LowerBoundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
     @Test
@@ -310,68 +315,68 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 CoreMatchers.not(TypeDefinition.Sort.describe(UnboundWildcardParameterizedType.class.getDeclaredField(FOO).getType())));
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
-        assertThat(typeDescription.getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().getOnly().asErasure().represents(Object.class), is(true));
-        assertThat(typeDescription.getParameters().getOnly().getLowerBounds().size(), is(0));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().getOnly().asErasure().represents(Object.class), is(true));
+        assertThat(typeDescription.getTypeArguments().getOnly().getLowerBounds().size(), is(0));
         assertThat(typeDescription.getTypeName(), is(UnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoComponentType() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getComponentType();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getComponentType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoOwnerType() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getOwnerType();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getOwnerType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getVariableSource();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoSymbol() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSymbol();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSymbol();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoErasure() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().asErasure();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().asErasure();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoStackSize() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getStackSize();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getStackSize();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoSuperType() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperType();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSuperType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundWildcardParameterizedTypeNoInterfaces() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getInterfaces();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getInterfaces();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundBoundWildcardParameterizedTypeNoFields() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredFields();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredFields();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundBoundWildcardParameterizedTypeNoMethods() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredMethods();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testUnboundBoundWildcardParameterizedTypeNoIterator() throws Exception {
-        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
+        describeType(UnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
     @Test
@@ -392,79 +397,79 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 CoreMatchers.not(TypeDefinition.Sort.describe(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO).getType())));
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
-        assertThat(typeDescription.getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().getOnly().getUpperBounds().getOnly().asErasure().represents(Object.class), is(true));
-        assertThat(typeDescription.getParameters().getOnly().getLowerBounds().size(), is(0));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().getOnly().getUpperBounds().getOnly().asErasure().represents(Object.class), is(true));
+        assertThat(typeDescription.getTypeArguments().getOnly().getLowerBounds().size(), is(0));
         assertThat(typeDescription.getTypeName(), is(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO).getGenericType().toString()));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoComponentType() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getComponentType();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getComponentType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoOwnerType() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getOwnerType();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getOwnerType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoVariableSource() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getVariableSource();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getVariableSource();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoSymbol() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSymbol();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSymbol();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoErasure() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().asErasure();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().asErasure();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoStackSize() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getStackSize();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getStackSize();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoSuperType() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getSuperType();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getSuperType();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundWildcardParameterizedTypeNoInterfaces() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getInterfaces();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getInterfaces();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundBoundWildcardParameterizedTypeNoFields() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredFields();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredFields();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundBoundWildcardParameterizedTypeNoMethods() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().getDeclaredMethods();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().getDeclaredMethods();
     }
 
     @Test(expected = IllegalStateException.class)
     public void testExplicitlyUnboundBoundWildcardParameterizedTypeNoIterator() throws Exception {
-        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getParameters().getOnly().iterator();
+        describeType(ExplicitlyUnboundWildcardParameterizedType.class.getDeclaredField(FOO)).getTypeArguments().getOnly().iterator();
     }
 
     @Test
     public void testNestedParameterizedType() throws Exception {
         TypeDescription.Generic typeDescription = describeType(NestedParameterizedType.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().getOnly().getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().getOnly().getParameters().getOnly().asErasure().represents(Foo.class), is(true));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(typeDescription.getTypeArguments().getOnly().getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().getOnly().getTypeArguments().getOnly().asErasure().represents(Foo.class), is(true));
     }
 
     @Test
@@ -486,9 +491,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
         assertThat(typeDescription.getComponentType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getComponentType().getParameters().size(), is(1));
-        assertThat(typeDescription.getComponentType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getComponentType().getParameters().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(typeDescription.getComponentType().getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getComponentType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getComponentType().getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
         assertThat(typeDescription.getTypeName(), is(SimpleGenericArrayType.class.getDeclaredField(FOO).getGenericType().toString()));
     }
 
@@ -530,7 +535,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoParameters() throws Exception {
-        describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getParameters();
+        describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getTypeArguments();
     }
 
     @Test
@@ -552,9 +557,9 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription, CoreMatchers.not(new Object()));
         assertThat(typeDescription.equals(null), is(false));
         assertThat(typeDescription.getComponentType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getComponentType().getParameters().size(), is(1));
-        assertThat(typeDescription.getComponentType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(typeDescription.getComponentType().getParameters().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(typeDescription.getComponentType().getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getComponentType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(typeDescription.getComponentType().getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
         assertThat(typeDescription.getTypeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));
     }
 
@@ -718,13 +723,13 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getTypeName(), is(NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
-        assertThat(typeDescription.getParameters().size(), is(0));
+        assertThat(typeDescription.getTypeArguments().size(), is(0));
         Type ownerType = ((ParameterizedType) NestedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
         assertThat(typeDescription.getOwnerType(), is(TypeDefinition.Sort.describe(ownerType)));
         assertThat(typeDescription.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getOwnerType().getParameters().size(), is(1));
-        assertThat(typeDescription.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(typeDescription.getOwnerType().getParameters().getOnly().getSymbol(), is(T));
+        assertThat(typeDescription.getOwnerType().getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(typeDescription.getOwnerType().getTypeArguments().getOnly().getSymbol(), is(T));
     }
 
     @Test
@@ -733,13 +738,13 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getTypeName(), is(NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
-        assertThat(typeDescription.getParameters().size(), is(0));
+        assertThat(typeDescription.getTypeArguments().size(), is(0));
         Type ownerType = ((ParameterizedType) NestedSpecifiedTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
         assertThat(typeDescription.getOwnerType(), is(TypeDefinition.Sort.describe(ownerType)));
         assertThat(typeDescription.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getOwnerType().getParameters().size(), is(1));
-        assertThat(typeDescription.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getOwnerType().getParameters().getOnly(), is((TypeDefinition) new TypeDescription.ForLoadedType(String.class)));
+        assertThat(typeDescription.getOwnerType().getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getOwnerType().getTypeArguments().getOnly(), is((TypeDefinition) new TypeDescription.ForLoadedType(String.class)));
     }
 
     @Test
@@ -748,8 +753,8 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getTypeName(), is(NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType().toString()));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
-        assertThat(typeDescription.getParameters().size(), is(1));
-        assertThat(typeDescription.getParameters().getOnly(), is((TypeDefinition) new TypeDescription.ForLoadedType(String.class)));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().getOnly(), is((TypeDefinition) new TypeDescription.ForLoadedType(String.class)));
         Type ownerType = ((ParameterizedType) NestedStaticTypeVariableType.class.getDeclaredField(FOO).getGenericType()).getOwnerType();
         assertThat(typeDescription.getOwnerType(), is(TypeDefinition.Sort.describe(ownerType)));
         assertThat(typeDescription.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -817,8 +822,8 @@ public abstract class AbstractTypeDescriptionGenericTest {
         TypeDescription.Generic upperBound = typeDescription.getUpperBounds().getOnly();
         assertThat(upperBound.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(upperBound.asErasure(), is(typeDescription.asErasure()));
-        assertThat(upperBound.getParameters().size(), is(1));
-        assertThat(upperBound.getParameters().getOnly(), is(typeDescription));
+        assertThat(upperBound.getTypeArguments().size(), is(1));
+        assertThat(upperBound.getTypeArguments().getOnly(), is(typeDescription));
     }
 
     @Test
@@ -840,21 +845,21 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testParameterizedTypeSuperTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         TypeDescription.Generic superType = typeDescription.getSuperType();
         assertThat(superType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(superType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
-        assertThat(superType.getParameters().size(), is(2));
-        assertThat(superType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
-        assertThat(superType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(superType.getTypeArguments().size(), is(2));
+        assertThat(superType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(superType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(superType.getDeclaredFields().size(), is(1));
         assertThat(superType.getDeclaredFields().getOnly().getDeclaringType(), is(superType));
         TypeDescription.Generic fieldType = superType.getDeclaredFields().getOnly().getType();
         assertThat(fieldType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(fieldType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(fieldType.getParameters().size(), is(2));
-        assertThat(fieldType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
-        assertThat(fieldType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(fieldType.getTypeArguments().size(), is(2));
+        assertThat(fieldType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(fieldType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(superType.getDeclaredMethods().filter(isConstructor()).size(), is(1));
         assertThat(superType.getDeclaredMethods().filter(isMethod()).size(), is(1));
         assertThat(superType.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaringType(), is((superType)));
@@ -862,29 +867,29 @@ public abstract class AbstractTypeDescriptionGenericTest {
         TypeDescription.Generic methodReturnType = superType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
         assertThat(methodReturnType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(methodReturnType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodReturnType.getParameters().size(), is(2));
-        assertThat(methodReturnType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
-        assertThat(methodReturnType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(methodReturnType.getTypeArguments().size(), is(2));
+        assertThat(methodReturnType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodReturnType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
         TypeDescription.Generic methodParameterType = superType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().asTypeList().getOnly();
         assertThat(methodParameterType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(methodParameterType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodParameterType.getParameters().size(), is(2));
-        assertThat(methodParameterType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
-        assertThat(methodParameterType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(methodParameterType.getTypeArguments().size(), is(2));
+        assertThat(methodParameterType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodParameterType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
     }
 
     @Test
     public void testParameterizedTypeInterfaceResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         assertThat(typeDescription.getInterfaces().size(), is(1));
         TypeDescription.Generic interfaceType = typeDescription.getInterfaces().getOnly();
         assertThat(interfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(interfaceType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
-        assertThat(interfaceType.getParameters().size(), is(2));
-        assertThat(interfaceType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
-        assertThat(interfaceType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(interfaceType.getTypeArguments().size(), is(2));
+        assertThat(interfaceType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(interfaceType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
         assertThat(interfaceType.getDeclaredFields().size(), is(0));
         assertThat(interfaceType.getDeclaredMethods().filter(isConstructor()).size(), is(0));
         assertThat(interfaceType.getDeclaredMethods().filter(isMethod()).size(), is(1));
@@ -892,22 +897,22 @@ public abstract class AbstractTypeDescriptionGenericTest {
         TypeDescription.Generic methodReturnType = interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getReturnType();
         assertThat(methodReturnType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(methodReturnType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodReturnType.getParameters().size(), is(2));
-        assertThat(methodReturnType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
-        assertThat(methodReturnType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(methodReturnType.getTypeArguments().size(), is(2));
+        assertThat(methodReturnType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodReturnType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
         TypeDescription.Generic methodParameterType = interfaceType.getDeclaredMethods().filter(isMethod()).getOnly().getParameters().asTypeList().getOnly();
         assertThat(methodParameterType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(methodParameterType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(Qux.class)));
-        assertThat(methodParameterType.getParameters().size(), is(2));
-        assertThat(methodParameterType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
-        assertThat(methodParameterType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(methodParameterType.getTypeArguments().size(), is(2));
+        assertThat(methodParameterType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(methodParameterType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
     }
 
     @Test
     public void testParameterizedTypeRawSuperTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAR));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         TypeDescription.Generic superType = typeDescription.getSuperType();
         assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
@@ -933,7 +938,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testParameterizedTypeRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAR));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         TypeDescription.Generic interfaceType = typeDescription.getInterfaces().getOnly();
         assertThat(interfaceType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(interfaceType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
@@ -954,121 +959,121 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testParameterizedTypePartiallyRawSuperTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(QUX));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         TypeDescription.Generic superType = typeDescription.getSuperType();
         assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Intermediate.class)));
         TypeDescription.Generic superSuperType = superType.getSuperType();
         assertThat(superSuperType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(superSuperType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
-        assertThat(superSuperType.getParameters().size(), is(2));
-        assertThat(superSuperType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperType.getParameters().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superSuperType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperType.getParameters().get(1).asErasure().represents(List.class), is(true));
+        assertThat(superSuperType.getTypeArguments().size(), is(2));
+        assertThat(superSuperType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superSuperType.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
+        assertThat(superSuperType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superSuperType.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
     }
 
     @Test
     public void testParameterizedTypePartiallyRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(QUX));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         TypeDescription.Generic superType = typeDescription.getSuperType();
         assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Intermediate.class)));
         TypeDescription.Generic superInterfaceType = superType.getInterfaces().getOnly();
         assertThat(superInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(superInterfaceType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
-        assertThat(superInterfaceType.getParameters().size(), is(2));
-        assertThat(superInterfaceType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getParameters().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getParameters().get(1).asErasure().represents(List.class), is(true));
+        assertThat(superInterfaceType.getTypeArguments().size(), is(2));
+        assertThat(superInterfaceType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
+        assertThat(superInterfaceType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
     }
 
     @Test
     public void testParameterizedTypeNestedPartiallyRawSuperTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAZ));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         TypeDescription.Generic superType = typeDescription.getSuperType();
         assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.NestedIntermediate.class)));
         TypeDescription.Generic superSuperType = superType.getSuperType();
         assertThat(superSuperType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(superSuperType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.Base.class)));
-        assertThat(superSuperType.getParameters().size(), is(2));
-        assertThat(superSuperType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superSuperType.getParameters().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superSuperType.getParameters().get(0).getParameters().size(), is(1));
-        assertThat(superSuperType.getParameters().get(0).getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperType.getParameters().get(0).getParameters().getOnly().asErasure().represents(List.class), is(true));
-        assertThat(superSuperType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superSuperType.getParameters().get(1).asErasure().represents(List.class), is(true));
-        assertThat(superSuperType.getParameters().get(1).getParameters().size(), is(1));
-        assertThat(superSuperType.getParameters().get(1).getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superSuperType.getParameters().get(1).getParameters().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(superSuperType.getTypeArguments().size(), is(2));
+        assertThat(superSuperType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superSuperType.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
+        assertThat(superSuperType.getTypeArguments().get(0).getTypeArguments().size(), is(1));
+        assertThat(superSuperType.getTypeArguments().get(0).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superSuperType.getTypeArguments().get(0).getTypeArguments().getOnly().asErasure().represents(List.class), is(true));
+        assertThat(superSuperType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superSuperType.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
+        assertThat(superSuperType.getTypeArguments().get(1).getTypeArguments().size(), is(1));
+        assertThat(superSuperType.getTypeArguments().get(1).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superSuperType.getTypeArguments().get(1).getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
     }
 
     @Test
     public void testParameterizedTypeNestedPartiallyRawInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(BAZ));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(1));
+        assertThat(typeDescription.getTypeArguments().size(), is(1));
         TypeDescription.Generic superType = typeDescription.getSuperType();
         assertThat(superType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(superType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.NestedIntermediate.class)));
         TypeDescription.Generic superInterfaceType = superType.getInterfaces().getOnly();
         assertThat(superInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(superInterfaceType.asErasure(), is((TypeDescription) new TypeDescription.ForLoadedType(TypeResolution.BaseInterface.class)));
-        assertThat(superInterfaceType.getParameters().size(), is(2));
-        assertThat(superInterfaceType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superInterfaceType.getParameters().get(0).asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getParameters().get(0).getParameters().size(), is(1));
-        assertThat(superInterfaceType.getParameters().get(0).getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getParameters().get(0).getParameters().getOnly().asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(superInterfaceType.getParameters().get(1).asErasure().represents(List.class), is(true));
-        assertThat(superInterfaceType.getParameters().get(1).getParameters().size(), is(1));
-        assertThat(superInterfaceType.getParameters().get(1).getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superInterfaceType.getParameters().get(1).getParameters().getOnly().asErasure().represents(String.class), is(true));
+        assertThat(superInterfaceType.getTypeArguments().size(), is(2));
+        assertThat(superInterfaceType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.getTypeArguments().get(0).asErasure().represents(List.class), is(true));
+        assertThat(superInterfaceType.getTypeArguments().get(0).getTypeArguments().size(), is(1));
+        assertThat(superInterfaceType.getTypeArguments().get(0).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getTypeArguments().get(0).getTypeArguments().getOnly().asErasure().represents(List.class), is(true));
+        assertThat(superInterfaceType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(superInterfaceType.getTypeArguments().get(1).asErasure().represents(List.class), is(true));
+        assertThat(superInterfaceType.getTypeArguments().get(1).getTypeArguments().size(), is(1));
+        assertThat(superInterfaceType.getTypeArguments().get(1).getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superInterfaceType.getTypeArguments().get(1).getTypeArguments().getOnly().asErasure().represents(String.class), is(true));
     }
 
     @Test
     public void testShadowedTypeSuperTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(FOO + BAR));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(2));
+        assertThat(typeDescription.getTypeArguments().size(), is(2));
         TypeDescription.Generic superType = typeDescription.getSuperType();
-        assertThat(superType.getParameters().size(), is(2));
-        assertThat(superType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
-        assertThat(superType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(superType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(superType.getTypeArguments().size(), is(2));
+        assertThat(superType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(superType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(superType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
     }
 
     @Test
     public void testShadowedTypeInterfaceTypeResolution() throws Exception {
         TypeDescription.Generic typeDescription = describeType(TypeResolution.class.getDeclaredField(FOO + BAR));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(2));
+        assertThat(typeDescription.getTypeArguments().size(), is(2));
         TypeDescription.Generic interfaceType = typeDescription.getInterfaces().getOnly();
-        assertThat(interfaceType.getParameters().size(), is(2));
-        assertThat(interfaceType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(interfaceType.getParameters().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
-        assertThat(interfaceType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(interfaceType.getParameters().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
+        assertThat(interfaceType.getTypeArguments().size(), is(2));
+        assertThat(interfaceType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(interfaceType.getTypeArguments().get(0), is((TypeDefinition) new TypeDescription.ForLoadedType(Bar.class)));
+        assertThat(interfaceType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(interfaceType.getTypeArguments().get(1), is((TypeDefinition) new TypeDescription.ForLoadedType(Foo.class)));
     }
 
     @Test
     public void testMethodTypeVariableIsRetained() throws Exception {
         TypeDescription.Generic typeDescription = describeType(MemberVariable.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(2));
-        assertThat(typeDescription.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().get(0).asErasure().represents(Number.class), is(true));
-        assertThat(typeDescription.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().get(1).asErasure().represents(Integer.class), is(true));
+        assertThat(typeDescription.getTypeArguments().size(), is(2));
+        assertThat(typeDescription.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().get(0).asErasure().represents(Number.class), is(true));
+        assertThat(typeDescription.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().get(1).asErasure().represents(Integer.class), is(true));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
@@ -1079,11 +1084,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testShadowedMethodTypeVariableIsRetained() throws Exception {
         TypeDescription.Generic typeDescription = describeType(MemberVariable.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(2));
-        assertThat(typeDescription.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().get(0).asErasure().represents(Number.class), is(true));
-        assertThat(typeDescription.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().get(1).asErasure().represents(Integer.class), is(true));
+        assertThat(typeDescription.getTypeArguments().size(), is(2));
+        assertThat(typeDescription.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().get(0).asErasure().represents(Number.class), is(true));
+        assertThat(typeDescription.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().get(1).asErasure().represents(Integer.class), is(true));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(BAR)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("T"));
@@ -1094,11 +1099,11 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testMethodTypeVariableWithExtensionIsRetained() throws Exception {
         TypeDescription.Generic typeDescription = describeType(MemberVariable.class.getDeclaredField(FOO));
         assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(typeDescription.getParameters().size(), is(2));
-        assertThat(typeDescription.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().get(0).asErasure().represents(Number.class), is(true));
-        assertThat(typeDescription.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription.getParameters().get(1).asErasure().represents(Integer.class), is(true));
+        assertThat(typeDescription.getTypeArguments().size(), is(2));
+        assertThat(typeDescription.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().get(0).asErasure().represents(Number.class), is(true));
+        assertThat(typeDescription.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.getTypeArguments().get(1).asErasure().represents(Integer.class), is(true));
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
@@ -1258,10 +1263,10 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(fieldType.getComponentType().getComponentType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(22));
-        assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
-        assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getComponentType().getComponentType().getParameters().getOnly().getDeclaredAnnotations()
+        assertThat(fieldType.getComponentType().getComponentType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(fieldType.getComponentType().getComponentType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldType.getComponentType().getComponentType().getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(fieldType.getComponentType().getComponentType().getTypeArguments().getOnly().getDeclaredAnnotations()
                 .ofType(typeAnnotation).getValue(value, Integer.class), is(23));
     }
 
@@ -1322,24 +1327,24 @@ public abstract class AbstractTypeDescriptionGenericTest {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
         Class<?> samples = Class.forName(TYPE_ANNOTATION_SAMPLES);
-        /*TypeDescription.Generic firstInterfaceType = describeInterfaceType(samples, 0);
+        TypeDescription.Generic firstInterfaceType = describeInterfaceType(samples, 0);
         assertThat(firstInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(firstInterfaceType.getDeclaredAnnotations().size(), is(1));
         assertThat(firstInterfaceType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(firstInterfaceType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(19));
-        assertThat(firstInterfaceType.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(firstInterfaceType.getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(20));*/
+        assertThat(firstInterfaceType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(firstInterfaceType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(firstInterfaceType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(firstInterfaceType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(20));
         TypeDescription.Generic secondInterfaceType = describeInterfaceType(samples, 1);
         assertThat(secondInterfaceType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(secondInterfaceType.getDeclaredAnnotations().size(), is(0));
-        assertThat(secondInterfaceType.getParameters().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().size(), is(1));
-        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(secondInterfaceType.getParameters().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(21));
-        assertThat(secondInterfaceType.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(secondInterfaceType.getParameters().get(1).getDeclaredAnnotations().size(), is(0));
+        assertThat(secondInterfaceType.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(secondInterfaceType.getTypeArguments().get(0).getDeclaredAnnotations().size(), is(1));
+        assertThat(secondInterfaceType.getTypeArguments().get(0).getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(secondInterfaceType.getTypeArguments().get(0).getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(21));
+        assertThat(secondInterfaceType.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(secondInterfaceType.getTypeArguments().get(1).getDeclaredAnnotations().size(), is(0));
     }
 
     @Test
@@ -1499,18 +1504,18 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(fieldType.getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(1));
-        assertThat(fieldType.getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(fieldType.getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(fieldType.getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(2));
+        assertThat(fieldType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(fieldType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(fieldType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(2));
         assertThat(fieldType.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(fieldType.getOwnerType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getOwnerType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(fieldType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));;
-        assertThat(fieldType.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(fieldType.getOwnerType().getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
-        assertThat(fieldType.getOwnerType().getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getOwnerType().getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(4));
+        assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(4));
     }
 
     @Test
