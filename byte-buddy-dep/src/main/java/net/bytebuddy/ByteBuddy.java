@@ -987,7 +987,7 @@ public class ByteBuddy {
             return instrumentedType
                     .withField(new FieldDescription.Token(ENUM_VALUES,
                             ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
-                            new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.<AnnotationDescription>emptyList()))) // TODO
+                            new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.<AnnotationDescription>emptyList())))
                     .withInitializer(new InitializationAppender(values));
         }
 

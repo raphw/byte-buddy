@@ -1071,7 +1071,7 @@ public interface TypePool {
                     protected ForTypeVariable(String descriptor, TypePath typePath) {
                         super(descriptor);
                         this.typePath = typePath == null
-                                ? ""
+                                ? LazyTypeDescription.GenericTypeToken.EMPTY_TYPE_PATH
                                 : typePath.toString();
                     }
 
@@ -3050,7 +3050,7 @@ public interface TypePool {
                                     exceptionTypeAnnotationTokens);
                             break;
                         case TypeReference.METHOD_RECEIVER:
-                            return null; // TODO: Are receiver types already processable?
+                            return null; // Receiver types are currently not supported.
                         default:
                             throw new IllegalStateException("Unexpected type reference on method: " + typeReference.getSort());
                     }
@@ -4048,6 +4048,14 @@ public interface TypePool {
          */
         protected interface GenericTypeToken {
 
+            String EMPTY_TYPE_PATH = "";
+
+            char COMPONENT_TYPE_PATH = '[';
+
+            char WILDCARD_TYPE_PATH = '*';
+
+            char INDEXED_TYPE_DELIMITER = ';';
+
             /**
              * Transforms this token into a generic type representation.
              *
@@ -4370,8 +4378,6 @@ public interface TypePool {
 
                     protected static class RawAnnotatedType extends Generic.OfNonGenericType {
 
-                        private static final String EMPTY_TYPE_PATH = "";
-
                         private final TypePool typePool;
 
                         private final String typePath;
@@ -4389,7 +4395,7 @@ public interface TypePool {
 
                         protected static Generic of(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
                             return new RawAnnotatedType(typePool,
-                                    "", // TODO
+                                    EMPTY_TYPE_PATH,
                                     annotationTokens == null
                                             ? Collections.emptyMap()
                                             : annotationTokens,
@@ -4406,7 +4412,7 @@ public interface TypePool {
                             TypeDescription componentType = typeDescription.getComponentType();
                             return componentType == null
                                     ? UNDEFINED
-                                    : new RawAnnotatedType(typePool, typePath + '[', annotationTokens, componentType); // TODO
+                                    : new RawAnnotatedType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
                         }
 
                         @Override
@@ -4976,7 +4982,7 @@ public interface TypePool {
                         TypeDescription componentType = typeDescription.getComponentType();
                         return componentType == null
                                 ? UNDEFINED
-                                : new LazyNonGenericType(typePool, typePath + '[', annotationTokens, componentType); // TODO
+                                : new LazyNonGenericType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
                     }
 
                     @Override
@@ -5140,8 +5146,6 @@ public interface TypePool {
                      */
                     protected static class LazyTypeVariable extends Generic.OfTypeVariable {
 
-                        protected static final String EMPTY_TYPE_PATH = "";
-
                         /**
                          * The type pool to use for locating type descriptions.
                          */
@@ -5292,8 +5296,6 @@ public interface TypePool {
 
                 protected static class LazyGenericArray extends Generic.OfGenericArray {
 
-                    private static final char COMPOUND_TYPE = '[';
-
                     private final TypePool typePool;
 
                     private final TypeVariableSource typeVariableSource;
@@ -5318,7 +5320,7 @@ public interface TypePool {
 
                     @Override
                     public Generic getComponentType() {
-                        return componentTypeToken.toGenericType(typePool, typeVariableSource, typePath + COMPOUND_TYPE, annotationTokens); // TODO: Navigation
+                        return componentTypeToken.toGenericType(typePool, typeVariableSource, typePath + COMPONENT_TYPE_PATH, annotationTokens);
                     }
 
                     @Override
@@ -5750,8 +5752,6 @@ public interface TypePool {
 
             class LazyTokenList extends TypeList.Generic.AbstractBase {
 
-                private static final char INDEX_DELIMITER = ';';
-
                 private final TypePool typePool;
 
                 private final TypeVariableSource typeVariableSource;
@@ -5776,7 +5776,7 @@ public interface TypePool {
 
                 @Override
                 public Generic get(int index) {
-                    return genericTypeTokens.get(index).toGenericType(typePool, typeVariableSource, typePath + index + INDEX_DELIMITER, annotationTokens);
+                    return genericTypeTokens.get(index).toGenericType(typePool, typeVariableSource, typePath + index + INDEXED_TYPE_DELIMITER, annotationTokens);
                 }
 
                 @Override
@@ -5785,8 +5785,6 @@ public interface TypePool {
                 }
 
                 protected static class ForWildcardElement extends TypeList.Generic.AbstractBase {
-
-                    private static final char WILDCARD_BOUND = '*';
 
                     private final TypePool typePool;
 
@@ -5813,9 +5811,9 @@ public interface TypePool {
                     @Override
                     public Generic get(int index) {
                         if (index == 0) {
-                            return genericTypeToken.toGenericType(typePool, typeVariableSource, typePath + WILDCARD_BOUND, annotationTokens);
+                            return genericTypeToken.toGenericType(typePool, typeVariableSource, typePath + WILDCARD_TYPE_PATH, annotationTokens);
                         } else {
-                            throw new IndexOutOfBoundsException(); // TODO: Check semantics
+                            throw new IndexOutOfBoundsException("index = " + index);
                         }
                     }
 
@@ -6814,8 +6812,6 @@ public interface TypePool {
          */
         private static class TokenizedGenericType extends Generic.LazyProjection {
 
-            private static final String EMPTY_TYPE_PATH = "";
-
             /**
              * The type pool to use for locating referenced types.
              */
@@ -6889,7 +6885,7 @@ public interface TypePool {
 
             @Override
             protected Generic resolve() {
-                return genericTypeToken.toGenericType(typePool, typeVariableSource, EMPTY_TYPE_PATH, annotationTokens);
+                return genericTypeToken.toGenericType(typePool, typeVariableSource, GenericTypeToken.EMPTY_TYPE_PATH, annotationTokens);
             }
 
             @Override
@@ -6899,7 +6895,7 @@ public interface TypePool {
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
+                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(GenericTypeToken.EMPTY_TYPE_PATH));
             }
 
             /**
@@ -7059,7 +7055,6 @@ public interface TypePool {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    // TODO: Really?
                     throw new GenericSignatureFormatError();
                 }
 
