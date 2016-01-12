@@ -90,10 +90,27 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         TypeDescription.Generic.Builder.parameterizedType(Foo.class);
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testForbiddenZeroArity() throws Exception {
+        TypeDescription.Generic.Builder.rawType(Foo.class).asArray(0);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testForbiddenNegativeType() throws Exception {
+        TypeDescription.Generic.Builder.rawType(Foo.class).asArray(-1);
+    }
+
     @Test
-    @Ignore("Refactoring")
+    public void testMultipleArityArray() throws Exception {
+        assertThat(TypeDescription.Generic.Builder.rawType(Foo.class).asArray(2).build().getComponentType().getComponentType().represents(Foo.class), is(true));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfGenericArrayType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfNonGenericType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfParameterizedType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfTypeVariable.class).apply();
     }
 
     @Override
@@ -129,7 +146,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
             List<TypeDescription.Generic> parameters = new ArrayList<>(parameterizedType.getActualTypeArguments().length);
             int index = 0;
             for (Type parameter : parameterizedType.getActualTypeArguments()) {
-                parameters.add(describe(parameter, annotationReader.ofParameterType(index++)));
+                parameters.add(describe(parameter, annotationReader.ofTypeArgument(index++)));
             }
             return TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType()),
                     parameterizedType.getOwnerType() == null
