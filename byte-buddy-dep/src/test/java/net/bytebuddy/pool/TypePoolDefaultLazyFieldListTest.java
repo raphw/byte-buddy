@@ -11,7 +11,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 
-public class TypePoolLazyFieldListTest extends AbstractFieldListTest<Field, FieldDescription.InDefinedShape> {
+public class TypePoolDefaultLazyFieldListTest extends AbstractFieldListTest<Field, FieldDescription.InDefinedShape> {
 
     private TypePool typePool;
 

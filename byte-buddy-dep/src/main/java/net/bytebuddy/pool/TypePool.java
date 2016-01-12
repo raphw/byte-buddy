@@ -471,7 +471,7 @@ public interface TypePool {
             /**
              * The annotation token that represents the nested invocation.
              */
-            private final LazyTypeDescription.AnnotationToken annotationToken;
+            private final Default.LazyTypeDescription.AnnotationToken annotationToken;
 
             /**
              * Creates a new annotation value for a nested annotation.
@@ -479,7 +479,7 @@ public interface TypePool {
              * @param typePool        The type pool to use for looking up types.
              * @param annotationToken The token that represents the annotation.
              */
-            public RawAnnotationValue(TypePool typePool, LazyTypeDescription.AnnotationToken annotationToken) {
+            public RawAnnotationValue(TypePool typePool, Default.LazyTypeDescription.AnnotationToken annotationToken) {
                 this.typePool = typePool;
                 this.annotationToken = annotationToken;
             }
@@ -588,7 +588,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return "TypePool.LazyTypeDescription.AnnotationValue.ForEnumeration{" +
+                return "TypePool.DefaultLazyTypeDescription.AnnotationValue.ForEnumeration{" +
                         "descriptor='" + descriptor + '\'' +
                         ", value='" + value + '\'' +
                         '}';
@@ -672,7 +672,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return "TypePool.LazyTypeDescription.AnnotationValue.ForType{" +
+                return "TypePool.DefaultLazyTypeDescription.AnnotationValue.ForType{" +
                         "name='" + name + '\'' +
                         '}';
             }
@@ -807,7 +807,7 @@ public interface TypePool {
 
             @Override
             public String toString() {
-                return "TypePool.LazyTypeDescription.AnnotationValue.ForComplexArray{" +
+                return "TypePool.DefaultLazyTypeDescription.AnnotationValue.ForComplexArray{" +
                         "value=" + value +
                         ", componentTypeReference=" + componentTypeReference +
                         '}';
@@ -1872,7 +1872,7 @@ public interface TypePool {
             }
 
             /**
-             * An incomplete {@link net.bytebuddy.pool.TypePool.LazyTypeDescription.GenericTypeToken}.
+             * An incomplete {@link LazyTypeDescription.GenericTypeToken}.
              */
             protected interface IncompleteToken {
 
@@ -2608,6 +2608,4295 @@ public interface TypePool {
         }
 
         /**
+         * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
+         * {@link AnnotationDescription} by querying a type pool at lookup time.
+         */
+        public static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
+
+            /**
+             * The index of a super type's type annotations.
+             */
+            private static final int SUPER_TYPE_INDEX = -1;
+
+            /**
+             * Indicates that a type does not define a super type.
+             */
+            private static final String NO_SUPER_TYPE = null;
+
+            /**
+             * The type pool to be used for looking up linked types.
+             */
+            private final TypePool typePool;
+
+            /**
+             * The modifiers of this type.
+             */
+            private final int modifiers;
+
+            /**
+             * The binary name of this type.
+             */
+            private final String name;
+
+            /**
+             * The type's super type's descriptor or {@code null} if this type does not define a super type.
+             */
+            private final String superTypeDescriptor;
+
+            /**
+             * The resolution of this type's generic type.
+             */
+            private final GenericTypeToken.Resolution.ForType signatureResolution;
+
+            /**
+             * The descriptor of this type's interfaces.
+             */
+            private final List<String> interfaceTypeDescriptors;
+
+            /**
+             * The declaration context of this type.
+             */
+            private final DeclarationContext declarationContext;
+
+            /**
+             * A list of descriptors representing the types that are declared by this type.
+             */
+            private final List<String> declaredTypes;
+
+            /**
+             * {@code true} if this type is an anonymous type.
+             */
+            private final boolean anonymousType;
+
+            /**
+             * A mapping of type annotations for this type's super type and interface types by their indices.
+             */
+            private final Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens;
+
+            /**
+             * A mapping of type annotations of the type variables' type annotations by their indices.
+             */
+            private final Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens;
+
+            /**
+             * A mapping of type annotations of the type variables' bounds' type annotations by their indices and each variable's index.
+             */
+            private final Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundsAnnotationTokens;
+
+            /**
+             * A list of tokens that represent the annotations of this type.
+             */
+            private final List<AnnotationToken> annotationTokens;
+
+            /**
+             * A list of field tokens describing the field's of this type.
+             */
+            private final List<FieldToken> fieldTokens;
+
+            /**
+             * A list of method tokens describing the method's of this type.
+             */
+            private final List<MethodToken> methodTokens;
+
+            /**
+             * Creates a new lazy type description.
+             *
+             * @param typePool                           The type pool to be used for looking up linked types.
+             * @param modifiers                          The modifiers of this type.
+             * @param name                               The binary name of this type.
+             * @param superTypeInternalName              The internal name of this type's super type or {@code null} if no such super type is defined.
+             * @param interfaceInternalName              An array of this type's interfaces or {@code null} if this type does not define any interfaces.
+             * @param signatureResolution                The resolution of this type's generic types.
+             * @param declarationContext                 The declaration context of this type.
+             * @param declaredTypes                      A list of descriptors representing the types that are declared by this type.
+             * @param anonymousType                      {@code true} if this type is an anonymous type.
+             * @param superTypeAnnotationTokens          A mapping of type annotations for this type's super type and interface types by their indices.
+             * @param typeVariableAnnotationTokens       A mapping of type annotations of the type variables' type annotations by their indices.
+             * @param typeVariableBoundsAnnotationTokens A mapping of type annotations of the type variables' bounds' type annotations by their indices
+             *                                           and each variable's index.
+             * @param annotationTokens                   A list of tokens that represent the annotations of this type.
+             * @param fieldTokens                        A list of field tokens describing the field's of this type.
+             * @param methodTokens                       A list of method tokens describing the method's of this type.
+             */
+            protected LazyTypeDescription(TypePool typePool,
+                                          int modifiers,
+                                          String name,
+                                          String superTypeInternalName,
+                                          String[] interfaceInternalName,
+                                          GenericTypeToken.Resolution.ForType signatureResolution,
+                                          DeclarationContext declarationContext,
+                                          List<String> declaredTypes,
+                                          boolean anonymousType,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
+                                          Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundsAnnotationTokens,
+                                          List<AnnotationToken> annotationTokens,
+                                          List<FieldToken> fieldTokens,
+                                          List<MethodToken> methodTokens) {
+                this.typePool = typePool;
+                this.modifiers = modifiers & ~Opcodes.ACC_SUPER;
+                this.name = Type.getObjectType(name).getClassName();
+                this.superTypeDescriptor = superTypeInternalName == null
+                        ? NO_SUPER_TYPE
+                        : Type.getObjectType(superTypeInternalName).getDescriptor();
+                this.signatureResolution = signatureResolution;
+                if (interfaceInternalName == null) {
+                    interfaceTypeDescriptors = Collections.emptyList();
+                } else {
+                    interfaceTypeDescriptors = new ArrayList<String>(interfaceInternalName.length);
+                    for (String internalName : interfaceInternalName) {
+                        interfaceTypeDescriptors.add(Type.getObjectType(internalName).getDescriptor());
+                    }
+                }
+                this.declarationContext = declarationContext;
+                this.declaredTypes = declaredTypes;
+                this.anonymousType = anonymousType;
+                this.superTypeAnnotationTokens = superTypeAnnotationTokens;
+                this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
+                this.typeVariableBoundsAnnotationTokens = typeVariableBoundsAnnotationTokens;
+                this.annotationTokens = annotationTokens;
+                this.fieldTokens = fieldTokens;
+                this.methodTokens = methodTokens;
+            }
+
+            @Override
+            public Generic getSuperType() {
+                return superTypeDescriptor == null || isInterface()
+                        ? Generic.UNDEFINED
+                        : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, superTypeAnnotationTokens.get(SUPER_TYPE_INDEX), this);
+            }
+
+            @Override
+            public TypeList.Generic getInterfaces() {
+                return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, superTypeAnnotationTokens, this);
+            }
+
+            @Override
+            public MethodDescription getEnclosingMethod() {
+                return declarationContext.getEnclosingMethod(typePool);
+            }
+
+            @Override
+            public TypeDescription getEnclosingType() {
+                return declarationContext.getEnclosingType(typePool);
+            }
+
+            @Override
+            public TypeList getDeclaredTypes() {
+                return new LazyTypeList(typePool, declaredTypes);
+            }
+
+            @Override
+            public boolean isAnonymousClass() {
+                return anonymousType;
+            }
+
+            @Override
+            public boolean isLocalClass() {
+                return !anonymousType && declarationContext.isDeclaredInMethod();
+            }
+
+            @Override
+            public boolean isMemberClass() {
+                return declarationContext.isDeclaredInType();
+            }
+
+            @Override
+            public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
+                return new FieldTokenList();
+            }
+
+            @Override
+            public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
+                return new MethodTokenList();
+            }
+
+            @Override
+            public PackageDescription getPackage() {
+                String name = getName();
+                int index = name.lastIndexOf('.');
+                return index == -1
+                        ? PackageDescription.UNDEFINED
+                        : new LazyPackageDescription(typePool, name.substring(0, index));
+            }
+
+            @Override
+            public String getName() {
+                return name;
+            }
+
+            @Override
+            public TypeDescription getDeclaringType() {
+                return declarationContext.isDeclaredInType()
+                        ? declarationContext.getEnclosingType(typePool)
+                        : TypeDescription.UNDEFINED;
+            }
+
+            @Override
+            public int getModifiers() {
+                return modifiers;
+            }
+
+            @Override
+            public AnnotationList getDeclaredAnnotations() {
+                return LazyAnnotationDescription.asList(typePool, annotationTokens);
+            }
+
+            @Override
+            public TypeList.Generic getTypeVariables() {
+                return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundsAnnotationTokens);
+            }
+
+            /**
+             * A list of field tokens representing each entry as a field description.
+             */
+            protected class FieldTokenList extends FieldList.AbstractBase<FieldDescription.InDefinedShape> {
+
+                @Override
+                public FieldDescription.InDefinedShape get(int index) {
+                    return fieldTokens.get(index).toFieldDescription(LazyTypeDescription.this);
+                }
+
+                @Override
+                public int size() {
+                    return fieldTokens.size();
+                }
+            }
+
+            /**
+             * A list of method tokens representing each entry as a method description.
+             */
+            protected class MethodTokenList extends MethodList.AbstractBase<MethodDescription.InDefinedShape> {
+
+                @Override
+                public MethodDescription.InDefinedShape get(int index) {
+                    return methodTokens.get(index).toMethodDescription(LazyTypeDescription.this);
+                }
+
+                @Override
+                public int size() {
+                    return methodTokens.size();
+                }
+            }
+
+            /**
+             * A declaration context encapsulates information about whether a type was declared within another type
+             * or within a method of another type.
+             */
+            protected interface DeclarationContext {
+
+                /**
+                 * Returns the enclosing method or {@code null} if no such method exists.
+                 *
+                 * @param typePool The type pool to be used for looking up linked types.
+                 * @return A method description describing the linked type or {@code null}.
+                 */
+                MethodDescription getEnclosingMethod(TypePool typePool);
+
+                /**
+                 * Returns the enclosing type or {@code null} if no such type exists.
+                 *
+                 * @param typePool The type pool to be used for looking up linked types.
+                 * @return A type description describing the linked type or {@code null}.
+                 */
+                TypeDescription getEnclosingType(TypePool typePool);
+
+                /**
+                 * Returns {@code true} if this instance represents a self declared type.
+                 *
+                 * @return {@code true} if this instance represents a self declared type.
+                 */
+                boolean isSelfDeclared();
+
+                /**
+                 * Returns {@code true} if this instance represents a type that was declared within another type but not
+                 * within a method.
+                 *
+                 * @return {@code true} if this instance represents a type that was declared within another type but not
+                 * within a method.
+                 */
+                boolean isDeclaredInType();
+
+                /**
+                 * Returns {@code true} if this instance represents a type that was declared within a method.
+                 *
+                 * @return {@code true} if this instance represents a type that was declared within a method.
+                 */
+                boolean isDeclaredInMethod();
+
+                /**
+                 * Represents a self-declared type that is not defined within another type.
+                 */
+                enum SelfDeclared implements DeclarationContext {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public MethodDescription getEnclosingMethod(TypePool typePool) {
+                        return MethodDescription.UNDEFINED;
+                    }
+
+                    @Override
+                    public TypeDescription getEnclosingType(TypePool typePool) {
+                        return TypeDescription.UNDEFINED;
+                    }
+
+                    @Override
+                    public boolean isSelfDeclared() {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isDeclaredInType() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isDeclaredInMethod() {
+                        return false;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.DeclarationContext.SelfDeclared." + name();
+                    }
+                }
+
+                /**
+                 * A declaration context representing a type that is declared within another type but not within
+                 * a method.
+                 */
+                class DeclaredInType implements DeclarationContext {
+
+                    /**
+                     * The binary name of the referenced type.
+                     */
+                    private final String name;
+
+                    /**
+                     * Creates a new declaration context for a type that is declared within another type.
+                     *
+                     * @param internalName The internal name of the declaring type.
+                     */
+                    public DeclaredInType(String internalName) {
+                        name = internalName.replace('/', '.');
+                    }
+
+                    @Override
+                    public MethodDescription getEnclosingMethod(TypePool typePool) {
+                        return MethodDescription.UNDEFINED;
+                    }
+
+                    @Override
+                    public TypeDescription getEnclosingType(TypePool typePool) {
+                        return typePool.describe(name).resolve();
+                    }
+
+                    @Override
+                    public boolean isSelfDeclared() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isDeclaredInType() {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean isDeclaredInMethod() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && name.equals(((DeclaredInType) other).name);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return name.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInType{" +
+                                "name='" + name + '\'' +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A declaration context representing a type that is declared within a method of another type.
+                 */
+                class DeclaredInMethod implements DeclarationContext {
+
+                    /**
+                     * The binary name of the declaring type.
+                     */
+                    private final String name;
+
+                    /**
+                     * The name of the method that is declaring a type.
+                     */
+                    private final String methodName;
+
+                    /**
+                     * The descriptor of the method that is declaring a type.
+                     */
+                    private final String methodDescriptor;
+
+                    /**
+                     * Creates a new declaration context for a method that declares a type.
+                     *
+                     * @param internalName     The internal name of the declaring type.
+                     * @param methodName       The name of the method that is declaring a type.
+                     * @param methodDescriptor The descriptor of the method that is declaring a type.
+                     */
+                    public DeclaredInMethod(String internalName, String methodName, String methodDescriptor) {
+                        name = internalName.replace('/', '.');
+                        this.methodName = methodName;
+                        this.methodDescriptor = methodDescriptor;
+                    }
+
+                    @Override
+                    public MethodDescription getEnclosingMethod(TypePool typePool) {
+                        return getEnclosingType(typePool).getDeclaredMethods().filter(hasMethodName(methodName).and(hasDescriptor(methodDescriptor))).getOnly();
+                    }
+
+                    @Override
+                    public TypeDescription getEnclosingType(TypePool typePool) {
+                        return typePool.describe(name).resolve();
+                    }
+
+                    @Override
+                    public boolean isSelfDeclared() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isDeclaredInType() {
+                        return false;
+                    }
+
+                    @Override
+                    public boolean isDeclaredInMethod() {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        DeclaredInMethod that = (DeclaredInMethod) other;
+                        return methodDescriptor.equals(that.methodDescriptor)
+                                && methodName.equals(that.methodName)
+                                && name.equals(that.name);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = name.hashCode();
+                        result = 31 * result + methodName.hashCode();
+                        result = 31 * result + methodDescriptor.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.DeclarationContext.DeclaredInMethod{" +
+                                "name='" + name + '\'' +
+                                ", methodName='" + methodName + '\'' +
+                                ", methodDescriptor='" + methodDescriptor + '\'' +
+                                '}';
+                    }
+                }
+            }
+
+            /**
+             * A token that represents a generic Java type.
+             */
+            protected interface GenericTypeToken {
+
+                /**
+                 * Represents an empty type path.
+                 */
+                String EMPTY_TYPE_PATH = "";
+
+                /**
+                 * Represents a step to a component type within a type path.
+                 */
+                char COMPONENT_TYPE_PATH = '[';
+
+                /**
+                 * Represents a wildcard type step within a type path.
+                 */
+                char WILDCARD_TYPE_PATH = '*';
+
+                /**
+                 * Represents a owner type step within a type path.
+                 */
+                char OWNER_TYPE_PATH = '.';
+
+                /**
+                 * Represents an index tzpe delimiter within a type path.
+                 */
+                char INDEXED_TYPE_DELIMITER = ';';
+
+                /**
+                 * Transforms this token into a generic type representation.
+                 *
+                 * @param typePool           The type pool to be used for locating non-generic type descriptions.
+                 * @param typeVariableSource The type variable source.
+                 * @param typePath           The type path of the resolved generic type.
+                 * @param annotationTokens   A mapping of the type's annotation tokens by their type path.
+                 * @return A description of the represented generic type.
+                 */
+                Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens);
+
+                /**
+                 * Determines if a generic type tokens represents a primary bound of a type variable. This method must only be invoked on types
+                 * that represent a {@link Sort#NON_GENERIC},
+                 * {@link Sort#PARAMETERIZED} or {@link Sort#VARIABLE}.
+                 *
+                 * @param typePool The type pool to use.
+                 * @return {@code true} if this token represents a primary bound.
+                 */
+                boolean isPrimaryBound(TypePool typePool);
+
+                /**
+                 * Represents a generic type token for a formal type variable.
+                 */
+                interface OfFormalTypeVariable {
+
+                    /**
+                     * Transforms this token into a generic type representation.
+                     *
+                     * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                     * @param typeVariableSource       The type variable source.
+                     * @param annotationTokens         A mapping of the type variables' type annotations.
+                     * @param boundaryAnnotationTokens A mapping of the type variables' bounds' type annotation by their bound index.
+                     * @return A generic type representation of this formal type variable.
+                     */
+                    Generic toGenericType(TypePool typePool,
+                                          TypeVariableSource typeVariableSource,
+                                          Map<String, List<AnnotationToken>> annotationTokens,
+                                          Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens);
+                }
+
+                /**
+                 * A generic type token that represents a primitive type.
+                 */
+                enum ForPrimitiveType implements GenericTypeToken {
+
+                    /**
+                     * The generic type token describing the {@code boolean} type.
+                     */
+                    BOOLEAN(boolean.class),
+
+                    /**
+                     * The generic type token describing the {@code byte} type.
+                     */
+                    BYTE(byte.class),
+
+                    /**
+                     * The generic type token describing the {@code short} type.
+                     */
+                    SHORT(short.class),
+
+                    /**
+                     * The generic type token describing the {@code char} type.
+                     */
+                    CHAR(char.class),
+
+                    /**
+                     * The generic type token describing the {@code int} type.
+                     */
+                    INTEGER(int.class),
+
+                    /**
+                     * The generic type token describing the {@code long} type.
+                     */
+                    LONG(long.class),
+
+                    /**
+                     * The generic type token describing the {@code float} type.
+                     */
+                    FLOAT(float.class),
+
+                    /**
+                     * The generic type token describing the {@code double} type.
+                     */
+                    DOUBLE(double.class),
+
+                    /**
+                     * The generic type token describing the {@code void} type.
+                     */
+                    VOID(void.class);
+
+                    /**
+                     * A description of this primitive type token.
+                     */
+                    private final TypeDescription typeDescription;
+
+                    /**
+                     * Creates a new primitive type token.
+                     *
+                     * @param type The loaded type representing this primitive.
+                     */
+                    ForPrimitiveType(Class<?> type) {
+                        typeDescription = new ForLoadedType(type);
+                    }
+
+                    /**
+                     * Resolves a generic type token of a primitive type.
+                     *
+                     * @param descriptor The descriptor of the primitive type.
+                     * @return The corresponding generic type token.
+                     */
+                    public static GenericTypeToken of(char descriptor) {
+                        switch (descriptor) {
+                            case 'V':
+                                return VOID;
+                            case 'Z':
+                                return BOOLEAN;
+                            case 'B':
+                                return BYTE;
+                            case 'S':
+                                return SHORT;
+                            case 'C':
+                                return CHAR;
+                            case 'I':
+                                return INTEGER;
+                            case 'J':
+                                return LONG;
+                            case 'F':
+                                return FLOAT;
+                            case 'D':
+                                return DOUBLE;
+                            default:
+                                throw new IllegalArgumentException("Not a valid primitive type descriptor: " + descriptor);
+                        }
+                    }
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool,
+                                                 TypeVariableSource typeVariableSource,
+                                                 String typePath,
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
+                        return new LazyPrimitiveType(typePool,
+                                typePath,
+                                annotationTokens == null
+                                        ? Collections.emptyMap()
+                                        : annotationTokens,
+                                typeDescription);
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        throw new IllegalStateException("A primitive type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForPrimitiveType." + name();
+                    }
+
+                    /**
+                     * A representation of a lazy primitive type.
+                     */
+                    protected static class LazyPrimitiveType extends Generic.OfNonGenericType {
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * This type's type path.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * This type's type annotation tokens.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * The represented type's description.
+                         */
+                        private final TypeDescription typeDescription;
+
+                        /**
+                         * Creates a new lazy primitive type.
+                         *
+                         * @param typePool         The type pool to use.
+                         * @param typePath         This type's type path.
+                         * @param annotationTokens This type's type annotation tokens.
+                         * @param typeDescription  The represented type's description.
+                         */
+                        protected LazyPrimitiveType(TypePool typePool,
+                                                    String typePath,
+                                                    Map<String, List<AnnotationToken>> annotationTokens,
+                                                    TypeDescription typeDescription) {
+                            this.typePool = typePool;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                            this.typeDescription = typeDescription;
+                        }
+
+                        @Override
+                        public TypeDescription asErasure() {
+                            return typeDescription;
+                        }
+
+                        @Override
+                        public Generic getComponentType() {
+                            return UNDEFINED;
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                        }
+                    }
+                }
+
+                /**
+                 * A generic type token that represents an unbound wildcard.
+                 */
+                enum ForUnboundWildcard implements GenericTypeToken {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool,
+                                                 TypeVariableSource typeVariableSource,
+                                                 String typePath,
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
+                        return new LazyUnboundWildcard(typePool,
+                                typePath,
+                                annotationTokens == null
+                                        ? Collections.emptyMap()
+                                        : annotationTokens);
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard." + name();
+                    }
+
+                    /**
+                     * A generic type representation of a generic unbound wildcard.
+                     */
+                    protected static class LazyUnboundWildcard extends Generic.OfWildcardType {
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * This type's type path.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * The type's type annotations.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * Creates a new lazy unbound wildcard.
+                         *
+                         * @param typePool         The type pool to use.
+                         * @param typePath         This type's type path.
+                         * @param annotationTokens The type's type annotations.
+                         */
+                        protected LazyUnboundWildcard(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                            this.typePool = typePool;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return new TypeList.Generic.Explicit(Generic.OBJECT);
+                        }
+
+                        @Override
+                        public TypeList.Generic getLowerBounds() {
+                            return new TypeList.Generic.Empty();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                        }
+                    }
+                }
+
+                /**
+                 * A resolution of a type's, method's or field's generic types.
+                 */
+                interface Resolution {
+
+                    /**
+                     * Resolves the type variables of the represented element.
+                     *
+                     * @param typePool              The type pool to be used for locating non-generic type descriptions.
+                     * @param typeVariableSource    The type variable source to use for resolving type variables.
+                     * @param annotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+                     * @param boundAnnotationTokens A mapping of the type variables' bounds' type annotation tokens by their indices
+                     *                              and each type variable's index.
+                     * @return A list describing the resolved generic types.
+                     */
+                    TypeList.Generic resolveTypeVariables(TypePool typePool,
+                                                          TypeVariableSource typeVariableSource,
+                                                          Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                          Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens);
+
+                    /**
+                     * A resolution of a type's, method's or field's generic types if all of the represented element's are raw.
+                     */
+                    enum Raw implements ForType, ForMethod, ForField {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        @Override
+                        public Generic resolveFieldType(String fieldTypeDescriptor,
+                                                        TypePool typePool,
+                                                        Map<String, List<AnnotationToken>> annotationTokens,
+                                                        FieldDescription.InDefinedShape definingField) {
+                            return RawAnnotatedType.of(typePool, annotationTokens, fieldTypeDescriptor);
+                        }
+
+                        @Override
+                        public Generic resolveReturnType(String returnTypeDescriptor,
+                                                         TypePool typePool,
+                                                         Map<String, List<AnnotationToken>> annotationTokens,
+                                                         MethodDescription.InDefinedShape definingMethod) {
+                            return RawAnnotatedType.of(typePool, annotationTokens, returnTypeDescriptor);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
+                                                                      TypePool typePool,
+                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                      MethodDescription.InDefinedShape definingMethod) {
+                            return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, parameterTypeDescriptors);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
+                                                                      TypePool typePool,
+                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                      MethodDescription.InDefinedShape definingMethod) {
+                            return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, exceptionTypeDescriptors);
+                        }
+
+                        @Override
+                        public Generic resolveSuperType(String superTypeDescriptor,
+                                                        TypePool typePool,
+                                                        Map<String, List<AnnotationToken>> annotationTokens,
+                                                        TypeDescription definingType) {
+                            return RawAnnotatedType.of(typePool, annotationTokens, superTypeDescriptor);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
+                                                                      TypePool typePool,
+                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                      TypeDescription definingType) {
+                            return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, interfaceTypeDescriptors);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveTypeVariables(TypePool typePool,
+                                                                     TypeVariableSource typeVariableSource,
+                                                                     Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                     Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
+                            return new TypeList.Generic.Empty();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.Raw." + name();
+                        }
+
+                        /**
+                         * Represents a non-generic type that defines type annotations.
+                         */
+                        protected static class RawAnnotatedType extends Generic.OfNonGenericType {
+
+                            /**
+                             * The type pool to use.
+                             */
+                            private final TypePool typePool;
+
+                            /**
+                             * The type's type path.
+                             */
+                            private final String typePath;
+
+                            /**
+                             * A mapping of this type's type annotations.
+                             */
+                            private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                            /**
+                             * The represented non-generic type.
+                             */
+                            private final TypeDescription typeDescription;
+
+                            /**
+                             * Creates a new raw annotated type.
+                             *
+                             * @param typePool         The type pool to use.
+                             * @param typePath         The type's type path.
+                             * @param annotationTokens A mapping of this type's type annotations.
+                             * @param typeDescription  The represented non-generic type.
+                             */
+                            protected RawAnnotatedType(TypePool typePool,
+                                                       String typePath,
+                                                       Map<String, List<AnnotationToken>> annotationTokens,
+                                                       TypeDescription typeDescription) {
+                                this.typePool = typePool;
+                                this.typePath = typePath;
+                                this.annotationTokens = annotationTokens;
+                                this.typeDescription = typeDescription;
+                            }
+
+                            /**
+                             * Creates a new raw annotated type.
+                             *
+                             * @param typePool         The type pool to use.
+                             * @param annotationTokens A mapping of this type's type annotations.
+                             * @param descriptor       The descriptor of the represented non-generic type.
+                             * @return An annotated non-generic type.
+                             */
+                            protected static Generic of(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
+                                return new RawAnnotatedType(typePool,
+                                        EMPTY_TYPE_PATH,
+                                        annotationTokens == null
+                                                ? Collections.emptyMap()
+                                                : annotationTokens,
+                                        TokenizedGenericType.toErasure(typePool, descriptor));
+                            }
+
+                            @Override
+                            public TypeDescription asErasure() {
+                                return typeDescription;
+                            }
+
+                            @Override
+                            public Generic getComponentType() {
+                                TypeDescription componentType = typeDescription.getComponentType();
+                                return componentType == null
+                                        ? UNDEFINED
+                                        : new RawAnnotatedType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
+                            }
+
+                            @Override
+                            public AnnotationList getDeclaredAnnotations() {
+                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                            }
+
+                            /**
+                             * A generic type list representing raw types.
+                             */
+                            protected static class LazyRawAnnotatedTypeList extends TypeList.Generic.AbstractBase {
+
+                                /**
+                                 * The type pool to use for locating types.
+                                 */
+                                private final TypePool typePool;
+
+                                /**
+                                 * A mapping of the represented types' type annotation tokens by their indices.
+                                 */
+                                private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
+
+                                /**
+                                 * A list of type descriptors that this list represents.
+                                 */
+                                private final List<String> descriptors;
+
+                                /**
+                                 * Creates a generic type list only representing raw types.
+                                 *
+                                 * @param typePool         The type pool to use for locating types.
+                                 * @param annotationTokens A mapping of the represented types' type annotation tokens by their indices.
+                                 * @param descriptors      A list of type descriptors that this list represents.
+                                 */
+                                protected LazyRawAnnotatedTypeList(TypePool typePool,
+                                                                   Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                   List<String> descriptors) {
+                                    this.typePool = typePool;
+                                    this.annotationTokens = annotationTokens;
+                                    this.descriptors = descriptors;
+                                }
+
+                                /**
+                                 * Creates generic type list only representing raw types.
+                                 *
+                                 * @param typePool         The type pool to use for locating types.
+                                 * @param annotationTokens A mapping of the represented types' type annotation tokens by their indices or
+                                 *                         {@code null} if no type annotations are defined for any type.
+                                 * @param descriptors      A list of type descriptors that this list represents.
+                                 * @return A generic type list representing the raw types this list represents.
+                                 */
+                                protected static TypeList.Generic of(TypePool typePool,
+                                                                     Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                     List<String> descriptors) {
+                                    return new LazyRawAnnotatedTypeList(typePool,
+                                            annotationTokens == null
+                                                    ? Collections.emptyMap()
+                                                    : annotationTokens,
+                                            descriptors);
+                                }
+
+                                @Override
+                                public Generic get(int index) {
+                                    return RawAnnotatedType.of(typePool, annotationTokens.get(index), descriptors.get(index));
+                                }
+
+                                @Override
+                                public int size() {
+                                    return descriptors.size();
+                                }
+
+                                @Override
+                                public TypeList asErasures() {
+                                    return new LazyTypeList(typePool, descriptors);
+                                }
+
+                                @Override
+                                public TypeList.Generic asRawTypes() {
+                                    return this;
+                                }
+
+                                @Override
+                                public int getStackSize() {
+                                    int stackSize = 0;
+                                    for (String descriptor : descriptors) {
+                                        stackSize += Type.getType(descriptor).getSize();
+                                    }
+                                    return stackSize;
+                                }
+                            }
+                        }
+                    }
+
+                    /**
+                     * A resolution of a type's, method's or field's generic types if its generic signature is malformed.
+                     */
+                    enum Malformed implements ForType, ForMethod, ForField {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        @Override
+                        public Generic resolveFieldType(String fieldTypeDescriptor,
+                                                        TypePool typePool,
+                                                        Map<String, List<AnnotationToken>> annotationTokens,
+                                                        FieldDescription.InDefinedShape definingField) {
+                            return new TokenizedGenericType.Malformed(typePool, fieldTypeDescriptor);
+                        }
+
+                        @Override
+                        public Generic resolveReturnType(String returnTypeDescriptor,
+                                                         TypePool typePool,
+                                                         Map<String, List<AnnotationToken>> annotationTokens,
+                                                         MethodDescription.InDefinedShape definingMethod) {
+                            return new TokenizedGenericType.Malformed(typePool, returnTypeDescriptor);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
+                                                                      TypePool typePool,
+                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                      MethodDescription.InDefinedShape definingMethod) {
+                            return new TokenizedGenericType.Malformed.TokenList(typePool, parameterTypeDescriptors);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
+                                                                      TypePool typePool,
+                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                      MethodDescription.InDefinedShape definingMethod) {
+                            return new TokenizedGenericType.Malformed.TokenList(typePool, exceptionTypeDescriptors);
+                        }
+
+                        @Override
+                        public Generic resolveSuperType(String superTypeDescriptor,
+                                                        TypePool typePool,
+                                                        Map<String, List<AnnotationToken>> annotationTokens,
+                                                        TypeDescription definingType) {
+                            return new TokenizedGenericType.Malformed(typePool, superTypeDescriptor);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
+                                                                      TypePool typePool,
+                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                      TypeDescription definingType) {
+                            return new TokenizedGenericType.Malformed.TokenList(typePool, interfaceTypeDescriptors);
+                        }
+
+                        @Override
+                        public TypeList.Generic resolveTypeVariables(TypePool typePool,
+                                                                     TypeVariableSource typeVariableSource,
+                                                                     Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                     Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
+                            throw new GenericSignatureFormatError();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.Malformed." + name();
+                        }
+                    }
+
+                    /**
+                     * A resolution of the generic types of a {@link TypeDescription}.
+                     */
+                    interface ForType extends Resolution {
+
+                        /**
+                         * Resolves the generic super type of the represented type.
+                         *
+                         * @param superTypeDescriptor The descriptor of the raw super type.
+                         * @param typePool            The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens    A mapping of the super type's type annotation tokens.
+                         * @param definingType        The type that defines this super type.
+                         * @return A description of this type's generic super type.
+                         */
+                        Generic resolveSuperType(String superTypeDescriptor,
+                                                 TypePool typePool,
+                                                 Map<String, List<AnnotationToken>> annotationTokens,
+                                                 TypeDescription definingType);
+
+                        /**
+                         * Resolves the generic interface types of the represented type.
+                         *
+                         * @param interfaceTypeDescriptors The descriptor of the raw interface types.
+                         * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens         A mapping of the interface types' type annotation tokens by their indices.
+                         * @param definingType             The type that defines these interface type.
+                         * @return A description of this type's generic interface types.
+                         */
+                        TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
+                                                               TypePool typePool,
+                                                               Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                               TypeDescription definingType);
+
+                        /**
+                         * An implementation of a tokenized resolution of generic types of a {@link TypeDescription}.
+                         */
+                        class Tokenized implements ForType {
+
+                            /**
+                             * The super type's generic type token.
+                             */
+                            private final GenericTypeToken superTypeToken;
+
+                            /**
+                             * The interface type's generic type tokens.
+                             */
+                            private final List<GenericTypeToken> interfaceTypeTokens;
+
+                            /**
+                             * The type variables generic type tokens.
+                             */
+                            private final List<OfFormalTypeVariable> typeVariableTokens;
+
+                            /**
+                             * Creates a new tokenized resolution of a {@link TypeDescription}'s generic signatures.
+                             *
+                             * @param superTypeToken      The super type's generic type token.
+                             * @param interfaceTypeTokens The interface type's generic type tokens.
+                             * @param typeVariableTokens  The type variables generic type tokens.
+                             */
+                            public Tokenized(GenericTypeToken superTypeToken,
+                                             List<GenericTypeToken> interfaceTypeTokens,
+                                             List<OfFormalTypeVariable> typeVariableTokens) {
+                                this.superTypeToken = superTypeToken;
+                                this.interfaceTypeTokens = interfaceTypeTokens;
+                                this.typeVariableTokens = typeVariableTokens;
+                            }
+
+                            @Override
+                            public Generic resolveSuperType(String superTypeDescriptor,
+                                                            TypePool typePool,
+                                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                                            TypeDescription definingType) {
+                                return TokenizedGenericType.of(typePool, superTypeToken, superTypeDescriptor, annotationTokens, definingType);
+                            }
+
+                            @Override
+                            public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
+                                                                          TypePool typePool,
+                                                                          Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                          TypeDescription definingType) {
+                                return new TokenizedGenericType.TokenList(typePool, interfaceTypeTokens, annotationTokens, interfaceTypeDescriptors, definingType);
+                            }
+
+                            @Override
+                            public TypeList.Generic resolveTypeVariables(TypePool typePool,
+                                                                         TypeVariableSource typeVariableSource,
+                                                                         Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                         Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
+                                return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource, annotationTokens, boundAnnotationTokens);
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (other == null || getClass() != other.getClass()) return false;
+                                Tokenized tokenized = (Tokenized) other;
+                                return superTypeToken.equals(tokenized.superTypeToken)
+                                        && interfaceTypeTokens.equals(tokenized.interfaceTypeTokens)
+                                        && typeVariableTokens.equals(tokenized.typeVariableTokens);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = superTypeToken.hashCode();
+                                result = 31 * result + interfaceTypeTokens.hashCode();
+                                result = 31 * result + typeVariableTokens.hashCode();
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.ForType.Tokenized{" +
+                                        "superTypeToken=" + superTypeToken +
+                                        ", interfaceTypeTokens=" + interfaceTypeTokens +
+                                        ", typeVariableTokens=" + typeVariableTokens +
+                                        '}';
+                            }
+                        }
+                    }
+
+                    /**
+                     * A resolution of the generic types of a {@link MethodDescription}.
+                     */
+                    interface ForMethod extends Resolution {
+
+                        /**
+                         * Resolves the return type of the represented method.
+                         *
+                         * @param returnTypeDescriptor The descriptor of the raw return type.
+                         * @param typePool             The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens     A mapping of the return type's type annotation tokens.
+                         * @param definingMethod       The method that defines this return type.
+                         * @return A description of this type's generic return type.
+                         */
+                        Generic resolveReturnType(String returnTypeDescriptor,
+                                                  TypePool typePool,
+                                                  Map<String, List<AnnotationToken>> annotationTokens,
+                                                  MethodDescription.InDefinedShape definingMethod);
+
+                        /**
+                         * Resolves the generic parameter types of the represented method.
+                         *
+                         * @param parameterTypeDescriptors The descriptor of the raw parameter types.
+                         * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens         A mapping of the parameter types' type annotation tokens by their indices.
+                         * @param definingMethod           The method that defines these parameter types.
+                         * @return A description of this type's generic interface types.
+                         */
+                        TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
+                                                               TypePool typePool,
+                                                               Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                               MethodDescription.InDefinedShape definingMethod);
+
+                        /**
+                         * Resolves the generic parameter types of the represented method.
+                         *
+                         * @param exceptionTypeDescriptors The descriptor of the raw exception types.
+                         * @param typePool                 The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens         A mapping of the execption types' type annotation tokens by their indices.
+                         * @param definingMethod           The method that defines these exception types.
+                         * @return A description of this type's generic interface types.
+                         */
+                        TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
+                                                               TypePool typePool,
+                                                               Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                               MethodDescription.InDefinedShape definingMethod);
+
+                        /**
+                         * An implementation of a tokenized resolution of generic types of a {@link MethodDescription}.
+                         */
+                        class Tokenized implements ForMethod {
+
+                            /**
+                             * A token describing the represented method's return type.
+                             */
+                            private final GenericTypeToken returnTypeToken;
+
+                            /**
+                             * A token describing the represented method's parameter types.
+                             */
+                            private final List<GenericTypeToken> parameterTypeTokens;
+
+                            /**
+                             * A token describing the represented method's exception types.
+                             */
+                            private final List<GenericTypeToken> exceptionTypeTokens;
+
+                            /**
+                             * A token describing the represented method's type variables.
+                             */
+                            private final List<OfFormalTypeVariable> typeVariableTokens;
+
+                            /**
+                             * Creates a new tokenized resolution of a {@link MethodDescription}'s generic signatures.
+                             *
+                             * @param returnTypeToken     A token describing the represented method's return type.
+                             * @param parameterTypeTokens A token describing the represented method's parameter types.
+                             * @param exceptionTypeTokens A token describing the represented method's exception types.
+                             * @param typeVariableTokens  A token describing the represented method's type variables.
+                             */
+                            public Tokenized(GenericTypeToken returnTypeToken,
+                                             List<GenericTypeToken> parameterTypeTokens,
+                                             List<GenericTypeToken> exceptionTypeTokens,
+                                             List<OfFormalTypeVariable> typeVariableTokens) {
+                                this.returnTypeToken = returnTypeToken;
+                                this.parameterTypeTokens = parameterTypeTokens;
+                                this.exceptionTypeTokens = exceptionTypeTokens;
+                                this.typeVariableTokens = typeVariableTokens;
+                            }
+
+                            @Override
+                            public Generic resolveReturnType(String returnTypeDescriptor,
+                                                             TypePool typePool,
+                                                             Map<String, List<AnnotationToken>> annotationTokens,
+                                                             MethodDescription.InDefinedShape definingMethod) {
+                                return TokenizedGenericType.of(typePool, returnTypeToken, returnTypeDescriptor, annotationTokens, definingMethod);
+                            }
+
+                            @Override
+                            public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
+                                                                          TypePool typePool,
+                                                                          Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                          MethodDescription.InDefinedShape definingMethod) {
+                                return new TokenizedGenericType.TokenList(typePool, parameterTypeTokens, annotationTokens, parameterTypeDescriptors, definingMethod);
+                            }
+
+                            @Override
+                            public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
+                                                                          TypePool typePool,
+                                                                          Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                          MethodDescription.InDefinedShape definingMethod) {
+                                // Generic signatures of methods are optional.
+                                return exceptionTypeTokens.isEmpty()
+                                        ? Raw.INSTANCE.resolveExceptionTypes(exceptionTypeDescriptors, typePool, annotationTokens, definingMethod)
+                                        : new TokenizedGenericType.TokenList(typePool, exceptionTypeTokens, annotationTokens, exceptionTypeDescriptors, definingMethod);
+                            }
+
+                            @Override
+                            public TypeList.Generic resolveTypeVariables(TypePool typePool,
+                                                                         TypeVariableSource typeVariableSource,
+                                                                         Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                                         Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
+                                return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource, annotationTokens, boundAnnotationTokens);
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                if (this == other) return true;
+                                if (other == null || getClass() != other.getClass()) return false;
+                                Tokenized tokenized = (Tokenized) other;
+                                return returnTypeToken.equals(tokenized.returnTypeToken)
+                                        && parameterTypeTokens.equals(tokenized.parameterTypeTokens)
+                                        && exceptionTypeTokens.equals(tokenized.exceptionTypeTokens)
+                                        && typeVariableTokens.equals(tokenized.typeVariableTokens);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = returnTypeToken.hashCode();
+                                result = 31 * result + parameterTypeTokens.hashCode();
+                                result = 31 * result + exceptionTypeTokens.hashCode();
+                                result = 31 * result + typeVariableTokens.hashCode();
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.ForMethod.Tokenized{" +
+                                        "returnTypeToken=" + returnTypeToken +
+                                        ", parameterTypeTokens=" + parameterTypeTokens +
+                                        ", exceptionTypeTokens=" + exceptionTypeTokens +
+                                        ", typeVariableTokens=" + typeVariableTokens +
+                                        '}';
+                            }
+                        }
+                    }
+
+                    /**
+                     * A resolution of the generic types of a {@link FieldDescription}.
+                     */
+                    interface ForField {
+
+                        /**
+                         * Resolves the field type of the represented field.
+                         *
+                         * @param fieldTypeDescriptor The descriptor of the raw field type.
+                         * @param annotationTokens    A mapping of the represented types' type annotation tokens.
+                         * @param typePool            The type pool to be used for locating non-generic type descriptions.
+                         * @param definingField       The field that defines this type.   @return A description of this field's type.
+                         * @return A generic type representation of the field's type.
+                         */
+                        Generic resolveFieldType(String fieldTypeDescriptor,
+                                                 TypePool typePool,
+                                                 Map<String, List<AnnotationToken>> annotationTokens,
+                                                 FieldDescription.InDefinedShape definingField);
+
+                        /**
+                         * An implementation of a tokenized resolution of the generic type of a {@link FieldDescription}.
+                         */
+                        class Tokenized implements ForField {
+
+                            /**
+                             * The token of the represented field's type.
+                             */
+                            private final GenericTypeToken fieldTypeToken;
+
+                            /**
+                             * Creates a new tokenized resolution of a {@link FieldDescription}'s type.
+                             *
+                             * @param fieldTypeToken The token of the represented field's type.
+                             */
+                            public Tokenized(GenericTypeToken fieldTypeToken) {
+                                this.fieldTypeToken = fieldTypeToken;
+                            }
+
+                            @Override
+                            public Generic resolveFieldType(String fieldTypeDescriptor,
+                                                            TypePool typePool,
+                                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                                            FieldDescription.InDefinedShape definingField) {
+                                return TokenizedGenericType.of(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
+                            }
+
+                            @Override
+                            public boolean equals(Object other) {
+                                return this == other || other != null && getClass() == other.getClass()
+                                        && fieldTypeToken.equals(((Tokenized) other).fieldTypeToken);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                return fieldTypeToken.hashCode();
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "TypePool.Default.LazyTypeDescription.GenericTypeToken.Resolution.ForField.Tokenized{" +
+                                        "fieldTypeToken=" + fieldTypeToken +
+                                        '}';
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * A generic type token that represents a non-generic type.
+                 */
+                class ForRawType implements GenericTypeToken {
+
+                    /**
+                     * The name of the represented type.
+                     */
+                    private final String name;
+
+                    /**
+                     * Creates a new type token that represents a non-generic type.
+                     *
+                     * @param name The name of the represented type.
+                     */
+                    public ForRawType(String name) {
+                        this.name = name;
+                    }
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                        return new LazyNonGenericType(typePool,
+                                typePath,
+                                annotationTokens == null
+                                        ? Collections.emptyMap()
+                                        : annotationTokens,
+                                typePool.describe(name).resolve());
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        return !typePool.describe(name).resolve().isInterface();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass()) && name.equals(((ForRawType) other).name);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return name.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForRawType{" +
+                                "name='" + name + '\'' +
+                                '}';
+                    }
+
+                    /**
+                     * A representation of an annotated non-generic type.
+                     */
+                    protected static class LazyNonGenericType extends Generic.OfNonGenericType {
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * This type's type path.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * A mapping of this type's type annotation tokens.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * The represented type description.
+                         */
+                        private final TypeDescription typeDescription;
+
+                        /**
+                         * Creates a new lazy non-generic type.
+                         *
+                         * @param typePool         The type pool to use.
+                         * @param typePath         This type's type path.
+                         * @param annotationTokens A mapping of this type's type annotation tokens.
+                         * @param typeDescription  The represented type description.
+                         */
+                        protected LazyNonGenericType(TypePool typePool,
+                                                     String typePath,
+                                                     Map<String, List<AnnotationToken>> annotationTokens,
+                                                     TypeDescription typeDescription) {
+                            this.typePool = typePool;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                            this.typeDescription = typeDescription;
+                        }
+
+                        @Override
+                        public TypeDescription asErasure() {
+                            return typeDescription;
+                        }
+
+                        @Override
+                        public Generic getComponentType() {
+                            TypeDescription componentType = typeDescription.getComponentType();
+                            return componentType == null
+                                    ? UNDEFINED
+                                    : new LazyNonGenericType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                        }
+                    }
+                }
+
+                /**
+                 * A generic type token that represents a type variable.
+                 */
+                class ForTypeVariable implements GenericTypeToken {
+
+                    /**
+                     * This type variable's nominal symbol.
+                     */
+                    private final String symbol;
+
+                    /**
+                     * Creates a generic type token that represents a type variable.
+                     *
+                     * @param symbol This type variable's nominal symbol.
+                     */
+                    public ForTypeVariable(String symbol) {
+                        this.symbol = symbol;
+                    }
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                        Generic typeVariable = typeVariableSource.findVariable(symbol);
+                        if (typeVariable == null) {
+                            throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + typeVariableSource);
+                        } else {
+                            return new AnnotatedTypeVariable(typePool, annotationTokens.get(typePath), typeVariable);
+                        }
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        return true;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass()) && symbol.equals(((ForTypeVariable) other).symbol);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return symbol.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForTypeVariable{" +
+                                "symbol='" + symbol + '\'' +
+                                '}';
+                    }
+
+                    /**
+                     * An annotated representation of a formal type variable.
+                     */
+                    protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * The represented annotation tokens.
+                         */
+                        private final List<AnnotationToken> annotationTokens;
+
+                        /**
+                         * The represented type variable.
+                         */
+                        private final Generic typeVariable;
+
+                        /**
+                         * Creates a new annotated type variable.
+                         *
+                         * @param typePool         The type pool to use.
+                         * @param annotationTokens The represented annotation tokens.
+                         * @param typeVariable     The represented type variable.
+                         */
+                        protected AnnotatedTypeVariable(TypePool typePool, List<AnnotationToken> annotationTokens, Generic typeVariable) {
+                            this.typePool = typePool;
+                            this.annotationTokens = annotationTokens;
+                            this.typeVariable = typeVariable;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return typeVariable.getUpperBounds();
+                        }
+
+                        @Override
+                        public TypeVariableSource getVariableSource() {
+                            return typeVariable.getVariableSource();
+                        }
+
+                        @Override
+                        public String getSymbol() {
+                            return typeVariable.getSymbol();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
+                        }
+                    }
+
+                    /**
+                     * A generic type token that represent a formal type variable, i.e. a type variable including its upper bounds.
+                     */
+                    public static class Formal implements GenericTypeToken.OfFormalTypeVariable {
+
+                        /**
+                         * This type variable's nominal symbol.
+                         */
+                        private final String symbol;
+
+                        /**
+                         * A list of tokens that represent this type variable's upper bounds.
+                         */
+                        private final List<GenericTypeToken> boundTypeTokens;
+
+                        /**
+                         * Creates generic type token that represent a formal type variable.
+                         *
+                         * @param symbol          This type variable's nominal symbol.
+                         * @param boundTypeTokens A list of tokens that represent this type variable's upper bounds.
+                         */
+                        public Formal(String symbol, List<GenericTypeToken> boundTypeTokens) {
+                            this.symbol = symbol;
+                            this.boundTypeTokens = boundTypeTokens;
+                        }
+
+                        @Override
+                        public Generic toGenericType(TypePool typePool,
+                                                     TypeVariableSource typeVariableSource,
+                                                     Map<String, List<AnnotationToken>> annotationTokens,
+                                                     Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens) {
+                            return new LazyTypeVariable(typePool,
+                                    typeVariableSource,
+                                    annotationTokens == null
+                                            ? Collections.emptyMap()
+                                            : annotationTokens,
+                                    boundaryAnnotationTokens == null
+                                            ? Collections.emptyMap()
+                                            : boundaryAnnotationTokens,
+                                    symbol,
+                                    boundTypeTokens);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && symbol.equals(((Formal) other).symbol)
+                                    && boundTypeTokens.equals(((Formal) other).boundTypeTokens);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return symbol.hashCode() + 31 * boundTypeTokens.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForTypeVariable.Formal{" +
+                                    "symbol='" + symbol + '\'' +
+                                    "boundTypeTokens='" + boundTypeTokens + '\'' +
+                                    '}';
+                        }
+
+                        /**
+                         * A type description that represents a type variable with bounds that are resolved lazily.
+                         */
+                        protected static class LazyTypeVariable extends Generic.OfTypeVariable {
+
+                            /**
+                             * The type pool to use for locating type descriptions.
+                             */
+                            private final TypePool typePool;
+
+                            /**
+                             * The type variable source to use for locating type variables.
+                             */
+                            private final TypeVariableSource typeVariableSource;
+
+                            /**
+                             * The type variable's type annotation tokens.
+                             */
+                            private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                            /**
+                             * A mapping of the type variable boundss type annotation tokens by their indices.
+                             */
+                            private final Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens;
+
+                            /**
+                             * The type variable's symbol.
+                             */
+                            private final String symbol;
+
+                            /**
+                             * Tokenized representations of the type variables bound types.
+                             */
+                            private final List<GenericTypeToken> boundTypeTokens;
+
+                            /**
+                             * Creates a lazy type description of a type variables.
+                             *
+                             * @param typePool                 The type pool to use for locating type descriptions.
+                             * @param typeVariableSource       The type variable source to use for locating type variables.
+                             * @param annotationTokens         The type variable's type annotation tokens.
+                             * @param boundaryAnnotationTokens A mapping of the type variable boundss type annotation tokens by their indices.
+                             * @param symbol                   The type variable's symbol.
+                             * @param boundTypeTokens          Tokenized representations of the type variables bound types.
+                             */
+                            protected LazyTypeVariable(TypePool typePool,
+                                                       TypeVariableSource typeVariableSource,
+                                                       Map<String, List<AnnotationToken>> annotationTokens,
+                                                       Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens,
+                                                       String symbol,
+                                                       List<GenericTypeToken> boundTypeTokens) {
+                                this.typePool = typePool;
+                                this.typeVariableSource = typeVariableSource;
+                                this.annotationTokens = annotationTokens;
+                                this.boundaryAnnotationTokens = boundaryAnnotationTokens;
+                                this.symbol = symbol;
+                                this.boundTypeTokens = boundTypeTokens;
+                            }
+
+                            @Override
+                            public TypeList.Generic getUpperBounds() {
+                                return new LazyBoundTokenList(typePool, typeVariableSource, boundaryAnnotationTokens, boundTypeTokens);
+                            }
+
+                            @Override
+                            public TypeVariableSource getVariableSource() {
+                                return typeVariableSource;
+                            }
+
+                            @Override
+                            public String getSymbol() {
+                                return symbol;
+                            }
+
+                            @Override
+                            public AnnotationList getDeclaredAnnotations() {
+                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
+                            }
+
+                            /**
+                             * A list representing a formal type variable's bounds.
+                             */
+                            protected static class LazyBoundTokenList extends TypeList.Generic.AbstractBase {
+
+                                /**
+                                 * The type pool to use.
+                                 */
+                                private final TypePool typePool;
+
+                                /**
+                                 * The type variable source for locating type variables.
+                                 */
+                                private final TypeVariableSource typeVariableSource;
+
+                                /**
+                                 * A mapping of the bound type's type annotations by their bound index.
+                                 */
+                                private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
+
+                                /**
+                                 * The bound types in their tokenized form.
+                                 */
+                                private final List<GenericTypeToken> boundTypeTokens;
+
+                                /**
+                                 * Creates a new lazy bound token list for a type variable.
+                                 *
+                                 * @param typePool           The type pool to use.
+                                 * @param typeVariableSource The type variable source for locating type variables.
+                                 * @param annotationTokens   A mapping of the bound type's type annotations by their bound index.
+                                 * @param boundTypeTokens    The bound types in their tokenized form.
+                                 */
+                                protected LazyBoundTokenList(TypePool typePool,
+                                                             TypeVariableSource typeVariableSource,
+                                                             Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                                             List<GenericTypeToken> boundTypeTokens) {
+                                    this.typePool = typePool;
+                                    this.typeVariableSource = typeVariableSource;
+                                    this.annotationTokens = annotationTokens;
+                                    this.boundTypeTokens = boundTypeTokens;
+                                }
+
+                                @Override
+                                public Generic get(int index) {
+                                    Map<String, List<AnnotationToken>> annotationTokens = this.annotationTokens.get(index + (boundTypeTokens.get(0).isPrimaryBound(typePool)
+                                            ? 0
+                                            : 1));
+                                    return boundTypeTokens.get(index).toGenericType(typePool,
+                                            typeVariableSource,
+                                            EMPTY_TYPE_PATH,
+                                            annotationTokens == null
+                                                    ? Collections.emptyMap()
+                                                    : annotationTokens);
+                                }
+
+                                @Override
+                                public int size() {
+                                    return boundTypeTokens.size();
+                                }
+                            }
+                        }
+                    }
+                }
+
+                /**
+                 * A generic type token that represents a generic array.
+                 */
+                class ForGenericArray implements GenericTypeToken {
+
+                    /**
+                     * The array's component type.
+                     */
+                    private final GenericTypeToken componentTypeToken;
+
+                    /**
+                     * Creates a generic type token that represents a generic array.
+                     *
+                     * @param componentTypeToken The array's component type.
+                     */
+                    public ForGenericArray(GenericTypeToken componentTypeToken) {
+                        this.componentTypeToken = componentTypeToken;
+                    }
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                        return new LazyGenericArray(typePool, typeVariableSource, typePath, annotationTokens, componentTypeToken);
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        throw new IllegalStateException("A generic array type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && componentTypeToken.equals(((ForGenericArray) other).componentTypeToken);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return componentTypeToken.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForGenericArray{" +
+                                "componentTypeToken='" + componentTypeToken + '\'' +
+                                '}';
+                    }
+
+                    /**
+                     * A generic type representation of a generic array.
+                     */
+                    protected static class LazyGenericArray extends Generic.OfGenericArray {
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * The type variable source for locating type variables.
+                         */
+                        private final TypeVariableSource typeVariableSource;
+
+                        /**
+                         * This type's type path.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * This type's type annotations.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * A tokenized representation of this generic arrays's component type.
+                         */
+                        private final GenericTypeToken componentTypeToken;
+
+                        /**
+                         * Creates a new lazy generic array.
+                         *
+                         * @param typePool           The type pool to use.
+                         * @param typeVariableSource The type variable source for locating type variables.
+                         * @param typePath           This type's type path.
+                         * @param annotationTokens   This type's type annotations.
+                         * @param componentTypeToken A tokenized representation of this generic arrays's component type.
+                         */
+                        protected LazyGenericArray(TypePool typePool,
+                                                   TypeVariableSource typeVariableSource,
+                                                   String typePath,
+                                                   Map<String, List<AnnotationToken>> annotationTokens,
+                                                   GenericTypeToken componentTypeToken) {
+                            this.typePool = typePool;
+                            this.typeVariableSource = typeVariableSource;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                            this.componentTypeToken = componentTypeToken;
+                        }
+
+                        @Override
+                        public Generic getComponentType() {
+                            return componentTypeToken.toGenericType(typePool, typeVariableSource, typePath + COMPONENT_TYPE_PATH, annotationTokens);
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                        }
+                    }
+                }
+
+                /**
+                 * A generic type token for a wildcard that is bound below.
+                 */
+                class ForLowerBoundWildcard implements GenericTypeToken {
+
+                    /**
+                     * A token that represents the wildcard's lower bound.
+                     */
+                    private final GenericTypeToken boundTypeToken;
+
+                    /**
+                     * Creates a generic type token for a wildcard that is bound below.
+                     *
+                     * @param boundTypeToken A token that represents the wildcard's lower bound.
+                     */
+                    public ForLowerBoundWildcard(GenericTypeToken boundTypeToken) {
+                        this.boundTypeToken = boundTypeToken;
+                    }
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                        return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && boundTypeToken.equals(((ForLowerBoundWildcard) other).boundTypeToken);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return boundTypeToken.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard{" +
+                                "boundTypeToken=" + boundTypeToken +
+                                '}';
+                    }
+
+                    /**
+                     * A generic type representation of a lower bound wildcard.
+                     */
+                    protected static class LazyLowerBoundWildcard extends Generic.OfWildcardType {
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * The type variable source for locating type variables.
+                         */
+                        private final TypeVariableSource typeVariableSource;
+
+                        /**
+                         * This type's type path.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * This type's type annotations.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * A tokenized representation of this wildcard's bound.
+                         */
+                        private final GenericTypeToken boundTypeToken;
+
+                        /**
+                         * Creates a new lazy lower bound wildcard.
+                         *
+                         * @param typePool           The type pool to use.
+                         * @param typeVariableSource The type variable source for locating type variables.
+                         * @param typePath           This type's type path.
+                         * @param annotationTokens   This type's type annotations.
+                         * @param boundTypeToken     A tokenized representation of this wildcard's bound.
+                         */
+                        protected LazyLowerBoundWildcard(TypePool typePool,
+                                                         TypeVariableSource typeVariableSource,
+                                                         String typePath,
+                                                         Map<String, List<AnnotationToken>> annotationTokens,
+                                                         GenericTypeToken boundTypeToken) {
+                            this.typePool = typePool;
+                            this.typeVariableSource = typeVariableSource;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                            this.boundTypeToken = boundTypeToken;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return new TypeList.Generic.Explicit(Generic.OBJECT);
+                        }
+
+                        @Override
+                        public TypeList.Generic getLowerBounds() {
+                            return new LazyTokenList.ForWildcardBound(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                        }
+                    }
+                }
+
+                /**
+                 * A generic type token for a wildcard that is bound above.
+                 */
+                class ForUpperBoundWildcard implements GenericTypeToken {
+
+                    /**
+                     * A token that represents the wildcard's upper bound.
+                     */
+                    private final GenericTypeToken boundTypeToken;
+
+                    /**
+                     * Creates a generic type token for a wildcard that is bound above.
+                     *
+                     * @param boundTypeToken A token that represents the wildcard's upper bound.
+                     */
+                    public ForUpperBoundWildcard(GenericTypeToken boundTypeToken) {
+                        this.boundTypeToken = boundTypeToken;
+                    }
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool,
+                                                 TypeVariableSource typeVariableSource,
+                                                 String typePath,
+                                                 Map<String, List<AnnotationToken>> annotationTokens) {
+                        return new LazyUpperBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && boundTypeToken.equals(((ForUpperBoundWildcard) other).boundTypeToken);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return boundTypeToken.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForUpperBoundWildcard{" +
+                                "boundTypeToken=" + boundTypeToken +
+                                '}';
+                    }
+
+                    /**
+                     * A generic type representation of a tokenized wildcard with an upper bound.
+                     */
+                    protected static class LazyUpperBoundWildcard extends Generic.OfWildcardType {
+
+                        /**
+                         * The type pool to use.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * The type variable source for locating type variables.
+                         */
+                        private final TypeVariableSource typeVariableSource;
+
+                        /**
+                         * This type's type path.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * This type's type annotations.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * A tokenized representation of this wildcard's bound.
+                         */
+                        private final GenericTypeToken boundTypeToken;
+
+                        /**
+                         * Creates a new lazy upper bound wildcard.
+                         *
+                         * @param typePool           The type pool to use.
+                         * @param typeVariableSource The type variable source for locating type variables.
+                         * @param typePath           This type's type path.
+                         * @param annotationTokens   This type's type annotations.
+                         * @param boundTypeToken     A tokenized representation of this wildcard's bound.
+                         */
+                        protected LazyUpperBoundWildcard(TypePool typePool,
+                                                         TypeVariableSource typeVariableSource,
+                                                         String typePath,
+                                                         Map<String, List<AnnotationToken>> annotationTokens,
+                                                         GenericTypeToken boundTypeToken) {
+                            this.typePool = typePool;
+                            this.typeVariableSource = typeVariableSource;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                            this.boundTypeToken = boundTypeToken;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return new LazyTokenList.ForWildcardBound(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
+                        }
+
+                        @Override
+                        public TypeList.Generic getLowerBounds() {
+                            return new TypeList.Generic.Empty();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                        }
+                    }
+                }
+
+                /**
+                 * A generic type token that represents a parameterized type.
+                 */
+                class ForParameterizedType implements GenericTypeToken {
+
+                    /**
+                     * The name of the parameterized type's erasure.
+                     */
+                    private final String name;
+
+                    /**
+                     * A list of tokens that represent the parameters of the represented type.
+                     */
+                    private final List<GenericTypeToken> parameterTypeTokens;
+
+                    /**
+                     * Creates a type token that represents a parameterized type.
+                     *
+                     * @param name                The name of the parameterized type's erasure.
+                     * @param parameterTypeTokens A list of tokens that represent the parameters of the represented type.
+                     */
+                    public ForParameterizedType(String name, List<GenericTypeToken> parameterTypeTokens) {
+                        this.name = name;
+                        this.parameterTypeTokens = parameterTypeTokens;
+                    }
+
+                    @Override
+                    public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
+                        return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens);
+                    }
+
+                    @Override
+                    public boolean isPrimaryBound(TypePool typePool) {
+                        return !typePool.describe(name).resolve().isInterface();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && name.equals(((ForParameterizedType) other).name)
+                                && parameterTypeTokens.equals(((ForParameterizedType) other).parameterTypeTokens);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return name.hashCode() + 31 * parameterTypeTokens.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForParameterizedType{" +
+                                "name='" + name + '\'' +
+                                ", parameterTypeTokens=" + parameterTypeTokens +
+                                '}';
+                    }
+
+                    /**
+                     * A generic type token to describe a parameterized type description with a generic owner type.
+                     */
+                    public static class Nested implements GenericTypeToken {
+
+                        /**
+                         * The name of the parameterized type's erasure.
+                         */
+                        private final String name;
+
+                        /**
+                         * A list of tokens that represent the parameters of the represented type.
+                         */
+                        private final List<GenericTypeToken> parameterTypeTokens;
+
+                        /**
+                         * A token that describes the described parameterized type's owner type.
+                         */
+                        private final GenericTypeToken ownerTypeToken;
+
+                        /**
+                         * Creates a type token that represents a parameterized type.
+                         *
+                         * @param name                The name of the parameterized type's erasure.
+                         * @param parameterTypeTokens A list of tokens that represent the parameters of the represented type.
+                         * @param ownerTypeToken      A token that describes the described parameterized type's owner type.
+                         */
+                        public Nested(String name, List<GenericTypeToken> parameterTypeTokens, GenericTypeToken ownerTypeToken) {
+                            this.name = name;
+                            this.parameterTypeTokens = parameterTypeTokens;
+                            this.ownerTypeToken = ownerTypeToken;
+                        }
+
+                        @Override
+                        public Generic toGenericType(TypePool typePool,
+                                                     TypeVariableSource typeVariableSource,
+                                                     String typePath,
+                                                     Map<String, List<AnnotationToken>> annotationTokens) {
+                            return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens, ownerTypeToken);
+                        }
+
+                        @Override
+                        public boolean isPrimaryBound(TypePool typePool) {
+                            return !typePool.describe(name).resolve().isInterface();
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            Nested nested = (Nested) other;
+                            return name.equals(nested.name)
+                                    && parameterTypeTokens.equals(nested.parameterTypeTokens)
+                                    && ownerTypeToken.equals(nested.ownerTypeToken);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = name.hashCode();
+                            result = 31 * result + parameterTypeTokens.hashCode();
+                            result = 31 * result + ownerTypeToken.hashCode();
+                            return result;
+                        }
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForParameterizedType.Nested{" +
+                                    "name='" + name + '\'' +
+                                    ", parameterTypeTokens=" + parameterTypeTokens +
+                                    ", ownerTypeToken=" + ownerTypeToken +
+                                    '}';
+                        }
+
+                        /**
+                         * A lazy description of a parameterized type with an owner type.
+                         */
+                        protected static class LazyParameterizedType extends Generic.OfParameterizedType {
+
+                            /**
+                             * The type pool that is used for locating a generic type.
+                             */
+                            private final TypePool typePool;
+
+                            /**
+                             * The type variable source to use for resolving type variables.
+                             */
+                            private final TypeVariableSource typeVariableSource;
+
+                            /**
+                             * This type's type path.
+                             */
+                            private final String typePath;
+
+                            /**
+                             * A mapping of type annotations for this type.
+                             */
+                            private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                            /**
+                             * The binary name of this parameterized type's raw type.
+                             */
+                            private final String name;
+
+                            /**
+                             * Tokens that represent this parameterized type's parameters.
+                             */
+                            private final List<GenericTypeToken> parameterTypeTokens;
+
+                            /**
+                             * A token that represents this type's owner type.
+                             */
+                            private final GenericTypeToken ownerTypeToken;
+
+                            /**
+                             * Creates a new lazy parameterized type.
+                             *
+                             * @param typePool            The type pool that is used for locating a generic type.
+                             * @param typeVariableSource  The type variable source to use for resolving type variables.
+                             * @param typePath            This type's type path.
+                             * @param annotationTokens    A mapping of type annotations for this type.
+                             * @param name                The binary name of this parameterized type's raw type.
+                             * @param parameterTypeTokens Tokens that represent this parameterized type's parameters.
+                             * @param ownerTypeToken      A token that represents this type's owner type.
+                             */
+                            protected LazyParameterizedType(TypePool typePool,
+                                                            TypeVariableSource typeVariableSource,
+                                                            String typePath,
+                                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                                            String name,
+                                                            List<GenericTypeToken> parameterTypeTokens,
+                                                            GenericTypeToken ownerTypeToken) {
+                                this.typePool = typePool;
+                                this.typeVariableSource = typeVariableSource;
+                                this.typePath = typePath;
+                                this.annotationTokens = annotationTokens;
+                                this.name = name;
+                                this.parameterTypeTokens = parameterTypeTokens;
+                                this.ownerTypeToken = ownerTypeToken;
+                            }
+
+                            @Override
+                            public TypeDescription asErasure() {
+                                return typePool.describe(name).resolve();
+                            }
+
+                            @Override
+                            public TypeList.Generic getParameters() {
+                                return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
+                            }
+
+                            @Override
+                            public Generic getOwnerType() {
+                                return ownerTypeToken.toGenericType(typePool, typeVariableSource, typePath + OWNER_TYPE_PATH, annotationTokens);
+                            }
+
+                            @Override
+                            public AnnotationList getDeclaredAnnotations() {
+                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                            }
+                        }
+                    }
+
+                    /**
+                     * A generic type description that represents a parameterized type <b>without</b> an enclosing generic owner type.
+                     */
+                    protected static class LazyParameterizedType extends Generic.OfParameterizedType {
+
+                        /**
+                         * The type pool that is used for locating a generic type.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * The type variable source to use for resolving type variables.
+                         */
+                        private final TypeVariableSource typeVariableSource;
+
+                        /**
+                         * This type's type path.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * A mapping of the represent type's annotation tokens.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * The binary name of the raw type.
+                         */
+                        private final String name;
+
+                        /**
+                         * A list of type tokens representing this type's bounds.
+                         */
+                        private final List<GenericTypeToken> parameterTypeTokens;
+
+                        /**
+                         * Creates a new description of a parameterized type.
+                         *
+                         * @param typePool            The type pool that is used for locating a generic type.
+                         * @param typeVariableSource  The type variable source to use for resolving type variables.
+                         * @param typePath            This type's type path.
+                         * @param annotationTokens    A mapping of the represent type's annotation tokens,
+                         * @param name                The binary name of the raw type.
+                         * @param parameterTypeTokens A list of type tokens representing this type's bounds.
+                         */
+                        protected LazyParameterizedType(TypePool typePool,
+                                                        TypeVariableSource typeVariableSource,
+                                                        String typePath,
+                                                        Map<String, List<AnnotationToken>> annotationTokens,
+                                                        String name,
+                                                        List<GenericTypeToken> parameterTypeTokens) {
+                            this.typePool = typePool;
+                            this.typeVariableSource = typeVariableSource;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                            this.name = name;
+                            this.parameterTypeTokens = parameterTypeTokens;
+                        }
+
+                        @Override
+                        public TypeDescription asErasure() {
+                            return typePool.describe(name).resolve();
+                        }
+
+                        @Override
+                        public TypeList.Generic getParameters() {
+                            return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
+                        }
+
+                        @Override
+                        public Generic getOwnerType() {
+                            TypeDescription ownerType = typePool.describe(name).resolve().getEnclosingType();
+                            return ownerType == null
+                                    ? UNDEFINED
+                                    : ownerType.asGenericType();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                        }
+                    }
+                }
+
+                /**
+                 * A lazy list of type tokens.
+                 */
+                class LazyTokenList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The type pool that is used for locating a generic type.
+                     */
+                    private final TypePool typePool;
+
+                    /**
+                     * The type variable source to use for resolving type variables.
+                     */
+                    private final TypeVariableSource typeVariableSource;
+
+                    /**
+                     * The represented types' type path to which an index step is added upon resolution.
+                     */
+                    private final String typePath;
+
+                    /**
+                     * A mapping of the represent types' annotation tokens.
+                     */
+                    private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                    /**
+                     * A list of type tokens this list represents.
+                     */
+                    private final List<GenericTypeToken> genericTypeTokens;
+
+                    /**
+                     * Creates a new type list that represents a list of tokenized types.
+                     *
+                     * @param typePool           The type pool that is used for locating a generic type.
+                     * @param typeVariableSource The type variable source to use for resolving type variables.
+                     * @param typePath           The represented types' type path to which an index step is added upon resolution.
+                     * @param annotationTokens   A mapping of the represent types' annotation tokens,
+                     * @param genericTypeTokens  A list of type tokens this list represents.
+                     */
+                    protected LazyTokenList(TypePool typePool,
+                                            TypeVariableSource typeVariableSource,
+                                            String typePath,
+                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                            List<GenericTypeToken> genericTypeTokens) {
+                        this.typePool = typePool;
+                        this.typeVariableSource = typeVariableSource;
+                        this.typePath = typePath;
+                        this.annotationTokens = annotationTokens;
+                        this.genericTypeTokens = genericTypeTokens;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return genericTypeTokens.get(index).toGenericType(typePool, typeVariableSource, typePath + index + INDEXED_TYPE_DELIMITER, annotationTokens);
+                    }
+
+                    @Override
+                    public int size() {
+                        return genericTypeTokens.size();
+                    }
+
+                    /**
+                     * A generic type description representing a tokenized wildcard bound.
+                     */
+                    protected static class ForWildcardBound extends TypeList.Generic.AbstractBase {
+
+                        /**
+                         * The type pool that is used for locating a generic type.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * The type variable source to use for resolving type variables.
+                         */
+                        private final TypeVariableSource typeVariableSource;
+
+                        /**
+                         * The represented types' type path to which a wildcard step is added upon resolution.
+                         */
+                        private final String typePath;
+
+                        /**
+                         * A mapping of the represent types' annotation tokens.
+                         */
+                        private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                        /**
+                         * A token representing the wildcard's bound.
+                         */
+                        private final GenericTypeToken genericTypeToken;
+
+                        /**
+                         * @param typePool           The type pool that is used for locating a generic type.
+                         * @param typeVariableSource The type variable source to use for resolving type variables.
+                         * @param typePath           The represented types' type path to which a wildcard step is added upon resolution.
+                         * @param annotationTokens   A mapping of the represent types' annotation tokens,
+                         * @param genericTypeToken   A token representing the wildcard's bound.
+                         */
+                        protected ForWildcardBound(TypePool typePool,
+                                                   TypeVariableSource typeVariableSource,
+                                                   String typePath,
+                                                   Map<String, List<AnnotationToken>> annotationTokens,
+                                                   GenericTypeToken genericTypeToken) {
+                            this.typePool = typePool;
+                            this.typeVariableSource = typeVariableSource;
+                            this.typePath = typePath;
+                            this.annotationTokens = annotationTokens;
+                            this.genericTypeToken = genericTypeToken;
+                        }
+
+                        @Override
+                        public Generic get(int index) {
+                            if (index == 0) {
+                                return genericTypeToken.toGenericType(typePool, typeVariableSource, typePath + WILDCARD_TYPE_PATH, annotationTokens);
+                            } else {
+                                throw new IndexOutOfBoundsException("index = " + index);
+                            }
+                        }
+
+                        @Override
+                        public int size() {
+                            return 1;
+                        }
+                    }
+                }
+            }
+
+            /**
+             * A token for representing collected data on an annotation.
+             */
+            protected static class AnnotationToken {
+
+                /**
+                 * The descriptor of the represented annotation.
+                 */
+                private final String descriptor;
+
+                /**
+                 * A map of annotation value names to their value representations.
+                 */
+                private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
+
+                /**
+                 * Creates a new annotation token.
+                 *
+                 * @param descriptor The descriptor of the represented annotation.
+                 * @param values     A map of annotation value names to their value representations.
+                 */
+                protected AnnotationToken(String descriptor, Map<String, AnnotationDescription.AnnotationValue<?, ?>> values) {
+                    this.descriptor = descriptor;
+                    this.values = values;
+                }
+
+                /**
+                 * Returns a map of annotation value names to their value representations.
+                 *
+                 * @return A map of annotation value names to their value representations.
+                 */
+                protected Map<String, AnnotationDescription.AnnotationValue<?, ?>> getValues() {
+                    return values;
+                }
+
+                /**
+                 * Returns the annotation type's binary name.
+                 *
+                 * @return The annotation type's binary name.
+                 */
+                protected String getBinaryName() {
+                    return descriptor.substring(1, descriptor.length() - 1).replace('/', '.');
+                }
+
+                /**
+                 * Transforms this token into an annotation description.
+                 *
+                 * @param typePool The type pool to be used for looking up linked types.
+                 * @return An optional description of this annotation's token.
+                 */
+                private Resolution toAnnotationDescription(TypePool typePool) {
+                    TypePool.Resolution resolution = typePool.describe(getBinaryName());
+                    return resolution.isResolved()
+                            ? new Resolution.Simple(new LazyAnnotationDescription(typePool, resolution.resolve(), values))
+                            : new Resolution.Illegal(getBinaryName());
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    AnnotationToken that = (AnnotationToken) other;
+                    return descriptor.equals(that.descriptor)
+                            && values.equals(that.values);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = descriptor.hashCode();
+                    result = 31 * result + values.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.LazyTypeDescription.AnnotationToken{" +
+                            "descriptor='" + descriptor + '\'' +
+                            ", values=" + values +
+                            '}';
+                }
+
+                /**
+                 * A resolution for an annotation tokens. Any annotation is suppressed if its type is not available.
+                 * This conforms to the handling of the Java reflection API.
+                 */
+                protected interface Resolution {
+
+                    /**
+                     * Returns {@code true} if the represented annotation could be resolved.
+                     *
+                     * @return {@code true} if the represented annotation could be resolved.
+                     */
+                    boolean isResolved();
+
+                    /**
+                     * Returns the resolved annotation. This method throws an exception if this instance is not resolved.
+                     *
+                     * @return The resolved annotation. This method throws an exception if this instance is not resolved.
+                     */
+                    AnnotationDescription resolve();
+
+                    /**
+                     * A simple resolved annotation.
+                     */
+                    class Simple implements Resolution {
+
+                        /**
+                         * The represented annotation description.
+                         */
+                        private final AnnotationDescription annotationDescription;
+
+                        /**
+                         * Creates a new simple resolution.
+                         *
+                         * @param annotationDescription The represented annotation description.
+                         */
+                        protected Simple(AnnotationDescription annotationDescription) {
+                            this.annotationDescription = annotationDescription;
+                        }
+
+                        @Override
+                        public boolean isResolved() {
+                            return true;
+                        }
+
+                        @Override
+                        public AnnotationDescription resolve() {
+                            return annotationDescription;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && annotationDescription.equals(((Simple) other).annotationDescription);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return annotationDescription.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.LazyTypeDescription.AnnotationToken.Resolution.Simple{" +
+                                    "annotationDescription=" + annotationDescription +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * An illegal resolution.
+                     */
+                    class Illegal implements Resolution {
+
+                        /**
+                         * The annotation's binary type name.
+                         */
+                        private final String annotationType;
+
+                        /**
+                         * Creates a new illegal resolution.
+                         *
+                         * @param annotationType The annotation's binary type name.
+                         */
+                        public Illegal(String annotationType) {
+                            this.annotationType = annotationType;
+                        }
+
+                        @Override
+                        public boolean isResolved() {
+                            return false;
+                        }
+
+                        @Override
+                        public AnnotationDescription resolve() {
+                            throw new IllegalStateException("Annotation type is not available: " + annotationType);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && annotationType.equals(((Illegal) other).annotationType);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return annotationType.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypePool.Default.LazyTypeDescription.AnnotationToken.Resolution.Illegal{" +
+                                    "annotationType=" + annotationType +
+                                    '}';
+                        }
+                    }
+                }
+            }
+
+            /**
+             * A token for representing collected data on a field.
+             */
+            protected static class FieldToken {
+
+                /**
+                 * The name of the field.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of the represented field.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The descriptor of the field.
+                 */
+                private final String descriptor;
+
+                /**
+                 * The resolution of this field's generic type.
+                 */
+                private final GenericTypeToken.Resolution.ForField signatureResolution;
+
+                /**
+                 * A mapping of the field type's type annotation tokens.
+                 */
+                private final Map<String, List<AnnotationToken>> typeAnnotationTokens;
+
+                /**
+                 * A list of annotation tokens representing the annotations of the represented field.
+                 */
+                private final List<AnnotationToken> annotationTokens;
+
+                /**
+                 * Creates a new field token.
+                 *
+                 * @param name                 The name of the field.
+                 * @param modifiers            The modifiers of the represented field.
+                 * @param descriptor           The descriptor of the field.
+                 * @param signatureResolution  The resolution of this field's generic type.
+                 * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
+                 * @param annotationTokens     A list of annotation tokens representing the annotations of the represented field.
+                 */
+                protected FieldToken(String name,
+                                     int modifiers,
+                                     String descriptor,
+                                     GenericTypeToken.Resolution.ForField signatureResolution,
+                                     Map<String, List<AnnotationToken>> typeAnnotationTokens,
+                                     List<AnnotationToken> annotationTokens) {
+                    this.modifiers = modifiers;
+                    this.name = name;
+                    this.descriptor = descriptor;
+                    this.signatureResolution = signatureResolution;
+                    this.typeAnnotationTokens = typeAnnotationTokens;
+                    this.annotationTokens = annotationTokens;
+                }
+
+                /**
+                 * Transforms this token into a lazy field description.
+                 *
+                 * @param lazyTypeDescription The lazy type description to attach this field description to.
+                 * @return A field description resembling this field token.
+                 */
+                private LazyFieldDescription toFieldDescription(LazyTypeDescription lazyTypeDescription) {
+                    return lazyTypeDescription.new LazyFieldDescription(name,
+                            modifiers,
+                            descriptor,
+                            signatureResolution,
+                            typeAnnotationTokens,
+                            annotationTokens);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    FieldToken that = (FieldToken) other;
+                    return modifiers == that.modifiers
+                            && annotationTokens.equals(that.annotationTokens)
+                            && descriptor.equals(that.descriptor)
+                            && signatureResolution.equals(that.signatureResolution)
+                            && typeAnnotationTokens.equals(that.typeAnnotationTokens)
+                            && name.equals(that.name);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = modifiers;
+                    result = 31 * result + name.hashCode();
+                    result = 31 * result + descriptor.hashCode();
+                    result = 31 * result + signatureResolution.hashCode();
+                    result = 31 * result + typeAnnotationTokens.hashCode();
+                    result = 31 * result + annotationTokens.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.LazyTypeDescription.FieldToken{" +
+                            "modifiers=" + modifiers +
+                            ", name='" + name + '\'' +
+                            ", descriptor='" + descriptor + '\'' +
+                            ", signatureResolution=" + signatureResolution +
+                            ", typeAnnotationTokens=" + typeAnnotationTokens +
+                            ", annotationTokens=" + annotationTokens +
+                            '}';
+                }
+            }
+
+            /**
+             * A token for representing collected data on a method.
+             */
+            protected static class MethodToken {
+
+                /**
+                 * The internal name of the represented method.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of the represented method.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The descriptor of the represented method.
+                 */
+                private final String descriptor;
+
+                /**
+                 * The generic type resolution of this method.
+                 */
+                private final GenericTypeToken.Resolution.ForMethod signatureResolution;
+
+                /**
+                 * An array of internal names of the exceptions of the represented method or {@code null} if there
+                 * are no such exceptions.
+                 */
+                private final String[] exceptionName;
+
+                /**
+                 * A mapping of the type variables' type annotation tokens by their indices.
+                 */
+                private final Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens;
+
+                /**
+                 * A mapping of the type variables' type bounds' type annotation tokens by their indices and each variable's index.
+                 */
+                private final Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens;
+
+                /**
+                 * A mapping of the return type's type variable tokens.
+                 */
+                private final Map<String, List<AnnotationToken>> returnTypeAnnotationTokens;
+
+                /**
+                 * A mapping of the parameter types' type annotation tokens by their indices.
+                 */
+                private final Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens;
+
+                /**
+                 * A mapping of the exception types' type annotation tokens by their indices.
+                 */
+                private final Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens;
+
+                /**
+                 * A list of annotation tokens that are present on the represented method.
+                 */
+                private final List<AnnotationToken> annotationTokens;
+
+                /**
+                 * A map of parameter indices to tokens that represent their annotations.
+                 */
+                private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
+
+                /**
+                 * A list of tokens describing meta data of the method's parameters.
+                 */
+                private final List<ParameterToken> parameterTokens;
+
+                /**
+                 * The default value of this method or {@code null} if there is no such value.
+                 */
+                private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+
+                /**
+                 * Creates a new method token.
+                 *
+                 * @param name                              The name of the method.
+                 * @param modifiers                         The modifiers of the represented method.
+                 * @param descriptor                        The descriptor of the represented method.
+                 * @param signatureResolution               The generic type resolution of this method.
+                 * @param exceptionName                     An array of internal names of the exceptions of the represented method or {@code null} if
+                 *                                          there are no such exceptions.
+                 * @param typeVariableAnnotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+                 * @param typeVariableBoundAnnotationTokens A mapping of the type variables' type bounds' type annotation tokens by their
+                 *                                          index and each variable's index.
+                 * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
+                 * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
+                 * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
+                 * @param annotationTokens                  A list of annotation tokens that are present on the represented method.
+                 * @param parameterAnnotationTokens         A map of parameter indices to tokens that represent their annotations.
+                 * @param parameterTokens                   A list of tokens describing meta data of the method's parameters.
+                 * @param defaultValue                      The default value of this method or {@code null} if there is no such value.
+                 */
+                protected MethodToken(String name,
+                                      int modifiers,
+                                      String descriptor,
+                                      GenericTypeToken.Resolution.ForMethod signatureResolution,
+                                      String[] exceptionName,
+                                      Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
+                                      Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens,
+                                      Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
+                                      Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
+                                      Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
+                                      List<AnnotationToken> annotationTokens,
+                                      Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
+                                      List<ParameterToken> parameterTokens,
+                                      AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
+                    this.modifiers = modifiers;
+                    this.name = name;
+                    this.descriptor = descriptor;
+                    this.signatureResolution = signatureResolution;
+                    this.exceptionName = exceptionName;
+                    this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
+                    this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
+                    this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
+                    this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
+                    this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
+                    this.annotationTokens = annotationTokens;
+                    this.parameterAnnotationTokens = parameterAnnotationTokens;
+                    this.parameterTokens = parameterTokens;
+                    this.defaultValue = defaultValue;
+                }
+
+                /**
+                 * Transforms this method token to a method description that is attached to a lazy type description.
+                 *
+                 * @param lazyTypeDescription The lazy type description to attach this method description to.
+                 * @return A method description representing this field token.
+                 */
+                private MethodDescription.InDefinedShape toMethodDescription(LazyTypeDescription lazyTypeDescription) {
+                    return lazyTypeDescription.new LazyMethodDescription(name,
+                            modifiers,
+                            descriptor,
+                            signatureResolution,
+                            exceptionName,
+                            typeVariableAnnotationTokens,
+                            typeVariableBoundAnnotationTokens,
+                            returnTypeAnnotationTokens,
+                            parameterTypeAnnotationTokens,
+                            exceptionTypeAnnotationTokens,
+                            annotationTokens,
+                            parameterAnnotationTokens,
+                            parameterTokens,
+                            defaultValue);
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    MethodToken that = (MethodToken) other;
+                    return modifiers == that.modifiers
+                            && typeVariableAnnotationTokens.equals(that.typeVariableAnnotationTokens)
+                            && typeVariableBoundAnnotationTokens.equals(that.typeVariableBoundAnnotationTokens)
+                            && returnTypeAnnotationTokens.equals(that.returnTypeAnnotationTokens)
+                            && parameterTypeAnnotationTokens.equals(that.parameterTypeAnnotationTokens)
+                            && exceptionTypeAnnotationTokens.equals(that.exceptionTypeAnnotationTokens)
+                            && annotationTokens.equals(that.annotationTokens)
+                            && defaultValue.equals(that.defaultValue)
+                            && descriptor.equals(that.descriptor)
+                            && parameterTokens.equals(that.parameterTokens)
+                            && signatureResolution.equals(that.signatureResolution)
+                            && Arrays.equals(exceptionName, that.exceptionName)
+                            && name.equals(that.name)
+                            && parameterAnnotationTokens.equals(that.parameterAnnotationTokens);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = modifiers;
+                    result = 31 * result + name.hashCode();
+                    result = 31 * result + descriptor.hashCode();
+                    result = 31 * result + signatureResolution.hashCode();
+                    result = 31 * result + Arrays.hashCode(exceptionName);
+                    result = 31 * result + typeVariableAnnotationTokens.hashCode();
+                    result = 31 * result + typeVariableBoundAnnotationTokens.hashCode();
+                    result = 31 * result + returnTypeAnnotationTokens.hashCode();
+                    result = 31 * result + parameterTypeAnnotationTokens.hashCode();
+                    result = 31 * result + exceptionTypeAnnotationTokens.hashCode();
+                    result = 31 * result + annotationTokens.hashCode();
+                    result = 31 * result + parameterAnnotationTokens.hashCode();
+                    result = 31 * result + parameterTokens.hashCode();
+                    result = 31 * result + defaultValue.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypePool.Default.LazyTypeDescription.MethodToken{" +
+                            "modifiers=" + modifiers +
+                            ", name='" + name + '\'' +
+                            ", descriptor='" + descriptor + '\'' +
+                            ", signatureResolution=" + signatureResolution +
+                            ", exceptionName=" + Arrays.toString(exceptionName) +
+                            ", typeVariableAnnotationTokens=" + typeVariableAnnotationTokens +
+                            ", typeVariableBoundAnnotationTokens=" + typeVariableBoundAnnotationTokens +
+                            ", returnTypeAnnotationTokens=" + returnTypeAnnotationTokens +
+                            ", parameterTypeAnnotationTokens=" + parameterTypeAnnotationTokens +
+                            ", exceptionTypeAnnotationTokens=" + exceptionTypeAnnotationTokens +
+                            ", annotationTokens=" + annotationTokens +
+                            ", parameterAnnotationTokens=" + parameterAnnotationTokens +
+                            ", parameterTokens=" + parameterTokens +
+                            ", defaultValue=" + defaultValue +
+                            '}';
+                }
+
+                /**
+                 * A token representing a method's parameter.
+                 */
+                protected static class ParameterToken {
+
+                    /**
+                     * Donates an unknown name of a parameter.
+                     */
+                    protected static final String NO_NAME = null;
+
+                    /**
+                     * Donates an unknown modifier of a parameter.
+                     */
+                    protected static final Integer NO_MODIFIERS = null;
+
+                    /**
+                     * The name of the parameter or {@code null} if no explicit name for this parameter is known.
+                     */
+                    private final String name;
+
+                    /**
+                     * The modifiers of the parameter or {@code null} if no modifiers are known for this parameter.
+                     */
+                    private final Integer modifiers;
+
+                    /**
+                     * Creates a parameter token for a parameter without an explicit name and without specific modifiers.
+                     */
+                    protected ParameterToken() {
+                        this(NO_NAME);
+                    }
+
+                    /**
+                     * Creates a parameter token for a parameter with an explicit name and without specific modifiers.
+                     *
+                     * @param name The name of the parameter.
+                     */
+                    protected ParameterToken(String name) {
+                        this(name, NO_MODIFIERS);
+                    }
+
+                    /**
+                     * Creates a parameter token for a parameter with an explicit name and with specific modifiers.
+                     *
+                     * @param name      The name of the parameter.
+                     * @param modifiers The modifiers of the parameter.
+                     */
+                    protected ParameterToken(String name, Integer modifiers) {
+                        this.name = name;
+                        this.modifiers = modifiers;
+                    }
+
+                    /**
+                     * Returns the name of the parameter or {@code null} if there is no such name.
+                     *
+                     * @return The name of the parameter or {@code null} if there is no such name.
+                     */
+                    protected String getName() {
+                        return name;
+                    }
+
+                    /**
+                     * Returns the modifiers of the parameter or {@code null} if no modifiers are known.
+                     *
+                     * @return The modifiers of the parameter or {@code null} if no modifiers are known.
+                     */
+                    protected Integer getModifiers() {
+                        return modifiers;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        ParameterToken that = ((ParameterToken) other);
+                        return !(modifiers != null ? !modifiers.equals(that.modifiers) : that.modifiers != null)
+                                && !(name != null ? !name.equals(that.name) : that.name != null);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = name != null ? name.hashCode() : 0;
+                        result = 31 * result + (modifiers != null ? modifiers.hashCode() : 0);
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.LazyTypeDescription.MethodToken.ParameterToken{" +
+                                "name='" + name + '\'' +
+                                ", modifiers=" + modifiers +
+                                '}';
+                    }
+                }
+            }
+
+            /**
+             * A lazy description of an annotation that looks up types from a type pool when required.
+             */
+            private static class LazyAnnotationDescription extends AnnotationDescription.AbstractBase {
+
+                /**
+                 * The type pool for looking up type references.
+                 */
+                protected final TypePool typePool;
+
+                /**
+                 * The type of this annotation.
+                 */
+                private final TypeDescription annotationType;
+
+                /**
+                 * A map of annotation values by their property name.
+                 */
+                protected final Map<String, AnnotationValue<?, ?>> values;
+
+                /**
+                 * Creates a new lazy annotation description.
+                 *
+                 * @param typePool       The type pool to be used for looking up linked types.
+                 * @param annotationType The annotation's type.
+                 * @param values         A map of annotation value names to their value representations.
+                 */
+                private LazyAnnotationDescription(TypePool typePool, TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> values) {
+                    this.typePool = typePool;
+                    this.annotationType = annotationType;
+                    this.values = values;
+                }
+
+                /**
+                 * Represents a list of annotation tokens in form of a list of lazy type annotations. Any annotation with
+                 * a type that cannot be loaded from the type pool is ignored and not included in the list. If the provided
+                 * {@code tokens} are {@code null}, an empty list is returned.
+                 *
+                 * @param typePool The type pool to be used for looking up linked types.
+                 * @param tokens   The tokens to represent in the list.
+                 * @return A list of the loadable annotations.
+                 */
+                protected static AnnotationList asListOfNullable(TypePool typePool, List<? extends AnnotationToken> tokens) {
+                    return tokens == null
+                            ? new AnnotationList.Empty()
+                            : asList(typePool, tokens);
+                }
+
+                /**
+                 * Represents a list of annotation tokens in form of a list of lazy type annotations. Any annotation with
+                 * a type that cannot be loaded from the type pool is ignored and not included in the list.
+                 *
+                 * @param typePool The type pool to be used for looking up linked types.
+                 * @param tokens   The tokens to represent in the list.
+                 * @return A list of the loadable annotations.
+                 */
+                protected static AnnotationList asList(TypePool typePool, List<? extends AnnotationToken> tokens) {
+                    List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
+                    for (AnnotationToken token : tokens) {
+                        AnnotationToken.Resolution resolution = token.toAnnotationDescription(typePool);
+                        if (resolution.isResolved()) {
+                            annotationDescriptions.add(resolution.resolve());
+                        }
+                    }
+                    return new AnnotationList.Explicit(annotationDescriptions);
+                }
+
+                @Override
+                public Object getValue(MethodDescription.InDefinedShape methodDescription) {
+                    if (!methodDescription.getDeclaringType().asErasure().equals(annotationType)) {
+                        throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
+                    }
+                    AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
+                    Object value = annotationValue == null
+                            ? getAnnotationType().getDeclaredMethods().filter(is(methodDescription)).getOnly().getDefaultValue()
+                            : annotationValue.resolve();
+                    if (value == null) {
+                        throw new IllegalStateException(methodDescription + " is not defined on annotation");
+                    }
+                    return PropertyDispatcher.of(value.getClass()).conditionalClone(value);
+                }
+
+                @Override
+                public TypeDescription getAnnotationType() {
+                    return annotationType;
+                }
+
+                @Override
+                public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
+                    if (!this.annotationType.represents(annotationType)) {
+                        throw new IllegalArgumentException(annotationType + " does not represent " + this.annotationType);
+                    }
+                    return new Loadable<T>(typePool, annotationType, values);
+                }
+
+                /**
+                 * A loadable version of a lazy annotation description.
+                 *
+                 * @param <S> The annotation type.
+                 */
+                private static class Loadable<S extends Annotation> extends LazyAnnotationDescription implements AnnotationDescription.Loadable<S> {
+
+                    /**
+                     * The loaded annotation type.
+                     */
+                    private final Class<S> annotationType;
+
+                    /**
+                     * Creates a new loadable version of a lazy annotation.
+                     *
+                     * @param typePool       The type pool to be used for looking up linked types.
+                     * @param annotationType The annotation's loaded type.
+                     * @param values         A map of annotation value names to their value representations.
+                     */
+                    private Loadable(TypePool typePool, Class<S> annotationType, Map<String, AnnotationValue<?, ?>> values) {
+                        super(typePool, new ForLoadedType(annotationType), values);
+                        this.annotationType = annotationType;
+                    }
+
+                    @Override
+                    public S load() throws ClassNotFoundException {
+                        return load(annotationType.getClassLoader());
+                    }
+
+                    @Override
+                    @SuppressWarnings("unchecked")
+                    public S load(ClassLoader classLoader) throws ClassNotFoundException {
+                        return (S) Proxy.newProxyInstance(classLoader,
+                                new Class<?>[]{annotationType},
+                                AnnotationInvocationHandler.of(classLoader, annotationType, values));
+                    }
+
+                    @Override
+                    public S loadSilent() {
+                        try {
+                            return load();
+                        } catch (ClassNotFoundException exception) {
+                            throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
+                        }
+                    }
+
+                    @Override
+                    public S loadSilent(ClassLoader classLoader) {
+                        try {
+                            return load(classLoader);
+                        } catch (ClassNotFoundException exception) {
+                            throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
+                        }
+                    }
+                }
+            }
+
+            /**
+             * An implementation of a {@link PackageDescription} that only
+             * loads its annotations on requirement.
+             */
+            private static class LazyPackageDescription extends PackageDescription.AbstractBase {
+
+                /**
+                 * The type pool to use for look-ups.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * The name of the package.
+                 */
+                private final String name;
+
+                /**
+                 * Creates a new lazy package description.
+                 *
+                 * @param typePool The type pool to use for look-ups.
+                 * @param name     The name of the package.
+                 */
+                private LazyPackageDescription(TypePool typePool, String name) {
+                    this.typePool = typePool;
+                    this.name = name;
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    Resolution resolution = typePool.describe(name + "." + PackageDescription.PACKAGE_CLASS_NAME);
+                    return resolution.isResolved()
+                            ? resolution.resolve().getDeclaredAnnotations()
+                            : new AnnotationList.Empty();
+                }
+
+                @Override
+                public String getName() {
+                    return name;
+                }
+            }
+
+            /**
+             * A list that is constructing {@link LazyTypeDescription}s.
+             */
+            private static class LazyTypeList extends TypeList.AbstractBase {
+
+                /**
+                 * The type pool to use for locating types.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * A list of type descriptors that this list represents.
+                 */
+                private final List<String> descriptors;
+
+                /**
+                 * Creates a list of lazy type descriptions.
+                 *
+                 * @param typePool    The type pool to use for locating types.
+                 * @param descriptors A list of type descriptors that this list represents.
+                 */
+                private LazyTypeList(TypePool typePool, List<String> descriptors) {
+                    this.typePool = typePool;
+                    this.descriptors = descriptors;
+                }
+
+                @Override
+                public TypeDescription get(int index) {
+                    return TokenizedGenericType.toErasure(typePool, descriptors.get(index));
+                }
+
+                @Override
+                public int size() {
+                    return descriptors.size();
+                }
+
+                @Override
+                public String[] toInternalNames() {
+                    String[] internalName = new String[descriptors.size()];
+                    int index = 0;
+                    for (String descriptor : descriptors) {
+                        internalName[index++] = Type.getType(descriptor).getInternalName();
+                    }
+                    return internalName.length == 0
+                            ? NO_INTERFACES
+                            : internalName;
+                }
+
+                @Override
+                public int getStackSize() {
+                    int stackSize = 0;
+                    for (String descriptor : descriptors) {
+                        stackSize += Type.getType(descriptor).getSize();
+                    }
+                    return stackSize;
+                }
+            }
+
+            /**
+             * A representation of a generic type that is described by a {@link GenericTypeToken}.
+             */
+            private static class TokenizedGenericType extends Generic.LazyProjection {
+
+                /**
+                 * The type pool to use for locating referenced types.
+                 */
+                private final TypePool typePool;
+
+                /**
+                 * The token that describes the represented generic type.
+                 */
+                private final GenericTypeToken genericTypeToken;
+
+                /**
+                 * A descriptor of the generic type's raw type.
+                 */
+                private final String rawTypeDescriptor;
+
+                /**
+                 * The tokenized type's type annotation tokens.
+                 */
+                private final Map<String, List<AnnotationToken>> annotationTokens;
+
+                /**
+                 * The closest type variable source of this generic type's declaration context.
+                 */
+                private final TypeVariableSource typeVariableSource;
+
+                /**
+                 * Creates a new tokenized generic type.
+                 *
+                 * @param typePool           The type pool to use for locating referenced types.
+                 * @param genericTypeToken   The token that describes the represented generic type.
+                 * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
+                 * @param annotationTokens   The tokenized type's type annotation tokens.
+                 * @param typeVariableSource The closest type variable source of this generic type's declaration context.
+                 */
+                protected TokenizedGenericType(TypePool typePool,
+                                               GenericTypeToken genericTypeToken,
+                                               String rawTypeDescriptor,
+                                               Map<String, List<AnnotationToken>> annotationTokens,
+                                               TypeVariableSource typeVariableSource) {
+                    this.typePool = typePool;
+                    this.genericTypeToken = genericTypeToken;
+                    this.rawTypeDescriptor = rawTypeDescriptor;
+                    this.annotationTokens = annotationTokens;
+                    this.typeVariableSource = typeVariableSource;
+                }
+
+                /**
+                 * Creates a new generic type description for a tokenized generic type.
+                 *
+                 * @param typePool           The type pool to use for locating referenced types.
+                 * @param genericTypeToken   The token that describes the represented generic type.
+                 * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
+                 * @param annotationTokens   The tokenized type's type annotation tokens or {@code null} if no such annotations are defined.
+                 * @param typeVariableSource The closest type variable source of this generic type's declaration context.
+                 * @return A suitable genric type.
+                 */
+                protected static Generic of(TypePool typePool,
+                                            GenericTypeToken genericTypeToken,
+                                            String rawTypeDescriptor,
+                                            Map<String, List<AnnotationToken>> annotationTokens,
+                                            TypeVariableSource typeVariableSource) {
+                    return new TokenizedGenericType(typePool,
+                            genericTypeToken,
+                            rawTypeDescriptor,
+                            annotationTokens == null
+                                    ? Collections.emptyMap()
+                                    : annotationTokens,
+                            typeVariableSource);
+                }
+
+                /**
+                 * Creates a type description from a descriptor by looking up the corresponding type.
+                 *
+                 * @param typePool   The type pool to use for locating a type.
+                 * @param descriptor The descriptor to interpret.
+                 * @return A description of the type represented by the descriptor.
+                 */
+                protected static TypeDescription toErasure(TypePool typePool, String descriptor) {
+                    Type type = Type.getType(descriptor);
+                    return typePool.describe(type.getSort() == Type.ARRAY
+                            ? type.getInternalName().replace('/', '.')
+                            : type.getClassName()).resolve();
+                }
+
+                @Override
+                protected Generic resolve() {
+                    return genericTypeToken.toGenericType(typePool, typeVariableSource, GenericTypeToken.EMPTY_TYPE_PATH, annotationTokens);
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return toErasure(typePool, rawTypeDescriptor);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(GenericTypeToken.EMPTY_TYPE_PATH));
+                }
+
+                /**
+                 * A tokenized list of generic types.
+                 */
+                protected static class TokenList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The type pool to use for locating types.
+                     */
+                    private final TypePool typePool;
+
+                    /**
+                     * Type tokens that describe the represented generic types.
+                     */
+                    private final List<GenericTypeToken> genericTypeTokens;
+
+                    /**
+                     * A list of the generic types' erasures.
+                     */
+                    private final List<String> rawTypeDescriptors;
+
+                    /**
+                     * The closest type variable source of this generic type's declaration context.
+                     */
+                    private final TypeVariableSource typeVariableSource;
+
+                    /**
+                     * A mapping of each type's type annotation tokens by its index.
+                     */
+                    private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
+
+                    /**
+                     * Creates a list of tokenized generic types.
+                     *
+                     * @param typePool           The type pool to use for locating type descriptions.
+                     * @param genericTypeTokens  A list of tokens describing the represented generic types.
+                     * @param annotationTokens   A mapping of each type's type annotation tokens by its index.
+                     * @param rawTypeDescriptors A list of the generic types' erasures.
+                     * @param typeVariableSource The closest type variable source of this generic type's declaration context.
+                     */
+                    private TokenList(TypePool typePool,
+                                      List<GenericTypeToken> genericTypeTokens,
+                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                      List<String> rawTypeDescriptors,
+                                      TypeVariableSource typeVariableSource) {
+                        this.typePool = typePool;
+                        this.genericTypeTokens = genericTypeTokens;
+                        this.annotationTokens = annotationTokens;
+                        this.rawTypeDescriptors = rawTypeDescriptors;
+                        this.typeVariableSource = typeVariableSource;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return index < genericTypeTokens.size()
+                                ? TokenizedGenericType.of(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), annotationTokens.get(index), typeVariableSource)
+                                : TokenizedGenericType.toErasure(typePool, rawTypeDescriptors.get(index)).asGenericType();
+                    }
+
+                    @Override
+                    public int size() {
+                        return rawTypeDescriptors.size();
+                    }
+
+                    @Override
+                    public TypeList asErasures() {
+                        return new LazyTypeList(typePool, rawTypeDescriptors);
+                    }
+                }
+
+                /**
+                 * A list of tokenized type variables.
+                 */
+                protected static class TypeVariableList extends TypeList.Generic.AbstractBase {
+
+                    /**
+                     * The type pool to use for locating types.
+                     */
+                    private final TypePool typePool;
+
+                    /**
+                     * Type tokens that describe the represented type variables.
+                     */
+                    private final List<GenericTypeToken.OfFormalTypeVariable> typeVariables;
+
+                    /**
+                     * The type variable source of the represented type variables.
+                     */
+                    private final TypeVariableSource typeVariableSource;
+
+                    /**
+                     * A mapping of the type variables' type annotation tokens by their indices.
+                     */
+                    private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
+
+                    /**
+                     * A mapping of the type variables' bound types' annotation tokens by their indices and each type variable's index..
+                     */
+                    private final Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens;
+
+                    /**
+                     * Creates a list of type variables.
+                     *
+                     * @param typePool              The type pool to use for locating types.
+                     * @param typeVariables         Type tokens that describe the represented generic types.
+                     * @param typeVariableSource    The type variable source of the represented type variables.
+                     * @param annotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+                     * @param boundAnnotationTokens A mapping of the type variables' bound types' annotation tokens by their indices
+                     *                              and each type variable's index.
+                     */
+                    protected TypeVariableList(TypePool typePool,
+                                               List<GenericTypeToken.OfFormalTypeVariable> typeVariables,
+                                               TypeVariableSource typeVariableSource,
+                                               Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
+                                               Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
+                        this.typePool = typePool;
+                        this.typeVariables = typeVariables;
+                        this.typeVariableSource = typeVariableSource;
+                        this.annotationTokens = annotationTokens;
+                        this.boundAnnotationTokens = boundAnnotationTokens;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return typeVariables.get(index).toGenericType(typePool, typeVariableSource, annotationTokens.get(index), boundAnnotationTokens.get(index));
+                    }
+
+                    @Override
+                    public int size() {
+                        return typeVariables.size();
+                    }
+                }
+
+                /**
+                 * A lazy description of a non-well-defined described generic type.
+                 */
+                protected static class Malformed extends LazyProjection {
+
+                    /**
+                     * The type pool to use for locating types.
+                     */
+                    private final TypePool typePool;
+
+                    /**
+                     * The descriptor of the type erasure.
+                     */
+                    private final String rawTypeDescriptor;
+
+                    /**
+                     * Creates a lazy description of a non-well-defined described generic type.
+                     *
+                     * @param typePool          The type pool to use for locating types.
+                     * @param rawTypeDescriptor The descriptor of the type erasure.
+                     */
+                    protected Malformed(TypePool typePool, String rawTypeDescriptor) {
+                        this.typePool = typePool;
+                        this.rawTypeDescriptor = rawTypeDescriptor;
+                    }
+
+                    @Override
+                    protected Generic resolve() {
+                        throw new GenericSignatureFormatError();
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return toErasure(typePool, rawTypeDescriptor);
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        throw new GenericSignatureFormatError();
+                    }
+
+                    /**
+                     * A tokenized list of non-well-defined generic types.
+                     */
+                    protected static class TokenList extends TypeList.Generic.AbstractBase {
+
+                        /**
+                         * The type pool to use for locating types.
+                         */
+                        private final TypePool typePool;
+
+                        /**
+                         * A list of descriptors of the list's types' erasures.
+                         */
+                        private final List<String> rawTypeDescriptors;
+
+                        /**
+                         * Creates a new tokenized list of generic types.
+                         *
+                         * @param typePool           The type pool to use for locating types.
+                         * @param rawTypeDescriptors A list of descriptors of the list's types' erasures.
+                         */
+                        protected TokenList(TypePool typePool, List<String> rawTypeDescriptors) {
+                            this.typePool = typePool;
+                            this.rawTypeDescriptors = rawTypeDescriptors;
+                        }
+
+                        @Override
+                        public Generic get(int index) {
+                            return new Malformed(typePool, rawTypeDescriptors.get(index));
+                        }
+
+                        @Override
+                        public int size() {
+                            return rawTypeDescriptors.size();
+                        }
+
+                        @Override
+                        public TypeList asErasures() {
+                            return new LazyTypeList(typePool, rawTypeDescriptors);
+                        }
+                    }
+
+                }
+            }
+
+            /**
+             * A lazy field description that only resolved type references when required.
+             */
+            private class LazyFieldDescription extends FieldDescription.InDefinedShape.AbstractBase {
+
+                /**
+                 * The name of the field.
+                 */
+                private final String name;
+
+                /**
+                 * The modifiers of the field.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The descriptor of this field's type.
+                 */
+                private final String descriptor;
+
+                /**
+                 * A resolution of this field's generic type.
+                 */
+                private final GenericTypeToken.Resolution.ForField signatureResolution;
+
+                /**
+                 * A mapping of the field type's type annotation tokens.
+                 */
+                private final Map<String, List<AnnotationToken>> typeAnnotationTokens;
+
+                /**
+                 * A list of annotation descriptions of this field.
+                 */
+                private final List<AnnotationToken> annotationTokens;
+
+                /**
+                 * Creates a new lazy field description.
+                 *
+                 * @param name                 The name of the field.
+                 * @param modifiers            The modifiers of the field.
+                 * @param descriptor           The descriptor of this field's type.
+                 * @param signatureResolution  A resolution of this field's generic type.
+                 * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
+                 * @param annotationTokens     A list of annotation descriptions of this field.
+                 */
+                private LazyFieldDescription(String name,
+                                             int modifiers,
+                                             String descriptor,
+                                             GenericTypeToken.Resolution.ForField signatureResolution,
+                                             Map<String, List<AnnotationToken>> typeAnnotationTokens,
+                                             List<AnnotationToken> annotationTokens) {
+                    this.modifiers = modifiers;
+                    this.name = name;
+                    this.descriptor = descriptor;
+                    this.signatureResolution = signatureResolution;
+                    this.typeAnnotationTokens = typeAnnotationTokens;
+                    this.annotationTokens = annotationTokens;
+                }
+
+                @Override
+                public Generic getType() {
+                    return signatureResolution.resolveFieldType(descriptor, typePool, typeAnnotationTokens, this);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
+                }
+
+                @Override
+                public String getName() {
+                    return name;
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return LazyTypeDescription.this;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return modifiers;
+                }
+            }
+
+            /**
+             * A lazy representation of a method that resolves references to types only on demand.
+             */
+            private class LazyMethodDescription extends MethodDescription.InDefinedShape.AbstractBase {
+
+                /**
+                 * The internal name of this method.
+                 */
+                private final String internalName;
+
+                /**
+                 * The modifiers of this method.
+                 */
+                private final int modifiers;
+
+                /**
+                 * The descriptor of the return type.
+                 */
+                private final String returnTypeDescriptor;
+
+                /**
+                 * The generic type token of this method.
+                 */
+                private final GenericTypeToken.Resolution.ForMethod signatureResolution;
+
+                /**
+                 * A list of type descriptions of this method's parameters.
+                 */
+                private final List<String> parameterTypeDescriptors;
+
+                /**
+                 * A list of type descriptions of this method's exception types.
+                 */
+                private final List<String> exceptionTypeDescriptors;
+
+                /**
+                 * A mapping of the type variables' type annotation tokens by their indices.
+                 */
+                private final Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens;
+
+                /**
+                 * A mapping of the type variables' type bounds' type annotation tokens by their indices and each variable's index.
+                 */
+                private final Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens;
+
+                /**
+                 * A mapping of the return type's type variable tokens.
+                 */
+                private final Map<String, List<AnnotationToken>> returnTypeAnnotationTokens;
+
+                /**
+                 * A mapping of the parameter types' type annotation tokens by their indices.
+                 */
+                private final Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens;
+
+                /**
+                 * A mapping of the exception types' type annotation tokens by their indices.
+                 */
+                private final Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens;
+
+                /**
+                 * The annotation tokens representing the method's annotations.
+                 */
+                private final List<AnnotationToken> annotationTokens;
+
+                /**
+                 * The annotation tokens representing the parameter's annotation. Every index can
+                 * contain {@code null} if a parameter does not define any annotations.
+                 */
+                private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
+
+                /**
+                 * An array of parameter names which may be {@code null} if no explicit name is known for a parameter.
+                 */
+                private final String[] parameterNames;
+
+                /**
+                 * An array of parameter modifiers which may be {@code null} if no modifiers is known.
+                 */
+                private final Integer[] parameterModifiers;
+
+                /**
+                 * The default value of this method or {@code null} if no such value exists.
+                 */
+                private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
+
+                /**
+                 * Creates a new lazy method description.
+                 *
+                 * @param internalName                      The internal name of this method.
+                 * @param modifiers                         The modifiers of the represented method.
+                 * @param methodDescriptor                  The method descriptor of this method.
+                 * @param signatureResolution               The generic type token of this method.
+                 * @param exceptionTypeInternalName         The internal names of the exceptions that are declared by this
+                 *                                          method or {@code null} if no exceptions are declared by this
+                 *                                          method.
+                 * @param typeVariableAnnotationTokens      A mapping of the type variables' type annotation tokens by their indices.
+                 * @param typeVariableBoundAnnotationTokens A mapping of the type variables' type bounds' type annotation tokens by their
+                 *                                          index and each variable's index.
+                 * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
+                 * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
+                 * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
+                 * @param annotationTokens                  The annotation tokens representing the method's annotations.
+                 * @param parameterAnnotationTokens         The annotation tokens representing the parameter's annotation. Every
+                 *                                          index can contain {@code null} if a parameter does not define any annotations.
+                 * @param parameterTokens                   A list of parameter tokens which might be empty or even out of sync
+                 *                                          with the actual parameters if the debugging information found in a
+                 *                                          class was corrupt.
+                 * @param defaultValue                      The default value of this method or {@code null} if there is no
+                 */
+                private LazyMethodDescription(String internalName,
+                                              int modifiers,
+                                              String methodDescriptor,
+                                              GenericTypeToken.Resolution.ForMethod signatureResolution,
+                                              String[] exceptionTypeInternalName,
+                                              Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
+                                              Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens,
+                                              Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
+                                              Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
+                                              Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
+                                              List<AnnotationToken> annotationTokens,
+                                              Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
+                                              List<MethodToken.ParameterToken> parameterTokens,
+                                              AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
+                    this.modifiers = modifiers;
+                    this.internalName = internalName;
+                    Type methodType = Type.getMethodType(methodDescriptor);
+                    Type returnType = methodType.getReturnType();
+                    Type[] parameterType = methodType.getArgumentTypes();
+                    returnTypeDescriptor = returnType.getDescriptor();
+                    parameterTypeDescriptors = new ArrayList<String>(parameterType.length);
+                    for (Type type : parameterType) {
+                        parameterTypeDescriptors.add(type.getDescriptor());
+                    }
+                    this.signatureResolution = signatureResolution;
+                    if (exceptionTypeInternalName == null) {
+                        exceptionTypeDescriptors = Collections.emptyList();
+                    } else {
+                        exceptionTypeDescriptors = new ArrayList<String>(exceptionTypeInternalName.length);
+                        for (String anExceptionTypeInternalName : exceptionTypeInternalName) {
+                            exceptionTypeDescriptors.add(Type.getObjectType(anExceptionTypeInternalName).getDescriptor());
+                        }
+                    }
+                    this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
+                    this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
+                    this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
+                    this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
+                    this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
+                    this.annotationTokens = annotationTokens;
+                    this.parameterAnnotationTokens = parameterAnnotationTokens;
+                    parameterNames = new String[parameterType.length];
+                    parameterModifiers = new Integer[parameterType.length];
+                    if (parameterTokens.size() == parameterType.length) {
+                        int index = 0;
+                        for (MethodToken.ParameterToken parameterToken : parameterTokens) {
+                            parameterNames[index] = parameterToken.getName();
+                            parameterModifiers[index] = parameterToken.getModifiers();
+                            index++;
+                        }
+                    }
+                    this.defaultValue = defaultValue;
+                }
+
+                @Override
+                public Generic getReturnType() {
+                    return signatureResolution.resolveReturnType(returnTypeDescriptor, typePool, returnTypeAnnotationTokens, this);
+                }
+
+                @Override
+                public TypeList.Generic getExceptionTypes() {
+                    return signatureResolution.resolveExceptionTypes(exceptionTypeDescriptors, typePool, exceptionTypeAnnotationTokens, this);
+                }
+
+                @Override
+                public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
+                    return new LazyParameterList();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return LazyAnnotationDescription.asList(typePool, annotationTokens);
+                }
+
+                @Override
+                public String getInternalName() {
+                    return internalName;
+                }
+
+                @Override
+                public TypeDescription getDeclaringType() {
+                    return LazyTypeDescription.this;
+                }
+
+                @Override
+                public int getModifiers() {
+                    return modifiers;
+                }
+
+                @Override
+                public TypeList.Generic getTypeVariables() {
+                    return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundAnnotationTokens);
+                }
+
+                @Override
+                public Object getDefaultValue() {
+                    return defaultValue == null
+                            ? NO_DEFAULT_VALUE
+                            : defaultValue.resolve();
+                }
+
+                /**
+                 * A lazy list of parameter descriptions for the enclosing method description.
+                 */
+                private class LazyParameterList extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
+
+                    @Override
+                    public ParameterDescription.InDefinedShape get(int index) {
+                        return new LazyParameterDescription(index);
+                    }
+
+                    @Override
+                    public boolean hasExplicitMetaData() {
+                        for (int i = 0; i < size(); i++) {
+                            if (parameterNames[i] == null || parameterModifiers[i] == null) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public int size() {
+                        return parameterTypeDescriptors.size();
+                    }
+
+                    @Override
+                    public TypeList.Generic asTypeList() {
+                        return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, parameterTypeAnnotationTokens, LazyMethodDescription.this);
+                    }
+                }
+
+                /**
+                 * A lazy description of a parameters of the enclosing method.
+                 */
+                private class LazyParameterDescription extends ParameterDescription.InDefinedShape.AbstractBase {
+
+                    /**
+                     * The index of the described parameter.
+                     */
+                    private final int index;
+
+                    /**
+                     * Creates a new description for a given parameter of the enclosing method.
+                     *
+                     * @param index The index of the described parameter.
+                     */
+                    protected LazyParameterDescription(int index) {
+                        this.index = index;
+                    }
+
+                    @Override
+                    public MethodDescription.InDefinedShape getDeclaringMethod() {
+                        return LazyMethodDescription.this;
+                    }
+
+                    @Override
+                    public int getIndex() {
+                        return index;
+                    }
+
+                    @Override
+                    public boolean isNamed() {
+                        return parameterNames[index] != null;
+                    }
+
+                    @Override
+                    public boolean hasModifiers() {
+                        return parameterModifiers[index] != null;
+                    }
+
+                    @Override
+                    public String getName() {
+                        return isNamed()
+                                ? parameterNames[index]
+                                : super.getName();
+                    }
+
+                    @Override
+                    public int getModifiers() {
+                        return hasModifiers()
+                                ? parameterModifiers[index]
+                                : super.getModifiers();
+                    }
+
+                    @Override
+                    public Generic getType() {
+                        return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, parameterTypeAnnotationTokens, LazyMethodDescription.this).get(index);
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return LazyAnnotationDescription.asListOfNullable(typePool, parameterAnnotationTokens.get(index));
+                    }
+                }
+            }
+        }
+
+        /**
          * A type extractor reads a class file and collects data that is relevant to create a type description.
          */
         protected class TypeExtractor extends ClassVisitor {
@@ -3012,6 +7301,15 @@ public interface TypePool {
                     public void onComplete() {
                         annotationRegistrant.register(name, new RawAnnotationValue(Default.this, new LazyTypeDescription.AnnotationToken(descriptor, values)));
                     }
+
+                    @Override
+                    public String toString() {
+                        return "TypePool.Default.TypeExtractor.AnnotationExtractor.AnnotationLookup{" +
+                                "descriptor='" + descriptor + '\'' +
+                                ", name='" + name + '\'' +
+                                ", values=" + values +
+                                '}';
+                    }
                 }
             }
 
@@ -3109,6 +7407,7 @@ public interface TypePool {
                             ", internalName='" + internalName + '\'' +
                             ", descriptor='" + descriptor + '\'' +
                             ", genericSignature='" + genericSignature + '\'' +
+                            ", typeAnnotationTokens=" + typeAnnotationTokens +
                             ", annotationTokens=" + annotationTokens +
                             '}';
                 }
@@ -3352,6 +7651,11 @@ public interface TypePool {
                             ", descriptor='" + descriptor + '\'' +
                             ", genericSignature='" + genericSignature + '\'' +
                             ", exceptionName=" + Arrays.toString(exceptionName) +
+                            ", typeVariableAnnotationTokens=" + typeVariableAnnotationTokens +
+                            ", typeVariableBoundAnnotationTokens=" + typeVariableBoundAnnotationTokens +
+                            ", returnTypeAnnotationTokens=" + returnTypeAnnotationTokens +
+                            ", parameterTypeAnnotationTokens=" + parameterTypeAnnotationTokens +
+                            ", exceptionTypeAnnotationTokens=" + exceptionTypeAnnotationTokens +
                             ", annotationTokens=" + annotationTokens +
                             ", parameterAnnotationTokens=" + parameterAnnotationTokens +
                             ", parameterTokens=" + parameterTokens +
@@ -3797,4248 +8101,4 @@ public interface TypePool {
         }
     }
 
-    /**
-     * A type description that looks up any referenced {@link net.bytebuddy.description.ByteCodeElement} or
-     * {@link AnnotationDescription} by querying a type pool at lookup time.
-     */
-    class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
-
-        /**
-         * The index of a super type's type annotations.
-         */
-        private static final int SUPER_TYPE_INDEX = -1;
-
-        /**
-         * Indicates that a type does not define a super type.
-         */
-        private static final String NO_SUPER_TYPE = null;
-
-        /**
-         * The type pool to be used for looking up linked types.
-         */
-        private final TypePool typePool;
-
-        /**
-         * The modifiers of this type.
-         */
-        private final int modifiers;
-
-        /**
-         * The binary name of this type.
-         */
-        private final String name;
-
-        /**
-         * The type's super type's descriptor or {@code null} if this type does not define a super type.
-         */
-        private final String superTypeDescriptor;
-
-        /**
-         * The resolution of this type's generic type.
-         */
-        private final GenericTypeToken.Resolution.ForType signatureResolution;
-
-        /**
-         * The descriptor of this type's interfaces.
-         */
-        private final List<String> interfaceTypeDescriptors;
-
-        /**
-         * The declaration context of this type.
-         */
-        private final DeclarationContext declarationContext;
-
-        /**
-         * A list of descriptors representing the types that are declared by this type.
-         */
-        private final List<String> declaredTypes;
-
-        /**
-         * {@code true} if this type is an anonymous type.
-         */
-        private final boolean anonymousType;
-
-        /**
-         * A mapping of type annotations for this type's super type and interface types by their indices.
-         */
-        private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> superTypeAnnotationTokens;
-
-        /**
-         * A mapping of type annotations of the type variables' type annotations by their indices.
-         */
-        private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
-
-        /**
-         * A mapping of type annotations of the type variables' bounds' type annotations by their indices and each variable's index.
-         */
-        private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundsAnnotationTokens;
-
-        /**
-         * A list of tokens that represent the annotations of this type.
-         */
-        private final List<AnnotationToken> annotationTokens;
-
-        /**
-         * A list of field tokens describing the field's of this type.
-         */
-        private final List<FieldToken> fieldTokens;
-
-        /**
-         * A list of method tokens describing the method's of this type.
-         */
-        private final List<MethodToken> methodTokens;
-
-        /**
-         * Creates a new lazy type description.
-         *
-         * @param typePool                           The type pool to be used for looking up linked types.
-         * @param modifiers                          The modifiers of this type.
-         * @param name                               The binary name of this type.
-         * @param superTypeInternalName              The internal name of this type's super type or {@code null} if no such super type is defined.
-         * @param interfaceInternalName              An array of this type's interfaces or {@code null} if this type does not define any interfaces.
-         * @param signatureResolution                The resolution of this type's generic types.
-         * @param declarationContext                 The declaration context of this type.
-         * @param declaredTypes                      A list of descriptors representing the types that are declared by this type.
-         * @param anonymousType                      {@code true} if this type is an anonymous type.
-         * @param superTypeAnnotationTokens          A mapping of type annotations for this type's super type and interface types by their indices.
-         * @param typeVariableAnnotationTokens       A mapping of type annotations of the type variables' type annotations by their indices.
-         * @param typeVariableBoundsAnnotationTokens A mapping of type annotations of the type variables' bounds' type annotations by their indices
-         *                                           and each variable's index.
-         * @param annotationTokens                   A list of tokens that represent the annotations of this type.
-         * @param fieldTokens                        A list of field tokens describing the field's of this type.
-         * @param methodTokens                       A list of method tokens describing the method's of this type.
-         */
-        protected LazyTypeDescription(TypePool typePool,
-                                      int modifiers,
-                                      String name,
-                                      String superTypeInternalName,
-                                      String[] interfaceInternalName,
-                                      GenericTypeToken.Resolution.ForType signatureResolution,
-                                      DeclarationContext declarationContext,
-                                      List<String> declaredTypes,
-                                      boolean anonymousType,
-                                      Map<Integer, Map<String, List<AnnotationToken>>> superTypeAnnotationTokens,
-                                      Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
-                                      Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundsAnnotationTokens,
-                                      List<AnnotationToken> annotationTokens,
-                                      List<FieldToken> fieldTokens,
-                                      List<MethodToken> methodTokens) {
-            this.typePool = typePool;
-            this.modifiers = modifiers & ~Opcodes.ACC_SUPER;
-            this.name = Type.getObjectType(name).getClassName();
-            this.superTypeDescriptor = superTypeInternalName == null
-                    ? NO_SUPER_TYPE
-                    : Type.getObjectType(superTypeInternalName).getDescriptor();
-            this.signatureResolution = signatureResolution;
-            if (interfaceInternalName == null) {
-                interfaceTypeDescriptors = Collections.emptyList();
-            } else {
-                interfaceTypeDescriptors = new ArrayList<String>(interfaceInternalName.length);
-                for (String internalName : interfaceInternalName) {
-                    interfaceTypeDescriptors.add(Type.getObjectType(internalName).getDescriptor());
-                }
-            }
-            this.declarationContext = declarationContext;
-            this.declaredTypes = declaredTypes;
-            this.anonymousType = anonymousType;
-            this.superTypeAnnotationTokens = superTypeAnnotationTokens;
-            this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
-            this.typeVariableBoundsAnnotationTokens = typeVariableBoundsAnnotationTokens;
-            this.annotationTokens = annotationTokens;
-            this.fieldTokens = fieldTokens;
-            this.methodTokens = methodTokens;
-        }
-
-        @Override
-        public Generic getSuperType() {
-            return superTypeDescriptor == null || isInterface()
-                    ? TypeDescription.Generic.UNDEFINED
-                    : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, superTypeAnnotationTokens.get(SUPER_TYPE_INDEX), this);
-        }
-
-        @Override
-        public TypeList.Generic getInterfaces() {
-            return signatureResolution.resolveInterfaceTypes(interfaceTypeDescriptors, typePool, superTypeAnnotationTokens, this);
-        }
-
-        @Override
-        public MethodDescription getEnclosingMethod() {
-            return declarationContext.getEnclosingMethod(typePool);
-        }
-
-        @Override
-        public TypeDescription getEnclosingType() {
-            return declarationContext.getEnclosingType(typePool);
-        }
-
-        @Override
-        public TypeList getDeclaredTypes() {
-            return new LazyTypeList(typePool, declaredTypes);
-        }
-
-        @Override
-        public boolean isAnonymousClass() {
-            return anonymousType;
-        }
-
-        @Override
-        public boolean isLocalClass() {
-            return !anonymousType && declarationContext.isDeclaredInMethod();
-        }
-
-        @Override
-        public boolean isMemberClass() {
-            return declarationContext.isDeclaredInType();
-        }
-
-        @Override
-        public FieldList<FieldDescription.InDefinedShape> getDeclaredFields() {
-            return new FieldTokenList();
-        }
-
-        @Override
-        public MethodList<MethodDescription.InDefinedShape> getDeclaredMethods() {
-            return new MethodTokenList();
-        }
-
-        @Override
-        public PackageDescription getPackage() {
-            String name = getName();
-            int index = name.lastIndexOf('.');
-            return index == -1
-                    ? PackageDescription.UNDEFINED
-                    : new LazyPackageDescription(typePool, name.substring(0, index));
-        }
-
-        @Override
-        public String getName() {
-            return name;
-        }
-
-        @Override
-        public TypeDescription getDeclaringType() {
-            return declarationContext.isDeclaredInType()
-                    ? declarationContext.getEnclosingType(typePool)
-                    : TypeDescription.UNDEFINED;
-        }
-
-        @Override
-        public int getModifiers() {
-            return modifiers;
-        }
-
-        @Override
-        public AnnotationList getDeclaredAnnotations() {
-            return LazyAnnotationDescription.asList(typePool, annotationTokens);
-        }
-
-        @Override
-        public TypeList.Generic getTypeVariables() {
-            return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundsAnnotationTokens);
-        }
-
-        /**
-         * A list of field tokens representing each entry as a field description.
-         */
-        protected class FieldTokenList extends FieldList.AbstractBase<FieldDescription.InDefinedShape> {
-
-            @Override
-            public FieldDescription.InDefinedShape get(int index) {
-                return fieldTokens.get(index).toFieldDescription(LazyTypeDescription.this);
-            }
-
-            @Override
-            public int size() {
-                return fieldTokens.size();
-            }
-        }
-
-        /**
-         * A list of method tokens representing each entry as a method description.
-         */
-        protected class MethodTokenList extends MethodList.AbstractBase<MethodDescription.InDefinedShape> {
-
-            @Override
-            public MethodDescription.InDefinedShape get(int index) {
-                return methodTokens.get(index).toMethodDescription(LazyTypeDescription.this);
-            }
-
-            @Override
-            public int size() {
-                return methodTokens.size();
-            }
-        }
-
-        /**
-         * A declaration context encapsulates information about whether a type was declared within another type
-         * or within a method of another type.
-         */
-        protected interface DeclarationContext {
-
-            /**
-             * Returns the enclosing method or {@code null} if no such method exists.
-             *
-             * @param typePool The type pool to be used for looking up linked types.
-             * @return A method description describing the linked type or {@code null}.
-             */
-            MethodDescription getEnclosingMethod(TypePool typePool);
-
-            /**
-             * Returns the enclosing type or {@code null} if no such type exists.
-             *
-             * @param typePool The type pool to be used for looking up linked types.
-             * @return A type description describing the linked type or {@code null}.
-             */
-            TypeDescription getEnclosingType(TypePool typePool);
-
-            /**
-             * Returns {@code true} if this instance represents a self declared type.
-             *
-             * @return {@code true} if this instance represents a self declared type.
-             */
-            boolean isSelfDeclared();
-
-            /**
-             * Returns {@code true} if this instance represents a type that was declared within another type but not
-             * within a method.
-             *
-             * @return {@code true} if this instance represents a type that was declared within another type but not
-             * within a method.
-             */
-            boolean isDeclaredInType();
-
-            /**
-             * Returns {@code true} if this instance represents a type that was declared within a method.
-             *
-             * @return {@code true} if this instance represents a type that was declared within a method.
-             */
-            boolean isDeclaredInMethod();
-
-            /**
-             * Represents a self-declared type that is not defined within another type.
-             */
-            enum SelfDeclared implements DeclarationContext {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public MethodDescription getEnclosingMethod(TypePool typePool) {
-                    return MethodDescription.UNDEFINED;
-                }
-
-                @Override
-                public TypeDescription getEnclosingType(TypePool typePool) {
-                    return TypeDescription.UNDEFINED;
-                }
-
-                @Override
-                public boolean isSelfDeclared() {
-                    return true;
-                }
-
-                @Override
-                public boolean isDeclaredInType() {
-                    return false;
-                }
-
-                @Override
-                public boolean isDeclaredInMethod() {
-                    return false;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.DeclarationContext.SelfDeclared." + name();
-                }
-            }
-
-            /**
-             * A declaration context representing a type that is declared within another type but not within
-             * a method.
-             */
-            class DeclaredInType implements DeclarationContext {
-
-                /**
-                 * The binary name of the referenced type.
-                 */
-                private final String name;
-
-                /**
-                 * Creates a new declaration context for a type that is declared within another type.
-                 *
-                 * @param internalName The internal name of the declaring type.
-                 */
-                public DeclaredInType(String internalName) {
-                    name = internalName.replace('/', '.');
-                }
-
-                @Override
-                public MethodDescription getEnclosingMethod(TypePool typePool) {
-                    return MethodDescription.UNDEFINED;
-                }
-
-                @Override
-                public TypeDescription getEnclosingType(TypePool typePool) {
-                    return typePool.describe(name).resolve();
-                }
-
-                @Override
-                public boolean isSelfDeclared() {
-                    return false;
-                }
-
-                @Override
-                public boolean isDeclaredInType() {
-                    return true;
-                }
-
-                @Override
-                public boolean isDeclaredInMethod() {
-                    return false;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && name.equals(((DeclaredInType) other).name);
-                }
-
-                @Override
-                public int hashCode() {
-                    return name.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.DeclarationContext.DeclaredInType{" +
-                            "name='" + name + '\'' +
-                            '}';
-                }
-            }
-
-            /**
-             * A declaration context representing a type that is declared within a method of another type.
-             */
-            class DeclaredInMethod implements DeclarationContext {
-
-                /**
-                 * The binary name of the declaring type.
-                 */
-                private final String name;
-
-                /**
-                 * The name of the method that is declaring a type.
-                 */
-                private final String methodName;
-
-                /**
-                 * The descriptor of the method that is declaring a type.
-                 */
-                private final String methodDescriptor;
-
-                /**
-                 * Creates a new declaration context for a method that declares a type.
-                 *
-                 * @param internalName     The internal name of the declaring type.
-                 * @param methodName       The name of the method that is declaring a type.
-                 * @param methodDescriptor The descriptor of the method that is declaring a type.
-                 */
-                public DeclaredInMethod(String internalName, String methodName, String methodDescriptor) {
-                    name = internalName.replace('/', '.');
-                    this.methodName = methodName;
-                    this.methodDescriptor = methodDescriptor;
-                }
-
-                @Override
-                public MethodDescription getEnclosingMethod(TypePool typePool) {
-                    return getEnclosingType(typePool).getDeclaredMethods().filter(hasMethodName(methodName).and(hasDescriptor(methodDescriptor))).getOnly();
-                }
-
-                @Override
-                public TypeDescription getEnclosingType(TypePool typePool) {
-                    return typePool.describe(name).resolve();
-                }
-
-                @Override
-                public boolean isSelfDeclared() {
-                    return false;
-                }
-
-                @Override
-                public boolean isDeclaredInType() {
-                    return false;
-                }
-
-                @Override
-                public boolean isDeclaredInMethod() {
-                    return true;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    DeclaredInMethod that = (DeclaredInMethod) other;
-                    return methodDescriptor.equals(that.methodDescriptor)
-                            && methodName.equals(that.methodName)
-                            && name.equals(that.name);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = name.hashCode();
-                    result = 31 * result + methodName.hashCode();
-                    result = 31 * result + methodDescriptor.hashCode();
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.DeclarationContext.DeclaredInMethod{" +
-                            "name='" + name + '\'' +
-                            ", methodName='" + methodName + '\'' +
-                            ", methodDescriptor='" + methodDescriptor + '\'' +
-                            '}';
-                }
-            }
-        }
-
-        /**
-         * A token that represents a generic Java type.
-         */
-        protected interface GenericTypeToken {
-
-            /**
-             * Represents an empty type path.
-             */
-            String EMPTY_TYPE_PATH = "";
-
-            /**
-             * Represents a step to a component type within a type path.
-             */
-            char COMPONENT_TYPE_PATH = '[';
-
-            /**
-             * Represents a wildcard type step within a type path.
-             */
-            char WILDCARD_TYPE_PATH = '*';
-
-            /**
-             * Represents a owner type step within a type path.
-             */
-            char OWNER_TYPE_PATH = '.';
-
-            /**
-             * Represents an index tzpe delimiter within a type path.
-             */
-            char INDEXED_TYPE_DELIMITER = ';';
-
-            /**
-             * Transforms this token into a generic type representation.
-             *
-             * @param typePool           The type pool to be used for locating non-generic type descriptions.
-             * @param typeVariableSource The type variable source.
-             * @param typePath           The type path of the resolved generic type.
-             * @param annotationTokens   A mapping of the type's annotation tokens by their type path.
-             * @return A description of the represented generic type.
-             */
-            Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens);
-
-            /**
-             * Determines if a generic type tokens represents a primary bound of a type variable. This method must only be invoked on types
-             * that represent a {@link net.bytebuddy.description.type.TypeDefinition.Sort#NON_GENERIC},
-             * {@link net.bytebuddy.description.type.TypeDefinition.Sort#PARAMETERIZED} or {@link net.bytebuddy.description.type.TypeDefinition.Sort#VARIABLE}.
-             *
-             * @param typePool The type pool to use.
-             * @return {@code true} if this token represents a primary bound.
-             */
-            boolean isPrimaryBound(TypePool typePool);
-
-            /**
-             * Represents a generic type token for a formal type variable.
-             */
-            interface OfFormalTypeVariable {
-
-                /**
-                 * Transforms this token into a generic type representation.
-                 *
-                 * @param typePool                 The type pool to be used for locating non-generic type descriptions.
-                 * @param typeVariableSource       The type variable source.
-                 * @param annotationTokens         A mapping of the type variables' type annotations.
-                 * @param boundaryAnnotationTokens A mapping of the type variables' bounds' type annotation by their bound index.
-                 * @return A generic type representation of this formal type variable.
-                 */
-                Generic toGenericType(TypePool typePool,
-                                      TypeVariableSource typeVariableSource,
-                                      Map<String, List<AnnotationToken>> annotationTokens,
-                                      Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens);
-            }
-
-            /**
-             * A generic type token that represents a primitive type.
-             */
-            enum ForPrimitiveType implements GenericTypeToken {
-
-                /**
-                 * The generic type token describing the {@code boolean} type.
-                 */
-                BOOLEAN(boolean.class),
-
-                /**
-                 * The generic type token describing the {@code byte} type.
-                 */
-                BYTE(byte.class),
-
-                /**
-                 * The generic type token describing the {@code short} type.
-                 */
-                SHORT(short.class),
-
-                /**
-                 * The generic type token describing the {@code char} type.
-                 */
-                CHAR(char.class),
-
-                /**
-                 * The generic type token describing the {@code int} type.
-                 */
-                INTEGER(int.class),
-
-                /**
-                 * The generic type token describing the {@code long} type.
-                 */
-                LONG(long.class),
-
-                /**
-                 * The generic type token describing the {@code float} type.
-                 */
-                FLOAT(float.class),
-
-                /**
-                 * The generic type token describing the {@code double} type.
-                 */
-                DOUBLE(double.class),
-
-                /**
-                 * The generic type token describing the {@code void} type.
-                 */
-                VOID(void.class);
-
-                /**
-                 * A description of this primitive type token.
-                 */
-                private final TypeDescription typeDescription;
-
-                /**
-                 * Creates a new primitive type token.
-                 *
-                 * @param type The loaded type representing this primitive.
-                 */
-                ForPrimitiveType(Class<?> type) {
-                    typeDescription = new TypeDescription.ForLoadedType(type);
-                }
-
-                /**
-                 * Resolves a generic type token of a primitive type.
-                 *
-                 * @param descriptor The descriptor of the primitive type.
-                 * @return The corresponding generic type token.
-                 */
-                public static GenericTypeToken of(char descriptor) {
-                    switch (descriptor) {
-                        case 'V':
-                            return VOID;
-                        case 'Z':
-                            return BOOLEAN;
-                        case 'B':
-                            return BYTE;
-                        case 'S':
-                            return SHORT;
-                        case 'C':
-                            return CHAR;
-                        case 'I':
-                            return INTEGER;
-                        case 'J':
-                            return LONG;
-                        case 'F':
-                            return FLOAT;
-                        case 'D':
-                            return DOUBLE;
-                        default:
-                            throw new IllegalArgumentException("Not a valid primitive type descriptor: " + descriptor);
-                    }
-                }
-
-                @Override
-                public Generic toGenericType(TypePool typePool,
-                                             TypeVariableSource typeVariableSource,
-                                             String typePath,
-                                             Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyPrimitiveType(typePool,
-                            typePath,
-                            annotationTokens == null
-                                    ? Collections.emptyMap()
-                                    : annotationTokens,
-                            typeDescription);
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    throw new IllegalStateException("A primitive type cannot be a type variable bound: " + this);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForPrimitiveType." + name();
-                }
-
-                /**
-                 * A representation of a lazy primitive type.
-                 */
-                protected static class LazyPrimitiveType extends Generic.OfNonGenericType {
-
-                    /**
-                     * The type pool to use.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * This type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * This type's type annotation tokens.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * The represented type's description.
-                     */
-                    private final TypeDescription typeDescription;
-
-                    /**
-                     * Creates a new lazy primitive type.
-                     *
-                     * @param typePool         The type pool to use.
-                     * @param typePath         This type's type path.
-                     * @param annotationTokens This type's type annotation tokens.
-                     * @param typeDescription  The represented type's description.
-                     */
-                    protected LazyPrimitiveType(TypePool typePool,
-                                                String typePath,
-                                                Map<String, List<AnnotationToken>> annotationTokens,
-                                                TypeDescription typeDescription) {
-                        this.typePool = typePool;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                        this.typeDescription = typeDescription;
-                    }
-
-                    @Override
-                    public TypeDescription asErasure() {
-                        return typeDescription;
-                    }
-
-                    @Override
-                    public Generic getComponentType() {
-                        return UNDEFINED;
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                    }
-                }
-            }
-
-            /**
-             * A generic type token that represents an unbound wildcard.
-             */
-            enum ForUnboundWildcard implements GenericTypeToken {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Generic toGenericType(TypePool typePool,
-                                             TypeVariableSource typeVariableSource,
-                                             String typePath,
-                                             Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyUnboundWildcard(typePool,
-                            typePath,
-                            annotationTokens == null
-                                    ? Collections.emptyMap()
-                                    : annotationTokens);
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForUnboundWildcard." + name();
-                }
-
-                /**
-                 * A generic type representation of a generic unbound wildcard.
-                 */
-                protected static class LazyUnboundWildcard extends Generic.OfWildcardType {
-
-                    /**
-                     * The type pool to use.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * This type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * The type's type annotations.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * Creates a new lazy unbound wildcard.
-                     *
-                     * @param typePool         The type pool to use.
-                     * @param typePath         This type's type path.
-                     * @param annotationTokens The type's type annotations.
-                     */
-                    protected LazyUnboundWildcard(TypePool typePool, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                        this.typePool = typePool;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                    }
-
-                    @Override
-                    public TypeList.Generic getUpperBounds() {
-                        return new TypeList.Generic.Explicit(Generic.OBJECT);
-                    }
-
-                    @Override
-                    public TypeList.Generic getLowerBounds() {
-                        return new TypeList.Generic.Empty();
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                    }
-                }
-            }
-
-            /**
-             * A resolution of a type's, method's or field's generic types.
-             */
-            interface Resolution {
-
-                /**
-                 * Resolves the type variables of the represented element.
-                 *
-                 * @param typePool              The type pool to be used for locating non-generic type descriptions.
-                 * @param typeVariableSource    The type variable source to use for resolving type variables.
-                 * @param annotationTokens      A mapping of the type variables' type annotation tokens by their indices.
-                 * @param boundAnnotationTokens A mapping of the type variables' bounds' type annotation tokens by their indices
-                 *                              and each type variable's index.
-                 * @return A list describing the resolved generic types.
-                 */
-                TypeList.Generic resolveTypeVariables(TypePool typePool,
-                                                      TypeVariableSource typeVariableSource,
-                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                      Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens);
-
-                /**
-                 * A resolution of a type's, method's or field's generic types if all of the represented element's are raw.
-                 */
-                enum Raw implements ForType, ForMethod, ForField {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public Generic resolveFieldType(String fieldTypeDescriptor,
-                                                    TypePool typePool,
-                                                    Map<String, List<AnnotationToken>> annotationTokens,
-                                                    FieldDescription.InDefinedShape definingField) {
-                        return RawAnnotatedType.of(typePool, annotationTokens, fieldTypeDescriptor);
-                    }
-
-                    @Override
-                    public Generic resolveReturnType(String returnTypeDescriptor,
-                                                     TypePool typePool,
-                                                     Map<String, List<AnnotationToken>> annotationTokens,
-                                                     MethodDescription.InDefinedShape definingMethod) {
-                        return RawAnnotatedType.of(typePool, annotationTokens, returnTypeDescriptor);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
-                                                                  TypePool typePool,
-                                                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                  MethodDescription.InDefinedShape definingMethod) {
-                        return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, parameterTypeDescriptors);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
-                                                                  TypePool typePool,
-                                                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                  MethodDescription.InDefinedShape definingMethod) {
-                        return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, exceptionTypeDescriptors);
-                    }
-
-                    @Override
-                    public Generic resolveSuperType(String superTypeDescriptor,
-                                                    TypePool typePool,
-                                                    Map<String, List<AnnotationToken>> annotationTokens,
-                                                    TypeDescription definingType) {
-                        return RawAnnotatedType.of(typePool, annotationTokens, superTypeDescriptor);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
-                                                                  TypePool typePool,
-                                                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                  TypeDescription definingType) {
-                        return RawAnnotatedType.LazyRawAnnotatedTypeList.of(typePool, annotationTokens, interfaceTypeDescriptors);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveTypeVariables(TypePool typePool,
-                                                                 TypeVariableSource typeVariableSource,
-                                                                 Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                 Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
-                        return new TypeList.Generic.Empty();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Raw." + name();
-                    }
-
-                    /**
-                     * Represents a non-generic type that defines type annotations.
-                     */
-                    protected static class RawAnnotatedType extends Generic.OfNonGenericType {
-
-                        /**
-                         * The type pool to use.
-                         */
-                        private final TypePool typePool;
-
-                        /**
-                         * The type's type path.
-                         */
-                        private final String typePath;
-
-                        /**
-                         * A mapping of this type's type annotations.
-                         */
-                        private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                        /**
-                         * The represented non-generic type.
-                         */
-                        private final TypeDescription typeDescription;
-
-                        /**
-                         * Creates a new raw annotated type.
-                         *
-                         * @param typePool         The type pool to use.
-                         * @param typePath         The type's type path.
-                         * @param annotationTokens A mapping of this type's type annotations.
-                         * @param typeDescription  The represented non-generic type.
-                         */
-                        protected RawAnnotatedType(TypePool typePool,
-                                                   String typePath,
-                                                   Map<String, List<AnnotationToken>> annotationTokens,
-                                                   TypeDescription typeDescription) {
-                            this.typePool = typePool;
-                            this.typePath = typePath;
-                            this.annotationTokens = annotationTokens;
-                            this.typeDescription = typeDescription;
-                        }
-
-                        /**
-                         * Creates a new raw annotated type.
-                         *
-                         * @param typePool         The type pool to use.
-                         * @param annotationTokens A mapping of this type's type annotations.
-                         * @param descriptor       The descriptor of the represented non-generic type.
-                         * @return An annotated non-generic type.
-                         */
-                        protected static Generic of(TypePool typePool, Map<String, List<AnnotationToken>> annotationTokens, String descriptor) {
-                            return new RawAnnotatedType(typePool,
-                                    EMPTY_TYPE_PATH,
-                                    annotationTokens == null
-                                            ? Collections.emptyMap()
-                                            : annotationTokens,
-                                    TokenizedGenericType.toErasure(typePool, descriptor));
-                        }
-
-                        @Override
-                        public TypeDescription asErasure() {
-                            return typeDescription;
-                        }
-
-                        @Override
-                        public Generic getComponentType() {
-                            TypeDescription componentType = typeDescription.getComponentType();
-                            return componentType == null
-                                    ? UNDEFINED
-                                    : new RawAnnotatedType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
-                        }
-
-                        @Override
-                        public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                        }
-
-                        /**
-                         * A generic type list representing raw types.
-                         */
-                        protected static class LazyRawAnnotatedTypeList extends TypeList.Generic.AbstractBase {
-
-                            /**
-                             * The type pool to use for locating types.
-                             */
-                            private final TypePool typePool;
-
-                            /**
-                             * A mapping of the represented types' type annotation tokens by their indices.
-                             */
-                            private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
-
-                            /**
-                             * A list of type descriptors that this list represents.
-                             */
-                            private final List<String> descriptors;
-
-                            /**
-                             * Creates a generic type list only representing raw types.
-                             *
-                             * @param typePool         The type pool to use for locating types.
-                             * @param annotationTokens A mapping of the represented types' type annotation tokens by their indices.
-                             * @param descriptors      A list of type descriptors that this list represents.
-                             */
-                            protected LazyRawAnnotatedTypeList(TypePool typePool,
-                                                               Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                               List<String> descriptors) {
-                                this.typePool = typePool;
-                                this.annotationTokens = annotationTokens;
-                                this.descriptors = descriptors;
-                            }
-
-                            /**
-                             * Creates generic type list only representing raw types.
-                             *
-                             * @param typePool         The type pool to use for locating types.
-                             * @param annotationTokens A mapping of the represented types' type annotation tokens by their indices or
-                             *                         {@code null} if no type annotations are defined for any type.
-                             * @param descriptors      A list of type descriptors that this list represents.
-                             * @return A generic type list representing the raw types this list represents.
-                             */
-                            protected static TypeList.Generic of(TypePool typePool,
-                                                                 Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                 List<String> descriptors) {
-                                return new LazyRawAnnotatedTypeList(typePool,
-                                        annotationTokens == null
-                                                ? Collections.emptyMap()
-                                                : annotationTokens,
-                                        descriptors);
-                            }
-
-                            @Override
-                            public TypeDescription.Generic get(int index) {
-                                return RawAnnotatedType.of(typePool, annotationTokens.get(index), descriptors.get(index));
-                            }
-
-                            @Override
-                            public int size() {
-                                return descriptors.size();
-                            }
-
-                            @Override
-                            public TypeList asErasures() {
-                                return new LazyTypeList(typePool, descriptors);
-                            }
-
-                            @Override
-                            public TypeList.Generic asRawTypes() {
-                                return this;
-                            }
-
-                            @Override
-                            public int getStackSize() {
-                                int stackSize = 0;
-                                for (String descriptor : descriptors) {
-                                    stackSize += Type.getType(descriptor).getSize();
-                                }
-                                return stackSize;
-                            }
-                        }
-                    }
-                }
-
-                /**
-                 * A resolution of a type's, method's or field's generic types if its generic signature is malformed.
-                 */
-                enum Malformed implements ForType, ForMethod, ForField {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public Generic resolveFieldType(String fieldTypeDescriptor,
-                                                    TypePool typePool,
-                                                    Map<String, List<AnnotationToken>> annotationTokens,
-                                                    FieldDescription.InDefinedShape definingField) {
-                        return new TokenizedGenericType.Malformed(typePool, fieldTypeDescriptor);
-                    }
-
-                    @Override
-                    public Generic resolveReturnType(String returnTypeDescriptor,
-                                                     TypePool typePool,
-                                                     Map<String, List<AnnotationToken>> annotationTokens,
-                                                     MethodDescription.InDefinedShape definingMethod) {
-                        return new TokenizedGenericType.Malformed(typePool, returnTypeDescriptor);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
-                                                                  TypePool typePool,
-                                                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                  MethodDescription.InDefinedShape definingMethod) {
-                        return new TokenizedGenericType.Malformed.TokenList(typePool, parameterTypeDescriptors);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
-                                                                  TypePool typePool,
-                                                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                  MethodDescription.InDefinedShape definingMethod) {
-                        return new TokenizedGenericType.Malformed.TokenList(typePool, exceptionTypeDescriptors);
-                    }
-
-                    @Override
-                    public Generic resolveSuperType(String superTypeDescriptor,
-                                                    TypePool typePool,
-                                                    Map<String, List<AnnotationToken>> annotationTokens,
-                                                    TypeDescription definingType) {
-                        return new TokenizedGenericType.Malformed(typePool, superTypeDescriptor);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
-                                                                  TypePool typePool,
-                                                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                  TypeDescription definingType) {
-                        return new TokenizedGenericType.Malformed.TokenList(typePool, interfaceTypeDescriptors);
-                    }
-
-                    @Override
-                    public TypeList.Generic resolveTypeVariables(TypePool typePool,
-                                                                 TypeVariableSource typeVariableSource,
-                                                                 Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                 Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
-                        throw new GenericSignatureFormatError();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.Malformed." + name();
-                    }
-                }
-
-                /**
-                 * A resolution of the generic types of a {@link TypeDescription}.
-                 */
-                interface ForType extends Resolution {
-
-                    /**
-                     * Resolves the generic super type of the represented type.
-                     *
-                     * @param superTypeDescriptor The descriptor of the raw super type.
-                     * @param typePool            The type pool to be used for locating non-generic type descriptions.
-                     * @param annotationTokens    A mapping of the super type's type annotation tokens.
-                     * @param definingType        The type that defines this super type.
-                     * @return A description of this type's generic super type.
-                     */
-                    Generic resolveSuperType(String superTypeDescriptor,
-                                             TypePool typePool,
-                                             Map<String, List<AnnotationToken>> annotationTokens,
-                                             TypeDescription definingType);
-
-                    /**
-                     * Resolves the generic interface types of the represented type.
-                     *
-                     * @param interfaceTypeDescriptors The descriptor of the raw interface types.
-                     * @param typePool                 The type pool to be used for locating non-generic type descriptions.
-                     * @param annotationTokens         A mapping of the interface types' type annotation tokens by their indices.
-                     * @param definingType             The type that defines these interface type.
-                     * @return A description of this type's generic interface types.
-                     */
-                    TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
-                                                           TypePool typePool,
-                                                           Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                           TypeDescription definingType);
-
-                    /**
-                     * An implementation of a tokenized resolution of generic types of a {@link TypeDescription}.
-                     */
-                    class Tokenized implements ForType {
-
-                        /**
-                         * The super type's generic type token.
-                         */
-                        private final GenericTypeToken superTypeToken;
-
-                        /**
-                         * The interface type's generic type tokens.
-                         */
-                        private final List<GenericTypeToken> interfaceTypeTokens;
-
-                        /**
-                         * The type variables generic type tokens.
-                         */
-                        private final List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens;
-
-                        /**
-                         * Creates a new tokenized resolution of a {@link TypeDescription}'s generic signatures.
-                         *
-                         * @param superTypeToken      The super type's generic type token.
-                         * @param interfaceTypeTokens The interface type's generic type tokens.
-                         * @param typeVariableTokens  The type variables generic type tokens.
-                         */
-                        public Tokenized(GenericTypeToken superTypeToken,
-                                         List<GenericTypeToken> interfaceTypeTokens,
-                                         List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens) {
-                            this.superTypeToken = superTypeToken;
-                            this.interfaceTypeTokens = interfaceTypeTokens;
-                            this.typeVariableTokens = typeVariableTokens;
-                        }
-
-                        @Override
-                        public Generic resolveSuperType(String superTypeDescriptor,
-                                                        TypePool typePool,
-                                                        Map<String, List<AnnotationToken>> annotationTokens,
-                                                        TypeDescription definingType) {
-                            return TokenizedGenericType.of(typePool, superTypeToken, superTypeDescriptor, annotationTokens, definingType);
-                        }
-
-                        @Override
-                        public TypeList.Generic resolveInterfaceTypes(List<String> interfaceTypeDescriptors,
-                                                                      TypePool typePool,
-                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                      TypeDescription definingType) {
-                            return new TokenizedGenericType.TokenList(typePool, interfaceTypeTokens, annotationTokens, interfaceTypeDescriptors, definingType);
-                        }
-
-                        @Override
-                        public TypeList.Generic resolveTypeVariables(TypePool typePool,
-                                                                     TypeVariableSource typeVariableSource,
-                                                                     Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                     Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
-                            return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource, annotationTokens, boundAnnotationTokens);
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            Tokenized tokenized = (Tokenized) other;
-                            return superTypeToken.equals(tokenized.superTypeToken)
-                                    && interfaceTypeTokens.equals(tokenized.interfaceTypeTokens)
-                                    && typeVariableTokens.equals(tokenized.typeVariableTokens);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = superTypeToken.hashCode();
-                            result = 31 * result + interfaceTypeTokens.hashCode();
-                            result = 31 * result + typeVariableTokens.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.ForType.Tokenized{" +
-                                    "superTypeToken=" + superTypeToken +
-                                    ", interfaceTypeTokens=" + interfaceTypeTokens +
-                                    ", typeVariableTokens=" + typeVariableTokens +
-                                    '}';
-                        }
-                    }
-                }
-
-                /**
-                 * A resolution of the generic types of a {@link MethodDescription}.
-                 */
-                interface ForMethod extends Resolution {
-
-                    /**
-                     * Resolves the return type of the represented method.
-                     *
-                     * @param returnTypeDescriptor The descriptor of the raw return type.
-                     * @param typePool             The type pool to be used for locating non-generic type descriptions.
-                     * @param annotationTokens     A mapping of the return type's type annotation tokens.
-                     * @param definingMethod       The method that defines this return type.
-                     * @return A description of this type's generic return type.
-                     */
-                    Generic resolveReturnType(String returnTypeDescriptor,
-                                              TypePool typePool,
-                                              Map<String, List<AnnotationToken>> annotationTokens,
-                                              MethodDescription.InDefinedShape definingMethod);
-
-                    /**
-                     * Resolves the generic parameter types of the represented method.
-                     *
-                     * @param parameterTypeDescriptors The descriptor of the raw parameter types.
-                     * @param typePool                 The type pool to be used for locating non-generic type descriptions.
-                     * @param annotationTokens         A mapping of the parameter types' type annotation tokens by their indices.
-                     * @param definingMethod           The method that defines these parameter types.
-                     * @return A description of this type's generic interface types.
-                     */
-                    TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
-                                                           TypePool typePool,
-                                                           Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                           MethodDescription.InDefinedShape definingMethod);
-
-                    /**
-                     * Resolves the generic parameter types of the represented method.
-                     *
-                     * @param exceptionTypeDescriptors The descriptor of the raw exception types.
-                     * @param typePool                 The type pool to be used for locating non-generic type descriptions.
-                     * @param annotationTokens         A mapping of the execption types' type annotation tokens by their indices.
-                     * @param definingMethod           The method that defines these exception types.
-                     * @return A description of this type's generic interface types.
-                     */
-                    TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
-                                                           TypePool typePool,
-                                                           Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                           MethodDescription.InDefinedShape definingMethod);
-
-                    /**
-                     * An implementation of a tokenized resolution of generic types of a {@link MethodDescription}.
-                     */
-                    class Tokenized implements ForMethod {
-
-                        /**
-                         * A token describing the represented method's return type.
-                         */
-                        private final GenericTypeToken returnTypeToken;
-
-                        /**
-                         * A token describing the represented method's parameter types.
-                         */
-                        private final List<GenericTypeToken> parameterTypeTokens;
-
-                        /**
-                         * A token describing the represented method's exception types.
-                         */
-                        private final List<GenericTypeToken> exceptionTypeTokens;
-
-                        /**
-                         * A token describing the represented method's type variables.
-                         */
-                        private final List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens;
-
-                        /**
-                         * Creates a new tokenized resolution of a {@link MethodDescription}'s generic signatures.
-                         *
-                         * @param returnTypeToken     A token describing the represented method's return type.
-                         * @param parameterTypeTokens A token describing the represented method's parameter types.
-                         * @param exceptionTypeTokens A token describing the represented method's exception types.
-                         * @param typeVariableTokens  A token describing the represented method's type variables.
-                         */
-                        public Tokenized(GenericTypeToken returnTypeToken,
-                                         List<GenericTypeToken> parameterTypeTokens,
-                                         List<GenericTypeToken> exceptionTypeTokens,
-                                         List<GenericTypeToken.OfFormalTypeVariable> typeVariableTokens) {
-                            this.returnTypeToken = returnTypeToken;
-                            this.parameterTypeTokens = parameterTypeTokens;
-                            this.exceptionTypeTokens = exceptionTypeTokens;
-                            this.typeVariableTokens = typeVariableTokens;
-                        }
-
-                        @Override
-                        public Generic resolveReturnType(String returnTypeDescriptor,
-                                                         TypePool typePool,
-                                                         Map<String, List<AnnotationToken>> annotationTokens,
-                                                         MethodDescription.InDefinedShape definingMethod) {
-                            return TokenizedGenericType.of(typePool, returnTypeToken, returnTypeDescriptor, annotationTokens, definingMethod);
-                        }
-
-                        @Override
-                        public TypeList.Generic resolveParameterTypes(List<String> parameterTypeDescriptors,
-                                                                      TypePool typePool,
-                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                      MethodDescription.InDefinedShape definingMethod) {
-                            return new TokenizedGenericType.TokenList(typePool, parameterTypeTokens, annotationTokens, parameterTypeDescriptors, definingMethod);
-                        }
-
-                        @Override
-                        public TypeList.Generic resolveExceptionTypes(List<String> exceptionTypeDescriptors,
-                                                                      TypePool typePool,
-                                                                      Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                      MethodDescription.InDefinedShape definingMethod) {
-                            // Generic signatures of methods are optional.
-                            return exceptionTypeTokens.isEmpty()
-                                    ? Raw.INSTANCE.resolveExceptionTypes(exceptionTypeDescriptors, typePool, annotationTokens, definingMethod)
-                                    : new TokenizedGenericType.TokenList(typePool, exceptionTypeTokens, annotationTokens, exceptionTypeDescriptors, definingMethod);
-                        }
-
-                        @Override
-                        public TypeList.Generic resolveTypeVariables(TypePool typePool,
-                                                                     TypeVariableSource typeVariableSource,
-                                                                     Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                                     Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
-                            return new TokenizedGenericType.TypeVariableList(typePool, typeVariableTokens, typeVariableSource, annotationTokens, boundAnnotationTokens);
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            Tokenized tokenized = (Tokenized) other;
-                            return returnTypeToken.equals(tokenized.returnTypeToken)
-                                    && parameterTypeTokens.equals(tokenized.parameterTypeTokens)
-                                    && exceptionTypeTokens.equals(tokenized.exceptionTypeTokens)
-                                    && typeVariableTokens.equals(tokenized.typeVariableTokens);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = returnTypeToken.hashCode();
-                            result = 31 * result + parameterTypeTokens.hashCode();
-                            result = 31 * result + exceptionTypeTokens.hashCode();
-                            result = 31 * result + typeVariableTokens.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.ForMethod.Tokenized{" +
-                                    "returnTypeToken=" + returnTypeToken +
-                                    ", parameterTypeTokens=" + parameterTypeTokens +
-                                    ", exceptionTypeTokens=" + exceptionTypeTokens +
-                                    ", typeVariableTokens=" + typeVariableTokens +
-                                    '}';
-                        }
-                    }
-                }
-
-                /**
-                 * A resolution of the generic types of a {@link FieldDescription}.
-                 */
-                interface ForField {
-
-                    /**
-                     * Resolves the field type of the represented field.
-                     *
-                     * @param fieldTypeDescriptor The descriptor of the raw field type.
-                     * @param annotationTokens    A mapping of the represented types' type annotation tokens.
-                     * @param typePool            The type pool to be used for locating non-generic type descriptions.
-                     * @param definingField       The field that defines this type.   @return A description of this field's type.
-                     * @return A generic type representation of the field's type.
-                     */
-                    Generic resolveFieldType(String fieldTypeDescriptor,
-                                             TypePool typePool,
-                                             Map<String, List<AnnotationToken>> annotationTokens,
-                                             FieldDescription.InDefinedShape definingField);
-
-                    /**
-                     * An implementation of a tokenized resolution of the generic type of a {@link FieldDescription}.
-                     */
-                    class Tokenized implements ForField {
-
-                        /**
-                         * The token of the represented field's type.
-                         */
-                        private final GenericTypeToken fieldTypeToken;
-
-                        /**
-                         * Creates a new tokenized resolution of a {@link FieldDescription}'s type.
-                         *
-                         * @param fieldTypeToken The token of the represented field's type.
-                         */
-                        public Tokenized(GenericTypeToken fieldTypeToken) {
-                            this.fieldTypeToken = fieldTypeToken;
-                        }
-
-                        @Override
-                        public Generic resolveFieldType(String fieldTypeDescriptor,
-                                                        TypePool typePool,
-                                                        Map<String, List<AnnotationToken>> annotationTokens,
-                                                        FieldDescription.InDefinedShape definingField) {
-                            return TokenizedGenericType.of(typePool, fieldTypeToken, fieldTypeDescriptor, annotationTokens, definingField.getDeclaringType());
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || other != null && getClass() == other.getClass()
-                                    && fieldTypeToken.equals(((Tokenized) other).fieldTypeToken);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return fieldTypeToken.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypePool.LazyTypeDescription.GenericTypeToken.Resolution.ForField.Tokenized{" +
-                                    "fieldTypeToken=" + fieldTypeToken +
-                                    '}';
-                        }
-                    }
-                }
-            }
-
-            /**
-             * A generic type token that represents a non-generic type.
-             */
-            class ForRawType implements GenericTypeToken {
-
-                /**
-                 * The name of the represented type.
-                 */
-                private final String name;
-
-                /**
-                 * Creates a new type token that represents a non-generic type.
-                 *
-                 * @param name The name of the represented type.
-                 */
-                public ForRawType(String name) {
-                    this.name = name;
-                }
-
-                @Override
-                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyNonGenericType(typePool,
-                            typePath,
-                            annotationTokens == null
-                                    ? Collections.emptyMap()
-                                    : annotationTokens,
-                            typePool.describe(name).resolve());
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    return !typePool.describe(name).resolve().isInterface();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass()) && name.equals(((ForRawType) other).name);
-                }
-
-                @Override
-                public int hashCode() {
-                    return name.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForRawType{" +
-                            "name='" + name + '\'' +
-                            '}';
-                }
-
-                /**
-                 * A representation of an annotated non-generic type.
-                 */
-                protected static class LazyNonGenericType extends Generic.OfNonGenericType {
-
-                    /**
-                     * The type pool to use.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * This type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * A mapping of this type's type annotation tokens.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * The represented type description.
-                     */
-                    private final TypeDescription typeDescription;
-
-                    /**
-                     * Creates a new lazy non-generic type.
-                     *
-                     * @param typePool         The type pool to use.
-                     * @param typePath         This type's type path.
-                     * @param annotationTokens A mapping of this type's type annotation tokens.
-                     * @param typeDescription  The represented type description.
-                     */
-                    protected LazyNonGenericType(TypePool typePool,
-                                                 String typePath,
-                                                 Map<String, List<AnnotationToken>> annotationTokens,
-                                                 TypeDescription typeDescription) {
-                        this.typePool = typePool;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                        this.typeDescription = typeDescription;
-                    }
-
-                    @Override
-                    public TypeDescription asErasure() {
-                        return typeDescription;
-                    }
-
-                    @Override
-                    public Generic getComponentType() {
-                        TypeDescription componentType = typeDescription.getComponentType();
-                        return componentType == null
-                                ? UNDEFINED
-                                : new LazyNonGenericType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                    }
-                }
-            }
-
-            /**
-             * A generic type token that represents a type variable.
-             */
-            class ForTypeVariable implements GenericTypeToken {
-
-                /**
-                 * This type variable's nominal symbol.
-                 */
-                private final String symbol;
-
-                /**
-                 * Creates a generic type token that represents a type variable.
-                 *
-                 * @param symbol This type variable's nominal symbol.
-                 */
-                public ForTypeVariable(String symbol) {
-                    this.symbol = symbol;
-                }
-
-                @Override
-                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    Generic typeVariable = typeVariableSource.findVariable(symbol);
-                    if (typeVariable == null) {
-                        throw new IllegalStateException("Cannot resolve type variable '" + symbol + "' for " + typeVariableSource);
-                    } else {
-                        return new AnnotatedTypeVariable(typePool, annotationTokens.get(typePath), typeVariable);
-                    }
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    return true;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass()) && symbol.equals(((ForTypeVariable) other).symbol);
-                }
-
-                @Override
-                public int hashCode() {
-                    return symbol.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable{" +
-                            "symbol='" + symbol + '\'' +
-                            '}';
-                }
-
-                /**
-                 * An annotated representation of a formal type variable.
-                 */
-                protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
-
-                    /**
-                     * The type pool to use.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * The represented annotation tokens.
-                     */
-                    private final List<AnnotationToken> annotationTokens;
-
-                    /**
-                     * The represented type variable.
-                     */
-                    private final Generic typeVariable;
-
-                    /**
-                     * Creates a new annotated type variable.
-                     *
-                     * @param typePool         The type pool to use.
-                     * @param annotationTokens The represented annotation tokens.
-                     * @param typeVariable     The represented type variable.
-                     */
-                    protected AnnotatedTypeVariable(TypePool typePool, List<AnnotationToken> annotationTokens, Generic typeVariable) {
-                        this.typePool = typePool;
-                        this.annotationTokens = annotationTokens;
-                        this.typeVariable = typeVariable;
-                    }
-
-                    @Override
-                    public TypeList.Generic getUpperBounds() {
-                        return typeVariable.getUpperBounds();
-                    }
-
-                    @Override
-                    public TypeVariableSource getVariableSource() {
-                        return typeVariable.getVariableSource();
-                    }
-
-                    @Override
-                    public String getSymbol() {
-                        return typeVariable.getSymbol();
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
-                    }
-                }
-
-                /**
-                 * A generic type token that represent a formal type variable, i.e. a type variable including its upper bounds.
-                 */
-                public static class Formal implements GenericTypeToken.OfFormalTypeVariable {
-
-                    /**
-                     * This type variable's nominal symbol.
-                     */
-                    private final String symbol;
-
-                    /**
-                     * A list of tokens that represent this type variable's upper bounds.
-                     */
-                    private final List<GenericTypeToken> boundTypeTokens;
-
-                    /**
-                     * Creates generic type token that represent a formal type variable.
-                     *
-                     * @param symbol          This type variable's nominal symbol.
-                     * @param boundTypeTokens A list of tokens that represent this type variable's upper bounds.
-                     */
-                    public Formal(String symbol, List<GenericTypeToken> boundTypeTokens) {
-                        this.symbol = symbol;
-                        this.boundTypeTokens = boundTypeTokens;
-                    }
-
-                    @Override
-                    public Generic toGenericType(TypePool typePool,
-                                                 TypeVariableSource typeVariableSource,
-                                                 Map<String, List<AnnotationToken>> annotationTokens,
-                                                 Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens) {
-                        return new LazyTypeVariable(typePool,
-                                typeVariableSource,
-                                annotationTokens == null
-                                        ? Collections.emptyMap()
-                                        : annotationTokens,
-                                boundaryAnnotationTokens == null
-                                        ? Collections.emptyMap()
-                                        : boundaryAnnotationTokens,
-                                symbol,
-                                boundTypeTokens);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && symbol.equals(((Formal) other).symbol)
-                                && boundTypeTokens.equals(((Formal) other).boundTypeTokens);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return symbol.hashCode() + 31 * boundTypeTokens.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.LazyTypeDescription.GenericTypeToken.ForTypeVariable.Formal{" +
-                                "symbol='" + symbol + '\'' +
-                                "boundTypeTokens='" + boundTypeTokens + '\'' +
-                                '}';
-                    }
-
-                    /**
-                     * A type description that represents a type variable with bounds that are resolved lazily.
-                     */
-                    protected static class LazyTypeVariable extends Generic.OfTypeVariable {
-
-                        /**
-                         * The type pool to use for locating type descriptions.
-                         */
-                        private final TypePool typePool;
-
-                        /**
-                         * The type variable source to use for locating type variables.
-                         */
-                        private final TypeVariableSource typeVariableSource;
-
-                        /**
-                         * The type variable's type annotation tokens.
-                         */
-                        private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                        /**
-                         * A mapping of the type variable boundss type annotation tokens by their indices.
-                         */
-                        private final Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens;
-
-                        /**
-                         * The type variable's symbol.
-                         */
-                        private final String symbol;
-
-                        /**
-                         * Tokenized representations of the type variables bound types.
-                         */
-                        private final List<GenericTypeToken> boundTypeTokens;
-
-                        /**
-                         * Creates a lazy type description of a type variables.
-                         *
-                         * @param typePool                 The type pool to use for locating type descriptions.
-                         * @param typeVariableSource       The type variable source to use for locating type variables.
-                         * @param annotationTokens         The type variable's type annotation tokens.
-                         * @param boundaryAnnotationTokens A mapping of the type variable boundss type annotation tokens by their indices.
-                         * @param symbol                   The type variable's symbol.
-                         * @param boundTypeTokens          Tokenized representations of the type variables bound types.
-                         */
-                        protected LazyTypeVariable(TypePool typePool,
-                                                   TypeVariableSource typeVariableSource,
-                                                   Map<String, List<AnnotationToken>> annotationTokens,
-                                                   Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens,
-                                                   String symbol,
-                                                   List<GenericTypeToken> boundTypeTokens) {
-                            this.typePool = typePool;
-                            this.typeVariableSource = typeVariableSource;
-                            this.annotationTokens = annotationTokens;
-                            this.boundaryAnnotationTokens = boundaryAnnotationTokens;
-                            this.symbol = symbol;
-                            this.boundTypeTokens = boundTypeTokens;
-                        }
-
-                        @Override
-                        public TypeList.Generic getUpperBounds() {
-                            return new LazyBoundTokenList(typePool, typeVariableSource, boundaryAnnotationTokens, boundTypeTokens);
-                        }
-
-                        @Override
-                        public TypeVariableSource getVariableSource() {
-                            return typeVariableSource;
-                        }
-
-                        @Override
-                        public String getSymbol() {
-                            return symbol;
-                        }
-
-                        @Override
-                        public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(EMPTY_TYPE_PATH));
-                        }
-
-                        /**
-                         * A list representing a formal type variable's bounds.
-                         */
-                        protected static class LazyBoundTokenList extends TypeList.Generic.AbstractBase {
-
-                            /**
-                             * The type pool to use.
-                             */
-                            private final TypePool typePool;
-
-                            /**
-                             * The type variable source for locating type variables.
-                             */
-                            private final TypeVariableSource typeVariableSource;
-
-                            /**
-                             * A mapping of the bound type's type annotations by their bound index.
-                             */
-                            private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
-
-                            /**
-                             * The bound types in their tokenized form.
-                             */
-                            private final List<GenericTypeToken> boundTypeTokens;
-
-                            /**
-                             * Creates a new lazy bound token list for a type variable.
-                             *
-                             * @param typePool           The type pool to use.
-                             * @param typeVariableSource The type variable source for locating type variables.
-                             * @param annotationTokens   A mapping of the bound type's type annotations by their bound index.
-                             * @param boundTypeTokens    The bound types in their tokenized form.
-                             */
-                            protected LazyBoundTokenList(TypePool typePool,
-                                                         TypeVariableSource typeVariableSource,
-                                                         Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                                         List<GenericTypeToken> boundTypeTokens) {
-                                this.typePool = typePool;
-                                this.typeVariableSource = typeVariableSource;
-                                this.annotationTokens = annotationTokens;
-                                this.boundTypeTokens = boundTypeTokens;
-                            }
-
-                            @Override
-                            public Generic get(int index) {
-                                Map<String, List<AnnotationToken>> annotationTokens = this.annotationTokens.get(index + (boundTypeTokens.get(0).isPrimaryBound(typePool)
-                                        ? 0
-                                        : 1));
-                                return boundTypeTokens.get(index).toGenericType(typePool,
-                                        typeVariableSource,
-                                        EMPTY_TYPE_PATH,
-                                        annotationTokens == null
-                                                ? Collections.emptyMap()
-                                                : annotationTokens);
-                            }
-
-                            @Override
-                            public int size() {
-                                return boundTypeTokens.size();
-                            }
-                        }
-                    }
-                }
-            }
-
-            /**
-             * A generic type token that represents a generic array.
-             */
-            class ForGenericArray implements GenericTypeToken {
-
-                /**
-                 * The array's component type.
-                 */
-                private final GenericTypeToken componentTypeToken;
-
-                /**
-                 * Creates a generic type token that represents a generic array.
-                 *
-                 * @param componentTypeToken The array's component type.
-                 */
-                public ForGenericArray(GenericTypeToken componentTypeToken) {
-                    this.componentTypeToken = componentTypeToken;
-                }
-
-                @Override
-                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyGenericArray(typePool, typeVariableSource, typePath, annotationTokens, componentTypeToken);
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    throw new IllegalStateException("A generic array type cannot be a type variable bound: " + this);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && componentTypeToken.equals(((ForGenericArray) other).componentTypeToken);
-                }
-
-                @Override
-                public int hashCode() {
-                    return componentTypeToken.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForGenericArray{" +
-                            "componentTypeToken='" + componentTypeToken + '\'' +
-                            '}';
-                }
-
-                /**
-                 * A generic type representation of a generic array.
-                 */
-                protected static class LazyGenericArray extends Generic.OfGenericArray {
-
-                    /**
-                     * The type pool to use.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * The type variable source for locating type variables.
-                     */
-                    private final TypeVariableSource typeVariableSource;
-
-                    /**
-                     * This type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * This type's type annotations.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * A tokenized representation of this generic arrays's component type.
-                     */
-                    private final GenericTypeToken componentTypeToken;
-
-                    /**
-                     * Creates a new lazy generic array.
-                     *
-                     * @param typePool           The type pool to use.
-                     * @param typeVariableSource The type variable source for locating type variables.
-                     * @param typePath           This type's type path.
-                     * @param annotationTokens   This type's type annotations.
-                     * @param componentTypeToken A tokenized representation of this generic arrays's component type.
-                     */
-                    protected LazyGenericArray(TypePool typePool,
-                                               TypeVariableSource typeVariableSource,
-                                               String typePath,
-                                               Map<String, List<AnnotationToken>> annotationTokens,
-                                               GenericTypeToken componentTypeToken) {
-                        this.typePool = typePool;
-                        this.typeVariableSource = typeVariableSource;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                        this.componentTypeToken = componentTypeToken;
-                    }
-
-                    @Override
-                    public Generic getComponentType() {
-                        return componentTypeToken.toGenericType(typePool, typeVariableSource, typePath + COMPONENT_TYPE_PATH, annotationTokens);
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                    }
-                }
-            }
-
-            /**
-             * A generic type token for a wildcard that is bound below.
-             */
-            class ForLowerBoundWildcard implements GenericTypeToken {
-
-                /**
-                 * A token that represents the wildcard's lower bound.
-                 */
-                private final GenericTypeToken boundTypeToken;
-
-                /**
-                 * Creates a generic type token for a wildcard that is bound below.
-                 *
-                 * @param boundTypeToken A token that represents the wildcard's lower bound.
-                 */
-                public ForLowerBoundWildcard(GenericTypeToken boundTypeToken) {
-                    this.boundTypeToken = boundTypeToken;
-                }
-
-                @Override
-                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyLowerBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && boundTypeToken.equals(((ForLowerBoundWildcard) other).boundTypeToken);
-                }
-
-                @Override
-                public int hashCode() {
-                    return boundTypeToken.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForLowerBoundWildcard{" +
-                            "boundTypeToken=" + boundTypeToken +
-                            '}';
-                }
-
-                /**
-                 * A generic type representation of a lower bound wildcard.
-                 */
-                protected static class LazyLowerBoundWildcard extends Generic.OfWildcardType {
-
-                    /**
-                     * The type pool to use.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * The type variable source for locating type variables.
-                     */
-                    private final TypeVariableSource typeVariableSource;
-
-                    /**
-                     * This type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * This type's type annotations.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * A tokenized representation of this wildcard's bound.
-                     */
-                    private final GenericTypeToken boundTypeToken;
-
-                    /**
-                     * Creates a new lazy lower bound wildcard.
-                     *
-                     * @param typePool           The type pool to use.
-                     * @param typeVariableSource The type variable source for locating type variables.
-                     * @param typePath           This type's type path.
-                     * @param annotationTokens   This type's type annotations.
-                     * @param boundTypeToken     A tokenized representation of this wildcard's bound.
-                     */
-                    protected LazyLowerBoundWildcard(TypePool typePool,
-                                                     TypeVariableSource typeVariableSource,
-                                                     String typePath,
-                                                     Map<String, List<AnnotationToken>> annotationTokens,
-                                                     GenericTypeToken boundTypeToken) {
-                        this.typePool = typePool;
-                        this.typeVariableSource = typeVariableSource;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                        this.boundTypeToken = boundTypeToken;
-                    }
-
-                    @Override
-                    public TypeList.Generic getUpperBounds() {
-                        return new TypeList.Generic.Explicit(Generic.OBJECT);
-                    }
-
-                    @Override
-                    public TypeList.Generic getLowerBounds() {
-                        return new LazyTokenList.ForWildcardBound(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                    }
-                }
-            }
-
-            /**
-             * A generic type token for a wildcard that is bound above.
-             */
-            class ForUpperBoundWildcard implements GenericTypeToken {
-
-                /**
-                 * A token that represents the wildcard's upper bound.
-                 */
-                private final GenericTypeToken boundTypeToken;
-
-                /**
-                 * Creates a generic type token for a wildcard that is bound above.
-                 *
-                 * @param boundTypeToken A token that represents the wildcard's upper bound.
-                 */
-                public ForUpperBoundWildcard(GenericTypeToken boundTypeToken) {
-                    this.boundTypeToken = boundTypeToken;
-                }
-
-                @Override
-                public Generic toGenericType(TypePool typePool,
-                                             TypeVariableSource typeVariableSource,
-                                             String typePath,
-                                             Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyUpperBoundWildcard(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && boundTypeToken.equals(((ForUpperBoundWildcard) other).boundTypeToken);
-                }
-
-                @Override
-                public int hashCode() {
-                    return boundTypeToken.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForUpperBoundWildcard{" +
-                            "boundTypeToken=" + boundTypeToken +
-                            '}';
-                }
-
-                /**
-                 * A generic type representation of a tokenized wildcard with an upper bound.
-                 */
-                protected static class LazyUpperBoundWildcard extends Generic.OfWildcardType {
-
-                    /**
-                     * The type pool to use.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * The type variable source for locating type variables.
-                     */
-                    private final TypeVariableSource typeVariableSource;
-
-                    /**
-                     * This type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * This type's type annotations.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * A tokenized representation of this wildcard's bound.
-                     */
-                    private final GenericTypeToken boundTypeToken;
-
-                    /**
-                     * Creates a new lazy upper bound wildcard.
-                     *
-                     * @param typePool           The type pool to use.
-                     * @param typeVariableSource The type variable source for locating type variables.
-                     * @param typePath           This type's type path.
-                     * @param annotationTokens   This type's type annotations.
-                     * @param boundTypeToken     A tokenized representation of this wildcard's bound.
-                     */
-                    protected LazyUpperBoundWildcard(TypePool typePool,
-                                                     TypeVariableSource typeVariableSource,
-                                                     String typePath,
-                                                     Map<String, List<AnnotationToken>> annotationTokens,
-                                                     GenericTypeToken boundTypeToken) {
-                        this.typePool = typePool;
-                        this.typeVariableSource = typeVariableSource;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                        this.boundTypeToken = boundTypeToken;
-                    }
-
-                    @Override
-                    public TypeList.Generic getUpperBounds() {
-                        return new LazyTokenList.ForWildcardBound(typePool, typeVariableSource, typePath, annotationTokens, boundTypeToken);
-                    }
-
-                    @Override
-                    public TypeList.Generic getLowerBounds() {
-                        return new TypeList.Generic.Empty();
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                    }
-                }
-            }
-
-            /**
-             * A generic type token that represents a parameterized type.
-             */
-            class ForParameterizedType implements GenericTypeToken {
-
-                /**
-                 * The name of the parameterized type's erasure.
-                 */
-                private final String name;
-
-                /**
-                 * A list of tokens that represent the parameters of the represented type.
-                 */
-                private final List<GenericTypeToken> parameterTypeTokens;
-
-                /**
-                 * Creates a type token that represents a parameterized type.
-                 *
-                 * @param name                The name of the parameterized type's erasure.
-                 * @param parameterTypeTokens A list of tokens that represent the parameters of the represented type.
-                 */
-                public ForParameterizedType(String name, List<GenericTypeToken> parameterTypeTokens) {
-                    this.name = name;
-                    this.parameterTypeTokens = parameterTypeTokens;
-                }
-
-                @Override
-                public Generic toGenericType(TypePool typePool, TypeVariableSource typeVariableSource, String typePath, Map<String, List<AnnotationToken>> annotationTokens) {
-                    return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens);
-                }
-
-                @Override
-                public boolean isPrimaryBound(TypePool typePool) {
-                    return !typePool.describe(name).resolve().isInterface();
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && name.equals(((ForParameterizedType) other).name)
-                            && parameterTypeTokens.equals(((ForParameterizedType) other).parameterTypeTokens);
-                }
-
-                @Override
-                public int hashCode() {
-                    return name.hashCode() + 31 * parameterTypeTokens.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.GenericTypeToken.ForParameterizedType{" +
-                            "name='" + name + '\'' +
-                            "parameterTypeTokens=" + parameterTypeTokens +
-                            '}';
-                }
-
-                /**
-                 * A generic type token to describe a parameterized type description with a generic owner type.
-                 */
-                public static class Nested implements GenericTypeToken {
-
-                    /**
-                     * The name of the parameterized type's erasure.
-                     */
-                    private final String name;
-
-                    /**
-                     * A list of tokens that represent the parameters of the represented type.
-                     */
-                    private final List<GenericTypeToken> parameterTypeTokens;
-
-                    /**
-                     * A token that describes the described parameterized type's owner type.
-                     */
-                    private final GenericTypeToken ownerTypeToken;
-
-                    /**
-                     * Creates a type token that represents a parameterized type.
-                     *
-                     * @param name                The name of the parameterized type's erasure.
-                     * @param parameterTypeTokens A list of tokens that represent the parameters of the represented type.
-                     * @param ownerTypeToken      A token that describes the described parameterized type's owner type.
-                     */
-                    public Nested(String name, List<GenericTypeToken> parameterTypeTokens, GenericTypeToken ownerTypeToken) {
-                        this.name = name;
-                        this.parameterTypeTokens = parameterTypeTokens;
-                        this.ownerTypeToken = ownerTypeToken;
-                    }
-
-                    @Override
-                    public Generic toGenericType(TypePool typePool,
-                                                 TypeVariableSource typeVariableSource,
-                                                 String typePath,
-                                                 Map<String, List<AnnotationToken>> annotationTokens) {
-                        return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens, ownerTypeToken);
-                    }
-
-                    @Override
-                    public boolean isPrimaryBound(TypePool typePool) {
-                        return !typePool.describe(name).resolve().isInterface();
-                    }
-
-                    /**
-                     * A lazy description of a parameterized type with an owner type.
-                     */
-                    protected static class LazyParameterizedType extends Generic.OfParameterizedType {
-
-                        /**
-                         * The type pool that is used for locating a generic type.
-                         */
-                        private final TypePool typePool;
-
-                        /**
-                         * The type variable source to use for resolving type variables.
-                         */
-                        private final TypeVariableSource typeVariableSource;
-
-                        /**
-                         * This type's type path.
-                         */
-                        private final String typePath;
-
-                        /**
-                         * A mapping of type annotations for this type.
-                         */
-                        private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                        /**
-                         * The binary name of this parameterized type's raw type.
-                         */
-                        private final String name;
-
-                        /**
-                         * Tokens that represent this parameterized type's parameters.
-                         */
-                        private final List<GenericTypeToken> parameterTypeTokens;
-
-                        /**
-                         * A token that represents this type's owner type.
-                         */
-                        private final GenericTypeToken ownerTypeToken;
-
-                        /**
-                         * Creates a new lazy parameterized type.
-                         *
-                         * @param typePool            The type pool that is used for locating a generic type.
-                         * @param typeVariableSource  The type variable source to use for resolving type variables.
-                         * @param typePath            This type's type path.
-                         * @param annotationTokens    A mapping of type annotations for this type.
-                         * @param name                The binary name of this parameterized type's raw type.
-                         * @param parameterTypeTokens Tokens that represent this parameterized type's parameters.
-                         * @param ownerTypeToken      A token that represents this type's owner type.
-                         */
-                        protected LazyParameterizedType(TypePool typePool,
-                                                        TypeVariableSource typeVariableSource,
-                                                        String typePath,
-                                                        Map<String, List<AnnotationToken>> annotationTokens,
-                                                        String name,
-                                                        List<GenericTypeToken> parameterTypeTokens,
-                                                        GenericTypeToken ownerTypeToken) {
-                            this.typePool = typePool;
-                            this.typeVariableSource = typeVariableSource;
-                            this.typePath = typePath;
-                            this.annotationTokens = annotationTokens;
-                            this.name = name;
-                            this.parameterTypeTokens = parameterTypeTokens;
-                            this.ownerTypeToken = ownerTypeToken;
-                        }
-
-                        @Override
-                        public TypeDescription asErasure() {
-                            return typePool.describe(name).resolve();
-                        }
-
-                        @Override
-                        public TypeList.Generic getParameters() {
-                            return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
-                        }
-
-                        @Override
-                        public Generic getOwnerType() {
-                            return ownerTypeToken.toGenericType(typePool, typeVariableSource, typePath + OWNER_TYPE_PATH, annotationTokens);
-                        }
-
-                        @Override
-                        public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                        }
-                    }
-                }
-
-                /**
-                 * A generic type description that represents a parameterized type <b>without</b> an enclosing generic owner type.
-                 */
-                protected static class LazyParameterizedType extends Generic.OfParameterizedType {
-
-                    /**
-                     * The type pool that is used for locating a generic type.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * The type variable source to use for resolving type variables.
-                     */
-                    private final TypeVariableSource typeVariableSource;
-
-                    /**
-                     * This type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * A mapping of the represent type's annotation tokens.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * The binary name of the raw type.
-                     */
-                    private final String name;
-
-                    /**
-                     * A list of type tokens representing this type's bounds.
-                     */
-                    private final List<GenericTypeToken> parameterTypeTokens;
-
-                    /**
-                     * Creates a new description of a parameterized type.
-                     *
-                     * @param typePool            The type pool that is used for locating a generic type.
-                     * @param typeVariableSource  The type variable source to use for resolving type variables.
-                     * @param typePath            This type's type path.
-                     * @param annotationTokens    A mapping of the represent type's annotation tokens,
-                     * @param name                The binary name of the raw type.
-                     * @param parameterTypeTokens A list of type tokens representing this type's bounds.
-                     */
-                    protected LazyParameterizedType(TypePool typePool,
-                                                    TypeVariableSource typeVariableSource,
-                                                    String typePath,
-                                                    Map<String, List<AnnotationToken>> annotationTokens,
-                                                    String name,
-                                                    List<GenericTypeToken> parameterTypeTokens) {
-                        this.typePool = typePool;
-                        this.typeVariableSource = typeVariableSource;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                        this.name = name;
-                        this.parameterTypeTokens = parameterTypeTokens;
-                    }
-
-                    @Override
-                    public TypeDescription asErasure() {
-                        return typePool.describe(name).resolve();
-                    }
-
-                    @Override
-                    public TypeList.Generic getParameters() {
-                        return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
-                    }
-
-                    @Override
-                    public Generic getOwnerType() {
-                        TypeDescription ownerType = typePool.describe(name).resolve().getEnclosingType();
-                        return ownerType == null
-                                ? UNDEFINED
-                                : ownerType.asGenericType();
-                    }
-
-                    @Override
-                    public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
-                    }
-                }
-            }
-
-            /**
-             * A lazy list of type tokens.
-             */
-            class LazyTokenList extends TypeList.Generic.AbstractBase {
-
-                /**
-                 * The type pool that is used for locating a generic type.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * The type variable source to use for resolving type variables.
-                 */
-                private final TypeVariableSource typeVariableSource;
-
-                /**
-                 * The represented types' type path to which an index step is added upon resolution.
-                 */
-                private final String typePath;
-
-                /**
-                 * A mapping of the represent types' annotation tokens.
-                 */
-                private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                /**
-                 * A list of type tokens this list represents.
-                 */
-                private final List<GenericTypeToken> genericTypeTokens;
-
-                /**
-                 * Creates a new type list that represents a list of tokenized types.
-                 *
-                 * @param typePool           The type pool that is used for locating a generic type.
-                 * @param typeVariableSource The type variable source to use for resolving type variables.
-                 * @param typePath           The represented types' type path to which an index step is added upon resolution.
-                 * @param annotationTokens   A mapping of the represent types' annotation tokens,
-                 * @param genericTypeTokens  A list of type tokens this list represents.
-                 */
-                protected LazyTokenList(TypePool typePool,
-                                        TypeVariableSource typeVariableSource,
-                                        String typePath,
-                                        Map<String, List<AnnotationToken>> annotationTokens,
-                                        List<GenericTypeToken> genericTypeTokens) {
-                    this.typePool = typePool;
-                    this.typeVariableSource = typeVariableSource;
-                    this.typePath = typePath;
-                    this.annotationTokens = annotationTokens;
-                    this.genericTypeTokens = genericTypeTokens;
-                }
-
-                @Override
-                public Generic get(int index) {
-                    return genericTypeTokens.get(index).toGenericType(typePool, typeVariableSource, typePath + index + INDEXED_TYPE_DELIMITER, annotationTokens);
-                }
-
-                @Override
-                public int size() {
-                    return genericTypeTokens.size();
-                }
-
-                /**
-                 * A generic type description representing a tokenized wildcard bound.
-                 */
-                protected static class ForWildcardBound extends TypeList.Generic.AbstractBase {
-
-                    /**
-                     * The type pool that is used for locating a generic type.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * The type variable source to use for resolving type variables.
-                     */
-                    private final TypeVariableSource typeVariableSource;
-
-                    /**
-                     * The represented types' type path to which a wildcard step is added upon resolution.
-                     */
-                    private final String typePath;
-
-                    /**
-                     * A mapping of the represent types' annotation tokens.
-                     */
-                    private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                    /**
-                     * A token representing the wildcard's bound.
-                     */
-                    private final GenericTypeToken genericTypeToken;
-
-                    /**
-                     * @param typePool           The type pool that is used for locating a generic type.
-                     * @param typeVariableSource The type variable source to use for resolving type variables.
-                     * @param typePath           The represented types' type path to which a wildcard step is added upon resolution.
-                     * @param annotationTokens   A mapping of the represent types' annotation tokens,
-                     * @param genericTypeToken   A token representing the wildcard's bound.
-                     */
-                    protected ForWildcardBound(TypePool typePool,
-                                               TypeVariableSource typeVariableSource,
-                                               String typePath,
-                                               Map<String, List<AnnotationToken>> annotationTokens,
-                                               GenericTypeToken genericTypeToken) {
-                        this.typePool = typePool;
-                        this.typeVariableSource = typeVariableSource;
-                        this.typePath = typePath;
-                        this.annotationTokens = annotationTokens;
-                        this.genericTypeToken = genericTypeToken;
-                    }
-
-                    @Override
-                    public Generic get(int index) {
-                        if (index == 0) {
-                            return genericTypeToken.toGenericType(typePool, typeVariableSource, typePath + WILDCARD_TYPE_PATH, annotationTokens);
-                        } else {
-                            throw new IndexOutOfBoundsException("index = " + index);
-                        }
-                    }
-
-                    @Override
-                    public int size() {
-                        return 1;
-                    }
-                }
-            }
-        }
-
-        /**
-         * A token for representing collected data on an annotation.
-         */
-        protected static class AnnotationToken {
-
-            /**
-             * The descriptor of the represented annotation.
-             */
-            private final String descriptor;
-
-            /**
-             * A map of annotation value names to their value representations.
-             */
-            private final Map<String, AnnotationDescription.AnnotationValue<?, ?>> values;
-
-            /**
-             * Creates a new annotation token.
-             *
-             * @param descriptor The descriptor of the represented annotation.
-             * @param values     A map of annotation value names to their value representations.
-             */
-            protected AnnotationToken(String descriptor, Map<String, AnnotationDescription.AnnotationValue<?, ?>> values) {
-                this.descriptor = descriptor;
-                this.values = values;
-            }
-
-            /**
-             * Returns a map of annotation value names to their value representations.
-             *
-             * @return A map of annotation value names to their value representations.
-             */
-            protected Map<String, AnnotationDescription.AnnotationValue<?, ?>> getValues() {
-                return values;
-            }
-
-            /**
-             * Returns the annotation type's binary name.
-             *
-             * @return The annotation type's binary name.
-             */
-            protected String getBinaryName() {
-                return descriptor.substring(1, descriptor.length() - 1).replace('/', '.');
-            }
-
-            /**
-             * Transforms this token into an annotation description.
-             *
-             * @param typePool The type pool to be used for looking up linked types.
-             * @return An optional description of this annotation's token.
-             */
-            private Resolution toAnnotationDescription(TypePool typePool) {
-                TypePool.Resolution resolution = typePool.describe(getBinaryName());
-                return resolution.isResolved()
-                        ? new Resolution.Simple(new LazyAnnotationDescription(typePool, resolution.resolve(), values))
-                        : new Resolution.Illegal(getBinaryName());
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                AnnotationToken that = (AnnotationToken) other;
-                return descriptor.equals(that.descriptor)
-                        && values.equals(that.values);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = descriptor.hashCode();
-                result = 31 * result + values.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.LazyTypeDescription.AnnotationToken{" +
-                        "descriptor='" + descriptor + '\'' +
-                        ", values=" + values +
-                        '}';
-            }
-
-            /**
-             * A resolution for an annotation tokens. Any annotation is suppressed if its type is not available.
-             * This conforms to the handling of the Java reflection API.
-             */
-            protected interface Resolution {
-
-                /**
-                 * Returns {@code true} if the represented annotation could be resolved.
-                 *
-                 * @return {@code true} if the represented annotation could be resolved.
-                 */
-                boolean isResolved();
-
-                /**
-                 * Returns the resolved annotation. This method throws an exception if this instance is not resolved.
-                 *
-                 * @return The resolved annotation. This method throws an exception if this instance is not resolved.
-                 */
-                AnnotationDescription resolve();
-
-                /**
-                 * A simple resolved annotation.
-                 */
-                class Simple implements Resolution {
-
-                    /**
-                     * The represented annotation description.
-                     */
-                    private final AnnotationDescription annotationDescription;
-
-                    /**
-                     * Creates a new simple resolution.
-                     *
-                     * @param annotationDescription The represented annotation description.
-                     */
-                    protected Simple(AnnotationDescription annotationDescription) {
-                        this.annotationDescription = annotationDescription;
-                    }
-
-                    @Override
-                    public boolean isResolved() {
-                        return true;
-                    }
-
-                    @Override
-                    public AnnotationDescription resolve() {
-                        return annotationDescription;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && annotationDescription.equals(((Simple) other).annotationDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return annotationDescription.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.LazyTypeDescription.AnnotationToken.Resolution.Simple{" +
-                                "annotationDescription=" + annotationDescription +
-                                '}';
-                    }
-                }
-
-                /**
-                 * An illegal resolution.
-                 */
-                class Illegal implements Resolution {
-
-                    /**
-                     * The annotation's binary type name.
-                     */
-                    private final String annotationType;
-
-                    /**
-                     * Creates a new illegal resolution.
-                     *
-                     * @param annotationType The annotation's binary type name.
-                     */
-                    public Illegal(String annotationType) {
-                        this.annotationType = annotationType;
-                    }
-
-                    @Override
-                    public boolean isResolved() {
-                        return false;
-                    }
-
-                    @Override
-                    public AnnotationDescription resolve() {
-                        throw new IllegalStateException("Annotation type is not available: " + annotationType);
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && annotationType.equals(((Illegal) other).annotationType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return annotationType.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypePool.LazyTypeDescription.AnnotationToken.Resolution.Illegal{" +
-                                "annotationType=" + annotationType +
-                                '}';
-                    }
-                }
-            }
-        }
-
-        /**
-         * A token for representing collected data on a field.
-         */
-        protected static class FieldToken {
-
-            /**
-             * The name of the field.
-             */
-            private final String name;
-
-            /**
-             * The modifiers of the represented field.
-             */
-            private final int modifiers;
-
-            /**
-             * The descriptor of the field.
-             */
-            private final String descriptor;
-
-            /**
-             * The resolution of this field's generic type.
-             */
-            private final GenericTypeToken.Resolution.ForField signatureResolution;
-
-            /**
-             * A mapping of the field type's type annotation tokens.
-             */
-            private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
-
-            /**
-             * A list of annotation tokens representing the annotations of the represented field.
-             */
-            private final List<AnnotationToken> annotationTokens;
-
-            /**
-             * Creates a new field token.
-             *
-             * @param name                 The name of the field.
-             * @param modifiers            The modifiers of the represented field.
-             * @param descriptor           The descriptor of the field.
-             * @param signatureResolution  The resolution of this field's generic type.
-             * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
-             * @param annotationTokens     A list of annotation tokens representing the annotations of the represented field.
-             */
-            protected FieldToken(String name,
-                                 int modifiers,
-                                 String descriptor,
-                                 GenericTypeToken.Resolution.ForField signatureResolution,
-                                 Map<String, List<AnnotationToken>> typeAnnotationTokens,
-                                 List<AnnotationToken> annotationTokens) {
-                this.modifiers = modifiers;
-                this.name = name;
-                this.descriptor = descriptor;
-                this.signatureResolution = signatureResolution;
-                this.typeAnnotationTokens = typeAnnotationTokens;
-                this.annotationTokens = annotationTokens;
-            }
-
-            /**
-             * Transforms this token into a lazy field description.
-             *
-             * @param lazyTypeDescription The lazy type description to attach this field description to.
-             * @return A field description resembling this field token.
-             */
-            private LazyFieldDescription toFieldDescription(LazyTypeDescription lazyTypeDescription) {
-                return lazyTypeDescription.new LazyFieldDescription(name,
-                        modifiers,
-                        descriptor,
-                        signatureResolution,
-                        typeAnnotationTokens,
-                        annotationTokens);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                FieldToken that = (FieldToken) other;
-                return modifiers == that.modifiers
-                        && annotationTokens.equals(that.annotationTokens)
-                        && descriptor.equals(that.descriptor)
-                        && signatureResolution.equals(that.signatureResolution)
-                        && name.equals(that.name);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = modifiers;
-                result = 31 * result + name.hashCode();
-                result = 31 * result + descriptor.hashCode();
-                result = 31 * result + signatureResolution.hashCode();
-                result = 31 * result + annotationTokens.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.LazyTypeDescription.FieldToken{" +
-                        "modifiers=" + modifiers +
-                        ", name='" + name + '\'' +
-                        ", descriptor='" + descriptor + '\'' +
-                        ", signatureResolution=" + signatureResolution +
-                        ", annotationTokens=" + annotationTokens +
-                        '}';
-            }
-        }
-
-        /**
-         * A token for representing collected data on a method.
-         */
-        protected static class MethodToken {
-
-            /**
-             * The internal name of the represented method.
-             */
-            private final String name;
-
-            /**
-             * The modifiers of the represented method.
-             */
-            private final int modifiers;
-
-            /**
-             * The descriptor of the represented method.
-             */
-            private final String descriptor;
-
-            /**
-             * The generic type resolution of this method.
-             */
-            private final GenericTypeToken.Resolution.ForMethod signatureResolution;
-
-            /**
-             * An array of internal names of the exceptions of the represented method or {@code null} if there
-             * are no such exceptions.
-             */
-            private final String[] exceptionName;
-
-            /**
-             * A mapping of the type variables' type annotation tokens by their indices.
-             */
-            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
-
-            /**
-             * A mapping of the type variables' type bounds' type annotation tokens by their indices and each variable's index.
-             */
-            private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundAnnotationTokens;
-
-            /**
-             * A mapping of the return type's type variable tokens.
-             */
-            private final Map<String, List<LazyTypeDescription.AnnotationToken>> returnTypeAnnotationTokens;
-
-            /**
-             * A mapping of the parameter types' type annotation tokens by their indices.
-             */
-            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> parameterTypeAnnotationTokens;
-
-            /**
-             * A mapping of the exception types' type annotation tokens by their indices.
-             */
-            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
-
-            /**
-             * A list of annotation tokens that are present on the represented method.
-             */
-            private final List<AnnotationToken> annotationTokens;
-
-            /**
-             * A map of parameter indices to tokens that represent their annotations.
-             */
-            private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
-
-            /**
-             * A list of tokens describing meta data of the method's parameters.
-             */
-            private final List<ParameterToken> parameterTokens;
-
-            /**
-             * The default value of this method or {@code null} if there is no such value.
-             */
-            private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
-
-            /**
-             * Creates a new method token.
-             *
-             * @param name                              The name of the method.
-             * @param modifiers                         The modifiers of the represented method.
-             * @param descriptor                        The descriptor of the represented method.
-             * @param signatureResolution               The generic type resolution of this method.
-             * @param exceptionName                     An array of internal names of the exceptions of the represented method or {@code null} if
-             *                                          there are no such exceptions.
-             * @param typeVariableAnnotationTokens      A mapping of the type variables' type annotation tokens by their indices.
-             * @param typeVariableBoundAnnotationTokens A mapping of the type variables' type bounds' type annotation tokens by their
-             *                                          index and each variable's index.
-             * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
-             * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
-             * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
-             * @param annotationTokens                  A list of annotation tokens that are present on the represented method.
-             * @param parameterAnnotationTokens         A map of parameter indices to tokens that represent their annotations.
-             * @param parameterTokens                   A list of tokens describing meta data of the method's parameters.
-             * @param defaultValue                      The default value of this method or {@code null} if there is no such value.
-             */
-            protected MethodToken(String name,
-                                  int modifiers,
-                                  String descriptor,
-                                  GenericTypeToken.Resolution.ForMethod signatureResolution,
-                                  String[] exceptionName,
-                                  Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
-                                  Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens,
-                                  Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
-                                  Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
-                                  Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
-                                  List<AnnotationToken> annotationTokens,
-                                  Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
-                                  List<ParameterToken> parameterTokens,
-                                  AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
-                this.modifiers = modifiers;
-                this.name = name;
-                this.descriptor = descriptor;
-                this.signatureResolution = signatureResolution;
-                this.exceptionName = exceptionName;
-                this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
-                this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
-                this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
-                this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
-                this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
-                this.annotationTokens = annotationTokens;
-                this.parameterAnnotationTokens = parameterAnnotationTokens;
-                this.parameterTokens = parameterTokens;
-                this.defaultValue = defaultValue;
-            }
-
-            /**
-             * Transforms this method token to a method description that is attached to a lazy type description.
-             *
-             * @param lazyTypeDescription The lazy type description to attach this method description to.
-             * @return A method description representing this field token.
-             */
-            private MethodDescription.InDefinedShape toMethodDescription(LazyTypeDescription lazyTypeDescription) {
-                return lazyTypeDescription.new LazyMethodDescription(name,
-                        modifiers,
-                        descriptor,
-                        signatureResolution,
-                        exceptionName,
-                        typeVariableAnnotationTokens,
-                        typeVariableBoundAnnotationTokens,
-                        returnTypeAnnotationTokens,
-                        parameterTypeAnnotationTokens,
-                        exceptionTypeAnnotationTokens,
-                        annotationTokens,
-                        parameterAnnotationTokens,
-                        parameterTokens,
-                        defaultValue);
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                MethodToken that = (MethodToken) other;
-                return modifiers == that.modifiers
-                        && annotationTokens.equals(that.annotationTokens)
-                        && defaultValue.equals(that.defaultValue)
-                        && descriptor.equals(that.descriptor)
-                        && parameterTokens.equals(that.parameterTokens)
-                        && signatureResolution.equals(that.signatureResolution)
-                        && Arrays.equals(exceptionName, that.exceptionName)
-                        && name.equals(that.name)
-                        && parameterAnnotationTokens.equals(that.parameterAnnotationTokens);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = modifiers;
-                result = 31 * result + name.hashCode();
-                result = 31 * result + descriptor.hashCode();
-                result = 31 * result + signatureResolution.hashCode();
-                result = 31 * result + Arrays.hashCode(exceptionName);
-                result = 31 * result + annotationTokens.hashCode();
-                result = 31 * result + parameterAnnotationTokens.hashCode();
-                result = 31 * result + parameterTokens.hashCode();
-                result = 31 * result + defaultValue.hashCode();
-                return result;
-            }
-
-            @Override
-            public String toString() {
-                return "TypePool.LazyTypeDescription.MethodToken{" +
-                        "modifiers=" + modifiers +
-                        ", name='" + name + '\'' +
-                        ", descriptor='" + descriptor + '\'' +
-                        ", signatureResolution=" + signatureResolution +
-                        ", exceptionName=" + Arrays.toString(exceptionName) +
-                        ", annotationTokens=" + annotationTokens +
-                        ", parameterAnnotationTokens=" + parameterAnnotationTokens +
-                        ", parameterTokens=" + parameterTokens +
-                        ", defaultValue=" + defaultValue +
-                        '}';
-            }
-
-            /**
-             * A token representing a method's parameter.
-             */
-            protected static class ParameterToken {
-
-                /**
-                 * Donates an unknown name of a parameter.
-                 */
-                protected static final String NO_NAME = null;
-
-                /**
-                 * Donates an unknown modifier of a parameter.
-                 */
-                protected static final Integer NO_MODIFIERS = null;
-
-                /**
-                 * The name of the parameter or {@code null} if no explicit name for this parameter is known.
-                 */
-                private final String name;
-
-                /**
-                 * The modifiers of the parameter or {@code null} if no modifiers are known for this parameter.
-                 */
-                private final Integer modifiers;
-
-                /**
-                 * Creates a parameter token for a parameter without an explicit name and without specific modifiers.
-                 */
-                protected ParameterToken() {
-                    this(NO_NAME);
-                }
-
-                /**
-                 * Creates a parameter token for a parameter with an explicit name and without specific modifiers.
-                 *
-                 * @param name The name of the parameter.
-                 */
-                protected ParameterToken(String name) {
-                    this(name, NO_MODIFIERS);
-                }
-
-                /**
-                 * Creates a parameter token for a parameter with an explicit name and with specific modifiers.
-                 *
-                 * @param name      The name of the parameter.
-                 * @param modifiers The modifiers of the parameter.
-                 */
-                protected ParameterToken(String name, Integer modifiers) {
-                    this.name = name;
-                    this.modifiers = modifiers;
-                }
-
-                /**
-                 * Returns the name of the parameter or {@code null} if there is no such name.
-                 *
-                 * @return The name of the parameter or {@code null} if there is no such name.
-                 */
-                protected String getName() {
-                    return name;
-                }
-
-                /**
-                 * Returns the modifiers of the parameter or {@code null} if no modifiers are known.
-                 *
-                 * @return The modifiers of the parameter or {@code null} if no modifiers are known.
-                 */
-                protected Integer getModifiers() {
-                    return modifiers;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    if (this == other) return true;
-                    if (other == null || getClass() != other.getClass()) return false;
-                    ParameterToken that = ((ParameterToken) other);
-                    return !(modifiers != null ? !modifiers.equals(that.modifiers) : that.modifiers != null)
-                            && !(name != null ? !name.equals(that.name) : that.name != null);
-                }
-
-                @Override
-                public int hashCode() {
-                    int result = name != null ? name.hashCode() : 0;
-                    result = 31 * result + (modifiers != null ? modifiers.hashCode() : 0);
-                    return result;
-                }
-
-                @Override
-                public String toString() {
-                    return "TypePool.LazyTypeDescription.MethodToken.ParameterToken{" +
-                            "name='" + name + '\'' +
-                            ", modifiers=" + modifiers +
-                            '}';
-                }
-            }
-        }
-
-        /**
-         * A lazy description of an annotation that looks up types from a type pool when required.
-         */
-        private static class LazyAnnotationDescription extends AnnotationDescription.AbstractBase {
-
-            /**
-             * The type pool for looking up type references.
-             */
-            protected final TypePool typePool;
-
-            /**
-             * The type of this annotation.
-             */
-            private final TypeDescription annotationType;
-
-            /**
-             * A map of annotation values by their property name.
-             */
-            protected final Map<String, AnnotationValue<?, ?>> values;
-
-            /**
-             * Creates a new lazy annotation description.
-             *
-             * @param typePool       The type pool to be used for looking up linked types.
-             * @param annotationType The annotation's type.
-             * @param values         A map of annotation value names to their value representations.
-             */
-            private LazyAnnotationDescription(TypePool typePool, TypeDescription annotationType, Map<String, AnnotationValue<?, ?>> values) {
-                this.typePool = typePool;
-                this.annotationType = annotationType;
-                this.values = values;
-            }
-
-            /**
-             * Represents a list of annotation tokens in form of a list of lazy type annotations. Any annotation with
-             * a type that cannot be loaded from the type pool is ignored and not included in the list. If the provided
-             * {@code tokens} are {@code null}, an empty list is returned.
-             *
-             * @param typePool The type pool to be used for looking up linked types.
-             * @param tokens   The tokens to represent in the list.
-             * @return A list of the loadable annotations.
-             */
-            protected static AnnotationList asListOfNullable(TypePool typePool, List<? extends AnnotationToken> tokens) {
-                return tokens == null
-                        ? new AnnotationList.Empty()
-                        : asList(typePool, tokens);
-            }
-
-            /**
-             * Represents a list of annotation tokens in form of a list of lazy type annotations. Any annotation with
-             * a type that cannot be loaded from the type pool is ignored and not included in the list.
-             *
-             * @param typePool The type pool to be used for looking up linked types.
-             * @param tokens   The tokens to represent in the list.
-             * @return A list of the loadable annotations.
-             */
-            protected static AnnotationList asList(TypePool typePool, List<? extends AnnotationToken> tokens) {
-                List<AnnotationDescription> annotationDescriptions = new ArrayList<AnnotationDescription>(tokens.size());
-                for (AnnotationToken token : tokens) {
-                    AnnotationToken.Resolution resolution = token.toAnnotationDescription(typePool);
-                    if (resolution.isResolved()) {
-                        annotationDescriptions.add(resolution.resolve());
-                    }
-                }
-                return new AnnotationList.Explicit(annotationDescriptions);
-            }
-
-            @Override
-            public Object getValue(MethodDescription.InDefinedShape methodDescription) {
-                if (!methodDescription.getDeclaringType().asErasure().equals(annotationType)) {
-                    throw new IllegalArgumentException(methodDescription + " is not declared by " + getAnnotationType());
-                }
-                AnnotationValue<?, ?> annotationValue = values.get(methodDescription.getName());
-                Object value = annotationValue == null
-                        ? getAnnotationType().getDeclaredMethods().filter(is(methodDescription)).getOnly().getDefaultValue()
-                        : annotationValue.resolve();
-                if (value == null) {
-                    throw new IllegalStateException(methodDescription + " is not defined on annotation");
-                }
-                return PropertyDispatcher.of(value.getClass()).conditionalClone(value);
-            }
-
-            @Override
-            public TypeDescription getAnnotationType() {
-                return annotationType;
-            }
-
-            @Override
-            public <T extends Annotation> Loadable<T> prepare(Class<T> annotationType) {
-                if (!this.annotationType.represents(annotationType)) {
-                    throw new IllegalArgumentException(annotationType + " does not represent " + this.annotationType);
-                }
-                return new Loadable<T>(typePool, annotationType, values);
-            }
-
-            /**
-             * A loadable version of a lazy annotation description.
-             *
-             * @param <S> The annotation type.
-             */
-            private static class Loadable<S extends Annotation> extends LazyAnnotationDescription implements AnnotationDescription.Loadable<S> {
-
-                /**
-                 * The loaded annotation type.
-                 */
-                private final Class<S> annotationType;
-
-                /**
-                 * Creates a new loadable version of a lazy annotation.
-                 *
-                 * @param typePool       The type pool to be used for looking up linked types.
-                 * @param annotationType The annotation's loaded type.
-                 * @param values         A map of annotation value names to their value representations.
-                 */
-                private Loadable(TypePool typePool, Class<S> annotationType, Map<String, AnnotationValue<?, ?>> values) {
-                    super(typePool, new ForLoadedType(annotationType), values);
-                    this.annotationType = annotationType;
-                }
-
-                @Override
-                public S load() throws ClassNotFoundException {
-                    return load(annotationType.getClassLoader());
-                }
-
-                @Override
-                @SuppressWarnings("unchecked")
-                public S load(ClassLoader classLoader) throws ClassNotFoundException {
-                    return (S) Proxy.newProxyInstance(classLoader,
-                            new Class<?>[]{annotationType},
-                            AnnotationInvocationHandler.of(classLoader, annotationType, values));
-                }
-
-                @Override
-                public S loadSilent() {
-                    try {
-                        return load();
-                    } catch (ClassNotFoundException exception) {
-                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
-                    }
-                }
-
-                @Override
-                public S loadSilent(ClassLoader classLoader) {
-                    try {
-                        return load(classLoader);
-                    } catch (ClassNotFoundException exception) {
-                        throw new IllegalStateException(ForLoadedAnnotation.ERROR_MESSAGE, exception);
-                    }
-                }
-            }
-        }
-
-        /**
-         * An implementation of a {@link PackageDescription} that only
-         * loads its annotations on requirement.
-         */
-        private static class LazyPackageDescription extends PackageDescription.AbstractBase {
-
-            /**
-             * The type pool to use for look-ups.
-             */
-            private final TypePool typePool;
-
-            /**
-             * The name of the package.
-             */
-            private final String name;
-
-            /**
-             * Creates a new lazy package description.
-             *
-             * @param typePool The type pool to use for look-ups.
-             * @param name     The name of the package.
-             */
-            private LazyPackageDescription(TypePool typePool, String name) {
-                this.typePool = typePool;
-                this.name = name;
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                Resolution resolution = typePool.describe(name + "." + PackageDescription.PACKAGE_CLASS_NAME);
-                return resolution.isResolved()
-                        ? resolution.resolve().getDeclaredAnnotations()
-                        : new AnnotationList.Empty();
-            }
-
-            @Override
-            public String getName() {
-                return name;
-            }
-        }
-
-        /**
-         * A list that is constructing {@link net.bytebuddy.pool.TypePool.LazyTypeDescription}s.
-         */
-        private static class LazyTypeList extends TypeList.AbstractBase {
-
-            /**
-             * The type pool to use for locating types.
-             */
-            private final TypePool typePool;
-
-            /**
-             * A list of type descriptors that this list represents.
-             */
-            private final List<String> descriptors;
-
-            /**
-             * Creates a list of lazy type descriptions.
-             *
-             * @param typePool    The type pool to use for locating types.
-             * @param descriptors A list of type descriptors that this list represents.
-             */
-            private LazyTypeList(TypePool typePool, List<String> descriptors) {
-                this.typePool = typePool;
-                this.descriptors = descriptors;
-            }
-
-            @Override
-            public TypeDescription get(int index) {
-                return TokenizedGenericType.toErasure(typePool, descriptors.get(index));
-            }
-
-            @Override
-            public int size() {
-                return descriptors.size();
-            }
-
-            @Override
-            public String[] toInternalNames() {
-                String[] internalName = new String[descriptors.size()];
-                int index = 0;
-                for (String descriptor : descriptors) {
-                    internalName[index++] = Type.getType(descriptor).getInternalName();
-                }
-                return internalName.length == 0
-                        ? NO_INTERFACES
-                        : internalName;
-            }
-
-            @Override
-            public int getStackSize() {
-                int stackSize = 0;
-                for (String descriptor : descriptors) {
-                    stackSize += Type.getType(descriptor).getSize();
-                }
-                return stackSize;
-            }
-        }
-
-        /**
-         * A representation of a generic type that is described by a {@link GenericTypeToken}.
-         */
-        private static class TokenizedGenericType extends Generic.LazyProjection {
-
-            /**
-             * The type pool to use for locating referenced types.
-             */
-            private final TypePool typePool;
-
-            /**
-             * The token that describes the represented generic type.
-             */
-            private final GenericTypeToken genericTypeToken;
-
-            /**
-             * A descriptor of the generic type's raw type.
-             */
-            private final String rawTypeDescriptor;
-
-            /**
-             * The tokenized type's type annotation tokens.
-             */
-            private final Map<String, List<AnnotationToken>> annotationTokens;
-
-            /**
-             * The closest type variable source of this generic type's declaration context.
-             */
-            private final TypeVariableSource typeVariableSource;
-
-            /**
-             * Creates a new tokenized generic type.
-             *
-             * @param typePool           The type pool to use for locating referenced types.
-             * @param genericTypeToken   The token that describes the represented generic type.
-             * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
-             * @param annotationTokens   The tokenized type's type annotation tokens.
-             * @param typeVariableSource The closest type variable source of this generic type's declaration context.
-             */
-            protected TokenizedGenericType(TypePool typePool,
-                                           GenericTypeToken genericTypeToken,
-                                           String rawTypeDescriptor,
-                                           Map<String, List<AnnotationToken>> annotationTokens,
-                                           TypeVariableSource typeVariableSource) {
-                this.typePool = typePool;
-                this.genericTypeToken = genericTypeToken;
-                this.rawTypeDescriptor = rawTypeDescriptor;
-                this.annotationTokens = annotationTokens;
-                this.typeVariableSource = typeVariableSource;
-            }
-
-            /**
-             * Creates a new generic type description for a tokenized generic type.
-             *
-             * @param typePool           The type pool to use for locating referenced types.
-             * @param genericTypeToken   The token that describes the represented generic type.
-             * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
-             * @param annotationTokens   The tokenized type's type annotation tokens or {@code null} if no such annotations are defined.
-             * @param typeVariableSource The closest type variable source of this generic type's declaration context.
-             * @return A suitable genric type.
-             */
-            protected static Generic of(TypePool typePool,
-                                        GenericTypeToken genericTypeToken,
-                                        String rawTypeDescriptor,
-                                        Map<String, List<AnnotationToken>> annotationTokens,
-                                        TypeVariableSource typeVariableSource) {
-                return new TokenizedGenericType(typePool,
-                        genericTypeToken,
-                        rawTypeDescriptor,
-                        annotationTokens == null
-                                ? Collections.emptyMap()
-                                : annotationTokens,
-                        typeVariableSource);
-            }
-
-            /**
-             * Creates a type description from a descriptor by looking up the corresponding type.
-             *
-             * @param typePool   The type pool to use for locating a type.
-             * @param descriptor The descriptor to interpret.
-             * @return A description of the type represented by the descriptor.
-             */
-            protected static TypeDescription toErasure(TypePool typePool, String descriptor) {
-                Type type = Type.getType(descriptor);
-                return typePool.describe(type.getSort() == Type.ARRAY
-                        ? type.getInternalName().replace('/', '.')
-                        : type.getClassName()).resolve();
-            }
-
-            @Override
-            protected Generic resolve() {
-                return genericTypeToken.toGenericType(typePool, typeVariableSource, GenericTypeToken.EMPTY_TYPE_PATH, annotationTokens);
-            }
-
-            @Override
-            public TypeDescription asErasure() {
-                return toErasure(typePool, rawTypeDescriptor);
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(GenericTypeToken.EMPTY_TYPE_PATH));
-            }
-
-            /**
-             * A tokenized list of generic types.
-             */
-            protected static class TokenList extends TypeList.Generic.AbstractBase {
-
-                /**
-                 * The type pool to use for locating types.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * Type tokens that describe the represented generic types.
-                 */
-                private final List<GenericTypeToken> genericTypeTokens;
-
-                /**
-                 * A list of the generic types' erasures.
-                 */
-                private final List<String> rawTypeDescriptors;
-
-                /**
-                 * The closest type variable source of this generic type's declaration context.
-                 */
-                private final TypeVariableSource typeVariableSource;
-
-                /**
-                 * A mapping of each type's type annotation tokens by its index.
-                 */
-                private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
-
-                /**
-                 * Creates a list of tokenized generic types.
-                 *
-                 * @param typePool           The type pool to use for locating type descriptions.
-                 * @param genericTypeTokens  A list of tokens describing the represented generic types.
-                 * @param annotationTokens   A mapping of each type's type annotation tokens by its index.
-                 * @param rawTypeDescriptors A list of the generic types' erasures.
-                 * @param typeVariableSource The closest type variable source of this generic type's declaration context.
-                 */
-                private TokenList(TypePool typePool,
-                                  List<GenericTypeToken> genericTypeTokens,
-                                  Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                  List<String> rawTypeDescriptors,
-                                  TypeVariableSource typeVariableSource) {
-                    this.typePool = typePool;
-                    this.genericTypeTokens = genericTypeTokens;
-                    this.annotationTokens = annotationTokens;
-                    this.rawTypeDescriptors = rawTypeDescriptors;
-                    this.typeVariableSource = typeVariableSource;
-                }
-
-                @Override
-                public Generic get(int index) {
-                    return index < genericTypeTokens.size()
-                            ? TokenizedGenericType.of(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), annotationTokens.get(index), typeVariableSource)
-                            : TokenizedGenericType.toErasure(typePool, rawTypeDescriptors.get(index)).asGenericType();
-                }
-
-                @Override
-                public int size() {
-                    return rawTypeDescriptors.size();
-                }
-
-                @Override
-                public TypeList asErasures() {
-                    return new LazyTypeList(typePool, rawTypeDescriptors);
-                }
-            }
-
-            /**
-             * A list of tokenized type variables.
-             */
-            protected static class TypeVariableList extends TypeList.Generic.AbstractBase {
-
-                /**
-                 * The type pool to use for locating types.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * Type tokens that describe the represented type variables.
-                 */
-                private final List<GenericTypeToken.OfFormalTypeVariable> typeVariables;
-
-                /**
-                 * The type variable source of the represented type variables.
-                 */
-                private final TypeVariableSource typeVariableSource;
-
-                /**
-                 * A mapping of the type variables' type annotation tokens by their indices.
-                 */
-                private final Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens;
-
-                /**
-                 * A mapping of the type variables' bound types' annotation tokens by their indices and each type variable's index..
-                 */
-                private final Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens;
-
-                /**
-                 * Creates a list of type variables.
-                 *
-                 * @param typePool              The type pool to use for locating types.
-                 * @param typeVariables         Type tokens that describe the represented generic types.
-                 * @param typeVariableSource    The type variable source of the represented type variables.
-                 * @param annotationTokens      A mapping of the type variables' type annotation tokens by their indices.
-                 * @param boundAnnotationTokens A mapping of the type variables' bound types' annotation tokens by their indices
-                 *                              and each type variable's index.
-                 */
-                protected TypeVariableList(TypePool typePool,
-                                           List<GenericTypeToken.OfFormalTypeVariable> typeVariables,
-                                           TypeVariableSource typeVariableSource,
-                                           Map<Integer, Map<String, List<AnnotationToken>>> annotationTokens,
-                                           Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> boundAnnotationTokens) {
-                    this.typePool = typePool;
-                    this.typeVariables = typeVariables;
-                    this.typeVariableSource = typeVariableSource;
-                    this.annotationTokens = annotationTokens;
-                    this.boundAnnotationTokens = boundAnnotationTokens;
-                }
-
-                @Override
-                public Generic get(int index) {
-                    return typeVariables.get(index).toGenericType(typePool, typeVariableSource, annotationTokens.get(index), boundAnnotationTokens.get(index));
-                }
-
-                @Override
-                public int size() {
-                    return typeVariables.size();
-                }
-            }
-
-            /**
-             * A lazy description of a non-well-defined described generic type.
-             */
-            protected static class Malformed extends Generic.LazyProjection {
-
-                /**
-                 * The type pool to use for locating types.
-                 */
-                private final TypePool typePool;
-
-                /**
-                 * The descriptor of the type erasure.
-                 */
-                private final String rawTypeDescriptor;
-
-                /**
-                 * Creates a lazy description of a non-well-defined described generic type.
-                 *
-                 * @param typePool          The type pool to use for locating types.
-                 * @param rawTypeDescriptor The descriptor of the type erasure.
-                 */
-                protected Malformed(TypePool typePool, String rawTypeDescriptor) {
-                    this.typePool = typePool;
-                    this.rawTypeDescriptor = rawTypeDescriptor;
-                }
-
-                @Override
-                protected Generic resolve() {
-                    throw new GenericSignatureFormatError();
-                }
-
-                @Override
-                public TypeDescription asErasure() {
-                    return toErasure(typePool, rawTypeDescriptor);
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    throw new GenericSignatureFormatError();
-                }
-
-                /**
-                 * A tokenized list of non-well-defined generic types.
-                 */
-                protected static class TokenList extends TypeList.Generic.AbstractBase {
-
-                    /**
-                     * The type pool to use for locating types.
-                     */
-                    private final TypePool typePool;
-
-                    /**
-                     * A list of descriptors of the list's types' erasures.
-                     */
-                    private final List<String> rawTypeDescriptors;
-
-                    /**
-                     * Creates a new tokenized list of generic types.
-                     *
-                     * @param typePool           The type pool to use for locating types.
-                     * @param rawTypeDescriptors A list of descriptors of the list's types' erasures.
-                     */
-                    protected TokenList(TypePool typePool, List<String> rawTypeDescriptors) {
-                        this.typePool = typePool;
-                        this.rawTypeDescriptors = rawTypeDescriptors;
-                    }
-
-                    @Override
-                    public Generic get(int index) {
-                        return new Malformed(typePool, rawTypeDescriptors.get(index));
-                    }
-
-                    @Override
-                    public int size() {
-                        return rawTypeDescriptors.size();
-                    }
-
-                    @Override
-                    public TypeList asErasures() {
-                        return new LazyTypeList(typePool, rawTypeDescriptors);
-                    }
-                }
-
-            }
-        }
-
-        /**
-         * A lazy field description that only resolved type references when required.
-         */
-        private class LazyFieldDescription extends FieldDescription.InDefinedShape.AbstractBase {
-
-            /**
-             * The name of the field.
-             */
-            private final String name;
-
-            /**
-             * The modifiers of the field.
-             */
-            private final int modifiers;
-
-            /**
-             * The descriptor of this field's type.
-             */
-            private final String descriptor;
-
-            /**
-             * A resolution of this field's generic type.
-             */
-            private final GenericTypeToken.Resolution.ForField signatureResolution;
-
-            /**
-             * A mapping of the field type's type annotation tokens.
-             */
-            private final Map<String, List<LazyTypeDescription.AnnotationToken>> typeAnnotationTokens;
-
-            /**
-             * A list of annotation descriptions of this field.
-             */
-            private final List<AnnotationToken> annotationTokens;
-
-            /**
-             * Creates a new lazy field description.
-             *
-             * @param name                 The name of the field.
-             * @param modifiers            The modifiers of the field.
-             * @param descriptor           The descriptor of this field's type.
-             * @param signatureResolution  A resolution of this field's generic type.
-             * @param typeAnnotationTokens A mapping of the field type's type annotation tokens.
-             * @param annotationTokens     A list of annotation descriptions of this field.
-             */
-            private LazyFieldDescription(String name,
-                                         int modifiers,
-                                         String descriptor,
-                                         GenericTypeToken.Resolution.ForField signatureResolution,
-                                         Map<String, List<AnnotationToken>> typeAnnotationTokens,
-                                         List<AnnotationToken> annotationTokens) {
-                this.modifiers = modifiers;
-                this.name = name;
-                this.descriptor = descriptor;
-                this.signatureResolution = signatureResolution;
-                this.typeAnnotationTokens = typeAnnotationTokens;
-                this.annotationTokens = annotationTokens;
-            }
-
-            @Override
-            public Generic getType() {
-                return signatureResolution.resolveFieldType(descriptor, typePool, typeAnnotationTokens, this);
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens);
-            }
-
-            @Override
-            public String getName() {
-                return name;
-            }
-
-            @Override
-            public TypeDescription getDeclaringType() {
-                return LazyTypeDescription.this;
-            }
-
-            @Override
-            public int getModifiers() {
-                return modifiers;
-            }
-        }
-
-        /**
-         * A lazy representation of a method that resolves references to types only on demand.
-         */
-        private class LazyMethodDescription extends MethodDescription.InDefinedShape.AbstractBase {
-
-            /**
-             * The internal name of this method.
-             */
-            private final String internalName;
-
-            /**
-             * The modifiers of this method.
-             */
-            private final int modifiers;
-
-            /**
-             * The descriptor of the return type.
-             */
-            private final String returnTypeDescriptor;
-
-            /**
-             * The generic type token of this method.
-             */
-            private final GenericTypeToken.Resolution.ForMethod signatureResolution;
-
-            /**
-             * A list of type descriptions of this method's parameters.
-             */
-            private final List<String> parameterTypeDescriptors;
-
-            /**
-             * A list of type descriptions of this method's exception types.
-             */
-            private final List<String> exceptionTypeDescriptors;
-
-            /**
-             * A mapping of the type variables' type annotation tokens by their indices.
-             */
-            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> typeVariableAnnotationTokens;
-
-            /**
-             * A mapping of the type variables' type bounds' type annotation tokens by their indices and each variable's index.
-             */
-            private final Map<Integer, Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>> typeVariableBoundAnnotationTokens;
-
-            /**
-             * A mapping of the return type's type variable tokens.
-             */
-            private final Map<String, List<LazyTypeDescription.AnnotationToken>> returnTypeAnnotationTokens;
-
-            /**
-             * A mapping of the parameter types' type annotation tokens by their indices.
-             */
-            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> parameterTypeAnnotationTokens;
-
-            /**
-             * A mapping of the exception types' type annotation tokens by their indices.
-             */
-            private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
-
-            /**
-             * The annotation tokens representing the method's annotations.
-             */
-            private final List<AnnotationToken> annotationTokens;
-
-            /**
-             * The annotation tokens representing the parameter's annotation. Every index can
-             * contain {@code null} if a parameter does not define any annotations.
-             */
-            private final Map<Integer, List<AnnotationToken>> parameterAnnotationTokens;
-
-            /**
-             * An array of parameter names which may be {@code null} if no explicit name is known for a parameter.
-             */
-            private final String[] parameterNames;
-
-            /**
-             * An array of parameter modifiers which may be {@code null} if no modifiers is known.
-             */
-            private final Integer[] parameterModifiers;
-
-            /**
-             * The default value of this method or {@code null} if no such value exists.
-             */
-            private final AnnotationDescription.AnnotationValue<?, ?> defaultValue;
-
-            /**
-             * Creates a new lazy method description.
-             *
-             * @param internalName                      The internal name of this method.
-             * @param modifiers                         The modifiers of the represented method.
-             * @param methodDescriptor                  The method descriptor of this method.
-             * @param signatureResolution               The generic type token of this method.
-             * @param exceptionTypeInternalName         The internal names of the exceptions that are declared by this
-             *                                          method or {@code null} if no exceptions are declared by this
-             *                                          method.
-             * @param typeVariableAnnotationTokens      A mapping of the type variables' type annotation tokens by their indices.
-             * @param typeVariableBoundAnnotationTokens A mapping of the type variables' type bounds' type annotation tokens by their
-             *                                          index and each variable's index.
-             * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
-             * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
-             * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
-             * @param annotationTokens                  The annotation tokens representing the method's annotations.
-             * @param parameterAnnotationTokens         The annotation tokens representing the parameter's annotation. Every
-             *                                          index can contain {@code null} if a parameter does not define any annotations.
-             * @param parameterTokens                   A list of parameter tokens which might be empty or even out of sync
-             *                                          with the actual parameters if the debugging information found in a
-             *                                          class was corrupt.
-             * @param defaultValue                      The default value of this method or {@code null} if there is no
-             */
-            private LazyMethodDescription(String internalName,
-                                          int modifiers,
-                                          String methodDescriptor,
-                                          GenericTypeToken.Resolution.ForMethod signatureResolution,
-                                          String[] exceptionTypeInternalName,
-                                          Map<Integer, Map<String, List<AnnotationToken>>> typeVariableAnnotationTokens,
-                                          Map<Integer, Map<Integer, Map<String, List<AnnotationToken>>>> typeVariableBoundAnnotationTokens,
-                                          Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
-                                          Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
-                                          Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
-                                          List<AnnotationToken> annotationTokens,
-                                          Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
-                                          List<MethodToken.ParameterToken> parameterTokens,
-                                          AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
-                this.modifiers = modifiers;
-                this.internalName = internalName;
-                Type methodType = Type.getMethodType(methodDescriptor);
-                Type returnType = methodType.getReturnType();
-                Type[] parameterType = methodType.getArgumentTypes();
-                returnTypeDescriptor = returnType.getDescriptor();
-                parameterTypeDescriptors = new ArrayList<String>(parameterType.length);
-                for (Type type : parameterType) {
-                    parameterTypeDescriptors.add(type.getDescriptor());
-                }
-                this.signatureResolution = signatureResolution;
-                if (exceptionTypeInternalName == null) {
-                    exceptionTypeDescriptors = Collections.emptyList();
-                } else {
-                    exceptionTypeDescriptors = new ArrayList<String>(exceptionTypeInternalName.length);
-                    for (String anExceptionTypeInternalName : exceptionTypeInternalName) {
-                        exceptionTypeDescriptors.add(Type.getObjectType(anExceptionTypeInternalName).getDescriptor());
-                    }
-                }
-                this.typeVariableAnnotationTokens = typeVariableAnnotationTokens;
-                this.typeVariableBoundAnnotationTokens = typeVariableBoundAnnotationTokens;
-                this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
-                this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
-                this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
-                this.annotationTokens = annotationTokens;
-                this.parameterAnnotationTokens = parameterAnnotationTokens;
-                parameterNames = new String[parameterType.length];
-                parameterModifiers = new Integer[parameterType.length];
-                if (parameterTokens.size() == parameterType.length) {
-                    int index = 0;
-                    for (MethodToken.ParameterToken parameterToken : parameterTokens) {
-                        parameterNames[index] = parameterToken.getName();
-                        parameterModifiers[index] = parameterToken.getModifiers();
-                        index++;
-                    }
-                }
-                this.defaultValue = defaultValue;
-            }
-
-            @Override
-            public Generic getReturnType() {
-                return signatureResolution.resolveReturnType(returnTypeDescriptor, typePool, returnTypeAnnotationTokens, this);
-            }
-
-            @Override
-            public TypeList.Generic getExceptionTypes() {
-                return signatureResolution.resolveExceptionTypes(exceptionTypeDescriptors, typePool, exceptionTypeAnnotationTokens, this);
-            }
-
-            @Override
-            public ParameterList<ParameterDescription.InDefinedShape> getParameters() {
-                return new LazyParameterList();
-            }
-
-            @Override
-            public AnnotationList getDeclaredAnnotations() {
-                return LazyAnnotationDescription.asList(typePool, annotationTokens);
-            }
-
-            @Override
-            public String getInternalName() {
-                return internalName;
-            }
-
-            @Override
-            public TypeDescription getDeclaringType() {
-                return LazyTypeDescription.this;
-            }
-
-            @Override
-            public int getModifiers() {
-                return modifiers;
-            }
-
-            @Override
-            public TypeList.Generic getTypeVariables() {
-                return signatureResolution.resolveTypeVariables(typePool, this, typeVariableAnnotationTokens, typeVariableBoundAnnotationTokens);
-            }
-
-            @Override
-            public Object getDefaultValue() {
-                return defaultValue == null
-                        ? NO_DEFAULT_VALUE
-                        : defaultValue.resolve();
-            }
-
-            /**
-             * A lazy list of parameter descriptions for the enclosing method description.
-             */
-            private class LazyParameterList extends ParameterList.AbstractBase<ParameterDescription.InDefinedShape> {
-
-                @Override
-                public ParameterDescription.InDefinedShape get(int index) {
-                    return new LazyParameterDescription(index);
-                }
-
-                @Override
-                public boolean hasExplicitMetaData() {
-                    for (int i = 0; i < size(); i++) {
-                        if (parameterNames[i] == null || parameterModifiers[i] == null) {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-
-                @Override
-                public int size() {
-                    return parameterTypeDescriptors.size();
-                }
-
-                @Override
-                public TypeList.Generic asTypeList() {
-                    return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, parameterTypeAnnotationTokens, LazyMethodDescription.this);
-                }
-            }
-
-            /**
-             * A lazy description of a parameters of the enclosing method.
-             */
-            private class LazyParameterDescription extends ParameterDescription.InDefinedShape.AbstractBase {
-
-                /**
-                 * The index of the described parameter.
-                 */
-                private final int index;
-
-                /**
-                 * Creates a new description for a given parameter of the enclosing method.
-                 *
-                 * @param index The index of the described parameter.
-                 */
-                protected LazyParameterDescription(int index) {
-                    this.index = index;
-                }
-
-                @Override
-                public MethodDescription.InDefinedShape getDeclaringMethod() {
-                    return LazyMethodDescription.this;
-                }
-
-                @Override
-                public int getIndex() {
-                    return index;
-                }
-
-                @Override
-                public boolean isNamed() {
-                    return parameterNames[index] != null;
-                }
-
-                @Override
-                public boolean hasModifiers() {
-                    return parameterModifiers[index] != null;
-                }
-
-                @Override
-                public String getName() {
-                    return isNamed()
-                            ? parameterNames[index]
-                            : super.getName();
-                }
-
-                @Override
-                public int getModifiers() {
-                    return hasModifiers()
-                            ? parameterModifiers[index]
-                            : super.getModifiers();
-                }
-
-                @Override
-                public Generic getType() {
-                    return signatureResolution.resolveParameterTypes(parameterTypeDescriptors, typePool, parameterTypeAnnotationTokens, LazyMethodDescription.this).get(index);
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return LazyAnnotationDescription.asListOfNullable(typePool, parameterAnnotationTokens.get(index));
-                }
-            }
-        }
-    }
 }

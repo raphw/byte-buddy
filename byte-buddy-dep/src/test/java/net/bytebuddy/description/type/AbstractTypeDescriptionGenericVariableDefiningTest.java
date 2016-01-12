@@ -6,12 +6,13 @@ import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 
-import static net.bytebuddy.matcher.ElementMatchers.isMethod;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends AbstractTypeDescriptionGenericTest {
+
+    private static final String FOO = "foo";
 
     private static final String T = "T", S = "S", U = "U", V = "V", W = "W", X = "X";
 
@@ -173,10 +174,11 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     }
 
     @Test
+    @SuppressWarnings("unchecked")
     public void testMethodVariableT() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
-        MethodDescription methodDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES)).getDeclaredMethods().filter(isMethod()).getOnly();
+        MethodDescription methodDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES)).getDeclaredMethods().filter(named(FOO)).getOnly();
         TypeDescription.Generic t = methodDescription.getTypeVariables().getOnly();
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(t.getDeclaredAnnotations().size(), is(1));

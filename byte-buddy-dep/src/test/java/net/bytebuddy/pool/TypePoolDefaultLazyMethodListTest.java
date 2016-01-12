@@ -11,7 +11,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 
-public class TypePoolLazyMethodListTest extends AbstractMethodListTest<Method, MethodDescription.InDefinedShape> {
+public class TypePoolDefaultLazyMethodListTest extends AbstractMethodListTest<Method, MethodDescription.InDefinedShape> {
 
     private TypePool typePool;
 
