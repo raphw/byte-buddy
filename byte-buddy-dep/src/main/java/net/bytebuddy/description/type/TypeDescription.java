@@ -558,7 +558,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public Generic onWildcard(Generic wildcard) {
                     // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    // TODO: Okay?
                     return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
                 }
 
@@ -582,13 +581,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onTypeVariable(Generic typeVariable) {
-                    return typeVariable.asRawType(); // TODO: As raw type: Retain type variables?
+                    return new OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable.getDeclaredAnnotations());
                 }
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
                     return new OfNonGenericType.Latent(typeDescription.asErasure(), typeDescription.getDeclaredAnnotations());
-                    // TODO: return typeDescription?
                 }
 
                 @Override
@@ -4771,7 +4769,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public Generic asGenericType() {
-            return new Generic.OfNonGenericType.Latent(this, Collections.<AnnotationDescription>emptyList()); // TODO
+            return new Generic.OfNonGenericType.Latent(this, Collections.<AnnotationDescription>emptyList());
         }
 
         @Override

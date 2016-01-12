@@ -3058,7 +3058,7 @@ public interface TypePool {
                 }
 
                 @Override
-                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                public AnnotationVisitor visitAnnotation(String descriptorcoo, boolean visible) {
                     return new AnnotationExtractor(descriptor, annotationTokens, new ComponentTypeLocator.ForAnnotationProperty(Default.this, descriptor));
                 }
 
