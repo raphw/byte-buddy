@@ -7,8 +7,9 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.*;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -35,7 +36,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Override
     protected TypeDescription.Generic describeExceptionType(Method method, int index) {
-        return describe(method.getExceptionTypes()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveExceptionType(method, index))
+        return describe(method.getGenericExceptionTypes()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveExceptionType(method, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new MethodDescription.ForLoadedMethod(method)));
     }
 
@@ -47,7 +48,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Override
     protected TypeDescription.Generic describeInterfaceType(Class<?> type, int index) {
-        return describe(type.getGenericInterfaces()[0], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, index))
+        return describe(type.getGenericInterfaces()[index], TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, index))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new TypeDescription.ForLoadedType(type)));
     }
 
@@ -95,39 +96,43 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.class).apply();
     }
 
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support owner types")
+    public void testTypeAnnotationOwnerType() throws Exception {
+        super.testTypeAnnotationOwnerType();
+    }
+
     private TypeDescription.Generic describe(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
-        if (type instanceof Class) {
-            return builder(type, annotationReader).build(annotationReader.asList());
-        } else if (type instanceof TypeVariable) {
-            return TypeDescription.Generic.Builder.typeVariable(((TypeVariable) type).getName(), annotationReader.asList());
-        } else if (type instanceof WildcardType) {
+        if (type instanceof WildcardType) {
             WildcardType wildcardType = (WildcardType) type;
-            if (wildcardType.getLowerBounds().length > 0) {
-                return builder(wildcardType.getLowerBounds()[0], annotationReader.ofWildcardLowerBoundType(0)).asWildcardLowerBound(annotationReader.asList());
-            } else if (wildcardType.getUpperBounds().length > 0) {
-                return builder(wildcardType.getUpperBounds()[0], annotationReader.ofWildcardUpperBoundType(0)).asWildcardUpperBound(annotationReader.asList());
-            } else {
-                return TypeDescription.Generic.Builder.unboundWildcard(annotationReader.asList()); // TODO: Remove?
-            }
-        } else if (type instanceof GenericArrayType) {
-            return builder(type, annotationReader.ofComponentType()).build(annotationReader.asList());
-        } else if (type instanceof ParameterizedType) {
-            return builder(type, annotationReader).build(annotationReader.asList());
+            return wildcardType.getLowerBounds().length == 0
+                    ? builder(wildcardType.getUpperBounds()[0], annotationReader.ofWildcardUpperBoundType(0)).asWildcardUpperBound(annotationReader.asList())
+                    : builder(wildcardType.getLowerBounds()[0], annotationReader.ofWildcardLowerBoundType(0)).asWildcardLowerBound(annotationReader.asList());
         } else {
-            throw new AssertionError("Unknown type: " + type);
+            return builder(type, annotationReader).build();
         }
     }
 
     private TypeDescription.Generic.Builder builder(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
-        if (type instanceof Class) {
-            return TypeDescription.Generic.Builder.rawType(((Class<?>) type));
+        if (type instanceof TypeVariable) {
+            return TypeDescription.Generic.Builder.typeVariable(((TypeVariable<?>) type).getName()).annotate(annotationReader.asList());
+        } else if (type instanceof Class) {
+            return TypeDescription.Generic.Builder.rawType((Class<?>) type).annotate(annotationReader.asList());
         } else if (type instanceof GenericArrayType) {
-            return builder(((GenericArrayType) type).getGenericComponentType(), annotationReader.ofComponentType()).asArray(annotationReader.asList());
+            return builder(((GenericArrayType) type).getGenericComponentType(), annotationReader.ofComponentType()).asArray().annotate(annotationReader.asList());
         } else if (type instanceof ParameterizedType) {
             ParameterizedType parameterizedType = (ParameterizedType) type;
-            return TypeDescription.Generic.Builder.parameterizedType((Class<?>) parameterizedType.getRawType(),
-                    parameterizedType.getOwnerType(),
-                    Arrays.asList(parameterizedType.getActualTypeArguments())); // TODO: Parameter annotations?
+            List<TypeDescription.Generic> parameters = new ArrayList<>(parameterizedType.getActualTypeArguments().length);
+            int index = 0;
+            for (Type parameter : parameterizedType.getActualTypeArguments()) {
+                parameters.add(describe(parameter, annotationReader.ofParameterType(index)));
+            }
+            return TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType((Class<?>) parameterizedType.getRawType()),
+                    parameterizedType.getOwnerType() == null
+                            ? null
+                            : describe(parameterizedType.getOwnerType(), annotationReader.ofOwnerType()),
+                    parameters).annotate(annotationReader.asList());
         } else {
             throw new AssertionError("Unexpected type: " + type);
         }

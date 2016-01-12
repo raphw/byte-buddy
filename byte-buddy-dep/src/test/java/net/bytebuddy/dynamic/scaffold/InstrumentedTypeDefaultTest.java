@@ -17,9 +17,8 @@ import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.packaging.PackagePrivateType;
 import net.bytebuddy.test.utility.MockitoRule;
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -50,15 +49,6 @@ public class InstrumentedTypeDefaultTest {
 
     @Mock
     private Implementation.Context implementationContext;
-
-    private TypeDescription.Generic packagePrivateType, packagePrivateInterfaceType, packagePrivateExceptionType;
-
-    @Before
-    public void setUp() throws Exception {
-        packagePrivateType = TypeDefinition.Sort.describe(Class.forName("net.bytebuddy.test.packaging.PackagePrivateType"));
-        packagePrivateInterfaceType = TypeDefinition.Sort.describe(Class.forName("net.bytebuddy.test.packaging.PackagePrivateInterfaceType"));
-        packagePrivateExceptionType = TypeDefinition.Sort.describe(Class.forName("net.bytebuddy.test.packaging.PackagePrivateExceptionType"));
-    }
 
     protected static InstrumentedType.WithFlexibleName makePlainInstrumentedType() {
         return new InstrumentedType.Default(FOO + "." + BAZ,
@@ -519,9 +509,9 @@ public class InstrumentedTypeDefaultTest {
         InstrumentedType.Default.subclass(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(Serializable.class)).validated();
     }
 
-    @Test
+    @Test(expected = IllegalStateException.class)
     public void testTypeInvisibleSubType() throws Exception {
-        InstrumentedType.Default.subclass(FOO, ModifierContributor.EMPTY_MASK, packagePrivateType).validated();
+        InstrumentedType.Default.subclass(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(PackagePrivateType.TYPE)).validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -536,7 +526,7 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testInvisibleInterfaceType() throws Exception {
-        makePlainInstrumentedType().withInterfaces(new TypeList.Generic.Explicit(packagePrivateInterfaceType)).validated();
+        makePlainInstrumentedType().withInterfaces(new TypeList.Generic.Explicit(TypeDefinition.Sort.describe(PackagePrivateType.INTERFACE_TYPE))).validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -630,10 +620,11 @@ public class InstrumentedTypeDefaultTest {
         makePlainInstrumentedType().withField(new FieldDescription.Token(ILLEGAL_NAME, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.VOID)).validated();
     }
 
-    @Ignore("??? (later)")
     @Test(expected = IllegalStateException.class)
     public void testFieldInvisibleType() throws Exception {
-        makePlainInstrumentedType().withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, packagePrivateType)).validated();
+        makePlainInstrumentedType()
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(PackagePrivateType.TYPE)))
+                .validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -667,18 +658,17 @@ public class InstrumentedTypeDefaultTest {
                 .validated();
     }
 
-    @Ignore("??? (later)")
     @Test(expected = IllegalStateException.class)
     public void testMethodInvisibleReturnType() throws Exception {
         makePlainInstrumentedType()
-                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, packagePrivateType))
+                .withMethod(new MethodDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(PackagePrivateType.TYPE)))
                 .validated();
     }
 
     @Test
     public void testMethodInvisibleReturnTypeSynthetic() throws Exception {
         assertThat(makePlainInstrumentedType()
-                .withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_SYNTHETIC, packagePrivateType))
+                .withMethod(new MethodDescription.Token(FOO, Opcodes.ACC_SYNTHETIC, TypeDefinition.Sort.describe(PackagePrivateType.TYPE)))
                 .validated(), instanceOf(TypeDescription.class));
     }
 
@@ -824,7 +814,6 @@ public class InstrumentedTypeDefaultTest {
                 .validated();
     }
 
-    @Ignore("??? (later)")
     @Test(expected = IllegalStateException.class)
     public void testMethodParameterInvisibleType() throws Exception {
         makePlainInstrumentedType()
@@ -832,7 +821,7 @@ public class InstrumentedTypeDefaultTest {
                         ModifierContributor.EMPTY_MASK,
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
-                        Collections.singletonList(new ParameterDescription.Token(packagePrivateType)),
+                        Collections.singletonList(new ParameterDescription.Token(TypeDefinition.Sort.describe(PackagePrivateType.TYPE))),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
@@ -846,7 +835,7 @@ public class InstrumentedTypeDefaultTest {
                         Opcodes.ACC_SYNTHETIC,
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
-                        Collections.singletonList(new ParameterDescription.Token(packagePrivateType)),
+                        Collections.singletonList(new ParameterDescription.Token(TypeDefinition.Sort.describe(PackagePrivateType.TYPE))),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
@@ -913,7 +902,6 @@ public class InstrumentedTypeDefaultTest {
                 .validated();
     }
 
-    @Ignore("??? (later)")
     @Test(expected = IllegalStateException.class)
     public void testMethodInvisibleExceptionType() throws Exception {
         makePlainInstrumentedType()
@@ -922,7 +910,7 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(packagePrivateExceptionType),
+                        Collections.singletonList(TypeDefinition.Sort.describe(PackagePrivateType.EXCEPTION_TYPE)),
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
                 .validated();
@@ -936,7 +924,7 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
-                        Collections.singletonList(packagePrivateExceptionType),
+                        Collections.singletonList(TypeDefinition.Sort.describe(PackagePrivateType.EXCEPTION_TYPE)),
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
                 .validated(), notNullValue(TypeDescription.class));

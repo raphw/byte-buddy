@@ -637,7 +637,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A type projection of an interface type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The type of which an interface type is represented.
@@ -671,7 +671,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = this.type.getGenericInterfaces();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
@@ -681,8 +681,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveInterface(type, index);
                 }
             }
         }
@@ -724,7 +724,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The constructor of which the exception types are represented.
@@ -758,7 +758,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericExceptionTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
@@ -768,8 +768,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveExceptionType(constructor, index);
                 }
             }
         }
@@ -811,7 +811,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The method of which the exception types are represented.
@@ -845,7 +845,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericExceptionTypes();
                     return index < type.length
-                            ? Sort.describe(type[index])
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
@@ -855,8 +855,8 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 }
 
                 @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Empty(); // TODO
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveExceptionType(method, index);
                 }
             }
         }

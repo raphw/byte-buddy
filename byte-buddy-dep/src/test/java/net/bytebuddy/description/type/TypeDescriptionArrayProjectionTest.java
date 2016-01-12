@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -49,5 +50,40 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalArity() throws Exception {
         TypeDescription.ArrayProjection.of(mock(TypeDescription.class), -1);
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    public void testTypeVariableU() throws Exception {
+        super.testTypeVariableU();
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    public void testTypeVariableV() throws Exception {
+        super.testTypeVariableV();
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    public void testTypeVariableW() throws Exception {
+        super.testTypeVariableW();
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API suffers a bug that affects parsing of type variable bounds")
+    public void testTypeVariableX() throws Exception {
+        super.testTypeVariableX();
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support owner types")
+    public void testTypeAnnotationOwnerType() throws Exception {
+        super.testTypeAnnotationOwnerType();
     }
 }
