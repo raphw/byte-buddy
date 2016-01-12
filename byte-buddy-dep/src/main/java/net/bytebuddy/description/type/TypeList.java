@@ -365,18 +365,40 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 return types.size();
             }
 
+            /**
+             * A type list that represents loaded type variables.
+             */
             public static class OfTypeVariables extends Generic.AbstractBase {
 
+                /**
+                 * The type variables this list represents.
+                 */
                 private final List<TypeVariable<?>> typeVariables;
 
+                /**
+                 * Creates a new type list for loaded type variables.
+                 *
+                 * @param typeVariable The type variables this list represents.
+                 */
                 protected OfTypeVariables(TypeVariable<?>... typeVariable) {
                     this(Arrays.asList(typeVariable));
                 }
 
+                /**
+                 * Creates a new type list for loaded type variables.
+                 *
+                 * @param typeVariables The type variables this list represents.
+                 */
                 protected OfTypeVariables(List<TypeVariable<?>> typeVariables) {
                     this.typeVariables = typeVariables;
                 }
 
+                /**
+                 * Creates a list of the type variables of the supplied generic declaration.
+                 *
+                 * @param genericDeclaration The generic declaration to represent.
+                 * @return A genric type list for the returned generic declaration.
+                 */
                 public static Generic of(GenericDeclaration genericDeclaration) {
                     return new OfTypeVariables(genericDeclaration.getTypeParameters());
                 }

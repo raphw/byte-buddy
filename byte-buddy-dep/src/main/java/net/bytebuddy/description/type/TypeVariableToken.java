@@ -23,8 +23,17 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
      */
     private final List<? extends TypeDescription.Generic> bounds;
 
+    /**
+     * The annotations of the type variable.
+     */
     private final List<? extends AnnotationDescription> annotations;
 
+    /**
+     * Creates a new type variable token without annotations.
+     *
+     * @param symbol The type variable's symbol.
+     * @param bounds The type variable's upper bounds.
+     */
     public TypeVariableToken(String symbol, List<? extends TypeDescription.Generic> bounds) {
         this(symbol, bounds, Collections.<AnnotationDescription>emptyList());
     }
@@ -32,8 +41,9 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
     /**
      * Creates a new type variable token.
      *
-     * @param symbol The type variable's symbol.
-     * @param bounds The type variable's upper bounds.
+     * @param symbol      The type variable's symbol.
+     * @param bounds      The type variable's upper bounds.
+     * @param annotations The annotations of the type variable.
      */
     public TypeVariableToken(String symbol, List<? extends TypeDescription.Generic> bounds, List<? extends AnnotationDescription> annotations) {
         this.symbol = symbol;
@@ -72,6 +82,11 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         return new TypeList.Generic.Explicit(bounds);
     }
 
+    /**
+     * Returns the annotations on this type variable.
+     *
+     * @return The annotations on this variable.
+     */
     public AnnotationList getAnnotations() {
         return new AnnotationList.Explicit(annotations);
     }
@@ -86,7 +101,9 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
         if (this == other) return true;
         if (other == null || getClass() != other.getClass()) return false;
         TypeVariableToken that = (TypeVariableToken) other;
-        return symbol.equals(that.symbol) && bounds.equals(that.bounds) && annotations.equals(that.annotations);
+        return symbol.equals(that.symbol)
+                && bounds.equals(that.bounds)
+                && annotations.equals(that.annotations);
     }
 
     @Override

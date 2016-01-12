@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -25,6 +26,9 @@ public class TypeVariableTokenTest {
     private TypeDescription.Generic bound, visitedBound;
 
     @Mock
+    private AnnotationDescription annotation;
+
+    @Mock
     private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
     @Before
@@ -36,9 +40,19 @@ public class TypeVariableTokenTest {
     }
 
     @Test
-    public void testProperties() throws Exception {
+    public void testPropertiesSimple() throws Exception {
         assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound)).getSymbol(), is(FOO));
         assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound)).getBounds(), is(Collections.singletonList(bound)));
+        assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound)).getAnnotations().size(), is(0));
+    }
+
+    @Test
+    public void testProperties() throws Exception {
+        assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound), Collections.singletonList(annotation)).getSymbol(), is(FOO));
+        assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound), Collections.singletonList(annotation)).getBounds(),
+                is(Collections.singletonList(bound)));
+        assertThat(new TypeVariableToken(FOO, Collections.singletonList(bound), Collections.singletonList(annotation)).getAnnotations(),
+                is(Collections.singletonList(annotation)));
     }
 
     @Test
