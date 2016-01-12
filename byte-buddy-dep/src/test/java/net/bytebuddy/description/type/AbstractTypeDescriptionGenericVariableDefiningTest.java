@@ -13,7 +13,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends AbstractTypeDescriptionGenericTest {
 
-    private static final String T = "T", S = "S", U = "U", V = "V";
+    private static final String T = "T", S = "S", U = "U", V = "V", W = "W", X = "X";
 
     private static final String TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.TypeAnnotation";
 
@@ -131,6 +131,48 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableW() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
+        TypeDescription.Generic t = typeDescription.getTypeVariables().filter(named(W)).getOnly();
+        assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(t.getDeclaredAnnotations().size(), is(1));
+        assertThat(t.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(t.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(13));
+        assertThat(t.getUpperBounds().size(), is(1));
+        assertThat(t.getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(14));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableX() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription typeDescription = describe(Class.forName(TYPE_ANNOTATION_SAMPLES));
+        TypeDescription.Generic t = typeDescription.getTypeVariables().filter(named(X)).getOnly();
+        assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(t.getDeclaredAnnotations().size(), is(1));
+        assertThat(t.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(t.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(15));
+        assertThat(t.getUpperBounds().size(), is(1));
+        assertThat(t.getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(16));
+        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.WILDCARD));
+        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(t.getUpperBounds().getOnly().getParameters().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(17));
+    }
+
+    @Test
     public void testMethodVariableT() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
@@ -139,10 +181,10 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(t.getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(t.getDeclaredAnnotations().size(), is(1));
         assertThat(t.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(t.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(23));
+        assertThat(t.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(26));
         assertThat(t.getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(24));
+        assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(27));
     }
 }
