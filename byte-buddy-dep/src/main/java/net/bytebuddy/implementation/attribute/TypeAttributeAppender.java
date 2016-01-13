@@ -1,13 +1,13 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import org.objectweb.asm.ClassVisitor;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 /**
  * An appender that writes attributes or annotations to a given ASM {@link org.objectweb.asm.ClassVisitor}.
@@ -71,7 +71,7 @@ public interface TypeAttributeAppender {
             for (TypeDescription.Generic interfaceType : instrumentedType.getInterfaces()) {
                 annotationAppender = interfaceType.accept(AnnotationAppender.ForTypeAnnotations.ofInterfaceType(annotationAppender,
                         annotationValueFilter,
-                        interfaceIndex));
+                        interfaceIndex++));
             }
             for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
                 annotationAppender = annotationAppender.append(annotation, annotationValueFilter);
@@ -86,56 +86,68 @@ public interface TypeAttributeAppender {
         /**
          * A type attribute appender that writes all annotations of the instrumented types but those that are explicitly excluded.
          */
-        public static class Excluding implements TypeAttributeAppender {
+        public static class Differentiating implements TypeAttributeAppender {
 
-            /**
-             * A set of the annotations that are excluded.
-             */
-            private final Set<? extends AnnotationDescription> excludedAnnotations;
+            private final int annotationIndex;
 
-            /**
-             * Creates a new excluding type annotation appender.
-             *
-             * @param typeDescription A type whose annotations are excluded from writing.
-             */
-            public Excluding(TypeDescription typeDescription) {
-                this(new HashSet<AnnotationDescription>(typeDescription.getDeclaredAnnotations()));
+            private final int typeVariableIndex;
+
+            private final int interfaceTypeIndex;
+
+            public Differentiating(TypeDescription instrumentedType) {
+                this(instrumentedType.getDeclaredAnnotations().size(), instrumentedType.getTypeVariables().size(), instrumentedType.getInterfaces().size());
             }
 
-            /**
-             * Creates a new excluding type annotation appender.
-             *
-             * @param excludedAnnotations A set of the annotations that are excluded.
-             */
-            public Excluding(Set<? extends AnnotationDescription> excludedAnnotations) {
-                this.excludedAnnotations = excludedAnnotations;
+            protected Differentiating(int annotationIndex, int typeVariableIndex, int interfaceTypeIndex) {
+                this.annotationIndex = annotationIndex;
+                this.typeVariableIndex = typeVariableIndex;
+                this.interfaceTypeIndex = interfaceTypeIndex;
             }
 
             @Override
             public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
-                AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
-                for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
-                    if (!excludedAnnotations.contains(annotation)) {
-                        appender = appender.append(annotation, annotationValueFilter);
-                    }
+                AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+                AnnotationAppender.ForTypeAnnotations.ofTypeVariable(annotationAppender,
+                        annotationValueFilter,
+                        AnnotationAppender.ForTypeAnnotations.VARIABLE_ON_TYPE,
+                        typeVariableIndex,
+                        instrumentedType.getTypeVariables());
+                TypeList.Generic interfaceTypes = instrumentedType.getInterfaces();
+                int interfaceTypeIndex = this.interfaceTypeIndex;
+                for (TypeDescription.Generic interfaceType : interfaceTypes.subList(this.interfaceTypeIndex, interfaceTypes.size())) {
+                    annotationAppender = interfaceType.accept(AnnotationAppender.ForTypeAnnotations.ofInterfaceType(annotationAppender,
+                            annotationValueFilter,
+                            interfaceTypeIndex++));
+                }
+                AnnotationList declaredAnnotations = instrumentedType.getDeclaredAnnotations();
+                for (AnnotationDescription annotationDescription : declaredAnnotations.subList(annotationIndex, declaredAnnotations.size())) {
+                    annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter);
                 }
             }
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass())
-                        && excludedAnnotations.equals(((Excluding) other).excludedAnnotations);
+                if (this == other) return true;
+                if (other == null || getClass() != other.getClass()) return false;
+                Differentiating differentiating = (Differentiating) other;
+                if (annotationIndex != differentiating.annotationIndex) return false;
+                return typeVariableIndex == differentiating.typeVariableIndex && interfaceTypeIndex == differentiating.interfaceTypeIndex;
             }
 
             @Override
             public int hashCode() {
-                return excludedAnnotations.hashCode();
+                int result = annotationIndex;
+                result = 31 * result + typeVariableIndex;
+                result = 31 * result + interfaceTypeIndex;
+                return result;
             }
 
             @Override
             public String toString() {
                 return "TypeAttributeAppender.ForInstrumentedType.Excluding{" +
-                        "excludedAnnotations=" + excludedAnnotations +
+                        "annotationIndex=" + annotationIndex +
+                        ", typeVariableIndex=" + typeVariableIndex +
+                        ", interfaceTypeIndex=" + interfaceTypeIndex +
                         '}';
             }
         }

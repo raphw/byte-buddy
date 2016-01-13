@@ -601,8 +601,8 @@ public class InstrumentedTypeDefaultTest {
     public void testTypeDuplicateAnnotation() throws Exception {
         makePlainInstrumentedType()
                 .withAnnotations(Arrays.asList(
-                        AnnotationDescription.Builder.forType(SampleAnnotation.class).make(),
-                        AnnotationDescription.Builder.forType(SampleAnnotation.class).make()
+                        AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
+                        AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                 )).validated();
     }
 
@@ -640,8 +640,8 @@ public class InstrumentedTypeDefaultTest {
     public void tesFieldDuplicateAnnotation() throws Exception {
         makePlainInstrumentedType()
                 .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT, Arrays.asList(
-                        AnnotationDescription.Builder.forType(SampleAnnotation.class).make(),
-                        AnnotationDescription.Builder.forType(SampleAnnotation.class).make()
+                        AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
+                        AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                 ))).validated();
     }
 
@@ -701,8 +701,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Arrays.asList(
-                                AnnotationDescription.Builder.forType(SampleAnnotation.class).make(),
-                                AnnotationDescription.Builder.forType(SampleAnnotation.class).make()
+                                AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
+                                AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                         ), MethodDescription.NO_DEFAULT_VALUE))
                 .validated();
     }
@@ -889,8 +889,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<TypeVariableToken>emptyList(),
                         TypeDescription.Generic.OBJECT,
                         Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, Arrays.asList(
-                                AnnotationDescription.Builder.forType(SampleAnnotation.class).make(),
-                                AnnotationDescription.Builder.forType(SampleAnnotation.class).make()
+                                AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
+                                AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                         ))), Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))

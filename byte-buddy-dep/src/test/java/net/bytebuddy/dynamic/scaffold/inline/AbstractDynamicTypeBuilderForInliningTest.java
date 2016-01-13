@@ -2,7 +2,10 @@ package net.bytebuddy.dynamic.scaffold.inline;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.MethodManifestation;
+import net.bytebuddy.description.modifier.TypeManifestation;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.*;
@@ -57,7 +60,13 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
 
     private static final String FOO = "foo", BAR = "bar";
 
+    private final int QUX = 42;
+
     private static final String PARAMETER_NAME_CLASS = "net.bytebuddy.test.precompiled.ParameterNames";
+
+    private static final String SIMPLE_TYPE_ANNOTATED = "net.bytebuddy.test.precompiled.SimpleTypeAnnotatedType";
+
+    private static final String TYPE_VARIABLE_NAME = "net.bytebuddy.test.precompiled.TypeAnnotation", VALUE = "value";
 
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
@@ -445,6 +454,55 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertThat(type.getDeclaredMethod(FOO, Void.class).isAnnotationPresent(sampleAnnotation), is(true));
         assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0].length, is(1));
         assertThat(type.getDeclaredMethod(FOO, Void.class).getParameterAnnotations()[0][0].annotationType(), is((Object) sampleAnnotation));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnInterfaceType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Class<?> type = create(Class.forName(SIMPLE_TYPE_ANNOTATED))
+                .merge(TypeManifestation.ABSTRACT)
+                .implement(TypeDescription.Generic.Builder.rawType(Callable.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, QUX * 3).build()))
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getInterfaces().length, is(2));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(QUX * 2));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 1).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 1).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(QUX * 3));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnTypeVariableType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Class<?> type = create(Class.forName(SIMPLE_TYPE_ANNOTATED))
+                .merge(TypeManifestation.ABSTRACT)
+                .typeVariable(BAR, TypeDescription.Generic.Builder.rawType(Callable.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, QUX * 4).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, QUX * 3).build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getTypeParameters().length, is(2));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(QUX));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(QUX * 3));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+                .asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+                .asList().ofType(typeAnnotationType).getValue(value, Integer.class), is(QUX * 4));
     }
 
     public @interface Baz {

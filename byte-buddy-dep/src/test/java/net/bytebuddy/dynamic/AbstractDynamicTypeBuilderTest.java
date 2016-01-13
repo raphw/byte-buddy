@@ -47,6 +47,7 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
@@ -64,6 +65,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", TO_STRING = "toString";
+
+    private static final String TYPE_VARIABLE_NAME = "net.bytebuddy.test.precompiled.TypeAnnotation", VALUE = "value";
 
     private static final int MODIFIERS = Opcodes.ACC_PUBLIC;
 
@@ -481,6 +484,384 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(null, ClassLoadingStrategy.Default.WRAPPER);
     }
 
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableOnTypeAnnotationClassBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Class<?> type = createPlain()
+                .typeVariable(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getTypeParameters().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE * 2));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableOnTypeAnnotationInterfaceBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Class<?> type = createPlain()
+                .typeVariable(FOO, TypeDescription.Generic.Builder.rawType(Runnable.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getTypeParameters().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds()[0], is((Object) Runnable.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE * 2));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableOnTypeAnnotationTypeVariableBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Class<?> type = createPlain()
+                .typeVariable(FOO).annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                .typeVariable(BAR, TypeDescription.Generic.Builder.typeVariable(FOO)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 3).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getTypeParameters().length, is(2));
+        assertThat(type.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
+        assertThat(type.getTypeParameters()[1].getBounds().length, is(1));
+        assertThat(type.getTypeParameters()[1].getBounds()[0], is((Object) type.getTypeParameters()[0]));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE * 2));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+                .asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+                .asList().ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE * 3));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeAnnotationOnInterfaceType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Class<?> type = createPlain()
+                .merge(TypeManifestation.ABSTRACT)
+                .implement(TypeDescription.Generic.Builder.rawType(Runnable.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build()))
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getInterfaces().length, is(1));
+        assertThat(type.getInterfaces()[0], is((Object) Runnable.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnFieldType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build()))
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(field.getType(), is((Object) Object.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableOnMethodAnnotationClassBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Method method = createPlain()
+                .merge(TypeManifestation.ABSTRACT)
+                .defineMethod(FOO, void.class)
+                .typeVariable(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                .withoutCode()
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredMethod(FOO);
+        assertThat(method.getTypeParameters().length, is(1));
+        assertThat(method.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(method.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE * 2));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableOnMethodAnnotationInterfaceBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Method method = createPlain()
+                .merge(TypeManifestation.ABSTRACT)
+                .defineMethod(FOO, void.class)
+                .typeVariable(FOO, TypeDescription.Generic.Builder.rawType(Runnable.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                .withoutCode()
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredMethod(FOO);
+        assertThat(method.getTypeParameters().length, is(1));
+        assertThat(method.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(method.getTypeParameters()[0].getBounds()[0], is((Object) Runnable.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).ofTypeVariableBoundType(0)
+                .asList().ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE * 2));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeVariableOnMethodAnnotationTypeVariableBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Method method = createPlain()
+                .merge(TypeManifestation.ABSTRACT)
+                .defineMethod(FOO, void.class)
+                .typeVariable(FOO).annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                .typeVariable(BAR, TypeDescription.Generic.Builder.typeVariable(FOO)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 3).build()))
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build())
+                .withoutCode()
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredMethod(FOO);
+        assertThat(method.getTypeParameters().length, is(2));
+        assertThat(method.getTypeParameters()[0].getBounds().length, is(1));
+        assertThat(method.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
+        assertThat(method.getTypeParameters()[1].getBounds().length, is(1));
+        assertThat(method.getTypeParameters()[1].getBounds()[0], is((Object) method.getTypeParameters()[0]));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[1]).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[1]).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE * 2));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+                .asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[1]).ofTypeVariableBoundType(0)
+                .asList().ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE * 3));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnMethodReturnType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Method method = createPlain()
+                .merge(TypeManifestation.ABSTRACT)
+                .defineMethod(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build()))
+                .withoutCode()
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredMethod(FOO);
+        assertThat(method.getReturnType(), is((Object) Object.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReturnType(method).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReturnType(method).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnMethodParameterType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Method method = createPlain()
+                .merge(TypeManifestation.ABSTRACT)
+                .defineMethod(FOO, void.class).withParameters(TypeDescription.Generic.Builder.rawType(Object.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build()))
+                .withoutCode()
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredMethod(FOO, Object.class);
+        assertThat(method.getParameterTypes().length, is(1));
+        assertThat(method.getParameterTypes()[0], is((Object) Object.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveParameterType(method, 0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveParameterType(method, 0).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnMethodExceptionType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Method method = createPlain()
+                .merge(TypeManifestation.ABSTRACT)
+                .defineMethod(FOO, void.class).throwing(TypeDescription.Generic.Builder.rawType(Exception.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build()))
+                .withoutCode()
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredMethod(FOO);
+        assertThat(method.getExceptionTypes().length, is(1));
+        assertThat(method.getExceptionTypes()[0], is((Object) Exception.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveExceptionType(method, 0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveExceptionType(method, 0).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnWildcardWithoutBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                        TypeDescription.Generic.Builder.unboundWildcard(AnnotationDescription.Builder.ofType(typeAnnotationType)
+                                .define(VALUE, INTEGER_VALUE).build())).build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnWildcardUpperBoundBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                        TypeDescription.Generic.Builder.rawType(Object.class)
+                                .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                                .asWildcardUpperBound()).build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardUpperBoundType(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardUpperBoundType(0).asList()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnWildcardLowerBoundBound() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                        TypeDescription.Generic.Builder.rawType(Object.class)
+                                .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                                .asWildcardLowerBound()).build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardLowerBoundType(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardLowerBoundType(0).asList()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnGenericComponentType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                        TypeDescription.Generic.Builder.unboundWildcard())
+                        .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                        .asArray()
+                        .build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnNonGenericComponentType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.rawType(Object.class)
+                        .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                        .asArray()
+                        .build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     public @interface SampleAnnotation {
 
@@ -531,7 +912,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
             return instrumentedType.withField(new FieldDescription.Token(FOO,
                     MODIFIERS,
                     TypeDescription.Generic.OBJECT,
-                    Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make())));
+                    Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build())));
         }
 
         @Override
@@ -549,9 +930,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
                     Collections.<TypeVariableToken>emptyList(),
                     TypeDescription.Generic.OBJECT,
                     Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT,
-                            Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, QUX).make()))),
+                            Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, QUX).build()))),
                     Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
-                    Collections.singletonList(AnnotationDescription.Builder.forType(SampleAnnotation.class).define(FOO, BAR).make()),
+                    Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build()),
                     MethodDescription.NO_DEFAULT_VALUE));
         }
 

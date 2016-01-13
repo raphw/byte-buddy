@@ -1787,8 +1787,8 @@ public interface AnnotationDescription {
          * @param annotationType The annotation type.
          * @return A builder for creating an annotation of the given type.
          */
-        public static Builder forType(Class<? extends Annotation> annotationType) {
-            return forType(new TypeDescription.ForLoadedType(annotationType));
+        public static Builder ofType(Class<? extends Annotation> annotationType) {
+            return ofType(new TypeDescription.ForLoadedType(annotationType));
         }
 
         /**
@@ -1797,7 +1797,7 @@ public interface AnnotationDescription {
          * @param annotationType A description of the annotation type.
          * @return A builder for creating an annotation of the given type.
          */
-        public static Builder forType(TypeDescription annotationType) {
+        public static Builder ofType(TypeDescription annotationType) {
             if (!annotationType.isAnnotation()) {
                 throw new IllegalArgumentException("Not an annotation type: " + annotationType);
             }
@@ -2211,7 +2211,7 @@ public interface AnnotationDescription {
          *
          * @return An appropriate annotation description.
          */
-        public AnnotationDescription make() {
+        public AnnotationDescription build() {
             for (MethodDescription methodDescription : annotationType.getDeclaredMethods()) {
                 if (annotationValues.get(methodDescription.getName()) == null && methodDescription.getDefaultValue() == null) {
                     throw new IllegalStateException("No value or default value defined for " + methodDescription.getName());

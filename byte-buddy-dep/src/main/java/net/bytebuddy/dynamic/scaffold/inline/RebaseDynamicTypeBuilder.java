@@ -74,7 +74,7 @@ public class RebaseDynamicTypeBuilder<T> extends DynamicType.Builder.AbstractBas
         this(instrumentedType,
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
-                new TypeAttributeAppender.ForInstrumentedType.Excluding(originalType),
+                new TypeAttributeAppender.ForInstrumentedType.Differentiating(originalType),
                 AsmVisitorWrapper.NoOp.INSTANCE,
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,

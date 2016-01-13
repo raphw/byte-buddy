@@ -421,8 +421,8 @@ public interface AnnotationAppender {
 
         private final String typePath;
 
-        protected ForTypeAnnotations(AnnotationAppender annotationAppender, AnnotationValueFilter annotationValueFilter, int typeReference) {
-            this(annotationAppender, annotationValueFilter, typeReference, EMPTY_TYPE_PATH);
+        protected ForTypeAnnotations(AnnotationAppender annotationAppender, AnnotationValueFilter annotationValueFilter, TypeReference typeReference) {
+            this(annotationAppender, annotationValueFilter, typeReference.getValue(), EMPTY_TYPE_PATH);
         }
 
         protected ForTypeAnnotations(AnnotationAppender annotationAppender, AnnotationValueFilter annotationValueFilter, int typeReference, String typePath) {
@@ -434,42 +434,49 @@ public interface AnnotationAppender {
 
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofSuperClass(AnnotationAppender annotationAppender,
                                                                                        AnnotationValueFilter annotationValueFilter) {
-            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newSuperTypeReference(SUPER_CLASS_INDEX).getValue());
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newSuperTypeReference(SUPER_CLASS_INDEX));
         }
 
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofInterfaceType(AnnotationAppender annotationAppender,
                                                                                           AnnotationValueFilter annotationValueFilter,
                                                                                           int index) {
-            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newSuperTypeReference(index).getValue());
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newSuperTypeReference(index));
         }
 
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofFieldType(AnnotationAppender annotationAppender,
                                                                                       AnnotationValueFilter annotationValueFilter) {
-            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.FIELD);
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newTypeReference(TypeReference.FIELD));
         }
 
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofMethodReturnType(AnnotationAppender annotationAppender,
                                                                                              AnnotationValueFilter annotationValueFilter) {
-            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.METHOD_RETURN);
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newTypeReference(TypeReference.METHOD_RETURN));
         }
 
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofMethodParameterType(AnnotationAppender annotationAppender,
                                                                                                 AnnotationValueFilter annotationValueFilter,
                                                                                                 int index) {
-            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newFormalParameterReference(index).getValue());
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newFormalParameterReference(index));
         }
 
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofExceptionType(AnnotationAppender annotationAppender,
                                                                                           AnnotationValueFilter annotationValueFilter,
                                                                                           int index) {
-            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newExceptionReference(index).getValue());
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newExceptionReference(index));
         }
 
         public static AnnotationAppender ofTypeVariable(AnnotationAppender annotationAppender,
                                                         AnnotationValueFilter annotationValueFilter,
                                                         boolean variableOnType,
                                                         List<? extends TypeDescription.Generic> typeVariables) {
-            int variableIndex = 0, variableBaseReference, variableBoundBaseBase;
+            return ofTypeVariable(annotationAppender, annotationValueFilter, variableOnType, 0, typeVariables);
+        }
+        public static AnnotationAppender ofTypeVariable(AnnotationAppender annotationAppender,
+                                                        AnnotationValueFilter annotationValueFilter,
+                                                        boolean variableOnType,
+                                                        int subListIndex,
+                                                        List<? extends TypeDescription.Generic> typeVariables) {
+            int typeVariableIndex = subListIndex, variableBaseReference, variableBoundBaseBase;
             if (variableOnType) {
                 variableBaseReference = TypeReference.CLASS_TYPE_PARAMETER;
                 variableBoundBaseBase = TypeReference.CLASS_TYPE_PARAMETER_BOUND;
@@ -477,20 +484,20 @@ public interface AnnotationAppender {
                 variableBaseReference = TypeReference.METHOD_TYPE_PARAMETER;
                 variableBoundBaseBase = TypeReference.METHOD_TYPE_PARAMETER_BOUND;
             }
-            for (TypeDescription.Generic typeVariable : typeVariables) {
-                int typeReference = TypeReference.newTypeParameterReference(variableBaseReference, variableIndex).getValue();
+            for (TypeDescription.Generic typeVariable : typeVariables.subList(subListIndex, typeVariables.size())) {
+                int typeReference = TypeReference.newTypeParameterReference(variableBaseReference, typeVariableIndex).getValue();
                 for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
                     annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter, typeReference, EMPTY_TYPE_PATH);
                 }
-                int boundIndex = typeVariable.getUpperBounds().get(0).getSort().isNonGeneric() && typeVariable.getUpperBounds().get(0).asErasure().isInterface()
+                int boundIndex = typeVariable.getUpperBounds().get(0).getSort().isTypeVariable() || typeVariable.getUpperBounds().get(0).asErasure().isInterface()
                         ? 1
                         : 0;
                 for (TypeDescription.Generic typeBound : typeVariable.getUpperBounds()) {
                     annotationAppender = typeBound.accept(new ForTypeAnnotations(annotationAppender,
                             annotationValueFilter,
-                            TypeReference.newTypeParameterBoundReference(variableBoundBaseBase, variableIndex, boundIndex++).getSort()));
+                            TypeReference.newTypeParameterBoundReference(variableBoundBaseBase, typeVariableIndex, boundIndex++)));
                 }
-                variableIndex++;
+                typeVariableIndex++;
             }
             return annotationAppender;
         }

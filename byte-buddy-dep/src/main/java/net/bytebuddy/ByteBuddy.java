@@ -21,6 +21,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -475,9 +476,7 @@ public class ByteBuddy {
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Visibility.PRIVATE).withParameters(String.class, int.class)
-                .intercept(MethodCall.invoke(enumType.getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(String.class, int.class))).getOnly())
-                        .withArgument(0, 1))
+                .intercept(SuperMethodCall.INSTANCE)
                 .defineMethod(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME,
                         TargetType.class,
                         Visibility.PUBLIC, Ownership.STATIC).withParameters(String.class)

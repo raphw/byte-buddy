@@ -124,7 +124,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
     public void testPackageRebasement() throws Exception {
         Class<?> packageType = new ByteBuddy()
                 .rebase(Sample.class.getPackage(), ClassFileLocator.ForClassLoader.of(getClass().getClassLoader()))
-                .annotateType(AnnotationDescription.Builder.forType(Baz.class).make())
+                .annotateType(AnnotationDescription.Builder.ofType(Baz.class).build())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();

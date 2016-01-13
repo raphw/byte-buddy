@@ -693,9 +693,9 @@ public interface InstrumentedType extends TypeDescription {
             for (TypeDescription.Generic typeVariable : typeVariables) {
                 String variableSymbol = typeVariable.getSymbol();
                 if (!typeVariableNames.add(variableSymbol)) {
-                    throw new IllegalStateException("Duplicate type variable symbol pf " + typeVariable + " for " + this);
+                    throw new IllegalStateException("Duplicate type variable symbol '" + typeVariable + "' for " + this);
                 } else if (!isValidIdentifier(variableSymbol)) {
-                    throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + this);
+                    throw new IllegalStateException("Illegal type variable name '" + typeVariable + "' for " + this);
                 }
                 boolean interfaceBound = false;
                 Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
@@ -752,9 +752,9 @@ public interface InstrumentedType extends TypeDescription {
                 for (TypeDescription.Generic typeVariable : methodDescription.getTypeVariables()) {
                     String variableSymbol = typeVariable.getSymbol();
                     if (!methodTypeVariableNames.add(variableSymbol)) {
-                        throw new IllegalStateException("Duplicate type variable symbol of " + typeVariable + " for " + methodDescription);
+                        throw new IllegalStateException("Duplicate type variable symbol '" + typeVariable + "' for " + methodDescription);
                     } else if (!isValidIdentifier(variableSymbol)) {
-                        throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + methodDescription);
+                        throw new IllegalStateException("Illegal type variable name '" + typeVariable + "' for " + methodDescription);
                     }
                     boolean interfaceBound = false;
                     Set<TypeDescription.Generic> bounds = new HashSet<Generic>();

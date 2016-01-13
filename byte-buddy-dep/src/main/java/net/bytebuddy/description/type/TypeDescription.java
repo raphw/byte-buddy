@@ -2016,7 +2016,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param type The type to represent.
                  * @return A suitable annotation reader.
                  */
-                AnnotationReader resolveSuperType(Class<?> type);
+                AnnotationReader resolveSuperClass(Class<?> type);
 
                 /**
                  * Resolves a loaded type's interface type's type annotations.
@@ -2077,7 +2077,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
-                    public AnnotationReader resolveSuperType(Class<?> type) {
+                    public AnnotationReader resolveSuperClass(Class<?> type) {
                         return NoOp.INSTANCE;
                     }
 
@@ -2198,7 +2198,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
-                    public AnnotationReader resolveSuperType(Class<?> type) {
+                    public AnnotationReader resolveSuperClass(Class<?> type) {
                         return new AnnotatedSuperType(type);
                     }
 
@@ -5028,7 +5028,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveSuperType(type);
+                    return AnnotationReader.DISPATCHER.resolveSuperClass(type);
                 }
             }
 
