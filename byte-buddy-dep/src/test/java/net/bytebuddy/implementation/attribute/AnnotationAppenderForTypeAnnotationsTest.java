@@ -10,6 +10,8 @@ import static org.mockito.Mockito.when;
 
 public class AnnotationAppenderForTypeAnnotationsTest {
 
+    // TODO
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AnnotationAppender.ForTypeAnnotations.class).refine(new ObjectPropertyAssertion.Refinement<TypeReference>() {

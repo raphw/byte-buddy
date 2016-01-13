@@ -28,6 +28,7 @@ import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
 import java.io.Serializable;
+import java.lang.annotation.Target;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -607,6 +608,13 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testTypeIncompatibleAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withAnnotations(Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testFieldDuplicateName() throws Exception {
         makePlainInstrumentedType()
                 .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
@@ -642,6 +650,14 @@ public class InstrumentedTypeDefaultTest {
                 .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT, Arrays.asList(
                         AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
                         AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
+                ))).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void tesFieldIncompatibleAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT, Collections.singletonList(
+                        AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()
                 ))).validated();
     }
 
@@ -704,6 +720,20 @@ public class InstrumentedTypeDefaultTest {
                                 AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
                                 AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                         ), MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIncompatibleAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()),
+                        MethodDescription.NO_DEFAULT_VALUE))
                 .validated();
     }
 
@@ -898,6 +928,21 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testMethodParameterIncompatibleAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, Collections.singletonList(
+                                AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()
+                        ))), Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testMethodIllegalExceptionType() throws Exception {
         makePlainInstrumentedType()
                 .withMethod(new MethodDescription.Token(FOO,
@@ -968,6 +1013,11 @@ public class InstrumentedTypeDefaultTest {
     }
 
     public @interface SampleAnnotation {
+        /* empty */
+    }
+
+    @Target({})
+    public @interface IncompatibleAnnotation {
         /* empty */
     }
 }

@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.utility.CompoundList;
 
+import java.lang.annotation.ElementType;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -715,7 +716,10 @@ public interface InstrumentedType extends TypeDescription {
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
-                if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                if (!annotationDescription.getElementTypes().contains(ElementType.TYPE)
+                        && !(isAnnotation() && annotationDescription.getElementTypes().contains(ElementType.ANNOTATION_TYPE))) {
+                    throw new IllegalStateException("Cannot add " + annotationDescription + " on " + this);
+                } else if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                     throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);
                 }
             }
@@ -736,7 +740,9 @@ public interface InstrumentedType extends TypeDescription {
                 }
                 Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : fieldDescription.getDeclaredAnnotations()) {
-                    if (!fieldAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                    if (!annotationDescription.getElementTypes().contains(ElementType.FIELD)) {
+                        throw new IllegalStateException("Cannot add " + annotationDescription + " on " + fieldDescription);
+                    } else if (!fieldAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + fieldDescription);
                     }
                 }
@@ -779,11 +785,11 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("A constructor must return void " + methodDescription);
                     }
                 } else if (!isValidIdentifier(methodDescription.getInternalName())) {
-                        throw new IllegalStateException("Illegal method name " + methodDescription.getReturnType() + " for " + methodDescription);
+                    throw new IllegalStateException("Illegal method name " + methodDescription.getReturnType() + " for " + methodDescription);
                 } else if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
-                        throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                    throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
                 } else if (!methodDescription.isSynthetic() && !methodDescription.getReturnType().asErasure().isVisibleTo(this)) {
-                        throw new IllegalStateException("Invisible return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                    throw new IllegalStateException("Invisible return type " + methodDescription.getReturnType() + " for " + methodDescription);
                 }
                 Set<String> parameterNames = new HashSet<String>();
                 for (ParameterDescription.InDefinedShape parameterDescription : methodDescription.getParameters()) {
@@ -795,9 +801,9 @@ public interface InstrumentedType extends TypeDescription {
                     if (parameterDescription.isNamed()) {
                         String parameterName = parameterDescription.getName();
                         if (!parameterNames.add(parameterName)) {
-                        throw new IllegalStateException("Duplicate parameter name of " + parameterDescription + " for " + methodDescription);
+                            throw new IllegalStateException("Duplicate parameter name of " + parameterDescription + " for " + methodDescription);
                         } else if (!isValidIdentifier(parameterName)) {
-                        throw new IllegalStateException("Illegal parameter name of " + parameterDescription + " for " + methodDescription);
+                            throw new IllegalStateException("Illegal parameter name of " + parameterDescription + " for " + methodDescription);
                         }
                     }
                     if (parameterDescription.hasModifiers() && (parameterDescription.getModifiers() & ~ModifierContributor.ForParameter.MASK) != EMPTY_MASK) {
@@ -805,7 +811,9 @@ public interface InstrumentedType extends TypeDescription {
                     }
                     Set<TypeDescription> parameterAnnotationTypes = new HashSet<TypeDescription>();
                     for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
-                        if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                        if (!annotationDescription.getElementTypes().contains(ElementType.PARAMETER)) {
+                            throw new IllegalStateException("Cannot add " + annotationDescription + " on " + parameterDescription);
+                        } else if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                             throw new IllegalStateException("Duplicate annotation " + annotationDescription + " of " + parameterDescription + " for " + methodDescription);
                         }
                     }
@@ -822,7 +830,9 @@ public interface InstrumentedType extends TypeDescription {
                 }
                 Set<TypeDescription> methodAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : methodDescription.getDeclaredAnnotations()) {
-                    if (!methodAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                    if (!annotationDescription.getElementTypes().contains(methodDescription.isMethod() ? ElementType.METHOD : ElementType.CONSTRUCTOR)) {
+                        throw new IllegalStateException("Cannot add " + annotationDescription + " on " + methodDescription);
+                    } else if (!methodAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);
                     }
                 }

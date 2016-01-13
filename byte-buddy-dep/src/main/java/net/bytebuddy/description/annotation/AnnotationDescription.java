@@ -1448,7 +1448,7 @@ public interface AnnotationDescription {
         @Override
         public Set<ElementType> getElementTypes() {
             AnnotationDescription.Loadable<Target> target = getAnnotationType().getDeclaredAnnotations().ofType(Target.class);
-            return EnumSet.copyOf(Arrays.asList(target == null
+            return new HashSet<ElementType>(Arrays.asList(target == null
                     ? DEFAULT_TARGET
                     : target.loadSilent().value()));
         }
