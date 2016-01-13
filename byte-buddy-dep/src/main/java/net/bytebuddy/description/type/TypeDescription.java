@@ -24,6 +24,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -730,568 +731,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public String toString() {
                         return "TypeDescription.Generic.Visitor.TypeVariableErasing.PartialErasureReviser." + name();
-                    }
-                }
-            }
-
-            /**
-             * Visits a generic type and appends the discovered type to the supplied signature visitor.
-             */
-            class ForSignatureVisitor implements Visitor<SignatureVisitor> {
-
-                /**
-                 * Index of a {@link String}'s only character to improve code readabilty.
-                 */
-                private static final int ONLY_CHARACTER = 0;
-
-                /**
-                 * The signature visitor that receives the discovered generic type.
-                 */
-                protected final SignatureVisitor signatureVisitor;
-
-                /**
-                 * Creates a new visitor for the given signature visitor.
-                 *
-                 * @param signatureVisitor The signature visitor that receives the discovered generic type.
-                 */
-                public ForSignatureVisitor(SignatureVisitor signatureVisitor) {
-                    this.signatureVisitor = signatureVisitor;
-                }
-
-                @Override
-                public SignatureVisitor onGenericArray(Generic genericArray) {
-                    genericArray.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
-                    return signatureVisitor;
-                }
-
-                @Override
-                public SignatureVisitor onWildcard(Generic wildcard) {
-                    throw new IllegalStateException("Unexpected wildcard: " + wildcard);
-                }
-
-                @Override
-                public SignatureVisitor onParameterizedType(Generic parameterizedType) {
-                    onOwnableType(parameterizedType);
-                    signatureVisitor.visitEnd();
-                    return signatureVisitor;
-                }
-
-                /**
-                 * Visits a type which might define an owner type.
-                 *
-                 * @param ownableType The visited generic type.
-                 */
-                private void onOwnableType(Generic ownableType) {
-                    Generic ownerType = ownableType.getOwnerType();
-                    if (ownerType != null && ownerType.getSort().isParameterized()) {
-                        onOwnableType(ownerType);
-                        signatureVisitor.visitInnerClassType(ownableType.asErasure().getSimpleName());
-                    } else {
-                        signatureVisitor.visitClassType(ownableType.asErasure().getInternalName());
-                    }
-                    for (Generic typeArgument : ownableType.getTypeArguments()) {
-                        typeArgument.accept(new OfTypeArgument(signatureVisitor));
-                    }
-                }
-
-                @Override
-                public SignatureVisitor onTypeVariable(Generic typeVariable) {
-                    signatureVisitor.visitTypeVariable(typeVariable.getSymbol());
-                    return signatureVisitor;
-                }
-
-                @Override
-                public SignatureVisitor onNonGenericType(Generic typeDescription) {
-                    if (typeDescription.isArray()) {
-                        typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
-                    } else if (typeDescription.isPrimitive()) {
-                        signatureVisitor.visitBaseType(typeDescription.asErasure().getDescriptor().charAt(ONLY_CHARACTER));
-                    } else {
-                        signatureVisitor.visitClassType(typeDescription.asErasure().getInternalName());
-                        signatureVisitor.visitEnd();
-                    }
-                    return signatureVisitor;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || other instanceof ForSignatureVisitor
-                            && signatureVisitor.equals(((ForSignatureVisitor) other).signatureVisitor);
-                }
-
-                @Override
-                public int hashCode() {
-                    return signatureVisitor.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.ForSignatureVisitor{" +
-                            "signatureVisitor=" + signatureVisitor +
-                            '}';
-                }
-
-                /**
-                 * Visits a parameter while visiting a generic type for delegating discoveries to a signature visitor.
-                 */
-                protected static class OfTypeArgument extends ForSignatureVisitor {
-
-                    /**
-                     * Creates a new parameter visitor.
-                     *
-                     * @param signatureVisitor The signature visitor which is notified over visited types.
-                     */
-                    protected OfTypeArgument(SignatureVisitor signatureVisitor) {
-                        super(signatureVisitor);
-                    }
-
-                    @Override
-                    public SignatureVisitor onWildcard(Generic wildcard) {
-                        TypeList.Generic upperBounds = wildcard.getUpperBounds(), lowerBounds = wildcard.getLowerBounds();
-                        if (lowerBounds.isEmpty() && upperBounds.getOnly().represents(Object.class)) {
-                            signatureVisitor.visitTypeArgument();
-                        } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
-                            lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
-                        } else /* if (!upperBounds.isEmpty() && lowerBounds.isEmpty()) */ {
-                            upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
-                        }
-                        return signatureVisitor;
-                    }
-
-                    @Override
-                    public SignatureVisitor onGenericArray(Generic genericArray) {
-                        genericArray.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
-                        return signatureVisitor;
-                    }
-
-                    @Override
-                    public SignatureVisitor onParameterizedType(Generic parameterizedType) {
-                        parameterizedType.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
-                        return signatureVisitor;
-                    }
-
-                    @Override
-                    public SignatureVisitor onTypeVariable(Generic typeVariable) {
-                        typeVariable.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
-                        return signatureVisitor;
-                    }
-
-                    @Override
-                    public SignatureVisitor onNonGenericType(Generic typeDescription) {
-                        typeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
-                        return signatureVisitor;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.ForSignatureVisitor.OfTypeArgument{}";
-                    }
-                }
-            }
-
-            /**
-             * An abstract implementation of a visitor that substitutes generic types by replacing (nested)
-             * type variables and/or non-generic component types.
-             */
-            abstract class Substitutor implements Visitor<Generic> {
-
-                @Override
-                public Generic onParameterizedType(Generic parameterizedType) {
-                    Generic ownerType = parameterizedType.getOwnerType();
-                    List<Generic> typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
-                    for (Generic typeArgument : parameterizedType.getTypeArguments()) {
-                        typeArguments.add(typeArgument.accept(this));
-                    }
-                    return new OfParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
-                            ownerType == null
-                                    ? UNDEFINED
-                                    : ownerType.accept(this),
-                            typeArguments,
-                            parameterizedType.getDeclaredAnnotations());
-                }
-
-                @Override
-                public Generic onGenericArray(Generic genericArray) {
-                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
-                }
-
-                @Override
-                public Generic onWildcard(Generic wildcard) {
-                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
-                }
-
-                @Override
-                public Generic onNonGenericType(Generic typeDescription) {
-                    return typeDescription.isArray()
-                            ? new OfGenericArray.Latent(typeDescription.getComponentType().accept(this), typeDescription.getDeclaredAnnotations())
-                            : onSimpleType(typeDescription);
-                }
-
-                /**
-                 * Visits a simple, non-generic type, i.e. either a component type of an array or a non-array type.
-                 *
-                 * @param typeDescription The type that is visited.
-                 * @return The substituted type.
-                 */
-                protected abstract Generic onSimpleType(Generic typeDescription);
-
-                /**
-                 * A substitutor that attaches type variables to a type variable source and replaces representations of
-                 * {@link TargetType} with a given declaring type.
-                 */
-                public static class ForAttachment extends Substitutor {
-
-                    /**
-                     * The declaring type which is filled in for {@link TargetType}.
-                     */
-                    private final Generic declaringType;
-
-                    /**
-                     * The source which is used for locating type variables.
-                     */
-                    private final TypeVariableSource typeVariableSource;
-
-                    /**
-                     * Creates a visitor for attaching type variables.
-                     *
-                     * @param declaringType      The declaring type which is filled in for {@link TargetType}.
-                     * @param typeVariableSource The source which is used for locating type variables.
-                     */
-                    protected ForAttachment(Generic declaringType, TypeVariableSource typeVariableSource) {
-                        this.declaringType = declaringType;
-                        this.typeVariableSource = typeVariableSource;
-                    }
-
-                    /**
-                     * Attaches all types to the given field description.
-                     *
-                     * @param fieldDescription The field description to which visited types should be attached to.
-                     * @return A substitutor that attaches visited types to the given field's type context.
-                     */
-                    public static ForAttachment of(FieldDescription fieldDescription) {
-                        return new ForAttachment(fieldDescription.getDeclaringType().asGenericType(), fieldDescription.getDeclaringType().asErasure());
-                    }
-
-                    /**
-                     * Attaches all types to the given method description.
-                     *
-                     * @param methodDescription The method description to which visited types should be attached to.
-                     * @return A substitutor that attaches visited types to the given method's type context.
-                     */
-                    public static ForAttachment of(MethodDescription methodDescription) {
-                        return new ForAttachment(methodDescription.getDeclaringType().asGenericType(), methodDescription);
-                    }
-
-                    /**
-                     * Attaches all types to the given parameter description.
-                     *
-                     * @param parameterDescription The parameter description to which visited types should be attached to.
-                     * @return A substitutor that attaches visited types to the given parameter's type context.
-                     */
-                    public static ForAttachment of(ParameterDescription parameterDescription) {
-                        return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asGenericType(), parameterDescription.getDeclaringMethod());
-                    }
-
-                    /**
-                     * Attaches all types to the given type description.
-                     *
-                     * @param typeDescription The type description to which visited types should be attached to.
-                     * @return A substitutor that attaches visited types to the given type's type context.
-                     */
-                    public static ForAttachment of(TypeDescription typeDescription) {
-                        return new ForAttachment(typeDescription.asGenericType(), typeDescription);
-                    }
-
-                    @Override
-                    public Generic onTypeVariable(Generic typeVariable) {
-                        Generic attachedVariable = typeVariableSource.findVariable(typeVariable.getSymbol());
-                        if (attachedVariable == null) {
-                            throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
-                        } else {
-                            return new AnnotatedTypeVariable(attachedVariable, typeVariable.getDeclaredAnnotations());
-                        }
-                    }
-
-                    @Override
-                    protected Generic onSimpleType(Generic typeDescription) {
-                        return typeDescription.represents(TargetType.class)
-                                ? declaringType
-                                : typeDescription;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof ForAttachment)) return false;
-                        ForAttachment that = (ForAttachment) other;
-                        return declaringType.equals(that.declaringType)
-                                && typeVariableSource.equals(that.typeVariableSource);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = declaringType.hashCode();
-                        result = 31 * result + typeVariableSource.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForAttachment{" +
-                                "declaringType=" + declaringType +
-                                ", typeVariableSource=" + typeVariableSource +
-                                '}';
-                    }
-
-                    /**
-                     * Wraps a formal type variable to allow for representing type annotations.
-                     */
-                    protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
-
-                        /**
-                         * The represented type variable.
-                         */
-                        private final Generic typeVariable;
-
-                        /**
-                         * The variable's type annotations.
-                         */
-                        private final List<AnnotationDescription> annotations;
-
-                        /**
-                         * Creates a new annotated type variable.
-                         *
-                         * @param typeVariable The represented type variable.
-                         * @param annotations  The variable's type annotations.
-                         */
-                        protected AnnotatedTypeVariable(Generic typeVariable, List<AnnotationDescription> annotations) {
-                            this.typeVariable = typeVariable;
-                            this.annotations = annotations;
-                        }
-
-                        @Override
-                        public TypeList.Generic getUpperBounds() {
-                            return typeVariable.getUpperBounds();
-                        }
-
-                        @Override
-                        public TypeVariableSource getVariableSource() {
-                            return typeVariable.getVariableSource();
-                        }
-
-                        @Override
-                        public String getSymbol() {
-                            return typeVariable.getSymbol();
-                        }
-
-                        @Override
-                        public AnnotationList getDeclaredAnnotations() {
-                            return new AnnotationList.Explicit(annotations);
-                        }
-                    }
-                }
-
-                /**
-                 * A visitor for detaching a type from its declaration context by detaching type variables. This is achieved by
-                 * detaching type variables and by replacing the declaring type which is identified by a provided {@link ElementMatcher}
-                 * with {@link TargetType}.
-                 */
-                public static class ForDetachment extends Substitutor {
-
-                    /**
-                     * A type matcher for identifying the declaring type.
-                     */
-                    private final ElementMatcher<? super TypeDescription> typeMatcher;
-
-                    /**
-                     * Creates a visitor for detaching a type.
-                     *
-                     * @param typeMatcher A type matcher for identifying the declaring type.
-                     */
-                    public ForDetachment(ElementMatcher<? super TypeDescription> typeMatcher) {
-                        this.typeMatcher = typeMatcher;
-                    }
-
-                    /**
-                     * Returns a new detachment visitor that detaches any type matching the supplied type description.
-                     *
-                     * @param typeDefinition The type to detach.
-                     * @return A detachment visitor for the supplied type description.
-                     */
-                    public static Visitor<Generic> of(TypeDefinition typeDefinition) {
-                        return new ForDetachment(is(typeDefinition));
-                    }
-
-                    @Override
-                    public Generic onTypeVariable(Generic typeVariable) {
-                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
-                    }
-
-                    @Override
-                    protected Generic onSimpleType(Generic typeDescription) {
-                        return typeMatcher.matches(typeDescription.asErasure())
-                                ? TargetType.GENERIC_DESCRIPTION
-                                : typeDescription;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && typeMatcher.equals(((ForDetachment) other).typeMatcher);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return typeMatcher.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForDetachment{" +
-                                "typeMatcher=" + typeMatcher +
-                                '}';
-                    }
-                }
-
-                /**
-                 * A visitor for binding type variables to their values.
-                 */
-                public static class ForTypeVariableBinding extends Substitutor {
-
-                    /**
-                     * Bindings of type variables to their substitution values.
-                     */
-                    private final Map<Generic, Generic> bindings;
-
-                    /**
-                     * Creates a new visitor for a type variable bindings.
-                     *
-                     * @param bindings Bindings of type variables to their substitution values.
-                     */
-                    protected ForTypeVariableBinding(Map<Generic, Generic> bindings) {
-                        this.bindings = bindings;
-                    }
-
-                    /**
-                     * Creates a visitor that binds the variables of the given generic type by the generic type's values. If the provided type
-                     * represents a raw generic type or if the generic type is incomplete, the returned visitor erases all found type variables
-                     * instead.
-                     *
-                     * @param typeDescription The type description to be bound.
-                     * @return A visitor that binds any type variables
-                     */
-                    public static Visitor<Generic> bind(Generic typeDescription) {
-                        Map<Generic, Generic> bindings = new HashMap<Generic, Generic>();
-                        do {
-                            TypeList.Generic typeArguments = typeDescription.getTypeArguments(), typeVariables = typeDescription.asErasure().getTypeVariables();
-                            if (typeArguments.size() != typeVariables.size()) {
-                                return TypeVariableErasing.INSTANCE;
-                            }
-                            for (int index = 0; index < typeVariables.size(); index++) {
-                                bindings.put(typeVariables.get(index), typeArguments.get(index));
-                            }
-                            typeDescription = typeDescription.getOwnerType();
-                        } while (typeDescription != null && typeDescription.getSort().isParameterized());
-                        return new ForTypeVariableBinding(bindings);
-                    }
-
-                    @Override
-                    public Generic onTypeVariable(Generic typeVariable) {
-                        Generic substitution = bindings.get(typeVariable);
-                        if (substitution == null) {
-                            throw new IllegalStateException("Unknown type variable: " + typeVariable);
-                        } else {
-                            return substitution;
-                        }
-                    }
-
-                    @Override
-                    public Generic onNonGenericType(Generic typeDescription) {
-                        return typeDescription;
-                    }
-
-                    @Override
-                    protected Generic onSimpleType(Generic typeDescription) {
-                        throw new UnsupportedOperationException();
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        if (this == other) return true;
-                        if (!(other instanceof ForTypeVariableBinding)) return false;
-                        ForTypeVariableBinding that = (ForTypeVariableBinding) other;
-                        return bindings.equals(that.bindings);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return bindings.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding{" +
-                                "bindings=" + bindings +
-                                '}';
-                    }
-                }
-
-                /**
-                 * A substitutor that normalizes a token to represent all {@link TargetType} by a given type and that symbolizes all type variables.
-                 */
-                public static class ForTokenNormalization extends Substitutor {
-
-                    /**
-                     * The type description to substitute all {@link TargetType} representations with.
-                     */
-                    private final TypeDescription.Generic typeDescription;
-
-                    /**
-                     * Creates a new token normalization visitor.
-                     *
-                     * @param typeDescription The type description to substitute all {@link TargetType}
-                     */
-                    public ForTokenNormalization(TypeDescription typeDescription) {
-                        this(typeDescription.asGenericType());
-                    }
-
-                    /**
-                     * Creates a new token normalization visitor.
-                     *
-                     * @param typeDescription The type description to substitute all {@link TargetType}
-                     */
-                    public ForTokenNormalization(Generic typeDescription) {
-                        this.typeDescription = typeDescription;
-                    }
-
-                    @Override
-                    protected Generic onSimpleType(Generic typeDescription) {
-                        return typeDescription.represents(TargetType.class)
-                                ? this.typeDescription
-                                : typeDescription;
-                    }
-
-                    @Override
-                    public Generic onTypeVariable(Generic typeVariable) {
-                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && typeDescription.equals(((ForTokenNormalization) other).typeDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return typeDescription.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization{" +
-                                "typeDescription=" + typeDescription +
-                                '}';
                     }
                 }
             }
@@ -2015,6 +1454,663 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public String toString() {
                     return "TypeDescription.Generic.Visitor.Validator." + name();
+                }
+
+                public enum ForTypeAnnotations implements Visitor<Boolean> {
+
+                    INSTANCE;
+
+                    private final ElementType typeUse;
+
+                    private final ElementType typeParameter;
+
+                    ForTypeAnnotations() {
+                        ElementType typeUse, typeParameter;
+                        try {
+                            typeUse = Enum.valueOf(ElementType.class, "TYPE_USE");
+                            typeParameter = Enum.valueOf(ElementType.class, "TYPE_PARAMETER");
+                        } catch (RuntimeException ignored) {
+                            typeUse = null;
+                            typeParameter = null;
+                        }
+                        this.typeUse = typeUse;
+                        this.typeParameter = typeParameter;
+                    }
+
+                    public static boolean ofFormalTypeVariable(Generic typeVariable) {
+                        Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
+                        for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
+                            if (!annotationDescription.getElementTypes().contains(INSTANCE.typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                                return false;
+                            }
+                            for (Generic bound : typeVariable.getUpperBounds()) {
+                                if (!bound.accept(INSTANCE)) {
+                                    return false;
+                                }
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean onGenericArray(Generic genericArray) {
+                        return isValid(genericArray) && genericArray.getComponentType().accept(this);
+                    }
+
+                    @Override
+                    public Boolean onWildcard(Generic wildcard) {
+                        if (!isValid(wildcard)) {
+                            return false;
+                        }
+                        TypeList.Generic lowerBounds = wildcard.getLowerBounds();
+                        return (lowerBounds.isEmpty()
+                                ? wildcard.getUpperBounds()
+                                : lowerBounds).getOnly().accept(this);
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        if (!isValid(parameterizedType)) {
+                            return false;
+                        }
+                        Generic ownerType = parameterizedType.getOwnerType();
+                        if (ownerType != null && !ownerType.accept(this)) {
+                            return false;
+                        }
+                        for (Generic typeArgument : parameterizedType.getTypeArguments()) {
+                            if (!typeArgument.accept(this)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(Generic typeVariable) {
+                        return isValid(typeVariable);
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return isValid(typeDescription) && (!typeDescription.isArray() || typeDescription.getComponentType().accept(this));
+                    }
+
+                    private boolean isValid(Generic typeDescription) {
+                        Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
+                        for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
+                            if (!annotationDescription.getElementTypes().contains(typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations" + name();
+                    }
+                }
+            }
+
+            /**
+             * Visits a generic type and appends the discovered type to the supplied signature visitor.
+             */
+            class ForSignatureVisitor implements Visitor<SignatureVisitor> {
+
+                /**
+                 * Index of a {@link String}'s only character to improve code readabilty.
+                 */
+                private static final int ONLY_CHARACTER = 0;
+
+                /**
+                 * The signature visitor that receives the discovered generic type.
+                 */
+                protected final SignatureVisitor signatureVisitor;
+
+                /**
+                 * Creates a new visitor for the given signature visitor.
+                 *
+                 * @param signatureVisitor The signature visitor that receives the discovered generic type.
+                 */
+                public ForSignatureVisitor(SignatureVisitor signatureVisitor) {
+                    this.signatureVisitor = signatureVisitor;
+                }
+
+                @Override
+                public SignatureVisitor onGenericArray(Generic genericArray) {
+                    genericArray.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
+                    return signatureVisitor;
+                }
+
+                @Override
+                public SignatureVisitor onWildcard(Generic wildcard) {
+                    throw new IllegalStateException("Unexpected wildcard: " + wildcard);
+                }
+
+                @Override
+                public SignatureVisitor onParameterizedType(Generic parameterizedType) {
+                    onOwnableType(parameterizedType);
+                    signatureVisitor.visitEnd();
+                    return signatureVisitor;
+                }
+
+                /**
+                 * Visits a type which might define an owner type.
+                 *
+                 * @param ownableType The visited generic type.
+                 */
+                private void onOwnableType(Generic ownableType) {
+                    Generic ownerType = ownableType.getOwnerType();
+                    if (ownerType != null && ownerType.getSort().isParameterized()) {
+                        onOwnableType(ownerType);
+                        signatureVisitor.visitInnerClassType(ownableType.asErasure().getSimpleName());
+                    } else {
+                        signatureVisitor.visitClassType(ownableType.asErasure().getInternalName());
+                    }
+                    for (Generic typeArgument : ownableType.getTypeArguments()) {
+                        typeArgument.accept(new OfTypeArgument(signatureVisitor));
+                    }
+                }
+
+                @Override
+                public SignatureVisitor onTypeVariable(Generic typeVariable) {
+                    signatureVisitor.visitTypeVariable(typeVariable.getSymbol());
+                    return signatureVisitor;
+                }
+
+                @Override
+                public SignatureVisitor onNonGenericType(Generic typeDescription) {
+                    if (typeDescription.isArray()) {
+                        typeDescription.getComponentType().accept(new ForSignatureVisitor(signatureVisitor.visitArrayType()));
+                    } else if (typeDescription.isPrimitive()) {
+                        signatureVisitor.visitBaseType(typeDescription.asErasure().getDescriptor().charAt(ONLY_CHARACTER));
+                    } else {
+                        signatureVisitor.visitClassType(typeDescription.asErasure().getInternalName());
+                        signatureVisitor.visitEnd();
+                    }
+                    return signatureVisitor;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || other instanceof ForSignatureVisitor
+                            && signatureVisitor.equals(((ForSignatureVisitor) other).signatureVisitor);
+                }
+
+                @Override
+                public int hashCode() {
+                    return signatureVisitor.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Visitor.ForSignatureVisitor{" +
+                            "signatureVisitor=" + signatureVisitor +
+                            '}';
+                }
+
+                /**
+                 * Visits a parameter while visiting a generic type for delegating discoveries to a signature visitor.
+                 */
+                protected static class OfTypeArgument extends ForSignatureVisitor {
+
+                    /**
+                     * Creates a new parameter visitor.
+                     *
+                     * @param signatureVisitor The signature visitor which is notified over visited types.
+                     */
+                    protected OfTypeArgument(SignatureVisitor signatureVisitor) {
+                        super(signatureVisitor);
+                    }
+
+                    @Override
+                    public SignatureVisitor onWildcard(Generic wildcard) {
+                        TypeList.Generic upperBounds = wildcard.getUpperBounds(), lowerBounds = wildcard.getLowerBounds();
+                        if (lowerBounds.isEmpty() && upperBounds.getOnly().represents(Object.class)) {
+                            signatureVisitor.visitTypeArgument();
+                        } else if (!lowerBounds.isEmpty() /* && upperBounds.isEmpty() */) {
+                            lowerBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.SUPER)));
+                        } else /* if (!upperBounds.isEmpty() && lowerBounds.isEmpty()) */ {
+                            upperBounds.getOnly().accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.EXTENDS)));
+                        }
+                        return signatureVisitor;
+                    }
+
+                    @Override
+                    public SignatureVisitor onGenericArray(Generic genericArray) {
+                        genericArray.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                        return signatureVisitor;
+                    }
+
+                    @Override
+                    public SignatureVisitor onParameterizedType(Generic parameterizedType) {
+                        parameterizedType.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                        return signatureVisitor;
+                    }
+
+                    @Override
+                    public SignatureVisitor onTypeVariable(Generic typeVariable) {
+                        typeVariable.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                        return signatureVisitor;
+                    }
+
+                    @Override
+                    public SignatureVisitor onNonGenericType(Generic typeDescription) {
+                        typeDescription.accept(new ForSignatureVisitor(signatureVisitor.visitTypeArgument(SignatureVisitor.INSTANCEOF)));
+                        return signatureVisitor;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.ForSignatureVisitor.OfTypeArgument{}";
+                    }
+                }
+            }
+
+            /**
+             * An abstract implementation of a visitor that substitutes generic types by replacing (nested)
+             * type variables and/or non-generic component types.
+             */
+            abstract class Substitutor implements Visitor<Generic> {
+
+                @Override
+                public Generic onParameterizedType(Generic parameterizedType) {
+                    Generic ownerType = parameterizedType.getOwnerType();
+                    List<Generic> typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
+                    for (Generic typeArgument : parameterizedType.getTypeArguments()) {
+                        typeArguments.add(typeArgument.accept(this));
+                    }
+                    return new OfParameterizedType.Latent(parameterizedType.asRawType().accept(this).asErasure(),
+                            ownerType == null
+                                    ? UNDEFINED
+                                    : ownerType.accept(this),
+                            typeArguments,
+                            parameterizedType.getDeclaredAnnotations());
+                }
+
+                @Override
+                public Generic onGenericArray(Generic genericArray) {
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), genericArray.getDeclaredAnnotations());
+                }
+
+                @Override
+                public Generic onWildcard(Generic wildcard) {
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
+                }
+
+                @Override
+                public Generic onNonGenericType(Generic typeDescription) {
+                    return typeDescription.isArray()
+                            ? new OfGenericArray.Latent(typeDescription.getComponentType().accept(this), typeDescription.getDeclaredAnnotations())
+                            : onSimpleType(typeDescription);
+                }
+
+                /**
+                 * Visits a simple, non-generic type, i.e. either a component type of an array or a non-array type.
+                 *
+                 * @param typeDescription The type that is visited.
+                 * @return The substituted type.
+                 */
+                protected abstract Generic onSimpleType(Generic typeDescription);
+
+                /**
+                 * A substitutor that attaches type variables to a type variable source and replaces representations of
+                 * {@link TargetType} with a given declaring type.
+                 */
+                public static class ForAttachment extends Substitutor {
+
+                    /**
+                     * The declaring type which is filled in for {@link TargetType}.
+                     */
+                    private final Generic declaringType;
+
+                    /**
+                     * The source which is used for locating type variables.
+                     */
+                    private final TypeVariableSource typeVariableSource;
+
+                    /**
+                     * Creates a visitor for attaching type variables.
+                     *
+                     * @param declaringType      The declaring type which is filled in for {@link TargetType}.
+                     * @param typeVariableSource The source which is used for locating type variables.
+                     */
+                    protected ForAttachment(Generic declaringType, TypeVariableSource typeVariableSource) {
+                        this.declaringType = declaringType;
+                        this.typeVariableSource = typeVariableSource;
+                    }
+
+                    /**
+                     * Attaches all types to the given field description.
+                     *
+                     * @param fieldDescription The field description to which visited types should be attached to.
+                     * @return A substitutor that attaches visited types to the given field's type context.
+                     */
+                    public static ForAttachment of(FieldDescription fieldDescription) {
+                        return new ForAttachment(fieldDescription.getDeclaringType().asGenericType(), fieldDescription.getDeclaringType().asErasure());
+                    }
+
+                    /**
+                     * Attaches all types to the given method description.
+                     *
+                     * @param methodDescription The method description to which visited types should be attached to.
+                     * @return A substitutor that attaches visited types to the given method's type context.
+                     */
+                    public static ForAttachment of(MethodDescription methodDescription) {
+                        return new ForAttachment(methodDescription.getDeclaringType().asGenericType(), methodDescription);
+                    }
+
+                    /**
+                     * Attaches all types to the given parameter description.
+                     *
+                     * @param parameterDescription The parameter description to which visited types should be attached to.
+                     * @return A substitutor that attaches visited types to the given parameter's type context.
+                     */
+                    public static ForAttachment of(ParameterDescription parameterDescription) {
+                        return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asGenericType(), parameterDescription.getDeclaringMethod());
+                    }
+
+                    /**
+                     * Attaches all types to the given type description.
+                     *
+                     * @param typeDescription The type description to which visited types should be attached to.
+                     * @return A substitutor that attaches visited types to the given type's type context.
+                     */
+                    public static ForAttachment of(TypeDescription typeDescription) {
+                        return new ForAttachment(typeDescription.asGenericType(), typeDescription);
+                    }
+
+                    @Override
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        Generic attachedVariable = typeVariableSource.findVariable(typeVariable.getSymbol());
+                        if (attachedVariable == null) {
+                            throw new IllegalArgumentException("Cannot attach undefined variable: " + typeVariable);
+                        } else {
+                            return new AnnotatedTypeVariable(attachedVariable, typeVariable.getDeclaredAnnotations());
+                        }
+                    }
+
+                    @Override
+                    protected Generic onSimpleType(Generic typeDescription) {
+                        return typeDescription.represents(TargetType.class)
+                                ? declaringType
+                                : typeDescription;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof ForAttachment)) return false;
+                        ForAttachment that = (ForAttachment) other;
+                        return declaringType.equals(that.declaringType)
+                                && typeVariableSource.equals(that.typeVariableSource);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = declaringType.hashCode();
+                        result = 31 * result + typeVariableSource.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Substitutor.ForAttachment{" +
+                                "declaringType=" + declaringType +
+                                ", typeVariableSource=" + typeVariableSource +
+                                '}';
+                    }
+
+                    /**
+                     * Wraps a formal type variable to allow for representing type annotations.
+                     */
+                    protected static class AnnotatedTypeVariable extends Generic.OfTypeVariable {
+
+                        /**
+                         * The represented type variable.
+                         */
+                        private final Generic typeVariable;
+
+                        /**
+                         * The variable's type annotations.
+                         */
+                        private final List<AnnotationDescription> annotations;
+
+                        /**
+                         * Creates a new annotated type variable.
+                         *
+                         * @param typeVariable The represented type variable.
+                         * @param annotations  The variable's type annotations.
+                         */
+                        protected AnnotatedTypeVariable(Generic typeVariable, List<AnnotationDescription> annotations) {
+                            this.typeVariable = typeVariable;
+                            this.annotations = annotations;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return typeVariable.getUpperBounds();
+                        }
+
+                        @Override
+                        public TypeVariableSource getVariableSource() {
+                            return typeVariable.getVariableSource();
+                        }
+
+                        @Override
+                        public String getSymbol() {
+                            return typeVariable.getSymbol();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return new AnnotationList.Explicit(annotations);
+                        }
+                    }
+                }
+
+                /**
+                 * A visitor for detaching a type from its declaration context by detaching type variables. This is achieved by
+                 * detaching type variables and by replacing the declaring type which is identified by a provided {@link ElementMatcher}
+                 * with {@link TargetType}.
+                 */
+                public static class ForDetachment extends Substitutor {
+
+                    /**
+                     * A type matcher for identifying the declaring type.
+                     */
+                    private final ElementMatcher<? super TypeDescription> typeMatcher;
+
+                    /**
+                     * Creates a visitor for detaching a type.
+                     *
+                     * @param typeMatcher A type matcher for identifying the declaring type.
+                     */
+                    public ForDetachment(ElementMatcher<? super TypeDescription> typeMatcher) {
+                        this.typeMatcher = typeMatcher;
+                    }
+
+                    /**
+                     * Returns a new detachment visitor that detaches any type matching the supplied type description.
+                     *
+                     * @param typeDefinition The type to detach.
+                     * @return A detachment visitor for the supplied type description.
+                     */
+                    public static Visitor<Generic> of(TypeDefinition typeDefinition) {
+                        return new ForDetachment(is(typeDefinition));
+                    }
+
+                    @Override
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
+                    }
+
+                    @Override
+                    protected Generic onSimpleType(Generic typeDescription) {
+                        return typeMatcher.matches(typeDescription.asErasure())
+                                ? TargetType.GENERIC_DESCRIPTION
+                                : typeDescription;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeMatcher.equals(((ForDetachment) other).typeMatcher);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeMatcher.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Substitutor.ForDetachment{" +
+                                "typeMatcher=" + typeMatcher +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A visitor for binding type variables to their values.
+                 */
+                public static class ForTypeVariableBinding extends Substitutor {
+
+                    /**
+                     * Bindings of type variables to their substitution values.
+                     */
+                    private final Map<Generic, Generic> bindings;
+
+                    /**
+                     * Creates a new visitor for a type variable bindings.
+                     *
+                     * @param bindings Bindings of type variables to their substitution values.
+                     */
+                    protected ForTypeVariableBinding(Map<Generic, Generic> bindings) {
+                        this.bindings = bindings;
+                    }
+
+                    /**
+                     * Creates a visitor that binds the variables of the given generic type by the generic type's values. If the provided type
+                     * represents a raw generic type or if the generic type is incomplete, the returned visitor erases all found type variables
+                     * instead.
+                     *
+                     * @param typeDescription The type description to be bound.
+                     * @return A visitor that binds any type variables
+                     */
+                    public static Visitor<Generic> bind(Generic typeDescription) {
+                        Map<Generic, Generic> bindings = new HashMap<Generic, Generic>();
+                        do {
+                            TypeList.Generic typeArguments = typeDescription.getTypeArguments(), typeVariables = typeDescription.asErasure().getTypeVariables();
+                            if (typeArguments.size() != typeVariables.size()) {
+                                return TypeVariableErasing.INSTANCE;
+                            }
+                            for (int index = 0; index < typeVariables.size(); index++) {
+                                bindings.put(typeVariables.get(index), typeArguments.get(index));
+                            }
+                            typeDescription = typeDescription.getOwnerType();
+                        } while (typeDescription != null && typeDescription.getSort().isParameterized());
+                        return new ForTypeVariableBinding(bindings);
+                    }
+
+                    @Override
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        Generic substitution = bindings.get(typeVariable);
+                        if (substitution == null) {
+                            throw new IllegalStateException("Unknown type variable: " + typeVariable);
+                        } else {
+                            return substitution;
+                        }
+                    }
+
+                    @Override
+                    public Generic onNonGenericType(Generic typeDescription) {
+                        return typeDescription;
+                    }
+
+                    @Override
+                    protected Generic onSimpleType(Generic typeDescription) {
+                        throw new UnsupportedOperationException();
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (!(other instanceof ForTypeVariableBinding)) return false;
+                        ForTypeVariableBinding that = (ForTypeVariableBinding) other;
+                        return bindings.equals(that.bindings);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return bindings.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding{" +
+                                "bindings=" + bindings +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A substitutor that normalizes a token to represent all {@link TargetType} by a given type and that symbolizes all type variables.
+                 */
+                public static class ForTokenNormalization extends Substitutor {
+
+                    /**
+                     * The type description to substitute all {@link TargetType} representations with.
+                     */
+                    private final TypeDescription.Generic typeDescription;
+
+                    /**
+                     * Creates a new token normalization visitor.
+                     *
+                     * @param typeDescription The type description to substitute all {@link TargetType}
+                     */
+                    public ForTokenNormalization(TypeDescription typeDescription) {
+                        this(typeDescription.asGenericType());
+                    }
+
+                    /**
+                     * Creates a new token normalization visitor.
+                     *
+                     * @param typeDescription The type description to substitute all {@link TargetType}
+                     */
+                    public ForTokenNormalization(Generic typeDescription) {
+                        this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    protected Generic onSimpleType(Generic typeDescription) {
+                        return typeDescription.represents(TargetType.class)
+                                ? this.typeDescription
+                                : typeDescription;
+                    }
+
+                    @Override
+                    public Generic onTypeVariable(Generic typeVariable) {
+                        return new OfTypeVariable.Symbolic(typeVariable.getSymbol(), typeVariable.getDeclaredAnnotations());
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeDescription.equals(((ForTokenNormalization) other).typeDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization{" +
+                                "typeDescription=" + typeDescription +
+                                '}';
+                    }
                 }
             }
         }
