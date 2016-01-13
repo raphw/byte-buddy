@@ -32,6 +32,7 @@ public abstract class AbstractAttributeAppenderTest {
         when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
     }
 
+    @Retention(RetentionPolicy.SOURCE)
     protected @interface Qux {
 
         class Instance implements Qux {

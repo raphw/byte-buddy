@@ -19,7 +19,6 @@ import org.objectweb.asm.AnnotationVisitor;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 
-import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 import static org.hamcrest.CoreMatchers.is;
@@ -60,9 +59,6 @@ public class TypeWriterFieldPoolRecordTest {
     private AnnotationDescription annotationDescription;
 
     @Mock
-    private Retention retention;
-
-    @Mock
     private TypeDescription annotationType;
 
     @Mock
@@ -83,9 +79,7 @@ public class TypeWriterFieldPoolRecordTest {
         when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
         when(annotationType.getDescriptor()).thenReturn(BAZ);
         when(annotationType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InDefinedShape>());
-        when(annotationType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(retention));
-        when(retention.value()).thenReturn(RetentionPolicy.RUNTIME);
-        when(retention.annotationType()).thenReturn((Class) Retention.class);
+        when(annotationDescription.getRetention()).thenReturn(RetentionPolicy.RUNTIME);
     }
 
     @Test

@@ -3,8 +3,6 @@ package net.bytebuddy.implementation.attribute;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.MethodList;
-import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.test.utility.MockitoRule;
@@ -29,7 +27,6 @@ import java.util.Collections;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.junit.Assert.fail;
 import static org.mockito.Mockito.*;
 
 public class AnnotationAppenderDefaultTest {
@@ -50,6 +47,9 @@ public class AnnotationAppenderDefaultTest {
 
     @Mock
     private AnnotationValueFilter valueFilter;
+
+    @Mock
+    private Retention retention;
 
     private AnnotationAppender annotationAppender;
 
@@ -116,24 +116,7 @@ public class AnnotationAppenderDefaultTest {
         AnnotationVisitor annotationVisitor = classWriter.visitAnnotation(Type.getDescriptor(annotation.annotationType()), true);
         when(target.visit(any(String.class), anyBoolean())).thenReturn(annotationVisitor);
         AnnotationDescription annotationDescription = AnnotationDescription.ForLoadedAnnotation.of(annotation);
-        AnnotationAppender.AnnotationVisibility annotationVisibility = AnnotationAppender.AnnotationVisibility.of(annotationDescription);
-        annotationAppender.append(annotationDescription, annotationVisibility, valueFilter);
-        switch (annotationVisibility) {
-            case RUNTIME:
-            case CLASS_FILE:
-                verify(target).visit(Type.getDescriptor(annotation.annotationType()), annotationVisibility == AnnotationAppender.AnnotationVisibility.RUNTIME);
-                verifyNoMoreInteractions(target);
-                for (MethodDescription.InDefinedShape methodDescription : annotationDescription.getAnnotationType().getDeclaredMethods()) {
-                    verify(valueFilter).isRelevant(annotationDescription, methodDescription);
-                }
-                verifyNoMoreInteractions(valueFilter);
-                break;
-            case INVISIBLE:
-                verifyZeroInteractions(target);
-                break;
-            default:
-                fail("Unknown annotation visibility");
-        }
+        annotationAppender.append(annotationDescription, valueFilter);
         classWriter.visitEnd();
         Class<?> bar = new ByteArrayClassLoader(getClass().getClassLoader(),
                 Collections.singletonMap(BAR, classWriter.toByteArray()),
@@ -147,29 +130,19 @@ public class AnnotationAppenderDefaultTest {
     }
 
     @Test
-    @SuppressWarnings("unchecked")
-    public void testSkipValues() throws Exception {
-        when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(false);
-        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
-        TypeDescription annotationType = mock(TypeDescription.class);
-        when(annotationType.getDeclaredMethods())
-                .thenReturn((MethodList) new MethodList.Explicit<MethodDescription>(methodDescription));
-        AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
-        when(annotationDescription.getAnnotationType()).thenReturn(annotationType);
+    public void testSourceAnnotation() throws Exception {
         AnnotationVisitor annotationVisitor = mock(AnnotationVisitor.class);
         when(target.visit(anyString(), anyBoolean())).thenReturn(annotationVisitor);
-        annotationAppender.append(annotationDescription, AnnotationAppender.AnnotationVisibility.RUNTIME, valueFilter);
-        verify(valueFilter).isRelevant(annotationDescription, methodDescription);
-        verifyNoMoreInteractions(valueFilter);
-        verify(annotationVisitor).visitEnd();
-        verifyNoMoreInteractions(annotationVisitor);
-
+        AnnotationDescription annotationDescription = mock(AnnotationDescription.class);
+        when(annotationDescription.getRetention()).thenReturn(RetentionPolicy.SOURCE);
+        annotationAppender.append(annotationDescription, valueFilter);
+        verifyZeroInteractions(valueFilter);
+        verifyZeroInteractions(annotationVisitor);
     }
 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AnnotationAppender.Default.class).apply();
-        ObjectPropertyAssertion.of(AnnotationAppender.AnnotationVisibility.class).apply();
     }
 
     @Retention(RetentionPolicy.RUNTIME)

@@ -6,8 +6,6 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import org.objectweb.asm.*;
 
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Array;
 
 /**
@@ -23,101 +21,11 @@ public interface AnnotationAppender {
     /**
      * Terminally writes the given annotation to the specified target.
      *
-     * @param annotation            The annotation to be written.
-     * @param annotationVisibility  Determines the annotation visibility for the given annotation.
+     * @param annotationDescription The annotation to be written.
      * @param annotationValueFilter The annotation value filter to use.
      * @return Usually {@code this} or any other annotation appender capable of writing another annotation to the specified target.
      */
-    AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, AnnotationValueFilter annotationValueFilter);
-
-    /**
-     * Determines if an annotation should be written to a specified target and if the annotation should be marked
-     * as being visible at runtime.
-     */
-    enum AnnotationVisibility {
-
-        /**
-         * The annotation is preserved in the compiled class and visible at runtime.
-         */
-        RUNTIME(true, false),
-
-        /**
-         * The annotation is preserved in the compiled class but not visible at runtime.
-         */
-        CLASS_FILE(false, false),
-
-        /**
-         * The annotation is ignored.
-         */
-        INVISIBLE(false, true);
-
-        /**
-         * {@code true} if this annotation is visible at runtime.
-         */
-        private final boolean visible;
-
-        /**
-         * {@code true} if this annotation is added to a compiled class.
-         */
-        private final boolean suppressed;
-
-        /**
-         * Creates a new annotation visibility representation.
-         *
-         * @param visible    {@code true} if this annotation is visible at runtime.
-         * @param suppressed {@code true} if this annotation is added to a compiled class.
-         */
-        AnnotationVisibility(boolean visible, boolean suppressed) {
-            this.visible = visible;
-            this.suppressed = suppressed;
-        }
-
-        /**
-         * Finds the annotation visibility that is declared for a given annotation.
-         *
-         * @param annotation The annotation of interest.
-         * @return The annotation visibility of a given annotation. Annotations with a non-defined visibility or an
-         * visibility of type {@link java.lang.annotation.RetentionPolicy#SOURCE} will be silently ignored.
-         */
-        public static AnnotationVisibility of(AnnotationDescription annotation) {
-            AnnotationDescription.Loadable<Retention> retention = annotation.getAnnotationType()
-                    .getDeclaredAnnotations()
-                    .ofType(Retention.class);
-            if (retention == null || retention.loadSilent().value() == RetentionPolicy.SOURCE) {
-                return INVISIBLE;
-            } else if (retention.loadSilent().value() == RetentionPolicy.CLASS) {
-                return CLASS_FILE;
-            } else {
-                return RUNTIME;
-            }
-        }
-
-        /**
-         * Checks if this instance represents an annotation that is visible at runtime, i.e. if this instance is
-         * {@link AnnotationAppender.AnnotationVisibility#RUNTIME}.
-         *
-         * @return {@code true} if this instance represents an annotation to be visible at runtime.
-         */
-        public boolean isVisible() {
-            return visible;
-        }
-
-        /**
-         * Checks if this instance represents an annotation that is not to be embedded into Java byte code, i.e.
-         * if this instance is
-         * {@link AnnotationAppender.AnnotationVisibility#INVISIBLE}.
-         *
-         * @return {@code true} if this instance represents an annotation to be suppressed from the byte code output.
-         */
-        public boolean isSuppressed() {
-            return suppressed;
-        }
-
-        @Override
-        public String toString() {
-            return "AnnotationAppender.AnnotationVisibility." + name();
-        }
-    }
+    AnnotationAppender append(AnnotationDescription annotationDescription, AnnotationValueFilter annotationValueFilter);
 
     /**
      * Represents a target for an annotation writing process.
@@ -377,9 +285,18 @@ public interface AnnotationAppender {
         }
 
         @Override
-        public AnnotationAppender append(AnnotationDescription annotation, AnnotationVisibility annotationVisibility, AnnotationValueFilter annotationValueFilter) {
-            if (!annotationVisibility.isSuppressed()) {
-                doAppend(annotation, annotationVisibility.isVisible(), annotationValueFilter);
+        public AnnotationAppender append(AnnotationDescription annotationDescription, AnnotationValueFilter annotationValueFilter) {
+            switch (annotationDescription.getRetention()) {
+                case RUNTIME:
+                    doAppend(annotationDescription, true, annotationValueFilter);
+                    break;
+                case CLASS:
+                    doAppend(annotationDescription, false, annotationValueFilter);
+                    break;
+                case SOURCE:
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected retention policy: " + annotationDescription.getRetention());
             }
             return this;
         }
@@ -409,6 +326,64 @@ public interface AnnotationAppender {
         @Override
         public String toString() {
             return "AnnotationAppender.Default{target=" + target + '}';
+        }
+    }
+
+    class ForTypeAnnotations implements TypeDescription.Generic.Visitor<AnnotationAppender> {
+
+        private final AnnotationAppender annotationAppender;
+
+        private final AnnotationValueFilter annotationValueFilter;
+
+        private final int typeReference;
+
+        private final String typePath;
+
+        protected ForTypeAnnotations(AnnotationAppender annotationAppender,
+                                     AnnotationValueFilter annotationValueFilter,
+                                     int typeReference,
+                                     String typePath) {
+            this.annotationAppender = annotationAppender;
+            this.annotationValueFilter = annotationValueFilter;
+            this.typeReference = typeReference;
+            this.typePath = typePath;
+        }
+
+        public static TypeDescription.Generic.Visitor<AnnotationAppender> ofFieldType(AnnotationAppender annotationAppender,
+                                                                                      AnnotationValueFilter annotationValueFilter) {
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.FIELD, "");
+        }
+
+        @Override
+        public AnnotationAppender onGenericArray(TypeDescription.Generic genericArray) {
+            return null;
+        }
+
+        @Override
+        public AnnotationAppender onWildcard(TypeDescription.Generic wildcard) {
+            return null;
+        }
+
+        @Override
+        public AnnotationAppender onParameterizedType(TypeDescription.Generic parameterizedType) {
+            return null;
+        }
+
+        @Override
+        public AnnotationAppender onTypeVariable(TypeDescription.Generic typeVariable) {
+            return null;
+        }
+
+        @Override
+        public AnnotationAppender onNonGenericType(TypeDescription.Generic typeDescription) {
+            return null;
+        }
+
+        private AnnotationAppender apply(AnnotationAppender annotationAppender, TypeDescription.Generic typeDescription) {
+            for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
+                //annotationAppender = annotationAppender.append(annotationDescription, AnnotationVisibility.of(annotationDescription), annotationValueFilter);
+            }
+            return annotationAppender;
         }
     }
 }

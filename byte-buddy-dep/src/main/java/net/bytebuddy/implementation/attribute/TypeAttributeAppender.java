@@ -60,7 +60,7 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+                appender = appender.append(annotation, annotationValueFilter);
             }
         }
 
@@ -102,7 +102,7 @@ public interface TypeAttributeAppender {
                 AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
                 for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
                     if (!excludedAnnotations.contains(annotation)) {
-                        appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+                        appender = appender.append(annotation, annotationValueFilter);
                     }
                 }
             }
@@ -151,7 +151,7 @@ public interface TypeAttributeAppender {
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
             for (AnnotationDescription annotation : annotations) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+                appender = appender.append(annotation, annotationValueFilter);
             }
         }
 

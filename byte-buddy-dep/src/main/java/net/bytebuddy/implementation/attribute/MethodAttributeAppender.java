@@ -142,13 +142,13 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
             for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
-                methodAppender = methodAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+                methodAppender = methodAppender.append(annotation, annotationValueFilter);
             }
             int index = 0;
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
                 AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
                 for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
-                    parameterAppender = parameterAppender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+                    parameterAppender = parameterAppender.append(annotation, annotationValueFilter);
                 }
             }
         }
@@ -231,7 +231,7 @@ public interface MethodAttributeAppender {
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
             AnnotationAppender appender = new AnnotationAppender.Default(target.make(methodVisitor, methodDescription));
             for (AnnotationDescription annotation : annotations) {
-                appender = appender.append(annotation, AnnotationAppender.AnnotationVisibility.of(annotation), annotationValueFilter);
+                appender = appender.append(annotation, annotationValueFilter);
             }
         }
 

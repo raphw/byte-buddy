@@ -1426,7 +1426,7 @@ public interface AnnotationDescription {
         public RetentionPolicy getRetention() {
             AnnotationDescription.Loadable<Retention> retention = getAnnotationType().getDeclaredAnnotations().ofType(Retention.class);
             return retention == null
-                    ? RetentionPolicy.SOURCE
+                    ? RetentionPolicy.CLASS
                     : retention.loadSilent().value();
         }
 
