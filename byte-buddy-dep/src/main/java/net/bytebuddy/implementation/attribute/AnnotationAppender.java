@@ -372,6 +372,14 @@ public interface AnnotationAppender {
             return this;
         }
 
+        /**
+         * Tries to append a given annotation by reflectively reading an annotation.
+         *
+         * @param annotation    The annotation to be written.
+         * @param visible       {@code true} if this annotation should be treated as visible at runtime.
+         * @param typeReference The type annotation's type reference.
+         * @param typePath      The type annotation's type path.
+         */
         private void doAppend(AnnotationDescription annotation,
                               boolean visible,
                               AnnotationValueFilter annotationValueFilter,
@@ -397,6 +405,10 @@ public interface AnnotationAppender {
         }
     }
 
+    /**
+     * A type visitor that visits all type annotations of a generic type and writes any discovered annotation to a
+     * supplied {@link AnnotationAppender}.
+     */
     class ForTypeAnnotations implements TypeDescription.Generic.Visitor<AnnotationAppender> {
 
         /**
@@ -485,6 +497,12 @@ public interface AnnotationAppender {
             this.typePath = typePath;
         }
 
+        /**
+         * Creates a type annotation appender for a type annotations of a super class type.
+         * @param annotationAppender The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter
+         * @return
+         */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofSuperClass(AnnotationAppender annotationAppender,
                                                                                        AnnotationValueFilter annotationValueFilter) {
             return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newSuperTypeReference(SUPER_CLASS_INDEX));

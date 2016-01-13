@@ -16,7 +16,10 @@ import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.*;
 import java.lang.reflect.Method;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -123,7 +126,7 @@ public abstract class AbstractAnnotationDescriptionTest {
 
     private static final String[] OTHER_STRING_ARRAY = new String[]{BAR};
 
-    private Annotation first, second, defaultFirst, defaultSecond;
+    private Annotation first, second, defaultFirst, defaultSecond, explicitTarget;
 
     protected abstract AnnotationDescription describe(Annotation annotation, Class<?> declaringType);
 
@@ -137,6 +140,8 @@ public abstract class AbstractAnnotationDescriptionTest {
             carrier = DefaultSample.class;
         } else if (annotation == defaultSecond) {
             carrier = NonDefaultSample.class;
+        } else if (annotation == explicitTarget) {
+            carrier = ExplicitTarget.Carrier.class;
         } else {
             throw new AssertionError();
         }
@@ -149,6 +154,7 @@ public abstract class AbstractAnnotationDescriptionTest {
         second = BarSample.class.getAnnotation(Sample.class);
         defaultFirst = DefaultSample.class.getAnnotation(SampleDefault.class);
         defaultSecond = NonDefaultSample.class.getAnnotation(SampleDefault.class);
+        explicitTarget = ExplicitTarget.Carrier.class.getAnnotation(ExplicitTarget.class);
     }
 
     @Test
@@ -376,6 +382,14 @@ public abstract class AbstractAnnotationDescriptionTest {
     @Test
     public void testRetention() throws Exception {
         assertThat(describe(first).getRetention(), is(RetentionPolicy.RUNTIME));
+    }
+
+    @Test
+    public void testAnnotationTarget() throws Exception {
+        assertThat(describe(first).getElementTypes(), is((Set<ElementType>) new HashSet<ElementType>(Arrays.asList(ElementType.ANNOTATION_TYPE,
+                ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
+                ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE, ElementType.TYPE_PARAMETER))));
+        assertThat(describe(explicitTarget).getElementTypes(), is(Collections.singleton(ElementType.TYPE)));
     }
 
     @Test
@@ -627,5 +641,15 @@ public abstract class AbstractAnnotationDescriptionTest {
     @Other(BAR)
     private static class OtherEnumerationCarrier {
 
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.TYPE)
+    private @interface ExplicitTarget {
+
+        @ExplicitTarget
+        class Carrier {
+            /* empty */
+        }
     }
 }

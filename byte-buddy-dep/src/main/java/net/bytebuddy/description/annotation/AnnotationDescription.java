@@ -77,6 +77,13 @@ public interface AnnotationDescription {
     RetentionPolicy getRetention();
 
     /**
+     * Returns a set of all {@link ElementType}s that can declare this annotation.
+     *
+     * @return A set of all element types that can declare this annotation.
+     */
+    Set<ElementType> getElementTypes();
+
+    /**
      * Checks if this annotation is inherited.
      *
      * @return {@code true} if this annotation is inherited.
@@ -1422,12 +1429,28 @@ public interface AnnotationDescription {
      */
     abstract class AbstractBase implements AnnotationDescription {
 
+        /**
+         * An array containing all element types that are a legal annotation target when such a target
+         * is not specified explicitly.
+         */
+        private static final ElementType[] DEFAULT_TARGET = new ElementType[]{ElementType.ANNOTATION_TYPE,
+                ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
+                ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE, ElementType.TYPE_PARAMETER};
+
         @Override
         public RetentionPolicy getRetention() {
             AnnotationDescription.Loadable<Retention> retention = getAnnotationType().getDeclaredAnnotations().ofType(Retention.class);
             return retention == null
                     ? RetentionPolicy.CLASS
                     : retention.loadSilent().value();
+        }
+
+        @Override
+        public Set<ElementType> getElementTypes() {
+            AnnotationDescription.Loadable<Target> target = getAnnotationType().getDeclaredAnnotations().ofType(Target.class);
+            return EnumSet.copyOf(Arrays.asList(target == null
+                    ? DEFAULT_TARGET
+                    : target.loadSilent().value()));
         }
 
         @Override
