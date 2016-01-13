@@ -30,12 +30,14 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     TypeDescription asErasure();
 
     /**
-     * Returns the super type of this type. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
-     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types.
+     * Returns the super class of this type. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
+     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types. Interface types
+     * and the {@link Object} class do not define a super class where {@code null} is returned. Array types define {@link Object}
+     * as their direct super class.
      *
-     * @return The super type of this type.
+     * @return The super class of this type or {@code null} if no super class exists for this type.
      */
-    TypeDescription.Generic getSuperType();
+    TypeDescription.Generic getSuperClass();
 
     /**
      * Returns the interfaces that this type implements. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
@@ -247,25 +249,25 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     /**
      * An iterator that iterates over a type's class hierarchy.
      */
-    class SuperTypeIterator implements Iterator<TypeDefinition> {
+    class SuperClassIterator implements Iterator<TypeDefinition> {
 
         /**
-         * The next type to represent.
+         * The next class to represent.
          */
-        private TypeDefinition nextType;
+        private TypeDefinition nextClass;
 
         /**
          * Creates a new iterator.
          *
          * @param initialType The initial type of this iterator.
          */
-        public SuperTypeIterator(TypeDefinition initialType) {
-            nextType = initialType;
+        public SuperClassIterator(TypeDefinition initialType) {
+            nextClass = initialType;
         }
 
         @Override
         public boolean hasNext() {
-            return nextType != null;
+            return nextClass != null;
         }
 
         @Override
@@ -274,9 +276,9 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
                 throw new NoSuchElementException("End of type hierarchy");
             }
             try {
-                return nextType;
+                return nextClass;
             } finally {
-                nextType = nextType.getSuperType();
+                nextClass = nextClass.getSuperClass();
             }
         }
 
@@ -287,8 +289,8 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
 
         @Override
         public String toString() {
-            return "TypeDefinition.SuperTypeIterator{" +
-                    "nextType=" + nextType +
+            return "TypeDefinition.SuperClassIterator{" +
+                    "nextClass=" + nextClass +
                     '}';
         }
     }

@@ -49,17 +49,17 @@ public enum JavaType {
      *
      * @param typeName   The binary name of this type.
      * @param modifiers  The modifiers of this type when creating a stub.
-     * @param superType  The super class of this type when creating a stub.
+     * @param superClass  The super class of this type when creating a stub.
      * @param interfaces The interfaces of this type when creating a stub.
      */
-    JavaType(String typeName, int modifiers, Class<?> superType, Class<?>... interfaces) {
+    JavaType(String typeName, int modifiers, Class<?> superClass, Class<?>... interfaces) {
         TypeDescription typeDescription;
         try {
             typeDescription = new TypeDescription.ForLoadedType(Class.forName(typeName));
         } catch (Exception ignored) {
             typeDescription = new TypeDescription.Latent(typeName,
                     modifiers,
-                    new TypeDescription.Generic.OfNonGenericType.ForLoadedType(superType),
+                    new TypeDescription.Generic.OfNonGenericType.ForLoadedType(superClass),
                     new TypeList.Generic.ForLoadedTypes(interfaces));
         }
         this.typeDescription = typeDescription;

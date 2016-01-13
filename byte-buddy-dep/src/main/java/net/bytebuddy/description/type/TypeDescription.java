@@ -24,6 +24,7 @@ import org.objectweb.asm.signature.SignatureWriter;
 
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
+import java.lang.annotation.ElementType;
 import java.lang.reflect.*;
 import java.util.*;
 
@@ -280,6 +281,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     boolean isAnnotationValue(Object value);
 
     /**
+     * Checks if this type represents a class that is a place holder for a package description.
+     *
+     * @return {@code true} if this type represents a package description.
+     */
+    boolean isPackageType();
+
+    /**
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
      */
@@ -533,6 +541,97 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             /**
+             * A visitor that strips all type annotations of all types.
+             */
+            enum AnnotationStripper implements Visitor<Generic> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Generic onGenericArray(Generic genericArray) {
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public Generic onWildcard(Generic wildcard) {
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this),
+                            wildcard.getLowerBounds().accept(this),
+                            Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public Generic onParameterizedType(Generic parameterizedType) {
+                    Generic ownerType = parameterizedType.getOwnerType();
+                    return new OfParameterizedType.Latent(parameterizedType.asErasure(),
+                            ownerType == null
+                                    ? UNDEFINED
+                                    : ownerType.accept(this),
+                            parameterizedType.getTypeArguments().accept(this),
+                            Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public Generic onTypeVariable(Generic typeVariable) {
+                    return new NonAnnotatedTypeVariable(typeVariable);
+                }
+
+                @Override
+                public Generic onNonGenericType(Generic typeDescription) {
+                    return typeDescription.isArray()
+                            ? new OfGenericArray.Latent(onNonGenericType(typeDescription.getComponentType()), Collections.<AnnotationDescription>emptyList())
+                            : new OfNonGenericType.Latent(typeDescription.asErasure(), Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Visitor.AnnotationStripper." + name();
+                }
+
+                /**
+                 * Representation of a type variable without annotations.
+                 */
+                protected static class NonAnnotatedTypeVariable extends OfTypeVariable {
+
+                    /**
+                     * The represented type variable.
+                     */
+                    private final Generic typeVariable;
+
+                    /**
+                     * Creates a new non-annotated type variable.
+                     *
+                     * @param typeVariable The represented type variable.
+                     */
+                    protected NonAnnotatedTypeVariable(Generic typeVariable) {
+                        this.typeVariable = typeVariable;
+                    }
+
+                    @Override
+                    public TypeList.Generic getUpperBounds() {
+                        return typeVariable.getUpperBounds();
+                    }
+
+                    @Override
+                    public TypeVariableSource getVariableSource() {
+                        return typeVariable.getVariableSource();
+                    }
+
+                    @Override
+                    public String getSymbol() {
+                        return typeVariable.getSymbol();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return new AnnotationList.Empty();
+                    }
+                }
+            }
+
+            /**
              * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
              * <ul>
              * <li>Parameterized types are reduced to their erasure if one of its parameters represents a type variable or a wildcard with a bound
@@ -558,7 +657,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public Generic onWildcard(Generic wildcard) {
                     // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this),
+                            wildcard.getLowerBounds().accept(this),
+                            wildcard.getDeclaredAnnotations());
                 }
 
                 @Override
@@ -637,6 +738,846 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public String toString() {
                         return "TypeDescription.Generic.Visitor.TypeVariableErasing.PartialErasureReviser." + name();
+                    }
+                }
+            }
+
+            /**
+             * A visitor that determines the direct assignability of a type to another generic type. This visitor only checks
+             * for strict assignability and does not perform any form of boxing or primitive type widening that are allowed
+             * in the Java language.
+             */
+            enum Assigner implements Visitor<Assigner.Dispatcher> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Dispatcher onGenericArray(Generic genericArray) {
+                    return new Dispatcher.ForGenericArray(genericArray);
+                }
+
+                @Override
+                public Dispatcher onWildcard(Generic wildcard) {
+                    throw new IllegalArgumentException("A wildcard is not a first level type: " + this);
+                }
+
+                @Override
+                public Dispatcher onParameterizedType(Generic parameterizedType) {
+                    return new Dispatcher.ForParameterizedType(parameterizedType);
+                }
+
+                @Override
+                public Dispatcher onTypeVariable(Generic typeVariable) {
+                    return new Dispatcher.ForTypeVariable(typeVariable);
+                }
+
+                @Override
+                public Dispatcher onNonGenericType(Generic typeDescription) {
+                    return new Dispatcher.ForNonGenericType(typeDescription.asErasure());
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Visitor.Assigner." + name();
+                }
+
+                /**
+                 * A dispatcher that allows to check if the visited generic type is assignable to the supplied type.
+                 */
+                public interface Dispatcher {
+
+                    /**
+                     * Checks if the represented type is a super type of the type that is supplied as an argument.
+                     *
+                     * @param typeDescription The type to check for being assignable to the represented type.
+                     * @return {@code true} if the represented type is assignable to the supplied type.
+                     */
+                    boolean isAssignableFrom(Generic typeDescription);
+
+                    /**
+                     * An abstract base implementation of a dispatcher that forwards the decision to a visitor implementation.
+                     */
+                    abstract class AbstractBase implements Dispatcher, Visitor<Boolean> {
+
+                        @Override
+                        public boolean isAssignableFrom(Generic typeDescription) {
+                            return typeDescription.accept(this);
+                        }
+                    }
+
+                    /**
+                     * A dispatcher for checking the assignability of a non-generic type.
+                     */
+                    class ForNonGenericType extends AbstractBase {
+
+                        /**
+                         * The description of the type to which another type is assigned.
+                         */
+                        private final TypeDescription typeDescription;
+
+                        /**
+                         * Creates a new dispatcher of a non-generic type.
+                         *
+                         * @param typeDescription The description of the type to which another type is assigned.
+                         */
+                        protected ForNonGenericType(TypeDescription typeDescription) {
+                            this.typeDescription = typeDescription;
+                        }
+
+                        @Override
+                        public Boolean onGenericArray(Generic genericArray) {
+                            return typeDescription.isArray()
+                                    ? genericArray.getComponentType().accept(new ForNonGenericType(typeDescription.getComponentType()))
+                                    : typeDescription.represents(Object.class) || TypeDescription.ARRAY_INTERFACES.contains(typeDescription.asGenericType());
+                        }
+
+                        @Override
+                        public Boolean onWildcard(Generic wildcard) {
+                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
+                        }
+
+                        @Override
+                        public Boolean onParameterizedType(Generic parameterizedType) {
+                            if (typeDescription.equals(parameterizedType.asErasure())) {
+                                return true;
+                            }
+                            Generic superClass = parameterizedType.getSuperClass();
+                            if (superClass != null && isAssignableFrom(superClass)) {
+                                return true;
+                            }
+                            for (Generic interfaceType : parameterizedType.getInterfaces()) {
+                                if (isAssignableFrom(interfaceType)) {
+                                    return true;
+                                }
+                            }
+                            return typeDescription.represents(Object.class);
+                        }
+
+                        @Override
+                        public Boolean onTypeVariable(Generic typeVariable) {
+                            for (Generic upperBound : typeVariable.getUpperBounds()) {
+                                if (isAssignableFrom(upperBound)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onNonGenericType(Generic typeDescription) {
+                            return this.typeDescription.isAssignableFrom(typeDescription.asErasure());
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && typeDescription.equals(((ForNonGenericType) other).typeDescription);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return typeDescription.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForNonGenericType{" +
+                                    "typeDescription=" + typeDescription +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A dispatcher for checking the assignability of a type variable.
+                     */
+                    class ForTypeVariable extends AbstractBase {
+
+                        /**
+                         * The description of the type variable to which another type is assigned.
+                         */
+                        private final Generic typeVariable;
+
+                        /**
+                         * Creates a new dispatcher of a type variable.
+                         *
+                         * @param typeVariable The description of the type variable to which another type is assigned.
+                         */
+                        protected ForTypeVariable(Generic typeVariable) {
+                            this.typeVariable = typeVariable;
+                        }
+
+                        @Override
+                        public Boolean onGenericArray(Generic genericArray) {
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onWildcard(Generic wildcard) {
+                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
+                        }
+
+                        @Override
+                        public Boolean onParameterizedType(Generic parameterizedType) {
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onTypeVariable(Generic typeVariable) {
+                            if (typeVariable.equals(this.typeVariable)) {
+                                return true;
+                            }
+                            for (Generic upperBound : typeVariable.getUpperBounds()) {
+                                if (isAssignableFrom(upperBound)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onNonGenericType(Generic typeDescription) {
+                            return false;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && typeVariable.equals(((ForTypeVariable) other).typeVariable);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return typeVariable.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForTypeVariable{" +
+                                    "typeVariable=" + typeVariable +
+                                    '}';
+                        }
+                    }
+
+                    /**
+                     * A dispatcher for checking the assignability of a parameterized type.
+                     */
+                    class ForParameterizedType extends AbstractBase {
+
+                        /**
+                         * The parameterized type to which another type is assigned.
+                         */
+                        private final Generic parameterizedType;
+
+                        /**
+                         * Creates a new dispatcher for checking the assignability of a parameterized type.
+                         *
+                         * @param parameterizedType The parameterized type to which another type is assigned.
+                         */
+                        protected ForParameterizedType(Generic parameterizedType) {
+                            this.parameterizedType = parameterizedType;
+                        }
+
+                        @Override
+                        public Boolean onGenericArray(Generic genericArray) {
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onWildcard(Generic wildcard) {
+                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
+                        }
+
+                        @Override
+                        public Boolean onParameterizedType(Generic parameterizedType) {
+                            if (this.parameterizedType.asErasure().equals(parameterizedType.asErasure())) {
+                                Generic fromOwner = this.parameterizedType.getOwnerType(), toOwner = parameterizedType.getOwnerType();
+                                if (fromOwner != null && toOwner != null && !fromOwner.accept(Assigner.INSTANCE).isAssignableFrom(toOwner)) {
+                                    return false;
+                                }
+                                TypeList.Generic fromArguments = this.parameterizedType.getTypeArguments(), toArguments = parameterizedType.getTypeArguments();
+                                if (fromArguments.size() == toArguments.size()) {
+                                    for (int index = 0; index < fromArguments.size(); index++) {
+                                        if (!fromArguments.get(index).accept(ParameterAssigner.INSTANCE).isAssignableFrom(toArguments.get(index))) {
+                                            return false;
+                                        }
+                                    }
+                                    return true;
+                                } else {
+                                    throw new IllegalArgumentException("Incompatible generic types: " + parameterizedType + " and " + this.parameterizedType);
+                                }
+                            }
+                            Generic superClass = parameterizedType.getSuperClass();
+                            if (superClass != null && isAssignableFrom(superClass)) {
+                                return true;
+                            }
+                            for (Generic interfaceType : parameterizedType.getInterfaces()) {
+                                if (isAssignableFrom(interfaceType)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onTypeVariable(Generic typeVariable) {
+                            for (Generic upperBound : typeVariable.getUpperBounds()) {
+                                if (isAssignableFrom(upperBound)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onNonGenericType(Generic typeDescription) {
+                            if (parameterizedType.asErasure().equals(typeDescription.asErasure())) {
+                                return true;
+                            }
+                            Generic superClass = typeDescription.getSuperClass();
+                            if (superClass != null && isAssignableFrom(superClass)) {
+                                return true;
+                            }
+                            for (Generic interfaceType : typeDescription.getInterfaces()) {
+                                if (isAssignableFrom(interfaceType)) {
+                                    return true;
+                                }
+                            }
+                            return false;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && parameterizedType.equals(((ForParameterizedType) other).parameterizedType);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return parameterizedType.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType{" +
+                                    "parameterizedType=" + parameterizedType +
+                                    '}';
+                        }
+
+                        /**
+                         * An assigner for a parameter of a parameterized type.
+                         */
+                        protected enum ParameterAssigner implements Visitor<Dispatcher> {
+
+                            /**
+                             * The singleton instance.
+                             */
+                            INSTANCE;
+
+                            @Override
+                            public Dispatcher onGenericArray(Generic genericArray) {
+                                return new InvariantBinding(genericArray);
+                            }
+
+                            @Override
+                            public Dispatcher onWildcard(Generic wildcard) {
+                                TypeList.Generic lowerBounds = wildcard.getLowerBounds();
+                                return lowerBounds.isEmpty()
+                                        ? new CovariantBinding(wildcard.getUpperBounds().getOnly())
+                                        : new ContravariantBinding(lowerBounds.getOnly());
+                            }
+
+                            @Override
+                            public Dispatcher onParameterizedType(Generic parameterizedType) {
+                                return new InvariantBinding(parameterizedType);
+                            }
+
+                            @Override
+                            public Dispatcher onTypeVariable(Generic typeVariable) {
+                                return new InvariantBinding(typeVariable);
+                            }
+
+                            @Override
+                            public Dispatcher onNonGenericType(Generic typeDescription) {
+                                return new InvariantBinding(typeDescription);
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner." + name();
+                            }
+
+                            /**
+                             * A dispatcher for an invariant parameter of a parameterized type, i.e. a type without a wildcard.
+                             */
+                            protected static class InvariantBinding implements Dispatcher {
+
+                                /**
+                                 * The invariant type of the parameter.
+                                 */
+                                private final Generic typeDescription;
+
+                                /**
+                                 * Creates a new dispatcher for an invariant parameter of a parameterized type.
+                                 *
+                                 * @param typeDescription The invariant type of the parameter.
+                                 */
+                                protected InvariantBinding(Generic typeDescription) {
+                                    this.typeDescription = typeDescription;
+                                }
+
+                                @Override
+                                public boolean isAssignableFrom(Generic typeDescription) {
+                                    return typeDescription.equals(this.typeDescription);
+                                }
+
+                                @Override
+                                public boolean equals(Object other) {
+                                    return this == other || !(other == null || getClass() != other.getClass())
+                                            && typeDescription.equals(((InvariantBinding) other).typeDescription);
+                                }
+
+                                @Override
+                                public int hashCode() {
+                                    return typeDescription.hashCode();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.InvariantBinding{" +
+                                            "typeDescription=" + typeDescription +
+                                            '}';
+                                }
+                            }
+
+                            /**
+                             * A dispatcher for an covariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
+                             */
+                            protected static class CovariantBinding implements Dispatcher {
+
+                                /**
+                                 * The lower bound type of a contracariant parameter.
+                                 */
+                                private final Generic upperBound;
+
+                                /**
+                                 * Creates a new dispatcher for covariant parameter of a parameterized type.
+                                 *
+                                 * @param upperBound The upper bound type of a covariant parameter.
+                                 */
+                                protected CovariantBinding(Generic upperBound) {
+                                    this.upperBound = upperBound;
+                                }
+
+                                @Override
+                                public boolean isAssignableFrom(Generic typeDescription) {
+                                    if (typeDescription.getSort().isWildcard()) {
+                                        return typeDescription.getLowerBounds().isEmpty() && upperBound.accept(Assigner.INSTANCE)
+                                                .isAssignableFrom(typeDescription.getUpperBounds().getOnly());
+                                    } else {
+                                        return upperBound.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription);
+                                    }
+                                }
+
+                                @Override
+                                public boolean equals(Object other) {
+                                    return this == other || !(other == null || getClass() != other.getClass())
+                                            && upperBound.equals(((CovariantBinding) other).upperBound);
+                                }
+
+                                @Override
+                                public int hashCode() {
+                                    return upperBound.hashCode();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.CovariantBinding{" +
+                                            "upperBound=" + upperBound +
+                                            '}';
+                                }
+                            }
+
+                            /**
+                             * A dispatcher for an contravariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
+                             */
+                            protected static class ContravariantBinding implements Dispatcher {
+
+                                /**
+                                 * The lower bound type of a contravariant parameter.
+                                 */
+                                private final Generic lowerBound;
+
+                                /**
+                                 * Creates a new dispatcher for contravariant parameter of a parameterized type.
+                                 *
+                                 * @param lowerBound The lower bound type of a contravariant parameter.
+                                 */
+                                protected ContravariantBinding(Generic lowerBound) {
+                                    this.lowerBound = lowerBound;
+                                }
+
+                                @Override
+                                public boolean isAssignableFrom(Generic typeDescription) {
+                                    if (typeDescription.getSort().isWildcard()) {
+                                        TypeList.Generic lowerBounds = typeDescription.getLowerBounds();
+                                        return !lowerBounds.isEmpty() && lowerBounds.getOnly().accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
+                                    } else {
+                                        return typeDescription.getSort().isWildcard() || typeDescription.accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
+                                    }
+                                }
+
+                                @Override
+                                public boolean equals(Object other) {
+                                    return this == other || !(other == null || getClass() != other.getClass())
+                                            && lowerBound.equals(((ContravariantBinding) other).lowerBound);
+                                }
+
+                                @Override
+                                public int hashCode() {
+                                    return lowerBound.hashCode();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.ContravariantBinding{" +
+                                            "lowerBound=" + lowerBound +
+                                            '}';
+                                }
+                            }
+                        }
+                    }
+
+                    /**
+                     * A dispatcher for checking the assignability of a generic array type.
+                     */
+                    class ForGenericArray extends AbstractBase {
+
+                        /**
+                         * The generic array type to which another type is assigned.
+                         */
+                        private final Generic genericArray;
+
+                        /**
+                         * Creates a new dispatcher for checking the assignability of a generic array type.
+                         *
+                         * @param genericArray The generic array type to which another type is assigned.
+                         */
+                        protected ForGenericArray(Generic genericArray) {
+                            this.genericArray = genericArray;
+                        }
+
+                        @Override
+                        public Boolean onGenericArray(Generic genericArray) {
+                            return this.genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(genericArray.getComponentType());
+                        }
+
+                        @Override
+                        public Boolean onWildcard(Generic wildcard) {
+                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
+                        }
+
+                        @Override
+                        public Boolean onParameterizedType(Generic parameterizedType) {
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onTypeVariable(Generic typeVariable) {
+                            return false;
+                        }
+
+                        @Override
+                        public Boolean onNonGenericType(Generic typeDescription) {
+                            return typeDescription.isArray()
+                                    && genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(typeDescription.getComponentType());
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && genericArray.equals(((ForGenericArray) other).genericArray);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return genericArray.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForGenericArray{" +
+                                    "genericArray=" + genericArray +
+                                    '}';
+                        }
+                    }
+                }
+            }
+
+            /**
+             * A validator for Java types that are defined for a specified type use within a Java class file.
+             */
+            enum Validator implements Visitor<Boolean> {
+
+                /**
+                 * A validator for checking a type's non-null super class.
+                 */
+                SUPER_CLASS(false, false, false, false) {
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return super.onNonGenericType(typeDescription) && !typeDescription.asErasure().isInterface();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        return !parameterizedType.asErasure().isInterface();
+                    }
+                },
+
+                /**
+                 * A validator for an interface type.
+                 */
+                INTERFACE(false, false, false, false) {
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return super.onNonGenericType(typeDescription) && typeDescription.asErasure().isInterface();
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        return parameterizedType.asErasure().isInterface();
+                    }
+                },
+
+                /**
+                 * A validator for a type variable.
+                 */
+                TYPE_VARIABLE(false, false, true, false),
+
+                /**
+                 * A validator for a field type.
+                 */
+                FIELD(true, true, true, false),
+
+                /**
+                 * A validator for a method return type.
+                 */
+                METHOD_RETURN(true, true, true, true),
+
+                /**
+                 * A validator for a method parameter type.
+                 */
+                METHOD_PARAMETER(true, true, true, false),
+
+                /**
+                 * A validator for a method exception type.
+                 */
+                EXCEPTION(false, false, true, false) {
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        return false;
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(Generic typeVariable) {
+                        for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
+                            if (bound.accept(this)) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return typeDescription.asErasure().isAssignableTo(Throwable.class);
+                    }
+                };
+
+                /**
+                 * {@code true} if this validator accepts array types.
+                 */
+                private final boolean acceptsArray;
+
+                /**
+                 * {@code true} if this validator accepts primitive types.
+                 */
+                private final boolean acceptsPrimitive;
+
+                /**
+                 * {@code true} if this validator accepts type variables.
+                 */
+                private final boolean acceptsVariable;
+
+                /**
+                 * {@code true} if this validator accepts the {@code void} type.
+                 */
+                private final boolean acceptsVoid;
+
+                /**
+                 * Creates a new validator.
+                 *
+                 * @param acceptsArray     {@code true} if this validator accepts array types.
+                 * @param acceptsPrimitive {@code true} if this validator accepts primitive types.
+                 * @param acceptsVariable  {@code true} if this validator accepts type variables.
+                 * @param acceptsVoid      {@code true} if this validator accepts the {@code void} type.
+                 */
+                Validator(boolean acceptsArray, boolean acceptsPrimitive, boolean acceptsVariable, boolean acceptsVoid) {
+                    this.acceptsArray = acceptsArray;
+                    this.acceptsPrimitive = acceptsPrimitive;
+                    this.acceptsVariable = acceptsVariable;
+                    this.acceptsVoid = acceptsVoid;
+                }
+
+                @Override
+                public Boolean onGenericArray(Generic genericArray) {
+                    return acceptsArray;
+                }
+
+                @Override
+                public Boolean onWildcard(Generic wildcard) {
+                    return false;
+                }
+
+                @Override
+                public Boolean onParameterizedType(Generic parameterizedType) {
+                    return true;
+                }
+
+                @Override
+                public Boolean onTypeVariable(Generic typeVariable) {
+                    return acceptsVariable;
+                }
+
+                @Override
+                public Boolean onNonGenericType(Generic typeDescription) {
+                    return (acceptsArray || !typeDescription.isArray())
+                            && (acceptsPrimitive || !typeDescription.isPrimitive())
+                            && (acceptsVoid || !typeDescription.represents(void.class));
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Visitor.Validator." + name();
+                }
+
+                /**
+                 * A type validator for checking type annotations.
+                 */
+                public enum ForTypeAnnotations implements Visitor<Boolean> {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * The {@link ElementType}'s {@code TYPE_USE} constant.
+                     */
+                    private final ElementType typeUse;
+
+                    /**
+                     * The {@link ElementType}'s {@code TYPE_PARAMETER} constant.
+                     */
+                    private final ElementType typeParameter;
+
+                    /**
+                     * Creates a new type annotation validator.
+                     */
+                    ForTypeAnnotations() {
+                        ElementType typeUse, typeParameter;
+                        try {
+                            typeUse = Enum.valueOf(ElementType.class, "TYPE_USE");
+                            typeParameter = Enum.valueOf(ElementType.class, "TYPE_PARAMETER");
+                        } catch (IllegalArgumentException ignored) {
+                            // Setting these values null results in this validator always failing for pre Java-8 VMs.
+                            typeUse = null;
+                            typeParameter = null;
+                        }
+                        this.typeUse = typeUse;
+                        this.typeParameter = typeParameter;
+                    }
+
+                    /**
+                     * Validates the type annotations on a formal type variable but not on its bounds..
+                     *
+                     * @param typeVariable The type variable to validate.
+                     * @return {@code true} if the formal type variable declares invalid type annotations.
+                     */
+                    public static boolean ofFormalTypeVariable(Generic typeVariable) {
+                        Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
+                        for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
+                            if (!annotationDescription.getElementTypes().contains(INSTANCE.typeParameter) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean onGenericArray(Generic genericArray) {
+                        return isValid(genericArray) && genericArray.getComponentType().accept(this);
+                    }
+
+                    @Override
+                    public Boolean onWildcard(Generic wildcard) {
+                        if (!isValid(wildcard)) {
+                            return false;
+                        }
+                        TypeList.Generic lowerBounds = wildcard.getLowerBounds();
+                        return (lowerBounds.isEmpty()
+                                ? wildcard.getUpperBounds()
+                                : lowerBounds).getOnly().accept(this);
+                    }
+
+                    @Override
+                    public Boolean onParameterizedType(Generic parameterizedType) {
+                        if (!isValid(parameterizedType)) {
+                            return false;
+                        }
+                        Generic ownerType = parameterizedType.getOwnerType();
+                        if (ownerType != null && !ownerType.accept(this)) {
+                            return false;
+                        }
+                        for (Generic typeArgument : parameterizedType.getTypeArguments()) {
+                            if (!typeArgument.accept(this)) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public Boolean onTypeVariable(Generic typeVariable) {
+                        return isValid(typeVariable);
+                    }
+
+                    @Override
+                    public Boolean onNonGenericType(Generic typeDescription) {
+                        return isValid(typeDescription) && (!typeDescription.isArray() || typeDescription.getComponentType().accept(this));
+                    }
+
+                    /**
+                     * Checks if the supplied type's type annotations are valid.
+                     *
+                     * @param typeDescription The type to validate.
+                     * @return {@code true} if the supplied type's type annotations are valid.
+                     */
+                    private boolean isValid(Generic typeDescription) {
+                        Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
+                        for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
+                            if (!annotationDescription.getElementTypes().contains(typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                                return false;
+                            }
+                        }
+                        return true;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations." + name();
                     }
                 }
             }
@@ -1202,728 +2143,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                 }
             }
-
-            /**
-             * A visitor that determines the direct assignability of a type to another generic type. This visitor only checks
-             * for strict assignability and does not perform any form of boxing or primitive type widening that are allowed
-             * in the Java language.
-             */
-            enum Assigner implements Visitor<Assigner.Dispatcher> {
-
-                /**
-                 * The singleton instance.
-                 */
-                INSTANCE;
-
-                @Override
-                public Dispatcher onGenericArray(Generic genericArray) {
-                    return new Dispatcher.ForGenericArray(genericArray);
-                }
-
-                @Override
-                public Dispatcher onWildcard(Generic wildcard) {
-                    throw new IllegalArgumentException("A wildcard is not a first level type: " + this);
-                }
-
-                @Override
-                public Dispatcher onParameterizedType(Generic parameterizedType) {
-                    return new Dispatcher.ForParameterizedType(parameterizedType);
-                }
-
-                @Override
-                public Dispatcher onTypeVariable(Generic typeVariable) {
-                    return new Dispatcher.ForTypeVariable(typeVariable);
-                }
-
-                @Override
-                public Dispatcher onNonGenericType(Generic typeDescription) {
-                    return new Dispatcher.ForNonGenericType(typeDescription.asErasure());
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.Assigner." + name();
-                }
-
-                /**
-                 * A dispatcher that allows to check if the visited generic type is assignable to the supplied type.
-                 */
-                public interface Dispatcher {
-
-                    /**
-                     * Checks if the represented type is a super type of the type that is supplied as an argument.
-                     *
-                     * @param typeDescription The type to check for being assignable to the represented type.
-                     * @return {@code true} if the represented type is assignable to the supplied type.
-                     */
-                    boolean isAssignableFrom(Generic typeDescription);
-
-                    /**
-                     * An abstract base implementation of a dispatcher that forwards the decision to a visitor implementation.
-                     */
-                    abstract class AbstractBase implements Dispatcher, Visitor<Boolean> {
-
-                        @Override
-                        public boolean isAssignableFrom(Generic typeDescription) {
-                            return typeDescription.accept(this);
-                        }
-                    }
-
-                    /**
-                     * A dispatcher for checking the assignability of a non-generic type.
-                     */
-                    class ForNonGenericType extends AbstractBase {
-
-                        /**
-                         * The description of the type to which another type is assigned.
-                         */
-                        private final TypeDescription typeDescription;
-
-                        /**
-                         * Creates a new dispatcher of a non-generic type.
-                         *
-                         * @param typeDescription The description of the type to which another type is assigned.
-                         */
-                        protected ForNonGenericType(TypeDescription typeDescription) {
-                            this.typeDescription = typeDescription;
-                        }
-
-                        @Override
-                        public Boolean onGenericArray(Generic genericArray) {
-                            return typeDescription.isArray()
-                                    ? genericArray.getComponentType().accept(new ForNonGenericType(typeDescription.getComponentType()))
-                                    : typeDescription.represents(Object.class) || TypeDescription.ARRAY_INTERFACES.contains(typeDescription.asGenericType());
-                        }
-
-                        @Override
-                        public Boolean onWildcard(Generic wildcard) {
-                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
-                        }
-
-                        @Override
-                        public Boolean onParameterizedType(Generic parameterizedType) {
-                            if (typeDescription.equals(parameterizedType.asErasure())) {
-                                return true;
-                            }
-                            Generic superType = parameterizedType.getSuperType();
-                            if (superType != null && isAssignableFrom(superType)) {
-                                return true;
-                            }
-                            for (Generic interfaceType : parameterizedType.getInterfaces()) {
-                                if (isAssignableFrom(interfaceType)) {
-                                    return true;
-                                }
-                            }
-                            return typeDescription.represents(Object.class);
-                        }
-
-                        @Override
-                        public Boolean onTypeVariable(Generic typeVariable) {
-                            for (Generic upperBound : typeVariable.getUpperBounds()) {
-                                if (isAssignableFrom(upperBound)) {
-                                    return true;
-                                }
-                            }
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onNonGenericType(Generic typeDescription) {
-                            return this.typeDescription.isAssignableFrom(typeDescription.asErasure());
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && typeDescription.equals(((ForNonGenericType) other).typeDescription);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return typeDescription.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForNonGenericType{" +
-                                    "typeDescription=" + typeDescription +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A dispatcher for checking the assignability of a type variable.
-                     */
-                    class ForTypeVariable extends AbstractBase {
-
-                        /**
-                         * The description of the type variable to which another type is assigned.
-                         */
-                        private final Generic typeVariable;
-
-                        /**
-                         * Creates a new dispatcher of a type variable.
-                         *
-                         * @param typeVariable The description of the type variable to which another type is assigned.
-                         */
-                        protected ForTypeVariable(Generic typeVariable) {
-                            this.typeVariable = typeVariable;
-                        }
-
-                        @Override
-                        public Boolean onGenericArray(Generic genericArray) {
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onWildcard(Generic wildcard) {
-                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
-                        }
-
-                        @Override
-                        public Boolean onParameterizedType(Generic parameterizedType) {
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onTypeVariable(Generic typeVariable) {
-                            if (typeVariable.equals(this.typeVariable)) {
-                                return true;
-                            }
-                            for (Generic upperBound : typeVariable.getUpperBounds()) {
-                                if (isAssignableFrom(upperBound)) {
-                                    return true;
-                                }
-                            }
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onNonGenericType(Generic typeDescription) {
-                            return false;
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && typeVariable.equals(((ForTypeVariable) other).typeVariable);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return typeVariable.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForTypeVariable{" +
-                                    "typeVariable=" + typeVariable +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A dispatcher for checking the assignability of a parameterized type.
-                     */
-                    class ForParameterizedType extends AbstractBase {
-
-                        /**
-                         * The parameterized type to which another type is assigned.
-                         */
-                        private final Generic parameterizedType;
-
-                        /**
-                         * Creates a new dispatcher for checking the assignability of a parameterized type.
-                         *
-                         * @param parameterizedType The parameterized type to which another type is assigned.
-                         */
-                        protected ForParameterizedType(Generic parameterizedType) {
-                            this.parameterizedType = parameterizedType;
-                        }
-
-                        @Override
-                        public Boolean onGenericArray(Generic genericArray) {
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onWildcard(Generic wildcard) {
-                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
-                        }
-
-                        @Override
-                        public Boolean onParameterizedType(Generic parameterizedType) {
-                            if (this.parameterizedType.asErasure().equals(parameterizedType.asErasure())) {
-                                Generic fromOwner = this.parameterizedType.getOwnerType(), toOwner = parameterizedType.getOwnerType();
-                                if (fromOwner != null && toOwner != null && !fromOwner.accept(Assigner.INSTANCE).isAssignableFrom(toOwner)) {
-                                    return false;
-                                }
-                                TypeList.Generic fromArguments = this.parameterizedType.getTypeArguments(), toArguments = parameterizedType.getTypeArguments();
-                                if (fromArguments.size() == toArguments.size()) {
-                                    for (int index = 0; index < fromArguments.size(); index++) {
-                                        if (!fromArguments.get(index).accept(ParameterAssigner.INSTANCE).isAssignableFrom(toArguments.get(index))) {
-                                            return false;
-                                        }
-                                    }
-                                    return true;
-                                } else {
-                                    throw new IllegalArgumentException("Incompatible generic types: " + parameterizedType + " and " + this.parameterizedType);
-                                }
-                            }
-                            Generic superType = parameterizedType.getSuperType();
-                            if (superType != null && isAssignableFrom(superType)) {
-                                return true;
-                            }
-                            for (Generic interfaceType : parameterizedType.getInterfaces()) {
-                                if (isAssignableFrom(interfaceType)) {
-                                    return true;
-                                }
-                            }
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onTypeVariable(Generic typeVariable) {
-                            for (Generic upperBound : typeVariable.getUpperBounds()) {
-                                if (isAssignableFrom(upperBound)) {
-                                    return true;
-                                }
-                            }
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onNonGenericType(Generic typeDescription) {
-                            if (parameterizedType.asErasure().equals(typeDescription.asErasure())) {
-                                return true;
-                            }
-                            Generic superType = typeDescription.getSuperType();
-                            if (superType != null && isAssignableFrom(superType)) {
-                                return true;
-                            }
-                            for (Generic interfaceType : typeDescription.getInterfaces()) {
-                                if (isAssignableFrom(interfaceType)) {
-                                    return true;
-                                }
-                            }
-                            return false;
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && parameterizedType.equals(((ForParameterizedType) other).parameterizedType);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return parameterizedType.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType{" +
-                                    "parameterizedType=" + parameterizedType +
-                                    '}';
-                        }
-
-                        /**
-                         * An assigner for a parameter of a parameterized type.
-                         */
-                        protected enum ParameterAssigner implements Visitor<Dispatcher> {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public Dispatcher onGenericArray(Generic genericArray) {
-                                return new InvariantBinding(genericArray);
-                            }
-
-                            @Override
-                            public Dispatcher onWildcard(Generic wildcard) {
-                                TypeList.Generic lowerBounds = wildcard.getLowerBounds();
-                                return lowerBounds.isEmpty()
-                                        ? new CovariantBinding(wildcard.getUpperBounds().getOnly())
-                                        : new ContravariantBinding(lowerBounds.getOnly());
-                            }
-
-                            @Override
-                            public Dispatcher onParameterizedType(Generic parameterizedType) {
-                                return new InvariantBinding(parameterizedType);
-                            }
-
-                            @Override
-                            public Dispatcher onTypeVariable(Generic typeVariable) {
-                                return new InvariantBinding(typeVariable);
-                            }
-
-                            @Override
-                            public Dispatcher onNonGenericType(Generic typeDescription) {
-                                return new InvariantBinding(typeDescription);
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner." + name();
-                            }
-
-                            /**
-                             * A dispatcher for an invariant parameter of a parameterized type, i.e. a type without a wildcard.
-                             */
-                            protected static class InvariantBinding implements Dispatcher {
-
-                                /**
-                                 * The invariant type of the parameter.
-                                 */
-                                private final Generic typeDescription;
-
-                                /**
-                                 * Creates a new dispatcher for an invariant parameter of a parameterized type.
-                                 *
-                                 * @param typeDescription The invariant type of the parameter.
-                                 */
-                                protected InvariantBinding(Generic typeDescription) {
-                                    this.typeDescription = typeDescription;
-                                }
-
-                                @Override
-                                public boolean isAssignableFrom(Generic typeDescription) {
-                                    return typeDescription.equals(this.typeDescription);
-                                }
-
-                                @Override
-                                public boolean equals(Object other) {
-                                    return this == other || !(other == null || getClass() != other.getClass())
-                                            && typeDescription.equals(((InvariantBinding) other).typeDescription);
-                                }
-
-                                @Override
-                                public int hashCode() {
-                                    return typeDescription.hashCode();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.InvariantBinding{" +
-                                            "typeDescription=" + typeDescription +
-                                            '}';
-                                }
-                            }
-
-                            /**
-                             * A dispatcher for an covariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
-                             */
-                            protected static class CovariantBinding implements Dispatcher {
-
-                                /**
-                                 * The lower bound type of a contracariant parameter.
-                                 */
-                                private final Generic upperBound;
-
-                                /**
-                                 * Creates a new dispatcher for covariant parameter of a parameterized type.
-                                 *
-                                 * @param upperBound The upper bound type of a covariant parameter.
-                                 */
-                                protected CovariantBinding(Generic upperBound) {
-                                    this.upperBound = upperBound;
-                                }
-
-                                @Override
-                                public boolean isAssignableFrom(Generic typeDescription) {
-                                    if (typeDescription.getSort().isWildcard()) {
-                                        return typeDescription.getLowerBounds().isEmpty() && upperBound.accept(Assigner.INSTANCE)
-                                                .isAssignableFrom(typeDescription.getUpperBounds().getOnly());
-                                    } else {
-                                        return upperBound.accept(Assigner.INSTANCE).isAssignableFrom(typeDescription);
-                                    }
-                                }
-
-                                @Override
-                                public boolean equals(Object other) {
-                                    return this == other || !(other == null || getClass() != other.getClass())
-                                            && upperBound.equals(((CovariantBinding) other).upperBound);
-                                }
-
-                                @Override
-                                public int hashCode() {
-                                    return upperBound.hashCode();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.CovariantBinding{" +
-                                            "upperBound=" + upperBound +
-                                            '}';
-                                }
-                            }
-
-                            /**
-                             * A dispatcher for an contravariant parameter of a parameterized type, i.e. a type that is the lower bound of a wildcard.
-                             */
-                            protected static class ContravariantBinding implements Dispatcher {
-
-                                /**
-                                 * The lower bound type of a contravariant parameter.
-                                 */
-                                private final Generic lowerBound;
-
-                                /**
-                                 * Creates a new dispatcher for contravariant parameter of a parameterized type.
-                                 *
-                                 * @param lowerBound The lower bound type of a contravariant parameter.
-                                 */
-                                protected ContravariantBinding(Generic lowerBound) {
-                                    this.lowerBound = lowerBound;
-                                }
-
-                                @Override
-                                public boolean isAssignableFrom(Generic typeDescription) {
-                                    if (typeDescription.getSort().isWildcard()) {
-                                        TypeList.Generic lowerBounds = typeDescription.getLowerBounds();
-                                        return !lowerBounds.isEmpty() && lowerBounds.getOnly().accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
-                                    } else {
-                                        return typeDescription.getSort().isWildcard() || typeDescription.accept(Assigner.INSTANCE).isAssignableFrom(lowerBound);
-                                    }
-                                }
-
-                                @Override
-                                public boolean equals(Object other) {
-                                    return this == other || !(other == null || getClass() != other.getClass())
-                                            && lowerBound.equals(((ContravariantBinding) other).lowerBound);
-                                }
-
-                                @Override
-                                public int hashCode() {
-                                    return lowerBound.hashCode();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForParameterizedType.ParameterAssigner.ContravariantBinding{" +
-                                            "lowerBound=" + lowerBound +
-                                            '}';
-                                }
-                            }
-                        }
-                    }
-
-                    /**
-                     * A dispatcher for checking the assignability of a generic array type.
-                     */
-                    class ForGenericArray extends AbstractBase {
-
-                        /**
-                         * The generic array type to which another type is assigned.
-                         */
-                        private final Generic genericArray;
-
-                        /**
-                         * Creates a new dispatcher for checking the assignability of a generic array type.
-                         *
-                         * @param genericArray The generic array type to which another type is assigned.
-                         */
-                        protected ForGenericArray(Generic genericArray) {
-                            this.genericArray = genericArray;
-                        }
-
-                        @Override
-                        public Boolean onGenericArray(Generic genericArray) {
-                            return this.genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(genericArray.getComponentType());
-                        }
-
-                        @Override
-                        public Boolean onWildcard(Generic wildcard) {
-                            throw new IllegalArgumentException("A wildcard is not a first-level type: " + wildcard);
-                        }
-
-                        @Override
-                        public Boolean onParameterizedType(Generic parameterizedType) {
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onTypeVariable(Generic typeVariable) {
-                            return false;
-                        }
-
-                        @Override
-                        public Boolean onNonGenericType(Generic typeDescription) {
-                            return typeDescription.isArray()
-                                    && genericArray.getComponentType().accept(Assigner.INSTANCE).isAssignableFrom(typeDescription.getComponentType());
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            return this == other || !(other == null || getClass() != other.getClass())
-                                    && genericArray.equals(((ForGenericArray) other).genericArray);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return genericArray.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "TypeDescription.Generic.Visitor.Assigner.Dispatcher.ForGenericArray{" +
-                                    "genericArray=" + genericArray +
-                                    '}';
-                        }
-                    }
-                }
-            }
-
-            /**
-             * A validator for Java types that are defined for a specified type use within a Java class file.
-             */
-            enum Validator implements Visitor<Boolean> {
-
-                /**
-                 * A validator for checking a type's non-null super class.
-                 */
-                SUPER_CLASS(false, false, false, false) {
-                    @Override
-                    public Boolean onNonGenericType(Generic typeDescription) {
-                        return super.onNonGenericType(typeDescription) && !typeDescription.asErasure().isInterface();
-                    }
-
-                    @Override
-                    public Boolean onParameterizedType(Generic parameterizedType) {
-                        return !parameterizedType.asErasure().isInterface();
-                    }
-                },
-
-                /**
-                 * A validator for an interface type.
-                 */
-                INTERFACE(false, false, false, false) {
-                    @Override
-                    public Boolean onNonGenericType(Generic typeDescription) {
-                        return super.onNonGenericType(typeDescription) && typeDescription.asErasure().isInterface();
-                    }
-
-                    @Override
-                    public Boolean onParameterizedType(Generic parameterizedType) {
-                        return parameterizedType.asErasure().isInterface();
-                    }
-                },
-
-                /**
-                 * A validator for a type variable.
-                 */
-                TYPE_VARIABLE(false, false, true, false),
-
-                /**
-                 * A validator for a field type.
-                 */
-                FIELD(true, true, true, false),
-
-                /**
-                 * A validator for a method return type.
-                 */
-                METHOD_RETURN(true, true, true, true),
-
-                /**
-                 * A validator for a method parameter type.
-                 */
-                METHOD_PARAMETER(true, true, true, false),
-
-                /**
-                 * A validator for a method exception type.
-                 */
-                EXCEPTION(false, false, true, false) {
-                    @Override
-                    public Boolean onParameterizedType(Generic parameterizedType) {
-                        return false;
-                    }
-
-                    @Override
-                    public Boolean onTypeVariable(Generic typeVariable) {
-                        for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
-                            if (bound.accept(this)) {
-                                return true;
-                            }
-                        }
-                        return false;
-                    }
-
-                    @Override
-                    public Boolean onNonGenericType(Generic typeDescription) {
-                        return typeDescription.asErasure().isAssignableTo(Throwable.class);
-                    }
-                };
-
-                /**
-                 * {@code true} if this validator accepts array types.
-                 */
-                private final boolean acceptsArray;
-
-                /**
-                 * {@code true} if this validator accepts primitive types.
-                 */
-                private final boolean acceptsPrimitive;
-
-                /**
-                 * {@code true} if this validator accepts type variables.
-                 */
-                private final boolean acceptsVariable;
-
-                /**
-                 * {@code true} if this validator accepts the {@code void} type.
-                 */
-                private final boolean acceptsVoid;
-
-                /**
-                 * Creates a new validator.
-                 *
-                 * @param acceptsArray     {@code true} if this validator accepts array types.
-                 * @param acceptsPrimitive {@code true} if this validator accepts primitive types.
-                 * @param acceptsVariable  {@code true} if this validator accepts type variables.
-                 * @param acceptsVoid      {@code true} if this validator accepts the {@code void} type.
-                 */
-                Validator(boolean acceptsArray, boolean acceptsPrimitive, boolean acceptsVariable, boolean acceptsVoid) {
-                    this.acceptsArray = acceptsArray;
-                    this.acceptsPrimitive = acceptsPrimitive;
-                    this.acceptsVariable = acceptsVariable;
-                    this.acceptsVoid = acceptsVoid;
-                }
-
-                @Override
-                public Boolean onGenericArray(Generic genericArray) {
-                    return acceptsArray;
-                }
-
-                @Override
-                public Boolean onWildcard(Generic wildcard) {
-                    return false;
-                }
-
-                @Override
-                public Boolean onParameterizedType(Generic parameterizedType) {
-                    return true;
-                }
-
-                @Override
-                public Boolean onTypeVariable(Generic typeVariable) {
-                    return acceptsVariable;
-                }
-
-                @Override
-                public Boolean onNonGenericType(Generic typeDescription) {
-                    return (acceptsArray || !typeDescription.isArray())
-                            && (acceptsPrimitive || !typeDescription.isPrimitive())
-                            && (acceptsVoid || !typeDescription.represents(void.class));
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeDescription.Generic.Visitor.Validator." + name();
-                }
-            }
         }
 
         /**
@@ -2016,7 +2235,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param type The type to represent.
                  * @return A suitable annotation reader.
                  */
-                AnnotationReader resolveSuperType(Class<?> type);
+                AnnotationReader resolveSuperClass(Class<?> type);
 
                 /**
                  * Resolves a loaded type's interface type's type annotations.
@@ -2077,7 +2296,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
-                    public AnnotationReader resolveSuperType(Class<?> type) {
+                    public AnnotationReader resolveSuperClass(Class<?> type) {
                         return NoOp.INSTANCE;
                     }
 
@@ -2198,8 +2417,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
-                    public AnnotationReader resolveSuperType(Class<?> type) {
-                        return new AnnotatedSuperType(type);
+                    public AnnotationReader resolveSuperClass(Class<?> type) {
+                        return new AnnotatedSuperClass(type);
                     }
 
                     @Override
@@ -2357,7 +2576,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * A delegating annotation reader for an annotated super type.
                      */
-                    protected class AnnotatedSuperType extends Delegator {
+                    protected class AnnotatedSuperClass extends Delegator {
 
                         /**
                          * The represented type.
@@ -2369,7 +2588,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @param type The represented type.
                          */
-                        protected AnnotatedSuperType(Class<?> type) {
+                        protected AnnotatedSuperClass(Class<?> type) {
                             this.type = type;
                         }
 
@@ -2396,8 +2615,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
-                                    && getOuter().equals(((AnnotatedSuperType) other).getOuter())
-                                    && type.equals(((AnnotatedSuperType) other).type);
+                                    && getOuter().equals(((AnnotatedSuperClass) other).getOuter())
+                                    && type.equals(((AnnotatedSuperClass) other).type);
                         }
 
                         @Override
@@ -2407,7 +2626,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperClass{" +
                                     "dispatcher=" + getOuter() +
                                     ", type=" + type +
                                     '}';
@@ -3373,11 +3592,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         abstract class OfNonGenericType extends AbstractBase {
 
             @Override
-            public Generic getSuperType() {
-                Generic superType = asErasure().getSuperType();
-                return superType == null
+            public Generic getSuperClass() {
+                Generic superClass = asErasure().getSuperClass();
+                return superClass == null
                         ? UNDEFINED
-                        : superType.accept(Visitor.TypeVariableErasing.INSTANCE);
+                        : superClass.accept(Visitor.TypeVariableErasing.INSTANCE);
             }
 
             @Override
@@ -3467,7 +3686,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Iterator<TypeDefinition> iterator() {
-                return new SuperTypeIterator(this);
+                return new SuperClassIterator(this);
             }
 
             @Override
@@ -3606,7 +3825,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
+            public Generic getSuperClass() {
                 return TypeDescription.Generic.OBJECT;
             }
 
@@ -3681,7 +3900,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Iterator<TypeDefinition> iterator() {
-                return new SuperTypeIterator(this);
+                return new SuperClassIterator(this);
             }
 
             @Override
@@ -3826,7 +4045,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
+            public Generic getSuperClass() {
                 throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
             }
 
@@ -4165,11 +4384,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
-                Generic superType = asErasure().getSuperType();
-                return superType == null
+            public Generic getSuperClass() {
+                Generic superClass = asErasure().getSuperClass();
+                return superClass == null
                         ? UNDEFINED
-                        : superType.accept(Visitor.Substitutor.ForTypeVariableBinding.bind(this));
+                        : superClass.accept(Visitor.Substitutor.ForTypeVariableBinding.bind(this));
             }
 
             @Override
@@ -4239,7 +4458,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Iterator<TypeDefinition> iterator() {
-                return new SuperTypeIterator(this);
+                return new SuperClassIterator(this);
             }
 
             @Override
@@ -4484,7 +4703,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
+            public Generic getSuperClass() {
                 throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
             }
 
@@ -4639,7 +4858,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public Generic getSuperType() {
+                public Generic getSuperClass() {
                     throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
                 }
 
@@ -4868,8 +5087,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
-                return resolve().getSuperType();
+            public Generic getSuperClass() {
+                return resolve().getSuperClass();
             }
 
             @Override
@@ -4994,7 +5213,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A lazy projection of a generic super type.
              */
-            public static class ForLoadedSuperType extends LazyProjection.OfAnnotatedElement {
+            public static class ForLoadedSuperClass extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The type of which the super class is represented.
@@ -5006,29 +5225,29 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param type The type of which the super class is represented.
                  */
-                public ForLoadedSuperType(Class<?> type) {
+                public ForLoadedSuperClass(Class<?> type) {
                     this.type = type;
                 }
 
                 @Override
                 protected Generic resolve() {
-                    java.lang.reflect.Type superType = type.getGenericSuperclass();
-                    return superType == null
+                    java.lang.reflect.Type superClass = type.getGenericSuperclass();
+                    return superClass == null
                             ? UNDEFINED
-                            : Sort.describe(superType, getAnnotationReader());
+                            : Sort.describe(superClass, getAnnotationReader());
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    Class<?> superType = type.getSuperclass();
-                    return superType == null
+                    Class<?> superClass = type.getSuperclass();
+                    return superClass == null
                             ? TypeDescription.UNDEFINED
-                            : new ForLoadedType(superType);
+                            : new ForLoadedType(superClass);
                 }
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveSuperType(type);
+                    return AnnotationReader.DISPATCHER.resolveSuperClass(type);
                 }
             }
 
@@ -5120,7 +5339,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The erasure of the parameter type.
                  */
-                private final Class<?> erasure;
+                private final Class<?>[] erasure;
 
                 /**
                  * Creates a lazy projection of a constructor's parameter.
@@ -5129,7 +5348,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param index       The parameter's index.
                  * @param erasure     The erasure of the parameter type.
                  */
-                public OfConstructorParameter(Constructor<?> constructor, int index, Class<?> erasure) {
+                public OfConstructorParameter(Constructor<?> constructor, int index, Class<?>[] erasure) {
                     this.constructor = constructor;
                     this.index = index;
                     this.erasure = erasure;
@@ -5138,14 +5357,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
-                    return index < type.length
+                    return erasure.length == type.length
                             ? Sort.describe(type[index], getAnnotationReader())
-                            : new OfNonGenericType.ForLoadedType(erasure);
+                            : new OfNonGenericType.ForLoadedType(erasure[index]);
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
+                    return new TypeDescription.ForLoadedType(erasure[index]);
                 }
 
                 @Override
@@ -5170,18 +5389,18 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final int index;
 
                 /**
-                 * The erasure of the parameter type.
+                 * The erasures of the method's parameter types.
                  */
-                private final Class<?> erasure;
+                private final Class<?>[] erasure;
 
                 /**
                  * Creates a lazy projection of a constructor's parameter.
                  *
                  * @param method  The method of which a parameter type is represented.
                  * @param index   The parameter's index.
-                 * @param erasure The erasure of the parameter's type.
+                 * @param erasure The erasures of the method's parameter types.
                  */
-                public OfMethodParameter(Method method, int index, Class<?> erasure) {
+                public OfMethodParameter(Method method, int index, Class<?>[] erasure) {
                     this.method = method;
                     this.index = index;
                     this.erasure = erasure;
@@ -5190,14 +5409,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericParameterTypes();
-                    return index < type.length
+                    return erasure.length == type.length
                             ? Sort.describe(type[index], getAnnotationReader())
-                            : new OfNonGenericType.ForLoadedType(erasure);
+                            : new OfNonGenericType.ForLoadedType(erasure[index]);
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
+                    return new TypeDescription.ForLoadedType(erasure[index]);
                 }
 
                 @Override
@@ -5671,6 +5890,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic doBuild() {
+                    if (typeDescription.represents(void.class) && !annotations.isEmpty()) {
+                        throw new IllegalArgumentException("The void non-type cannot be annotated");
+                    }
                     return new Generic.OfNonGenericType.Latent(typeDescription, annotations);
                 }
 
@@ -5943,8 +6165,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 return !targetType.isPrimitive();
             }
             // (4) The sub type has a super type and this super type is assignable to the super type.
-            Generic superType = targetType.getSuperType();
-            if (superType != null && sourceType.isAssignableFrom(superType.asErasure())) {
+            Generic superClass = targetType.getSuperClass();
+            if (superClass != null && sourceType.isAssignableFrom(superClass.asErasure())) {
                 return true;
             }
             // (5) If the target type is an interface, any of this type's interfaces might be assignable to it.
@@ -6088,13 +6310,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                     generic = true;
                 }
-                Generic superType = getSuperType();
+                Generic superClass = getSuperClass();
                 // The object type itself is non generic and implicitly returns a non-generic signature
-                if (superType == null) {
-                    superType = TypeDescription.Generic.OBJECT;
+                if (superClass == null) {
+                    superClass = TypeDescription.Generic.OBJECT;
                 }
-                superType.accept(new Generic.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
-                generic = generic || !superType.getSort().isNonGeneric();
+                superClass.accept(new Generic.Visitor.ForSignatureVisitor(signatureWriter.visitSuperclass()));
+                generic = generic || !superClass.getSort().isNonGeneric();
                 for (Generic interfaceType : getInterfaces()) {
                     interfaceType.accept(new Generic.Visitor.ForSignatureVisitor(signatureWriter.visitInterface()));
                     generic = generic || !interfaceType.getSort().isNonGeneric();
@@ -6124,15 +6346,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public AnnotationList getInheritedAnnotations() {
+            Generic superClass = getSuperClass();
             AnnotationList declaredAnnotations = getDeclaredAnnotations();
-            if (getSuperType() == null) {
+            if (superClass == null) {
                 return declaredAnnotations;
             } else {
                 Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : declaredAnnotations) {
                     annotationTypes.add(annotationDescription.getAnnotationType());
                 }
-                return new AnnotationList.Explicit(CompoundList.of(declaredAnnotations, getSuperType().asErasure().getInheritedAnnotations().inherited(annotationTypes)));
+                return new AnnotationList.Explicit(CompoundList.of(declaredAnnotations, superClass.asErasure().getInheritedAnnotations().inherited(annotationTypes)));
             }
         }
 
@@ -6240,8 +6463,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
+        public boolean isPackageType() {
+            return getSimpleName().equals(PackageDescription.PACKAGE_CLASS_NAME);
+        }
+
+        @Override
         public Iterator<TypeDefinition> iterator() {
-            return new SuperTypeIterator(this);
+            return new SuperClassIterator(this);
         }
 
         @Override
@@ -6379,10 +6607,10 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return type.getSuperclass() == null
                     ? TypeDescription.Generic.UNDEFINED
-                    : new Generic.LazyProjection.ForLoadedSuperType(type);
+                    : new Generic.LazyProjection.ForLoadedSuperClass(type);
         }
 
         @Override
@@ -6599,7 +6827,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
 
@@ -6742,7 +6970,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         /**
          * The super type or {@code null} if no such type exists.
          */
-        private final Generic superType;
+        private final Generic superClass;
 
         /**
          * The interfaces that this type implements.
@@ -6754,19 +6982,19 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          *
          * @param name       The name of the type.
          * @param modifiers  The modifiers of the type.
-         * @param superType  The super type or {@code null} if no such type exists.
+         * @param superClass The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
-        public Latent(String name, int modifiers, Generic superType, List<? extends Generic> interfaces) {
+        public Latent(String name, int modifiers, Generic superClass, List<? extends Generic> interfaces) {
             this.name = name;
             this.modifiers = modifiers;
-            this.superType = superType;
+            this.superClass = superClass;
             this.interfaces = interfaces;
         }
 
         @Override
-        public Generic getSuperType() {
-            return superType;
+        public Generic getSuperClass() {
+            return superClass;
         }
 
         @Override
@@ -6869,7 +7097,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
 

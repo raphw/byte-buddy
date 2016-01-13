@@ -273,7 +273,7 @@ public class TypeWriterDefaultTest {
     public void testAnnotationOnTypePreJava5TypeAssertion() throws Exception {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
-                .annotateType(AnnotationDescription.Builder.forType(Foo.class).make())
+                .annotateType(AnnotationDescription.Builder.ofType(Foo.class).build())
                 .make();
     }
 
@@ -282,7 +282,7 @@ public class TypeWriterDefaultTest {
         new ByteBuddy(ClassFileVersion.JAVA_V4)
                 .subclass(Object.class)
                 .defineField(FOO, Void.class)
-                .annotateField(AnnotationDescription.Builder.forType(Foo.class).make())
+                .annotateField(AnnotationDescription.Builder.ofType(Foo.class).build())
                 .make();
     }
 
@@ -292,7 +292,7 @@ public class TypeWriterDefaultTest {
                 .subclass(Object.class)
                 .defineMethod(FOO, void.class)
                 .intercept(StubMethod.INSTANCE)
-                .annotateMethod(AnnotationDescription.Builder.forType(Foo.class).make())
+                .annotateMethod(AnnotationDescription.Builder.ofType(Foo.class).build())
                 .make();
     }
 

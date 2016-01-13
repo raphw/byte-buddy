@@ -124,7 +124,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
     public void testPackageRebasement() throws Exception {
         Class<?> packageType = new ByteBuddy()
                 .rebase(Sample.class.getPackage(), ClassFileLocator.ForClassLoader.of(getClass().getClassLoader()))
-                .annotateType(AnnotationDescription.Builder.forType(Baz.class).make())
+                .annotateType(AnnotationDescription.Builder.ofType(Baz.class).build())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
@@ -181,6 +181,7 @@ public class RebaseDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderForI
                 TypeDescription rawTypeDescription = mock(TypeDescription.class);
                 when(rawTypeDescription.asErasure()).thenReturn(rawTypeDescription);
                 when(rawTypeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+                when(rawTypeDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
                 TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
                 when(typeDescription.asGenericType()).thenReturn(typeDescription);
                 when(typeDescription.asErasure()).thenReturn(rawTypeDescription);

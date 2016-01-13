@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.utility.CompoundList;
 
+import java.lang.annotation.ElementType;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
@@ -195,7 +196,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The generic super type of the instrumented type.
          */
-        private final Generic superType;
+        private final Generic superClass;
 
         /**
          * The instrumented type's type variables in their tokenized form.
@@ -273,7 +274,7 @@ public interface InstrumentedType extends TypeDescription {
          * @param name                   The binary name of the instrumented type.
          * @param modifiers              The modifiers of the instrumented type.
          * @param typeVariables          The instrumented type's type variables in their tokenized form.
-         * @param superType              The generic super type of the instrumented type.
+         * @param superClass             The generic super type of the instrumented type.
          * @param interfaceTypes         A list of interfaces of the instrumented type.
          * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
          * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
@@ -290,7 +291,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected Default(String name,
                           int modifiers,
-                          Generic superType,
+                          Generic superClass,
                           List<? extends TypeVariableToken> typeVariables,
                           List<? extends Generic> interfaceTypes,
                           List<? extends FieldDescription.Token> fieldTokens,
@@ -308,7 +309,7 @@ public interface InstrumentedType extends TypeDescription {
             this.name = name;
             this.modifiers = modifiers;
             this.typeVariables = typeVariables;
-            this.superType = superType;
+            this.superClass = superClass;
             this.interfaceTypes = interfaceTypes;
             this.fieldTokens = fieldTokens;
             this.methodTokens = methodTokens;
@@ -327,15 +328,15 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * Creates an instrumented type that is a subclass of the given super type named as given and with the modifiers.
          *
-         * @param name      The name of the instrumented type.
-         * @param modifiers The modifiers of the instrumented type.
-         * @param superType The super type of the instrumented type.
+         * @param name       The name of the instrumented type.
+         * @param modifiers  The modifiers of the instrumented type.
+         * @param superClass The super type of the instrumented type.
          * @return An instrumented type as a subclass of the given type with the given name and modifiers.
          */
-        public static InstrumentedType.WithFlexibleName subclass(String name, int modifiers, Generic superType) {
+        public static InstrumentedType.WithFlexibleName subclass(String name, int modifiers, Generic superClass) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     Collections.<TypeVariableToken>emptyList(),
                     Collections.<Generic>emptyList(),
                     Collections.<FieldDescription.Token>emptyList(),
@@ -361,7 +362,7 @@ public interface InstrumentedType extends TypeDescription {
         public static InstrumentedType.WithFlexibleName of(TypeDescription typeDescription) {
             return new Default(typeDescription.getName(),
                     typeDescription.getModifiers(),
-                    typeDescription.getSuperType(),
+                    typeDescription.getSuperClass(),
                     typeDescription.getTypeVariables().asTokenList(is(typeDescription)),
                     typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
                     typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
@@ -382,7 +383,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withModifiers(int modifiers) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -403,7 +404,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withField(FieldDescription.Token token) {
             return new Default(this.name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     CompoundList.of(fieldTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
@@ -424,7 +425,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withMethod(MethodDescription.Token token) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -445,7 +446,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     CompoundList.of(this.interfaceTypes, interfaceTypes.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     fieldTokens,
@@ -466,7 +467,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -487,7 +488,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     CompoundList.of(typeVariables, typeVariable.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     interfaceTypes,
                     fieldTokens,
@@ -508,7 +509,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withName(String name) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -529,7 +530,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -550,7 +551,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -626,10 +627,10 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public Generic getSuperType() {
-            return superType == null
+        public Generic getSuperClass() {
+            return superClass == null
                     ? Generic.UNDEFINED
-                    : superType.accept(Generic.Visitor.Substitutor.ForAttachment.of(this));
+                    : superClass.accept(Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
@@ -668,17 +669,25 @@ public interface InstrumentedType extends TypeDescription {
                 throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
             } else if ((getModifiers() & ~ModifierContributor.ForType.MASK) != EMPTY_MASK) {
                 throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for " + this);
+            } else if (isPackageType() && getModifiers() != PackageDescription.PACKAGE_MODIFIERS) {
+                throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for package " + this);
             }
-            TypeDescription.Generic superType = getSuperType();
-            if (superType != null && (!superType.accept(Generic.Visitor.Validator.SUPER_CLASS))) {
-                throw new IllegalStateException("Illegal super class " + getSuperType() + " for " + this);
-            } else if (superType != null && !superType.asErasure().isVisibleTo(this)) {
-                throw new IllegalStateException("Invisible super type " + superType + " for " + this);
+            TypeDescription.Generic superClass = getSuperClass();
+            if (superClass != null) {
+                if (!superClass.accept(Generic.Visitor.Validator.SUPER_CLASS)) {
+                    throw new IllegalStateException("Illegal super class " + superClass + " for " + this);
+                } else if (!superClass.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations on super class " + superClass + " for " + this);
+                } else if (!superClass.asErasure().isVisibleTo(this)) {
+                    throw new IllegalStateException("Invisible super type " + superClass + " for " + this);
+                }
             }
             Set<TypeDescription> interfaceErasures = new HashSet<TypeDescription>();
             for (TypeDescription.Generic interfaceType : getInterfaces()) {
                 if (!interfaceType.accept(Generic.Visitor.Validator.INTERFACE)) {
                     throw new IllegalStateException("Illegal interface " + interfaceType + " for " + this);
+                } else if (!interfaceType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations on interface " + interfaceType + " for " + this);
                 } else if (!interfaceErasures.add(interfaceType.asErasure())) {
                     throw new IllegalStateException("Already implemented interface " + interfaceType + " for " + this);
                 } else if (!interfaceType.asErasure().isVisibleTo(this)) {
@@ -693,15 +702,19 @@ public interface InstrumentedType extends TypeDescription {
             for (TypeDescription.Generic typeVariable : typeVariables) {
                 String variableSymbol = typeVariable.getSymbol();
                 if (!typeVariableNames.add(variableSymbol)) {
-                    throw new IllegalStateException("Duplicate type variable symbol pf " + typeVariable + " for " + this);
+                    throw new IllegalStateException("Duplicate type variable symbol '" + typeVariable + "' for " + this);
                 } else if (!isValidIdentifier(variableSymbol)) {
-                    throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + this);
+                    throw new IllegalStateException("Illegal type variable name '" + typeVariable + "' for " + this);
+                } else if (!Generic.Visitor.Validator.ForTypeAnnotations.ofFormalTypeVariable(typeVariable)) {
+                    throw new IllegalStateException("Illegal type annotation on '" + typeVariable + "' for " + this);
                 }
                 boolean interfaceBound = false;
                 Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
                 for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                     if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                         throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + this);
+                    } else if (!bound.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                        throw new IllegalStateException("Illegal type annotations on type variable " + bound + " for " + this);
                     } else if (!bounds.add(bound)) {
                         throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + this);
                     } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
@@ -715,7 +728,11 @@ public interface InstrumentedType extends TypeDescription {
             }
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
-                if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                if (!annotationDescription.getElementTypes().contains(ElementType.TYPE)
+                        && !(isAnnotation() && annotationDescription.getElementTypes().contains(ElementType.ANNOTATION_TYPE))
+                        && !(isPackageType() && annotationDescription.getElementTypes().contains(ElementType.PACKAGE))) {
+                    throw new IllegalStateException("Cannot add " + annotationDescription + " on " + this);
+                } else if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                     throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);
                 }
             }
@@ -729,14 +746,19 @@ public interface InstrumentedType extends TypeDescription {
                 } else if ((fieldDescription.getModifiers() & ~ModifierContributor.ForField.MASK) != EMPTY_MASK) {
                     throw new IllegalStateException("Illegal field modifiers " + fieldDescription.getModifiers() + " for " + fieldDescription);
                 }
-                if (!fieldDescription.getType().accept(Generic.Visitor.Validator.FIELD)) {
-                    throw new IllegalStateException("Illegal type variable bound " + fieldDescription.getType() + " for " + fieldDescription);
-                } else if (!fieldDescription.isSynthetic() && !fieldDescription.getType().asErasure().isVisibleTo(this)) {
+                Generic fieldType = fieldDescription.getType();
+                if (!fieldType.accept(Generic.Visitor.Validator.FIELD)) {
+                    throw new IllegalStateException("Illegal field type " + fieldType + " for " + fieldDescription);
+                } else if (!fieldType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations on " + fieldType + " for " + this);
+                } else if (!fieldDescription.isSynthetic() && !fieldType.asErasure().isVisibleTo(this)) {
                     throw new IllegalStateException("Invisible field type " + fieldDescription.getType() + " for " + fieldDescription);
                 }
                 Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : fieldDescription.getDeclaredAnnotations()) {
-                    if (!fieldAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                    if (!annotationDescription.getElementTypes().contains(ElementType.FIELD)) {
+                        throw new IllegalStateException("Cannot add " + annotationDescription + " on " + fieldDescription);
+                    } else if (!fieldAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + fieldDescription);
                     }
                 }
@@ -752,15 +774,19 @@ public interface InstrumentedType extends TypeDescription {
                 for (TypeDescription.Generic typeVariable : methodDescription.getTypeVariables()) {
                     String variableSymbol = typeVariable.getSymbol();
                     if (!methodTypeVariableNames.add(variableSymbol)) {
-                        throw new IllegalStateException("Duplicate type variable symbol of " + typeVariable + " for " + methodDescription);
+                        throw new IllegalStateException("Duplicate type variable symbol '" + typeVariable + "' for " + methodDescription);
                     } else if (!isValidIdentifier(variableSymbol)) {
-                        throw new IllegalStateException("Illegal type variable name of " + typeVariable + " for " + methodDescription);
+                        throw new IllegalStateException("Illegal type variable name '" + typeVariable + "' for " + methodDescription);
+                    } else if (!Generic.Visitor.Validator.ForTypeAnnotations.ofFormalTypeVariable(typeVariable)) {
+                        throw new IllegalStateException("Illegal type annotation on '" + typeVariable + "' for " + methodDescription);
                     }
                     boolean interfaceBound = false;
                     Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
                     for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                         if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                             throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + methodDescription);
+                        } else if (!bound.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                            throw new IllegalStateException("Illegal type annotations on bound " + bound + " of " + typeVariable + " for " + this);
                         } else if (!bounds.add(bound)) {
                             throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
@@ -772,32 +798,40 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Type variable " + typeVariable + " for " + methodDescription + " does not define at least one bound");
                     }
                 }
+                Generic returnType = methodDescription.getReturnType();
                 if (methodDescription.isTypeInitializer()) {
                     throw new IllegalStateException("Illegal explicit declaration of a type initializer by " + this);
                 } else if (methodDescription.isConstructor()) {
-                    if (!methodDescription.getReturnType().represents(void.class)) {
+                    if (!returnType.represents(void.class)) {
                         throw new IllegalStateException("A constructor must return void " + methodDescription);
+                    } else if (!returnType.getDeclaredAnnotations().isEmpty()) {
+                        throw new IllegalStateException("The void non-type must not be annotated for " + methodDescription);
                     }
                 } else if (!isValidIdentifier(methodDescription.getInternalName())) {
-                        throw new IllegalStateException("Illegal method name " + methodDescription.getReturnType() + " for " + methodDescription);
-                } else if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
-                        throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                    throw new IllegalStateException("Illegal method name " + returnType + " for " + methodDescription);
+                } else if (!returnType.accept(Generic.Visitor.Validator.METHOD_RETURN)) {
+                    throw new IllegalStateException("Illegal return type " + returnType + " for " + methodDescription);
+                } else if (!returnType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations return type " + returnType + " for " + methodDescription);
                 } else if (!methodDescription.isSynthetic() && !methodDescription.getReturnType().asErasure().isVisibleTo(this)) {
-                        throw new IllegalStateException("Invisible return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                    throw new IllegalStateException("Invisible return type " + methodDescription.getReturnType() + " for " + methodDescription);
                 }
                 Set<String> parameterNames = new HashSet<String>();
                 for (ParameterDescription.InDefinedShape parameterDescription : methodDescription.getParameters()) {
-                    if (!parameterDescription.getType().accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
+                    Generic parameterType = parameterDescription.getType();
+                    if (!parameterType.accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
                         throw new IllegalStateException("Illegal parameter type of " + parameterDescription + " for " + methodDescription);
-                    } else if (!methodDescription.isSynthetic() && !parameterDescription.getType().asErasure().isVisibleTo(this)) {
+                    } else if (!parameterType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                        throw new IllegalStateException("Illegal type annotations return type " + parameterType + " for " + methodDescription);
+                    } else if (!methodDescription.isSynthetic() && !parameterType.asErasure().isVisibleTo(this)) {
                         throw new IllegalStateException("Invisible parameter type of " + parameterDescription + " for " + methodDescription);
                     }
                     if (parameterDescription.isNamed()) {
                         String parameterName = parameterDescription.getName();
                         if (!parameterNames.add(parameterName)) {
-                        throw new IllegalStateException("Duplicate parameter name of " + parameterDescription + " for " + methodDescription);
+                            throw new IllegalStateException("Duplicate parameter name of " + parameterDescription + " for " + methodDescription);
                         } else if (!isValidIdentifier(parameterName)) {
-                        throw new IllegalStateException("Illegal parameter name of " + parameterDescription + " for " + methodDescription);
+                            throw new IllegalStateException("Illegal parameter name of " + parameterDescription + " for " + methodDescription);
                         }
                     }
                     if (parameterDescription.hasModifiers() && (parameterDescription.getModifiers() & ~ModifierContributor.ForParameter.MASK) != EMPTY_MASK) {
@@ -805,7 +839,9 @@ public interface InstrumentedType extends TypeDescription {
                     }
                     Set<TypeDescription> parameterAnnotationTypes = new HashSet<TypeDescription>();
                     for (AnnotationDescription annotationDescription : parameterDescription.getDeclaredAnnotations()) {
-                        if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                        if (!annotationDescription.getElementTypes().contains(ElementType.PARAMETER)) {
+                            throw new IllegalStateException("Cannot add " + annotationDescription + " on " + parameterDescription);
+                        } else if (!parameterAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                             throw new IllegalStateException("Duplicate annotation " + annotationDescription + " of " + parameterDescription + " for " + methodDescription);
                         }
                     }
@@ -816,13 +852,17 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate exception type " + exceptionType + " for " + methodDescription);
                     } else if (!exceptionType.accept(Generic.Visitor.Validator.EXCEPTION)) {
                         throw new IllegalStateException("Illegal exception type " + exceptionType + " for " + methodDescription);
+                    } else if (!exceptionType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                        throw new IllegalStateException("Illegal type annotations on " + exceptionType + " for " + methodDescription);
                     } else if (!methodDescription.isSynthetic() && !exceptionType.asErasure().isVisibleTo(this)) {
                         throw new IllegalStateException("Invisible exception type " + exceptionType + " for " + methodDescription);
                     }
                 }
                 Set<TypeDescription> methodAnnotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : methodDescription.getDeclaredAnnotations()) {
-                    if (!methodAnnotationTypes.add(annotationDescription.getAnnotationType())) {
+                    if (!annotationDescription.getElementTypes().contains(methodDescription.isMethod() ? ElementType.METHOD : ElementType.CONSTRUCTOR)) {
+                        throw new IllegalStateException("Cannot add " + annotationDescription + " on " + methodDescription);
+                    } else if (!methodAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                         throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + methodDescription);
                     }
                 }

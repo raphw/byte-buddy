@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -13,6 +14,7 @@ import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.mock;
 
 public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGenericTest {
 
@@ -41,8 +43,8 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     }
 
     @Override
-    protected TypeDescription.Generic describeSuperType(Class<?> type) {
-        return describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperType(type))
+    protected TypeDescription.Generic describeSuperClass(Class<?> type) {
+        return describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(type))
                 .accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(new TypeDescription.ForLoadedType(type)));
     }
 
@@ -103,6 +105,11 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     @Test
     public void testMultipleArityArray() throws Exception {
         assertThat(TypeDescription.Generic.Builder.rawType(Foo.class).asArray(2).build().getComponentType().getComponentType().represents(Foo.class), is(true));
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testCannotAnnotateVoid() throws Exception {
+        TypeDescription.Generic.Builder.rawType(void.class).annotate(mock(AnnotationDescription.class)).build();
     }
 
     @Test

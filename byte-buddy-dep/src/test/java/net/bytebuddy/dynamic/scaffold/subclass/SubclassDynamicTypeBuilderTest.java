@@ -3,8 +3,10 @@ package net.bytebuddy.dynamic.scaffold.subclass;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
 import net.bytebuddy.description.type.PackageDescription;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.AbstractDynamicTypeBuilderTest;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -47,7 +49,11 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
+    private static final String TYPE_VARIABLE_NAME = "net.bytebuddy.test.precompiled.TypeAnnotation", VALUE = "value";
+
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
+
+    private static final int BAZ = 42;
 
     private static final String DEFAULT_METHOD_INTERFACE = "net.bytebuddy.test.precompiled.SingleDefaultMethodInterface";
 
@@ -63,10 +69,6 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Override
     protected DynamicType.Builder<?> createPlain() {
         return new ByteBuddy().subclass(Object.class);
-    }
-
-    protected DynamicType.Builder<?> create(Class<?> type) {
-        return new ByteBuddy().subclass(type);
     }
 
     @Override
@@ -198,7 +200,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     public void testPackageDefinition() throws Exception {
         Class<?> packageType = new ByteBuddy()
                 .makePackage(FOO)
-                .annotateType(AnnotationDescription.Builder.forType(Foo.class).make())
+                .annotateType(AnnotationDescription.Builder.ofType(Foo.class).build())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
@@ -296,7 +298,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testDoesNotOverrideMethodWithPackagePrivateReturnType() throws Exception {
-        Class<?> type = create(PackagePrivateReturnType.class)
+        Class<?> type = new ByteBuddy()
+                .subclass(PackagePrivateReturnType.class)
                 .name("net.bytebuddy.test.generated." + FOO)
                 .method(isDeclaredBy(PackagePrivateReturnType.class))
                 .intercept(StubMethod.INSTANCE)
@@ -313,7 +316,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testDoesNotOverrideMethodWithPackagePrivateArgumentType() throws Exception {
-        Class<?> type = create(PackagePrivateArgumentType.class)
+        Class<?> type = new ByteBuddy()
+                .subclass(PackagePrivateArgumentType.class)
                 .name("net.bytebuddy.test.generated." + FOO)
                 .method(isDeclaredBy(PackagePrivateArgumentType.class))
                 .intercept(StubMethod.INSTANCE)
@@ -330,7 +334,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testDoesNotOverridePrivateMethod() throws Exception {
-        Class<?> type = create(PrivateMethod.class)
+        Class<?> type = new ByteBuddy()
+                .subclass(PrivateMethod.class)
                 .method(isDeclaredBy(PrivateMethod.class))
                 .intercept(StubMethod.INSTANCE)
                 .make()
@@ -346,7 +351,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testGenericType() throws Exception {
-        Class<?> dynamicType = create(GenericType.Inner.class)
+        Class<?> dynamicType = new ByteBuddy()
+                .subclass(GenericType.Inner.class)
                 .method(named(FOO).or(named("call"))).intercept(StubMethod.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -384,7 +390,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @SuppressWarnings("unchecked")
     public void testBridgeMethodCreation() throws Exception {
-        Class<?> dynamicType = create(BridgeRetention.Inner.class)
+        Class<?> dynamicType = new ByteBuddy()
+                .subclass(BridgeRetention.Inner.class)
                 .method(named(FOO)).intercept(new Implementation.Simple(new TextConstant(FOO), MethodReturn.REFERENCE))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
@@ -399,7 +406,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @SuppressWarnings("unchecked")
     public void testBridgeMethodCreationForExistingBridgeMethod() throws Exception {
-        Class<?> dynamicType = create(CallSuperMethod.Inner.class)
+        Class<?> dynamicType = new ByteBuddy()
+                .subclass(CallSuperMethod.Inner.class)
                 .method(named(FOO)).intercept(net.bytebuddy.implementation.SuperMethodCall.INSTANCE)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
@@ -418,7 +426,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testBridgeMethodForAbstractMethod() throws Exception {
-        Class<?> dynamicType = create(AbstractGenericType.Inner.class)
+        Class<?> dynamicType = new ByteBuddy()
+                .subclass(AbstractGenericType.Inner.class)
                 .modifiers(Opcodes.ACC_ABSTRACT | Opcodes.ACC_PUBLIC)
                 .method(named(FOO)).withoutCode()
                 .make()
@@ -437,7 +446,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testVisibilityBridge() throws Exception {
-        Class<?> type = create(VisibilityBridge.class)
+        Class<?> type = new ByteBuddy()
+                .subclass(VisibilityBridge.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -461,7 +471,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testNoVisibilityBridgeForNonPublicType() throws Exception {
-        Class<?> type = create(VisibilityBridge.class)
+        Class<?> type = new ByteBuddy()
+                .subclass(VisibilityBridge.class)
                 .modifiers(0)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -472,7 +483,8 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testNoVisibilityBridgeForInheritedType() throws Exception {
-        Class<?> type = create(VisibilityBridgeExtension.class)
+        Class<?> type = new ByteBuddy()
+                .subclass(VisibilityBridgeExtension.class)
                 .modifiers(Opcodes.ACC_PUBLIC)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
@@ -483,13 +495,32 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
 
     @Test
     public void testNoVisibilityBridgeForAbstractMethod() throws Exception {
-        Class<?> type = create(VisibilityBridgeAbstractMethod.class)
+        Class<?> type = new ByteBuddy()
+                .subclass(VisibilityBridgeAbstractMethod.class)
                 .modifiers(Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.INJECTION)
                 .getLoaded();
         assertThat(type.getDeclaredConstructors().length, is(1));
         assertThat(type.getDeclaredMethods().length, is(0));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnSuperClass() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Class<?> type = new ByteBuddy()
+                .subclass(TypeDescription.Generic.Builder.rawType(Object.class)
+                        .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, BAZ).build()))
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        assertThat(type.getSuperclass(), is((Object) Object.class));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(type).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(type).asList().ofType(typeAnnotationType)
+                .getValue(value, Integer.class), is(BAZ));
     }
 
     @Test

@@ -38,8 +38,8 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     }
 
     @Override
-    protected TypeDescription.Generic describeSuperType(Class<?> type) {
-        return TypeDefinition.Sort.describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperType(type));
+    protected TypeDescription.Generic describeSuperClass(Class<?> type) {
+        return TypeDefinition.Sort.describe(type.getGenericSuperclass(), TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(type));
     }
 
     @Override

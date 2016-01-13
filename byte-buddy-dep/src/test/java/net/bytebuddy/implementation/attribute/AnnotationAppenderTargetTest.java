@@ -9,14 +9,18 @@ import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.FieldVisitor;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.TypePath;
 
+import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
-
 public class AnnotationAppenderTargetTest {
 
-    private static final String FOO = "foo";
+    private static final String FOO = "foo", QUX = "qux";
+
+    private static final int BAR = 42;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -55,6 +59,34 @@ public class AnnotationAppenderTargetTest {
     public void testOnMethodParameter() throws Exception {
         new AnnotationAppender.Target.OnMethodParameter(methodVisitor, 0).visit(FOO, true);
         verify(methodVisitor).visitParameterAnnotation(0, FOO, true);
+        verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
+    public void testTypeAnnotationOnField() throws Exception {
+        new AnnotationAppender.Target.OnField(fieldVisitor).visit(FOO, true, BAR, QUX);
+        verify(fieldVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
+        verifyNoMoreInteractions(fieldVisitor);
+    }
+
+    @Test
+    public void testTypeAnnotationOnType() throws Exception {
+        new AnnotationAppender.Target.OnType(classVisitor).visit(FOO, true, BAR, QUX);
+        verify(classVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
+        verifyNoMoreInteractions(classVisitor);
+    }
+
+    @Test
+    public void testTypeAnnotationOnMethod() throws Exception {
+        new AnnotationAppender.Target.OnMethod(methodVisitor).visit(FOO, true, BAR, QUX);
+        verify(methodVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
+        verifyNoMoreInteractions(methodVisitor);
+    }
+
+    @Test
+    public void testTypeAnnotationOnMethodParameter() throws Exception {
+        new AnnotationAppender.Target.OnMethodParameter(methodVisitor, 0).visit(FOO, true, BAR, QUX);
+        verify(methodVisitor).visitTypeAnnotation(eq(BAR), any(TypePath.class), eq(FOO), eq(true));
         verifyNoMoreInteractions(methodVisitor);
     }
 

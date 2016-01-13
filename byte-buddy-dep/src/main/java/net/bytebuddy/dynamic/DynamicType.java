@@ -1510,7 +1510,7 @@ public interface DynamicType {
 
                     @Override
                     public Annotatable<V> typeVariable(String symbol) {
-                        return typeVariable(symbol, Collections.<TypeDefinition>emptyList());
+                        return typeVariable(symbol, Collections.singletonList(Object.class));
                     }
 
                     @Override

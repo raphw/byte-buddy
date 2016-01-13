@@ -21,6 +21,7 @@ import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.dynamic.scaffold.subclass.SubclassDynamicTypeBuilder;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
+import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.AnnotationRetention;
 import net.bytebuddy.implementation.attribute.AnnotationValueFilter;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
@@ -213,25 +214,25 @@ public class ByteBuddy {
      * {@link ConstructorStrategy} by {@link ByteBuddy#subclass(Class, ConstructorStrategy)}.
      * </p>
      *
-     * @param superType The super class or interface type to extend.
+     * @param superClass The super class or interface type to extend.
      * @param <T>       A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(Class<T> superType) {
-        return subclass(new TypeDescription.ForLoadedType(superType));
+    public <T> DynamicType.Builder<T> subclass(Class<T> superClass) {
+        return subclass(new TypeDescription.ForLoadedType(superClass));
     }
 
     /**
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
      * this interface type is created.
      *
-     * @param superType           The super class or interface type to extend.
+     * @param superClass           The super class or interface type to extend.
      * @param constructorStrategy A constructor strategy that determines the
      * @param <T>                 A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
-    public <T> DynamicType.Builder<T> subclass(Class<T> superType, ConstructorStrategy constructorStrategy) {
-        return subclass(new TypeDescription.ForLoadedType(superType), constructorStrategy);
+    public <T> DynamicType.Builder<T> subclass(Class<T> superClass, ConstructorStrategy constructorStrategy) {
+        return subclass(new TypeDescription.ForLoadedType(superClass), constructorStrategy);
     }
 
     /**
@@ -288,7 +289,7 @@ public class ByteBuddy {
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDefinition superType) {
-        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE);
+        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_CLASS);
     }
 
     /**
@@ -475,9 +476,7 @@ public class ByteBuddy {
                 ignoredMethods,
                 ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .defineConstructor(Visibility.PRIVATE).withParameters(String.class, int.class)
-                .intercept(MethodCall.invoke(enumType.getDeclaredMethods()
-                        .filter(isConstructor().and(takesArguments(String.class, int.class))).getOnly())
-                        .withArgument(0, 1))
+                .intercept(SuperMethodCall.INSTANCE)
                 .defineMethod(EnumerationImplementation.ENUM_VALUE_OF_METHOD_NAME,
                         TargetType.class,
                         Visibility.PUBLIC, Ownership.STATIC).withParameters(String.class)

@@ -52,10 +52,10 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     private InstrumentedType instrumentedType;
 
     @Mock
-    private TypeDescription typeDescription, superType, returnType, declaringType;
+    private TypeDescription typeDescription, rawSuperClass, returnType, declaringType;
 
     @Mock
-    private TypeDescription.Generic genericSuperType, genericReturnType;
+    private TypeDescription.Generic superClass, genericReturnType;
 
     @Mock
     private Implementation.Target implementationTarget;
@@ -73,14 +73,14 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     private MethodDescription.SignatureToken token;
 
     @Mock
-    private MethodList superTypeMethods;
+    private MethodList superClassMethods;
 
     @Before
     public void setUp() throws Exception {
         when(implementationTarget.getInstrumentedType()).thenReturn(typeDescription);
         when(methodDescription.asSignatureToken()).thenReturn(token);
         when(genericReturnType.asErasure()).thenReturn(returnType);
-        when(genericSuperType.asErasure()).thenReturn(superType);
+        when(superClass.asErasure()).thenReturn(rawSuperClass);
     }
 
     @Test
@@ -92,10 +92,10 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testConstructor() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(typeDescription.getSuperClass()).thenReturn(superClass);
         when(methodDescription.isConstructor()).thenReturn(true);
-        when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
-        when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
+        when(rawSuperClass.getDeclaredMethods()).thenReturn(superClassMethods);
+        when(superClassMethods.filter(any(ElementMatcher.class))).thenReturn(superClassMethods);
         when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
@@ -103,13 +103,13 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testStaticMethod() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(typeDescription.getSuperClass()).thenReturn(superClass);
         when(methodDescription.isStatic()).thenReturn(true);
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
-        when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
+        when(rawSuperClass.getDeclaredMethods()).thenReturn(superClassMethods);
+        when(superClassMethods.filter(any(ElementMatcher.class))).thenReturn(superClassMethods);
         when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }
@@ -117,14 +117,14 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testNoSuper() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(typeDescription.getSuperClass()).thenReturn(superClass);
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(declaringType.getStackSize()).thenReturn(StackSize.SINGLE);
         when(returnType.getStackSize()).thenReturn(StackSize.SINGLE);
-        when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
-        when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
+        when(rawSuperClass.getDeclaredMethods()).thenReturn(superClassMethods);
+        when(superClassMethods.filter(any(ElementMatcher.class))).thenReturn(superClassMethods);
         when(implementationTarget.invokeDominant(token)).thenReturn(Implementation.SpecialMethodInvocation.Illegal.INSTANCE);
         SuperMethodCall.INSTANCE.appender(implementationTarget).apply(methodVisitor, implementationContext, methodDescription);
     }

@@ -15,7 +15,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class TypeDefinitionSuperTypeIteratorTest {
+public class TypeDefinitionSuperClassIteratorTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -24,38 +24,38 @@ public class TypeDefinitionSuperTypeIteratorTest {
     private TypeDescription typeDescription;
 
     @Mock
-    private TypeDescription.Generic superType;
+    private TypeDescription.Generic superClass;
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
+        when(typeDescription.getSuperClass()).thenReturn(superClass);
     }
 
     @Test
     public void testHasNext() throws Exception {
-        Iterator<TypeDefinition> iterator = new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription);
+        Iterator<TypeDefinition> iterator = new TypeDefinition.SuperClassIterator(typeDescription);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((TypeDefinition) superType));
+        assertThat(iterator.next(), is((TypeDefinition) superClass));
         assertThat(iterator.hasNext(), is(false));
     }
 
     @Test(expected = NoSuchElementException.class)
     public void testHasNotNext() throws Exception {
-        Iterator<TypeDefinition> iterator = new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription);
+        Iterator<TypeDefinition> iterator = new TypeDefinition.SuperClassIterator(typeDescription);
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
-        assertThat(iterator.next(), is((TypeDefinition) superType));
+        assertThat(iterator.next(), is((TypeDefinition) superClass));
         iterator.next();
     }
 
     @Test(expected = UnsupportedOperationException.class)
     public void testNoRemoval() throws Exception {
-        new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription).remove();
+        new TypeDefinition.SuperClassIterator(typeDescription).remove();
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.SuperTypeIterator.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeDefinition.SuperClassIterator.class).applyBasic();
     }
 }

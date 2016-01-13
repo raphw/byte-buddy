@@ -2089,7 +2089,7 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (implementationTarget.getInstrumentedType().getSuperType() == null) {
+                if (implementationTarget.getInstrumentedType().getSuperClass() == null) {
                     throw new IllegalStateException("Cannot invoke super method for " + implementationTarget.getInstrumentedType());
                 } else if (!methodDescription.isInvokableOn(implementationTarget.getOriginType().asErasure())) {
                     throw new IllegalStateException("Cannot invoke " + methodDescription + " as super method of " + implementationTarget.getInstrumentedType());

@@ -77,6 +77,13 @@ public interface AnnotationDescription {
     RetentionPolicy getRetention();
 
     /**
+     * Returns a set of all {@link ElementType}s that can declare this annotation.
+     *
+     * @return A set of all element types that can declare this annotation.
+     */
+    Set<ElementType> getElementTypes();
+
+    /**
      * Checks if this annotation is inherited.
      *
      * @return {@code true} if this annotation is inherited.
@@ -1422,12 +1429,28 @@ public interface AnnotationDescription {
      */
     abstract class AbstractBase implements AnnotationDescription {
 
+        /**
+         * An array containing all element types that are a legal annotation target when such a target
+         * is not specified explicitly.
+         */
+        private static final ElementType[] DEFAULT_TARGET = new ElementType[]{ElementType.ANNOTATION_TYPE,
+                ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
+                ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE, ElementType.TYPE_PARAMETER};
+
         @Override
         public RetentionPolicy getRetention() {
             AnnotationDescription.Loadable<Retention> retention = getAnnotationType().getDeclaredAnnotations().ofType(Retention.class);
             return retention == null
-                    ? RetentionPolicy.SOURCE
+                    ? RetentionPolicy.CLASS
                     : retention.loadSilent().value();
+        }
+
+        @Override
+        public Set<ElementType> getElementTypes() {
+            AnnotationDescription.Loadable<Target> target = getAnnotationType().getDeclaredAnnotations().ofType(Target.class);
+            return new HashSet<ElementType>(Arrays.asList(target == null
+                    ? DEFAULT_TARGET
+                    : target.loadSilent().value()));
         }
 
         @Override
@@ -1787,8 +1810,8 @@ public interface AnnotationDescription {
          * @param annotationType The annotation type.
          * @return A builder for creating an annotation of the given type.
          */
-        public static Builder forType(Class<? extends Annotation> annotationType) {
-            return forType(new TypeDescription.ForLoadedType(annotationType));
+        public static Builder ofType(Class<? extends Annotation> annotationType) {
+            return ofType(new TypeDescription.ForLoadedType(annotationType));
         }
 
         /**
@@ -1797,7 +1820,7 @@ public interface AnnotationDescription {
          * @param annotationType A description of the annotation type.
          * @return A builder for creating an annotation of the given type.
          */
-        public static Builder forType(TypeDescription annotationType) {
+        public static Builder ofType(TypeDescription annotationType) {
             if (!annotationType.isAnnotation()) {
                 throw new IllegalArgumentException("Not an annotation type: " + annotationType);
             }
@@ -2211,7 +2234,7 @@ public interface AnnotationDescription {
          *
          * @return An appropriate annotation description.
          */
-        public AnnotationDescription make() {
+        public AnnotationDescription build() {
             for (MethodDescription methodDescription : annotationType.getDeclaredMethods()) {
                 if (annotationValues.get(methodDescription.getName()) == null && methodDescription.getDefaultValue() == null) {
                     throw new IllegalStateException("No value or default value defined for " + methodDescription.getName());

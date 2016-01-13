@@ -55,7 +55,7 @@ public interface MethodGraph {
         }
 
         @Override
-        public MethodGraph getSuperGraph() {
+        public MethodGraph getSuperClassGraph() {
             return this;
         }
 
@@ -91,7 +91,7 @@ public interface MethodGraph {
          *
          * @return A graph representing the view on this represented type's super type.
          */
-        MethodGraph getSuperGraph();
+        MethodGraph getSuperClassGraph();
 
         /**
          * Returns a graph representing the view on this represented type's directly implemented interface type.
@@ -112,9 +112,9 @@ public interface MethodGraph {
             private final MethodGraph methodGraph;
 
             /**
-             * The super type's method graph.
+             * The super class's method graph.
              */
-            private final MethodGraph superGraph;
+            private final MethodGraph superClassGraph;
 
             /**
              * A mapping of method graphs of the represented type's directly implemented interfaces to their graph representatives.
@@ -125,18 +125,18 @@ public interface MethodGraph {
              * Creates a new delegation method graph.
              *
              * @param methodGraph     The represented type's method graph.
-             * @param superGraph      The super type's method graph.
+             * @param superClassGraph      The super class's method graph.
              * @param interfaceGraphs A mapping of method graphs of the represented type's directly implemented interfaces to their graph representatives.
              */
-            public Delegation(MethodGraph methodGraph, MethodGraph superGraph, Map<TypeDescription, MethodGraph> interfaceGraphs) {
+            public Delegation(MethodGraph methodGraph, MethodGraph superClassGraph, Map<TypeDescription, MethodGraph> interfaceGraphs) {
                 this.methodGraph = methodGraph;
-                this.superGraph = superGraph;
+                this.superClassGraph = superClassGraph;
                 this.interfaceGraphs = interfaceGraphs;
             }
 
             @Override
-            public MethodGraph getSuperGraph() {
-                return superGraph;
+            public MethodGraph getSuperClassGraph() {
+                return superClassGraph;
             }
 
             @Override
@@ -163,14 +163,14 @@ public interface MethodGraph {
                 if (other == null || getClass() != other.getClass()) return false;
                 Delegation that = (Delegation) other;
                 return methodGraph.equals(that.methodGraph)
-                        && superGraph.equals(that.superGraph)
+                        && superClassGraph.equals(that.superClassGraph)
                         && interfaceGraphs.equals(that.interfaceGraphs);
             }
 
             @Override
             public int hashCode() {
                 int result = methodGraph.hashCode();
-                result = 31 * result + superGraph.hashCode();
+                result = 31 * result + superClassGraph.hashCode();
                 result = 31 * result + interfaceGraphs.hashCode();
                 return result;
             }
@@ -179,7 +179,7 @@ public interface MethodGraph {
             public String toString() {
                 return "MethodGraph.Linked.Delegation{" +
                         "methodGraph=" + methodGraph +
-                        ", superGraph=" + superGraph +
+                        ", superClassGraph=" + superClassGraph +
                         ", interfaceGraphs=" + interfaceGraphs +
                         '}';
             }
@@ -500,16 +500,16 @@ public interface MethodGraph {
             public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 Map<TypeDefinition, Key.Store<T>> snapshots = new HashMap<TypeDefinition, Key.Store<T>>();
                 Key.Store<?> rootStore = doAnalyze(typeDefinition, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
-                TypeDescription.Generic superType = typeDefinition.getSuperType();
+                TypeDescription.Generic superClass = typeDefinition.getSuperClass();
                 List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
                 for (TypeDescription.Generic interfaceType : interfaceTypes) {
                     interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
-                        superType == null
+                        superClass == null
                                 ? Empty.INSTANCE
-                                : snapshots.get(superType).asGraph(merger),
+                                : snapshots.get(superClass).asGraph(merger),
                         interfaceGraphs);
             }
 
@@ -559,7 +559,7 @@ public interface MethodGraph {
             protected Key.Store<T> doAnalyze(TypeDefinition typeDefinition,
                                              Map<TypeDefinition, Key.Store<T>> snapshots,
                                              ElementMatcher<? super MethodDescription> relevanceMatcher) {
-                Key.Store<T> store = analyzeNullable(typeDefinition.getSuperType(), snapshots, relevanceMatcher);
+                Key.Store<T> store = analyzeNullable(typeDefinition.getSuperClass(), snapshots, relevanceMatcher);
                 Key.Store<T> interfaceStore = new Key.Store<T>();
                 for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces()) {
                     interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, relevanceMatcher));
