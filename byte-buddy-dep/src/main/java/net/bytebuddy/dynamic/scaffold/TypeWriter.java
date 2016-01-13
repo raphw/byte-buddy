@@ -2976,6 +2976,20 @@ public interface TypeWriter<T> {
                 }
 
                 @Override
+                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                    return annotationRetention.isEnabled()
+                            ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                            : IGNORE_ANNOTATION;
+                }
+
+                @Override
+                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                    return annotationRetention.isEnabled()
+                            ? super.visitAnnotation(descriptor, visible)
+                            : IGNORE_ANNOTATION;
+                }
+
+                @Override
                 public FieldVisitor visitField(int modifiers,
                                                String internalName,
                                                String descriptor,
@@ -3107,6 +3121,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
                     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? super.visitAnnotation(descriptor, visible)
@@ -3169,6 +3190,13 @@ public interface TypeWriter<T> {
                     @Override
                     public AnnotationVisitor visitAnnotationDefault() {
                         return IGNORE_ANNOTATION; // Annotation types can never be rebased.
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
                     }
 
                     @Override
@@ -3247,6 +3275,13 @@ public interface TypeWriter<T> {
                     @Override
                     public AnnotationVisitor visitAnnotationDefault() {
                         return IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
                     }
 
                     @Override

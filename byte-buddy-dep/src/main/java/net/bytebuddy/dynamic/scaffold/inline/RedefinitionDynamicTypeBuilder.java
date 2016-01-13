@@ -61,7 +61,9 @@ public class RedefinitionDynamicTypeBuilder<T> extends DynamicType.Builder.Abstr
         this(instrumentedType,
                 new FieldRegistry.Default(),
                 new MethodRegistry.Default(),
-                new TypeAttributeAppender.ForInstrumentedType.Differentiating(originalType),
+                annotationRetention.isEnabled()
+                        ? new TypeAttributeAppender.ForInstrumentedType.Differentiating(originalType)
+                        : TypeAttributeAppender.ForInstrumentedType.INSTANCE,
                 AsmVisitorWrapper.NoOp.INSTANCE,
                 classFileVersion,
                 auxiliaryTypeNamingStrategy,
