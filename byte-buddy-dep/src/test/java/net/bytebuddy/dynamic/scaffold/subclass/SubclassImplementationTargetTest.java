@@ -17,8 +17,6 @@ import org.mockito.Mockito;
 import org.objectweb.asm.MethodVisitor;
 import org.objectweb.asm.Opcodes;
 
-import java.util.Collections;
-
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.*;
@@ -47,7 +45,7 @@ public class SubclassImplementationTargetTest extends AbstractImplementationTarg
     public void setUp() throws Exception {
         when(superGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
-        when(instrumentedType.getSuperType()).thenReturn(superType);
+        when(instrumentedType.getSuperClass()).thenReturn(superType);
         when(superType.asErasure()).thenReturn(rawSuperType);
         when(superType.asGenericType()).thenReturn(superType);
         when(rawSuperType.asGenericType()).thenReturn(superType);

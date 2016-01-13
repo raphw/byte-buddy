@@ -30,12 +30,14 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     TypeDescription asErasure();
 
     /**
-     * Returns the super type of this type. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
-     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types.
+     * Returns the super class of this type. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
+     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types. Interface types
+     * and the {@link Object} class do not define a super class where {@code null} is returned. Array types define {@link Object}
+     * as their direct super class.
      *
-     * @return The super type of this type.
+     * @return The super class of this type or {@code null} if no super class exists for this type.
      */
-    TypeDescription.Generic getSuperType();
+    TypeDescription.Generic getSuperClass();
 
     /**
      * Returns the interfaces that this type implements. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
@@ -276,7 +278,7 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
             try {
                 return nextType;
             } finally {
-                nextType = nextType.getSuperType();
+                nextType = nextType.getSuperClass();
             }
         }
 

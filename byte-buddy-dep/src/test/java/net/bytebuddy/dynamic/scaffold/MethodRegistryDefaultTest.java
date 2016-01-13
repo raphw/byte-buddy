@@ -331,7 +331,7 @@ public class MethodRegistryDefaultTest {
         TypeDescription.Generic superType = mock(TypeDescription.Generic.class);
         TypeDescription rawSuperType = mock(TypeDescription.class);
         when(superType.asErasure()).thenReturn(rawSuperType);
-        when(typeDescription.getSuperType()).thenReturn(superType);
+        when(typeDescription.getSuperClass()).thenReturn(superType);
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
         when(instrumentedMethod.asToken(ElementMatchers.is(typeDescription))).thenReturn(methodToken);
         when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);

@@ -39,7 +39,7 @@ public class RebaseImplementationTargetFactoryTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(instrumentedType.getSuperType()).thenReturn(superType);
+        when(instrumentedType.getSuperClass()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
         factory = new RebaseImplementationTarget.Factory(methodRebaseResolver);
     }

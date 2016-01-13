@@ -1305,7 +1305,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             if (typeDescription.equals(parameterizedType.asErasure())) {
                                 return true;
                             }
-                            Generic superType = parameterizedType.getSuperType();
+                            Generic superType = parameterizedType.getSuperClass();
                             if (superType != null && isAssignableFrom(superType)) {
                                 return true;
                             }
@@ -1470,7 +1470,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                     throw new IllegalArgumentException("Incompatible generic types: " + parameterizedType + " and " + this.parameterizedType);
                                 }
                             }
-                            Generic superType = parameterizedType.getSuperType();
+                            Generic superType = parameterizedType.getSuperClass();
                             if (superType != null && isAssignableFrom(superType)) {
                                 return true;
                             }
@@ -1497,7 +1497,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             if (parameterizedType.asErasure().equals(typeDescription.asErasure())) {
                                 return true;
                             }
-                            Generic superType = typeDescription.getSuperType();
+                            Generic superType = typeDescription.getSuperClass();
                             if (superType != null && isAssignableFrom(superType)) {
                                 return true;
                             }
@@ -3373,8 +3373,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         abstract class OfNonGenericType extends AbstractBase {
 
             @Override
-            public Generic getSuperType() {
-                Generic superType = asErasure().getSuperType();
+            public Generic getSuperClass() {
+                Generic superType = asErasure().getSuperClass();
                 return superType == null
                         ? UNDEFINED
                         : superType.accept(Visitor.TypeVariableErasing.INSTANCE);
@@ -3606,7 +3606,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
+            public Generic getSuperClass() {
                 return TypeDescription.Generic.OBJECT;
             }
 
@@ -3826,7 +3826,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
+            public Generic getSuperClass() {
                 throw new IllegalStateException("A wildcard does not imply a super type definition: " + this);
             }
 
@@ -4165,8 +4165,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
-                Generic superType = asErasure().getSuperType();
+            public Generic getSuperClass() {
+                Generic superType = asErasure().getSuperClass();
                 return superType == null
                         ? UNDEFINED
                         : superType.accept(Visitor.Substitutor.ForTypeVariableBinding.bind(this));
@@ -4484,7 +4484,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
+            public Generic getSuperClass() {
                 throw new IllegalStateException("A type variable does not imply a super type definition: " + this);
             }
 
@@ -4639,7 +4639,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
-                public Generic getSuperType() {
+                public Generic getSuperClass() {
                     throw new IllegalStateException("A symbolic type variable does not imply a super type definition: " + this);
                 }
 
@@ -4868,8 +4868,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getSuperType() {
-                return resolve().getSuperType();
+            public Generic getSuperClass() {
+                return resolve().getSuperClass();
             }
 
             @Override
@@ -5943,7 +5943,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 return !targetType.isPrimitive();
             }
             // (4) The sub type has a super type and this super type is assignable to the super type.
-            Generic superType = targetType.getSuperType();
+            Generic superType = targetType.getSuperClass();
             if (superType != null && sourceType.isAssignableFrom(superType.asErasure())) {
                 return true;
             }
@@ -6088,7 +6088,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                     generic = true;
                 }
-                Generic superType = getSuperType();
+                Generic superType = getSuperClass();
                 // The object type itself is non generic and implicitly returns a non-generic signature
                 if (superType == null) {
                     superType = TypeDescription.Generic.OBJECT;
@@ -6125,14 +6125,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         @Override
         public AnnotationList getInheritedAnnotations() {
             AnnotationList declaredAnnotations = getDeclaredAnnotations();
-            if (getSuperType() == null) {
+            if (getSuperClass() == null) {
                 return declaredAnnotations;
             } else {
                 Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                 for (AnnotationDescription annotationDescription : declaredAnnotations) {
                     annotationTypes.add(annotationDescription.getAnnotationType());
                 }
-                return new AnnotationList.Explicit(CompoundList.of(declaredAnnotations, getSuperType().asErasure().getInheritedAnnotations().inherited(annotationTypes)));
+                return new AnnotationList.Explicit(CompoundList.of(declaredAnnotations, getSuperClass().asErasure().getInheritedAnnotations().inherited(annotationTypes)));
             }
         }
 
@@ -6379,7 +6379,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return type.getSuperclass() == null
                     ? TypeDescription.Generic.UNDEFINED
                     : new Generic.LazyProjection.ForLoadedSuperType(type);
@@ -6599,7 +6599,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
 
@@ -6765,7 +6765,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return superType;
         }
 
@@ -6869,7 +6869,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return TypeDescription.Generic.OBJECT;
         }
 

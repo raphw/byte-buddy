@@ -5,11 +5,8 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.MethodGraph;
-import net.bytebuddy.dynamic.scaffold.inline.RebaseImplementationTarget;
-import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -37,7 +34,7 @@ public class SubclassImplementationTargetFactoryTest {
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
+        when(instrumentedType.getSuperClass()).thenReturn(genericSuperType);
         when(genericSuperType.asErasure()).thenReturn(superType);
         when(genericSuperType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
     }

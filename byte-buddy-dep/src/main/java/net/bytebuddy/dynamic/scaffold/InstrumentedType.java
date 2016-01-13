@@ -361,7 +361,7 @@ public interface InstrumentedType extends TypeDescription {
         public static InstrumentedType.WithFlexibleName of(TypeDescription typeDescription) {
             return new Default(typeDescription.getName(),
                     typeDescription.getModifiers(),
-                    typeDescription.getSuperType(),
+                    typeDescription.getSuperClass(),
                     typeDescription.getTypeVariables().asTokenList(is(typeDescription)),
                     typeDescription.getInterfaces().accept(Generic.Visitor.Substitutor.ForDetachment.of(typeDescription)),
                     typeDescription.getDeclaredFields().asTokenList(is(typeDescription)),
@@ -626,7 +626,7 @@ public interface InstrumentedType extends TypeDescription {
         }
 
         @Override
-        public Generic getSuperType() {
+        public Generic getSuperClass() {
             return superType == null
                     ? Generic.UNDEFINED
                     : superType.accept(Generic.Visitor.Substitutor.ForAttachment.of(this));
@@ -669,9 +669,9 @@ public interface InstrumentedType extends TypeDescription {
             } else if ((getModifiers() & ~ModifierContributor.ForType.MASK) != EMPTY_MASK) {
                 throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for " + this);
             }
-            TypeDescription.Generic superType = getSuperType();
+            TypeDescription.Generic superType = getSuperClass();
             if (superType != null && (!superType.accept(Generic.Visitor.Validator.SUPER_CLASS))) {
-                throw new IllegalStateException("Illegal super class " + getSuperType() + " for " + this);
+                throw new IllegalStateException("Illegal super class " + getSuperClass() + " for " + this);
             } else if (superType != null && !superType.asErasure().isVisibleTo(this)) {
                 throw new IllegalStateException("Invisible super type " + superType + " for " + this);
             }

@@ -45,7 +45,7 @@ public class TypePoolDefaultTypeDescriptionTest extends AbstractTypeDescriptionT
 
     @Override
     protected TypeDescription.Generic describeSuperType(Class<?> type) {
-        return describe(type).getSuperType();
+        return describe(type).getSuperClass();
     }
 
     @Override

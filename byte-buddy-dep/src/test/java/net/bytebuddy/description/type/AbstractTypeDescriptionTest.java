@@ -271,14 +271,14 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testSuperType() throws Exception {
-        assertThat(describe(Object.class).getSuperType(), nullValue(TypeDescription.Generic.class));
-        assertThat(describe(SampleInterface.class).getSuperType(), nullValue(TypeDescription.Generic.class));
-        assertThat(describe(SampleAnnotation.class).getSuperType(), nullValue(TypeDescription.Generic.class));
-        assertThat(describe(void.class).getSuperType(), nullValue(TypeDescription.Generic.class));
-        assertThat(describe(SampleClass.class).getSuperType(), is(TypeDescription.Generic.OBJECT));
-        assertThat(describe(SampleIndirectInterfaceImplementation.class).getSuperType(),
+        assertThat(describe(Object.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleInterface.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleAnnotation.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(void.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(SampleClass.class).getSuperClass(), is(TypeDescription.Generic.OBJECT));
+        assertThat(describe(SampleIndirectInterfaceImplementation.class).getSuperClass(),
                 is((TypeDefinition) new TypeDescription.ForLoadedType(SampleInterfaceImplementation.class)));
-        assertThat(describe(Object[].class).getSuperType(), is(TypeDescription.Generic.OBJECT));
+        assertThat(describe(Object[].class).getSuperClass(), is(TypeDescription.Generic.OBJECT));
     }
 
     @Test
@@ -451,7 +451,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     @Test
     public void testGenericType() throws Exception {
         assertThat(describe(SampleGenericType.class).getTypeVariables(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getTypeVariables()));
-        assertThat(describe(SampleGenericType.class).getSuperType(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getSuperType()));
+        assertThat(describe(SampleGenericType.class).getSuperClass(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getSuperClass()));
         assertThat(describe(SampleGenericType.class).getInterfaces(), is(new TypeDescription.ForLoadedType(SampleGenericType.class).getInterfaces()));
     }
 

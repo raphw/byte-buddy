@@ -92,7 +92,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testConstructor() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(typeDescription.getSuperClass()).thenReturn(genericSuperType);
         when(methodDescription.isConstructor()).thenReturn(true);
         when(superType.getDeclaredMethods()).thenReturn(superTypeMethods);
         when(superTypeMethods.filter(any(ElementMatcher.class))).thenReturn(superTypeMethods);
@@ -103,7 +103,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testStaticMethod() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(typeDescription.getSuperClass()).thenReturn(genericSuperType);
         when(methodDescription.isStatic()).thenReturn(true);
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getReturnType()).thenReturn(genericReturnType);
@@ -117,7 +117,7 @@ public class SuperMethodCallOtherTest extends AbstractImplementationTest {
     @Test(expected = IllegalStateException.class)
     @SuppressWarnings("unchecked")
     public void testNoSuper() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(genericSuperType);
+        when(typeDescription.getSuperClass()).thenReturn(genericSuperType);
         when(methodDescription.getParameters()).thenReturn((ParameterList) new ParameterList.Empty<ParameterDescription>());
         when(methodDescription.getReturnType()).thenReturn(genericReturnType);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);

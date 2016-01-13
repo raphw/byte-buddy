@@ -54,7 +54,7 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     @Before
     public void setUp() throws Exception {
         when(methodGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
-        when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
+        when(instrumentedType.getSuperClass()).thenReturn(genericSuperType);
         when(genericSuperType.asErasure()).thenReturn(superType);
         when(superType.getInternalName()).thenReturn(BAR);
         when(rebasedMethod.getInternalName()).thenReturn(QUX);

@@ -2760,7 +2760,7 @@ public interface TypePool {
             }
 
             @Override
-            public Generic getSuperType() {
+            public Generic getSuperClass() {
                 return superTypeDescriptor == null || isInterface()
                         ? Generic.UNDEFINED
                         : signatureResolution.resolveSuperType(superTypeDescriptor, typePool, superTypeAnnotationTokens.get(SUPER_TYPE_INDEX), this);
@@ -8023,8 +8023,8 @@ public interface TypePool {
                 }
 
                 @Override
-                public Generic getSuperType() {
-                    return resolve().getSuperType();
+                public Generic getSuperClass() {
+                    return resolve().getSuperClass();
                 }
 
                 @Override

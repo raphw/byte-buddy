@@ -42,7 +42,7 @@ public class TypeDescriptionLatentTest {
 
     @Test
     public void testSuperType() throws Exception {
-        assertThat(new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getSuperType(), is(superType));
+        assertThat(new TypeDescription.Latent(FOO, MODIFIERS, superType, Collections.singletonList(interfaceType)).getSuperClass(), is(superType));
     }
 
     @Test

@@ -824,7 +824,7 @@ public interface TypeWriter<T> {
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
                                 bridgeTarget,
-                                instrumentedType.getSuperType().asErasure(),
+                                instrumentedType.getSuperClass().asErasure(),
                                 attributeAppender);
                     }
 
@@ -2524,7 +2524,7 @@ public interface TypeWriter<T> {
                     return TypeDescription.OBJECT.getInternalName();
                 } else {
                     do {
-                        leftType = leftType.getSuperType().asErasure();
+                        leftType = leftType.getSuperClass().asErasure();
                     } while (!leftType.isAssignableFrom(rightType));
                     return leftType.getInternalName();
                 }
@@ -2957,9 +2957,9 @@ public interface TypeWriter<T> {
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            (instrumentedType.getSuperType() == null ?
+                            (instrumentedType.getSuperClass() == null ?
                                     TypeDescription.OBJECT :
-                                    instrumentedType.getSuperType().asErasure()).getInternalName(),
+                                    instrumentedType.getSuperClass().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
                     typeAttributeAppender.apply(this, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
@@ -3400,9 +3400,9 @@ public interface TypeWriter<T> {
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
-                        (instrumentedType.getSuperType() == null
+                        (instrumentedType.getSuperClass() == null
                                 ? TypeDescription.OBJECT
-                                : instrumentedType.getSuperType().asErasure()).getInternalName(),
+                                : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {

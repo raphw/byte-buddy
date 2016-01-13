@@ -500,7 +500,7 @@ public interface MethodGraph {
             public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 Map<TypeDefinition, Key.Store<T>> snapshots = new HashMap<TypeDefinition, Key.Store<T>>();
                 Key.Store<?> rootStore = doAnalyze(typeDefinition, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
-                TypeDescription.Generic superType = typeDefinition.getSuperType();
+                TypeDescription.Generic superType = typeDefinition.getSuperClass();
                 List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
                 for (TypeDescription.Generic interfaceType : interfaceTypes) {
@@ -559,7 +559,7 @@ public interface MethodGraph {
             protected Key.Store<T> doAnalyze(TypeDefinition typeDefinition,
                                              Map<TypeDefinition, Key.Store<T>> snapshots,
                                              ElementMatcher<? super MethodDescription> relevanceMatcher) {
-                Key.Store<T> store = analyzeNullable(typeDefinition.getSuperType(), snapshots, relevanceMatcher);
+                Key.Store<T> store = analyzeNullable(typeDefinition.getSuperClass(), snapshots, relevanceMatcher);
                 Key.Store<T> interfaceStore = new Key.Store<T>();
                 for (TypeDescription.Generic interfaceType : typeDefinition.getInterfaces()) {
                     interfaceStore = interfaceStore.combineWith(analyze(interfaceType, snapshots, relevanceMatcher));

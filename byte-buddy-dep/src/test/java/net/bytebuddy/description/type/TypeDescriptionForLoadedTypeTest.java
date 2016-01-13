@@ -37,7 +37,7 @@ public class TypeDescriptionForLoadedTypeTest extends AbstractTypeDescriptionTes
 
     @Override
     protected TypeDescription.Generic describeSuperType(Class<?> type) {
-        return new TypeDescription.ForLoadedType(type).getSuperType();
+        return new TypeDescription.ForLoadedType(type).getSuperClass();
     }
 
     @Override

@@ -86,7 +86,7 @@ public class ElementMatchersTest {
     @Test
     public void testIsFieldDefinedShape() throws Exception {
         Field field = GenericFieldType.class.getDeclaredField(FOO);
-        FieldDescription fieldDescription = new TypeDescription.ForLoadedType(GenericFieldType.Inner.class).getSuperType()
+        FieldDescription fieldDescription = new TypeDescription.ForLoadedType(GenericFieldType.Inner.class).getSuperClass()
                 .getDeclaredFields().filter(named(FOO)).getOnly();
         assertThat(ElementMatchers.is(field).matches(fieldDescription), is(true));
         assertThat(ElementMatchers.definedField(ElementMatchers.is(fieldDescription.asDefined())).matches(fieldDescription), is(true));
@@ -122,7 +122,7 @@ public class ElementMatchersTest {
     @Test
     public void testIsConstructorDefinedShape() throws Exception {
         Constructor<?> constructor = GenericConstructorType.class.getDeclaredConstructor(Exception.class);
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(GenericConstructorType.Inner.class).getSuperType()
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(GenericConstructorType.Inner.class).getSuperClass()
                 .getDeclaredMethods().filter(isConstructor()).getOnly();
         assertThat(ElementMatchers.is(constructor).matches(methodDescription), is(true));
         assertThat(ElementMatchers.definedMethod(ElementMatchers.is(methodDescription.asDefined())).matches(methodDescription), is(true));
@@ -207,7 +207,7 @@ public class ElementMatchersTest {
     @Test
     public void testAnyOfConstructorDefinedShape() throws Exception {
         Constructor<?> constructor = GenericConstructorType.class.getDeclaredConstructor(Exception.class);
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(GenericConstructorType.Inner.class).getSuperType()
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(GenericConstructorType.Inner.class).getSuperClass()
                 .getDeclaredMethods().filter(isConstructor()).getOnly();
         assertThat(ElementMatchers.anyOf(constructor).matches(methodDescription), is(true));
         assertThat(ElementMatchers.definedMethod(ElementMatchers.anyOf(methodDescription.asDefined())).matches(methodDescription), is(true));
@@ -229,7 +229,7 @@ public class ElementMatchersTest {
     @Test
     public void testAnyOfFieldDefinedShape() throws Exception {
         Field field = GenericFieldType.class.getDeclaredField(FOO);
-        FieldDescription fieldDescription = new TypeDescription.ForLoadedType(GenericFieldType.Inner.class).getSuperType()
+        FieldDescription fieldDescription = new TypeDescription.ForLoadedType(GenericFieldType.Inner.class).getSuperClass()
                 .getDeclaredFields().filter(named(FOO)).getOnly();
         assertThat(ElementMatchers.anyOf(field).matches(fieldDescription), is(true));
         assertThat(ElementMatchers.definedField(ElementMatchers.anyOf(fieldDescription.asDefined())).matches(fieldDescription), is(true));
@@ -264,7 +264,7 @@ public class ElementMatchersTest {
     @Test
     public void testNoneOfConstructorDefinedShape() throws Exception {
         Constructor<?> constructor = GenericConstructorType.class.getDeclaredConstructor(Exception.class);
-        MethodDescription methodDescription = new TypeDescription.ForLoadedType(GenericConstructorType.Inner.class).getSuperType()
+        MethodDescription methodDescription = new TypeDescription.ForLoadedType(GenericConstructorType.Inner.class).getSuperClass()
                 .getDeclaredMethods().filter(isConstructor()).getOnly();
         assertThat(ElementMatchers.noneOf(constructor).matches(methodDescription), is(false));
         assertThat(ElementMatchers.definedMethod(ElementMatchers.noneOf(methodDescription.asDefined())).matches(methodDescription), is(false));
@@ -298,7 +298,7 @@ public class ElementMatchersTest {
     @Test
     public void testNoneOfFieldDefinedShape() throws Exception {
         Field field = GenericFieldType.class.getDeclaredField(FOO);
-        FieldDescription fieldDescription = new TypeDescription.ForLoadedType(GenericFieldType.Inner.class).getSuperType()
+        FieldDescription fieldDescription = new TypeDescription.ForLoadedType(GenericFieldType.Inner.class).getSuperClass()
                 .getDeclaredFields().filter(named(FOO)).getOnly();
         assertThat(ElementMatchers.noneOf(field).matches(fieldDescription), is(false));
         assertThat(ElementMatchers.definedField(ElementMatchers.noneOf(fieldDescription.asDefined())).matches(fieldDescription), is(false));

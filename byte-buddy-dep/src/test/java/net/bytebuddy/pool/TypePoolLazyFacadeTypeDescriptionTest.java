@@ -45,7 +45,7 @@ public class TypePoolLazyFacadeTypeDescriptionTest extends AbstractTypeDescripti
 
     @Override
     protected TypeDescription.Generic describeSuperType(Class<?> type) {
-        return describe(type).getSuperType();
+        return describe(type).getSuperClass();
     }
 
     @Override

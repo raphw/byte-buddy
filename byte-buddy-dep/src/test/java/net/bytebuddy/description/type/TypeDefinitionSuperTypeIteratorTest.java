@@ -28,7 +28,7 @@ public class TypeDefinitionSuperTypeIteratorTest {
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.getSuperType()).thenReturn(superType);
+        when(typeDescription.getSuperClass()).thenReturn(superType);
     }
 
     @Test

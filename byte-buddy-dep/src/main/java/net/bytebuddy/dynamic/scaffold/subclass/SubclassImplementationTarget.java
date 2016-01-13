@@ -37,7 +37,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      */
     protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeResolver originTypeResolver) {
         super(instrumentedType, methodGraph);
-        TypeDescription.Generic superType = instrumentedType.getSuperType();
+        TypeDescription.Generic superType = instrumentedType.getSuperClass();
         MethodList<?> superConstructors = superType == null
                 ? new MethodList.Empty<MethodDescription.InGenericShape>()
                 : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
@@ -65,7 +65,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         MethodDescription methodDescription = superConstructors.get(token);
         return methodDescription == null
                 ? Implementation.SpecialMethodInvocation.Illegal.INSTANCE
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asErasure());
+                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperClass().asErasure());
     }
 
     /**
@@ -77,7 +77,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.SignatureToken token) {
         MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(token);
         return methodNode.getSort().isUnique()
-                ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asErasure())
+                ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperClass().asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
@@ -124,7 +124,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         SUPER_TYPE {
             @Override
             protected TypeDefinition identify(TypeDescription typeDescription) {
-                return typeDescription.getSuperType();
+                return typeDescription.getSuperClass();
             }
         },
 

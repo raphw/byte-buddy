@@ -53,7 +53,7 @@ public class ConstructorStrategyDefaultTest {
                 any(MethodRegistry.Handler.class),
                 any(MethodAttributeAppender.Factory.class),
                 any(MethodTransformer.class))).thenReturn(methodRegistry);
-        when(instrumentedType.getSuperType()).thenReturn(superType);
+        when(instrumentedType.getSuperClass()).thenReturn(superType);
         when(superType.getDeclaredMethods()).thenReturn((MethodList) methodList);
         when(filteredMethodList.asTokenList(ElementMatchers.is(instrumentedType))).thenReturn(filteredMethodTokenList);
     }
@@ -78,7 +78,7 @@ public class ConstructorStrategyDefaultTest {
                 eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSuperType();
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);
     }
 
@@ -94,7 +94,7 @@ public class ConstructorStrategyDefaultTest {
                 eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSuperType();
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);
     }
 
@@ -111,7 +111,7 @@ public class ConstructorStrategyDefaultTest {
                 eq(MethodAttributeAppender.NoOp.INSTANCE),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSuperType();
+        verify(instrumentedType, atLeastOnce()).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);
     }
 
