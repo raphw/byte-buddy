@@ -1487,7 +1487,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     public static boolean ofFormalTypeVariable(Generic typeVariable) {
                         Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                         for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
-                            if (!annotationDescription.getElementTypes().contains(INSTANCE.typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
+                            if (!annotationDescription.getElementTypes().contains(INSTANCE.typeParameter) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
                                 return false;
                             }
                         }

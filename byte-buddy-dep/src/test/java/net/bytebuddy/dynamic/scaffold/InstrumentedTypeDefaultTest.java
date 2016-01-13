@@ -634,6 +634,39 @@ public class InstrumentedTypeDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testAnnotationTypeIncompatibleSuperClassTypeAnnotation() throws Exception {
+        InstrumentedType.Default.subclass(FOO, ModifierReviewable.EMPTY_MASK, TypeDescription.Generic.Builder.rawType(Object.class)
+                .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationTypeIncompatibleInterfaceTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withInterfaces(new TypeList.Generic.Explicit(TypeDescription.Generic.Builder.rawType(Runnable.class)
+                        .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationTypeIncompatibleTypeVariableTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withTypeVariable(new TypeVariableToken(FOO,
+                        Collections.singletonList(TypeDescription.Generic.OBJECT),
+                        Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationTypeIncompatibleTypeVariableBoundTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withTypeVariable(new TypeVariableToken(FOO,
+                        Collections.singletonList(TypeDescription.Generic.Builder.rawType(Object.class)
+                                .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testFieldDuplicateName() throws Exception {
         makePlainInstrumentedType()
                 .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT))
@@ -678,6 +711,16 @@ public class InstrumentedTypeDefaultTest {
                 .withField(new FieldDescription.Token(FOO, ModifierContributor.EMPTY_MASK, TypeDescription.Generic.OBJECT, Collections.singletonList(
                         AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()
                 ))).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldIncompatibleTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withField(new FieldDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        TypeDescription.Generic.Builder.rawType(Runnable.class)
+                                .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))
+                .validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -752,6 +795,48 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIncompatibleReturnTypeTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        TypeDescription.Generic.Builder.rawType(Runnable.class)
+                                .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIllegalTypeVariableTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.singletonList(new TypeVariableToken(FOO,
+                                Collections.singletonList(TypeDescription.Generic.OBJECT),
+                                Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIllegalTypeVariableBoundTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.singletonList(new TypeVariableToken(FOO,
+                                Collections.singletonList(TypeDescription.Generic.Builder.rawType(Object.class).build(
+                                AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())))),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
                 .validated();
     }
@@ -970,6 +1055,21 @@ public class InstrumentedTypeDefaultTest {
                         TypeDescription.Generic.OBJECT,
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDescription.Generic.OBJECT),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testMethodIncompatibleExceptionTypeTypeAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.singletonList(TypeDescription.Generic.Builder.rawType(Exception.class)
+                        .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())),
                         Collections.<AnnotationDescription>emptyList(),
                         MethodDescription.NO_DEFAULT_VALUE))
                 .validated();
