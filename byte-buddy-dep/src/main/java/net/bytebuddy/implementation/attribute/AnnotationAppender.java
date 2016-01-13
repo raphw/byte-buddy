@@ -375,10 +375,11 @@ public interface AnnotationAppender {
         /**
          * Tries to append a given annotation by reflectively reading an annotation.
          *
-         * @param annotation    The annotation to be written.
-         * @param visible       {@code true} if this annotation should be treated as visible at runtime.
-         * @param typeReference The type annotation's type reference.
-         * @param typePath      The type annotation's type path.
+         * @param annotation            The annotation to be written.
+         * @param visible               {@code true} if this annotation should be treated as visible at runtime.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @param typeReference         The type annotation's type reference.
+         * @param typePath              The type annotation's type path.
          */
         private void doAppend(AnnotationDescription annotation,
                               boolean visible,
@@ -499,43 +500,91 @@ public interface AnnotationAppender {
 
         /**
          * Creates a type annotation appender for a type annotations of a super class type.
-         * @param annotationAppender The annotation appender to write any type annotation to.
-         * @param annotationValueFilter The annotation value filter
-         * @return
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @return A visitor for appending type annotations of a super class.
          */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofSuperClass(AnnotationAppender annotationAppender,
                                                                                        AnnotationValueFilter annotationValueFilter) {
             return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newSuperTypeReference(SUPER_CLASS_INDEX));
         }
 
+        /**
+         * Creates a type annotation appender for type annotations of an interface type.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @param index                 The index of the interface type.
+         * @return A visitor for appending type annotations of an interface type.
+         */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofInterfaceType(AnnotationAppender annotationAppender,
                                                                                           AnnotationValueFilter annotationValueFilter,
                                                                                           int index) {
             return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newSuperTypeReference(index));
         }
 
+        /**
+         * Creates a type annotation appender for type annotations of a field's type.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @return A visitor for appending type annotations of a field's type.
+         */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofFieldType(AnnotationAppender annotationAppender,
                                                                                       AnnotationValueFilter annotationValueFilter) {
             return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newTypeReference(TypeReference.FIELD));
         }
 
+        /**
+         * Creates a type annotation appender for type annotations of a method's return type.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @return A visitor for appending type annotations of a method's return type.
+         */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofMethodReturnType(AnnotationAppender annotationAppender,
                                                                                              AnnotationValueFilter annotationValueFilter) {
             return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newTypeReference(TypeReference.METHOD_RETURN));
         }
 
+        /**
+         * Creates a type annotation appender for type annotations of a method's parameter type.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @param index                 The parameter index.
+         * @return A visitor for appending type annotations of a method's parameter type.
+         */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofMethodParameterType(AnnotationAppender annotationAppender,
                                                                                                 AnnotationValueFilter annotationValueFilter,
                                                                                                 int index) {
             return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newFormalParameterReference(index));
         }
 
+        /**
+         * Creates a type annotation appender for type annotations of a method's exception type.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @param index                 The exception type's index.
+         * @return A visitor for appending type annotations of a method's exception type.
+         */
         public static TypeDescription.Generic.Visitor<AnnotationAppender> ofExceptionType(AnnotationAppender annotationAppender,
                                                                                           AnnotationValueFilter annotationValueFilter,
                                                                                           int index) {
             return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newExceptionReference(index));
         }
 
+        /**
+         * Appends all supplied type variables to the supplied method appender.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @param variableOnType        {@code true} if the type variables are declared by a type, {@code false} if they are declared by a method.
+         * @param typeVariables         The type variables to append.
+         * @return The resulting annotation appender.
+         */
         public static AnnotationAppender ofTypeVariable(AnnotationAppender annotationAppender,
                                                         AnnotationValueFilter annotationValueFilter,
                                                         boolean variableOnType,
@@ -543,6 +592,16 @@ public interface AnnotationAppender {
             return ofTypeVariable(annotationAppender, annotationValueFilter, variableOnType, 0, typeVariables);
         }
 
+        /**
+         * Appends all supplied type variables to the supplied method appender.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @param variableOnType        {@code true} if the type variables are declared by a type, {@code false} if they are declared by a method.
+         * @param subListIndex          The index of the first type variable to append. All previous type variables are ignored.
+         * @param typeVariables         The type variables to append.
+         * @return The resulting annotation appender.
+         */
         public static AnnotationAppender ofTypeVariable(AnnotationAppender annotationAppender,
                                                         AnnotationValueFilter annotationValueFilter,
                                                         boolean variableOnType,
