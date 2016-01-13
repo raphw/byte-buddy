@@ -5,9 +5,9 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
@@ -621,11 +621,11 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Creates a stack manipulation that represents the method's invocation.
          *
-         * @param methodDescription The method to be invoked.
-         * @param instrumentedType  The instrumented type.
-         * @return A stack manipulation that invokes the method.
+         * @param invokedMethod      The method to be invoked.
+         * @param instrumentedMethod The instrumented method.
+         * @param instrumentedType   The instrumented type.  @return A stack manipulation that invokes the method.
          */
-        StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType);
+        StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType);
 
         /**
          * Prepares the instrumented type in order to allow for the represented invocation.
@@ -647,12 +647,12 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(
-                        methodDescription.isStatic()
+                        invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
-                        methodDescription.isConstructor()
+                        invokedMethod.isConstructor()
                                 ? Duplication.SINGLE
                                 : StackManipulation.Trivial.INSTANCE
                 );
@@ -680,8 +680,8 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(TypeCreation.forType(methodDescription.getDeclaringType().asErasure()), Duplication.SINGLE);
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+                return new StackManipulation.Compound(TypeCreation.forType(invokedMethod.getDeclaringType().asErasure()), Duplication.SINGLE);
             }
 
             @Override
@@ -726,7 +726,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
                 return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter();
             }
 
@@ -787,9 +787,9 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(
-                        methodDescription.isStatic()
+                        invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter());
@@ -844,10 +844,10 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription methodDescription, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadOffset(variableOffset),
-                        TypeCasting.to(methodDescription.getDeclaringType().asErasure()));
+                        TypeCasting.to(invokedMethod.getDeclaringType().asErasure()));
             }
 
             @Override
@@ -873,14 +873,14 @@ public class MethodCall implements Implementation.Composable {
          *
          * @param instrumentedType  The instrumented type.
          * @param interceptedMethod The method being intercepted.
-         * @param target            The target type.
+         * @param target            The target parameter.
          * @param assigner          The assigner to be used.
          * @param typing            Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return The stack manipulation that loads the represented argument onto the stack.
          */
         StackManipulation resolve(TypeDescription instrumentedType,
                                   MethodDescription interceptedMethod,
-                                  TypeDescription.Generic target,
+                                  ParameterDescription target,
                                   Assigner assigner,
                                   Assigner.Typing typing);
 
@@ -905,10 +905,10 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
-                if (target.isPrimitive()) {
+                if (target.getType().isPrimitive()) {
                     throw new IllegalStateException("Cannot assign null to " + target);
                 }
                 return NullConstant.INSTANCE;
@@ -938,7 +938,7 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 if (interceptedMethod.isStatic()) {
@@ -946,7 +946,7 @@ public class MethodCall implements Implementation.Composable {
                 }
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadOffset(0),
-                        assigner.assign(instrumentedType.asGenericType(), target, typing));
+                        assigner.assign(instrumentedType.asGenericType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + instrumentedType + " to " + target);
                 }
@@ -977,12 +977,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         ClassConstant.of(instrumentedType),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + target);
                 }
@@ -1022,7 +1022,7 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 if (index >= interceptedMethod.getParameters().size()) {
@@ -1031,7 +1031,7 @@ public class MethodCall implements Implementation.Composable {
                 ParameterDescription parameterDescription = interceptedMethod.getParameters().get(index);
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.of(parameterDescription.getType().asErasure()).loadOffset(parameterDescription.getOffset()),
-                        assigner.assign(parameterDescription.getType(), target, typing));
+                        assigner.assign(parameterDescription.getType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + parameterDescription + " to " + target + " for " + interceptedMethod);
                 }
@@ -1135,12 +1135,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass()), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass()), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + value.getClass() + " to " + target);
                 }
@@ -1205,7 +1205,7 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 if (interceptedMethod.isStatic()) {
@@ -1214,7 +1214,7 @@ public class MethodCall implements Implementation.Composable {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter(),
-                        assigner.assign(fieldType, target, typing));
+                        assigner.assign(fieldType, target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign field " + fieldName + " of type " + fieldType + " to " + target);
                 }
@@ -1275,7 +1275,7 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 FieldDescription fieldDescription = locate(instrumentedType);
@@ -1287,7 +1287,7 @@ public class MethodCall implements Implementation.Composable {
                                 ? StackManipulation.Trivial.INSTANCE
                                 : MethodVariableAccess.REFERENCE.loadOffset(0),
                         FieldAccess.forField(fieldDescription).getter(),
-                        assigner.assign(fieldDescription.getType(), target, typing)
+                        assigner.assign(fieldDescription.getType(), target.getType(), typing)
                 );
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + fieldDescription + " to " + target);
@@ -1355,12 +1355,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(boolean.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(boolean.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign boolean value to " + target);
                 }
@@ -1411,12 +1411,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(byte.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(byte.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign byte value to " + target);
                 }
@@ -1467,12 +1467,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(short.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(short.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign short value to " + target);
                 }
@@ -1523,12 +1523,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(char.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(char.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign char value to " + target);
                 }
@@ -1579,12 +1579,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         IntegerConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(int.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign integer value to " + target);
                 }
@@ -1635,12 +1635,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         LongConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(long.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(long.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign long value to " + target);
                 }
@@ -1693,12 +1693,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         FloatConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(float.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(float.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign float value to " + target);
                 }
@@ -1749,12 +1749,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         DoubleConstant.forValue(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(double.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(double.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign double value to " + target);
                 }
@@ -1806,12 +1806,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         new TextConstant(value),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(String.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign String value to " + target);
                 }
@@ -1864,12 +1864,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         ClassConstant.of(typeDescription),
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class), target, typing));
+                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Class.class), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign class value to " + target);
                 }
@@ -1922,12 +1922,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         FieldAccess.forEnumeration(enumerationDescription),
-                        assigner.assign(enumerationDescription.getEnumerationType().asGenericType(), target, typing));
+                        assigner.assign(enumerationDescription.getEnumerationType().asGenericType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign " + enumerationDescription.getEnumerationType() + " value to " + target);
                 }
@@ -1980,12 +1980,12 @@ public class MethodCall implements Implementation.Composable {
             @Override
             public StackManipulation resolve(TypeDescription instrumentedType,
                                              MethodDescription interceptedMethod,
-                                             TypeDescription.Generic target,
+                                             ParameterDescription target,
                                              Assigner assigner,
                                              Assigner.Typing typing) {
                 StackManipulation stackManipulation = new StackManipulation.Compound(
                         javaInstance.asStackManipulation(),
-                        assigner.assign(javaInstance.getInstanceType().asGenericType(), target, typing));
+                        assigner.assign(javaInstance.getInstanceType().asGenericType(), target.getType(), typing));
                 if (!stackManipulation.isValid()) {
                     throw new IllegalStateException("Cannot assign Class value to " + target);
                 }
@@ -2026,11 +2026,11 @@ public class MethodCall implements Implementation.Composable {
         /**
          * Invokes the method.
          *
-         * @param methodDescription    The method to be invoked.
+         * @param invokedMethod        The method to be invoked.
          * @param implementationTarget The implementation target of the instrumented instance.
          * @return A stack manipulation that represents the method invocation.
          */
-        StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget);
+        StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget);
 
         /**
          * Applies a contextual invocation of the provided method, i.e. a static invocation for static methods,
@@ -2044,15 +2044,15 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (methodDescription.isVirtual() && !methodDescription.isInvokableOn(implementationTarget.getInstrumentedType())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getInstrumentedType());
-                } else if (!methodDescription.isVisibleTo(implementationTarget.getInstrumentedType())) {
-                    throw new IllegalStateException(implementationTarget.getInstrumentedType() + " cannot see " + methodDescription);
+            public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
+                if (invokedMethod.isVirtual() && !invokedMethod.isInvokableOn(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
+                } else if (!invokedMethod.isVisibleTo(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException(implementationTarget.getInstrumentedType() + " cannot see " + invokedMethod);
                 }
-                return methodDescription.isVirtual()
-                        ? MethodInvocation.invoke(methodDescription).virtual(implementationTarget.getInstrumentedType())
-                        : MethodInvocation.invoke(methodDescription);
+                return invokedMethod.isVirtual()
+                        ? MethodInvocation.invoke(invokedMethod).virtual(implementationTarget.getInstrumentedType())
+                        : MethodInvocation.invoke(invokedMethod);
             }
 
             @Override
@@ -2090,15 +2090,15 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (!methodDescription.isVirtual()) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " virtually");
-                } else if (!methodDescription.isInvokableOn(typeDescription.asErasure())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + typeDescription);
+            public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
+                if (!invokedMethod.isVirtual()) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
+                } else if (!invokedMethod.isInvokableOn(typeDescription.asErasure())) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + typeDescription);
                 } else if (!typeDescription.asErasure().isVisibleTo(implementationTarget.getInstrumentedType())) {
                     throw new IllegalStateException(typeDescription + " is not visible to " + implementationTarget.getInstrumentedType());
                 }
-                return MethodInvocation.invoke(methodDescription).virtual(typeDescription.asErasure());
+                return MethodInvocation.invoke(invokedMethod).virtual(typeDescription.asErasure());
             }
 
             @Override
@@ -2133,15 +2133,15 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
+            public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
                 if (implementationTarget.getInstrumentedType().getSuperClass() == null) {
                     throw new IllegalStateException("Cannot invoke super method for " + implementationTarget.getInstrumentedType());
-                } else if (!methodDescription.isInvokableOn(implementationTarget.getOriginType().asErasure())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as super method of " + implementationTarget.getInstrumentedType());
+                } else if (!invokedMethod.isInvokableOn(implementationTarget.getOriginType().asErasure())) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " as super method of " + implementationTarget.getInstrumentedType());
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDominant(methodDescription.asSignatureToken());
+                StackManipulation stackManipulation = implementationTarget.invokeDominant(invokedMethod.asSignatureToken());
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as a super method");
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " as a super method");
                 }
                 return stackManipulation;
             }
@@ -2163,13 +2163,13 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation invoke(MethodDescription methodDescription, Target implementationTarget) {
-                if (!methodDescription.isInvokableOn(implementationTarget.getInstrumentedType())) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " as default method of " + implementationTarget.getInstrumentedType());
+            public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
+                if (!invokedMethod.isInvokableOn(implementationTarget.getInstrumentedType())) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " as default method of " + implementationTarget.getInstrumentedType());
                 }
-                StackManipulation stackManipulation = implementationTarget.invokeDefault(methodDescription.getDeclaringType().asErasure(), methodDescription.asSignatureToken());
+                StackManipulation stackManipulation = implementationTarget.invokeDefault(invokedMethod.getDeclaringType().asErasure(), invokedMethod.asSignatureToken());
                 if (!stackManipulation.isValid()) {
-                    throw new IllegalStateException("Cannot invoke " + methodDescription + " on " + implementationTarget.getInstrumentedType());
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + implementationTarget.getInstrumentedType());
                 }
                 return stackManipulation;
             }
@@ -2294,15 +2294,25 @@ public class MethodCall implements Implementation.Composable {
                     typing);
         }
 
-        public MethodCall onArgument(int offset) {
-            if (!(methodLocator instanceof MethodLocator.ForExplicitMethod)) {
-                throw new IllegalStateException("Only explicit methods supported for onArgument, called on " + methodLocator);
-            }
-            TypeDescription.Generic type = methodLocator.resolve(null).getDeclaringType().asGenericType();
+        public MethodCall onArgument(int index) {
+            return new MethodCall(methodLocator,
+                    new TargetHandler.ForMethodParameter(index),
+                    argumentLoaders,
+                    new MethodInvoker.ForVirtualInvocation.OnMethodArgument(index),
+                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    assigner,
+                    typing);
+        }
+
+        public MethodCall onArgument(int index, Class<?> type) {
+            return onArgument(index, new TypeDescription.ForLoadedType(type));
+        }
+
+        public MethodCall onArgument(int offset, TypeDescription typeDescription) {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForMethodParameter(offset),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(type.asErasure()),
+                    new MethodInvoker.ForVirtualInvocation.OnMethodArgument.WithExplicitType(offset, typeDescription),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
@@ -2407,11 +2417,11 @@ public class MethodCall implements Implementation.Composable {
         @Override
         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
             MethodDescription invokedMethod = methodLocator.resolve(instrumentedMethod);
-            TypeList.Generic methodParameters = invokedMethod.getParameters().asTypeList();
-            if (methodParameters.size() != argumentLoaders.size()) {
+            ParameterList<?> parameters = invokedMethod.getParameters();
+            if (parameters.size() != argumentLoaders.size()) {
                 throw new IllegalStateException(invokedMethod + " does not take " + argumentLoaders.size() + " arguments");
             }
-            Iterator<TypeDescription.Generic> parameterIterator = methodParameters.iterator();
+            Iterator<? extends ParameterDescription> parameterIterator = parameters.iterator();
             List<StackManipulation> argumentInstructions = new ArrayList<StackManipulation>(argumentLoaders.size());
             for (ArgumentLoader argumentLoader : argumentLoaders) {
                 argumentInstructions.add(argumentLoader.resolve(implementationTarget.getInstrumentedType(),
@@ -2421,7 +2431,7 @@ public class MethodCall implements Implementation.Composable {
                         typing));
             }
             StackManipulation.Size size = new StackManipulation.Compound(
-                    targetHandler.resolve(invokedMethod, implementationTarget.getInstrumentedType()),
+                    targetHandler.resolve(invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType()),
                     new StackManipulation.Compound(argumentInstructions),
                     methodInvoker.invoke(invokedMethod, implementationTarget),
                     terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, typing)
