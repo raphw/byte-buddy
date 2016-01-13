@@ -1490,11 +1490,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             if (!annotationDescription.getElementTypes().contains(INSTANCE.typeUse) || !annotationTypes.add(annotationDescription.getAnnotationType())) {
                                 return false;
                             }
-                            for (Generic bound : typeVariable.getUpperBounds()) {
-                                if (!bound.accept(INSTANCE)) {
-                                    return false;
-                                }
-                            }
                         }
                         return true;
                     }
@@ -5867,6 +5862,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic doBuild() {
+                    if (typeDescription.represents(void.class) && !annotations.isEmpty()) {
+                        throw new IllegalArgumentException("The void non-type cannot be annotated");
+                    }
                     return new Generic.OfNonGenericType.Latent(typeDescription, annotations);
                 }
 
@@ -6956,7 +6954,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          *
          * @param name       The name of the type.
          * @param modifiers  The modifiers of the type.
-         * @param superClass  The super type or {@code null} if no such type exists.
+         * @param superClass The super type or {@code null} if no such type exists.
          * @param interfaces The interfaces that this type implements.
          */
         public Latent(String name, int modifiers, Generic superClass, List<? extends Generic> interfaces) {

@@ -686,6 +686,8 @@ public interface InstrumentedType extends TypeDescription {
             for (TypeDescription.Generic interfaceType : getInterfaces()) {
                 if (!interfaceType.accept(Generic.Visitor.Validator.INTERFACE)) {
                     throw new IllegalStateException("Illegal interface " + interfaceType + " for " + this);
+                } else if (!interfaceType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations on interface " + interfaceType + " for " + this);
                 } else if (!interfaceErasures.add(interfaceType.asErasure())) {
                     throw new IllegalStateException("Already implemented interface " + interfaceType + " for " + this);
                 } else if (!interfaceType.asErasure().isVisibleTo(this)) {
@@ -703,12 +705,16 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Duplicate type variable symbol '" + typeVariable + "' for " + this);
                 } else if (!isValidIdentifier(variableSymbol)) {
                     throw new IllegalStateException("Illegal type variable name '" + typeVariable + "' for " + this);
+                } else if (!Generic.Visitor.Validator.ForTypeAnnotations.ofFormalTypeVariable(typeVariable)) {
+                    throw new IllegalStateException("Illegal type annotation on '" + typeVariable + "' for " + this);
                 }
                 boolean interfaceBound = false;
                 Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
                 for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                     if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                         throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + this);
+                    } else if (!bound.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                        throw new IllegalStateException("Illegal type annotations on type variable " + bound + " for " + this);
                     } else if (!bounds.add(bound)) {
                         throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + this);
                     } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
@@ -740,9 +746,12 @@ public interface InstrumentedType extends TypeDescription {
                 } else if ((fieldDescription.getModifiers() & ~ModifierContributor.ForField.MASK) != EMPTY_MASK) {
                     throw new IllegalStateException("Illegal field modifiers " + fieldDescription.getModifiers() + " for " + fieldDescription);
                 }
-                if (!fieldDescription.getType().accept(Generic.Visitor.Validator.FIELD)) {
-                    throw new IllegalStateException("Illegal type variable bound " + fieldDescription.getType() + " for " + fieldDescription);
-                } else if (!fieldDescription.isSynthetic() && !fieldDescription.getType().asErasure().isVisibleTo(this)) {
+                Generic fieldType = fieldDescription.getType();
+                if (!fieldType.accept(Generic.Visitor.Validator.FIELD)) {
+                    throw new IllegalStateException("Illegal field type " + fieldType + " for " + fieldDescription);
+                } else if (!fieldType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations on " + fieldType + " for " + this);
+                } else if (!fieldDescription.isSynthetic() && !fieldType.asErasure().isVisibleTo(this)) {
                     throw new IllegalStateException("Invisible field type " + fieldDescription.getType() + " for " + fieldDescription);
                 }
                 Set<TypeDescription> fieldAnnotationTypes = new HashSet<TypeDescription>();
@@ -768,12 +777,16 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate type variable symbol '" + typeVariable + "' for " + methodDescription);
                     } else if (!isValidIdentifier(variableSymbol)) {
                         throw new IllegalStateException("Illegal type variable name '" + typeVariable + "' for " + methodDescription);
+                    } else if (!Generic.Visitor.Validator.ForTypeAnnotations.ofFormalTypeVariable(typeVariable)) {
+                        throw new IllegalStateException("Illegal type annotation on '" + typeVariable + "' for " + methodDescription);
                     }
                     boolean interfaceBound = false;
                     Set<TypeDescription.Generic> bounds = new HashSet<Generic>();
                     for (TypeDescription.Generic bound : typeVariable.getUpperBounds()) {
                         if (!bound.accept(Generic.Visitor.Validator.TYPE_VARIABLE)) {
                             throw new IllegalStateException("Illegal type variable bound " + bound + " of " + typeVariable + " for " + methodDescription);
+                        } else if (!bound.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                            throw new IllegalStateException("Illegal type annotations on bound " + bound + " of " + typeVariable + " for " + this);
                         } else if (!bounds.add(bound)) {
                             throw new IllegalStateException("Duplicate bound " + bound + " of " + typeVariable + " for " + methodDescription);
                         } else if (interfaceBound && (bound.getSort().isTypeVariable() || !bound.asErasure().isInterface())) {
@@ -785,24 +798,32 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Type variable " + typeVariable + " for " + methodDescription + " does not define at least one bound");
                     }
                 }
+                Generic returnType = methodDescription.getReturnType();
                 if (methodDescription.isTypeInitializer()) {
                     throw new IllegalStateException("Illegal explicit declaration of a type initializer by " + this);
                 } else if (methodDescription.isConstructor()) {
-                    if (!methodDescription.getReturnType().represents(void.class)) {
+                    if (!returnType.represents(void.class)) {
                         throw new IllegalStateException("A constructor must return void " + methodDescription);
+                    } else if (!returnType.getDeclaredAnnotations().isEmpty()) {
+                        throw new IllegalStateException("The void non-type must not be annotated for " + methodDescription);
                     }
                 } else if (!isValidIdentifier(methodDescription.getInternalName())) {
-                    throw new IllegalStateException("Illegal method name " + methodDescription.getReturnType() + " for " + methodDescription);
-                } else if (!methodDescription.getReturnType().accept(Generic.Visitor.Validator.METHOD_RETURN)) {
-                    throw new IllegalStateException("Illegal return type " + methodDescription.getReturnType() + " for " + methodDescription);
+                    throw new IllegalStateException("Illegal method name " + returnType + " for " + methodDescription);
+                } else if (!returnType.accept(Generic.Visitor.Validator.METHOD_RETURN)) {
+                    throw new IllegalStateException("Illegal return type " + returnType + " for " + methodDescription);
+                } else if (!returnType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations return type " + returnType + " for " + methodDescription);
                 } else if (!methodDescription.isSynthetic() && !methodDescription.getReturnType().asErasure().isVisibleTo(this)) {
                     throw new IllegalStateException("Invisible return type " + methodDescription.getReturnType() + " for " + methodDescription);
                 }
                 Set<String> parameterNames = new HashSet<String>();
                 for (ParameterDescription.InDefinedShape parameterDescription : methodDescription.getParameters()) {
-                    if (!parameterDescription.getType().accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
+                    Generic parameterType = parameterDescription.getType();
+                    if (!parameterType.accept(Generic.Visitor.Validator.METHOD_PARAMETER)) {
                         throw new IllegalStateException("Illegal parameter type of " + parameterDescription + " for " + methodDescription);
-                    } else if (!methodDescription.isSynthetic() && !parameterDescription.getType().asErasure().isVisibleTo(this)) {
+                    } else if (!parameterType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                        throw new IllegalStateException("Illegal type annotations return type " + parameterType + " for " + methodDescription);
+                    } else if (!methodDescription.isSynthetic() && !parameterType.asErasure().isVisibleTo(this)) {
                         throw new IllegalStateException("Invisible parameter type of " + parameterDescription + " for " + methodDescription);
                     }
                     if (parameterDescription.isNamed()) {
@@ -831,6 +852,8 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Duplicate exception type " + exceptionType + " for " + methodDescription);
                     } else if (!exceptionType.accept(Generic.Visitor.Validator.EXCEPTION)) {
                         throw new IllegalStateException("Illegal exception type " + exceptionType + " for " + methodDescription);
+                    } else if (!exceptionType.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                        throw new IllegalStateException("Illegal type annotations on " + exceptionType + " for " + methodDescription);
                     } else if (!methodDescription.isSynthetic() && !exceptionType.asErasure().isVisibleTo(this)) {
                         throw new IllegalStateException("Invisible exception type " + exceptionType + " for " + methodDescription);
                     }
