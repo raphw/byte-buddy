@@ -84,20 +84,42 @@ public interface TypeAttributeAppender {
         }
 
         /**
-         * A type attribute appender that writes all annotations of the instrumented types but those that are explicitly excluded.
+         * A type attribute appender that writes all annotations of the instrumented but excludes annotations up to
+         * a given index.
          */
         public static class Differentiating implements TypeAttributeAppender {
 
+            /**
+             * The index of the first annotations that should be directly written onto the type.
+             */
             private final int annotationIndex;
 
+            /**
+             * The index of the first type variable for which type annotations should be directly written onto the type.
+             */
             private final int typeVariableIndex;
 
+            /**
+             * The index of the first interface type for which type annotations should be directly written onto the type.
+             */
             private final int interfaceTypeIndex;
 
-            public Differentiating(TypeDescription instrumentedType) {
-                this(instrumentedType.getDeclaredAnnotations().size(), instrumentedType.getTypeVariables().size(), instrumentedType.getInterfaces().size());
+            /**
+             * Creates a new differentiating type attribute appender.
+             *
+             * @param typeDescription The type for which to resolve all exclusion indices.
+             */
+            public Differentiating(TypeDescription typeDescription) {
+                this(typeDescription.getDeclaredAnnotations().size(), typeDescription.getTypeVariables().size(), typeDescription.getInterfaces().size());
             }
 
+            /**
+             * Creates a new differentiating type attribute appender.
+             *
+             * @param annotationIndex    The index of the first annotations that should be directly written onto the type.
+             * @param typeVariableIndex  The index of the first interface type for which type annotations should be directly written onto the type.
+             * @param interfaceTypeIndex The index of the first interface type for which type annotations should be directly written onto the type.
+             */
             protected Differentiating(int annotationIndex, int typeVariableIndex, int interfaceTypeIndex) {
                 this.annotationIndex = annotationIndex;
                 this.typeVariableIndex = typeVariableIndex;

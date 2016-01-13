@@ -532,6 +532,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
+            /**
+             * A visitor that strips all type annotations of all types.
+             */
             enum AnnotationStripper implements Visitor<Generic> {
 
                 /**
@@ -579,10 +582,21 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     return "TypeDescription.Generic.Visitor.AnnotationStripper." + name();
                 }
 
+                /**
+                 * Representation of a type variable without annotations.
+                 */
                 protected static class NonAnnotatedTypeVariable extends OfTypeVariable {
 
+                    /**
+                     * The represented type variable.
+                     */
                     private final Generic typeVariable;
 
+                    /**
+                     * Creates a new non-annotated type variable.
+                     *
+                     * @param typeVariable The represented type variable.
+                     */
                     protected NonAnnotatedTypeVariable(Generic typeVariable) {
                         this.typeVariable = typeVariable;
                     }
@@ -5258,7 +5272,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param method  The method of which a parameter type is represented.
                  * @param index   The parameter's index.
-                 * @param erasure  The erasures of the method's parameter types.
+                 * @param erasure The erasures of the method's parameter types.
                  */
                 public OfMethodParameter(Method method, int index, Class<?>[] erasure) {
                     this.method = method;
