@@ -1559,6 +1559,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         return isValid(typeDescription) && (!typeDescription.isArray() || typeDescription.getComponentType().accept(this));
                     }
 
+                    /**
+                     * Checks if the supplied type's type annotations are valid.
+                     *
+                     * @param typeDescription The type to validate.
+                     * @return {@code true} if the supplied type's type annotations are valid.
+                     */
                     private boolean isValid(Generic typeDescription) {
                         Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                         for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
