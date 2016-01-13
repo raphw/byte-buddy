@@ -541,8 +541,9 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = createPlain()
-                .typeVariable(FOO).annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
-                .typeVariable(BAR, TypeDescription.Generic.Builder.typeVariable(FOO)
+                .typeVariable(FOO)
+                .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                .typeVariable(BAR, TypeDescription.Generic.Builder.rawType(Object.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 3).build()))
                 .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build())
                 .make()
@@ -552,7 +553,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(type.getTypeParameters()[0].getBounds().length, is(1));
         assertThat(type.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
         assertThat(type.getTypeParameters()[1].getBounds().length, is(1));
-        assertThat(type.getTypeParameters()[1].getBounds()[0], is((Object) type.getTypeParameters()[0]));
+        assertThat(type.getTypeParameters()[1].getBounds()[0], is((Object) Object.class));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().size(), is(1));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(type.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
                 .getValue(value, Integer.class), is(INTEGER_VALUE));
@@ -672,7 +673,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .merge(TypeManifestation.ABSTRACT)
                 .defineMethod(FOO, void.class)
                 .typeVariable(FOO).annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
-                .typeVariable(BAR, TypeDescription.Generic.Builder.typeVariable(FOO)
+                .typeVariable(BAR, TypeDescription.Generic.Builder.rawType(Object.class)
                         .build(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 3).build()))
                 .annotateTypeVariable(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE * 2).build())
                 .withoutCode()
@@ -684,7 +685,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(method.getTypeParameters()[0].getBounds().length, is(1));
         assertThat(method.getTypeParameters()[0].getBounds()[0], is((Object) Object.class));
         assertThat(method.getTypeParameters()[1].getBounds().length, is(1));
-        assertThat(method.getTypeParameters()[1].getBounds()[0], is((Object) method.getTypeParameters()[0]));
+        assertThat(method.getTypeParameters()[1].getBounds()[0], is((Object) Object.class));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().size(), is(1));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(method.getTypeParameters()[0]).asList().ofType(typeAnnotationType)
                 .getValue(value, Integer.class), is(INTEGER_VALUE));
