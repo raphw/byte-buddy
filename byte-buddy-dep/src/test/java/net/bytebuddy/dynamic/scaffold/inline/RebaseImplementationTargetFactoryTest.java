@@ -32,15 +32,15 @@ public class RebaseImplementationTargetFactoryTest {
     private TypeDescription instrumentedType;
 
     @Mock
-    private TypeDescription.Generic superType;
+    private TypeDescription.Generic superClass;
 
     private Implementation.Target.Factory factory;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(instrumentedType.getSuperType()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
+        when(instrumentedType.getSuperClass()).thenReturn(superClass);
+        when(superClass.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
         factory = new RebaseImplementationTarget.Factory(methodRebaseResolver);
     }
 

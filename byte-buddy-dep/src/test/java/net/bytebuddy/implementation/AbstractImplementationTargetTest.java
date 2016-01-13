@@ -48,7 +48,7 @@ public abstract class AbstractImplementationTargetTest {
     public void setUp() throws Exception {
         when(instrumentedType.asErasure()).thenReturn(instrumentedType);
         when(instrumentedType.getInternalName()).thenReturn(BAZ);
-        when(methodGraph.getSuperGraph()).thenReturn(superGraph);
+        when(methodGraph.getSuperClassGraph()).thenReturn(superGraph);
         when(superGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
         when(superGraph.locate(invokableToken)).thenReturn(new MethodGraph.Node.Simple(invokableMethod));
         when(methodGraph.getInterfaceGraph(defaultMethodDeclaringType)).thenReturn(defaultGraph);

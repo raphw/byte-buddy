@@ -55,7 +55,7 @@ public class TypeWriterMethodPoolRecordTest {
     private MethodDescription methodDescription, bridgeTarget;
 
     @Mock
-    private TypeDescription superType;
+    private TypeDescription superClass;
 
     @Mock
     private ByteCodeAppender byteCodeAppender, otherAppender;
@@ -387,7 +387,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testVisibilityBridgeProperties() throws Exception {
         TypeWriter.MethodPool.Record record = new TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge(methodDescription,
                 bridgeTarget,
-                superType,
+                superClass,
                 methodAttributeAppender);
         assertThat(record.getSort(), is(TypeWriter.MethodPool.Record.Sort.IMPLEMENTED));
     }
@@ -396,7 +396,7 @@ public class TypeWriterMethodPoolRecordTest {
     public void testVisibilityBridgePrepending() throws Exception {
         assertThat(new TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge(methodDescription,
                 bridgeTarget,
-                superType,
+                superClass,
                 methodAttributeAppender).prepend(byteCodeAppender), instanceOf(TypeWriter.MethodPool.Record.ForDefinedMethod.WithBody.class));
     }
 

@@ -37,10 +37,10 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      */
     protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeResolver originTypeResolver) {
         super(instrumentedType, methodGraph);
-        TypeDescription.Generic superType = instrumentedType.getSuperType();
-        MethodList<?> superConstructors = superType == null
+        TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+        MethodList<?> superConstructors = superClass == null
                 ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
+                : superClass.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
         this.superConstructors = new HashMap<MethodDescription.SignatureToken, MethodDescription>();
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.asSignatureToken(), superConstructor);
@@ -65,7 +65,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
         MethodDescription methodDescription = superConstructors.get(token);
         return methodDescription == null
                 ? Implementation.SpecialMethodInvocation.Illegal.INSTANCE
-                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperType().asErasure());
+                : Implementation.SpecialMethodInvocation.Simple.of(methodDescription, instrumentedType.getSuperClass().asErasure());
     }
 
     /**
@@ -75,9 +75,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      * @return A special method invocation for a method representing the given method token, if available.
      */
     private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.SignatureToken token) {
-        MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(token);
+        MethodGraph.Node methodNode = methodGraph.getSuperClassGraph().locate(token);
         return methodNode.getSort().isUnique()
-                ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperType().asErasure())
+                ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperClass().asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
     }
 
@@ -119,12 +119,12 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public enum OriginTypeResolver {
 
         /**
-         * Identifies the super type of an instrumented type as the origin type.
+         * Identifies the super type of an instrumented type as the origin class.
          */
-        SUPER_TYPE {
+        SUPER_CLASS {
             @Override
             protected TypeDefinition identify(TypeDescription typeDescription) {
-                return typeDescription.getSuperType();
+                return typeDescription.getSuperClass();
             }
         },
 
@@ -158,9 +158,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public enum Factory implements Implementation.Target.Factory {
 
         /**
-         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#SUPER_TYPE}.
+         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#SUPER_CLASS}.
          */
-        SUPER_TYPE(OriginTypeResolver.SUPER_TYPE),
+        SUPER_CLASS(OriginTypeResolver.SUPER_CLASS),
 
         /**
          * A factory creating a subclass implementation target with a {@link OriginTypeResolver#LEVEL_TYPE}.

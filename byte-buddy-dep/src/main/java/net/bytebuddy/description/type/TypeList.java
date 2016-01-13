@@ -3,6 +3,7 @@ package net.bytebuddy.description.type;
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -12,7 +13,9 @@ import net.bytebuddy.matcher.FilterableList;
 import org.objectweb.asm.Type;
 
 import java.lang.reflect.Constructor;
+import java.lang.reflect.GenericDeclaration;
 import java.lang.reflect.Method;
+import java.lang.reflect.TypeVariable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -361,6 +364,56 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             public int size() {
                 return types.size();
             }
+
+            /**
+             * A type list that represents loaded type variables.
+             */
+            public static class OfTypeVariables extends Generic.AbstractBase {
+
+                /**
+                 * The type variables this list represents.
+                 */
+                private final List<TypeVariable<?>> typeVariables;
+
+                /**
+                 * Creates a new type list for loaded type variables.
+                 *
+                 * @param typeVariable The type variables this list represents.
+                 */
+                protected OfTypeVariables(TypeVariable<?>... typeVariable) {
+                    this(Arrays.asList(typeVariable));
+                }
+
+                /**
+                 * Creates a new type list for loaded type variables.
+                 *
+                 * @param typeVariables The type variables this list represents.
+                 */
+                protected OfTypeVariables(List<TypeVariable<?>> typeVariables) {
+                    this.typeVariables = typeVariables;
+                }
+
+                /**
+                 * Creates a list of the type variables of the supplied generic declaration.
+                 *
+                 * @param genericDeclaration The generic declaration to represent.
+                 * @return A genric type list for the returned generic declaration.
+                 */
+                public static Generic of(GenericDeclaration genericDeclaration) {
+                    return new OfTypeVariables(genericDeclaration.getTypeParameters());
+                }
+
+                @Override
+                public TypeDescription.Generic get(int index) {
+                    TypeVariable<?> typeVariable = typeVariables.get(index);
+                    return TypeDefinition.Sort.describe(typeVariable, TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveTypeVariable(typeVariable));
+                }
+
+                @Override
+                public int size() {
+                    return typeVariables.size();
+                }
+            }
         }
 
         /**
@@ -560,6 +613,11 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                     public String getSymbol() {
                         return typeVariableToken.getSymbol();
                     }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return typeVariableToken.getAnnotations();
+                    }
                 }
             }
         }
@@ -585,7 +643,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
             @Override
             public TypeDescription.Generic get(int index) {
-                return new OfLoadedInterfaceTypes.TypeProjection(type, index, type.getInterfaces()[index]);
+                return new OfLoadedInterfaceTypes.TypeProjection(type, index, type.getInterfaces());
             }
 
             @Override
@@ -601,7 +659,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A type projection of an interface type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The type of which an interface type is represented.
@@ -614,18 +672,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 private final int index;
 
                 /**
-                 * The erasure of the type of the interface this lazy projection represents.
+                 * The erasures of the represented type's interface types.
                  */
-                private final Class<?> erasure;
+                private final Class<?>[] erasure;
 
                 /**
                  * Creates a new lazy type projection of a generic interface type.
                  *
                  * @param type    The type of which an interface type is represented.
                  * @param index   The index of the generic interface type that is represented.
-                 * @param erasure The erasure of the type of the interface this lazy projection represents.
+                 * @param erasure The erasures of the represented type's interface types.
                  */
-                private TypeProjection(Class<?> type, int index, Class<?> erasure) {
+                private TypeProjection(Class<?> type, int index, Class<?>[] erasure) {
                     this.type = type;
                     this.index = index;
                     this.erasure = erasure;
@@ -634,14 +692,19 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 @Override
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = this.type.getGenericInterfaces();
-                    return index < type.length
-                            ? Sort.describe(type[index])
+                    return erasure.length == type.length
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
+                    return new TypeDescription.ForLoadedType(erasure[index]);
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveInterface(type, index);
                 }
             }
         }
@@ -667,7 +730,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
             @Override
             public TypeDescription.Generic get(int index) {
-                return new OfConstructorExceptionTypes.TypeProjection(constructor, index, constructor.getExceptionTypes()[index]);
+                return new OfConstructorExceptionTypes.TypeProjection(constructor, index, constructor.getExceptionTypes());
             }
 
             @Override
@@ -683,7 +746,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The constructor of which the exception types are represented.
@@ -696,18 +759,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 private final int index;
 
                 /**
-                 * The erasure of the type of the interface this lazy projection represents.
+                 * The erasures of the represented constructor's exception types.
                  */
-                private final Class<?> erasure;
+                private final Class<?>[] erasure;
 
                 /**
                  * Creates a lazy type projection of a constructor's exception type.
                  *
                  * @param constructor The constructor of which the exception types are represented.
                  * @param index       The index of the exception type.
-                 * @param erasure     The erasure of the type of the interface this lazy projection represents.
+                 * @param erasure     The erasures of the represented constructor's exception types.
                  */
-                private TypeProjection(Constructor<?> constructor, int index, Class<?> erasure) {
+                private TypeProjection(Constructor<?> constructor, int index, Class<?>[] erasure) {
                     this.constructor = constructor;
                     this.index = index;
                     this.erasure = erasure;
@@ -716,14 +779,19 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 @Override
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericExceptionTypes();
-                    return index < type.length
-                            ? Sort.describe(type[index])
+                    return erasure.length == type.length
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
+                    return new TypeDescription.ForLoadedType(erasure[index]);
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveExceptionType(constructor, index);
                 }
             }
         }
@@ -749,7 +817,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
             @Override
             public TypeDescription.Generic get(int index) {
-                return new OfMethodExceptionTypes.TypeProjection(method, index, method.getExceptionTypes()[index]);
+                return new OfMethodExceptionTypes.TypeProjection(method, index, method.getExceptionTypes());
             }
 
             @Override
@@ -765,7 +833,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
             /**
              * A projection of a specific exception type.
              */
-            private static class TypeProjection extends TypeDescription.Generic.LazyProjection {
+            private static class TypeProjection extends TypeDescription.Generic.LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The method of which the exception types are represented.
@@ -778,18 +846,18 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 private final int index;
 
                 /**
-                 * The erasure of the type of the interface this lazy projection represents.
+                 * The erasures of the represented type's interface type.
                  */
-                private final Class<?> erasure;
+                private final Class<?>[] erasure;
 
                 /**
                  * Creates a lazy type projection of a constructor's exception type.
                  *
                  * @param method  The method of which the exception types are represented.
                  * @param index   The index of the exception type.
-                 * @param erasure The erasure of the type of the interface this lazy projection represents.
+                 * @param erasure The erasures of the represented type's interface type.
                  */
-                public TypeProjection(Method method, int index, Class<?> erasure) {
+                public TypeProjection(Method method, int index, Class<?>[] erasure) {
                     this.method = method;
                     this.index = index;
                     this.erasure = erasure;
@@ -798,14 +866,19 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
                 @Override
                 protected TypeDescription.Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericExceptionTypes();
-                    return index < type.length
-                            ? Sort.describe(type[index])
+                    return erasure.length == type.length
+                            ? Sort.describe(type[index], getAnnotationReader())
                             : asRawType();
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
+                    return new TypeDescription.ForLoadedType(erasure[index]);
+                }
+
+                @Override
+                protected AnnotationReader getAnnotationReader() {
+                    return AnnotationReader.DISPATCHER.resolveExceptionType(method, index);
                 }
             }
         }

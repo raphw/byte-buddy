@@ -30,12 +30,14 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     TypeDescription asErasure();
 
     /**
-     * Returns the super type of this type. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
-     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types.
+     * Returns the super class of this type. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
+     * parameterized types ({@link Sort#PARAMETERIZED}) or generic array types ({@link Sort#GENERIC_ARRAY}) types. Interface types
+     * and the {@link Object} class do not define a super class where {@code null} is returned. Array types define {@link Object}
+     * as their direct super class.
      *
-     * @return The super type of this type.
+     * @return The super class of this type or {@code null} if no super class exists for this type.
      */
-    TypeDescription.Generic getSuperType();
+    TypeDescription.Generic getSuperClass();
 
     /**
      * Returns the interfaces that this type implements. A super type is only defined for non-generic types ({@link Sort#NON_GENERIC}),
@@ -166,16 +168,28 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
          * @return A description of the provided generic type.
          */
         public static TypeDescription.Generic describe(Type type) {
+            return describe(type, TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE);
+        }
+
+        /**
+         * Describes the generic type while using the supplied annotation reader for resolving type annotations if this
+         * language feature is available on the current JVM.
+         *
+         * @param type             The type to describe.
+         * @param annotationReader The annotation reader for extracting type annotations.
+         * @return A description of the provided generic annotated type.
+         */
+        protected static TypeDescription.Generic describe(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
             if (type instanceof Class<?>) {
-                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType((Class<?>) type);
+                return new TypeDescription.Generic.OfNonGenericType.ForLoadedType((Class<?>) type, annotationReader);
             } else if (type instanceof GenericArrayType) {
-                return new TypeDescription.Generic.OfGenericArray.ForLoadedType((GenericArrayType) type);
+                return new TypeDescription.Generic.OfGenericArray.ForLoadedType((GenericArrayType) type, annotationReader);
             } else if (type instanceof ParameterizedType) {
-                return new TypeDescription.Generic.OfParameterizedType.ForLoadedType((ParameterizedType) type);
+                return new TypeDescription.Generic.OfParameterizedType.ForLoadedType((ParameterizedType) type, annotationReader);
             } else if (type instanceof TypeVariable) {
-                return new TypeDescription.Generic.OfTypeVariable.ForLoadedType((TypeVariable<?>) type);
+                return new TypeDescription.Generic.OfTypeVariable.ForLoadedType((TypeVariable<?>) type, annotationReader);
             } else if (type instanceof WildcardType) {
-                return new TypeDescription.Generic.OfWildcardType.ForLoadedType((WildcardType) type);
+                return new TypeDescription.Generic.OfWildcardType.ForLoadedType((WildcardType) type, annotationReader);
             } else {
                 throw new IllegalArgumentException("Unknown type: " + type);
             }
@@ -235,25 +249,25 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     /**
      * An iterator that iterates over a type's class hierarchy.
      */
-    class SuperTypeIterator implements Iterator<TypeDefinition> {
+    class SuperClassIterator implements Iterator<TypeDefinition> {
 
         /**
-         * The next type to represent.
+         * The next class to represent.
          */
-        private TypeDefinition nextType;
+        private TypeDefinition nextClass;
 
         /**
          * Creates a new iterator.
          *
          * @param initialType The initial type of this iterator.
          */
-        public SuperTypeIterator(TypeDefinition initialType) {
-            nextType = initialType;
+        public SuperClassIterator(TypeDefinition initialType) {
+            nextClass = initialType;
         }
 
         @Override
         public boolean hasNext() {
-            return nextType != null;
+            return nextClass != null;
         }
 
         @Override
@@ -262,9 +276,9 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
                 throw new NoSuchElementException("End of type hierarchy");
             }
             try {
-                return nextType;
+                return nextClass;
             } finally {
-                nextType = nextType.getSuperType();
+                nextClass = nextClass.getSuperClass();
             }
         }
 
@@ -275,8 +289,8 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
 
         @Override
         public String toString() {
-            return "TypeDefinition.SuperTypeIterator{" +
-                    "nextType=" + nextType +
+            return "TypeDefinition.SuperClassIterator{" +
+                    "nextClass=" + nextClass +
                     '}';
         }
     }

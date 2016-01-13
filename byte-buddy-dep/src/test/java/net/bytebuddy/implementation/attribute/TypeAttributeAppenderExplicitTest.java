@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.mockito.asm.Type;
@@ -12,29 +13,35 @@ import static org.mockito.Mockito.*;
 public class TypeAttributeAppenderExplicitTest extends AbstractTypeAttributeAppenderTest {
 
     @Test
-    public void testAnnotationAppenderNoRetention() throws Exception {
-        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Qux.Instance()))
-                .apply(classVisitor, instrumentedType, annotationValueFilter);
-        verifyZeroInteractions(classVisitor);
+    public void testAnnotationNoRetention() throws Exception {
+        when(instrumentedType.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
+        when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Qux.Instance())).apply(classVisitor, instrumentedType, annotationValueFilter);
+        verifyNoMoreInteractions(classVisitor);
         verifyZeroInteractions(instrumentedType);
     }
 
     @Test
-    public void testAnnotationAppenderRuntimeRetention() throws Exception {
-        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new Baz.Instance()))
-                .apply(classVisitor, instrumentedType, annotationValueFilter);
+    public void testAnnotationByteCodeRetention() throws Exception {
+        when(instrumentedType.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
+        when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new Baz.Instance())).apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(Baz.class), true);
-        verifyZeroInteractions(classVisitor);
+        verifyNoMoreInteractions(classVisitor);
         verifyZeroInteractions(instrumentedType);
+
     }
 
     @Test
-    public void testAnnotationAppenderByteCodeRetention() throws Exception {
-        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotation(new QuxBaz.Instance()))
-                .apply(classVisitor, instrumentedType, annotationValueFilter);
+    public void testAnnotationClassFileRetention() throws Exception {
+        when(instrumentedType.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
+        when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
+        when(instrumentedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance()));
+        new TypeAttributeAppender.Explicit(new AnnotationList.ForLoadedAnnotations(new QuxBaz.Instance())).apply(classVisitor, instrumentedType, annotationValueFilter);
         verify(classVisitor).visitAnnotation(Type.getDescriptor(QuxBaz.class), false);
         verifyNoMoreInteractions(classVisitor);
-        verifyZeroInteractions(classVisitor);
         verifyZeroInteractions(instrumentedType);
     }
 

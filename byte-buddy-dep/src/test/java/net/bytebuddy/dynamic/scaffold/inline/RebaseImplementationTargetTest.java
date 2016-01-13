@@ -45,18 +45,18 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     private MethodRebaseResolver.Resolution resolution;
 
     @Mock
-    private TypeDescription superType;
+    private TypeDescription rawSuperClass;
 
     @Mock
-    private TypeDescription.Generic genericSuperType;
+    private TypeDescription.Generic superClass;
 
     @Override
     @Before
     public void setUp() throws Exception {
         when(methodGraph.locate(Mockito.any(MethodDescription.SignatureToken.class))).thenReturn(MethodGraph.Node.Unresolved.INSTANCE);
-        when(instrumentedType.getSuperType()).thenReturn(genericSuperType);
-        when(genericSuperType.asErasure()).thenReturn(superType);
-        when(superType.getInternalName()).thenReturn(BAR);
+        when(instrumentedType.getSuperClass()).thenReturn(superClass);
+        when(superClass.asErasure()).thenReturn(rawSuperClass);
+        when(rawSuperClass.getInternalName()).thenReturn(BAR);
         when(rebasedMethod.getInternalName()).thenReturn(QUX);
         when(rebasedMethod.asToken(ElementMatchers.is(instrumentedType))).thenReturn(rebasedToken);
         when(rebasedMethod.getDescriptor()).thenReturn(FOO);
@@ -160,11 +160,11 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
 
     @Test
     public void testSuperTypeMethodIsInvokable() throws Exception {
-        when(invokableMethod.isSpecializableFor(superType)).thenReturn(true);
+        when(invokableMethod.isSpecializableFor(rawSuperClass)).thenReturn(true);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);
         assertThat(specialMethodInvocation.isValid(), is(true));
         assertThat(specialMethodInvocation.getMethodDescription(), is((MethodDescription) invokableMethod));
-        assertThat(specialMethodInvocation.getTypeDescription(), is(superType));
+        assertThat(specialMethodInvocation.getTypeDescription(), is(rawSuperClass));
         MethodVisitor methodVisitor = mock(MethodVisitor.class);
         Implementation.Context implementationContext = mock(Implementation.Context.class);
         StackManipulation.Size size = specialMethodInvocation.apply(methodVisitor, implementationContext);
@@ -176,8 +176,8 @@ public class RebaseImplementationTargetTest extends AbstractImplementationTarget
     }
 
     @Test
-    public void testNonSpecializableSuperTypeMethodIsNotInvokable() throws Exception {
-        when(invokableMethod.isSpecializableFor(superType)).thenReturn(false);
+    public void testNonSpecializableSuperClassMethodIsNotInvokable() throws Exception {
+        when(invokableMethod.isSpecializableFor(rawSuperClass)).thenReturn(false);
         when(resolution.isRebased()).thenReturn(false);
         when(resolution.getResolvedMethod()).thenReturn(invokableMethod);
         Implementation.SpecialMethodInvocation specialMethodInvocation = implementationTarget.invokeSuper(invokableToken);

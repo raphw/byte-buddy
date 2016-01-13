@@ -22,25 +22,25 @@ public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
         TypeDescription.Generic attached = detached.accept(new TypeDescription.Generic.Visitor.Substitutor.ForAttachment(target.asGenericType(), target));
         assertThat(attached.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(attached.asErasure(), sameInstance(target));
-        assertThat(attached.getParameters().size(), is(4));
-        assertThat(attached.getParameters().get(0).getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(attached.getParameters().get(0).getSymbol(), is("T"));
-        assertThat(attached.getParameters().get(0), is(target.getTypeVariables().filter(named("T")).getOnly()));
-        assertThat(attached.getParameters().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(attached.getParameters().get(1).asErasure().represents(String.class), is(true));
-        assertThat(attached.getParameters().get(2).getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(attached.getParameters().get(2).getSymbol(), is("U"));
-        assertThat(attached.getParameters().get(2), is(target.getTypeVariables().filter(named("U")).getOnly()));
-        assertThat(attached.getParameters().get(3).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(attached.getParameters().get(3).asErasure().represents(List.class), is(true));
-        assertThat(attached.getParameters().get(3).getParameters().size(), is(1));
-        assertThat(attached.getParameters().get(3).getParameters().getOnly(), is(target.getTypeVariables().filter(named("S")).getOnly()));
+        assertThat(attached.getTypeArguments().size(), is(4));
+        assertThat(attached.getTypeArguments().get(0).getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(attached.getTypeArguments().get(0).getSymbol(), is("T"));
+        assertThat(attached.getTypeArguments().get(0), is(target.getTypeVariables().filter(named("T")).getOnly()));
+        assertThat(attached.getTypeArguments().get(1).getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(attached.getTypeArguments().get(1).asErasure().represents(String.class), is(true));
+        assertThat(attached.getTypeArguments().get(2).getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(attached.getTypeArguments().get(2).getSymbol(), is("U"));
+        assertThat(attached.getTypeArguments().get(2), is(target.getTypeVariables().filter(named("U")).getOnly()));
+        assertThat(attached.getTypeArguments().get(3).getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(attached.getTypeArguments().get(3).asErasure().represents(List.class), is(true));
+        assertThat(attached.getTypeArguments().get(3).getTypeArguments().size(), is(1));
+        assertThat(attached.getTypeArguments().get(3).getTypeArguments().getOnly(), is(target.getTypeVariables().filter(named("S")).getOnly()));
         assertThat(attached.getOwnerType(), notNullValue(TypeDescription.Generic.class));
         assertThat(attached.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(attached.getOwnerType().getParameters().size(), is(1));
-        assertThat(attached.getOwnerType().getParameters().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
-        assertThat(attached.getOwnerType().getParameters().getOnly().getSymbol(), is("T"));
-        assertThat(attached.getOwnerType().getParameters().getOnly(), is(target.getTypeVariables().filter(named("T")).getOnly()));
+        assertThat(attached.getOwnerType().getTypeArguments().size(), is(1));
+        assertThat(attached.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(attached.getOwnerType().getTypeArguments().getOnly().getSymbol(), is("T"));
+        assertThat(attached.getOwnerType().getTypeArguments().getOnly(), is(target.getTypeVariables().filter(named("T")).getOnly()));
     }
 
     @Test(expected = IllegalArgumentException.class)

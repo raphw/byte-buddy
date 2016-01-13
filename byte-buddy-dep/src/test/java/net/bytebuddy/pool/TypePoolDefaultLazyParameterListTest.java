@@ -12,7 +12,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
 
-public class TypePoolLazyParameterListTest extends AbstractParameterListTest<ParameterDescription.InDefinedShape, ParameterDescription> {
+public class TypePoolDefaultLazyParameterListTest extends AbstractParameterListTest<ParameterDescription.InDefinedShape, ParameterDescription> {
 
     private TypePool typePool;
 

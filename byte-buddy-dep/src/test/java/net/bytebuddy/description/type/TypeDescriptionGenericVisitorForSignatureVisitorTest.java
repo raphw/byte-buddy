@@ -16,6 +16,6 @@ public class TypeDescriptionGenericVisitorForSignatureVisitorTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.ForSignatureVisitor.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.ForSignatureVisitor.OfParameter.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.ForSignatureVisitor.OfTypeArgument.class).apply();
     }
 }

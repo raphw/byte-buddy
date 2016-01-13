@@ -11,50 +11,50 @@ public class AnnotationDescriptionBuilderTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonMatchingEnumerationValue() throws Exception {
-        AnnotationDescription.Builder.forType(Foo.class).define(FOO, FooBar.FIRST);
+        AnnotationDescription.Builder.ofType(Foo.class).define(FOO, FooBar.FIRST);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonMatchingAnnotationValue() throws Exception {
-        AnnotationDescription.Builder.forType(Qux.class).define(FOO, new QuxBaz.Instance());
+        AnnotationDescription.Builder.ofType(Qux.class).define(FOO, new QuxBaz.Instance());
     }
 
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testNonMatchingEnumerationArrayValue() throws Exception {
-        AnnotationDescription.Builder.forType(Foo.class).defineEnumerationArray(BAR, (Class) Bar.class, Bar.FIRST, FooBar.SECOND);
+        AnnotationDescription.Builder.ofType(Foo.class).defineEnumerationArray(BAR, (Class) Bar.class, Bar.FIRST, FooBar.SECOND);
     }
 
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testNonMatchingAnnotationArrayValue() throws Exception {
-        AnnotationDescription.Builder.forType(Foo.class).defineAnnotationArray(BAZ, (Class) Qux.class, new Qux.Instance(), new QuxBaz.Instance());
+        AnnotationDescription.Builder.ofType(Foo.class).defineAnnotationArray(BAZ, (Class) Qux.class, new Qux.Instance(), new QuxBaz.Instance());
     }
 
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testNonAnnotationType() throws Exception {
-        AnnotationDescription.Builder.forType((Class) Object.class);
+        AnnotationDescription.Builder.ofType((Class) Object.class);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIncompleteAnnotation() throws Exception {
-        AnnotationDescription.Builder.forType(Foo.class).make();
+        AnnotationDescription.Builder.ofType(Foo.class).build();
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testUnknownProperty() throws Exception {
-        AnnotationDescription.Builder.forType(Foo.class).define(FOO + BAR, FOO);
+        AnnotationDescription.Builder.ofType(Foo.class).define(FOO + BAR, FOO);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalProperty() throws Exception {
-        AnnotationDescription.Builder.forType(Foo.class).define(FOO, FOO);
+        AnnotationDescription.Builder.ofType(Foo.class).define(FOO, FOO);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testDuplicateProperty() throws Exception {
-        AnnotationDescription.Builder.forType(Foo.class).define(BAZ, FOO).define(BAZ, FOO);
+        AnnotationDescription.Builder.ofType(Foo.class).define(BAZ, FOO).define(BAZ, FOO);
     }
 
     @Test

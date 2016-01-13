@@ -2,7 +2,9 @@ package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.utility.MockitoRule;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,11 +29,30 @@ public abstract class AbstractAttributeAppenderTest {
     @Mock
     protected AnnotationValueFilter annotationValueFilter;
 
+    @Mock
+    protected TypeDescription.Generic.OfNonGenericType simpleAnnotatedType;
+
+    @Mock
+    protected TypeDescription.Generic.OfTypeVariable annotatedTypeVariable;
+
+    @Mock
+    protected TypeDescription.Generic.OfNonGenericType annotatedTypeVariableBound;
+
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(annotationValueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
+        when(annotatedTypeVariable.accept(any(TypeDescription.Generic.Visitor.class))).thenCallRealMethod();
+        when(annotatedTypeVariable.getUpperBounds()).thenReturn(new TypeList.Generic.Explicit(annotatedTypeVariableBound));
+        when(annotatedTypeVariable.asGenericType()).thenReturn(annotatedTypeVariable);
+        when(annotatedTypeVariableBound.accept(any(TypeDescription.Generic.Visitor.class))).thenCallRealMethod();
+        when(annotatedTypeVariableBound.getSort()).thenReturn(TypeDefinition.Sort.VARIABLE);
+        when(annotatedTypeVariableBound.asGenericType()).thenReturn(annotatedTypeVariableBound);
+        when(simpleAnnotatedType.accept(any(TypeDescription.Generic.Visitor.class))).thenCallRealMethod();
+        when(simpleAnnotatedType.asGenericType()).thenReturn(simpleAnnotatedType);
     }
 
+    @Retention(RetentionPolicy.SOURCE)
     protected @interface Qux {
 
         class Instance implements Qux {

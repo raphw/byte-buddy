@@ -54,7 +54,7 @@ public interface ConstructorStrategy {
          */
         NO_CONSTRUCTORS {
             @Override
-            public List<MethodDescription.Token> extractConstructors(TypeDescription superType) {
+            public List<MethodDescription.Token> extractConstructors(TypeDescription superClass) {
                 return Collections.emptyList();
             }
 
@@ -72,14 +72,14 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription.Generic superType = instrumentedType.getSuperType();
-                MethodList<?> defaultConstructors = superType == null
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+                MethodList<?> defaultConstructors = superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
+                        : superClass.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (defaultConstructors.size() == 1) {
                     return defaultConstructors.asTokenList(is(instrumentedType));
                 } else {
-                    throw new IllegalArgumentException(instrumentedType.getSuperType() + " declares no constructor that is visible to " + instrumentedType);
+                    throw new IllegalArgumentException(instrumentedType.getSuperClass() + " declares no constructor that is visible to " + instrumentedType);
                 }
             }
 
@@ -93,18 +93,18 @@ public interface ConstructorStrategy {
         },
 
         /**
-         * This strategy is adding all constructors of the instrumented type's super type where each constructor is
-         * directly invoking its signature-equivalent super type constructor. Only constructors that are visible to the
+         * This strategy is adding all constructors of the instrumented type's super class where each constructor is
+         * directly invoking its signature-equivalent super class constructor. Only constructors that are visible to the
          * instrumented type are added, i.e. package-private constructors are only added if the super type is defined
          * in the same package as the instrumented type and private constructors are always skipped.
          */
-        IMITATE_SUPER_TYPE {
+        IMITATE_SUPER_CLASS {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription.Generic superType = instrumentedType.getSuperType();
-                return (superType == null
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+                return (superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
+                        : superClass.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
             }
 
             @Override
@@ -117,17 +117,17 @@ public interface ConstructorStrategy {
         },
 
         /**
-         * This strategy is adding all constructors of the instrumented type's super type where each constructor is
-         * directly invoking its signature-equivalent super type constructor. Only {@code public} constructors are
+         * This strategy is adding all constructors of the instrumented type's super class where each constructor is
+         * directly invoking its signature-equivalent super class constructor. Only {@code public} constructors are
          * added.
          */
-        IMITATE_SUPER_TYPE_PUBLIC {
+        IMITATE_SUPER_CLASS_PUBLIC {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription.Generic superType = instrumentedType.getSuperType();
-                return (superType == null
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+                return (superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList(is(instrumentedType));
+                        : superClass.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList(is(instrumentedType));
             }
 
             @Override

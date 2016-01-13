@@ -12,7 +12,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 
-public class TypePoolGenericTypeListTest extends AbstractTypeListGenericTest<Type> {
+public class TypePoolDefaultGenericTypeListTest extends AbstractTypeListGenericTest<Type> {
 
     private TypePool typePool;
 

@@ -38,13 +38,13 @@ public class VoidAwareAssigner implements Assigner {
     public StackManipulation assign(TypeDescription.Generic source, TypeDescription.Generic target, Typing typing) {
         if (source.represents(void.class) && target.represents(void.class)) {
             return StackManipulation.Trivial.INSTANCE;
-        } else if (source.represents(void.class) /* && subType != void.class */) {
+        } else if (source.represents(void.class) /* && target != void.class */) {
             return typing.isDynamic()
                     ? DefaultValue.of(target)
                     : StackManipulation.Illegal.INSTANCE;
-        } else if (/* superType != void.class && */ target.represents(void.class)) {
+        } else if (/* source != void.class && */ target.represents(void.class)) {
             return Removal.pop(source);
-        } else /* superType != void.class && subType != void.class */ {
+        } else /* source != void.class && target != void.class */ {
             return chained.assign(source, target, typing);
         }
     }

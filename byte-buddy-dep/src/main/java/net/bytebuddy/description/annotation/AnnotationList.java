@@ -141,7 +141,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
     /**
      * Describes an array of loaded {@link java.lang.annotation.Annotation}s as an annotation list.
      */
-    class ForLoadedAnnotation extends AbstractBase {
+    class ForLoadedAnnotations extends AbstractBase {
 
         /**
          * The represented annotations.
@@ -153,7 +153,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          *
          * @param annotation The represented annotations.
          */
-        public ForLoadedAnnotation(Annotation... annotation) {
+        public ForLoadedAnnotations(Annotation... annotation) {
             this(Arrays.asList(annotation));
         }
 
@@ -162,7 +162,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
          *
          * @param annotations The represented annotations.
          */
-        public ForLoadedAnnotation(List<? extends Annotation> annotations) {
+        public ForLoadedAnnotations(List<? extends Annotation> annotations) {
             this.annotations = annotations;
         }
 
@@ -175,7 +175,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         public static List<AnnotationList> asList(Annotation[][] annotations) {
             List<AnnotationList> result = new ArrayList<AnnotationList>(annotations.length);
             for (Annotation[] annotation : annotations) {
-                result.add(new ForLoadedAnnotation(annotation));
+                result.add(new ForLoadedAnnotations(annotation));
             }
             return result;
         }

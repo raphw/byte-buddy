@@ -58,7 +58,7 @@ public class MethodGraphLinkedDelegationTest {
 
     @Test
     public void testSuperGraph() throws Exception {
-        assertThat(linkedMethodGraph.getSuperGraph(), is(superGraph));
+        assertThat(linkedMethodGraph.getSuperClassGraph(), is(superGraph));
     }
 
     @Test

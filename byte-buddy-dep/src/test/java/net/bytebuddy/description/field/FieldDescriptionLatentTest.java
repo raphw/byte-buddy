@@ -14,6 +14,6 @@ public class FieldDescriptionLatentTest extends AbstractFieldDescriptionTest {
                 field.getName(),
                 field.getModifiers(),
                 TypeDefinition.Sort.describe(field.getGenericType()),
-                new AnnotationList.ForLoadedAnnotation(field.getDeclaredAnnotations()));
+                new AnnotationList.ForLoadedAnnotations(field.getDeclaredAnnotations()));
     }
 }

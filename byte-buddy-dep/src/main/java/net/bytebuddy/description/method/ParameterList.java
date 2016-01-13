@@ -362,7 +362,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType[index], parameterAnnotation[index]);
+                return new ParameterDescription.ForLoadedParameter.OfLegacyVmConstructor(constructor, index, parameterType, parameterAnnotation);
             }
 
             @Override
@@ -405,7 +405,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
 
             @Override
             public ParameterDescription.InDefinedShape get(int index) {
-                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType[index], parameterAnnotation[index]);
+                return new ParameterDescription.ForLoadedParameter.OfLegacyVmMethod(method, index, parameterType, parameterAnnotation);
             }
 
             @Override

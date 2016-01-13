@@ -788,7 +788,7 @@ public interface TypeWriter<T> {
                     /**
                      * The super type of the instrumented type.
                      */
-                    private final TypeDescription superType;
+                    private final TypeDescription superClass;
 
                     /**
                      * The attribute appender to apply to the visibility bridge.
@@ -800,16 +800,16 @@ public interface TypeWriter<T> {
                      *
                      * @param visibilityBridge  The visibility bridge.
                      * @param bridgeTarget      The method the visibility bridge invokes.
-                     * @param superType         The super type of the instrumented type.
+                     * @param superClass         The super type of the instrumented type.
                      * @param attributeAppender The attribute appender to apply to the visibility bridge.
                      */
                     protected OfVisibilityBridge(MethodDescription visibilityBridge,
                                                  MethodDescription bridgeTarget,
-                                                 TypeDescription superType,
+                                                 TypeDescription superClass,
                                                  MethodAttributeAppender attributeAppender) {
                         this.visibilityBridge = visibilityBridge;
                         this.bridgeTarget = bridgeTarget;
-                        this.superType = superType;
+                        this.superClass = superClass;
                         this.attributeAppender = attributeAppender;
                     }
 
@@ -824,7 +824,7 @@ public interface TypeWriter<T> {
                     public static Record of(TypeDescription instrumentedType, MethodDescription bridgeTarget, MethodAttributeAppender attributeAppender) {
                         return new OfVisibilityBridge(new VisibilityBridge(instrumentedType, bridgeTarget),
                                 bridgeTarget,
-                                instrumentedType.getSuperType().asErasure(),
+                                instrumentedType.getSuperClass().asErasure(),
                                 attributeAppender);
                     }
 
@@ -860,7 +860,7 @@ public interface TypeWriter<T> {
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
-                                MethodInvocation.invoke(bridgeTarget).special(superType),
+                                MethodInvocation.invoke(bridgeTarget).special(superClass),
                                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
@@ -872,7 +872,7 @@ public interface TypeWriter<T> {
                         OfVisibilityBridge that = (OfVisibilityBridge) other;
                         return visibilityBridge.equals(that.visibilityBridge)
                                 && bridgeTarget.equals(that.bridgeTarget)
-                                && superType.equals(that.superType)
+                                && superClass.equals(that.superClass)
                                 && attributeAppender.equals(that.attributeAppender);
                     }
 
@@ -880,7 +880,7 @@ public interface TypeWriter<T> {
                     public int hashCode() {
                         int result = visibilityBridge.hashCode();
                         result = 31 * result + bridgeTarget.hashCode();
-                        result = 31 * result + superType.hashCode();
+                        result = 31 * result + superClass.hashCode();
                         result = 31 * result + attributeAppender.hashCode();
                         return result;
                     }
@@ -890,7 +890,7 @@ public interface TypeWriter<T> {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge{" +
                                 "visibilityBridge=" + visibilityBridge +
                                 ", bridgeTarget=" + bridgeTarget +
-                                ", superType=" + superType +
+                                ", superClass=" + superClass +
                                 ", attributeAppender=" + attributeAppender +
                                 '}';
                     }
@@ -2524,7 +2524,7 @@ public interface TypeWriter<T> {
                     return TypeDescription.OBJECT.getInternalName();
                 } else {
                     do {
-                        leftType = leftType.getSuperType().asErasure();
+                        leftType = leftType.getSuperClass().asErasure();
                     } while (!leftType.isAssignableFrom(rightType));
                     return leftType.getInternalName();
                 }
@@ -2951,17 +2951,17 @@ public interface TypeWriter<T> {
                                   int modifiers,
                                   String internalName,
                                   String genericSignature,
-                                  String superTypeInternalName,
+                                  String superClassInternalName,
                                   String[] interfaceTypeInternalName) {
                     super.visit(classFileVersionNumber,
-                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0),
+                            instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),
                             instrumentedType.getInternalName(),
                             instrumentedType.getGenericSignature(),
-                            (instrumentedType.getSuperType() == null ?
+                            (instrumentedType.getSuperClass() == null ?
                                     TypeDescription.OBJECT :
-                                    instrumentedType.getSuperType().asErasure()).getInternalName(),
+                                    instrumentedType.getSuperClass().asErasure()).getInternalName(),
                             instrumentedType.getInterfaces().asErasures().toInternalNames());
-                    typeAttributeAppender.apply(this, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
+                    typeAttributeAppender.apply(cv, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                     if (!ClassFileVersion.ofMinorMajor(classFileVersionNumber).isAtLeast(ClassFileVersion.JAVA_V8) && instrumentedType.isInterface()) {
                         implementationContext.prohibitTypeInitializer();
                     }
@@ -2973,6 +2973,20 @@ public interface TypeWriter<T> {
                         modifiers = instrumentedType.getModifiers();
                     }
                     super.visitInnerClass(internalName, outerName, innerName, modifiers);
+                }
+
+                @Override
+                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                    return annotationRetention.isEnabled()
+                            ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                            : IGNORE_ANNOTATION;
+                }
+
+                @Override
+                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
+                    return annotationRetention.isEnabled()
+                            ? super.visitAnnotation(descriptor, visible)
+                            : IGNORE_ANNOTATION;
                 }
 
                 @Override
@@ -3107,6 +3121,13 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
+                    }
+
+                    @Override
                     public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
                         return annotationRetention.isEnabled()
                                 ? super.visitAnnotation(descriptor, visible)
@@ -3169,6 +3190,13 @@ public interface TypeWriter<T> {
                     @Override
                     public AnnotationVisitor visitAnnotationDefault() {
                         return IGNORE_ANNOTATION; // Annotation types can never be rebased.
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
                     }
 
                     @Override
@@ -3247,6 +3275,13 @@ public interface TypeWriter<T> {
                     @Override
                     public AnnotationVisitor visitAnnotationDefault() {
                         return IGNORE_ANNOTATION;
+                    }
+
+                    @Override
+                    public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                        return annotationRetention.isEnabled()
+                                ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
+                                : IGNORE_ANNOTATION;
                     }
 
                     @Override
@@ -3400,9 +3435,9 @@ public interface TypeWriter<T> {
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),
                         instrumentedType.getGenericSignature(),
-                        (instrumentedType.getSuperType() == null
+                        (instrumentedType.getSuperClass() == null
                                 ? TypeDescription.OBJECT
-                                : instrumentedType.getSuperType().asErasure()).getInternalName(),
+                                : instrumentedType.getSuperClass().asErasure()).getInternalName(),
                         instrumentedType.getInterfaces().asErasures().toInternalNames());
                 typeAttributeAppender.apply(classVisitor, instrumentedType, annotationValueFilterFactory.on(instrumentedType));
                 for (FieldDescription fieldDescription : instrumentedType.getDeclaredFields()) {

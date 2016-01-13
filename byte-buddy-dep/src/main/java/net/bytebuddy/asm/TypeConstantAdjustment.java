@@ -66,9 +66,9 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
         }
 
         @Override
-        public void visit(int version, int modifiers, String name, String signature, String superTypeName, String[] interfaceName) {
+        public void visit(int version, int modifiers, String name, String signature, String superClassName, String[] interfaceName) {
             supportsTypeConstants = ClassFileVersion.ofMinorMajor(version).isAtLeast(ClassFileVersion.JAVA_V5);
-            super.visit(version, modifiers, name, signature, superTypeName, interfaceName);
+            super.visit(version, modifiers, name, signature, superClassName, interfaceName);
         }
 
         @Override

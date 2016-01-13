@@ -47,14 +47,15 @@ public class MethodDescriptionTokenTest {
     private TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(typeVariableToken.accept(visitor)).thenReturn(visitedTypeVariableToken);
         when(returnType.asGenericType()).thenReturn(returnType);
         when(visitedReturnType.asGenericType()).thenReturn(visitedReturnType);
-        when(returnType.accept(visitor)).thenReturn(visitedReturnType);
+        when(returnType.accept((TypeDescription.Generic.Visitor) visitor)).thenReturn(visitedReturnType);
         when(exceptionType.asGenericType()).thenReturn(exceptionType);
         when(visitedExceptionType.asGenericType()).thenReturn(visitedExceptionType);
-        when(exceptionType.accept(visitor)).thenReturn(visitedExceptionType);
+        when(exceptionType.accept((TypeDescription.Generic.Visitor) visitor)).thenReturn(visitedExceptionType);
         when(parameterToken.accept(visitor)).thenReturn(visitedParameterToken);
     }
 

@@ -150,6 +150,7 @@ public class RedefinitionDynamicTypeBuilderTest extends AbstractDynamicTypeBuild
             public TypeDescription create() {
                 TypeDescription rawTypeDescription = mock(TypeDescription.class);
                 when(rawTypeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+                when(rawTypeDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
                 TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
                 when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
                 when(typeDescription.asGenericType()).thenReturn(typeDescription);

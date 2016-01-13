@@ -10,7 +10,7 @@ import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.anyOf;
 
-public class TypePoolLazyTypeListTest extends AbstractTypeListTest<Class<?>> {
+public class TypePoolDefaultLazyTypeListTest extends AbstractTypeListTest<Class<?>> {
 
     private TypePool typePool;
 

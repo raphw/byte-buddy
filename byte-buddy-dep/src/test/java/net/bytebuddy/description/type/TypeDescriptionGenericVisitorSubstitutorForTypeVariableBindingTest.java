@@ -55,7 +55,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
     @Test
     public void testUnequalVariablesAndParameters() throws Exception {
         TypeDescription.Generic typeDescription = mock(TypeDescription.Generic.class);
-        when(typeDescription.getParameters()).thenReturn(new TypeList.Generic.Explicit(mock(TypeDescription.Generic.class)));
+        when(typeDescription.getTypeArguments()).thenReturn(new TypeList.Generic.Explicit(mock(TypeDescription.Generic.class)));
         TypeDescription rawTypeDescription = mock(TypeDescription.class);
         when(typeDescription.asErasure()).thenReturn(rawTypeDescription);
         when(rawTypeDescription.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());

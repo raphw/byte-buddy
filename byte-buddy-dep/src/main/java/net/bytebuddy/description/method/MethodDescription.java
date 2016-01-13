@@ -778,12 +778,12 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(constructor.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(constructor.getDeclaredAnnotations());
         }
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForLoadedTypes(constructor.getTypeParameters());
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(constructor);
         }
     }
 
@@ -887,7 +887,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public AnnotationList getDeclaredAnnotations() {
-            return new AnnotationList.ForLoadedAnnotation(method.getDeclaredAnnotations());
+            return new AnnotationList.ForLoadedAnnotations(method.getDeclaredAnnotations());
         }
 
         @Override
@@ -900,7 +900,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForLoadedTypes(method.getTypeParameters());
+            return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(method);
         }
     }
 
@@ -1212,8 +1212,8 @@ public interface MethodDescription extends TypeVariableSource,
 
             @Override
             public TypeDescription.Generic onParameterizedType(TypeDescription.Generic parameterizedType) {
-                List<TypeDescription.Generic> parameters = new ArrayList<TypeDescription.Generic>(parameterizedType.getParameters().size());
-                for (TypeDescription.Generic parameter : parameterizedType.getParameters()) {
+                List<TypeDescription.Generic> parameters = new ArrayList<TypeDescription.Generic>(parameterizedType.getTypeArguments().size());
+                for (TypeDescription.Generic parameter : parameterizedType.getTypeArguments()) {
                     if (parameter.getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
                         return visitor.onParameterizedType(parameterizedType);
                     } else if (parameter.getSort().isWildcard()) {
@@ -1230,7 +1230,8 @@ public interface MethodDescription extends TypeVariableSource,
                         ownerType == null
                                 ? TypeDescription.Generic.UNDEFINED
                                 : ownerType.accept(this),
-                        parameters);
+                        parameters,
+                        parameterizedType.getDeclaredAnnotations());
             }
 
             @Override
@@ -1307,6 +1308,11 @@ public interface MethodDescription extends TypeVariableSource,
                 @Override
                 public String getSymbol() {
                     return typeVariable.getSymbol();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return typeVariable.getDeclaredAnnotations();
                 }
             }
         }

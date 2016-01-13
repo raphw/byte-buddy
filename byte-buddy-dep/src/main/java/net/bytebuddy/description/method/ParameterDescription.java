@@ -325,7 +325,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 /**
                  * Creates a new dispatcher for a modern VM.
                  *
-                 * @param getParameters A reference to {@code java.lang.reflect.Executable#getParameters}.
+                 * @param getParameters A reference to {@code java.lang.reflect.Executable#getTypeArguments}.
                  * @param getName       A reference to {@code java.lang.reflect.Parameter#getName}.
                  * @param isNamePresent A reference to {@code java.lang.reflect.Parameter#isNamePresent}.
                  * @param getModifiers  A reference to {@code java.lang.reflect.Parameter#getModifiers}.
@@ -473,12 +473,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public TypeDescription.Generic getType() {
-                return new TypeDescription.Generic.LazyProjection.OfMethodParameter(executable, index, executable.getParameterTypes()[index]);
+                return new TypeDescription.Generic.LazyProjection.OfMethodParameter(executable, index, executable.getParameterTypes());
             }
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(executable.getParameterAnnotations()[index]);
+                return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
             }
         }
 
@@ -504,12 +504,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public TypeDescription.Generic getType() {
-                return new TypeDescription.Generic.LazyProjection.OfConstructorParameter(executable, index, executable.getParameterTypes()[index]);
+                return new TypeDescription.Generic.LazyProjection.OfConstructorParameter(executable, index, executable.getParameterTypes());
             }
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(executable.getParameterAnnotations()[index]);
+                return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
             }
         }
 
@@ -530,24 +530,24 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             private final int index;
 
             /**
-             * The type of this parameter.
+             * The type erasures of the represented method.
              */
-            private final Class<?> parameterType;
+            private final Class<?>[] parameterType;
 
             /**
-             * The annotations of this parameter.
+             * The annotations of the represented method's parameters.
              */
-            private final Annotation[] parameterAnnotation;
+            private final Annotation[][] parameterAnnotation;
 
             /**
              * Creates a legacy representation of a method's parameter.
              *
              * @param method              The method that declares this parameter.
              * @param index               The index of this parameter.
-             * @param parameterType       The type of this parameter.
-             * @param parameterAnnotation The annotations of this parameter.
+             * @param parameterType       The type erasures of the represented method.
+             * @param parameterAnnotation The annotations of the represented method's parameters.
              */
-            protected OfLegacyVmMethod(Method method, int index, Class<?> parameterType, Annotation[] parameterAnnotation) {
+            protected OfLegacyVmMethod(Method method, int index, Class<?>[] parameterType, Annotation[][] parameterAnnotation) {
                 this.method = method;
                 this.index = index;
                 this.parameterType = parameterType;
@@ -581,7 +581,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(parameterAnnotation);
+                return new AnnotationList.ForLoadedAnnotations(parameterAnnotation[index]);
             }
         }
 
@@ -602,24 +602,24 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             private final int index;
 
             /**
-             * The type of this parameter.
+             * The type erasures of the represented method.
              */
-            private final Class<?> parameterType;
+            private final Class<?>[] parameterType;
 
             /**
              * The annotations of this parameter.
              */
-            private final Annotation[] parameterAnnotation;
+            private final Annotation[][] parameterAnnotation;
 
             /**
              * Creates a legacy representation of a method's parameter.
              *
              * @param constructor         The constructor that declares this parameter.
              * @param index               The index of this parameter.
-             * @param parameterType       The type of this parameter.
-             * @param parameterAnnotation The annotations of this parameter.
+             * @param parameterType       The type erasures of the represented method.
+             * @param parameterAnnotation An array of all parameter annotations of the represented method.
              */
-            protected OfLegacyVmConstructor(Constructor<?> constructor, int index, Class<?> parameterType, Annotation[] parameterAnnotation) {
+            protected OfLegacyVmConstructor(Constructor<?> constructor, int index, Class<?>[] parameterType, Annotation[][] parameterAnnotation) {
                 this.constructor = constructor;
                 this.index = index;
                 this.parameterType = parameterType;
@@ -653,7 +653,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
             @Override
             public AnnotationList getDeclaredAnnotations() {
-                return new AnnotationList.ForLoadedAnnotation(parameterAnnotation);
+                return new AnnotationList.ForLoadedAnnotations(parameterAnnotation[index]);
             }
         }
     }

@@ -22,7 +22,7 @@ public abstract class AbstractPackageDescriptionTest {
     public void testNonTrivialPackage() throws Exception {
         assertThat(describe(Sample.class).getName(), is(Sample.class.getPackage().getName()));
         assertThat(describe(Sample.class).getDeclaredAnnotations(),
-                is((AnnotationList) new AnnotationList.ForLoadedAnnotation(Sample.class.getPackage().getDeclaredAnnotations())));
+                is((AnnotationList) new AnnotationList.ForLoadedAnnotations(Sample.class.getPackage().getDeclaredAnnotations())));
     }
 
     @Test
