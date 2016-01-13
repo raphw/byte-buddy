@@ -8,10 +8,7 @@ import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.modifier.ModifierContributor;
-import net.bytebuddy.description.type.TypeDefinition;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.description.type.TypeList;
-import net.bytebuddy.description.type.TypeVariableToken;
+import net.bytebuddy.description.type.*;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -526,7 +523,13 @@ public class InstrumentedTypeDefaultTest {
 
     @Test(expected = IllegalStateException.class)
     public void testTypeIllegalModifiers() throws Exception {
-        InstrumentedType.Default.subclass(FOO, ILLEGAL_MODIFIERS, TypeDefinition.Sort.describe(Serializable.class)).validated();
+        InstrumentedType.Default.subclass(FOO, ILLEGAL_MODIFIERS, TypeDefinition.Sort.describe(Object.class)).validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageTypeIllegalModifiers() throws Exception {
+        InstrumentedType.Default.subclass(FOO + "." + PackageDescription.PACKAGE_CLASS_NAME, ModifierContributor.EMPTY_MASK, TypeDefinition.Sort.describe(Object.class))
+                .validated();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -610,6 +613,22 @@ public class InstrumentedTypeDefaultTest {
     @Test(expected = IllegalStateException.class)
     public void testTypeIncompatibleAnnotation() throws Exception {
         makePlainInstrumentedType()
+                .withAnnotations(Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testPackageIncompatibleAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withName(FOO + "." + PackageDescription.PACKAGE_CLASS_NAME)
+                .withAnnotations(Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAnnotationTypeIncompatibleAnnotation() throws Exception {
+        makePlainInstrumentedType()
+                .withModifiers(Opcodes.ACC_ANNOTATION | Opcodes.ACC_ABSTRACT)
                 .withAnnotations(Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()))
                 .validated();
     }

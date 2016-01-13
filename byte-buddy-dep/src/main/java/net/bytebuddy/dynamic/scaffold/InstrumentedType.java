@@ -669,6 +669,8 @@ public interface InstrumentedType extends TypeDescription {
                 throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
             } else if ((getModifiers() & ~ModifierContributor.ForType.MASK) != EMPTY_MASK) {
                 throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for " + this);
+            } else if (isPackageDescription() && getModifiers() != PackageDescription.PACKAGE_MODIFIERS) {
+                throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for package " + this);
             }
             TypeDescription.Generic superType = getSuperClass();
             if (superType != null && (!superType.accept(Generic.Visitor.Validator.SUPER_CLASS))) {
@@ -717,7 +719,8 @@ public interface InstrumentedType extends TypeDescription {
             Set<TypeDescription> typeAnnotationTypes = new HashSet<TypeDescription>();
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
                 if (!annotationDescription.getElementTypes().contains(ElementType.TYPE)
-                        && !(isAnnotation() && annotationDescription.getElementTypes().contains(ElementType.ANNOTATION_TYPE))) {
+                        && !(isAnnotation() && annotationDescription.getElementTypes().contains(ElementType.ANNOTATION_TYPE))
+                        && !(isPackageDescription() && annotationDescription.getElementTypes().contains(ElementType.PACKAGE))) {
                     throw new IllegalStateException("Cannot add " + annotationDescription + " on " + this);
                 } else if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                     throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);

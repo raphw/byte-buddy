@@ -280,6 +280,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      */
     boolean isAnnotationValue(Object value);
 
+    boolean isPackageDescription();
+
     /**
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
@@ -6426,6 +6428,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         @Override
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
             return visitor.onType(this);
+        }
+
+        @Override
+        public boolean isPackageDescription() {
+            return getSimpleName().equals(PackageDescription.PACKAGE_CLASS_NAME);
         }
 
         @Override

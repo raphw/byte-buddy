@@ -7,6 +7,7 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.visibility.Sample;
 import org.junit.Test;
 import org.mockito.asm.Type;
 import org.objectweb.asm.*;
@@ -518,6 +519,12 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(typeDescription.getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
         assertThat(typeDescription.getDeclaredFields().getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
         assertThat(typeDescription.getDeclaredMethods().filter(isMethod()).getOnly().getDeclaredAnnotations().isAnnotationPresent(SampleAnnotation.class), is(false));
+    }
+
+    @Test
+    public void testIsPackageDescription() throws Exception {
+        assertThat(describe(Class.forName(Sample.class.getPackage().getName() + "." + PackageDescription.PACKAGE_CLASS_NAME)).isPackageDescription(), is(true));
+        assertThat(describe(Object.class).isPackageDescription(), is(false));
     }
 
     protected interface SampleInterface {
