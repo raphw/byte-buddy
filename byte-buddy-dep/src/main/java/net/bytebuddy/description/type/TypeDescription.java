@@ -532,6 +532,83 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
+            enum AnnotationStripper implements Visitor<Generic> {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Generic onGenericArray(Generic genericArray) {
+                    return new OfGenericArray.Latent(genericArray.getComponentType().accept(this), Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public Generic onWildcard(Generic wildcard) {
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this),
+                            wildcard.getLowerBounds().accept(this),
+                            Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public Generic onParameterizedType(Generic parameterizedType) {
+                    Generic ownerType = parameterizedType.getOwnerType();
+                    return new OfParameterizedType.Latent(parameterizedType.asErasure(),
+                            ownerType == null
+                                    ? UNDEFINED
+                                    : ownerType.accept(this),
+                            parameterizedType.getTypeArguments().accept(this),
+                            Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public Generic onTypeVariable(Generic typeVariable) {
+                    return new NonAnnotatedTypeVariable(typeVariable);
+                }
+
+                @Override
+                public Generic onNonGenericType(Generic typeDescription) {
+                    return typeDescription.isArray()
+                            ? new OfGenericArray.Latent(onNonGenericType(typeDescription.getComponentType()), Collections.<AnnotationDescription>emptyList())
+                            : new OfNonGenericType.Latent(typeDescription.asErasure(), Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Visitor.AnnotationStripper." + name();
+                }
+
+                protected static class NonAnnotatedTypeVariable extends OfTypeVariable {
+
+                    private final Generic typeVariable;
+
+                    protected NonAnnotatedTypeVariable(Generic typeVariable) {
+                        this.typeVariable = typeVariable;
+                    }
+
+                    @Override
+                    public TypeList.Generic getUpperBounds() {
+                        return typeVariable.getUpperBounds();
+                    }
+
+                    @Override
+                    public TypeVariableSource getVariableSource() {
+                        return typeVariable.getVariableSource();
+                    }
+
+                    @Override
+                    public String getSymbol() {
+                        return typeVariable.getSymbol();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return new AnnotationList.Empty();
+                    }
+                }
+            }
+
             /**
              * A visitor for erasing type variables on the most fine-grained level. In practice, this means:
              * <ul>
@@ -558,7 +635,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public Generic onWildcard(Generic wildcard) {
                     // Wildcards which are used within parameterized types are taken care of by the calling method.
-                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this), wildcard.getLowerBounds().accept(this), wildcard.getDeclaredAnnotations());
+                    return new OfWildcardType.Latent(wildcard.getUpperBounds().accept(this),
+                            wildcard.getLowerBounds().accept(this),
+                            wildcard.getDeclaredAnnotations());
                 }
 
                 @Override
