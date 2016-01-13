@@ -130,8 +130,9 @@ public interface TypeAttributeAppender {
                 if (this == other) return true;
                 if (other == null || getClass() != other.getClass()) return false;
                 Differentiating differentiating = (Differentiating) other;
-                if (annotationIndex != differentiating.annotationIndex) return false;
-                return typeVariableIndex == differentiating.typeVariableIndex && interfaceTypeIndex == differentiating.interfaceTypeIndex;
+                return annotationIndex == differentiating.annotationIndex
+                        && typeVariableIndex == differentiating.typeVariableIndex
+                        && interfaceTypeIndex == differentiating.interfaceTypeIndex;
             }
 
             @Override
@@ -144,7 +145,7 @@ public interface TypeAttributeAppender {
 
             @Override
             public String toString() {
-                return "TypeAttributeAppender.ForInstrumentedType.Excluding{" +
+                return "TypeAttributeAppender.ForInstrumentedType.Differentiating{" +
                         "annotationIndex=" + annotationIndex +
                         ", typeVariableIndex=" + typeVariableIndex +
                         ", interfaceTypeIndex=" + interfaceTypeIndex +

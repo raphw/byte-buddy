@@ -130,10 +130,10 @@ public interface FieldAttributeAppender {
 
         @Override
         public void apply(FieldVisitor fieldVisitor, FieldDescription fieldDescription, AnnotationValueFilter annotationValueFilter) {
-            AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
-            appender = fieldDescription.getType().accept(AnnotationAppender.ForTypeAnnotations.ofFieldType(appender, annotationValueFilter));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnField(fieldVisitor));
+            annotationAppender = fieldDescription.getType().accept(AnnotationAppender.ForTypeAnnotations.ofFieldType(annotationAppender, annotationValueFilter));
             for (AnnotationDescription annotation : fieldDescription.getDeclaredAnnotations()) {
-                appender = appender.append(annotation, annotationValueFilter);
+                annotationAppender = annotationAppender.append(annotation, annotationValueFilter);
             }
         }
 
