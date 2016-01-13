@@ -114,9 +114,8 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testInstancePrimitiveGetterInvocationOnArgument() throws ReflectiveOperationException {
-        Method getInt = Pojo.class.getDeclaredMethod("getInt");
         DynamicType.Loaded<Getters> loaded = implement(Getters.class,
-            MethodCall.invoke(getInt).onArgument(0),
+            MethodCall.invoke(Pojo.class.getDeclaredMethod("getInt")).onArgument(0),
             Getters.class.getClassLoader(),
             named("getInt"));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -132,9 +131,8 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testInstanceObjectGetterInvocationOnArgument() throws ReflectiveOperationException {
-        Method getObject = Pojo.class.getDeclaredMethod("getObject");
         DynamicType.Loaded<Getters> loaded = implement(Getters.class,
-            MethodCall.invoke(getObject).onArgument(0),
+            MethodCall.invoke(Pojo.class.getDeclaredMethod("getObject")).onArgument(0),
             Getters.class.getClassLoader(),
             named("get"));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -168,9 +166,8 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testInstancePrimitiveSetterInvocationOnArgument() throws ReflectiveOperationException {
-        Method setInt = Pojo.class.getDeclaredMethod("setInt", int.class);
         DynamicType.Loaded<Setters> loaded = implement(Setters.class,
-            MethodCall.invoke(setInt).onArgument(0).withArgument(1),
+            MethodCall.invoke(Pojo.class.getDeclaredMethod("setInt", int.class)).onArgument(0).withArgument(1),
             Setters.class.getClassLoader(),
             named("setInt"));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -186,9 +183,8 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testInstanceObjectSetterInvocationOnArgument() throws ReflectiveOperationException {
-        Method setObject = Pojo.class.getDeclaredMethod("setObject", Object.class);
         DynamicType.Loaded<Setters> loaded = implement(Setters.class,
-            MethodCall.invoke(setObject).onArgument(0).withArgument(1),
+            MethodCall.invoke(Pojo.class.getDeclaredMethod("setObject", Object.class)).onArgument(0).withArgument(1),
             Setters.class.getClassLoader(),
             named("set"));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
@@ -204,9 +200,8 @@ public class MethodCallTest extends AbstractImplementationTest {
 
     @Test
     public void testInstanceStringSetterInvocationOnArgument() throws ReflectiveOperationException {
-        Method setString = Pojo.class.getDeclaredMethod("setString", String.class);
         DynamicType.Loaded<Setters> loaded = implement(Setters.class,
-            MethodCall.invoke(setString).onArgument(0).withArgument(1),
+            MethodCall.invoke(Pojo.class.getDeclaredMethod("setString", String.class)).onArgument(0).withArgument(1),
             Setters.class.getClassLoader(),
             named("set"));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
