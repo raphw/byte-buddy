@@ -5348,6 +5348,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param index       The parameter's index.
                  * @param erasure     The erasure of the parameter type.
                  */
+                @SuppressFBWarnings(value = "I2 - EI_EXPOSE_REP2", justification = "The array is never exposed outside of the class")
                 public OfConstructorParameter(Constructor<?> constructor, int index, Class<?>[] erasure) {
                     this.constructor = constructor;
                     this.index = index;
@@ -5400,6 +5401,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param index   The parameter's index.
                  * @param erasure The erasures of the method's parameter types.
                  */
+                @SuppressFBWarnings(value = "I2 - EI_EXPOSE_REP2", justification = "The array is never exposed outside of the class")
                 public OfMethodParameter(Method method, int index, Class<?>[] erasure) {
                     this.method = method;
                     this.index = index;
