@@ -857,7 +857,7 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public String toString() {
-                return "MethodCall.TargetHandler.ForMethodParameter{" + variableOffset +"}";
+                return "MethodCall.TargetHandler.ForMethodParameter{" + variableOffset + "}";
             }
         }
     }
@@ -873,7 +873,7 @@ public class MethodCall implements Implementation.Composable {
          *
          * @param instrumentedType  The instrumented type.
          * @param interceptedMethod The method being intercepted.
-         * @param target        The target type.
+         * @param target            The target type.
          * @param assigner          The assigner to be used.
          * @param typing            Indicates if dynamic type castings should be attempted for incompatible assignments.
          * @return The stack manipulation that loads the represented argument onto the stack.
@@ -2069,15 +2069,24 @@ public class MethodCall implements Implementation.Composable {
             /**
              * The type description to virtually invoke the method upon.
              */
-            private final TypeDescription.Generic typeDescription;
+            private final TypeDescription typeDescription;
 
             /**
              * Creates a new method invoking for a virtual method invocation.
              *
              * @param typeDescription The type description to virtually invoke the method upon.
              */
-            protected ForVirtualInvocation(TypeDescription.Generic typeDescription) {
+            protected ForVirtualInvocation(TypeDescription typeDescription) {
                 this.typeDescription = typeDescription;
+            }
+
+            /**
+             * Creates a new method invoking for a virtual method invocation.
+             *
+             * @param type The type to virtually invoke the method upon.
+             */
+            protected ForVirtualInvocation(Class<?> type) {
+                this(new TypeDescription.ForLoadedType(type));
             }
 
             @Override
@@ -2279,7 +2288,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForStaticField(target),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(target.getClass())),
+                    new MethodInvoker.ForVirtualInvocation(target.getClass()),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
@@ -2291,12 +2300,12 @@ public class MethodCall implements Implementation.Composable {
             }
             TypeDescription.Generic type = methodLocator.resolve(null).getDeclaringType().asGenericType();
             return new MethodCall(methodLocator,
-                new TargetHandler.ForMethodParameter(offset),
-                argumentLoaders,
-                new MethodInvoker.ForVirtualInvocation(type),
-                TerminationHandler.ForMethodReturn.INSTANCE,
-                assigner,
-                typing);
+                    new TargetHandler.ForMethodParameter(offset),
+                    argumentLoaders,
+                    new MethodInvoker.ForVirtualInvocation(type.asErasure()),
+                    TerminationHandler.ForMethodReturn.INSTANCE,
+                    assigner,
+                    typing);
         }
 
         /**
@@ -2323,7 +2332,7 @@ public class MethodCall implements Implementation.Composable {
             return new MethodCall(methodLocator,
                     new TargetHandler.ForInstanceField(fieldName, typeDescription),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation(typeDescription),
+                    new MethodInvoker.ForVirtualInvocation(typeDescription.asErasure()),
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
