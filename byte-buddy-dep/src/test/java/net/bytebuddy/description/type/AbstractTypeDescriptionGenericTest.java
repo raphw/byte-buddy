@@ -1193,13 +1193,13 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public void testGenericTypeInconsistency() throws Exception {
         TypeDescription.Generic typeDescription = describeType(GenericDisintegrator.make());
         assertThat(typeDescription.getInterfaces().size(), is(2));
-        assertThat(typeDescription.getInterfaces().get(0).getSort(), is(TypeDescription.Generic.Sort.PARAMETERIZED));
+        assertThat(typeDescription.getInterfaces().get(0).getSort(), is(TypeDescription.Generic.Sort.NON_GENERIC));
         assertThat(typeDescription.getInterfaces().get(0).asErasure().represents(Callable.class), is(true));
         assertThat(typeDescription.getInterfaces().get(1).getSort(), is(TypeDescription.Generic.Sort.NON_GENERIC));
         assertThat(typeDescription.getInterfaces().get(1).represents(Serializable.class), is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().size(), is(2));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().get(0).getType().getSort(),
-                is(TypeDescription.Generic.Sort.VARIABLE));
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().get(0).getType().asErasure().represents(Exception.class),
                 is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getParameters().get(1).getType().getSort(),
@@ -1208,7 +1208,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().size(), is(2));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().get(0).getSort(),
-                is(TypeDescription.Generic.Sort.VARIABLE));
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().get(0).asErasure().represents(Exception.class),
                 is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly().getExceptionTypes().get(1).getSort(),
@@ -1217,7 +1217,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().size(), is(2));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().get(0).getType().getSort(),
-                is(TypeDescription.Generic.Sort.VARIABLE));
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().get(0).getType().asErasure().represents(Exception.class),
                 is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getParameters().get(1).getType().getSort(),
@@ -1226,7 +1226,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
                 is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().size(), is(2));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(0).getSort(),
-                is(TypeDescription.Generic.Sort.VARIABLE));
+                is(TypeDescription.Generic.Sort.NON_GENERIC));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(0).asErasure().represents(Exception.class),
                 is(true));
         assertThat(typeDescription.getDeclaredMethods().filter(isConstructor()).getOnly().getExceptionTypes().get(1).getSort(),

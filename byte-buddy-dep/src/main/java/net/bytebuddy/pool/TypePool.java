@@ -6343,7 +6343,7 @@ public interface TypePool {
 
                     @Override
                     public Generic get(int index) {
-                        return index < genericTypeTokens.size()
+                        return rawTypeDescriptors.size() == genericTypeTokens.size()
                                 ? TokenizedGenericType.of(typePool, genericTypeTokens.get(index), rawTypeDescriptors.get(index), annotationTokens.get(index), typeVariableSource)
                                 : TokenizedGenericType.toErasure(typePool, rawTypeDescriptors.get(index)).asGenericType();
                     }

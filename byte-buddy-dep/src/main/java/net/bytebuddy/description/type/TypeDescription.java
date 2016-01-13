@@ -5120,7 +5120,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * The erasure of the parameter type.
                  */
-                private final Class<?> erasure;
+                private final Class<?>[] erasure;
 
                 /**
                  * Creates a lazy projection of a constructor's parameter.
@@ -5129,7 +5129,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param index       The parameter's index.
                  * @param erasure     The erasure of the parameter type.
                  */
-                public OfConstructorParameter(Constructor<?> constructor, int index, Class<?> erasure) {
+                public OfConstructorParameter(Constructor<?> constructor, int index, Class<?>[] erasure) {
                     this.constructor = constructor;
                     this.index = index;
                     this.erasure = erasure;
@@ -5138,14 +5138,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = constructor.getGenericParameterTypes();
-                    return index < type.length
+                    return erasure.length == type.length
                             ? Sort.describe(type[index], getAnnotationReader())
-                            : new OfNonGenericType.ForLoadedType(erasure);
+                            : new OfNonGenericType.ForLoadedType(erasure[index]);
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
+                    return new TypeDescription.ForLoadedType(erasure[index]);
                 }
 
                 @Override
@@ -5170,18 +5170,18 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final int index;
 
                 /**
-                 * The erasure of the parameter type.
+                 * The erasures of the method's parameter types.
                  */
-                private final Class<?> erasure;
+                private final Class<?>[] erasure;
 
                 /**
                  * Creates a lazy projection of a constructor's parameter.
                  *
                  * @param method  The method of which a parameter type is represented.
                  * @param index   The parameter's index.
-                 * @param erasure The erasure of the parameter's type.
+                 * @param erasure  The erasures of the method's parameter types.
                  */
-                public OfMethodParameter(Method method, int index, Class<?> erasure) {
+                public OfMethodParameter(Method method, int index, Class<?>[] erasure) {
                     this.method = method;
                     this.index = index;
                     this.erasure = erasure;
@@ -5190,14 +5190,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 protected Generic resolve() {
                     java.lang.reflect.Type[] type = method.getGenericParameterTypes();
-                    return index < type.length
+                    return erasure.length == type.length
                             ? Sort.describe(type[index], getAnnotationReader())
-                            : new OfNonGenericType.ForLoadedType(erasure);
+                            : new OfNonGenericType.ForLoadedType(erasure[index]);
                 }
 
                 @Override
                 public TypeDescription asErasure() {
-                    return new TypeDescription.ForLoadedType(erasure);
+                    return new TypeDescription.ForLoadedType(erasure[index]);
                 }
 
                 @Override
