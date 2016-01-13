@@ -523,8 +523,8 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
     @Test
     public void testIsPackageDescription() throws Exception {
-        assertThat(describe(Class.forName(Sample.class.getPackage().getName() + "." + PackageDescription.PACKAGE_CLASS_NAME)).isPackageDescription(), is(true));
-        assertThat(describe(Object.class).isPackageDescription(), is(false));
+        assertThat(describe(Class.forName(Sample.class.getPackage().getName() + "." + PackageDescription.PACKAGE_CLASS_NAME)).isPackageType(), is(true));
+        assertThat(describe(Object.class).isPackageType(), is(false));
     }
 
     protected interface SampleInterface {

@@ -27,7 +27,7 @@ public class SubclassImplementationTargetFactoryTest {
     private MethodGraph.Linked methodGraph;
 
     @Mock
-    private TypeDescription instrumentedType, superType;
+    private TypeDescription instrumentedType, superClass;
 
     @Mock
     private TypeDescription.Generic genericSuperType;
@@ -35,7 +35,7 @@ public class SubclassImplementationTargetFactoryTest {
     @Before
     public void setUp() throws Exception {
         when(instrumentedType.getSuperClass()).thenReturn(genericSuperType);
-        when(genericSuperType.asErasure()).thenReturn(superType);
+        when(genericSuperType.asErasure()).thenReturn(superClass);
         when(genericSuperType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
     }
 

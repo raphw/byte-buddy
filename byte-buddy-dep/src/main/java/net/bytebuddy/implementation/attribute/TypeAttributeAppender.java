@@ -63,9 +63,9 @@ public interface TypeAttributeAppender {
                     annotationValueFilter,
                     AnnotationAppender.ForTypeAnnotations.VARIABLE_ON_TYPE,
                     instrumentedType.getTypeVariables());
-            TypeDescription.Generic superType = instrumentedType.getSuperClass();
-            if (superType != null) {
-                annotationAppender = superType.accept(AnnotationAppender.ForTypeAnnotations.ofSuperClass(annotationAppender, annotationValueFilter));
+            TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+            if (superClass != null) {
+                annotationAppender = superClass.accept(AnnotationAppender.ForTypeAnnotations.ofSuperClass(annotationAppender, annotationValueFilter));
             }
             int interfaceIndex = 0;
             for (TypeDescription.Generic interfaceType : instrumentedType.getInterfaces()) {

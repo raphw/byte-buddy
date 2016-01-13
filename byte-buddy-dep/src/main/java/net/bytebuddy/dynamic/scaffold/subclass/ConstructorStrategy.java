@@ -54,7 +54,7 @@ public interface ConstructorStrategy {
          */
         NO_CONSTRUCTORS {
             @Override
-            public List<MethodDescription.Token> extractConstructors(TypeDescription superType) {
+            public List<MethodDescription.Token> extractConstructors(TypeDescription superClass) {
                 return Collections.emptyList();
             }
 
@@ -72,10 +72,10 @@ public interface ConstructorStrategy {
         DEFAULT_CONSTRUCTOR {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription.Generic superType = instrumentedType.getSuperClass();
-                MethodList<?> defaultConstructors = superType == null
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+                MethodList<?> defaultConstructors = superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
+                        : superClass.getDeclaredMethods().filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)));
                 if (defaultConstructors.size() == 1) {
                     return defaultConstructors.asTokenList(is(instrumentedType));
                 } else {
@@ -101,10 +101,10 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription.Generic superType = instrumentedType.getSuperClass();
-                return (superType == null
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+                return (superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
+                        : superClass.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
             }
 
             @Override
@@ -124,10 +124,10 @@ public interface ConstructorStrategy {
         IMITATE_SUPER_TYPE_PUBLIC {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
-                TypeDescription.Generic superType = instrumentedType.getSuperClass();
-                return (superType == null
+                TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+                return (superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superType.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList(is(instrumentedType));
+                        : superClass.getDeclaredMethods().filter(isPublic().and(isConstructor()))).asTokenList(is(instrumentedType));
             }
 
             @Override

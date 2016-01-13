@@ -328,10 +328,10 @@ public class MethodRegistryDefaultTest {
         when(thirdType.isPublic()).thenReturn(true);
         when(instrumentedMethod.isPublic()).thenReturn(true);
         when(declaringType.isPackagePrivate()).thenReturn(true);
-        TypeDescription.Generic superType = mock(TypeDescription.Generic.class);
+        TypeDescription.Generic superClass = mock(TypeDescription.Generic.class);
         TypeDescription rawSuperType = mock(TypeDescription.class);
-        when(superType.asErasure()).thenReturn(rawSuperType);
-        when(typeDescription.getSuperClass()).thenReturn(superType);
+        when(superClass.asErasure()).thenReturn(rawSuperType);
+        when(typeDescription.getSuperClass()).thenReturn(superClass);
         MethodDescription.Token methodToken = mock(MethodDescription.Token.class);
         when(instrumentedMethod.asToken(ElementMatchers.is(typeDescription))).thenReturn(methodToken);
         when(methodToken.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(methodToken);

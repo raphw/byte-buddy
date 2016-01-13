@@ -500,16 +500,16 @@ public interface MethodGraph {
             public MethodGraph.Linked compile(TypeDefinition typeDefinition, TypeDescription viewPoint) {
                 Map<TypeDefinition, Key.Store<T>> snapshots = new HashMap<TypeDefinition, Key.Store<T>>();
                 Key.Store<?> rootStore = doAnalyze(typeDefinition, snapshots, isVirtual().and(isVisibleTo(viewPoint)));
-                TypeDescription.Generic superType = typeDefinition.getSuperClass();
+                TypeDescription.Generic superClass = typeDefinition.getSuperClass();
                 List<TypeDescription.Generic> interfaceTypes = typeDefinition.getInterfaces();
                 Map<TypeDescription, MethodGraph> interfaceGraphs = new HashMap<TypeDescription, MethodGraph>();
                 for (TypeDescription.Generic interfaceType : interfaceTypes) {
                     interfaceGraphs.put(interfaceType.asErasure(), snapshots.get(interfaceType).asGraph(merger));
                 }
                 return new Linked.Delegation(rootStore.asGraph(merger),
-                        superType == null
+                        superClass == null
                                 ? Empty.INSTANCE
-                                : snapshots.get(superType).asGraph(merger),
+                                : snapshots.get(superClass).asGraph(merger),
                         interfaceGraphs);
             }
 

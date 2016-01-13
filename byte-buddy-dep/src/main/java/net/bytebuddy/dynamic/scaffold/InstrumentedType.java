@@ -196,7 +196,7 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * The generic super type of the instrumented type.
          */
-        private final Generic superType;
+        private final Generic superClass;
 
         /**
          * The instrumented type's type variables in their tokenized form.
@@ -274,7 +274,7 @@ public interface InstrumentedType extends TypeDescription {
          * @param name                   The binary name of the instrumented type.
          * @param modifiers              The modifiers of the instrumented type.
          * @param typeVariables          The instrumented type's type variables in their tokenized form.
-         * @param superType              The generic super type of the instrumented type.
+         * @param superClass             The generic super type of the instrumented type.
          * @param interfaceTypes         A list of interfaces of the instrumented type.
          * @param fieldTokens            A list of field tokens describing the fields of the instrumented type.
          * @param methodTokens           A list of method tokens describing the methods of the instrumented type.
@@ -291,7 +291,7 @@ public interface InstrumentedType extends TypeDescription {
          */
         protected Default(String name,
                           int modifiers,
-                          Generic superType,
+                          Generic superClass,
                           List<? extends TypeVariableToken> typeVariables,
                           List<? extends Generic> interfaceTypes,
                           List<? extends FieldDescription.Token> fieldTokens,
@@ -309,7 +309,7 @@ public interface InstrumentedType extends TypeDescription {
             this.name = name;
             this.modifiers = modifiers;
             this.typeVariables = typeVariables;
-            this.superType = superType;
+            this.superClass = superClass;
             this.interfaceTypes = interfaceTypes;
             this.fieldTokens = fieldTokens;
             this.methodTokens = methodTokens;
@@ -328,15 +328,15 @@ public interface InstrumentedType extends TypeDescription {
         /**
          * Creates an instrumented type that is a subclass of the given super type named as given and with the modifiers.
          *
-         * @param name      The name of the instrumented type.
-         * @param modifiers The modifiers of the instrumented type.
-         * @param superType The super type of the instrumented type.
+         * @param name       The name of the instrumented type.
+         * @param modifiers  The modifiers of the instrumented type.
+         * @param superClass The super type of the instrumented type.
          * @return An instrumented type as a subclass of the given type with the given name and modifiers.
          */
-        public static InstrumentedType.WithFlexibleName subclass(String name, int modifiers, Generic superType) {
+        public static InstrumentedType.WithFlexibleName subclass(String name, int modifiers, Generic superClass) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     Collections.<TypeVariableToken>emptyList(),
                     Collections.<Generic>emptyList(),
                     Collections.<FieldDescription.Token>emptyList(),
@@ -383,7 +383,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withModifiers(int modifiers) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -404,7 +404,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withField(FieldDescription.Token token) {
             return new Default(this.name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     CompoundList.of(fieldTokens, token.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
@@ -425,7 +425,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withMethod(MethodDescription.Token token) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -446,7 +446,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInterfaces(TypeList.Generic interfaceTypes) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     CompoundList.of(this.interfaceTypes, interfaceTypes.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     fieldTokens,
@@ -467,7 +467,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withAnnotations(List<? extends AnnotationDescription> annotationDescriptions) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -488,7 +488,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withTypeVariable(TypeVariableToken typeVariable) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     CompoundList.of(typeVariables, typeVariable.accept(Generic.Visitor.Substitutor.ForDetachment.of(this))),
                     interfaceTypes,
                     fieldTokens,
@@ -509,7 +509,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withName(String name) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -530,7 +530,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInitializer(LoadedTypeInitializer loadedTypeInitializer) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -551,7 +551,7 @@ public interface InstrumentedType extends TypeDescription {
         public WithFlexibleName withInitializer(ByteCodeAppender byteCodeAppender) {
             return new Default(name,
                     modifiers,
-                    superType,
+                    superClass,
                     typeVariables,
                     interfaceTypes,
                     fieldTokens,
@@ -628,9 +628,9 @@ public interface InstrumentedType extends TypeDescription {
 
         @Override
         public Generic getSuperClass() {
-            return superType == null
+            return superClass == null
                     ? Generic.UNDEFINED
-                    : superType.accept(Generic.Visitor.Substitutor.ForAttachment.of(this));
+                    : superClass.accept(Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         @Override
@@ -669,14 +669,18 @@ public interface InstrumentedType extends TypeDescription {
                 throw new IllegalStateException("Illegal type name: " + getName() + " for " + this);
             } else if ((getModifiers() & ~ModifierContributor.ForType.MASK) != EMPTY_MASK) {
                 throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for " + this);
-            } else if (isPackageDescription() && getModifiers() != PackageDescription.PACKAGE_MODIFIERS) {
+            } else if (isPackageType() && getModifiers() != PackageDescription.PACKAGE_MODIFIERS) {
                 throw new IllegalStateException("Illegal modifiers " + getModifiers() + " for package " + this);
             }
-            TypeDescription.Generic superType = getSuperClass();
-            if (superType != null && (!superType.accept(Generic.Visitor.Validator.SUPER_CLASS))) {
-                throw new IllegalStateException("Illegal super class " + getSuperClass() + " for " + this);
-            } else if (superType != null && !superType.asErasure().isVisibleTo(this)) {
-                throw new IllegalStateException("Invisible super type " + superType + " for " + this);
+            TypeDescription.Generic superClass = getSuperClass();
+            if (superClass != null) {
+                if (!superClass.accept(Generic.Visitor.Validator.SUPER_CLASS)) {
+                    throw new IllegalStateException("Illegal super class " + superClass + " for " + this);
+                } else if (!superClass.accept(Generic.Visitor.Validator.ForTypeAnnotations.INSTANCE)) {
+                    throw new IllegalStateException("Illegal type annotations on super class " + superClass + " for " + this);
+                } else if (!superClass.asErasure().isVisibleTo(this)) {
+                    throw new IllegalStateException("Invisible super type " + superClass + " for " + this);
+                }
             }
             Set<TypeDescription> interfaceErasures = new HashSet<TypeDescription>();
             for (TypeDescription.Generic interfaceType : getInterfaces()) {
@@ -720,7 +724,7 @@ public interface InstrumentedType extends TypeDescription {
             for (AnnotationDescription annotationDescription : getDeclaredAnnotations()) {
                 if (!annotationDescription.getElementTypes().contains(ElementType.TYPE)
                         && !(isAnnotation() && annotationDescription.getElementTypes().contains(ElementType.ANNOTATION_TYPE))
-                        && !(isPackageDescription() && annotationDescription.getElementTypes().contains(ElementType.PACKAGE))) {
+                        && !(isPackageType() && annotationDescription.getElementTypes().contains(ElementType.PACKAGE))) {
                     throw new IllegalStateException("Cannot add " + annotationDescription + " on " + this);
                 } else if (!typeAnnotationTypes.add(annotationDescription.getAnnotationType())) {
                     throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);

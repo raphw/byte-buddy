@@ -37,10 +37,10 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      */
     protected SubclassImplementationTarget(TypeDescription instrumentedType, MethodGraph.Linked methodGraph, OriginTypeResolver originTypeResolver) {
         super(instrumentedType, methodGraph);
-        TypeDescription.Generic superType = instrumentedType.getSuperClass();
-        MethodList<?> superConstructors = superType == null
+        TypeDescription.Generic superClass = instrumentedType.getSuperClass();
+        MethodList<?> superConstructors = superClass == null
                 ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                : superType.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
+                : superClass.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)));
         this.superConstructors = new HashMap<MethodDescription.SignatureToken, MethodDescription>();
         for (MethodDescription superConstructor : superConstructors) {
             this.superConstructors.put(superConstructor.asSignatureToken(), superConstructor);

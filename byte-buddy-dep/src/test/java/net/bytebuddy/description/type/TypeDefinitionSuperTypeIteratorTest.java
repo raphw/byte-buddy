@@ -24,11 +24,11 @@ public class TypeDefinitionSuperTypeIteratorTest {
     private TypeDescription typeDescription;
 
     @Mock
-    private TypeDescription.Generic superType;
+    private TypeDescription.Generic superClass;
 
     @Before
     public void setUp() throws Exception {
-        when(typeDescription.getSuperClass()).thenReturn(superType);
+        when(typeDescription.getSuperClass()).thenReturn(superClass);
     }
 
     @Test
@@ -37,7 +37,7 @@ public class TypeDefinitionSuperTypeIteratorTest {
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
         assertThat(iterator.hasNext(), is(true));
-        assertThat(iterator.next(), is((TypeDefinition) superType));
+        assertThat(iterator.next(), is((TypeDefinition) superClass));
         assertThat(iterator.hasNext(), is(false));
     }
 
@@ -45,7 +45,7 @@ public class TypeDefinitionSuperTypeIteratorTest {
     public void testHasNotNext() throws Exception {
         Iterator<TypeDefinition> iterator = new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription);
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
-        assertThat(iterator.next(), is((TypeDefinition) superType));
+        assertThat(iterator.next(), is((TypeDefinition) superClass));
         iterator.next();
     }
 

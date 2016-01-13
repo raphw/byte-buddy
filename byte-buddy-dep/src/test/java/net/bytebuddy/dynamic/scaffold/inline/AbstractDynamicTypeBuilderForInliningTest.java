@@ -161,16 +161,16 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         assertThat(dynamicType.getGenericSuperclass(), instanceOf(ParameterizedType.class));
         assertThat(((ParameterizedType) dynamicType.getGenericSuperclass()).getActualTypeArguments().length, is(1));
         assertThat(((ParameterizedType) dynamicType.getGenericSuperclass()).getActualTypeArguments()[0], instanceOf(ParameterizedType.class));
-        ParameterizedType superType = (ParameterizedType) ((ParameterizedType) dynamicType.getGenericSuperclass()).getActualTypeArguments()[0];
-        assertThat(superType.getActualTypeArguments().length, is(2));
-        assertThat(superType.getActualTypeArguments()[0], is((Type) dynamicType.getTypeParameters()[0]));
-        assertThat(superType.getActualTypeArguments()[1], is((Type) dynamicType.getTypeParameters()[1]));
-        assertThat(superType.getOwnerType(), instanceOf(ParameterizedType.class));
-        assertThat(((ParameterizedType) superType.getOwnerType()).getRawType(), instanceOf(Class.class));
-        assertThat(((Class<?>) ((ParameterizedType) superType.getOwnerType()).getRawType()).getName(), is(GenericType.class.getName()));
-        assertThat(((ParameterizedType) superType.getOwnerType()).getActualTypeArguments().length, is(1));
-        assertThat(((ParameterizedType) superType.getOwnerType()).getActualTypeArguments()[0],
-                is((Type) ((Class<?>) ((ParameterizedType) superType.getOwnerType()).getRawType()).getTypeParameters()[0]));
+        ParameterizedType superClass = (ParameterizedType) ((ParameterizedType) dynamicType.getGenericSuperclass()).getActualTypeArguments()[0];
+        assertThat(superClass.getActualTypeArguments().length, is(2));
+        assertThat(superClass.getActualTypeArguments()[0], is((Type) dynamicType.getTypeParameters()[0]));
+        assertThat(superClass.getActualTypeArguments()[1], is((Type) dynamicType.getTypeParameters()[1]));
+        assertThat(superClass.getOwnerType(), instanceOf(ParameterizedType.class));
+        assertThat(((ParameterizedType) superClass.getOwnerType()).getRawType(), instanceOf(Class.class));
+        assertThat(((Class<?>) ((ParameterizedType) superClass.getOwnerType()).getRawType()).getName(), is(GenericType.class.getName()));
+        assertThat(((ParameterizedType) superClass.getOwnerType()).getActualTypeArguments().length, is(1));
+        assertThat(((ParameterizedType) superClass.getOwnerType()).getActualTypeArguments()[0],
+                is((Type) ((Class<?>) ((ParameterizedType) superClass.getOwnerType()).getRawType()).getTypeParameters()[0]));
         assertThat(dynamicType.getGenericInterfaces().length, is(1));
         assertThat(dynamicType.getGenericInterfaces()[0], instanceOf(ParameterizedType.class));
         assertThat(((ParameterizedType) dynamicType.getGenericInterfaces()[0]).getActualTypeArguments()[0], instanceOf(ParameterizedType.class));

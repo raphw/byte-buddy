@@ -29,10 +29,10 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
     private TypePool typePool;
 
     @Mock
-    private TypeDescription leftType, rightType, superType;
+    private TypeDescription leftType, rightType, superClass;
 
     @Mock
-    private TypeDescription.Generic genericSuperType;
+    private TypeDescription.Generic genericSuperClass;
 
     private TypeWriter.Default.FrameComputingClassWriter frameComputingClassWriter;
 
@@ -43,9 +43,9 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
         when(typePool.describe(BAR.replace('/', '.'))).thenReturn(new TypePool.Resolution.Simple(rightType));
         when(leftType.getInternalName()).thenReturn(QUX);
         when(rightType.getInternalName()).thenReturn(BAZ);
-        when(leftType.getSuperClass()).thenReturn(genericSuperType);
-        when(genericSuperType.asErasure()).thenReturn(superType);
-        when(superType.getInternalName()).thenReturn(FOOBAR);
+        when(leftType.getSuperClass()).thenReturn(genericSuperClass);
+        when(genericSuperClass.asErasure()).thenReturn(superClass);
+        when(superClass.getInternalName()).thenReturn(FOOBAR);
     }
 
     @Test
@@ -82,7 +82,7 @@ public class TypeWriterDefaultFrameComputingClassWriterTest {
 
     @Test
     public void testSuperTypeIteration() throws Exception {
-        when(superType.isAssignableFrom(rightType)).thenReturn(true);
+        when(superClass.isAssignableFrom(rightType)).thenReturn(true);
         assertThat(frameComputingClassWriter.getCommonSuperClass(FOO, BAR), is(FOOBAR));
     }
 

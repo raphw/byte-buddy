@@ -788,7 +788,7 @@ public interface TypeWriter<T> {
                     /**
                      * The super type of the instrumented type.
                      */
-                    private final TypeDescription superType;
+                    private final TypeDescription superClass;
 
                     /**
                      * The attribute appender to apply to the visibility bridge.
@@ -800,16 +800,16 @@ public interface TypeWriter<T> {
                      *
                      * @param visibilityBridge  The visibility bridge.
                      * @param bridgeTarget      The method the visibility bridge invokes.
-                     * @param superType         The super type of the instrumented type.
+                     * @param superClass         The super type of the instrumented type.
                      * @param attributeAppender The attribute appender to apply to the visibility bridge.
                      */
                     protected OfVisibilityBridge(MethodDescription visibilityBridge,
                                                  MethodDescription bridgeTarget,
-                                                 TypeDescription superType,
+                                                 TypeDescription superClass,
                                                  MethodAttributeAppender attributeAppender) {
                         this.visibilityBridge = visibilityBridge;
                         this.bridgeTarget = bridgeTarget;
-                        this.superType = superType;
+                        this.superClass = superClass;
                         this.attributeAppender = attributeAppender;
                     }
 
@@ -860,7 +860,7 @@ public interface TypeWriter<T> {
                     public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext, MethodDescription instrumentedMethod) {
                         return new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(instrumentedMethod).prependThisReference(),
-                                MethodInvocation.invoke(bridgeTarget).special(superType),
+                                MethodInvocation.invoke(bridgeTarget).special(superClass),
                                 MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext, instrumentedMethod);
                     }
@@ -872,7 +872,7 @@ public interface TypeWriter<T> {
                         OfVisibilityBridge that = (OfVisibilityBridge) other;
                         return visibilityBridge.equals(that.visibilityBridge)
                                 && bridgeTarget.equals(that.bridgeTarget)
-                                && superType.equals(that.superType)
+                                && superClass.equals(that.superClass)
                                 && attributeAppender.equals(that.attributeAppender);
                     }
 
@@ -880,7 +880,7 @@ public interface TypeWriter<T> {
                     public int hashCode() {
                         int result = visibilityBridge.hashCode();
                         result = 31 * result + bridgeTarget.hashCode();
-                        result = 31 * result + superType.hashCode();
+                        result = 31 * result + superClass.hashCode();
                         result = 31 * result + attributeAppender.hashCode();
                         return result;
                     }
@@ -890,7 +890,7 @@ public interface TypeWriter<T> {
                         return "TypeWriter.MethodPool.Record.ForDefinedMethod.OfVisibilityBridge{" +
                                 "visibilityBridge=" + visibilityBridge +
                                 ", bridgeTarget=" + bridgeTarget +
-                                ", superType=" + superType +
+                                ", superClass=" + superClass +
                                 ", attributeAppender=" + attributeAppender +
                                 '}';
                     }
@@ -2951,7 +2951,7 @@ public interface TypeWriter<T> {
                                   int modifiers,
                                   String internalName,
                                   String genericSignature,
-                                  String superTypeInternalName,
+                                  String superClassInternalName,
                                   String[] interfaceTypeInternalName) {
                     super.visit(classFileVersionNumber,
                             instrumentedType.getActualModifiers((modifiers & Opcodes.ACC_SUPER) != 0 && !instrumentedType.isInterface()),

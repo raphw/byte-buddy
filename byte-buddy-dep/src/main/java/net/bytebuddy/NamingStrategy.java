@@ -17,10 +17,10 @@ public interface NamingStrategy {
     /**
      * Determines a new name when creating a new type that subclasses the provided type.
      *
-     * @param superType The super type of the created type.
+     * @param superClass The super type of the created type.
      * @return The name of the dynamic type.
      */
-    String subclass(TypeDescription.Generic superType);
+    String subclass(TypeDescription.Generic superClass);
 
     /**
      * Determines a name for the dynamic type when redefining the provided type.
@@ -44,17 +44,17 @@ public interface NamingStrategy {
     abstract class AbstractBase implements NamingStrategy {
 
         @Override
-        public String subclass(TypeDescription.Generic superType) {
-            return name(superType.asErasure());
+        public String subclass(TypeDescription.Generic superClass) {
+            return name(superClass.asErasure());
         }
 
         /**
          * Determines a new name when creating a new type that subclasses the provided type.
          *
-         * @param superType The super type of the created type.
+         * @param superClass The super type of the created type.
          * @return The name of the dynamic type.
          */
-        protected abstract String name(TypeDescription superType);
+        protected abstract String name(TypeDescription superClass);
 
         @Override
         public String redefine(TypeDescription typeDescription) {
@@ -158,8 +158,8 @@ public interface NamingStrategy {
         }
 
         @Override
-        protected String name(TypeDescription superType) {
-            String baseName = baseNameResolver.resolve(superType);
+        protected String name(TypeDescription superClass) {
+            String baseName = baseNameResolver.resolve(superClass);
             if (baseName.startsWith(JAVA_PACKAGE) && !javaLangPackagePrefix.equals("")) {
                 baseName = javaLangPackagePrefix + "." + baseName;
             }
@@ -343,8 +343,8 @@ public interface NamingStrategy {
         }
 
         @Override
-        protected String name(TypeDescription superType) {
-            return String.format("%s.%s$%s", prefix, superType.getName(), randomString.nextString());
+        protected String name(TypeDescription superClass) {
+            return String.format("%s.%s$%s", prefix, superClass.getName(), randomString.nextString());
         }
 
         @Override

@@ -38,7 +38,7 @@ public class ConstructorStrategyDefaultTest {
     private InstrumentedType instrumentedType;
 
     @Mock
-    private TypeDescription.Generic superType;
+    private TypeDescription.Generic superClass;
 
     @Mock
     private MethodList<?> methodList, filteredMethodList;
@@ -53,8 +53,8 @@ public class ConstructorStrategyDefaultTest {
                 any(MethodRegistry.Handler.class),
                 any(MethodAttributeAppender.Factory.class),
                 any(MethodTransformer.class))).thenReturn(methodRegistry);
-        when(instrumentedType.getSuperClass()).thenReturn(superType);
-        when(superType.getDeclaredMethods()).thenReturn((MethodList) methodList);
+        when(instrumentedType.getSuperClass()).thenReturn(superClass);
+        when(superClass.getDeclaredMethods()).thenReturn((MethodList) methodList);
         when(filteredMethodList.asTokenList(ElementMatchers.is(instrumentedType))).thenReturn(filteredMethodTokenList);
     }
 
