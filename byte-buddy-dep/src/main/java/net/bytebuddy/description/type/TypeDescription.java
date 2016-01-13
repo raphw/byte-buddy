@@ -1463,20 +1463,36 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     return "TypeDescription.Generic.Visitor.Validator." + name();
                 }
 
+                /**
+                 * A type validator for checking type annotations.
+                 */
                 public enum ForTypeAnnotations implements Visitor<Boolean> {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
+                    /**
+                     * The {@link ElementType}'s {@code TYPE_USE} constant.
+                     */
                     private final ElementType typeUse;
 
+                    /**
+                     * The {@link ElementType}'s {@code TYPE_PARAMETER} constant.
+                     */
                     private final ElementType typeParameter;
 
+                    /**
+                     * Creates a new type annotation validator.
+                     */
                     ForTypeAnnotations() {
                         ElementType typeUse, typeParameter;
                         try {
                             typeUse = Enum.valueOf(ElementType.class, "TYPE_USE");
                             typeParameter = Enum.valueOf(ElementType.class, "TYPE_PARAMETER");
-                        } catch (RuntimeException ignored) {
+                        } catch (IllegalArgumentException ignored) {
+                            // Setting these values null results in this validator always failing for pre Java-8 VMs.
                             typeUse = null;
                             typeParameter = null;
                         }
@@ -1484,6 +1500,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         this.typeParameter = typeParameter;
                     }
 
+                    /**
+                     * Validates the type annotations on a formal type variable but not on its bounds..
+                     *
+                     * @param typeVariable The type variable to validate.
+                     * @return {@code true} if the formal type variable declares invalid type annotations.
+                     */
                     public static boolean ofFormalTypeVariable(Generic typeVariable) {
                         Set<TypeDescription> annotationTypes = new HashSet<TypeDescription>();
                         for (AnnotationDescription annotationDescription : typeVariable.getDeclaredAnnotations()) {
@@ -1549,7 +1571,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public String toString() {
-                        return "TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations" + name();
+                        return "TypeDescription.Generic.Visitor.Validator.ForTypeAnnotations." + name();
                     }
                 }
             }
