@@ -58,9 +58,23 @@ public interface TypeAttributeAppender {
 
         @Override
         public void apply(ClassVisitor classVisitor, TypeDescription instrumentedType, AnnotationValueFilter annotationValueFilter) {
-            AnnotationAppender appender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnType(classVisitor));
+            annotationAppender = AnnotationAppender.ForTypeAnnotations.ofTypeVariable(annotationAppender,
+                    annotationValueFilter,
+                    AnnotationAppender.ForTypeAnnotations.VARIABLE_ON_TYPE,
+                    instrumentedType.getTypeVariables());
+            TypeDescription.Generic superType = instrumentedType.getSuperType();
+            if (superType != null) {
+                annotationAppender = superType.accept(AnnotationAppender.ForTypeAnnotations.ofSuperClass(annotationAppender, annotationValueFilter));
+            }
+            int interfaceIndex = 0;
+            for (TypeDescription.Generic interfaceType : instrumentedType.getInterfaces()) {
+                annotationAppender = interfaceType.accept(AnnotationAppender.ForTypeAnnotations.ofInterfaceType(annotationAppender,
+                        annotationValueFilter,
+                        interfaceIndex));
+            }
             for (AnnotationDescription annotation : instrumentedType.getDeclaredAnnotations()) {
-                appender = appender.append(annotation, annotationValueFilter);
+                annotationAppender = annotationAppender.append(annotation, annotationValueFilter);
             }
         }
 

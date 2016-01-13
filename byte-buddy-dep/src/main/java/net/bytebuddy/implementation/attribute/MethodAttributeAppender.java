@@ -140,16 +140,31 @@ public interface MethodAttributeAppender {
 
         @Override
         public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
-            AnnotationAppender methodAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
+            AnnotationAppender annotationAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor));
+            annotationAppender = methodDescription.getReturnType().accept(AnnotationAppender.ForTypeAnnotations.ofMethodReturnType(annotationAppender,
+                    annotationValueFilter));
+            annotationAppender = AnnotationAppender.ForTypeAnnotations.ofTypeVariable(annotationAppender,
+                    annotationValueFilter,
+                    AnnotationAppender.ForTypeAnnotations.VARIABLE_ON_INVOKEABLE,
+                    methodDescription.getTypeVariables());
             for (AnnotationDescription annotation : methodDescription.getDeclaredAnnotations()) {
-                methodAppender = methodAppender.append(annotation, annotationValueFilter);
+                annotationAppender = annotationAppender.append(annotation, annotationValueFilter);
             }
-            int index = 0;
             for (ParameterDescription parameterDescription : methodDescription.getParameters()) {
-                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor, index++));
+                AnnotationAppender parameterAppender = new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethodParameter(methodVisitor,
+                        parameterDescription.getIndex()));
+                parameterAppender = parameterDescription.getType().accept(AnnotationAppender.ForTypeAnnotations.ofMethodParameterType(parameterAppender,
+                        annotationValueFilter,
+                        parameterDescription.getIndex()));
                 for (AnnotationDescription annotation : parameterDescription.getDeclaredAnnotations()) {
                     parameterAppender = parameterAppender.append(annotation, annotationValueFilter);
                 }
+            }
+            int exceptionTypeIndex = 0;
+            for (TypeDescription.Generic exceptionType : methodDescription.getExceptionTypes()) {
+                annotationAppender = exceptionType.accept(AnnotationAppender.ForTypeAnnotations.ofExceptionType(annotationAppender,
+                        annotationValueFilter,
+                        exceptionTypeIndex++));
             }
         }
 
