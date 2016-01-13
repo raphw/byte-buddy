@@ -21,7 +21,7 @@ public interface AnnotationAppender {
     String NO_NAME = null;
 
     /**
-     * Terminally writes the given annotation to the specified target.
+     * Writes the given annotation to the target that this appender represents.
      *
      * @param annotationDescription The annotation to be written.
      * @param annotationValueFilter The annotation value filter to use.
@@ -29,6 +29,15 @@ public interface AnnotationAppender {
      */
     AnnotationAppender append(AnnotationDescription annotationDescription, AnnotationValueFilter annotationValueFilter);
 
+    /**
+     * Writes the given type annotation to the target that this appender represents.
+     *
+     * @param annotationDescription The annotation to be written.
+     * @param annotationValueFilter The annotation value filter to use.
+     * @param typeReference         The type variable's type reference.
+     * @param typePath              The type variable's type path.
+     * @return Usually {@code this} or any other annotation appender capable of writing another annotation to the specified target.
+     */
     AnnotationAppender append(AnnotationDescription annotationDescription, AnnotationValueFilter annotationValueFilter, int typeReference, String typePath);
 
     /**
@@ -37,15 +46,23 @@ public interface AnnotationAppender {
     interface Target {
 
         /**
-         * Creates an annotation visitor that is going to consume an annotation writing.
+         * Creates an annotation visitor for writing the specified annotation.
          *
          * @param annotationTypeDescriptor The type descriptor for the annotation to be written.
          * @param visible                  {@code true} if the annotation is to be visible at runtime.
-         * @return An annotation visitor that is going to consume an annotation that is written to the latter
-         * by the caller of this method.
+         * @return An annotation visitor for consuming the specified annotation.
          */
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible);
 
+        /**
+         * Creates an annotation visitor for writing the specified type annotation.
+         *
+         * @param annotationTypeDescriptor The type descriptor for the annotation to be written.
+         * @param visible                  {@code true} if the annotation is to be visible at runtime.
+         * @param typeReference            The type annotation's type reference.
+         * @param typePath                 The type annotation's type path.
+         * @return An annotation visitor for consuming the specified annotation.
+         */
         AnnotationVisitor visit(String annotationTypeDescriptor, boolean visible, int typeReference, String typePath);
 
         /**
@@ -382,8 +399,14 @@ public interface AnnotationAppender {
 
     class ForTypeAnnotations implements TypeDescription.Generic.Visitor<AnnotationAppender> {
 
+        /**
+         * Indicates that type variables type annotations are written on a Java type.
+         */
         public static final boolean VARIABLE_ON_TYPE = true;
 
+        /**
+         * Indicates that type variables type annotations are written on a Java method or constructor.
+         */
         public static final boolean VARIABLE_ON_INVOKEABLE = false;
 
         /**
@@ -411,20 +434,50 @@ public interface AnnotationAppender {
          */
         private static final char INDEXED_TYPE_DELIMITER = ';';
 
+        /**
+         * The index that indicates that super type type annotations are written onto a super class.
+         */
         private static final int SUPER_CLASS_INDEX = -1;
 
+        /**
+         * The annotation appender to use.
+         */
         private final AnnotationAppender annotationAppender;
 
+        /**
+         * The annotation value filter to use.
+         */
         private final AnnotationValueFilter annotationValueFilter;
 
+        /**
+         * The type reference to use.
+         */
         private final int typeReference;
 
+        /**
+         * The type path to use.
+         */
         private final String typePath;
 
+        /**
+         * Creates a new type annotation appending visitor for an empty type path.
+         *
+         * @param annotationAppender    The annotation appender to use.
+         * @param annotationValueFilter The annotation value filter to use.
+         * @param typeReference         The type reference to use.
+         */
         protected ForTypeAnnotations(AnnotationAppender annotationAppender, AnnotationValueFilter annotationValueFilter, TypeReference typeReference) {
             this(annotationAppender, annotationValueFilter, typeReference.getValue(), EMPTY_TYPE_PATH);
         }
 
+        /**
+         * Creates a new type annotation appending visitor.
+         *
+         * @param annotationAppender    The annotation appender to use.
+         * @param annotationValueFilter The annotation value filter to use.
+         * @param typeReference         The type reference to use.
+         * @param typePath              The type path to use.
+         */
         protected ForTypeAnnotations(AnnotationAppender annotationAppender, AnnotationValueFilter annotationValueFilter, int typeReference, String typePath) {
             this.annotationAppender = annotationAppender;
             this.annotationValueFilter = annotationValueFilter;
@@ -471,6 +524,7 @@ public interface AnnotationAppender {
                                                         List<? extends TypeDescription.Generic> typeVariables) {
             return ofTypeVariable(annotationAppender, annotationValueFilter, variableOnType, 0, typeVariables);
         }
+
         public static AnnotationAppender ofTypeVariable(AnnotationAppender annotationAppender,
                                                         AnnotationValueFilter annotationValueFilter,
                                                         boolean variableOnType,
@@ -555,12 +609,48 @@ public interface AnnotationAppender {
             return annotationAppender;
         }
 
+        /**
+         * Writes all annotations of the supplied type to this instance's annotation appender.
+         *
+         * @param typeDescription The type of what all annotations should be written of.
+         * @return The resulting annotation appender.
+         */
         private AnnotationAppender apply(TypeDescription.Generic typeDescription) {
             AnnotationAppender annotationAppender = this.annotationAppender;
             for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
                 annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter, typeReference, typePath);
             }
             return annotationAppender;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            ForTypeAnnotations that = (ForTypeAnnotations) other;
+            return typeReference == that.typeReference
+                    && annotationAppender.equals(that.annotationAppender)
+                    && annotationValueFilter.equals(that.annotationValueFilter)
+                    && typePath.equals(that.typePath);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = annotationAppender.hashCode();
+            result = 31 * result + annotationValueFilter.hashCode();
+            result = 31 * result + typeReference;
+            result = 31 * result + typePath.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "AnnotationAppender.ForTypeAnnotations{" +
+                    "annotationAppender=" + annotationAppender +
+                    ", annotationValueFilter=" + annotationValueFilter +
+                    ", typeReference=" + typeReference +
+                    ", typePath='" + typePath + '\'' +
+                    '}';
         }
     }
 }
