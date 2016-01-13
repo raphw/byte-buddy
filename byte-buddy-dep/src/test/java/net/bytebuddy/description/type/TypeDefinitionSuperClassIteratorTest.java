@@ -15,7 +15,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.when;
 
-public class TypeDefinitionSuperTypeIteratorTest {
+public class TypeDefinitionSuperClassIteratorTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -33,7 +33,7 @@ public class TypeDefinitionSuperTypeIteratorTest {
 
     @Test
     public void testHasNext() throws Exception {
-        Iterator<TypeDefinition> iterator = new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription);
+        Iterator<TypeDefinition> iterator = new TypeDefinition.SuperClassIterator(typeDescription);
         assertThat(iterator.hasNext(), is(true));
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
         assertThat(iterator.hasNext(), is(true));
@@ -43,7 +43,7 @@ public class TypeDefinitionSuperTypeIteratorTest {
 
     @Test(expected = NoSuchElementException.class)
     public void testHasNotNext() throws Exception {
-        Iterator<TypeDefinition> iterator = new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription);
+        Iterator<TypeDefinition> iterator = new TypeDefinition.SuperClassIterator(typeDescription);
         assertThat(iterator.next(), is((TypeDefinition) typeDescription));
         assertThat(iterator.next(), is((TypeDefinition) superClass));
         iterator.next();
@@ -51,11 +51,11 @@ public class TypeDefinitionSuperTypeIteratorTest {
 
     @Test(expected = UnsupportedOperationException.class)
     public void testNoRemoval() throws Exception {
-        new TypeDescription.AbstractBase.SuperTypeIterator(typeDescription).remove();
+        new TypeDefinition.SuperClassIterator(typeDescription).remove();
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.SuperTypeIterator.class).applyBasic();
+        ObjectPropertyAssertion.of(TypeDefinition.SuperClassIterator.class).applyBasic();
     }
 }

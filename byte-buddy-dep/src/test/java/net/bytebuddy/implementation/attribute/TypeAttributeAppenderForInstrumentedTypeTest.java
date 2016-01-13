@@ -56,7 +56,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
     }
 
     @Test
-    public void testSuperTypeTypeAnnotationNoRetention() throws Exception {
+    public void testSuperClassTypeAnnotationNoRetention() throws Exception {
         when(instrumentedType.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Qux.Instance()));
@@ -72,7 +72,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
     }
 
     @Test
-    public void testSuperTypeTypeAnnotationByteCodeRetention() throws Exception {
+    public void testSuperClassTypeAnnotationByteCodeRetention() throws Exception {
         when(instrumentedType.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
         when(simpleAnnotatedType.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(new Baz.Instance()));
@@ -88,7 +88,7 @@ public class TypeAttributeAppenderForInstrumentedTypeTest extends AbstractTypeAt
     }
 
     @Test
-    public void testSuperTypeTypeAnnotationClassFileRetention() throws Exception {
+    public void testSuperClassTypeAnnotationClassFileRetention() throws Exception {
         when(instrumentedType.getTypeVariables()).thenReturn(new TypeList.Generic.Empty());
         when(instrumentedType.getInterfaces()).thenReturn(new TypeList.Generic.Empty());
         when(simpleAnnotatedType.getDeclaredAnnotations())

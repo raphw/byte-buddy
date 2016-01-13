@@ -93,12 +93,12 @@ public interface ConstructorStrategy {
         },
 
         /**
-         * This strategy is adding all constructors of the instrumented type's super type where each constructor is
-         * directly invoking its signature-equivalent super type constructor. Only constructors that are visible to the
+         * This strategy is adding all constructors of the instrumented type's super class where each constructor is
+         * directly invoking its signature-equivalent super class constructor. Only constructors that are visible to the
          * instrumented type are added, i.e. package-private constructors are only added if the super type is defined
          * in the same package as the instrumented type and private constructors are always skipped.
          */
-        IMITATE_SUPER_TYPE {
+        IMITATE_SUPER_CLASS {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
                 TypeDescription.Generic superClass = instrumentedType.getSuperClass();
@@ -117,11 +117,11 @@ public interface ConstructorStrategy {
         },
 
         /**
-         * This strategy is adding all constructors of the instrumented type's super type where each constructor is
-         * directly invoking its signature-equivalent super type constructor. Only {@code public} constructors are
+         * This strategy is adding all constructors of the instrumented type's super class where each constructor is
+         * directly invoking its signature-equivalent super class constructor. Only {@code public} constructors are
          * added.
          */
-        IMITATE_SUPER_TYPE_PUBLIC {
+        IMITATE_SUPER_CLASS_PUBLIC {
             @Override
             public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
                 TypeDescription.Generic superClass = instrumentedType.getSuperClass();

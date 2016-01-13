@@ -508,7 +508,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @JavaVersionRule.Enforce(8)
     @SuppressWarnings("unchecked")
-    public void testAnnotationTypeOnSuperType() throws Exception {
+    public void testAnnotationTypeOnSuperClass() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Class<?> type = new ByteBuddy()

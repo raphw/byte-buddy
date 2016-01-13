@@ -76,7 +76,7 @@ public class GenericSignatureResolutionTest {
     }
 
     @Test
-    public void testNoSuperType() throws Exception {
+    public void testNoSuperClass() throws Exception {
         assertThat(new ByteBuddy().redefine(Object.class).make(), notNullValue(DynamicType.class));
     }
 

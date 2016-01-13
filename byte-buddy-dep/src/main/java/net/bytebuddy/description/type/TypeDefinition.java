@@ -249,25 +249,25 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
     /**
      * An iterator that iterates over a type's class hierarchy.
      */
-    class SuperTypeIterator implements Iterator<TypeDefinition> {
+    class SuperClassIterator implements Iterator<TypeDefinition> {
 
         /**
-         * The next type to represent.
+         * The next class to represent.
          */
-        private TypeDefinition nextType;
+        private TypeDefinition nextClass;
 
         /**
          * Creates a new iterator.
          *
          * @param initialType The initial type of this iterator.
          */
-        public SuperTypeIterator(TypeDefinition initialType) {
-            nextType = initialType;
+        public SuperClassIterator(TypeDefinition initialType) {
+            nextClass = initialType;
         }
 
         @Override
         public boolean hasNext() {
-            return nextType != null;
+            return nextClass != null;
         }
 
         @Override
@@ -276,9 +276,9 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
                 throw new NoSuchElementException("End of type hierarchy");
             }
             try {
-                return nextType;
+                return nextClass;
             } finally {
-                nextType = nextType.getSuperClass();
+                nextClass = nextClass.getSuperClass();
             }
         }
 
@@ -289,8 +289,8 @@ public interface TypeDefinition extends NamedElement, Iterable<TypeDefinition> {
 
         @Override
         public String toString() {
-            return "TypeDefinition.SuperTypeIterator{" +
-                    "nextType=" + nextType +
+            return "TypeDefinition.SuperClassIterator{" +
+                    "nextClass=" + nextClass +
                     '}';
         }
     }

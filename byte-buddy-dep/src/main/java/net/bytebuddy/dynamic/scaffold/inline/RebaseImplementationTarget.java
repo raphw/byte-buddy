@@ -57,7 +57,7 @@ public class RebaseImplementationTarget extends Implementation.Target.AbstractBa
     public Implementation.SpecialMethodInvocation invokeSuper(MethodDescription.SignatureToken token) {
         MethodRebaseResolver.Resolution resolution = rebaseableMethods.get(token);
         return resolution == null
-                ? invokeSuper(methodGraph.getSuperGraph().locate(token))
+                ? invokeSuper(methodGraph.getSuperClassGraph().locate(token))
                 : invokeSuper(resolution);
     }
 

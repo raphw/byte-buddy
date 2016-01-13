@@ -2395,7 +2395,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public AnnotationReader resolveSuperClass(Class<?> type) {
-                        return new AnnotatedSuperType(type);
+                        return new AnnotatedSuperClass(type);
                     }
 
                     @Override
@@ -2553,7 +2553,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * A delegating annotation reader for an annotated super type.
                      */
-                    protected class AnnotatedSuperType extends Delegator {
+                    protected class AnnotatedSuperClass extends Delegator {
 
                         /**
                          * The represented type.
@@ -2565,7 +2565,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @param type The represented type.
                          */
-                        protected AnnotatedSuperType(Class<?> type) {
+                        protected AnnotatedSuperClass(Class<?> type) {
                             this.type = type;
                         }
 
@@ -2592,8 +2592,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
-                                    && getOuter().equals(((AnnotatedSuperType) other).getOuter())
-                                    && type.equals(((AnnotatedSuperType) other).type);
+                                    && getOuter().equals(((AnnotatedSuperClass) other).getOuter())
+                                    && type.equals(((AnnotatedSuperClass) other).type);
                         }
 
                         @Override
@@ -2603,7 +2603,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperClass{" +
                                     "dispatcher=" + getOuter() +
                                     ", type=" + type +
                                     '}';
@@ -3663,7 +3663,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Iterator<TypeDefinition> iterator() {
-                return new SuperTypeIterator(this);
+                return new SuperClassIterator(this);
             }
 
             @Override
@@ -3877,7 +3877,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Iterator<TypeDefinition> iterator() {
-                return new SuperTypeIterator(this);
+                return new SuperClassIterator(this);
             }
 
             @Override
@@ -4435,7 +4435,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Iterator<TypeDefinition> iterator() {
-                return new SuperTypeIterator(this);
+                return new SuperClassIterator(this);
             }
 
             @Override
@@ -5190,7 +5190,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * A lazy projection of a generic super type.
              */
-            public static class ForLoadedSuperType extends LazyProjection.OfAnnotatedElement {
+            public static class ForLoadedSuperClass extends LazyProjection.OfAnnotatedElement {
 
                 /**
                  * The type of which the super class is represented.
@@ -5202,7 +5202,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  *
                  * @param type The type of which the super class is represented.
                  */
-                public ForLoadedSuperType(Class<?> type) {
+                public ForLoadedSuperClass(Class<?> type) {
                     this.type = type;
                 }
 
@@ -6443,7 +6443,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public Iterator<TypeDefinition> iterator() {
-            return new SuperTypeIterator(this);
+            return new SuperClassIterator(this);
         }
 
         @Override
@@ -6584,7 +6584,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         public Generic getSuperClass() {
             return type.getSuperclass() == null
                     ? TypeDescription.Generic.UNDEFINED
-                    : new Generic.LazyProjection.ForLoadedSuperType(type);
+                    : new Generic.LazyProjection.ForLoadedSuperClass(type);
         }
 
         @Override

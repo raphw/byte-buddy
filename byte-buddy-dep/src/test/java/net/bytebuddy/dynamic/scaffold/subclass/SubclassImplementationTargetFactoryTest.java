@@ -27,27 +27,27 @@ public class SubclassImplementationTargetFactoryTest {
     private MethodGraph.Linked methodGraph;
 
     @Mock
-    private TypeDescription instrumentedType, superClass;
+    private TypeDescription instrumentedType, rawSuperClass;
 
     @Mock
-    private TypeDescription.Generic genericSuperType;
+    private TypeDescription.Generic superClass;
 
     @Before
     public void setUp() throws Exception {
-        when(instrumentedType.getSuperClass()).thenReturn(genericSuperType);
-        when(genericSuperType.asErasure()).thenReturn(superClass);
-        when(genericSuperType.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
+        when(instrumentedType.getSuperClass()).thenReturn(superClass);
+        when(superClass.asErasure()).thenReturn(rawSuperClass);
+        when(superClass.getDeclaredMethods()).thenReturn(new MethodList.Empty<MethodDescription.InGenericShape>());
     }
 
     @Test
     public void testReturnsSubclassImplementationTarget() throws Exception {
-        assertThat(SubclassImplementationTarget.Factory.SUPER_TYPE.make(instrumentedType, methodGraph), instanceOf(SubclassImplementationTarget.class));
+        assertThat(SubclassImplementationTarget.Factory.SUPER_CLASS.make(instrumentedType, methodGraph), instanceOf(SubclassImplementationTarget.class));
         assertThat(SubclassImplementationTarget.Factory.LEVEL_TYPE.make(instrumentedType, methodGraph), instanceOf(SubclassImplementationTarget.class));
     }
 
     @Test
-    public void testOriginTypeSuperType() throws Exception {
-        assertThat(SubclassImplementationTarget.Factory.SUPER_TYPE.make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) genericSuperType));
+    public void testOriginTypeSuperClass() throws Exception {
+        assertThat(SubclassImplementationTarget.Factory.SUPER_CLASS.make(instrumentedType, methodGraph).getOriginType(), is((TypeDefinition) superClass));
     }
 
     @Test

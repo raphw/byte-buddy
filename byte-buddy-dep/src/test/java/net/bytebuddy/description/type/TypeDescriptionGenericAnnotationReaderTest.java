@@ -95,7 +95,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                     }
                 }).apply();
         final Iterator<Class<?>> types2 = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Number.class).iterator();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperType.class)
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperClass.class)
                 .create(new ObjectPropertyAssertion.Creator<Class<?>>() {
                     @Override
                     public Class<?> create() {

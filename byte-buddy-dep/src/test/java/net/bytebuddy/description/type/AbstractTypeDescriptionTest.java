@@ -271,7 +271,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
-    public void testSuperType() throws Exception {
+    public void testSuperClass() throws Exception {
         assertThat(describe(Object.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
         assertThat(describe(SampleInterface.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
         assertThat(describe(SampleAnnotation.class).getSuperClass(), nullValue(TypeDescription.Generic.class));

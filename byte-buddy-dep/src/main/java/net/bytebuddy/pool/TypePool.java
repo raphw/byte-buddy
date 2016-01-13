@@ -2614,14 +2614,14 @@ public interface TypePool {
         public static class LazyTypeDescription extends TypeDescription.AbstractBase.OfSimpleType {
 
             /**
-             * The index of a super type's type annotations.
+             * The index of a super class's type annotations.
              */
-            private static final int SUPER_TYPE_INDEX = -1;
+            private static final int SUPER_CLASS_INDEX = -1;
 
             /**
              * Indicates that a type does not define a super type.
              */
-            private static final String NO_SUPER_TYPE = null;
+            private static final String NO_SUPER_CLASS = null;
 
             /**
              * The type pool to be used for looking up linked types.
@@ -2737,7 +2737,7 @@ public interface TypePool {
                 this.modifiers = modifiers & ~Opcodes.ACC_SUPER;
                 this.name = Type.getObjectType(name).getClassName();
                 this.superClassDescriptor = superClassInternalName == null
-                        ? NO_SUPER_TYPE
+                        ? NO_SUPER_CLASS
                         : Type.getObjectType(superClassInternalName).getDescriptor();
                 this.signatureResolution = signatureResolution;
                 if (interfaceInternalName == null) {
@@ -2763,7 +2763,7 @@ public interface TypePool {
             public Generic getSuperClass() {
                 return superClassDescriptor == null || isInterface()
                         ? Generic.UNDEFINED
-                        : signatureResolution.resolveSuperType(superClassDescriptor, typePool, superTypeAnnotationTokens.get(SUPER_TYPE_INDEX), this);
+                        : signatureResolution.resolveSuperClass(superClassDescriptor, typePool, superTypeAnnotationTokens.get(SUPER_CLASS_INDEX), this);
             }
 
             @Override
@@ -3510,10 +3510,10 @@ public interface TypePool {
                         }
 
                         @Override
-                        public Generic resolveSuperType(String superClassDescriptor,
-                                                        TypePool typePool,
-                                                        Map<String, List<AnnotationToken>> annotationTokens,
-                                                        TypeDescription definingType) {
+                        public Generic resolveSuperClass(String superClassDescriptor,
+                                                         TypePool typePool,
+                                                         Map<String, List<AnnotationToken>> annotationTokens,
+                                                         TypeDescription definingType) {
                             return RawAnnotatedType.of(typePool, annotationTokens, superClassDescriptor);
                         }
 
@@ -3745,10 +3745,10 @@ public interface TypePool {
                         }
 
                         @Override
-                        public Generic resolveSuperType(String superClassDescriptor,
-                                                        TypePool typePool,
-                                                        Map<String, List<AnnotationToken>> annotationTokens,
-                                                        TypeDescription definingType) {
+                        public Generic resolveSuperClass(String superClassDescriptor,
+                                                         TypePool typePool,
+                                                         Map<String, List<AnnotationToken>> annotationTokens,
+                                                         TypeDescription definingType) {
                             return new TokenizedGenericType.Malformed(typePool, superClassDescriptor);
                         }
 
@@ -3788,10 +3788,10 @@ public interface TypePool {
                          * @param definingType        The type that defines this super type.
                          * @return A description of this type's generic super type.
                          */
-                        Generic resolveSuperType(String superClassDescriptor,
-                                                 TypePool typePool,
-                                                 Map<String, List<AnnotationToken>> annotationTokens,
-                                                 TypeDescription definingType);
+                        Generic resolveSuperClass(String superClassDescriptor,
+                                                  TypePool typePool,
+                                                  Map<String, List<AnnotationToken>> annotationTokens,
+                                                  TypeDescription definingType);
 
                         /**
                          * Resolves the generic interface types of the represented type.
@@ -3843,10 +3843,10 @@ public interface TypePool {
                             }
 
                             @Override
-                            public Generic resolveSuperType(String superClassDescriptor,
-                                                            TypePool typePool,
-                                                            Map<String, List<AnnotationToken>> annotationTokens,
-                                                            TypeDescription definingType) {
+                            public Generic resolveSuperClass(String superClassDescriptor,
+                                                             TypePool typePool,
+                                                             Map<String, List<AnnotationToken>> annotationTokens,
+                                                             TypeDescription definingType) {
                                 return TokenizedGenericType.of(typePool, superClassToken, superClassDescriptor, annotationTokens, definingType);
                             }
 

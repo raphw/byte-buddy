@@ -289,7 +289,7 @@ public class ByteBuddy {
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     public <T> DynamicType.Builder<T> subclass(TypeDefinition superType) {
-        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_TYPE);
+        return subclass(superType, ConstructorStrategy.Default.IMITATE_SUPER_CLASS);
     }
 
     /**

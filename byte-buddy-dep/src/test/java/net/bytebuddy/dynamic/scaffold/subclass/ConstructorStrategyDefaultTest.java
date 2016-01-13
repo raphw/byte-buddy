@@ -68,11 +68,11 @@ public class ConstructorStrategyDefaultTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testImitateSuperTypeStrategy() throws Exception {
+    public void testImitateSuperClassStrategy() throws Exception {
         when(methodList.filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn((MethodList) filteredMethodList);
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.extractConstructors(instrumentedType),
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE.inject(methodRegistry), is(methodRegistry));
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),
@@ -84,11 +84,11 @@ public class ConstructorStrategyDefaultTest {
 
     @Test
     @SuppressWarnings("unchecked")
-    public void testImitateSuperTypePublicStrategy() throws Exception {
+    public void testImitateSuperClassPublicStrategy() throws Exception {
         when(methodList.filter(isPublic().and(isConstructor()))).thenReturn((MethodList) filteredMethodList);
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.extractConstructors(instrumentedType),
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.extractConstructors(instrumentedType),
                 is((List<MethodDescription.Token>) filteredMethodTokenList));
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_TYPE_PUBLIC.inject(methodRegistry), is(methodRegistry));
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),

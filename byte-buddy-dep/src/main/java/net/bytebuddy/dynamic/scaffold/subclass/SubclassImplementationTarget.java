@@ -75,7 +75,7 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
      * @return A special method invocation for a method representing the given method token, if available.
      */
     private Implementation.SpecialMethodInvocation invokeMethod(MethodDescription.SignatureToken token) {
-        MethodGraph.Node methodNode = methodGraph.getSuperGraph().locate(token);
+        MethodGraph.Node methodNode = methodGraph.getSuperClassGraph().locate(token);
         return methodNode.getSort().isUnique()
                 ? Implementation.SpecialMethodInvocation.Simple.of(methodNode.getRepresentative(), instrumentedType.getSuperClass().asErasure())
                 : Implementation.SpecialMethodInvocation.Illegal.INSTANCE;
@@ -119,9 +119,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public enum OriginTypeResolver {
 
         /**
-         * Identifies the super type of an instrumented type as the origin type.
+         * Identifies the super type of an instrumented type as the origin class.
          */
-        SUPER_TYPE {
+        SUPER_CLASS {
             @Override
             protected TypeDefinition identify(TypeDescription typeDescription) {
                 return typeDescription.getSuperClass();
@@ -158,9 +158,9 @@ public class SubclassImplementationTarget extends Implementation.Target.Abstract
     public enum Factory implements Implementation.Target.Factory {
 
         /**
-         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#SUPER_TYPE}.
+         * A factory creating a subclass implementation target with a {@link OriginTypeResolver#SUPER_CLASS}.
          */
-        SUPER_TYPE(OriginTypeResolver.SUPER_TYPE),
+        SUPER_CLASS(OriginTypeResolver.SUPER_CLASS),
 
         /**
          * A factory creating a subclass implementation target with a {@link OriginTypeResolver#LEVEL_TYPE}.

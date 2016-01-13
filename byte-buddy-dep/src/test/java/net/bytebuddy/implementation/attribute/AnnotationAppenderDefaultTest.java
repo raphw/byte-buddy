@@ -110,7 +110,7 @@ public class AnnotationAppenderDefaultTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotation() throws Exception {
-        Class<?> bar = makeTypeWithSuperTypeAnnotation(new Foo.Instance());
+        Class<?> bar = makeTypeWithSuperClassAnnotation(new Foo.Instance());
         TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(1));
         assertThat(annotationReader.asList().isAnnotationPresent(Foo.class), is(true));
@@ -119,7 +119,7 @@ public class AnnotationAppenderDefaultTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotationSourceCodeRetention() throws Exception {
-        Class<?> bar = makeTypeWithSuperTypeAnnotation(new FooSourceCodeRetention.Instance());
+        Class<?> bar = makeTypeWithSuperClassAnnotation(new FooSourceCodeRetention.Instance());
         TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(0));
     }
@@ -127,7 +127,7 @@ public class AnnotationAppenderDefaultTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotationByteCodeRetention() throws Exception {
-        Class<?> bar = makeTypeWithSuperTypeAnnotation(new FooByteCodeRetention.Instance());
+        Class<?> bar = makeTypeWithSuperClassAnnotation(new FooByteCodeRetention.Instance());
         TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(0));
     }
@@ -135,7 +135,7 @@ public class AnnotationAppenderDefaultTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testNoArgumentTypeAnnotationNoRetention() throws Exception {
-        Class<?> bar = makeTypeWithSuperTypeAnnotation(new FooNoRetention.Instance());
+        Class<?> bar = makeTypeWithSuperClassAnnotation(new FooNoRetention.Instance());
         TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(0));
     }
@@ -143,7 +143,7 @@ public class AnnotationAppenderDefaultTest {
     @Test
     @JavaVersionRule.Enforce(8)
     public void testSingleTypeArgumentAnnotation() throws Exception {
-        Class<?> bar = makeTypeWithSuperTypeAnnotation(new Qux.Instance(FOOBAR));
+        Class<?> bar = makeTypeWithSuperClassAnnotation(new Qux.Instance(FOOBAR));
         TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(1));
         assertThat(annotationReader.asList().isAnnotationPresent(Qux.class), is(true));
@@ -154,7 +154,7 @@ public class AnnotationAppenderDefaultTest {
     @JavaVersionRule.Enforce(8)
     public void testMultipleTypeArgumentAnnotation() throws Exception {
         int[] array = {2, 3, 4};
-        Class<?> bar = makeTypeWithSuperTypeAnnotation(new Baz.Instance(FOOBAR, array, new Foo.Instance(), Baz.Enum.VALUE, Void.class));
+        Class<?> bar = makeTypeWithSuperClassAnnotation(new Baz.Instance(FOOBAR, array, new Foo.Instance(), Baz.Enum.VALUE, Void.class));
         TypeDescription.Generic.AnnotationReader annotationReader = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveSuperClass(bar);
         assertThat(annotationReader.asList().size(), is(1));
         assertThat(annotationReader.asList().isAnnotationPresent(Baz.class), is(true));
@@ -190,7 +190,7 @@ public class AnnotationAppenderDefaultTest {
         return bar;
     }
 
-    private Class<?> makeTypeWithSuperTypeAnnotation(Annotation annotation) throws Exception {
+    private Class<?> makeTypeWithSuperClassAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
         ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
         classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion(),

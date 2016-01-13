@@ -137,7 +137,7 @@ public class TypeDescriptionGenericOfTypeVariableSymbolic {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testSuperTypeThrowsException() throws Exception {
+    public void testSuperClassThrowsException() throws Exception {
         typeVariable.getSuperClass();
     }
 

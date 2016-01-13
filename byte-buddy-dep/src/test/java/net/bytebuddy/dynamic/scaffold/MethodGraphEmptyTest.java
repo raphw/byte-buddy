@@ -23,7 +23,7 @@ public class MethodGraphEmptyTest {
 
     @Test
     public void testSuperGraph() throws Exception {
-        assertThat(MethodGraph.Empty.INSTANCE.getSuperGraph(), is((MethodGraph) MethodGraph.Empty.INSTANCE));
+        assertThat(MethodGraph.Empty.INSTANCE.getSuperClassGraph(), is((MethodGraph) MethodGraph.Empty.INSTANCE));
     }
 
     @Test
