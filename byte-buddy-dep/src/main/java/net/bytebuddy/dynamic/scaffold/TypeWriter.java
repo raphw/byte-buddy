@@ -1065,6 +1065,9 @@ public interface TypeWriter<T> {
                     for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
                         MethodDescription.InDefinedShape bridgeMethod = new AccessorBridge(bridgeTarget, bridgeType, instrumentedType);
                         MethodDescription.InDefinedShape bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
+                        if (!bridgeMethod.getReturnType().asErasure().isAssignableFrom(bridgeTarget.getReturnType().asErasure())) {
+                            throw new IllegalStateException("Cannot implement bridge " + bridgeMethod + " to " + bridgeTarget);
+                        }
                         MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getAdjustedModifiers(true),
                                 bridgeMethod.getInternalName(),
                                 bridgeMethod.getDescriptor(),

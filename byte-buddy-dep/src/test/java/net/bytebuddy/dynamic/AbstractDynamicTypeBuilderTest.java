@@ -13,6 +13,7 @@ import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.dynamic.loading.PackageDefinitionStrategy;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.MethodCall;
 import net.bytebuddy.implementation.StubMethod;
@@ -861,6 +862,60 @@ public abstract class AbstractDynamicTypeBuilderTest {
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList().size(), is(1));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testBridgeResolutionAmbiguous() throws Exception {
+        createPlain()
+                .defineMethod(QUX, String.class)
+                .intercept(FixedValue.value(FOO))
+                .defineMethod(QUX, Object.class)
+                .intercept(FixedValue.value(BAR))
+                .make();
+    }
+
+    @Test
+    public void testCanOverloadMethodByReturnType() throws Exception {
+        Class<?> type = createPlain()
+                .defineMethod(QUX, String.class, Visibility.PUBLIC)
+                .intercept(FixedValue.value(FOO))
+                .defineMethod(QUX, Object.class, Ownership.STATIC, Visibility.PUBLIC) // TIs static to avoid method graph compiler.
+                .intercept(FixedValue.value(BAR))
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        for (Method method : type.getDeclaredMethods()) {
+            if (method.getReturnType() == String.class) {
+                assertThat(method.getName(), is(QUX));
+                assertThat(method.getParameterTypes().length, is(0));
+                assertThat(method.invoke(type.newInstance()), is((Object) FOO));
+            } else if(method.getReturnType() == Object.class) {
+                assertThat(method.getName(), is(QUX));
+                assertThat(method.getParameterTypes().length, is(0));
+                assertThat(method.invoke(null), is((Object) BAR));
+            } else {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @Test
+    public void testCanOverloadFieldByType() throws Exception {
+        Class<?> type = createPlain()
+                .defineField(QUX, String.class)
+                .defineField(QUX, Object.class)
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        for (Field field: type.getDeclaredFields()) {
+            if (field.getType() == String.class) {
+                assertThat(field.getName(), is(QUX));
+            } else if(field.getType() == Object.class) {
+                assertThat(field.getName(), is(QUX));
+            } else {
+                throw new AssertionError();
+            }
+        }
     }
 
     @Retention(RetentionPolicy.RUNTIME)

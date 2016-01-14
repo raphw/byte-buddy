@@ -388,7 +388,7 @@ public abstract class AbstractAnnotationDescriptionTest {
     public void testAnnotationTarget() throws Exception {
         assertThat(describe(first).getElementTypes(), is((Set<ElementType>) new HashSet<ElementType>(Arrays.asList(ElementType.ANNOTATION_TYPE,
                 ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.LOCAL_VARIABLE, ElementType.METHOD,
-                ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE, ElementType.TYPE_PARAMETER))));
+                ElementType.PACKAGE, ElementType.PARAMETER, ElementType.TYPE))));
         assertThat(describe(explicitTarget).getElementTypes(), is(Collections.singleton(ElementType.TYPE)));
     }
 
