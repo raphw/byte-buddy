@@ -26,6 +26,8 @@ import org.mockito.Mockito;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.Iterator;
 import java.util.concurrent.Callable;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -112,107 +114,53 @@ public class MethodCallTest extends AbstractImplementationTest {
         assertThat(instance, instanceOf(InstanceMethod.class));
     }
 
-    @Test
-    public void testInstancePrimitiveGetterInvocationOnArgument() throws ReflectiveOperationException {
-        DynamicType.Loaded<Getters> loaded = implement(Getters.class,
-            MethodCall.invoke(Pojo.class.getDeclaredMethod("getInt")).onArgument(0),
-            Getters.class.getClassLoader(),
-            named("getInt"));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        Getters instance = loaded.getLoaded().newInstance();
-        Pojo pojo = new Pojo();
-        pojo.anInt = 42;
-        assertThat(instance.getInt(pojo), is(42));
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Getters.class)));
-        assertThat(instance, instanceOf(Getters.class));
+    @Test(expected = IllegalArgumentException.class)
+    public void testOnArgumentInvocationNegativeArgument() throws Exception {
+        MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onArgument(-1);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testOnArgumentInvocationNonExisting() throws Exception {
+        implement(ArgumentCall.class, MethodCall.invoke(Object.class.getDeclaredMethod("toString")).onArgument(10));
     }
 
     @Test
-    public void testInstanceObjectGetterInvocationOnArgument() throws ReflectiveOperationException {
-        DynamicType.Loaded<Getters> loaded = implement(Getters.class,
-            MethodCall.invoke(Pojo.class.getDeclaredMethod("getObject")).onArgument(0),
-            Getters.class.getClassLoader(),
-            named("get"));
+    public void testInvokeOnArgument() throws Exception {
+        DynamicType.Loaded<ArgumentCall> loaded = implement(ArgumentCall.class,
+                MethodCall.invoke(ArgumentCall.Target.class.getDeclaredMethod("foo")).onArgument(0));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        Getters instance = loaded.getLoaded().newInstance();
-        Pojo pojo = new Pojo();
-        pojo.object = BAR;
-        assertThat(instance.get(pojo), is((Object)BAR));
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Getters.class)));
-        assertThat(instance, instanceOf(Getters.class));
+        ArgumentCall instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(new ArgumentCall.Target(BAR)), is(BAR));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
+        assertThat(instance, instanceOf(ArgumentCall.class));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvokeOnArgumentNonAssignable() throws Exception {
+        DynamicType.Loaded<ArgumentCallDynamic> loaded = implement(ArgumentCallDynamic.class,
+                MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvokeOnArgumentNonVirtual() throws Exception {
+        DynamicType.Loaded<ArgumentCallDynamic> loaded = implement(ArgumentCallDynamic.class,
+                MethodCall.invoke(Object.class.getDeclaredMethod("registerNatives")).onArgument(0));
     }
 
     @Test
-    public void testInstanceStringGetterInvocationOnArgument() throws ReflectiveOperationException {
-        Method getString = Pojo.class.getDeclaredMethod("getString");
-        DynamicType.Loaded<Getters> loaded = implement(Getters.class,
-            MethodCall.invoke(getString).onArgument(0),
-            Getters.class.getClassLoader(),
-            named("get"));
+    public void testInvokeOnArgumentDynamic() throws Exception {
+        DynamicType.Loaded<ArgumentCallDynamic> loaded = implement(ArgumentCallDynamic.class,
+                MethodCall.invoke(ArgumentCallDynamic.Target.class.getDeclaredMethod("foo")).onArgument(0)
+                        .withAssigner(Assigner.DEFAULT, Assigner.Typing.DYNAMIC));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
         assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
         assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        Getters instance = loaded.getLoaded().newInstance();
-        Pojo pojo = new Pojo();
-        pojo.string = BAR;
-        assertThat((String)instance.get(pojo), is(BAR));
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Getters.class)));
-        assertThat(instance, instanceOf(Getters.class));
-    }
-
-    @Test
-    public void testInstancePrimitiveSetterInvocationOnArgument() throws ReflectiveOperationException {
-        DynamicType.Loaded<Setters> loaded = implement(Setters.class,
-            MethodCall.invoke(Pojo.class.getDeclaredMethod("setInt", int.class)).onArgument(0).withArgument(1),
-            Setters.class.getClassLoader(),
-            named("setInt"));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        Setters instance = loaded.getLoaded().newInstance();
-        Pojo pojo = new Pojo();
-        instance.setInt(pojo, 42);
-        assertThat(pojo.anInt, is(42));
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Setters.class)));
-        assertThat(instance, instanceOf(Setters.class));
-    }
-
-    @Test
-    public void testInstanceObjectSetterInvocationOnArgument() throws ReflectiveOperationException {
-        DynamicType.Loaded<Setters> loaded = implement(Setters.class,
-            MethodCall.invoke(Pojo.class.getDeclaredMethod("setObject", Object.class)).onArgument(0).withArgument(1),
-            Setters.class.getClassLoader(),
-            named("set"));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        Setters instance = loaded.getLoaded().newInstance();
-        Pojo pojo = new Pojo();
-        instance.set(pojo, BAR);
-        assertThat(pojo.object, is((Object)BAR));
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Setters.class)));
-        assertThat(instance, instanceOf(Setters.class));
-    }
-
-    @Test
-    public void testInstanceStringSetterInvocationOnArgument() throws ReflectiveOperationException {
-        DynamicType.Loaded<Setters> loaded = implement(Setters.class,
-            MethodCall.invoke(Pojo.class.getDeclaredMethod("setString", String.class)).onArgument(0).withArgument(1),
-            Setters.class.getClassLoader(),
-            named("set"));
-        assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));
-        assertThat(loaded.getLoaded().getDeclaredMethods().length, is(1));
-        assertThat(loaded.getLoaded().getDeclaredFields().length, is(0));
-        Setters instance = loaded.getLoaded().newInstance();
-        Pojo pojo = new Pojo();
-        instance.set(pojo, BAR);
-        assertThat(pojo.string, is(BAR));
-        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(Setters.class)));
-        assertThat(instance, instanceOf(Setters.class));
+        ArgumentCallDynamic instance = loaded.getLoaded().newInstance();
+        assertThat(instance.foo(new ArgumentCallDynamic.Target(BAR)), is(BAR));
+        assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(InstanceMethod.class)));
+        assertThat(instance, instanceOf(ArgumentCallDynamic.class));
     }
 
     @Test
@@ -668,7 +616,14 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForExplicitMethod.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodLocator.ForInterceptedMethod.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForContextualInvocation.class).apply();
-        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.class).apply();
+        final Iterator<Class<?>> iterator = Arrays.<Class<?>>asList(String.class, Object.class).iterator();
+        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return iterator.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForVirtualInvocation.WithImplicitType.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForSuperMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.MethodInvoker.ForDefaultMethodInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TerminationHandler.ForChainedInvocation.class).apply();
@@ -677,6 +632,7 @@ public class MethodCallTest extends AbstractImplementationTest {
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForInstanceField.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForSelfOrStaticInvocation.class).apply();
         ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForConstructingInvocation.class).apply();
+        ObjectPropertyAssertion.of(MethodCall.TargetHandler.ForMethodParameter.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForNullConstant.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForThisReference.class).apply();
         ObjectPropertyAssertion.of(MethodCall.ArgumentLoader.ForOwnType.class).apply();
@@ -727,31 +683,40 @@ public class MethodCallTest extends AbstractImplementationTest {
         }
     }
 
-    public static class Pojo {
-        int anInt;
-        Object object;
-        String string;
+    public abstract static class ArgumentCall {
 
-        public int getInt() { return this.anInt; }
-        public void setInt(int anInt) { this.anInt = anInt; }
+        public abstract String foo(Target target);
 
-        public Object getObject() { return this.object; }
-        public void setObject(Object object) { this.object = object; }
+        public static class Target {
 
-        public String getString() { return this.string; }
-        public void setString(String string) {
-            this.string = string;
+            private final String value;
+
+            public Target(String value) {
+                this.value = value;
+            }
+
+            public String foo() {
+                return value;
+            }
         }
     }
 
-    public static class Getters {
-        public Object get(Object obj) { throw new IllegalArgumentException(); }
-        public int getInt(Object obj) { throw new IllegalArgumentException(); }
-    }
+    public abstract static class ArgumentCallDynamic {
 
-    public static abstract class Setters {
-        public void setInt(Object obj, int val) { throw new IllegalArgumentException(); }
-        public void set(Object obj, String val) { throw new IllegalArgumentException(); }
+        public abstract String foo(Object target);
+
+        public static class Target {
+
+            private final String value;
+
+            public Target(String value) {
+                this.value = value;
+            }
+
+            public String foo() {
+                return value;
+            }
+        }
     }
 
     public static class SelfReference {

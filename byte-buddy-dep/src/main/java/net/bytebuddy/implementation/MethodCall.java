@@ -11,7 +11,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.implementation.bytecode.*;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
-import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
@@ -624,8 +623,15 @@ public class MethodCall implements Implementation.Composable {
          * @param invokedMethod      The method to be invoked.
          * @param instrumentedMethod The instrumented method.
          * @param instrumentedType   The instrumented type.  @return A stack manipulation that invokes the method.
+         * @param assigner           The assigner to use.
+         * @param typing             The typing to apply.
+         * @return A stack manipulation that loads the method target onto the operand stack.
          */
-        StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType);
+        StackManipulation resolve(MethodDescription invokedMethod,
+                                  MethodDescription instrumentedMethod,
+                                  TypeDescription instrumentedType,
+                                  Assigner assigner,
+                                  Assigner.Typing typing);
 
         /**
          * Prepares the instrumented type in order to allow for the represented invocation.
@@ -647,7 +653,7 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
@@ -680,7 +686,7 @@ public class MethodCall implements Implementation.Composable {
             INSTANCE;
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                 return new StackManipulation.Compound(TypeCreation.forType(invokedMethod.getDeclaringType().asErasure()), Duplication.SINGLE);
             }
 
@@ -726,7 +732,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                 return FieldAccess.forField(instrumentedType.getDeclaredFields().filter(named(fieldName)).getOnly()).getter();
             }
 
@@ -787,7 +793,7 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
+            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
                 return new StackManipulation.Compound(
                         invokedMethod.isStatic()
                                 ? StackManipulation.Trivial.INSTANCE
@@ -827,27 +833,39 @@ public class MethodCall implements Implementation.Composable {
         }
 
         /**
-         * Invokes a method on a parameter of the intercepted method.
+         * A target handler that loads the parameter of the given index as the target object.
          */
         class ForMethodParameter implements TargetHandler {
 
-            private final int variableOffset;
+            /**
+             * The index of the instrumented method's parameter that is the target of the method invocation.
+             */
+            private final int index;
 
             /**
-             * Creates a target handler for getting the invocation target from a parameter
-             * of the intercepted method.
+             * Creates a new target handler for the instrumented method's argument.
              *
-             * @param offset The index of the parameter, starting with 0
+             * @param index The index of the instrumented method's parameter that is the target of the method invocation.
              */
-            public ForMethodParameter(int offset) {
-                this.variableOffset = offset + 1;
+            public ForMethodParameter(int index) {
+                this.index = index;
             }
 
             @Override
-            public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType) {
-                return new StackManipulation.Compound(
-                        MethodVariableAccess.REFERENCE.loadOffset(variableOffset),
-                        TypeCasting.to(invokedMethod.getDeclaringType().asErasure()));
+            public StackManipulation resolve(MethodDescription invokedMethod,
+                                             MethodDescription instrumentedMethod,
+                                             TypeDescription instrumentedType,
+                                             Assigner assigner,
+                                             Assigner.Typing typing) {
+                if (instrumentedMethod.getParameters().size() < index) {
+                    throw new IllegalArgumentException(instrumentedMethod + " does not have a parameter with index " + index);
+                }
+                ParameterDescription parameterDescription = instrumentedMethod.getParameters().get(index);
+                StackManipulation stackManipulation = assigner.assign(parameterDescription.getType(), invokedMethod.getDeclaringType().asGenericType(), typing);
+                if (!stackManipulation.isValid()) {
+                    throw new IllegalStateException("Cannot invoke " + invokedMethod + " on " + parameterDescription.getType());
+                }
+                return new StackManipulation.Compound(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()), stackManipulation);
             }
 
             @Override
@@ -856,8 +874,20 @@ public class MethodCall implements Implementation.Composable {
             }
 
             @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass()) && index == ((ForMethodParameter) other).index;
+            }
+
+            @Override
+            public int hashCode() {
+                return index;
+            }
+
+            @Override
             public String toString() {
-                return "MethodCall.TargetHandler.ForMethodParameter{" + variableOffset + "}";
+                return "MethodCall.TargetHandler.ForMethodParameter{" +
+                        "index=" + index +
+                        '}';
             }
         }
     }
@@ -2120,6 +2150,30 @@ public class MethodCall implements Implementation.Composable {
                         "typeDescription=" + typeDescription +
                         '}';
             }
+
+            /**
+             * A method invoker for a virtual method that uses an implicit target type.
+             */
+            public enum WithImplicitType implements MethodInvoker {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public StackManipulation invoke(MethodDescription invokedMethod, Target implementationTarget) {
+                    if (!invokedMethod.isVirtual()) {
+                        throw new IllegalStateException("Cannot invoke " + invokedMethod + " virtually");
+                    }
+                    return MethodInvocation.invoke(invokedMethod);
+                }
+
+                @Override
+                public String toString() {
+                    return "MethodCall.MethodInvoker.ForVirtualInvocation.WithImplicitType." + name();
+                }
+            }
         }
 
         /**
@@ -2294,25 +2348,20 @@ public class MethodCall implements Implementation.Composable {
                     typing);
         }
 
+        /**
+         * Invokes the specified method on the instrumented method's argument of the given index.
+         *
+         * @param index The index of the method's argument on which the specified method should be invoked.
+         * @return Amethod call that invokes the provided method on the given method argument.
+         */
         public MethodCall onArgument(int index) {
+            if (index < 0) {
+                throw new IllegalArgumentException("An argument index cannot be negative: " + index);
+            }
             return new MethodCall(methodLocator,
                     new TargetHandler.ForMethodParameter(index),
                     argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation.OnMethodArgument(index),
-                    TerminationHandler.ForMethodReturn.INSTANCE,
-                    assigner,
-                    typing);
-        }
-
-        public MethodCall onArgument(int index, Class<?> type) {
-            return onArgument(index, new TypeDescription.ForLoadedType(type));
-        }
-
-        public MethodCall onArgument(int offset, TypeDescription typeDescription) {
-            return new MethodCall(methodLocator,
-                    new TargetHandler.ForMethodParameter(offset),
-                    argumentLoaders,
-                    new MethodInvoker.ForVirtualInvocation.OnMethodArgument.WithExplicitType(offset, typeDescription),
+                    MethodInvoker.ForVirtualInvocation.WithImplicitType.INSTANCE,
                     TerminationHandler.ForMethodReturn.INSTANCE,
                     assigner,
                     typing);
@@ -2431,7 +2480,7 @@ public class MethodCall implements Implementation.Composable {
                         typing));
             }
             StackManipulation.Size size = new StackManipulation.Compound(
-                    targetHandler.resolve(invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType()),
+                    targetHandler.resolve(invokedMethod, instrumentedMethod, implementationTarget.getInstrumentedType(), assigner, typing),
                     new StackManipulation.Compound(argumentInstructions),
                     methodInvoker.invoke(invokedMethod, implementationTarget),
                     terminationHandler.resolve(invokedMethod, instrumentedMethod, assigner, typing)
