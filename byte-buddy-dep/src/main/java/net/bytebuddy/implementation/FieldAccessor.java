@@ -269,7 +269,9 @@ public abstract class FieldAccessor implements Implementation {
             public FieldDescription locate(String name, boolean staticMethod) {
                 for (TypeDefinition currentType : instrumentedType) {
                     FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
-                    if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
+                    if (fieldList.size() > 1) {
+                        throw new IllegalStateException("Ambiguous fields: " + fieldList);
+                    } else if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
                         return fieldList.getOnly();
                     }
                 }
@@ -344,7 +346,9 @@ public abstract class FieldAccessor implements Implementation {
             @Override
             public FieldDescription locate(String name, boolean staticMethod) {
                 FieldList<?> fieldList = targetType.getDeclaredFields().filter(named(name).and(isVisibleTo(instrumentedType)));
-                if (fieldList.isEmpty() || (staticMethod && !fieldList.getOnly().isStatic())) {
+                if (fieldList.size() > 1) {
+                    throw new IllegalStateException("Ambiguous fields named '" + name + "' " + fieldList);
+                } else if (fieldList.isEmpty() || (staticMethod && !fieldList.getOnly().isStatic())) {
                     throw new IllegalArgumentException("No field named " + name + " on " + targetType + " is visible to " + instrumentedType);
                 }
                 return fieldList.getOnly();

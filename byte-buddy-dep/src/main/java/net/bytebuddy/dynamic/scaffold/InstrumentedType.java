@@ -736,10 +736,10 @@ public interface InstrumentedType extends TypeDescription {
                     throw new IllegalStateException("Duplicate annotation " + annotationDescription + " for " + this);
                 }
             }
-            Set<String> fieldNames = new HashSet<String>();
+            Set<FieldDescription.SignatureToken> fieldSignatureTokens = new HashSet<FieldDescription.SignatureToken>();
             for (FieldDescription.InDefinedShape fieldDescription : getDeclaredFields()) {
                 String fieldName = fieldDescription.getName();
-                if (!fieldNames.add(fieldName)) {
+                if (!fieldSignatureTokens.add(fieldDescription.asSignatureToken())) {
                     throw new IllegalStateException("Duplicate field definition for " + fieldDescription);
                 } else if (!isValidIdentifier(fieldName)) {
                     throw new IllegalStateException("Illegal field name for " + fieldDescription);

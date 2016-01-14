@@ -261,7 +261,9 @@ public @interface FieldValue {
                 protected Resolution resolve(String fieldName, boolean staticMethod) {
                     for (TypeDefinition currentType : instrumentedType) {
                         FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName));
-                        if (!fieldList.isEmpty() && fieldList.getOnly().isVisibleTo(instrumentedType) && (!staticMethod || fieldList.getOnly().isStatic())) {
+                        if (fieldList.size() > 1) {
+                            throw new IllegalStateException("Ambiguous fields: " + fieldList);
+                        } else if (!fieldList.isEmpty() && fieldList.getOnly().isVisibleTo(instrumentedType) && (!staticMethod || fieldList.getOnly().isStatic())) {
                             return new Resolution.Resolved(fieldList.getOnly());
                         }
                     }
@@ -335,6 +337,9 @@ public @interface FieldValue {
                 @Override
                 protected Resolution resolve(String fieldName, boolean staticMethod) {
                     FieldList<?> fieldList = typeDescription.getDeclaredFields().filter(named(fieldName));
+                    if (fieldList.size() > 1) {
+                        throw new IllegalStateException("Ambiguous fields: " + fieldList);
+                    }
                     return fieldList.isEmpty() || !fieldList.getOnly().isVisibleTo(instrumentedType) || (staticMethod && !fieldList.getOnly().isStatic())
                             ? Resolution.Unresolved.INSTANCE
                             : new Resolution.Resolved(fieldList.getOnly());

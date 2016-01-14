@@ -36,6 +36,13 @@ public interface FieldDescription extends ByteCodeElement,
     TypeDescription.Generic getType();
 
     /**
+     * Returns a signature token representing this field.
+     *
+     * @return A signature token representing this field.
+     */
+    SignatureToken asSignatureToken();
+
+    /**
      * Represents a field description in its generic shape, i.e. in the shape it is defined by a generic or raw type.
      */
     interface InGenericShape extends FieldDescription {
@@ -111,6 +118,11 @@ public interface FieldDescription extends ByteCodeElement,
                     getModifiers(),
                     getType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getDeclaredAnnotations());
+        }
+
+        @Override
+        public SignatureToken asSignatureToken() {
+            return new SignatureToken(getInternalName(), getType().asErasure());
         }
 
         @Override
@@ -478,6 +490,74 @@ public interface FieldDescription extends ByteCodeElement,
                     ", modifiers=" + modifiers +
                     ", type=" + type +
                     ", annotations=" + annotations +
+                    '}';
+        }
+    }
+
+    /**
+     * A token that uniquely identifies a field by its name and type erasure.
+     */
+    class SignatureToken {
+
+        /**
+         * The field's name.
+         */
+        private final String name;
+
+        /**
+         * The field's raw type.
+         */
+        private final TypeDescription type;
+
+        /**
+         * Creates a new signature token.
+         *
+         * @param name The field's name.
+         * @param type The field's raw type.
+         */
+        public SignatureToken(String name, TypeDescription type) {
+            this.name = name;
+            this.type = type;
+        }
+
+        /**
+         * Returns the name of the represented field.
+         *
+         * @return The name of the represented field.
+         */
+        public String getName() {
+            return name;
+        }
+
+        /**
+         * Returns the type of the represented field.
+         *
+         * @return The type of the represented field.
+         */
+        public TypeDescription getType() {
+            return type;
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) return true;
+            if (other == null || getClass() != other.getClass()) return false;
+            SignatureToken that = (SignatureToken) other;
+            return name.equals(that.name) && type.equals(that.type);
+        }
+
+        @Override
+        public int hashCode() {
+            int result = name.hashCode();
+            result = 31 * result + type.hashCode();
+            return result;
+        }
+
+        @Override
+        public String toString() {
+            return "FieldDescription.SignatureToken{" +
+                    "name='" + name + '\'' +
+                    ", type=" + type +
                     '}';
         }
     }
