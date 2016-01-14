@@ -6,6 +6,7 @@ import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleInterface;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.StubMethod;
 import net.sf.cglib.proxy.CallbackHelper;
 import net.sf.cglib.proxy.Enhancer;
@@ -166,6 +167,7 @@ public class ClassByImplementationBenchmark {
     @Benchmark
     public ExampleInterface benchmarkByteBuddy() throws Exception {
         return new ByteBuddy()
+                .with(TypeValidation.DISABLED)
                 .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(baseClass)).intercept(StubMethod.INSTANCE)

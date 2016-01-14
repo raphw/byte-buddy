@@ -6,6 +6,7 @@ import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.benchmark.specimen.ExampleClass;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.bytebuddy.implementation.MethodDelegation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bind.annotation.RuntimeType;
@@ -75,6 +76,7 @@ public class ClassByExtensionBenchmark {
     @Benchmark
     public ExampleClass benchmarkByteBuddyWithAnnotations() throws Exception {
         return new ByteBuddy()
+                .with(TypeValidation.DISABLED)
                 .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(MethodDelegation.to(ByteBuddyInterceptor.class))
@@ -94,6 +96,7 @@ public class ClassByExtensionBenchmark {
     @Benchmark
     public ExampleClass benchmarkByteBuddySpecialized() throws Exception {
         return new ByteBuddy()
+                .with(TypeValidation.DISABLED)
                 .ignore(none())
                 .subclass(baseClass)
                 .method(isDeclaredBy(ExampleClass.class)).intercept(SuperMethodCall.INSTANCE)

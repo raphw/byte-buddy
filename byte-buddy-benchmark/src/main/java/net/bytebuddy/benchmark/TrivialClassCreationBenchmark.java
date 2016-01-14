@@ -4,6 +4,7 @@ import javassist.util.proxy.MethodFilter;
 import javassist.util.proxy.ProxyFactory;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.dynamic.scaffold.TypeValidation;
 import net.sf.cglib.proxy.Enhancer;
 import net.sf.cglib.proxy.NoOp;
 import org.openjdk.jmh.annotations.*;
@@ -65,6 +66,7 @@ public class TrivialClassCreationBenchmark {
     @Benchmark
     public Class<?> benchmarkByteBuddy() {
         return new ByteBuddy()
+                .with(TypeValidation.DISABLED)
                 .ignore(any())
                 .subclass(baseClass)
                 .make()

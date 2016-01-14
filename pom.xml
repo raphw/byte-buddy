@@ -68,7 +68,7 @@
         <version.plugin.release>2.5.2</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
         <version.plugin.surefire>2.18.1</version.plugin.surefire>
-        <version.plugin.pitest>1.1.7</version.plugin.pitest>
+        <version.plugin.pitest>1.1.8</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
         <!-- Versions 2.6 and 2.7 fail on Travis. -->
