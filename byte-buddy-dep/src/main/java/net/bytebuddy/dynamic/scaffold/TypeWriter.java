@@ -3194,7 +3194,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
+                        return annotationRetention.isEnabled() || TypeReference.newTypeReference(TypeReference.METHOD_RECEIVER).getValue() == typeReference
                                 ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                 : IGNORE_ANNOTATION;
                     }
@@ -3279,7 +3279,7 @@ public interface TypeWriter<T> {
 
                     @Override
                     public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                        return annotationRetention.isEnabled()
+                        return annotationRetention.isEnabled() || TypeReference.newTypeReference(TypeReference.METHOD_RECEIVER).getValue() == typeReference
                                 ? super.visitTypeAnnotation(typeReference, typePath, descriptor, visible)
                                 : IGNORE_ANNOTATION;
                     }
