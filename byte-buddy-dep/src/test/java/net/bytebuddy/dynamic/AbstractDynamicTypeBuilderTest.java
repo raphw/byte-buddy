@@ -902,16 +902,20 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     public void testCanOverloadFieldByType() throws Exception {
         Class<?> type = createPlain()
-                .defineField(QUX, String.class)
-                .defineField(QUX, Object.class)
+                .defineField(QUX, String.class, Ownership.STATIC, Visibility.PUBLIC)
+                .value(FOO)
+                .defineField(QUX, long.class, Ownership.STATIC, Visibility.PUBLIC)
+                .value(42L)
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         for (Field field: type.getDeclaredFields()) {
             if (field.getType() == String.class) {
                 assertThat(field.getName(), is(QUX));
-            } else if(field.getType() == Object.class) {
+                assertThat(field.get(null), is((Object) FOO));
+            } else if(field.getType() == long.class) {
                 assertThat(field.getName(), is(QUX));
+                assertThat(field.get(null), is((Object) 42L));
             } else {
                 throw new AssertionError();
             }
