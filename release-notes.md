@@ -1,6 +1,15 @@
 Byte Buddy release notes
 ------------------------
 
+### 15. January 2016: version 1.0.0
+
+- Added support for type annotations.
+- Refactored public API to support type annotations and parameter meta information.
+- Several renamings in preparation of the version one release.
+- Refactored type representation to no represent raw types as `TypeDescription`s. This allows for resolution of variables on these types as erasures rather than their unresolved form. Refactored naming of generic types to the common naming scheme with nested classes.
+- Replaced generalized token representation to define tokens, type tokens and signature tokens.
+- General API improvements and minor bug fixes.
+
 ### 4. January 2016: version 0.7.8
 
 - Implemented all type lists of class file-rooted files to fallback to type erasures in case that the length of generic types and raw types does not match. This makes Byte Buddy more robust when dealing with illegally defined class files.
