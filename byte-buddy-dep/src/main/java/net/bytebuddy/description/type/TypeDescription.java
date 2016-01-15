@@ -288,8 +288,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     boolean isPackageType();
 
     /**
+     * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
      * a specialization of a generic type.
+     * </p>
+     * <p>
+     * Note that annotations that are declared on an annotated type refer to any type annotations that are declared by this
+     * generic type. For reading annotations of the erasure type, {@link TypeDefinition#asErasure()} must be called before.
+     * </p>
      */
     interface Generic extends TypeDefinition, AnnotatedCodeElement {
 
