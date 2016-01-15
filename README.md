@@ -103,25 +103,25 @@ previous example, `FixedValue` that implements this interface was already demons
 a user of Byte Buddy can go to the length of defining custom byte code for a method. Normally, it is however easier to 
 use Byte Buddy's predefined implementations such as `MethodDelegation` which allows for implementing any method in 
 plain Java. Using this implementation is straight forward as it operates by delegating the control flow to any POJO. As 
-an example of such a POJO, Byte Buddy can for example invoke the method of the following `Interceptor` class:
+an example of such a POJO, Byte Buddy can for example invoke the method of the following interceptor class:
 
 ```java
-public class Interceptor {
-  public Object intercept(Object argument) {
+public class GreetingInterceptor {
+  public Object greet(Object argument) {
     return "Hello from " + argument.toString();
   }
 }
 ```
 
-Note that the above `Interceptor` does not depend on any Byte Buddy type. This is good news because none of the classes
-that by Byte Buddy generates require Byte Buddy on the class path! Given the above `Interceptor`, we can use Byte Buddy 
+Note that the above `GreetingInterceptor` does not depend on any Byte Buddy type. This is good news because none of the classes
+that by Byte Buddy generates require Byte Buddy on the class path! Given the above `GreetingInterceptor`, we can use Byte Buddy 
 to implement the Java 8 `java.util.function.Function` interface and its abstract `apply` method:
 
 ```java
 Class<? extends java.util.function.Function> dynamicType = new ByteBuddy()
   .subclass(java.util.function.Function.class)
   .method(ElementMatchers.named("apply"))
-  .intercept(MethodDelegation.to(new FunctionInterceptor()))
+  .intercept(MethodDelegation.to(new GreetingInterceptor()))
   .make()
   .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
   .getLoaded();
@@ -129,8 +129,8 @@ assertThat((String) dynamicType.newInstance().apply("Byte Buddy"), is("Hello fro
 ```
 
 Executing the above code, Byte Buddy implements Java's `Function` interface and implements the `apply` method
-as a delegation to an instance of the `FunctionInterceptor` POJO that we defined before. Now, every time that the
-`Function::apply` method is called, the control flow is dispatched to `Interceptor::intercept` and the latter
+as a delegation to an instance of the `GreetingInterceptor` POJO that we defined before. Now, every time that the
+`Function::apply` method is called, the control flow is dispatched to `GreetingInterceptor::greet` and the latter
 method's return value is returned from the interface's method.
 
 Interceptors can be defined to take with more generic inputs and outputs by annotating the interceptor's parameters. 
