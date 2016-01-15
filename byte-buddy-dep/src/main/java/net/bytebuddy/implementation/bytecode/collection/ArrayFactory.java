@@ -37,7 +37,7 @@ public class ArrayFactory implements CollectionFactory {
      * Creates a new array factory with a given
      * {@link net.bytebuddy.implementation.bytecode.collection.ArrayFactory.ArrayCreator}
      * without inferring the type from the component type. Normally,
-     * {@link net.bytebuddy.implementation.bytecode.collection.ArrayFactory#forType(TypeDescription)}
+     * {@link net.bytebuddy.implementation.bytecode.collection.ArrayFactory#forType(net.bytebuddy.description.type.TypeDescription.Generic)}
      * should be used.
      *
      * @param componentType The component type of the array factory.
