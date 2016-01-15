@@ -34,20 +34,21 @@
 
 <p>
     The Java language comes with a comparatively strict type system. Java requires all variables and objects to be of a
-    specific type and an attempt to assign incompatible types will always cause an error. These errors are usually
-    emitted by the Java compiler or at the very least by the Java runtime. This behavior is great when for example
-    writing business applications because business domains can usually be described in an explicit manner where any
-    domain item would represent its own type. This way, we can use Java to build very readable and robust applications.
-    Among other things, it is Java's type system that is responsible for Java's popularity in enterprise programming.
+    specific type and any attempt to assign incompatible types always causes an error. These errors are usually
+    emitted by the Java compiler or at the very least by the Java runtime when casting a type illegally. Such strict
+    typing is often desireable, for example when writing business applications. Business domains can usually be described
+    in such an explicit manner where any domain item represents its own type. This way, we can use Java to build very
+    readable and robust applications where mistakes are catched close to their source. Among other things, it is
+    Java's type system that is responsible for Java's popularity in enterprise programming.
 </p>
 
 <p>
     However, by enforcing its strict type system, Java imposes limitations that restrict the language's
-    scope of use in other domains. For example, when writing a general-purpose library that is to be used by other
-    Java applications, we are normally not able to use any type that is defined in the user's application
-    because these types are unknown to us when our library is compiled. In order to call methods or access
-    fields of the user's unknown code, the Java Class Library comes with a reflection API. Using the reflection API,
-    we are able to introspect unknown types and to call methods or access fields. Unfortunately, the use of
+    scope in other domains. For example, when writing a general-purpose library that is to be used by other
+    Java applications, we are normally not able to reference any type that is defined in the user's application
+    because these types are unknown to us when our library is compiled. In order to call methods or to access
+    fields of the user's unknown code, the Java Class Library comes with a reflection API. Using the reflection
+    API, we are able to introspect unknown types and to call methods or access fields. Unfortunately, the use of
     the reflection API has two significant downsides:
 </p>
 
@@ -65,9 +66,9 @@
         types such that the performance drawback is not entirely settled.
     </span></li>
     <li><span>
-        The reflection API breaks type-safety: Even though the JVM is capable of invoking code by reflection, the
+        The reflection API defeats type-safety: Even though the JVM is capable of invoking code by reflection, the
         reflection API is itself not type-safe. When writing a library, this is not a problem as long as we do not
-        need to expose the reflection API to outside the library. After all, we do not know the user code during
+        need to expose the reflection API to the library's user. After all, we do not know the user code during
         compilation and could not validate our library code against its types. Sometimes, it is however required to
         expose the reflection API to a user by for example letting a library invoke one of our own methods for us.
         This is where using the reflection API becomes problematic as the Java compiler would have all the information
@@ -80,10 +81,12 @@
     </span></li>
 </ul>
 
-This is where runtime code generation can help us out. It allows us to emulate some features that are normally only
-accessible when programming in a dynamic languages without discarding Java's static type checks. This way, we can get
-the best of both worlds and additionally improve runtime performance. To get a better understanding of this problem,
-let us look at the example of implementing the mentioned method-level security library.
+<p>
+    This is where runtime code generation can help us out. It allows us to emulate some features that are normally
+    only accessible when programming in a dynamic languages without discarding Java's static type checks. This way,
+    we can get the best of both worlds and additionally improve runtime performance. To get a better understanding
+    of this problem, let us look at the example of implementing the mentioned method-level security library.
+</p>
 
 <h4>Writing a security library</h4>
 
@@ -474,10 +477,10 @@ DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
 </p>
 
 <pre class="prettyprint">DynamicType.Unloaded&lt;?&gt; dynamicType = new ByteBuddy()
-  .withNamingStrategy(new NamingStrategy() {
+  .with(new NamingStrategy.AbstractBase() {
     @Override
-    public String getName(UnnamedType unnamedType) {
-        return "i.love.ByteBuddy." + unnamedType.getSuperType().asErasure().getSimpleName();
+    public String subclass(TypeDescription superClass) {
+        return "i.love.ByteBuddy." + superClass.getSimpleName();
     }
   })
   .subclass(Object.class)
@@ -927,6 +930,37 @@ class ToStringAgent {
     an Android application. In order to function, it requires a folder for writing temporary files and compiled
     class files. This folder must not be shared among different applications as this is forbidden by Android's
     security manager.
+</p>
+
+<h4>Working with generic types</h4>
+
+<p>
+    Byte Buddy is processing generic types as they are defined by the Java programming language. Generic types are
+    not considered by the Java runtime which only processes the erasures of generic types. However, generic types
+    are still embedded into any Java class file and are exposed by the Java reflection API. Therefore, it sometime
+    makes sense to include generic information into a generated class because the generic type information can effect
+    the behavior of other libraries and frameworks. Embedding generic type information is also important when a class
+    is persisted and processed as a library by the Java compiler.
+</p>
+
+<p>
+    When subclassing a class, implementing an interface or when declaring a field or method, Byte Buddy accepts
+    a Java <code>Type</code> instead of an erased <code>Class</code> for the above reasons. Generic types can
+    also be defined explicitly by using the <code>TypeDescription.Generic.Builder</code>. One important difference
+    of Java generic types to type erasures is the contextual meaning of type variables. A type variable of a
+    certain name that is defined by some type does not necessarily denote the same type when another type declares
+    the same type variable by the same name. Therefore, Byte Buddy rebinds all generic types that denote type
+    variables in the context of the generated type or method when a <code>Type</code> instance is handed to the
+    library.
+</p>
+
+<p>
+    Byte Buddy also inserts
+    <a href="https://docs.oracle.com/javase/tutorial/java/generics/bridgeMethods.html"><i>bridge methods</i></a>
+    transparently when a type is created. Bridge methods are resolved by a <code>MethodGraph.Compiler</code>
+    which is a property of any <code>ByteBuddy</code> instance. The default method graph compiler behaves like
+    the Java compiler and processes any class file's generic type information. For other languages than Java,
+    a differen method graph compiler might however be appropriate.
 </p>
 
 </div>
@@ -1648,91 +1682,6 @@ MemoryDatabase loggingDatabase = new ByteBuddy()
 </p>
 
 <p>
-    Before we proceed to the next section, we should discuss a final caveat concerning the <code>@Super</code>
-    annotation. Using this annotation can be problematic when it is used in the context of so-called <i>bridge
-    methods</i>. Bridge methods are created by the Java compiler, mainly in order to support inheritance from
-    generic types. The easiest way for understanding the related problem is to look at an example of such
-    inheritance:
-</p>
-
-<pre class="prettyprint">
-class Foo&lt;T&gt; {
-  void m(T t) { }
-}
-
-class Bar extends Foo&lt;String&gt; {
-  @Override
-  void m(String s) { }
-}
-</pre>
-
-<p>
-    When compiling the above <code>Foo</code> class, the Java compiler will apply a
-    <a href="http://docs.oracle.com/javase/tutorial/java/generics/erasure.html">type erasure</a> in order to hide
-    the generic type from the Java runtime which is unaware of the Java language's concept of generics. In the process
-    of type erasure, all type variables are reduced to their lower bounds which are implicitly set to <code>Object</code>
-    if no explicit bound is specified. As a result, the only method of <code>Foo</code> is compiled as if it was defined
-    with the signature <code>m(Object)</code>. At the same time, the Java compiler creates a <i>desugared</i> version of
-    the <code>Bar</code> class. This class contains an additional bridge method with the same erased method signature
-    <code>m(Object)</code> which only delegates its invocation to the actual method <code>m(String)</code>. With
-    these rules applied, the Java compiler will process the above classes as if they were defined as follows:
-</p>
-
-<pre class="prettyprint">
-class Foo { // type erasure
-  void m(Object t) { }
-}
-
-class Bar extends Foo {
-
-  @Override
-  void m(Object t) { // bridge method
-    m((String) t);
-  }
-
-  void m(String t) { }
-}
-</pre>
-
-<p>
-    Thanks to the above class definition, the Java runtime can simply process method invocations on type erasures
-    and act as if generic types did not exist. Instead, it is the <code>Bar</code> class itself that shoulders the
-    responsibility of invoking the correct method. In this sence, generic types are nothing but syntactic sugar.
-    While this is convenient for the Java runtime, this can become problematic to us when we dynamically extend
-    <code>Bar</code> and require an auxiliary class for an assignment to <code>@Super Foo&lt;String&gt;</code>.
-    For this auxiliary class, a user would expect a call of the <code>m</code> method to invoke <code>Bar</code>'s
-    implementation of <code>m(String)</code> which is this method's super implementation relative to the created
-    dynamic class. However, because of the generic type's erasure, <code>m(Object)</code> would be invoked instead.
-    Since this method is only a bridge, this invocation delegates to <code>m(String)</code> <b>without</b> invoking
-    the super implementation.
-</p>
-
-<p>
-    To overcome this problem, Byte Buddy uses a <code>BridgeMethodResolver</code> when implementing methods of
-    auxiliary classes for <code>@Super</code> annotated parameters. Unfortunately for us, the Java compiler only marks
-    bridge methods but does not reveal their invocation target. As a consequence, we need to manually resolve a bridge
-    method's target what can lead to ambiguous results if a generic method is overloaded. Let us look at an example
-    of such ambiguity:
-</p>
-
-<pre class="prettyprint">
-class Qux extends Foo&lt;Integer&gt; {
-  @Override
-  void m(Integer i) { }
-
-  void m(Long l) { }
-}
-</pre>
-
-<p>
-    For the above <code>Qux</code> class, Byte Buddy's <code>BridgeMethodResolver</code> cannot tell if the
-    synthetic bridge method targets the <code>m(Integer)</code> or the <code>m(Long)</code> method. You can however
-    configure <code>ByteBuddy</code> to use a custom bridge method resolver which is aware of the resolution for
-    a particular class's bridge methods. In a future version, Byte Buddy will provide better support for processing
-    generic types based on a class's meta information what allows for a resolution of such ambiguities.
-</p>
-
-<p>
     There are several more predefined annotations that can be used with a <code>MethodDelegation</code> that we
     only want to name briefly. If you want to read more about these annotations, you can find further information in
     the in-code documentation. These annotations are:
@@ -2161,10 +2110,10 @@ new ByteBuddy()
         method. Likewise, a field can be annotated after its definition. Again, let us look at an example:
     </p>
 
-
 <pre class="prettyprint">
 new ByteBuddy()
   .subclass(Object.class)
+    .annotateType(new RuntimeDefinitionImpl())
   .method(named("toString"))
     .intercept(SuperMethodCall.INSTANCE)
     .annotateMethod(new RuntimeDefinitionImpl())
@@ -2175,7 +2124,7 @@ new ByteBuddy()
     <p>
         The above code example overrides the <code>toString</code> method and annotates the overridden method with
         <code>RuntimeDefinition</code>. Furthermore, the created type defines a field <code>foo</code> that carries the
-        same annotation.
+        same annotation and also defines the latter annotation on the created type itself.
     </p>
 
     <p>
@@ -2191,6 +2140,54 @@ new ByteBuddy()
         offers a fluent interface for defining an annotation without triggering class loading but at the costs
         of type safety. All annotation properties are however evaluated at runtime.
     </p>
+
+    <p>
+        By default, Byte Buddy includes any property of an annotation into a class file, including default properties
+        that are specified implicitly by a <code>default</code> value. This behavior can however be customized by
+        providing an <code>AnnotationFilter</code> to a <code>ByteBuddy</code> instance.
+    </p>
+
+<h4>Type annotations</h4>
+
+<p>
+    Byte Buddy exposes and writes type annotations as they were introduced as a part of Java 8. Type annotations are
+    accessible as declared annotations by the any <code>TypeDescription.Generic</code> instance. If a type annotation
+    should be added to a type of a generic field or method, an annotated type can be generated using a
+    <code>TypeDescription.Generic.Builder</code>.
+</p>
+
+<h4>Attribute appenders</h4>
+
+<p>
+    A Java class file can include any custom information as a so-called attribute. Such attributes can be included using
+    Byte Buddy by using an <code>*AttributeAppender</code> for a type, field or method. Attribute appenders can however
+    also be used for defining methods based on information that is provided by the intercepted type, field or method. For
+    example, it is possible to copy all annotations of an intercepted method when overriding a method in a subclass:
+</p>
+
+<pre class="prettyprint">
+class AnnotatedMethod {
+  @SomeAnnotation
+  void bar() { }
+}
+new ByteBuddy()
+  .subclass(AnnotatedMethod.class)
+  .method(named("bar"))
+  .intercept(StubMethod.INSTANCE)
+  .attribute(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE)
+</pre>
+
+<p>
+    The above code overrides the <code>bar</code> method of the <code>AnnotatedMethod</code> class but copies all
+    annotations of the overridden method, including annotations on parameters or types.
+</p>
+
+<p>
+    When a class is redefined or rebased, the same rule might not apply. By default, <code>ByteBuddy</code> is
+    configured to preserve any annotations of a rebased or redefined method, even if the method is intercepted
+    as above. This behavior can however be changed such that Byte Buddy discards any prexisting annotations by
+    setting the <code>AnnotationRetention</code> strategy to <code>DISABLED</code>.
+</p>
 
 </div>
 
@@ -2510,10 +2507,10 @@ enum ToStringAssigner implements Assigner {
   INSTANCE; // singleton
 
   @Override
-  public StackManipulation assign(TypeDescription sourceType,
-                                  TypeDescription targetType,
+  public StackManipulation assign(TypeDescription.Generic source,
+                                  TypeDescription.Generic target,
                                   Assigner.Typing typing) {
-    if (!sourceType.isPrimitive() && targetType.represents(String.class)) {
+    if (!source.isPrimitive() && target.represents(String.class)) {
       MethodDescription toStringMethod = new TypeDescription.ForLoadedType(Object.class)
         .getDeclaredMethods()
         .filter(named("toString"))
@@ -2607,7 +2604,7 @@ enum StringValueBinder
                                                          ParameterDescription target,
                                                          Implementation.Target implementationTarget,
                                                          Assigner assigner) {
-    if (!target.getTypeDescription().asErasure().represents(String.class)) {
+    if (!target.getType().asErasure().represents(String.class)) {
       throw new IllegalStateException(target + " makes illegal use of @StringValue");
     }
     StackManipulation constant = new TextConstant(annotation.loadSilent().value());
