@@ -90,6 +90,16 @@ mvn package
     </p>
 
     <p>
+        Similarly, Byte Buddy describes generic types as instances of the <code>TypeDescription.Generic</code>
+        interface. This interface is richer than Java's equivalent, the <code>Type</code> interface where Byte
+        Buddy offers methods for dealing with all sorts of generic types. Functionality that is only supported
+        by certain generic types throws an exception when requested for a generic type that does not support
+        certain properties. This approach was chosen as a more concise alternative to type casting that is
+        required by the Java language. Since most manipulations are performed by visitors, this does however
+        not show to be a problem in practice.
+    </p>
+
+    <p>
         Byte Buddy builds on top of the <a href="http://asm.ow2.org/">ASM byte code parser</a> which has become the
         de facto standard for byte code parsing in the Java ecosystem. ASM operates with low-level constructs, often
         string values that represent names and descriptors. Byte Buddy offers the <code>StackManipulation</code>
@@ -224,21 +234,30 @@ mvn package
     <h2>Roadmap</h2>
 
     <p>
-        Currently, there are several enhancements planned for future releases. A version 1.0 will be released once all
-        the following features are implemented and tested to be stable:
+        Byte Buddy has reached version 1.0 and is considered to be feature complete aside from two features that are
+        not yet supported. With the release of version 1.0 a big emphasis is put on the library's stability and performance
+        and new features are added defensively. Naturally, the evolution of the Java programming language and the
+        byte code format will require newer releases in the future where it is the goal of Byte Buddy to offer
+        a backwards compatible way of manipulating code for older and newer versions of Java. As of Java 8, Byte Buddy
+        does not currently support the following functionality:
     </p>
 
     <dl>
-        <dt>0.7.*</dt>
+        <dt>Receiver types</dt>
         <dd>
-            Support for generic types: In this version, generic types should be written to created class files as
-            it is often used by frameworks that read out this metadata. Additionally, the API is extended to allow the
-            definition of additional generic parameters when defining new types, methods or fields.
+            Receiver types can be annotated at runtime but it is currently not a widely used Java feature. The implementation
+            of receiver types in Byte Buddy would be straight forward. However, it seems currently unclear how receiver
+            types are going to be implemented in the Java programming language once value types are introduced where receivers
+            with specific generic arguments are considered to be supported. Currently, receiver types also display a number of
+            bugs in the Java programming language such that it makes sense to delay this feature until it is a little bit more
+            evolved.
         </dd>
-        <dt>0.8.*</dt>
+        <dt>Type inference</dt>
         <dd>
-            Support for type annotations: In this version, type annotations are made accessible via Byte Buddy's
-            type API.
+            Generic types can be inferred by the Java compiler. Byte Buddy does not currently offer such functionality. Support
+            for type inference would allow for better validation of generic types and for implementing <code>Assigner</code>s
+            that consider generic type information. Unfortunately, this feature imposes a lot of work while it is of little
+            practical use. For this reason, it is not currently implemented.
         </dd>
     </dl>
 </div>
