@@ -103,7 +103,7 @@ previous example, `FixedValue` that implements this interface was already demons
 a user of Byte Buddy can go to the length of defining custom byte code for a method. Normally, it is however easier to 
 use Byte Buddy's predefined implementations such as `MethodDelegation` which allows for implementing any method in 
 plain Java. Using this implementation is straight forward as it operates by delegating the control flow to any POJO. As 
-an example of such a POJO, Byte Buddy can for example invoke the method of the following interceptor class:
+an example of such a POJO, Byte Buddy can for example redirect a call to the only method of the following class:
 
 ```java
 public class GreetingInterceptor {
