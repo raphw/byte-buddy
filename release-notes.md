@@ -5,8 +5,8 @@ Byte Buddy release notes
 
 - Added support for type annotations.
 - Refactored public API to support type annotations and parameter meta information.
-- Several renamings in preparation of the version one release.
-- Refactored type representation to no represent raw types as `TypeDescription`s. This allows for resolution of variables on these types as erasures rather than their unresolved form. Refactored naming of generic types to the common naming scheme with nested classes.
+- Several renamings in preparation of the 1.0.0 release.
+- Refactored type representation to represent raw types as `TypeDescription`s. This allows for resolution of variables on these types as erasures rather than their unresolved form. Refactored naming of generic types to the common naming scheme with nested classes.
 - Replaced generalized token representation to define tokens, type tokens and signature tokens.
 - General API improvements and minor bug fixes.
 
