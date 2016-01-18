@@ -693,7 +693,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    return new OfNonGenericType.Latent(typeDescription.asErasure(), typeDescription.getDeclaredAnnotations()); // TODO: Retain old value?
+                    return typeDescription;
                 }
 
                 @Override
@@ -747,10 +747,21 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                 }
 
+                /**
+                 * A type variable reviser erases a type variable if it is not defined by a method.
+                 */
                 protected static class TypeVariableReviser implements TypeVariableSource.Visitor<Generic> {
 
+                    /**
+                     * The discovered type variable.
+                     */
                     private final Generic typeVariable;
 
+                    /**
+                     * Creates a new type variable reviser.
+                     *
+                     * @param typeVariable The discovered type variable.
+                     */
                     protected TypeVariableReviser(Generic typeVariable) {
                         this.typeVariable = typeVariable;
                     }
@@ -764,12 +775,41 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     public Generic onMethod(MethodDescription.InDefinedShape methodDescription) {
                         return new RetainedTypeVariable(typeVariable);
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && typeVariable.equals(((TypeVariableReviser) other).typeVariable);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return typeVariable.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "TypeDescription.Generic.Visitor.TypeVariableErasing.TypeVariableReviser{" +
+                                "typeVariable=" + typeVariable +
+                                '}';
+                    }
                 }
 
+                /**
+                 * A retained type variable that is not erased.
+                 */
                 protected static class RetainedTypeVariable extends OfTypeVariable {
 
+                    /**
+                     * The retained type variable.
+                     */
                     private final Generic typeVariable;
 
+                    /**
+                     * Creates a new retained type variable.
+                     *
+                     * @param typeVariable The retained type variable.
+                     */
                     protected RetainedTypeVariable(Generic typeVariable) {
                         this.typeVariable = typeVariable;
                     }
@@ -1212,7 +1252,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             protected static class CovariantBinding implements Dispatcher {
 
                                 /**
-                                 * The lower bound type of a contracariant parameter.
+                                 * The lower bound type of a covariant parameter.
                                  */
                                 private final Generic upperBound;
 
@@ -2132,10 +2172,22 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 '}';
                     }
 
+                    /**
+                     * Substitutes a type variable, either with a new binding if the variable is defined by a type or with a
+                     * retained type variable if the variable is defined by a method.
+                     */
                     protected class TypeVariableSubstitutor implements TypeVariableSource.Visitor<Generic> {
 
+                        /**
+                         * The discovered type variable.
+                         */
                         private final Generic typeVariable;
 
+                        /**
+                         * Creates a new type variable substitutor.
+                         *
+                         * @param typeVariable The discovered type variable.
+                         */
                         protected TypeVariableSubstitutor(Generic typeVariable) {
                             this.typeVariable = typeVariable;
                         }
@@ -2154,12 +2206,52 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         public Generic onMethod(MethodDescription.InDefinedShape methodDescription) {
                             return new RetainedMethodTypeVariable(typeVariable);
                         }
+
+                        /**
+                         * Returns the outer instance.
+                         *
+                         * @return The outer instance.
+                         */
+                        private ForTypeVariableBinding getOuter() {
+                            return ForTypeVariableBinding.this;
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && getOuter().equals(((TypeVariableSubstitutor) other).getOuter())
+                                    && typeVariable.equals(((TypeVariableSubstitutor) other).typeVariable);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return typeVariable.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding.TypeVariableSubstitutor{" +
+                                    "outer=" + getOuter() +
+                                    ", typeVariable=" + typeVariable +
+                                    '}';
+                        }
                     }
 
+                    /**
+                     * Implementation of a type variable on a method that is not substituted.
+                     */
                     protected class RetainedMethodTypeVariable extends OfTypeVariable {
 
+                        /**
+                         * The discovered type variable.
+                         */
                         private final Generic typeVariable;
 
+                        /**
+                         * Creates a new retained type variable.
+                         *
+                         * @param typeVariable The discovered type variable.
+                         */
                         protected RetainedMethodTypeVariable(Generic typeVariable) {
                             this.typeVariable = typeVariable;
                         }

@@ -9,5 +9,6 @@ public class TypeDescriptionGenericVisitorTypeVariableErasingTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.TypeVariableErasing.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.TypeVariableErasing.PartialErasureReviser.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.TypeVariableErasing.TypeVariableReviser.class).apply();
     }
 }

@@ -1,5 +1,7 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.TypeVariableSource;
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -13,6 +15,7 @@ import java.util.Map;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -22,14 +25,23 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription.Generic source, target, unknown;
+    private TypeDescription.Generic source, target, unknown, substituted;
+
+    @Mock
+    private TypeDescription.AbstractBase typeDefinition;
+
+    @Mock
+    private MethodDescription.AbstractBase methodDefinition;
 
     private Map<TypeDescription.Generic, TypeDescription.Generic> mapping;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         mapping = new HashMap<TypeDescription.Generic, TypeDescription.Generic>();
         mapping.put(source, target);
+        when(typeDefinition.accept(any(TypeVariableSource.Visitor.class))).thenCallRealMethod();
+        when(methodDefinition.accept(any(TypeVariableSource.Visitor.class))).thenReturn(substituted);
     }
 
     @Test(expected = UnsupportedOperationException.class)
@@ -43,13 +55,27 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
     }
 
     @Test
-    public void testTypeVariableKnown() throws Exception {
+    public void testTypeVariableKnownOnType() throws Exception {
+        when(source.getVariableSource()).thenReturn(typeDefinition);
         assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(source), is(target));
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testTypeVariableUnknown() throws Exception {
+    public void testTypeVariableUnknownOnType() throws Exception {
+        when(unknown.getVariableSource()).thenReturn(typeDefinition);
         new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(unknown);
+    }
+
+    @Test
+    public void testTypeVariableKnownOnMethod() throws Exception {
+        when(source.getVariableSource()).thenReturn(methodDefinition);
+        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(source), is(substituted));
+    }
+
+    @Test
+    public void testTypeVariableUnknownOnMethod() throws Exception {
+        when(unknown.getVariableSource()).thenReturn(methodDefinition);
+        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding(mapping).onTypeVariable(unknown), is(substituted));
     }
 
     @Test
@@ -66,5 +92,6 @@ public class TypeDescriptionGenericVisitorSubstitutorForTypeVariableBindingTest 
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding.TypeVariableSubstitutor.class).apply();
     }
 }

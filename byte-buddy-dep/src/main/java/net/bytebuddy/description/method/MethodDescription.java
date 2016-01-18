@@ -568,7 +568,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-            return visitor.onMethod(this.asDefined()); // TODO!
+            return visitor.onMethod(this.asDefined());
         }
 
         @Override
