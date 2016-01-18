@@ -93,7 +93,7 @@ public class TypeVariableToken implements ByteCodeElement.Token<TypeVariableToke
 
     @Override
     public TypeVariableToken accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-        return new TypeVariableToken(getSymbol(), getBounds().accept(visitor), getAnnotations());
+        return new TypeVariableToken(symbol, getBounds().accept(visitor), annotations);
     }
 
     @Override
