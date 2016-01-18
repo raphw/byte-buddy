@@ -1,7 +1,6 @@
 package net.bytebuddy.description.type;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
-import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotatedCodeElement;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -29,7 +28,6 @@ import java.lang.reflect.*;
 import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.is;
-import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
  * Implementations of this interface represent a Java type, i.e. a class or interface. Instances of this interface always
@@ -6334,7 +6332,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     /**
      * An abstract base implementation of a type description.
      */
-    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements TypeDescription {
+    abstract class AbstractBase extends TypeVariableSource.AbstractBase implements TypeDescription {
 
         /**
          * Checks if a specific type is assignable to another type where the source type must be a super
@@ -6636,21 +6634,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         public TypeVariableSource getEnclosingSource() {
             MethodDescription enclosingMethod = getEnclosingMethod();
             return enclosingMethod == null
-                    ? getEnclosingType()
+                    ? (isStatic() ? TypeVariableSource.UNDEFINED : getEnclosingType()) // Top-level classes (non-static) have no enclosing type.
                     : enclosingMethod;
-        }
-
-        @Override
-        public Generic findVariable(String symbol) {
-            TypeList.Generic typeVariables = getTypeVariables().filter(named(symbol));
-            if (typeVariables.isEmpty()) {
-                TypeVariableSource enclosingSource = getEnclosingSource();
-                return enclosingSource == null
-                        ? TypeDescription.Generic.UNDEFINED
-                        : enclosingSource.findVariable(symbol);
-            } else {
-                return typeVariables.getOnly();
-            }
         }
 
         @Override
@@ -6703,7 +6688,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public TypeDescription getComponentType() {
-                return UNDEFINED;
+                return TypeDescription.UNDEFINED;
             }
 
             @Override
@@ -7049,7 +7034,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public TypeDescription getEnclosingType() {
-            return UNDEFINED;
+            return TypeDescription.UNDEFINED;
         }
 
         @Override
@@ -7144,7 +7129,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public TypeDescription getDeclaringType() {
-            return UNDEFINED;
+            return TypeDescription.UNDEFINED;
         }
 
         @Override
@@ -7319,7 +7304,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public TypeDescription getEnclosingType() {
-            return UNDEFINED;
+            return TypeDescription.UNDEFINED;
         }
 
         @Override
@@ -7364,7 +7349,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public TypeDescription getDeclaringType() {
-            return UNDEFINED;
+            return TypeDescription.UNDEFINED;
         }
 
         @Override

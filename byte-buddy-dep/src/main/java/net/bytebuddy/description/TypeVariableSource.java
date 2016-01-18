@@ -4,10 +4,17 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 /**
  * A type variable source represents a byte code element that can declare type variables.
  */
 public interface TypeVariableSource extends ByteCodeElement {
+
+    /**
+     * Indicates that a type variable source is undefined.
+     */
+    TypeVariableSource UNDEFINED = null;
 
     /**
      * Returns the type variables that are declared by this element.
@@ -86,6 +93,25 @@ public interface TypeVariableSource extends ByteCodeElement {
             @Override
             public String toString() {
                 return "TypeVariableSource.Visitor.NoOp." + name();
+            }
+        }
+    }
+
+    /**
+     * An abstract base implementation of a type variable source.
+     */
+    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements TypeVariableSource {
+
+        @Override
+        public TypeDescription.Generic findVariable(String symbol) {
+            TypeList.Generic typeVariables = getTypeVariables().filter(named(symbol));
+            if (typeVariables.isEmpty()) {
+                TypeVariableSource enclosingSource = getEnclosingSource();
+                return enclosingSource == null
+                        ? TypeDescription.Generic.UNDEFINED
+                        : enclosingSource.findVariable(symbol);
+            } else {
+                return typeVariables.getOnly();
             }
         }
     }

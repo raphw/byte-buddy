@@ -1,7 +1,6 @@
 package net.bytebuddy.description.method;
 
 import net.bytebuddy.description.ByteCodeElement;
-import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
 import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -28,7 +27,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
+import static net.bytebuddy.matcher.ElementMatchers.not;
+import static net.bytebuddy.matcher.ElementMatchers.ofSort;
 
 /**
  * Implementations of this interface describe a Java method, i.e. a method or a constructor. Implementations of this
@@ -283,7 +283,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * An abstract base implementation of a method description.
      */
-    abstract class AbstractBase extends ModifierReviewable.AbstractBase implements MethodDescription {
+    abstract class AbstractBase extends TypeVariableSource.AbstractBase implements MethodDescription {
 
         /**
          * A merger of all method modifiers that are visible in the Java source code.
@@ -555,15 +555,9 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeVariableSource getEnclosingSource() {
-            return getDeclaringType().asErasure();
-        }
-
-        @Override
-        public TypeDescription.Generic findVariable(String symbol) {
-            TypeList.Generic typeVariables = getTypeVariables().filter(named(symbol));
-            return typeVariables.isEmpty()
-                    ? getEnclosingSource().findVariable(symbol)
-                    : typeVariables.getOnly();
+            return isStatic()
+                    ? TypeVariableSource.UNDEFINED
+                    : getDeclaringType().asErasure();
         }
 
         @Override
@@ -572,8 +566,8 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public Token asToken(ElementMatcher<? super TypeDescription> matcher) {
-            return new Token(getInternalName(),
+        public MethodDescription.Token asToken(ElementMatcher<? super TypeDescription> matcher) {
+            return new MethodDescription.Token(getInternalName(),
                     getModifiers(),
                     getTypeVariables().asTokenList(matcher),
                     getReturnType().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
@@ -961,7 +955,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @param declaringType The declaring type of the method.
          * @param token         A token representing the method's shape.
          */
-        public Latent(TypeDescription declaringType, Token token) {
+        public Latent(TypeDescription declaringType, MethodDescription.Token token) {
             this(declaringType,
                     token.getName(),
                     token.getModifiers(),

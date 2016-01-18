@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -585,6 +586,12 @@ public abstract class AbstractMethodDescriptionTest {
     @Test
     public void testToGenericString() throws Exception {
         assertThat(describe(genericMethod).toGenericString(), is(genericMethod.toGenericString()));
+    }
+
+    @Test
+    public void testEnclosingSource() throws Exception {
+        assertThat(describe(firstMethod).getEnclosingSource(), nullValue(TypeVariableSource.class));
+        assertThat(describe(secondMethod).getEnclosingSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(Sample.class)));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

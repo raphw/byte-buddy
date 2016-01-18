@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.description.TypeVariableSource;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
@@ -525,6 +526,38 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     public void testIsPackageDescription() throws Exception {
         assertThat(describe(Class.forName(Sample.class.getPackage().getName() + "." + PackageDescription.PACKAGE_CLASS_NAME)).isPackageType(), is(true));
         assertThat(describe(Object.class).isPackageType(), is(false));
+    }
+
+    @Test
+    public void testEnclosingSource() throws Exception {
+        assertThat(describe(SampleClass.class).getEnclosingSource(), is((TypeVariableSource) describe(AbstractTypeDescriptionTest.class)));
+        assertThat(describe(Traversal.class).getEnclosingSource(), nullValue(TypeVariableSource.class));
+    }
+
+    @Test
+    public void testInMethodType() throws Exception {
+        assertThat(describe(inMethodClass()).getEnclosingMethod(),
+                is((TypeVariableSource) new MethodDescription.ForLoadedMethod(AbstractTypeDescriptionTest.class.getDeclaredMethod("inMethodClass"))));
+        assertThat(describe(inMethodClass()).getEnclosingSource(),
+                is((TypeVariableSource) new MethodDescription.ForLoadedMethod(AbstractTypeDescriptionTest.class.getDeclaredMethod("inMethodClass"))));
+    }
+
+    @Test
+    public void testEnclosingAndDeclaringType() throws Exception {
+        assertThat(describe(SampleClass.class).getEnclosingType(), is(describe(AbstractTypeDescriptionTest.class)));
+        assertThat(describe(SampleClass.class).getDeclaringType(), is(describe(AbstractTypeDescriptionTest.class)));
+        Class<?> anonymousType = new Object() {
+            /* empty */
+        }.getClass();
+        assertThat(describe(anonymousType).getEnclosingType(), is(describe(AbstractTypeDescriptionTest.class)));
+        assertThat(describe(anonymousType).getDeclaringType(), nullValue(TypeDescription.class));
+    }
+
+    private Class<?> inMethodClass() {
+        class InMethod {
+            /* empty */
+        }
+        return InMethod.class;
     }
 
     protected interface SampleInterface {
