@@ -923,12 +923,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         /**
          * The type of the represented parameter.
          */
-        private final TypeDescription.Generic typeDescription;
+        private final TypeDescription.Generic type;
 
         /**
          * A list of parameter annotations.
          */
-        private final List<? extends AnnotationDescription> annotationDescriptions;
+        private final List<? extends AnnotationDescription> annotations;
 
         /**
          * The name of the parameter or {@code null} if no explicit name is defined.
@@ -943,47 +943,47 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         /**
          * Creates a new parameter token without an explicit name, an explicit modifier or annotations.
          *
-         * @param typeDescription The type of the represented parameter.
+         * @param type The type of the represented parameter.
          */
-        public Token(TypeDescription.Generic typeDescription) {
-            this(typeDescription, Collections.<AnnotationDescription>emptyList());
+        public Token(TypeDescription.Generic type) {
+            this(type, Collections.<AnnotationDescription>emptyList());
         }
 
         /**
          * Creates a new parameter token without an explicit name or an explicit modifier.
          *
-         * @param typeDescription        The type of the represented parameter.
-         * @param annotationDescriptions The annotations of the parameter.
+         * @param type        The type of the represented parameter.
+         * @param annotations The annotations of the parameter.
          */
-        public Token(TypeDescription.Generic typeDescription, List<? extends AnnotationDescription> annotationDescriptions) {
-            this(typeDescription, annotationDescriptions, NO_NAME, NO_MODIFIERS);
+        public Token(TypeDescription.Generic type, List<? extends AnnotationDescription> annotations) {
+            this(type, annotations, NO_NAME, NO_MODIFIERS);
         }
 
         /**
          * Creates a parameter token without annotations.
          *
-         * @param typeDescription The type of the represented parameter.
+         * @param type The type of the represented parameter.
          * @param name            The name of the parameter or {@code null} if no explicit name is defined.
          * @param modifiers       The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
-        public Token(TypeDescription.Generic typeDescription, String name, Integer modifiers) {
-            this(typeDescription, Collections.<AnnotationDescription>emptyList(), name, modifiers);
+        public Token(TypeDescription.Generic type, String name, Integer modifiers) {
+            this(type, Collections.<AnnotationDescription>emptyList(), name, modifiers);
         }
 
         /**
          * Creates a new parameter token.
          *
-         * @param typeDescription        The type of the represented parameter.
-         * @param annotationDescriptions The annotations of the parameter.
+         * @param type        The type of the represented parameter.
+         * @param annotations The annotations of the parameter.
          * @param name                   The name of the parameter or {@code null} if no explicit name is defined.
          * @param modifiers              The modifiers of the parameter or {@code null} if no explicit modifiers is defined.
          */
-        public Token(TypeDescription.Generic typeDescription,
-                     List<? extends AnnotationDescription> annotationDescriptions,
+        public Token(TypeDescription.Generic type,
+                     List<? extends AnnotationDescription> annotations,
                      String name,
                      Integer modifiers) {
-            this.typeDescription = typeDescription;
-            this.annotationDescriptions = annotationDescriptions;
+            this.type = type;
+            this.annotations = annotations;
             this.name = name;
             this.modifiers = modifiers;
         }
@@ -994,7 +994,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
          * @return The type of the represented method parameter.
          */
         public TypeDescription.Generic getType() {
-            return typeDescription;
+            return type;
         }
 
         /**
@@ -1003,7 +1003,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
          * @return The annotations of the represented method parameter.
          */
         public AnnotationList getAnnotations() {
-            return new AnnotationList.Explicit(annotationDescriptions);
+            return new AnnotationList.Explicit(annotations);
         }
 
         /**
@@ -1026,10 +1026,10 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         @Override
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-            return new Token(getType().accept(visitor),
-                    getAnnotations(),
-                    getName(),
-                    getModifiers());
+            return new Token(type.accept(visitor),
+                    annotations,
+                    name,
+                    modifiers);
         }
 
         @Override
@@ -1037,16 +1037,16 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             if (this == other) return true;
             if (other == null || getClass() != other.getClass()) return false;
             Token token = (Token) other;
-            return typeDescription.equals(token.typeDescription)
-                    && annotationDescriptions.equals(token.annotationDescriptions)
+            return type.equals(token.type)
+                    && annotations.equals(token.annotations)
                     && (name != null ? name.equals(token.name) : token.name == null)
                     && (modifiers != null ? modifiers.equals(token.modifiers) : token.modifiers == null);
         }
 
         @Override
         public int hashCode() {
-            int result = typeDescription.hashCode();
-            result = 31 * result + annotationDescriptions.hashCode();
+            int result = type.hashCode();
+            result = 31 * result + annotations.hashCode();
             result = 31 * result + (name != null ? name.hashCode() : 0);
             result = 31 * result + (modifiers != null ? modifiers.hashCode() : 0);
             return result;
@@ -1055,8 +1055,8 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         @Override
         public String toString() {
             return "ParameterDescription.Token{" +
-                    "typeDescription=" + typeDescription +
-                    ", annotationDescriptions=" + annotationDescriptions +
+                    "type=" + type +
+                    ", annotations=" + annotations +
                     ", name=" + (name == null ? null : "'" + name + '\'') +
                     ", modifiers=" + modifiers +
                     '}';

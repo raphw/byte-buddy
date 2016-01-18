@@ -1391,14 +1391,14 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-            return new Token(getName(),
-                    getModifiers(),
+            return new Token(name,
+                    modifiers,
                     getTypeVariableTokens().accept(visitor),
-                    getReturnType().accept(visitor),
+                    returnType.accept(visitor),
                     getParameterTokens().accept(visitor),
                     getExceptionTypes().accept(visitor),
-                    getAnnotations(),
-                    getDefaultValue());
+                    annotations,
+                    defaultValue);
         }
 
         @Override

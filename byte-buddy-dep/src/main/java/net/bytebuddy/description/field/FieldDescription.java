@@ -457,10 +457,10 @@ public interface FieldDescription extends ByteCodeElement,
 
         @Override
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
-            return new Token(getName(),
-                    getModifiers(),
-                    getType().accept(visitor),
-                    getAnnotations());
+            return new Token(name,
+                    modifiers,
+                    type.accept(visitor),
+                    annotations);
         }
 
         @Override
