@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 18. January 2016: version 1.0.1
+
+- Refactored type variable bindings for generic super types: Always retain variables that are defined by methods.
+- Retain type annotations that are defined on a `TargetType`.
+
 ### 15. January 2016: version 1.0.0
 
 - Added support for type annotations.
