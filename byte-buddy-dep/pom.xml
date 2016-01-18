@@ -55,12 +55,6 @@
             <version>${project.version}</version>
             <scope>test</scope>
         </dependency>
-        <dependency>
-            <groupId>org.elasticsearch</groupId>
-            <artifactId>elasticsearch</artifactId>
-            <version>1.7.4</version>
-            <scope>test</scope>
-        </dependency>
     </dependencies>
 
 </project>

@@ -1244,6 +1244,15 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test
+    public void testMixedTypeVariables() throws Exception {
+        MethodDescription methodDescription = describeInterfaceType(MixedTypeVariables.Inner.class, 0).getDeclaredMethods().getOnly();
+        assertThat(methodDescription.getParameters().getOnly().getType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(methodDescription.getParameters().getOnly().getType().asRawType().represents(MixedTypeVariables.SampleType.class), is(true));
+        assertThat(methodDescription.getParameters().getOnly().getType().getTypeArguments().get(0), is(methodDescription.getTypeVariables().getOnly()));
+        assertThat(methodDescription.getParameters().getOnly().getType().getTypeArguments().get(1).represents(Void.class), is(true));
+    }
+
+    @Test
     @JavaVersionRule.Enforce(8)
     @SuppressWarnings("unchecked")
     public void testTypeAnnotationsFieldType() throws Exception {
@@ -1814,6 +1823,19 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
         @SuppressWarnings("unchecked")
         public static class Raw extends MemberVariable {
+            /* empty */
+        }
+    }
+
+    interface MixedTypeVariables<T> {
+
+        interface Inner extends MixedTypeVariables<Void> {
+            /* empty */
+        }
+
+        <S> void qux(SampleType<S, T> arg);
+
+        interface SampleType<U, V> {
             /* empty */
         }
     }
