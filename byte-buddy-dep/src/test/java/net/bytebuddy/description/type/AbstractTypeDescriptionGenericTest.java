@@ -1077,7 +1077,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(FOO)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
     }
 
     @Test
@@ -1092,7 +1092,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(BAR)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("T"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
     }
 
     @Test
@@ -1107,7 +1107,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         MethodDescription methodDescription = typeDescription.getDeclaredMethods().filter(named(QUX)).getOnly();
         assertThat(methodDescription.getReturnType().getSort(), is(TypeDefinition.Sort.VARIABLE));
         assertThat(methodDescription.getReturnType().getSymbol(), is("S"));
-        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription));
+        assertThat(methodDescription.getReturnType().getVariableSource(), is((TypeVariableSource) methodDescription.asDefined()));
         assertThat(methodDescription.getReturnType().getUpperBounds().size(), is(1));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(methodDescription.getReturnType().getUpperBounds().getOnly().asErasure().represents(Number.class), is(true));

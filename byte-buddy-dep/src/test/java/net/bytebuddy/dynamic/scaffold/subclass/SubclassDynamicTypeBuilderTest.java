@@ -1,7 +1,6 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.Visibility;
@@ -350,7 +349,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     }
 
     @Test
-    public void testGenericType() throws Exception {
+    public void testGenericTypeRawExtension() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .subclass(GenericType.Inner.class)
                 .method(named(FOO).or(named("call"))).intercept(StubMethod.INSTANCE)
@@ -369,20 +368,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
         assertThat(foo.getTypeParameters()[1].getName(), is("W"));
         assertThat(foo.getTypeParameters()[1].getBounds().length, is(1));
         assertThat(foo.getTypeParameters()[1].getBounds()[0], is((Type) Exception.class));
-        assertThat(foo.getGenericReturnType(), instanceOf(ParameterizedType.class));
-        assertThat(((ParameterizedType) foo.getGenericReturnType()).getActualTypeArguments().length, is(1));
-        Type parameterType = ((ParameterizedType) foo.getGenericReturnType()).getActualTypeArguments()[0];
-        // Before Java 7, non-generic array types returned from methods of the generic reflection API returned generic arrays.
-        if (ClassFileVersion.forCurrentJavaVersion().compareTo(ClassFileVersion.JAVA_V7) < 0) {
-            assertThat(parameterType, instanceOf(GenericArrayType.class));
-            assertThat(((GenericArrayType) parameterType).getGenericComponentType(), is((Type) String.class));
-        } else {
-            assertThat(parameterType, is((Type) String[].class));
-        }
-        assertThat(foo.getGenericParameterTypes().length, is(1));
-        assertThat(foo.getGenericParameterTypes()[0], is((Type) foo.getTypeParameters()[0]));
-        assertThat(foo.getGenericExceptionTypes().length, is(1));
-        assertThat(foo.getGenericExceptionTypes()[0], is((Type) foo.getTypeParameters()[1]));
+        assertThat(foo.getGenericReturnType(), is((Object) List.class));
         Method call = dynamicType.getDeclaredMethod("call");
         assertThat(call.getGenericReturnType(), is(((ParameterizedType) GenericType.Inner.class.getGenericInterfaces()[0]).getActualTypeArguments()[0]));
     }

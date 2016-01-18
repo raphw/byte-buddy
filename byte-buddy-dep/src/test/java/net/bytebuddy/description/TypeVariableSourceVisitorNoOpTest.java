@@ -20,7 +20,7 @@ public class TypeVariableSourceVisitorNoOpTest {
 
     @Test
     public void testVisitMethod() throws Exception {
-        MethodDescription methodDescription = mock(MethodDescription.class);
+        MethodDescription.InDefinedShape methodDescription = mock(MethodDescription.InDefinedShape.class);
         assertThat(TypeVariableSource.Visitor.NoOp.INSTANCE.onMethod(methodDescription), is((TypeVariableSource) methodDescription));
     }
 

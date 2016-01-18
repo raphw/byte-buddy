@@ -568,7 +568,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public <T> T accept(TypeVariableSource.Visitor<T> visitor) {
-            return visitor.onMethod(this);
+            return visitor.onMethod(this.asDefined()); // TODO!
         }
 
         @Override
@@ -1154,22 +1154,22 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public TypeList.Generic getTypeVariables() {
-            return new TypeList.Generic.ForDetachedTypes(methodDescription.getTypeVariables(), new VariableRetainingDelegator());
+            return new TypeList.Generic.ForDetachedTypes(methodDescription.getTypeVariables(), visitor);
         }
 
         @Override
         public TypeDescription.Generic getReturnType() {
-            return methodDescription.getReturnType().accept(new VariableRetainingDelegator());
+            return methodDescription.getReturnType().accept(visitor);
         }
 
         @Override
         public ParameterList<ParameterDescription.InGenericShape> getParameters() {
-            return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), new VariableRetainingDelegator());
+            return new ParameterList.TypeSubstituting(this, methodDescription.getParameters(), visitor);
         }
 
         @Override
         public TypeList.Generic getExceptionTypes() {
-            return new TypeList.Generic.ForDetachedTypes(methodDescription.getExceptionTypes(), new VariableRetainingDelegator());
+            return new TypeList.Generic.ForDetachedTypes(methodDescription.getExceptionTypes(), visitor);
         }
 
         @Override
@@ -1200,121 +1200,6 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public InDefinedShape asDefined() {
             return methodDescription.asDefined();
-        }
-
-        /**
-         * A visitor that only escalates to the actual visitor if a non-generic type is discovered or if a type variable
-         * that is not declared by the represented method is discovered. This way, a method's type variables are never bound
-         * by the supplied visitor as non-generic types never reference a method's type variables and since a type variable
-         * that is not declared by the represented method can never reference a type variable of the represented method.
-         */
-        protected class VariableRetainingDelegator extends TypeDescription.Generic.Visitor.Substitutor {
-
-            @Override
-            public TypeDescription.Generic onParameterizedType(TypeDescription.Generic parameterizedType) {
-                List<TypeDescription.Generic> parameters = new ArrayList<TypeDescription.Generic>(parameterizedType.getTypeArguments().size());
-                for (TypeDescription.Generic parameter : parameterizedType.getTypeArguments()) {
-                    if (parameter.getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
-                        return visitor.onParameterizedType(parameterizedType);
-                    } else if (parameter.getSort().isWildcard()) {
-                        TypeList.Generic bounds = parameter.getLowerBounds();
-                        bounds = bounds.isEmpty() ? parameter.getUpperBounds() : bounds;
-                        if (bounds.getOnly().getSort().isTypeVariable() && !methodDescription.getTypeVariables().contains(parameter)) {
-                            return visitor.onParameterizedType(parameterizedType);
-                        }
-                    }
-                    parameters.add(parameter.accept(this));
-                }
-                TypeDescription.Generic ownerType = parameterizedType.getOwnerType();
-                return new TypeDescription.Generic.OfParameterizedType.Latent(parameterizedType.asErasure(),
-                        ownerType == null
-                                ? TypeDescription.Generic.UNDEFINED
-                                : ownerType.accept(this),
-                        parameters,
-                        parameterizedType.getDeclaredAnnotations());
-            }
-
-            @Override
-            public TypeDescription.Generic onNonGenericType(TypeDescription.Generic typeDescription) {
-                return visitor.onNonGenericType(typeDescription);
-            }
-
-            @Override
-            protected TypeDescription.Generic onSimpleType(TypeDescription.Generic typeDescription) {
-                throw new UnsupportedOperationException();
-            }
-
-            @Override
-            public TypeDescription.Generic onTypeVariable(TypeDescription.Generic typeVariable) {
-                return methodDescription.getTypeVariables().contains(typeVariable)
-                        ? new RetainedVariable(typeVariable)
-                        : visitor.onTypeVariable(typeVariable);
-            }
-
-            @Override
-            public int hashCode() {
-                return TypeSubstituting.this.hashCode();
-            }
-
-            @Override
-            public boolean equals(Object other) {
-                return other != null && other.getClass() == this.getClass()
-                        && TypeSubstituting.this.equals(((VariableRetainingDelegator) other).getOuter());
-            }
-
-            /**
-             * Returns the outer instance.
-             *
-             * @return The outer instance.
-             */
-            private Object getOuter() {
-                return TypeSubstituting.this;
-            }
-
-            @Override
-            public String toString() {
-                return "MethodDescription.TypeSubstituting.VariableRetainingDelegator{methodDescription=" + TypeSubstituting.this + '}';
-            }
-
-            /**
-             * A retained type variable that is declared by the method.
-             */
-            protected class RetainedVariable extends TypeDescription.Generic.OfTypeVariable {
-
-                /**
-                 * The type variable this retained variable represents.
-                 */
-                private final TypeDescription.Generic typeVariable;
-
-                /**
-                 * Creates a new retained type variable.
-                 *
-                 * @param typeVariable The type variable this retained variable represents.
-                 */
-                protected RetainedVariable(TypeDescription.Generic typeVariable) {
-                    this.typeVariable = typeVariable;
-                }
-
-                @Override
-                public TypeList.Generic getUpperBounds() {
-                    return new TypeList.Generic.ForDetachedTypes(typeVariable.getUpperBounds(), VariableRetainingDelegator.this);
-                }
-
-                @Override
-                public TypeVariableSource getVariableSource() {
-                    return TypeSubstituting.this;
-                }
-
-                @Override
-                public String getSymbol() {
-                    return typeVariable.getSymbol();
-                }
-
-                @Override
-                public AnnotationList getDeclaredAnnotations() {
-                    return typeVariable.getDeclaredAnnotations();
-                }
-            }
         }
     }
 

@@ -61,7 +61,7 @@ public interface TypeVariableSource extends ByteCodeElement {
          * @param methodDescription The method onto which this visitor is applied.
          * @return The visitor's return value.
          */
-        T onMethod(MethodDescription methodDescription);
+        T onMethod(MethodDescription.InDefinedShape methodDescription);
 
         /**
          * A none-operational implementation of a type variable visitor that simply returns the visited source.
@@ -79,7 +79,7 @@ public interface TypeVariableSource extends ByteCodeElement {
             }
 
             @Override
-            public TypeVariableSource onMethod(MethodDescription methodDescription) {
+            public TypeVariableSource onMethod(MethodDescription.InDefinedShape methodDescription) {
                 return methodDescription;
             }
 

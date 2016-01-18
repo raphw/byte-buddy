@@ -688,12 +688,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onTypeVariable(Generic typeVariable) {
-                    return new OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable.getDeclaredAnnotations());
+                    return typeVariable.getVariableSource().accept(new TypeVariableReviser(typeVariable));
                 }
 
                 @Override
                 public Generic onNonGenericType(Generic typeDescription) {
-                    return new OfNonGenericType.Latent(typeDescription.asErasure(), typeDescription.getDeclaredAnnotations());
+                    return new OfNonGenericType.Latent(typeDescription.asErasure(), typeDescription.getDeclaredAnnotations()); // TODO: Retain old value?
                 }
 
                 @Override
@@ -744,6 +744,54 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public String toString() {
                         return "TypeDescription.Generic.Visitor.TypeVariableErasing.PartialErasureReviser." + name();
+                    }
+                }
+
+                protected static class TypeVariableReviser implements TypeVariableSource.Visitor<Generic> {
+
+                    private final Generic typeVariable;
+
+                    protected TypeVariableReviser(Generic typeVariable) {
+                        this.typeVariable = typeVariable;
+                    }
+
+                    @Override
+                    public Generic onType(TypeDescription typeDescription) {
+                        return new OfNonGenericType.Latent(typeVariable.asErasure(), typeVariable.getDeclaredAnnotations());
+                    }
+
+                    @Override
+                    public Generic onMethod(MethodDescription.InDefinedShape methodDescription) {
+                        return new RetainedTypeVariable(typeVariable);
+                    }
+                }
+
+                protected static class RetainedTypeVariable extends OfTypeVariable {
+
+                    private final Generic typeVariable;
+
+                    protected RetainedTypeVariable(Generic typeVariable) {
+                        this.typeVariable = typeVariable;
+                    }
+
+                    @Override
+                    public TypeList.Generic getUpperBounds() {
+                        return typeVariable.getUpperBounds().accept(TypeVariableErasing.INSTANCE);
+                    }
+
+                    @Override
+                    public TypeVariableSource getVariableSource() {
+                        return typeVariable.getVariableSource();
+                    }
+
+                    @Override
+                    public String getSymbol() {
+                        return typeVariable.getSymbol();
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return typeVariable.getDeclaredAnnotations();
                     }
                 }
             }
@@ -2051,12 +2099,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public Generic onTypeVariable(Generic typeVariable) {
-                        Generic substitution = bindings.get(typeVariable);
-                        if (substitution == null) {
-                            throw new IllegalStateException("Unknown type variable: " + typeVariable);
-                        } else {
-                            return substitution;
-                        }
+                        return typeVariable.getVariableSource().accept(new TypeVariableSubstitutor(typeVariable));
                     }
 
                     @Override
@@ -2087,6 +2130,59 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         return "TypeDescription.Generic.Visitor.Substitutor.ForTypeVariableBinding{" +
                                 "bindings=" + bindings +
                                 '}';
+                    }
+
+                    protected class TypeVariableSubstitutor implements TypeVariableSource.Visitor<Generic> {
+
+                        private final Generic typeVariable;
+
+                        protected TypeVariableSubstitutor(Generic typeVariable) {
+                            this.typeVariable = typeVariable;
+                        }
+
+                        @Override
+                        public Generic onType(TypeDescription typeDescription) {
+                            Generic substitution = bindings.get(typeVariable);
+                            if (substitution == null) {
+                                throw new IllegalStateException("Unknown type variable: " + typeVariable);
+                            } else {
+                                return substitution;
+                            }
+                        }
+
+                        @Override
+                        public Generic onMethod(MethodDescription.InDefinedShape methodDescription) {
+                            return new RetainedMethodTypeVariable(typeVariable);
+                        }
+                    }
+
+                    protected class RetainedMethodTypeVariable extends OfTypeVariable {
+
+                        private final Generic typeVariable;
+
+                        protected RetainedMethodTypeVariable(Generic typeVariable) {
+                            this.typeVariable = typeVariable;
+                        }
+
+                        @Override
+                        public TypeList.Generic getUpperBounds() {
+                            return typeVariable.getUpperBounds().accept(ForTypeVariableBinding.this);
+                        }
+
+                        @Override
+                        public TypeVariableSource getVariableSource() {
+                            return typeVariable.getVariableSource();
+                        }
+
+                        @Override
+                        public String getSymbol() {
+                            return typeVariable.getSymbol();
+                        }
+
+                        @Override
+                        public AnnotationList getDeclaredAnnotations() {
+                            return typeVariable.getDeclaredAnnotations();
+                        }
                     }
                 }
 
