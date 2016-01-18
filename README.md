@@ -108,7 +108,7 @@ an example of such a POJO, Byte Buddy can for example redirect a call to the onl
 ```java
 public class GreetingInterceptor {
   public Object greet(Object argument) {
-    return "Hello from " + argument.toString();
+    return "Hello from " + argument;
   }
 }
 ```

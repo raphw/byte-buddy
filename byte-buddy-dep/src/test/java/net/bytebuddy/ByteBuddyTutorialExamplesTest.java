@@ -86,7 +86,7 @@ public class ByteBuddyTutorialExamplesTest {
         Class<? extends Function> dynamicType = new ByteBuddy()
             .subclass(Function.class)
             .method(named("apply"))
-            .intercept(MethodDelegation.to(new FunctionInterceptor()))
+            .intercept(MethodDelegation.to(new GreetingInterceptor()))
             .make()
             .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
             .getLoaded();
@@ -558,9 +558,9 @@ public class ByteBuddyTutorialExamplesTest {
         Object apply(Object arg);
     }
 
-    public static class FunctionInterceptor {
+    public static class GreetingInterceptor {
 
-        public Object intercept(Object argument) {
+        public Object greet(Object argument) {
             return "Hello from " + argument;
         }
     }
