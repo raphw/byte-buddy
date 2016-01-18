@@ -6619,10 +6619,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public boolean represents(java.lang.reflect.Type type) {
-            if (type == null) { // Exception is thrown implicitly by TypeDescription.Generic implementations
-                throw new NullPointerException();
-            }
-            return type instanceof Class && equals(new ForLoadedType((Class<?>) type));
+            return equals(Sort.describe(type));
         }
 
         @Override

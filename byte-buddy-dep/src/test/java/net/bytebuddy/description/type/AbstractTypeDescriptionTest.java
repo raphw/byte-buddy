@@ -504,11 +504,6 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(List.class).represents(SimpleParameterizedType.class.getDeclaredField(FOO).getGenericType()), is(false));
     }
 
-    @Test(expected = NullPointerException.class)
-    public void testRepresentsNullPointer() throws Exception {
-        describe(Object.class).represents(null);
-    }
-
     @Test
     public void testNonAvailableAnnotations() throws Exception {
         TypeDescription typeDescription = describe(new ByteArrayClassLoader(null,
