@@ -44,6 +44,7 @@ public class AnnotationAppenderForTypeAnnotationsTest {
     private TypeDescription.Generic.Visitor<AnnotationAppender> visitor;
 
     @Before
+    @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
         when(annotationAppender.append(annotationDescription, annotationValueFilter, BAR, FOO)).thenReturn(result);
         when(typeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
