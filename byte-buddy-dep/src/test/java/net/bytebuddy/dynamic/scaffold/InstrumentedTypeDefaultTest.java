@@ -94,7 +94,7 @@ public class InstrumentedTypeDefaultTest {
     public void testWithTypeVariableWithInstrumentedType() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getTypeVariables().size(), is(0));
-        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, Collections.singletonList(TargetType.GENERIC_DESCRIPTION)));
+        instrumentedType = instrumentedType.withTypeVariable(new TypeVariableToken(BAR, Collections.singletonList(TargetType.DESCRIPTION.asGenericType())));
         assertThat(instrumentedType.getTypeVariables().size(), is(1));
         TypeDescription.Generic typeVariable = instrumentedType.getTypeVariables().get(0);
         assertThat(typeVariable.getTypeName(), is(BAR));
@@ -125,7 +125,7 @@ public class InstrumentedTypeDefaultTest {
     public void testWithFieldOfInstrumentedType() throws Exception {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
-        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TargetType.GENERIC_DESCRIPTION));
+        instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC, TargetType.DESCRIPTION.asGenericType()));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().asErasure(), sameInstance((TypeDescription) instrumentedType));
@@ -139,7 +139,7 @@ public class InstrumentedTypeDefaultTest {
         InstrumentedType instrumentedType = makePlainInstrumentedType();
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withField(new FieldDescription.Token(BAR, Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.singletonList(annotationDescription))));
+                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), Collections.singletonList(annotationDescription))));
         assertThat(instrumentedType.getDeclaredFields().size(), is(1));
         FieldDescription.InDefinedShape fieldDescription = instrumentedType.getDeclaredFields().get(0);
         assertThat(fieldDescription.getType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
@@ -190,8 +190,8 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                TargetType.GENERIC_DESCRIPTION,
-                Collections.singletonList(TargetType.GENERIC_DESCRIPTION)));
+                TargetType.DESCRIPTION.asGenericType(),
+                Collections.singletonList(TargetType.DESCRIPTION.asGenericType())));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asErasure(), sameInstance((TypeDescription) instrumentedType));
@@ -209,8 +209,8 @@ public class InstrumentedTypeDefaultTest {
         assertThat(instrumentedType.getDeclaredFields().size(), is(0));
         instrumentedType = instrumentedType.withMethod(new MethodDescription.Token(BAR,
                 Opcodes.ACC_PUBLIC,
-                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.singletonList(annotationDescription)),
-                Collections.singletonList(new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.singletonList(annotationDescription)))));
+                new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), Collections.singletonList(annotationDescription)),
+                Collections.singletonList(new TypeDescription.Generic.OfGenericArray.Latent(TargetType.DESCRIPTION.asGenericType(), Collections.singletonList(annotationDescription)))));
         assertThat(instrumentedType.getDeclaredMethods().size(), is(1));
         MethodDescription.InDefinedShape methodDescription = instrumentedType.getDeclaredMethods().get(0);
         assertThat(methodDescription.getReturnType().asErasure().isArray(), is(true));

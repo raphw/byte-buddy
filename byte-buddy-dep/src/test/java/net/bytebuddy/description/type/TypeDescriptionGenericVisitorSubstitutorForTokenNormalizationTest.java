@@ -39,7 +39,7 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
 
     @Test
     public void testTargetType() throws Exception {
-        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onSimpleType(TargetType.GENERIC_DESCRIPTION), is(target));
+        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onSimpleType(TargetType.DESCRIPTION.asGenericType()), is(target));
     }
 
     @Test

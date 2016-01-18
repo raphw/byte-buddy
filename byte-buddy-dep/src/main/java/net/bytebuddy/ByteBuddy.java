@@ -1,6 +1,5 @@
 package net.bytebuddy;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.modifier.*;
@@ -981,12 +980,12 @@ public class ByteBuddy {
             for (String value : values) {
                 instrumentedType = instrumentedType.withField(new FieldDescription.Token(value,
                         ENUM_FIELD_MODIFIERS | Opcodes.ACC_ENUM,
-                        TargetType.GENERIC_DESCRIPTION));
+                        TargetType.DESCRIPTION.asGenericType()));
             }
             return instrumentedType
                     .withField(new FieldDescription.Token(ENUM_VALUES,
                             ENUM_FIELD_MODIFIERS | Opcodes.ACC_SYNTHETIC,
-                            new TypeDescription.Generic.OfGenericArray.Latent(TargetType.GENERIC_DESCRIPTION, Collections.<AnnotationDescription>emptyList())))
+                            TypeDescription.ArrayProjection.of(TargetType.DESCRIPTION).asGenericType()))
                     .withInitializer(new InitializationAppender(values));
         }
 

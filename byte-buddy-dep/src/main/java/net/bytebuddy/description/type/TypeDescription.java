@@ -2072,7 +2072,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     protected Generic onSimpleType(Generic typeDescription) {
                         return typeMatcher.matches(typeDescription.asErasure())
-                                ? TargetType.GENERIC_DESCRIPTION
+                                ? new OfNonGenericType.Latent(TargetType.DESCRIPTION, typeDescription.getDeclaredAnnotations())
                                 : typeDescription;
                     }
 
@@ -6986,11 +6986,21 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         /**
+         * Creates an array projection of an arrity of one.
+         *
+         * @param componentType The component type of the array.
+         * @return A projection of the component type as an array of the given value with an arity of one.
+         */
+        public static TypeDescription of(TypeDescription componentType) {
+            return of(componentType, 1);
+        }
+
+        /**
          * Creates an array projection.
          *
          * @param componentType The component type of the array.
          * @param arity         The arity of this array.
-         * @return A projection of the component type as an arity of the given value.
+         * @return A projection of the component type as an array of the given value with the supplied arity.
          */
         public static TypeDescription of(TypeDescription componentType, int arity) {
             if (arity < 0) {

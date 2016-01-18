@@ -14,11 +14,6 @@ public final class TargetType {
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
 
     /**
-     * A generic description of the {@link net.bytebuddy.dynamic.TargetType}.
-     */
-    public static final TypeDescription.Generic GENERIC_DESCRIPTION = new TypeDescription.Generic.OfNonGenericType.ForLoadedType(TargetType.class);
-
-    /**
      * An unusable constructor to avoid instance creation.
      */
     private TargetType() {
