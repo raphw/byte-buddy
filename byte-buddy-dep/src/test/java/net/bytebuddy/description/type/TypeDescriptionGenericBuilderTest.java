@@ -113,6 +113,13 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     }
 
     @Test
+    public void testNonGenericTypeAsParameterizedType() throws Exception {
+        TypeDescription.Generic typeDescription = TypeDescription.Generic.Builder.parameterizedType(Object.class).build();
+        assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription, is(TypeDescription.Generic.OBJECT));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfGenericArrayType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfNonGenericType.class).apply();
