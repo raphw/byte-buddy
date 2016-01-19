@@ -47,7 +47,8 @@ ___
 <img src="https://raw.githubusercontent.com/raphw/byte-buddy/gh-pages/images/dukeschoice.jpg" alt="Duke's Choice award" height="110px" align="left" />
 </a>
 
-In October 2015, Byte Buddy was distinguished with a [*Duke's Choice award*](https://www.java.net/dukeschoice) 
+In October 2015, Byte Buddy was distinguished with a
+[*Duke's Choice award*](https://www.oracle.com/corporate/pressrelease/dukes-award-102815.html) 
 by Oracle. The award appreciates Byte Buddy for its "*tremendous amount of innovation in Java Technology*". 
 We feel very honored for having received this award and want to thank all users and everybody else who helped 
 making Byte Buddy the success it has become. We really appreciate it!
