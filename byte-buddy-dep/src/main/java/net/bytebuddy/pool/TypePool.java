@@ -6824,6 +6824,25 @@ public interface TypePool {
                             : defaultValue.resolve();
                 }
 
+                @Override
+                public Generic getReceiverType() {
+                    if (isStatic()) {
+                        return Generic.UNDEFINED;
+                    } else if (isConstructor()) {
+                        TypeDescription declaringType = getDeclaringType(), enclosingDeclaringType = declaringType.getEnclosingType();
+                        TypeDescription receiverType = enclosingDeclaringType == null
+                                ? declaringType
+                                : enclosingDeclaringType;
+                        return receiverType.isGenericDeclaration()
+                                ? new LazyParameterizedReceiverType(receiverType)
+                                : new LazyNonGenericReceiverType(receiverType);
+                    } else {
+                        return isGenericDeclaration()
+                                ? new LazyParameterizedReceiverType()
+                                : new LazyNonGenericReceiverType();
+                    }
+                }
+
                 /**
                  * A lazy list of parameter descriptions for the enclosing method description.
                  */
@@ -6946,7 +6965,7 @@ public interface TypePool {
                     @Override
                     public Generic getOwnerType() {
                         TypeDescription declaringType = typeDescription.getDeclaringType();
-                        return declaringType == null ? UNDEFINED : declaringType.isGeneric()
+                        return declaringType == null ? UNDEFINED : declaringType.isGenericDeclaration()
                                 ? new LazyParameterizedReceiverType(declaringType, typePath + GenericTypeToken.OWNER_TYPE_PATH)
                                 : new LazyNonGenericReceiverType(declaringType, typePath + GenericTypeToken.OWNER_TYPE_PATH);
                     }
@@ -7022,6 +7041,10 @@ public interface TypePool {
                     private final String typePath;
 
                     protected LazyNonGenericReceiverType() {
+                        this(LazyTypeDescription.this);
+                    }
+
+                    protected LazyNonGenericReceiverType(TypeDescription typeDescription) {
                         this(LazyTypeDescription.this, GenericTypeToken.EMPTY_TYPE_PATH);
                     }
 

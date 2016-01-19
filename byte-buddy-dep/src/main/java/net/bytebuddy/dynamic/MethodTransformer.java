@@ -255,6 +255,11 @@ public interface MethodTransformer {
                 return methodDescription;
             }
 
+            @Override
+            public TypeDescription.Generic getReceiverType() {
+                return methodDescription.getReceiverType(); // TODO: Token!
+            }
+
             /**
              * A parameter list representing the transformed method's parameters.
              */

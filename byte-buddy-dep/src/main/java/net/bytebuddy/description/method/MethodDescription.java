@@ -231,6 +231,8 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isDefaultValue(Object value);
 
+    TypeDescription.Generic getReceiverType();
+
     /**
      * Returns a signature token representing this method.
      *
@@ -276,6 +278,20 @@ public interface MethodDescription extends TypeVariableSource,
             @Override
             public InDefinedShape asDefined() {
                 return this;
+            }
+
+            @Override
+            public TypeDescription.Generic getReceiverType() {
+                if (isStatic()) {
+                    return TypeDescription.Generic.UNDEFINED;
+                } else if (isConstructor()) {
+                    TypeDescription declaringType = getDeclaringType(), enclosingDeclaringType = getDeclaringType().getEnclosingType();
+                    return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(enclosingDeclaringType == null
+                            ? declaringType
+                            : enclosingDeclaringType);
+                } else {
+                    return TypeDescription.Generic.OfParameterizedType.ForGenerifiedErasure.of(getDeclaringType());
+                }
             }
         }
     }
@@ -784,6 +800,14 @@ public interface MethodDescription extends TypeVariableSource,
         public TypeList.Generic getTypeVariables() {
             return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(constructor);
         }
+
+        @Override
+        public TypeDescription.Generic getReceiverType() {
+            TypeDescription.Generic receiverType = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(constructor);
+            return receiverType == null
+                    ? super.getReceiverType()
+                    : receiverType;
+        }
     }
 
     /**
@@ -900,6 +924,14 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public TypeList.Generic getTypeVariables() {
             return TypeList.Generic.ForLoadedTypes.OfTypeVariables.of(method);
+        }
+
+        @Override
+        public TypeDescription.Generic getReceiverType() {
+            TypeDescription.Generic receiverType = TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method);
+            return receiverType == null
+                    ? super.getReceiverType()
+                    : receiverType;
         }
     }
 
@@ -1174,6 +1206,14 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public Object getDefaultValue() {
             return methodDescription.getDefaultValue();
+        }
+
+        @Override
+        public TypeDescription.Generic getReceiverType() {
+            TypeDescription.Generic receiverType = methodDescription.getReceiverType();
+            return receiverType == null
+                    ? TypeDescription.Generic.UNDEFINED
+                    : receiverType.accept(visitor);
         }
 
         @Override
