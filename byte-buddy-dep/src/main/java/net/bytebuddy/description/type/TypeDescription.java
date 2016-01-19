@@ -6223,9 +6223,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic doBuild() {
-                    return ownerType == null && parameterTypes.isEmpty()
-                            ? new Generic.OfNonGenericType.Latent(rawType, annotations)
-                            : new Generic.OfParameterizedType.Latent(rawType, ownerType, parameterTypes, annotations);
+                    return new Generic.OfParameterizedType.Latent(rawType, ownerType, parameterTypes, annotations);
                 }
 
                 @Override
