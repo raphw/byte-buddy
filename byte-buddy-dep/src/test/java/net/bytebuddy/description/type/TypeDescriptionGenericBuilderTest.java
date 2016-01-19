@@ -112,11 +112,9 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         TypeDescription.Generic.Builder.rawType(void.class).annotate(mock(AnnotationDescription.class)).build();
     }
 
-    @Test
+    @Test(expected = IllegalArgumentException.class)
     public void testNonGenericTypeAsParameterizedType() throws Exception {
-        TypeDescription.Generic typeDescription = TypeDescription.Generic.Builder.parameterizedType(Object.class).build();
-        assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
-        assertThat(typeDescription, is(TypeDescription.Generic.OBJECT));
+        TypeDescription.Generic.Builder.parameterizedType(Object.class).build();
     }
 
     @Test

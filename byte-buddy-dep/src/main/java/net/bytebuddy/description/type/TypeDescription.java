@@ -5848,7 +5848,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
                     ownerType = declaringType.asGenericType();
                 }
-                if (ownerType == null && declaringType != null && !rawType.isStatic()) {
+                if (!rawType.isGenericDeclaration()) {
+                    throw new IllegalArgumentException(rawType + " is not a parameterized type");
+                } if (ownerType == null && declaringType != null && !rawType.isStatic()) {
                     throw new IllegalArgumentException(rawType + " requires an owner type");
                 } else if (ownerType != null && !ownerType.asErasure().equals(declaringType)) {
                     throw new IllegalArgumentException(ownerType + " does not represent required owner for " + rawType);
@@ -6698,6 +6700,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         @Override
         public boolean isPackageType() {
             return getSimpleName().equals(PackageDescription.PACKAGE_CLASS_NAME);
+        }
+
+        @Override
+        public boolean isGenericDeclaration() {
+            if (!getTypeVariables().isEmpty()) {
+                return true;
+            } else if (isStatic()) {
+                return false;
+            }
+            TypeDescription declaringType = getDeclaringType();
+            return declaringType != null && declaringType.isGenericDeclaration();
         }
 
         @Override
