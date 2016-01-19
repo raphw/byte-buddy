@@ -1520,7 +1520,8 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(fieldType.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(fieldType.getOwnerType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getOwnerType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));;
+        assertThat(fieldType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));
+        ;
         assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));

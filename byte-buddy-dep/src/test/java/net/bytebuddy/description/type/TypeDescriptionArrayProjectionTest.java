@@ -86,4 +86,32 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     public void testTypeAnnotationOwnerType() throws Exception {
         super.testTypeAnnotationOwnerType();
     }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support generic receiver types")
+    public void testGenericTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        super.testGenericTypeAnnotationReceiverTypeOnMethod();
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support generic receiver types")
+    public void testGenericNestedTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        super.testGenericNestedTypeAnnotationReceiverTypeOnMethod();
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support generic receiver types")
+    public void testGenericNestedTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        super.testGenericNestedTypeAnnotationReceiverTypeOnConstructor();
+    }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support generic receiver types")
+    public void testGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        super.testGenericInnerTypeAnnotationReceiverTypeOnConstructor();
+    }
 }

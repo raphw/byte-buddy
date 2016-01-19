@@ -6837,7 +6837,7 @@ public interface TypePool {
                                 ? new LazyParameterizedReceiverType(receiverType)
                                 : new LazyNonGenericReceiverType(receiverType);
                     } else {
-                        return isGenericDeclaration()
+                        return LazyTypeDescription.this.isGenericDeclaration()
                                 ? new LazyParameterizedReceiverType()
                                 : new LazyNonGenericReceiverType();
                     }
@@ -7045,7 +7045,7 @@ public interface TypePool {
                     }
 
                     protected LazyNonGenericReceiverType(TypeDescription typeDescription) {
-                        this(LazyTypeDescription.this, GenericTypeToken.EMPTY_TYPE_PATH);
+                        this(typeDescription, GenericTypeToken.EMPTY_TYPE_PATH);
                     }
 
                     protected LazyNonGenericReceiverType(TypeDescription typeDescription, String typePath) {
@@ -7060,7 +7060,7 @@ public interface TypePool {
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath + GenericTypeToken.OWNER_TYPE_PATH));
+                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath));
                     }
 
                     @Override

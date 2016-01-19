@@ -2,12 +2,15 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
 
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.notNullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends AbstractTypeDescriptionGenericTest {
@@ -19,6 +22,8 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     private static final String TYPE_ANNOTATION = "net.bytebuddy.test.precompiled.TypeAnnotation";
 
     private static final String TYPE_ANNOTATION_SAMPLES = "net.bytebuddy.test.precompiled.TypeAnnotationSamples";
+
+    private static final String RECEIVER_TYPE_SAMPLE = "net.bytebuddy.test.precompiled.ReceiverTypeSample", INNER = "Inner", NESTED = "Nested", GENERIC = "Generic";
 
     protected abstract TypeDescription describe(Class<?> type);
 
@@ -189,5 +194,251 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(t.getUpperBounds().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(27));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testNonGenericTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE))
+                .getDeclaredMethods()
+                .filter(named(FOO))
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testNonGenericTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE))
+                .getDeclaredMethods()
+                .filter(isConstructor())
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    @Ignore("The owner types of receiver types are illegally inversed by javac")
+    public void testNonGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + INNER))
+                .getDeclaredMethods()
+                .filter(named(FOO))
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + INNER)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(1));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testNonGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + INNER))
+                .getDeclaredMethods()
+                .filter(isConstructor())
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(2));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testNonGenericNestedTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + NESTED))
+                .getDeclaredMethods()
+                .filter(named(FOO))
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + NESTED)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testNonGenericNestedTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + NESTED))
+                .getDeclaredMethods()
+                .filter(isConstructor())
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
+    }
+
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testGenericTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC))
+                .getDeclaredMethods()
+                .filter(named(FOO))
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(4));
+        assertThat(receiverType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(receiverType.getTypeArguments().getOnly().getSymbol(), is(T));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(5));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testGenericTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC))
+                .getDeclaredMethods()
+                .filter(isConstructor())
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(0));;
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    @Ignore("The owner types of receiver types are illegally inversed by javac")
+    public void testGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + INNER))
+                .getDeclaredMethods()
+                .filter(named(FOO))
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + INNER)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(8));
+        assertThat(receiverType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(receiverType.getTypeArguments().getOnly().getSymbol(), is(S));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(9));
+        assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(receiverType.getOwnerType().asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + INNER)), is(true));
+        assertThat(receiverType.getOwnerType().getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getOwnerType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(6));
+        assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getSymbol(), is(T));
+        assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(7));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + INNER))
+                .getDeclaredMethods()
+                .filter(isConstructor())
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(10));
+        assertThat(receiverType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(receiverType.getTypeArguments().getOnly().getSymbol(), is(T));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(11));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testGenericNestedTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + NESTED))
+                .getDeclaredMethods()
+                .filter(named(FOO))
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + NESTED)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(12));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(13));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    @JavaVersionRule.Enforce(8)
+    public void testGenericNestedTypeAnnotationReceiverTypeOnConstructor() throws Exception {
+        TypeDescription.Generic receiverType = describe(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + NESTED))
+                .getDeclaredMethods()
+                .filter(isConstructor())
+                .getOnly()
+                .getReceiverType();
+        assertThat(receiverType, notNullValue(TypeDescription.Generic.class));
+        assertThat(receiverType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
+        assertThat(receiverType.asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC)), is(true));
+        assertThat(receiverType.getDeclaredAnnotations().size(), is(0));
+        assertThat(receiverType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.VARIABLE));
+        assertThat(receiverType.getTypeArguments().getOnly().getSymbol(), is(T));
+        assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(0));
     }
 }
