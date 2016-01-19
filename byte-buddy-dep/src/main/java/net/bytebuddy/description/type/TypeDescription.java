@@ -2472,6 +2472,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 AnnotationReader resolveExceptionType(AccessibleObject executable, int index);
 
+                /**
+                 * Resolves a method's or constructor's receiver type. If receiver types are not available on the executing VM,
+                 * {@code null} is returned.
+                 *
+                 * @param executable The executable for which the receiver type should be resolved.
+                 * @return The executable's receiver type or {@code null}.
+                 */
                 Generic resolveReceiverType(AccessibleObject executable);
 
                 /**

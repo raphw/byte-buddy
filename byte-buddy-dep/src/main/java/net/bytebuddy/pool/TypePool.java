@@ -2704,7 +2704,7 @@ public interface TypePool {
              * @param typePool                           The type pool to be used for looking up linked types.
              * @param modifiers                          The modifiers of this type.
              * @param name                               The binary name of this type.
-             * @param superClassInternalName              The internal name of this type's super type or {@code null} if no such super type is defined.
+             * @param superClassInternalName             The internal name of this type's super type or {@code null} if no such super type is defined.
              * @param interfaceInternalName              An array of this type's interfaces or {@code null} if this type does not define any interfaces.
              * @param signatureResolution                The resolution of this type's generic types.
              * @param declarationContext                 The declaration context of this type.
@@ -3783,9 +3783,9 @@ public interface TypePool {
                          * Resolves the generic super type of the represented type.
                          *
                          * @param superClassDescriptor The descriptor of the raw super type.
-                         * @param typePool            The type pool to be used for locating non-generic type descriptions.
-                         * @param annotationTokens    A mapping of the super type's type annotation tokens.
-                         * @param definingType        The type that defines this super type.
+                         * @param typePool             The type pool to be used for locating non-generic type descriptions.
+                         * @param annotationTokens     A mapping of the super type's type annotation tokens.
+                         * @param definingType         The type that defines this super type.
                          * @return A description of this type's generic super type.
                          */
                         Generic resolveSuperClass(String superClassDescriptor,
@@ -3830,7 +3830,7 @@ public interface TypePool {
                             /**
                              * Creates a new tokenized resolution of a {@link TypeDescription}'s generic signatures.
                              *
-                             * @param superClassToken      The super class's generic type token.
+                             * @param superClassToken     The super class's generic type token.
                              * @param interfaceTypeTokens The interface type's generic type tokens.
                              * @param typeVariableTokens  The type variables generic type tokens.
                              */
@@ -5726,6 +5726,7 @@ public interface TypePool {
                  * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
                  * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
                  * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
+                 * @param receiverTypeAnnotationTokens      A mapping of the receiver type's annotation tokens.
                  * @param annotationTokens                  A list of annotation tokens that are present on the represented method.
                  * @param parameterAnnotationTokens         A map of parameter indices to tokens that represent their annotations.
                  * @param parameterTokens                   A list of tokens describing meta data of the method's parameters.
@@ -6711,6 +6712,7 @@ public interface TypePool {
                  * @param returnTypeAnnotationTokens        A mapping of the return type's type variable tokens.
                  * @param parameterTypeAnnotationTokens     A mapping of the parameter types' type annotation tokens by their indices.
                  * @param exceptionTypeAnnotationTokens     A mapping of the exception types' type annotation tokens by their indices.
+                 * @param receiverTypeAnnotationTokens      A mapping of the receiver type's type annotation tokens.
                  * @param annotationTokens                  The annotation tokens representing the method's annotations.
                  * @param parameterAnnotationTokens         The annotation tokens representing the parameter's annotation. Every
                  *                                          index can contain {@code null} if a parameter does not define any annotations.
