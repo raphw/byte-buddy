@@ -2472,6 +2472,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  */
                 AnnotationReader resolveExceptionType(AccessibleObject executable, int index);
 
+                Generic resolveReceiverType(AccessibleObject executable);
+
                 /**
                  * A dispatcher for {@link AnnotationReader}s on a legacy VM that does not support type annotations.
                  */
@@ -2518,6 +2520,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
+                    public Generic resolveReceiverType(AccessibleObject executable) {
+                        return UNDEFINED;
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm." + name();
                     }
@@ -2559,6 +2566,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     private final Method getAnnotatedExceptionTypes;
 
                     /**
+                     * The {@code java.lang.reflect.Executable#getAnnotatedReceiverType} method.
+                     */
+                    private final Method getAnnotatedReceiverType;
+
+                    /**
+                     * The {@code java.lang.reflect.AnnotatedType#getType} method.
+                     */
+                    private final Method getType;
+
+                    /**
                      * Creates a new dispatcher for a VM that supports type annotations.
                      *
                      * @param getAnnotatedSuperclass     The {@code java.lang.Class#getAnnotatedSuperclass} method.
@@ -2567,19 +2584,25 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * @param getAnnotatedReturnType     The {@code java.lang.reflect.Method#getAnnotatedReturnType} method.
                      * @param getAnnotatedParameterTypes The {@code java.lang.reflect.Executable#getAnnotatedParameterTypes} method.
                      * @param getAnnotatedExceptionTypes The {@code java.lang.reflect.Executable#getAnnotatedExceptionTypes} method.
+                     * @param getAnnotatedReceiverType   The {@code java.lang.reflect.Executable#getAnnotatedReceiverType} method.
+                     * @param getType                    The {@code java.lang.reflect.AnnotatedType#getType} method.
                      */
                     protected ForModernVm(Method getAnnotatedSuperclass,
                                           Method getAnnotatedInterfaces,
                                           Method getAnnotatedType,
                                           Method getAnnotatedReturnType,
                                           Method getAnnotatedParameterTypes,
-                                          Method getAnnotatedExceptionTypes) {
+                                          Method getAnnotatedExceptionTypes,
+                                          Method getAnnotatedReceiverType,
+                                          Method getType) {
                         this.getAnnotatedSuperclass = getAnnotatedSuperclass;
                         this.getAnnotatedInterfaces = getAnnotatedInterfaces;
                         this.getAnnotatedType = getAnnotatedType;
                         this.getAnnotatedReturnType = getAnnotatedReturnType;
                         this.getAnnotatedParameterTypes = getAnnotatedParameterTypes;
                         this.getAnnotatedExceptionTypes = getAnnotatedExceptionTypes;
+                        this.getAnnotatedReceiverType = getAnnotatedReceiverType;
+                        this.getType = getType;
                     }
 
                     /**
@@ -2595,7 +2618,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                     Field.class.getDeclaredMethod("getAnnotatedType"),
                                     Method.class.getDeclaredMethod("getAnnotatedReturnType"),
                                     Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedParameterTypes"),
-                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedExceptionTypes"));
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedExceptionTypes"),
+                                    Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getAnnotatedReceiverType"),
+                                    Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getType"));
                         } catch (RuntimeException exception) {
                             throw exception;
                         } catch (Exception ignored) {
@@ -2639,6 +2664,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
+                    public Generic resolveReceiverType(AccessibleObject executable) {
+                        try {
+                            AnnotatedElement annotatedReceiver = (AnnotatedElement) getAnnotatedReceiverType.invoke(executable);
+                            return annotatedReceiver == null
+                                    ? UNDEFINED
+                                    : Sort.describe((java.lang.reflect.Type) getType.invoke(annotatedReceiver), new Resolved(annotatedReceiver));
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Could not access receiver type", exception);
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Error when accessing receiver type", exception.getCause());
+                        }
+                    }
+
+                    @Override
                     public boolean equals(Object other) {
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
@@ -2648,7 +2687,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 && getAnnotatedType.equals(that.getAnnotatedType)
                                 && getAnnotatedReturnType.equals(that.getAnnotatedReturnType)
                                 && getAnnotatedParameterTypes.equals(that.getAnnotatedParameterTypes)
-                                && getAnnotatedExceptionTypes.equals(that.getAnnotatedExceptionTypes);
+                                && getAnnotatedExceptionTypes.equals(that.getAnnotatedExceptionTypes)
+                                && getAnnotatedReceiverType.equals(that.getAnnotatedReceiverType)
+                                && getType.equals(that.getType);
                     }
 
                     @Override
@@ -2659,6 +2700,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                         result = 31 * result + getAnnotatedReturnType.hashCode();
                         result = 31 * result + getAnnotatedParameterTypes.hashCode();
                         result = 31 * result + getAnnotatedExceptionTypes.hashCode();
+                        result = 31 * result + getAnnotatedReceiverType.hashCode();
+                        result = 31 * result + getType.hashCode();
                         return result;
                     }
 
@@ -2671,6 +2714,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                                 ", getAnnotatedReturnType=" + getAnnotatedReturnType +
                                 ", getAnnotatedParameterTypes=" + getAnnotatedParameterTypes +
                                 ", getAnnotatedExceptionTypes=" + getAnnotatedExceptionTypes +
+                                ", getAnnotatedReceiverType=" + getAnnotatedReceiverType +
+                                ", getType=" + getType +
                                 '}';
                     }
 

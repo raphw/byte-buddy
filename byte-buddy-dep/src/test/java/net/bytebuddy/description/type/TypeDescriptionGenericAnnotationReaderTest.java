@@ -1,6 +1,7 @@
 package net.bytebuddy.description.type;
 
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.CompoundList;
 import org.junit.Test;
 
 import java.lang.reflect.Field;
@@ -60,7 +61,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForWildcardLowerBoundType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForWildcardUpperBoundType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.class).apply();
-        final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
+        final Iterator<Method> methods = CompoundList.of(Arrays.asList(Object.class.getDeclaredMethods()), Arrays.asList(String.class.getDeclaredMethods())).iterator();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {
                     @Override

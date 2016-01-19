@@ -5687,6 +5687,11 @@ public interface TypePool {
                 private final Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens;
 
                 /**
+                 * A mapping of the receiver type's annotation tokens.
+                 */
+                private final Map<String, List<AnnotationToken>> receiverTypeAnnotationTokens;
+
+                /**
                  * A list of annotation tokens that are present on the represented method.
                  */
                 private final List<AnnotationToken> annotationTokens;
@@ -5736,6 +5741,7 @@ public interface TypePool {
                                       Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
                                       Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
                                       Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
+                                      Map<String, List<AnnotationToken>> receiverTypeAnnotationTokens,
                                       List<AnnotationToken> annotationTokens,
                                       Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                       List<ParameterToken> parameterTokens,
@@ -5750,6 +5756,7 @@ public interface TypePool {
                     this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
                     this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
                     this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
+                    this.receiverTypeAnnotationTokens = receiverTypeAnnotationTokens;
                     this.annotationTokens = annotationTokens;
                     this.parameterAnnotationTokens = parameterAnnotationTokens;
                     this.parameterTokens = parameterTokens;
@@ -5773,6 +5780,7 @@ public interface TypePool {
                             returnTypeAnnotationTokens,
                             parameterTypeAnnotationTokens,
                             exceptionTypeAnnotationTokens,
+                            receiverTypeAnnotationTokens,
                             annotationTokens,
                             parameterAnnotationTokens,
                             parameterTokens,
@@ -5790,6 +5798,7 @@ public interface TypePool {
                             && returnTypeAnnotationTokens.equals(that.returnTypeAnnotationTokens)
                             && parameterTypeAnnotationTokens.equals(that.parameterTypeAnnotationTokens)
                             && exceptionTypeAnnotationTokens.equals(that.exceptionTypeAnnotationTokens)
+                            && receiverTypeAnnotationTokens.equals(that.receiverTypeAnnotationTokens)
                             && annotationTokens.equals(that.annotationTokens)
                             && defaultValue.equals(that.defaultValue)
                             && descriptor.equals(that.descriptor)
@@ -5812,6 +5821,7 @@ public interface TypePool {
                     result = 31 * result + returnTypeAnnotationTokens.hashCode();
                     result = 31 * result + parameterTypeAnnotationTokens.hashCode();
                     result = 31 * result + exceptionTypeAnnotationTokens.hashCode();
+                    result = 31 * result + receiverTypeAnnotationTokens.hashCode();
                     result = 31 * result + annotationTokens.hashCode();
                     result = 31 * result + parameterAnnotationTokens.hashCode();
                     result = 31 * result + parameterTokens.hashCode();
@@ -5832,6 +5842,7 @@ public interface TypePool {
                             ", returnTypeAnnotationTokens=" + returnTypeAnnotationTokens +
                             ", parameterTypeAnnotationTokens=" + parameterTypeAnnotationTokens +
                             ", exceptionTypeAnnotationTokens=" + exceptionTypeAnnotationTokens +
+                            ", receiverTypeAnnotationTokens=" + receiverTypeAnnotationTokens +
                             ", annotationTokens=" + annotationTokens +
                             ", parameterAnnotationTokens=" + parameterAnnotationTokens +
                             ", parameterTokens=" + parameterTokens +
@@ -6654,6 +6665,11 @@ public interface TypePool {
                 private final Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens;
 
                 /**
+                 * A mapping of the receiver type's type annotation tokens.
+                 */
+                private final Map<String, List<AnnotationToken>> receiverTypeAnnotationTokens;
+
+                /**
                  * The annotation tokens representing the method's annotations.
                  */
                 private final List<AnnotationToken> annotationTokens;
@@ -6713,6 +6729,7 @@ public interface TypePool {
                                               Map<String, List<AnnotationToken>> returnTypeAnnotationTokens,
                                               Map<Integer, Map<String, List<AnnotationToken>>> parameterTypeAnnotationTokens,
                                               Map<Integer, Map<String, List<AnnotationToken>>> exceptionTypeAnnotationTokens,
+                                              Map<String, List<AnnotationToken>> receiverTypeAnnotationTokens,
                                               List<AnnotationToken> annotationTokens,
                                               Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                               List<MethodToken.ParameterToken> parameterTokens,
@@ -6741,6 +6758,7 @@ public interface TypePool {
                     this.returnTypeAnnotationTokens = returnTypeAnnotationTokens;
                     this.parameterTypeAnnotationTokens = parameterTypeAnnotationTokens;
                     this.exceptionTypeAnnotationTokens = exceptionTypeAnnotationTokens;
+                    this.receiverTypeAnnotationTokens = receiverTypeAnnotationTokens;
                     this.annotationTokens = annotationTokens;
                     this.parameterAnnotationTokens = parameterAnnotationTokens;
                     parameterNames = new String[parameterType.length];
@@ -7475,6 +7493,11 @@ public interface TypePool {
                 private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> exceptionTypeAnnotationTokens;
 
                 /**
+                 * A mapping of the receiver type's type annotations.
+                 */
+                private final Map<String, List<LazyTypeDescription.AnnotationToken>> receiverTypeAnnotationTokens;
+
+                /**
                  * A list of annotation tokens declared on the found method.
                  */
                 private final List<LazyTypeDescription.AnnotationToken> annotationTokens;
@@ -7533,6 +7556,7 @@ public interface TypePool {
                     returnTypeAnnotationTokens = new HashMap<String, List<LazyTypeDescription.AnnotationToken>>();
                     parameterTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
                     exceptionTypeAnnotationTokens = new HashMap<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>>();
+                    receiverTypeAnnotationTokens = new HashMap<String, List<LazyTypeDescription.AnnotationToken>>();
                     annotationTokens = new ArrayList<LazyTypeDescription.AnnotationToken>();
                     parameterAnnotationTokens = new HashMap<Integer, List<LazyTypeDescription.AnnotationToken>>();
                     parameterTokens = new ArrayList<LazyTypeDescription.MethodToken.ParameterToken>();
@@ -7575,7 +7599,10 @@ public interface TypePool {
                                     exceptionTypeAnnotationTokens);
                             break;
                         case TypeReference.METHOD_RECEIVER:
-                            return null; // Receiver types are currently not supported.
+                            annotationRegistrant = new ForTypeVariable(descriptor,
+                                    typePath,
+                                    receiverTypeAnnotationTokens);
+                            break;
                         default:
                             throw new IllegalStateException("Unexpected type reference on method: " + typeReference.getSort());
                     }
@@ -7638,6 +7665,7 @@ public interface TypePool {
                             returnTypeAnnotationTokens,
                             parameterTypeAnnotationTokens,
                             exceptionTypeAnnotationTokens,
+                            receiverTypeAnnotationTokens,
                             annotationTokens,
                             parameterAnnotationTokens,
                             parameterTokens.isEmpty()
@@ -7660,6 +7688,7 @@ public interface TypePool {
                             ", returnTypeAnnotationTokens=" + returnTypeAnnotationTokens +
                             ", parameterTypeAnnotationTokens=" + parameterTypeAnnotationTokens +
                             ", exceptionTypeAnnotationTokens=" + exceptionTypeAnnotationTokens +
+                            ", receiverTypeAnnotationTokens=" + receiverTypeAnnotationTokens +
                             ", annotationTokens=" + annotationTokens +
                             ", parameterAnnotationTokens=" + parameterAnnotationTokens +
                             ", parameterTokens=" + parameterTokens +

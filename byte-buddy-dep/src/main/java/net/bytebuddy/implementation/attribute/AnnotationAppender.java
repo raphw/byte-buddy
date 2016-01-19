@@ -577,6 +577,18 @@ public interface AnnotationAppender {
         }
 
         /**
+         * Creates a type annotation appender for type annotations of a method's receiver type.
+         *
+         * @param annotationAppender    The annotation appender to write any type annotation to.
+         * @param annotationValueFilter The annotation value filter to apply.
+         * @return A visitor for appending type annotations of a method's receiver type.
+         */
+        public static TypeDescription.Generic.Visitor<AnnotationAppender> ofReceiverType(AnnotationAppender annotationAppender,
+                                                                                         AnnotationValueFilter annotationValueFilter) {
+            return new ForTypeAnnotations(annotationAppender, annotationValueFilter, TypeReference.newTypeReference(TypeReference.METHOD_RECEIVER));
+        }
+
+        /**
          * Appends all supplied type variables to the supplied method appender.
          *
          * @param annotationAppender    The annotation appender to write any type annotation to.
