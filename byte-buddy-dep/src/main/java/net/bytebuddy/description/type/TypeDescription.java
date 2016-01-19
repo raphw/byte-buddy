@@ -6663,6 +6663,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
+        @SuppressFBWarnings(value = "EC_UNRELATED_CLASS_AND_INTERFACE", justification = "Fits equality contract for type definitions")
         public boolean represents(java.lang.reflect.Type type) {
             return equals(Sort.describe(type));
         }

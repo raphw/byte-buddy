@@ -10,6 +10,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.junit.Assert.assertThat;
 
 public class TypeDescriptionGenericAnnotationReaderTest {
@@ -30,6 +31,8 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                 is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
         assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveTypeVariable(null),
                 is((TypeDescription.Generic.AnnotationReader) TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+        assertThat(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.INSTANCE.resolveReceiverType(null),
+                nullValue(TypeDescription.Generic.class));
     }
 
     @Test
