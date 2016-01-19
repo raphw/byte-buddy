@@ -285,8 +285,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      */
     boolean isPackageType();
 
-    boolean isGeneric();
-
     /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
@@ -5850,7 +5848,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 if (ownerType == null && declaringType != null && rawType.isStatic()) {
                     ownerType = declaringType.asGenericType();
                 }
-                if (ownerType == null && declaringType != null && !rawType.isStatic()) {
+                if (!rawType.isGenericDeclaration()) {
+                    throw new IllegalArgumentException(rawType + " is not a parameterized type");
+                } if (ownerType == null && declaringType != null && !rawType.isStatic()) {
                     throw new IllegalArgumentException(rawType + " requires an owner type");
                 } else if (ownerType != null && !ownerType.asErasure().equals(declaringType)) {
                     throw new IllegalArgumentException(ownerType + " does not represent required owner for " + rawType);
@@ -6223,7 +6223,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected Generic doBuild() {
-                    return new Generic.OfParameterizedType.Latent(rawType, ownerType, parameterTypes, annotations);
+                    return ownerType == null && parameterTypes.isEmpty()
+                            ? new Generic.OfNonGenericType.Latent(rawType, annotations)
+                            : new Generic.OfParameterizedType.Latent(rawType, ownerType, parameterTypes, annotations);
                 }
 
                 @Override
@@ -6701,14 +6703,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         }
 
         @Override
-        public boolean isGeneric() {
+        public boolean isGenericDeclaration() {
             if (!getTypeVariables().isEmpty()) {
                 return true;
             } else if (isStatic()) {
                 return false;
             }
             TypeDescription declaringType = getDeclaringType();
-            return declaringType != null && declaringType.isGeneric();
+            return declaringType != null && declaringType.isGenericDeclaration();
         }
 
         @Override

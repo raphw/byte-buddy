@@ -48,6 +48,17 @@ public interface TypeVariableSource extends ByteCodeElement {
     <T> T accept(Visitor<T> visitor);
 
     /**
+     * Checks if this type variable source has a generic declaration. This means:
+     * <ul>
+     * <li>A type declares type variables or is an inner class of a type with a generic declaration.</li>
+     * <li>A method declares at least one type variable.</li>
+     * </ul>
+     *
+     * @return {@code true} if this type code element has a generic declaration.
+     */
+    boolean isGenericDeclaration();
+
+    /**
      * A visitor that can be applied to a type variable source.
      *
      * @param <T> The visitor's return type.

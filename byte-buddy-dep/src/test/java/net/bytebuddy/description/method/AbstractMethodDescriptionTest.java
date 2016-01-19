@@ -30,7 +30,7 @@ public abstract class AbstractMethodDescriptionTest {
     @Rule
     public MethodRule javaVersionRule = new JavaVersionRule();
 
-    protected Method firstMethod, secondMethod, thirdMethod, genericMethod, genericMethodWithRawException;
+    protected Method firstMethod, secondMethod, thirdMethod, genericMethod, genericMethodWithRawException, genericMethodWithTypeVariable;
 
     protected Constructor<?> firstConstructor, secondConstructor;
 
@@ -61,6 +61,7 @@ public abstract class AbstractMethodDescriptionTest {
         secondConstructor = Sample.class.getDeclaredConstructor(int[].class, long.class);
         genericMethod = GenericMethod.class.getDeclaredMethod("foo", Exception.class);
         genericMethodWithRawException = GenericMethod.class.getDeclaredMethod("bar", Exception.class);
+        genericMethodWithTypeVariable = GenericMethod.class.getDeclaredMethod("qux");
     }
 
     @Test
@@ -594,6 +595,12 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(secondMethod).getEnclosingSource(), is((TypeVariableSource) new TypeDescription.ForLoadedType(Sample.class)));
     }
 
+    @Test
+    public void testIsGenericDeclaration() throws Exception {
+        assertThat(describe(genericMethodWithTypeVariable).isGenericDeclaration(), is(true));
+        assertThat(describe(firstMethod).isGenericDeclaration(), is(false));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
 
@@ -727,6 +734,10 @@ public abstract class AbstractMethodDescriptionTest {
 
         T bar(T t) throws Exception {
             return null;
+        }
+
+        <Q> void qux() {
+            /* empty */
         }
     }
 }

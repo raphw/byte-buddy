@@ -566,6 +566,11 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
+        public boolean isGenericDeclaration() {
+            return !getTypeVariables().isEmpty();
+        }
+
+        @Override
         public MethodDescription.Token asToken(ElementMatcher<? super TypeDescription> matcher) {
             return new MethodDescription.Token(getInternalName(),
                     getModifiers(),

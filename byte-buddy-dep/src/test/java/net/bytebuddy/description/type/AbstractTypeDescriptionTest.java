@@ -548,6 +548,14 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(anonymousType).getDeclaringType(), nullValue(TypeDescription.class));
     }
 
+    @Test
+    public void testIsGenericDeclaration() throws Exception {
+        assertThat(describe(GenericSample.class).isGenericDeclaration(), is(true));
+        assertThat(describe(GenericSample.Inner.class).isGenericDeclaration(), is(true));
+        assertThat(describe(GenericSample.Nested.class).isGenericDeclaration(), is(false));
+        assertThat(describe(Object.class).isGenericDeclaration(), is(false));
+    }
+
     private Class<?> inMethodClass() {
         class InMethod {
             /* empty */
@@ -683,6 +691,17 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
 
         @SampleAnnotation
         void foo(@SampleAnnotation  Void foo) {
+            /* empty */
+        }
+    }
+
+    private static class GenericSample<T> {
+
+        static class Nested {
+            /* empty */
+        }
+
+        class Inner {
             /* empty */
         }
     }
