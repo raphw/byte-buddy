@@ -285,6 +285,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      */
     boolean isPackageType();
 
+    boolean isGeneric();
+
     /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
@@ -6696,6 +6698,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
         @Override
         public boolean isPackageType() {
             return getSimpleName().equals(PackageDescription.PACKAGE_CLASS_NAME);
+        }
+
+        @Override
+        public boolean isGeneric() {
+            if (!getTypeVariables().isEmpty()) {
+                return true;
+            } else if (isStatic()) {
+                return false;
+            }
+            TypeDescription declaringType = getDeclaringType();
+            return declaringType != null && declaringType.isGeneric();
         }
 
         @Override

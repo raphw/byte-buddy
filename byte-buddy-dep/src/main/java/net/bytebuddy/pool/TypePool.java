@@ -6918,6 +6918,133 @@ public interface TypePool {
                         return LazyAnnotationDescription.asListOfNullable(typePool, parameterAnnotationTokens.get(index));
                     }
                 }
+
+                private class LazyParameterizedReceiverType extends Generic.OfParameterizedType {
+
+                    private final TypeDescription typeDescription;
+
+                    private final String typePath;
+
+                    protected LazyParameterizedReceiverType() {
+                        this(LazyTypeDescription.this);
+                    }
+
+                    protected LazyParameterizedReceiverType(TypeDescription typeDescription) {
+                        this(typeDescription, GenericTypeToken.EMPTY_TYPE_PATH);
+                    }
+
+                    private LazyParameterizedReceiverType(TypeDescription typeDescription, String typePath) {
+                        this.typeDescription = typeDescription;
+                        this.typePath = typePath;
+                    }
+
+                    @Override
+                    public TypeList.Generic getTypeArguments() {
+                        return new TypeArgumentList(typeDescription.getTypeVariables());
+                    }
+
+                    @Override
+                    public Generic getOwnerType() {
+                        TypeDescription declaringType = typeDescription.getDeclaringType();
+                        return declaringType == null ? UNDEFINED : declaringType.isGeneric()
+                                ? new LazyParameterizedReceiverType(declaringType, typePath + GenericTypeToken.OWNER_TYPE_PATH)
+                                : new LazyNonGenericReceiverType(declaringType, typePath + GenericTypeToken.OWNER_TYPE_PATH);
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath));
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return typeDescription;
+                    }
+
+                    protected class TypeArgumentList extends TypeList.Generic.AbstractBase {
+
+                        private final List<? extends Generic> typeVariables;
+
+                        protected TypeArgumentList(List<? extends Generic> typeVariables) {
+                            this.typeVariables = typeVariables;
+                        }
+
+                        @Override
+                        public Generic get(int index) {
+                            return new AnnotatedTypeVariable(typeVariables.get(index), index);
+                        }
+
+                        @Override
+                        public int size() {
+                            return typeVariables.size();
+                        }
+
+                        protected class AnnotatedTypeVariable extends OfTypeVariable {
+
+                            private final Generic typeVariable;
+
+                            private final int index;
+
+                            protected AnnotatedTypeVariable(Generic typeVariable, int index) {
+                                this.typeVariable = typeVariable;
+                                this.index = index;
+                            }
+
+                            @Override
+                            public TypeList.Generic getUpperBounds() {
+                                return typeVariable.getUpperBounds();
+                            }
+
+                            @Override
+                            public TypeVariableSource getVariableSource() {
+                                return typeVariable.getVariableSource();
+                            }
+
+                            @Override
+                            public String getSymbol() {
+                                return typeVariable.getSymbol();
+                            }
+
+                            @Override
+                            public AnnotationList getDeclaredAnnotations() {
+                                return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath
+                                        + index
+                                        + GenericTypeToken.INDEXED_TYPE_DELIMITER));
+                            }
+                        }
+                    }
+                }
+
+                protected class LazyNonGenericReceiverType extends Generic.OfNonGenericType {
+
+                    private final TypeDescription typeDescription;
+
+                    private final String typePath;
+
+                    protected LazyNonGenericReceiverType() {
+                        this(LazyTypeDescription.this, GenericTypeToken.EMPTY_TYPE_PATH);
+                    }
+
+                    protected LazyNonGenericReceiverType(TypeDescription typeDescription, String typePath) {
+                        this.typeDescription = typeDescription;
+                        this.typePath = typePath;
+                    }
+
+                    @Override
+                    public Generic getComponentType() {
+                        return UNDEFINED;
+                    }
+
+                    @Override
+                    public AnnotationList getDeclaredAnnotations() {
+                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath + GenericTypeToken.OWNER_TYPE_PATH));
+                    }
+
+                    @Override
+                    public TypeDescription asErasure() {
+                        return typeDescription;
+                    }
+                }
             }
         }
 
