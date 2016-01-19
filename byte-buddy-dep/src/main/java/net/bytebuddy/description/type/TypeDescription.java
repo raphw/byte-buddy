@@ -5850,7 +5850,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
                 if (!rawType.isGenericDeclaration()) {
                     throw new IllegalArgumentException(rawType + " is not a parameterized type");
-                } if (ownerType == null && declaringType != null && !rawType.isStatic()) {
+                } else if (ownerType == null && declaringType != null && !rawType.isStatic()) {
                     throw new IllegalArgumentException(rawType + " requires an owner type");
                 } else if (ownerType != null && !ownerType.asErasure().equals(declaringType)) {
                     throw new IllegalArgumentException(ownerType + " does not represent required owner for " + rawType);
