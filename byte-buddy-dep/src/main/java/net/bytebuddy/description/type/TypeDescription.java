@@ -4926,6 +4926,63 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     return new AnnotationList.Explicit(declaredAnnotations);
                 }
             }
+
+            public static class ForGenerifiedErasure extends OfParameterizedType {
+
+                private final TypeDescription typeDescription;
+
+                protected ForGenerifiedErasure(TypeDescription typeDescription) {
+                    this.typeDescription = typeDescription;
+                }
+
+                public static Generic of(TypeDescription typeDescription) {
+                    return typeDescription.isGenericDeclaration()
+                            ? new ForGenerifiedErasure(typeDescription)
+                            : new OfNonGenericType.Latent(typeDescription, Collections.<AnnotationDescription>emptyList());
+                }
+
+                @Override
+                public TypeList.Generic getTypeArguments() {
+                    return new NonAnnotatedTypeVariableList(typeDescription.getTypeVariables());
+                }
+
+                @Override
+                public Generic getOwnerType() {
+                    TypeDescription declaringType = typeDescription.getDeclaringType();
+                    return declaringType == null
+                            ? UNDEFINED
+                            : of(declaringType);
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Empty();
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return typeDescription;
+                }
+
+                protected static class NonAnnotatedTypeVariableList extends TypeList.Generic.AbstractBase {
+
+                    private final List<? extends Generic> typeVariables;
+
+                    protected NonAnnotatedTypeVariableList(List<? extends Generic> typeVariables) {
+                        this.typeVariables = typeVariables;
+                    }
+
+                    @Override
+                    public Generic get(int index) {
+                        return typeVariables.get(index).accept(Visitor.TypeVariableErasing.INSTANCE);
+                    }
+
+                    @Override
+                    public int size() {
+                        return typeVariables.size();
+                    }
+                }
+            }
         }
 
         /**
