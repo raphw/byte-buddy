@@ -114,4 +114,11 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     public void testGenericInnerTypeAnnotationReceiverTypeOnConstructor() throws Exception {
         super.testGenericInnerTypeAnnotationReceiverTypeOnConstructor();
     }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support generic receiver types")
+    public void testGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
+        super.testGenericInnerTypeAnnotationReceiverTypeOnMethod();
+    }
 }

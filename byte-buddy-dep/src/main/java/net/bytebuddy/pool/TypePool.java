@@ -7002,11 +7002,6 @@ public interface TypePool {
                     private final TypeDescription typeDescription;
 
                     /**
-                     * The receiver type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
                      * Creates a new lazy parameterized receiver type of the method's declaring type.
                      */
                     protected LazyParameterizedReceiverType() {
@@ -7014,23 +7009,12 @@ public interface TypePool {
                     }
 
                     /**
-                     * Creates a new lazy parameterized receiver type of the supplied receiver type with an empty type path.
+                     * Creates a new lazy parameterized receiver type of the supplied receiver type.
                      *
                      * @param typeDescription The erasure of the type to be represented as a parameterized receiver type.
                      */
                     protected LazyParameterizedReceiverType(TypeDescription typeDescription) {
-                        this(typeDescription, GenericTypeToken.EMPTY_TYPE_PATH);
-                    }
-
-                    /**
-                     * Creates a new lazy parameterized receiver type of the supplied receiver type.
-                     *
-                     * @param typeDescription The erasure of the type to be represented as a parameterized receiver type.
-                     * @param typePath        The receiver type's type path.
-                     */
-                    private LazyParameterizedReceiverType(TypeDescription typeDescription, String typePath) {
                         this.typeDescription = typeDescription;
-                        this.typePath = typePath;
                     }
 
                     @Override
@@ -7042,13 +7026,26 @@ public interface TypePool {
                     public Generic getOwnerType() {
                         TypeDescription declaringType = typeDescription.getDeclaringType();
                         return declaringType == null ? UNDEFINED : declaringType.isGenericDeclaration()
-                                ? new LazyParameterizedReceiverType(declaringType, typePath + GenericTypeToken.OWNER_TYPE_PATH)
-                                : new LazyNonGenericReceiverType(declaringType, typePath + GenericTypeToken.OWNER_TYPE_PATH);
+                                ? new LazyParameterizedReceiverType(declaringType)
+                                : new LazyNonGenericReceiverType(declaringType);
                     }
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath));
+                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(getTypePath()));
+                    }
+
+                    /**
+                     * Returns the type path for this type.
+                     *
+                     * @return This type's type path.
+                     */
+                    private String getTypePath() {
+                        StringBuilder typePath = new StringBuilder();
+                        for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
+                            typePath.append(GenericTypeToken.OWNER_TYPE_PATH);
+                        }
+                        return typePath.toString();
                     }
 
                     @Override
@@ -7128,7 +7125,7 @@ public interface TypePool {
 
                             @Override
                             public AnnotationList getDeclaredAnnotations() {
-                                return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath
+                                return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(getTypePath()
                                         + index
                                         + GenericTypeToken.INDEXED_TYPE_DELIMITER));
                             }
@@ -7147,11 +7144,6 @@ public interface TypePool {
                     private final TypeDescription typeDescription;
 
                     /**
-                     * The represented type's type path.
-                     */
-                    private final String typePath;
-
-                    /**
                      * Creates a new non-generic receiver type of the method's declaring type.
                      */
                     protected LazyNonGenericReceiverType() {
@@ -7159,23 +7151,12 @@ public interface TypePool {
                     }
 
                     /**
-                     * Creates a new non-generic receiver type of the supplied type with an empty type path.
+                     * Creates a new non-generic receiver type of the supplied type.
                      *
                      * @param typeDescription The type to represent as a non-generic receiver type.
                      */
                     protected LazyNonGenericReceiverType(TypeDescription typeDescription) {
-                        this(typeDescription, GenericTypeToken.EMPTY_TYPE_PATH);
-                    }
-
-                    /**
-                     * Creates a new non-generic receiver type of the supplied type with the given type path.
-                     *
-                     * @param typeDescription The type to represent as a non-generic receiver type.
-                     * @param typePath        The type's type path.
-                     */
-                    protected LazyNonGenericReceiverType(TypeDescription typeDescription, String typePath) {
                         this.typeDescription = typeDescription;
-                        this.typePath = typePath;
                     }
 
                     @Override
@@ -7185,7 +7166,11 @@ public interface TypePool {
 
                     @Override
                     public AnnotationList getDeclaredAnnotations() {
-                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath));
+                        StringBuilder typePath = new StringBuilder();
+                        for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
+                            typePath.append(GenericTypeToken.OWNER_TYPE_PATH);
+                        }
+                        return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath.toString()));
                     }
 
                     @Override

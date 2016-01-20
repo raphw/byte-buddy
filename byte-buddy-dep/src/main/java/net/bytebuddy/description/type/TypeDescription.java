@@ -285,6 +285,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      */
     boolean isPackageType();
 
+    int getSegmentCount();
+
     /**
      * <p>
      * Represents a generic type of the Java programming language. A non-generic {@link TypeDescription} is considered to be
@@ -6798,6 +6800,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
             TypeDescription declaringType = getDeclaringType();
             return declaringType != null && declaringType.isGenericDeclaration();
+        }
+
+        @Override
+        public int getSegmentCount() {
+            if (isStatic()) {
+                return 0;
+            }
+            TypeDescription declaringType = getDeclaringType();
+            return declaringType == null
+                    ? 0
+                    : declaringType.getSegmentCount() + 1;
         }
 
         @Override

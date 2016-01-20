@@ -2,7 +2,6 @@ package net.bytebuddy.description.type;
 
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.JavaVersionRule;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.lang.annotation.Annotation;
@@ -233,7 +232,6 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @Test
     @SuppressWarnings("unchecked")
     @JavaVersionRule.Enforce(8)
-    @Ignore("The owner types of receiver types are illegally inversed by javac")
     public void testNonGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
@@ -346,7 +344,6 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
     @Test
     @SuppressWarnings("unchecked")
     @JavaVersionRule.Enforce(8)
-    @Ignore("The owner types of receiver types are illegally inversed by javac")
     public void testGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
         Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
@@ -367,7 +364,7 @@ public abstract class AbstractTypeDescriptionGenericVariableDefiningTest extends
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(9));
         assertThat(receiverType.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
-        assertThat(receiverType.getOwnerType().asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC + "$" + INNER)), is(true));
+        assertThat(receiverType.getOwnerType().asErasure().represents(Class.forName(RECEIVER_TYPE_SAMPLE + "$" + GENERIC)), is(true));
         assertThat(receiverType.getOwnerType().getDeclaredAnnotations().size(), is(1));
         assertThat(receiverType.getOwnerType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
         assertThat(receiverType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(6));
