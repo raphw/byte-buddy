@@ -41,17 +41,21 @@ public class AnnotationAppenderForTypeAnnotationsTest {
     @Mock
     private TypeDescription.Generic typeDescription, second, third;
 
+    @Mock
+    private TypeDescription erasure;
+
     private TypeDescription.Generic.Visitor<AnnotationAppender> visitor;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(annotationAppender.append(annotationDescription, annotationValueFilter, BAR, FOO)).thenReturn(result);
+        when(annotationAppender.append(eq(annotationDescription), eq(annotationValueFilter), eq(BAR), any(String.class))).thenReturn(result);
         when(typeDescription.getDeclaredAnnotations()).thenReturn(new AnnotationList.Explicit(annotationDescription));
         when(second.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(result);
         when(third.accept(any(TypeDescription.Generic.Visitor.class))).thenReturn(result);
         when(second.asGenericType()).thenReturn(second);
         when(third.asGenericType()).thenReturn(third);
+        when(typeDescription.asErasure()).thenReturn(erasure);
         visitor = new AnnotationAppender.ForTypeAnnotations(annotationAppender, annotationValueFilter, BAR, FOO);
     }
 
@@ -117,13 +121,14 @@ public class AnnotationAppenderForTypeAnnotationsTest {
 
     @Test
     public void testParameterized() throws Exception {
+        when(erasure.getSegmentCount()).thenReturn(1);
         when(typeDescription.getTypeArguments()).thenReturn(new TypeList.Generic.Explicit(second));
         when(typeDescription.getOwnerType()).thenReturn(third);
         assertThat(visitor.onParameterizedType(typeDescription), is(result));
-        verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO);
+        verify(annotationAppender).append(annotationDescription, annotationValueFilter, BAR, FOO + ".");
         verifyNoMoreInteractions(annotationAppender);
-        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "0;"));
-        verify(third).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + "."));
+        verify(second).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + ".0;"));
+        verify(third).accept(new AnnotationAppender.ForTypeAnnotations(result, annotationValueFilter, BAR, FOO + ""));
     }
 
     @Test

@@ -647,7 +647,7 @@ public interface AnnotationAppender {
 
         @Override
         public AnnotationAppender onGenericArray(TypeDescription.Generic genericArray) {
-            return genericArray.getComponentType().accept(new ForTypeAnnotations(apply(genericArray),
+            return genericArray.getComponentType().accept(new ForTypeAnnotations(apply(genericArray, typePath),
                     annotationValueFilter,
                     typeReference,
                     typePath + COMPONENT_TYPE_PATH));
@@ -658,37 +658,41 @@ public interface AnnotationAppender {
             TypeList.Generic lowerBounds = wildcard.getLowerBounds();
             return (lowerBounds.isEmpty()
                     ? wildcard.getUpperBounds().getOnly()
-                    : lowerBounds.getOnly()).accept(new ForTypeAnnotations(apply(wildcard), annotationValueFilter, typeReference, typePath + WILDCARD_TYPE_PATH));
+                    : lowerBounds.getOnly()).accept(new ForTypeAnnotations(apply(wildcard, typePath), annotationValueFilter, typeReference, typePath + WILDCARD_TYPE_PATH));
         }
 
         @Override
         public AnnotationAppender onParameterizedType(TypeDescription.Generic parameterizedType) {
-            AnnotationAppender annotationAppender = apply(parameterizedType);
+            StringBuilder typePath = new StringBuilder(this.typePath);
+            for (int index = 0; index < parameterizedType.asErasure().getSegmentCount(); index++) {
+                typePath.append(OWNER_TYPE_PATH);
+            }
+            AnnotationAppender annotationAppender = apply(parameterizedType, typePath.toString());
             TypeDescription.Generic ownerType = parameterizedType.getOwnerType();
             if (ownerType != null) {
                 annotationAppender = ownerType.accept(new ForTypeAnnotations(annotationAppender,
                         annotationValueFilter,
                         typeReference,
-                        typePath + OWNER_TYPE_PATH));
+                        this.typePath));
             }
             int index = 0;
             for (TypeDescription.Generic typeArgument : parameterizedType.getTypeArguments()) {
                 annotationAppender = typeArgument.accept(new ForTypeAnnotations(annotationAppender,
                         annotationValueFilter,
                         typeReference,
-                        typePath + index++ + INDEXED_TYPE_DELIMITER));
+                        typePath.toString() + index++ + INDEXED_TYPE_DELIMITER));
             }
             return annotationAppender;
         }
 
         @Override
         public AnnotationAppender onTypeVariable(TypeDescription.Generic typeVariable) {
-            return apply(typeVariable);
+            return apply(typeVariable, typePath);
         }
 
         @Override
         public AnnotationAppender onNonGenericType(TypeDescription.Generic typeDescription) {
-            AnnotationAppender annotationAppender = apply(typeDescription);
+            AnnotationAppender annotationAppender = apply(typeDescription, typePath);
             if (typeDescription.isArray()) {
                 annotationAppender = typeDescription.getComponentType().accept(new ForTypeAnnotations(annotationAppender,
                         annotationValueFilter,
@@ -702,9 +706,10 @@ public interface AnnotationAppender {
          * Writes all annotations of the supplied type to this instance's annotation appender.
          *
          * @param typeDescription The type of what all annotations should be written of.
+         * @param typePath        The type path to use.
          * @return The resulting annotation appender.
          */
-        private AnnotationAppender apply(TypeDescription.Generic typeDescription) {
+        private AnnotationAppender apply(TypeDescription.Generic typeDescription, String typePath) {
             AnnotationAppender annotationAppender = this.annotationAppender;
             for (AnnotationDescription annotationDescription : typeDescription.getDeclaredAnnotations()) {
                 annotationAppender = annotationAppender.append(annotationDescription, annotationValueFilter, typeReference, typePath);

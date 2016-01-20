@@ -557,6 +557,15 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(Object.class).isGenericDeclaration(), is(false));
     }
 
+    @Test
+    public void testGetSegmentCount() throws Exception {
+        assertThat(describe(GenericSample.class).getSegmentCount(), is(0));
+        assertThat(describe(GenericSample.Inner.class).getSegmentCount(), is(1));
+        assertThat(describe(GenericSample.Nested.class).getSegmentCount(), is(0));
+        assertThat(describe(GenericSample.NestedInterface.class).getSegmentCount(), is(0));
+        assertThat(describe(Object.class).getSegmentCount(), is(0));
+    }
+
     private Class<?> inMethodClass() {
         class InMethod {
             /* empty */

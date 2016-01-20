@@ -285,6 +285,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      */
     boolean isPackageType();
 
+    /**
+     * Returns the amount of outer classes this type defines. If this type is not an inner type of another class, {@code 0} is returned.
+     *
+     * @return The number of outer classes relatively to this type.
+     */
     int getSegmentCount();
 
     /**
