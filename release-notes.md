@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 20. January 2016: version 1.0.2
+
+- Fixed resolution of type paths for inner classes.
+- Added preliminary support for receiver types.
+- Fixed resolution of type variables from a static context.
+
 ### 18. January 2016: version 1.0.1
 
 - Refactored type variable bindings for generic super types: Always retain variables that are defined by methods.
