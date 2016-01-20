@@ -24,12 +24,10 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.test.utility.CallTraceable;
-import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.*;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
@@ -864,6 +862,50 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testAnnotationTypeOnParameterizedType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Collection.class),
+                        TypeDescription.Generic.Builder.unboundWildcard(AnnotationDescription.Builder.ofType(typeAnnotationType)
+                                .define(VALUE, INTEGER_VALUE).build()))
+                        .build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    @Ignore("Seems correctly resolved in the class file")
+    public void testAnnotationTypeOnNestedParameterizedType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Nested.Inner.class),
+                        TypeDescription.Generic.Builder.parameterizedType(Nested.class, Void.class)
+                                .build(),
+                        Collections.<TypeDefinition>emptyList())
+                        .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                        .build())
+                .visit(DebuggingWrapper.makeDefault())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testBridgeResolutionAmbiguous() throws Exception {
         createPlain()
@@ -879,7 +921,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .defineMethod(QUX, String.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(FOO))
-                .defineMethod(QUX, Object.class, Ownership.STATIC, Visibility.PUBLIC) // TIs static to avoid method graph compiler.
+                .defineMethod(QUX, Object.class, Ownership.STATIC, Visibility.PUBLIC) // Is static to avoid method graph compiler.
                 .intercept(FixedValue.value(BAR))
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
@@ -889,7 +931,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 assertThat(method.getName(), is(QUX));
                 assertThat(method.getParameterTypes().length, is(0));
                 assertThat(method.invoke(type.newInstance()), is((Object) FOO));
-            } else if(method.getReturnType() == Object.class) {
+            } else if (method.getReturnType() == Object.class) {
                 assertThat(method.getName(), is(QUX));
                 assertThat(method.getParameterTypes().length, is(0));
                 assertThat(method.invoke(null), is((Object) BAR));
@@ -909,11 +951,11 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
-        for (Field field: type.getDeclaredFields()) {
+        for (Field field : type.getDeclaredFields()) {
             if (field.getType() == String.class) {
                 assertThat(field.getName(), is(QUX));
                 assertThat(field.get(null), is((Object) FOO));
-            } else if(field.getType() == long.class) {
+            } else if (field.getType() == long.class) {
                 assertThat(field.getName(), is(QUX));
                 assertThat(field.get(null), is((Object) 42L));
             } else {
@@ -1014,5 +1056,12 @@ public abstract class AbstractDynamicTypeBuilderTest {
         List<?> list;
 
         List<foo> fooList;
+    }
+
+    public static class Nested<T> {
+
+        public class Inner {
+            /* empty */
+        }
     }
 }
