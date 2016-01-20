@@ -3472,7 +3472,7 @@ public interface DynamicType {
                          * @param handler The handler that determines how a method is implemented.
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler) {
-                            this(handler, MethodAttributeAppender.ForInstrumentedMethod.INSTANCE, MethodTransformer.NoOp.INSTANCE);
+                            this(handler, MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER, MethodTransformer.NoOp.INSTANCE);
                         }
 
                         /**

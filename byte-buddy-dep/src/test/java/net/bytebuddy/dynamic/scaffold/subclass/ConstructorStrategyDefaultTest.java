@@ -75,7 +75,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
-                eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),
+                eq(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperClass();
@@ -91,7 +91,7 @@ public class ConstructorStrategyDefaultTest {
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
-                eq(MethodAttributeAppender.ForInstrumentedMethod.INSTANCE),
+                eq(MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
         verify(instrumentedType, atLeastOnce()).getSuperClass();

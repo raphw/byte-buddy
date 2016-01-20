@@ -129,9 +129,40 @@ public interface MethodAttributeAppender {
     enum ForInstrumentedMethod implements MethodAttributeAppender, Factory {
 
         /**
-         * The singleton instance.
+         * Appends all annotations of the instrumented method but not the annotations of the method's receiver type if such a type exists.
          */
-        INSTANCE;
+        EXCLUDING_RECEIVER {
+            @Override
+            protected AnnotationAppender appendReceiver(AnnotationAppender annotationAppender,
+                                                        AnnotationValueFilter annotationValueFilter,
+                                                        MethodDescription methodDescription) {
+                return annotationAppender;
+            }
+        },
+
+        /**
+         * <p>
+         * Appends all annotations of the instrumented method including the annotations of the method's receiver type if such a type exists.
+         * </p>
+         * <p>
+         * If a method is overridden, the annotations can be misplaced if the overriding class does not expose a similar structure to
+         * the method that declared the method, i.e. the same amount of type variables and similar owner types. If this is not the case,
+         * type annotations are appended as if the overridden method was declared by the original type. This does not corrupt the resulting
+         * class file but it might result in type annotations not being visible via core reflection. This might however confuse other tools
+         * that parse the resulting class file manually.
+         * </p>
+         */
+        INCLUDING_RECEIVER {
+            @Override
+            protected AnnotationAppender appendReceiver(AnnotationAppender annotationAppender,
+                                                        AnnotationValueFilter annotationValueFilter,
+                                                        MethodDescription methodDescription) {
+                TypeDescription.Generic receiverType = methodDescription.getReceiverType();
+                return receiverType == null
+                        ? annotationAppender
+                        : receiverType.accept(AnnotationAppender.ForTypeAnnotations.ofReceiverType(annotationAppender, annotationValueFilter));
+            }
+        };
 
         @Override
         public MethodAttributeAppender make(TypeDescription typeDescription) {
@@ -160,6 +191,7 @@ public interface MethodAttributeAppender {
                     parameterAppender = parameterAppender.append(annotation, annotationValueFilter);
                 }
             }
+            annotationAppender = appendReceiver(annotationAppender, annotationValueFilter, methodDescription);
             int exceptionTypeIndex = 0;
             for (TypeDescription.Generic exceptionType : methodDescription.getExceptionTypes()) {
                 annotationAppender = exceptionType.accept(AnnotationAppender.ForTypeAnnotations.ofExceptionType(annotationAppender,
@@ -167,6 +199,18 @@ public interface MethodAttributeAppender {
                         exceptionTypeIndex++));
             }
         }
+
+        /**
+         * Appends the annotations of the instrumented method's receiver type if this is enabled and such a type exists.
+         *
+         * @param annotationAppender    The annotation appender to use.
+         * @param annotationValueFilter The annotation value filter to apply when the annotations are written.
+         * @param methodDescription     The instrumented method.
+         * @return The resulting annotation appender.
+         */
+        protected abstract AnnotationAppender appendReceiver(AnnotationAppender annotationAppender,
+                                                             AnnotationValueFilter annotationValueFilter,
+                                                             MethodDescription methodDescription);
 
         @Override
         public String toString() {

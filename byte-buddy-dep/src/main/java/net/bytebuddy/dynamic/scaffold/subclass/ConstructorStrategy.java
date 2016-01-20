@@ -111,7 +111,7 @@ public interface ConstructorStrategy {
             public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE,
+                        MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER,
                         MethodTransformer.NoOp.INSTANCE);
             }
         },
@@ -134,7 +134,7 @@ public interface ConstructorStrategy {
             public MethodRegistry inject(MethodRegistry methodRegistry) {
                 return methodRegistry.append(new LatentMatcher.Resolved<MethodDescription>(isConstructor()),
                         new MethodRegistry.Handler.ForImplementation(SuperMethodCall.INSTANCE),
-                        MethodAttributeAppender.ForInstrumentedMethod.INSTANCE,
+                        MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER,
                         MethodTransformer.NoOp.INSTANCE);
             }
         };
