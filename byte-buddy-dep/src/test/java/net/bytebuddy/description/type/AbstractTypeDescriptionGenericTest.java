@@ -530,11 +530,6 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoOwnerType() throws Exception {
-        describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getOwnerType();
-    }
-
-    @Test(expected = IllegalStateException.class)
     public void testGenericArrayTypeNoTypeArguments() throws Exception {
         describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getTypeArguments();
     }
@@ -546,6 +541,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(typeDescription.getStackSize(), is(StackSize.SINGLE));
         assertThat(typeDescription.getDeclaredFields().size(), is(0));
         assertThat(typeDescription.getDeclaredMethods().size(), is(0));
+        assertThat(typeDescription.getOwnerType(), nullValue(TypeDescription.Generic.class));
         assertThat(typeDescription.getSuperClass(), is(TypeDescription.Generic.OBJECT));
         assertThat(typeDescription.getInterfaces(), is(TypeDescription.ARRAY_INTERFACES));
         assertThat(typeDescription.getSourceCodeName(), is(GenericArrayOfGenericComponentType.class.getDeclaredField(FOO).getGenericType().toString()));

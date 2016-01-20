@@ -132,6 +132,13 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         super.testTypeAnnotationOwnerType();
     }
 
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support generic inner types")
+    public void testTypeAnnotationNonGenericInnerType() throws Exception {
+        super.testTypeAnnotationNonGenericInnerType();
+    }
+
     private TypeDescription.Generic describe(Type type, TypeDescription.Generic.AnnotationReader annotationReader) {
         if (type instanceof WildcardType) {
             WildcardType wildcardType = (WildcardType) type;

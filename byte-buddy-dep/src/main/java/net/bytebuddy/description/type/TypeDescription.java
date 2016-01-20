@@ -380,9 +380,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
          * declaring class, {@code null} is returned.
          * </p>
          * <p>
-         * An owner type is only well-defined for parameterized types ({@link Sort#PARAMETERIZED}) and
-         * for non-generic types ({@link Sort#NON_GENERIC}).For all other types, this method throws an
-         * {@link IllegalStateException}.
+         * An owner type is only well-defined for parameterized types ({@link Sort#PARAMETERIZED}),
+         * for non-generic types ({@link Sort#NON_GENERIC}) and for generic arrays ({@link Sort#GENERIC_ARRAY}).
+         * For all other types, this method throws an {@link IllegalStateException}.
          * </p>
          *
          * @return This type's owner type or {@code null} if no owner type exists.
@@ -4160,7 +4160,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
             @Override
             public Generic getOwnerType() {
-                throw new IllegalStateException("A generic array type does not imply an owner type: " + this);
+                return UNDEFINED;
             }
 
             @Override
