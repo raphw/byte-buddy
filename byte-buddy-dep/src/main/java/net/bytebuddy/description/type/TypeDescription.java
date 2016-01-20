@@ -668,19 +668,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public Generic onParameterizedType(Generic parameterizedType) {
-                    List<Generic> typeArguments = new ArrayList<Generic>(parameterizedType.getTypeArguments().size());
-                    for (Generic typeArgument : parameterizedType.getTypeArguments()) {
+                    TypeList.Generic typeArguments = parameterizedType.getTypeArguments();
+                    List<Generic> transformedTypeArguments = new ArrayList<Generic>(typeArguments.size());
+                    for (Generic typeArgument : typeArguments) {
                         if (typeArgument.accept(TypeVariableErasing.PartialErasureReviser.INSTANCE)) {
                             return parameterizedType.asRawType();
                         }
-                        typeArguments.add(typeArgument.accept(this));
+                        transformedTypeArguments.add(typeArgument.accept(this));
                     }
                     Generic ownerType = parameterizedType.getOwnerType();
                     return new OfParameterizedType.Latent(parameterizedType.asErasure(),
                             ownerType == null
                                     ? UNDEFINED
                                     : ownerType.accept(this),
-                            typeArguments,
+                            transformedTypeArguments,
                             parameterizedType.getDeclaredAnnotations());
                 }
 
