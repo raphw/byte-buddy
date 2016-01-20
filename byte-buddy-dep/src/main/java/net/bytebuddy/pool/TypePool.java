@@ -3142,7 +3142,7 @@ public interface TypePool {
                 char OWNER_TYPE_PATH = '.';
 
                 /**
-                 * Represents an index tzpe delimiter within a type path.
+                 * Represents an index type delimiter within a type path.
                  */
                 char INDEXED_TYPE_DELIMITER = ';';
 
@@ -3166,6 +3166,8 @@ public interface TypePool {
                  * @return {@code true} if this token represents a primary bound.
                  */
                 boolean isPrimaryBound(TypePool typePool);
+
+                String getPathPrefix();
 
                 /**
                  * Represents a generic type token for a formal type variable.
@@ -3301,6 +3303,11 @@ public interface TypePool {
                     }
 
                     @Override
+                    public String getPathPrefix() {
+                        throw new IllegalStateException("A primitive type cannot be the owner of a nested type: " + this);
+                    }
+
+                    @Override
                     public String toString() {
                         return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForPrimitiveType." + name();
                     }
@@ -3390,6 +3397,11 @@ public interface TypePool {
                     @Override
                     public boolean isPrimaryBound(TypePool typePool) {
                         throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public String getPathPrefix() {
+                        throw new IllegalStateException("An unbound wildcard cannot be the owner of a nested type: " + this);
                     }
 
                     @Override
@@ -3933,7 +3945,7 @@ public interface TypePool {
                          *
                          * @param exceptionTypeDescriptors The descriptor of the raw exception types.
                          * @param typePool                 The type pool to be used for locating non-generic type descriptions.
-                         * @param annotationTokens         A mapping of the execption types' type annotation tokens by their indices.
+                         * @param annotationTokens         A mapping of the exception types' type annotation tokens by their indices.
                          * @param definingMethod           The method that defines these exception types.
                          * @return A description of this type's generic interface types.
                          */
@@ -4157,6 +4169,11 @@ public interface TypePool {
                     }
 
                     @Override
+                    public String getPathPrefix() {
+                        throw new IllegalStateException("A non-generic type cannot be the owner of a nested type: " + this);
+                    }
+
+                    @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass()) && name.equals(((ForRawType) other).name);
                     }
@@ -4268,6 +4285,11 @@ public interface TypePool {
                     @Override
                     public boolean isPrimaryBound(TypePool typePool) {
                         return true;
+                    }
+
+                    @Override
+                    public String getPathPrefix() {
+                        throw new IllegalStateException("A type variable cannot be the owner of a nested type: " + this);
                     }
 
                     @Override
@@ -4425,7 +4447,7 @@ public interface TypePool {
                             private final Map<String, List<AnnotationToken>> annotationTokens;
 
                             /**
-                             * A mapping of the type variable boundss type annotation tokens by their indices.
+                             * A mapping of the type variable bounds' type annotation tokens by their indices.
                              */
                             private final Map<Integer, Map<String, List<AnnotationToken>>> boundaryAnnotationTokens;
 
@@ -4445,7 +4467,7 @@ public interface TypePool {
                              * @param typePool                 The type pool to use for locating type descriptions.
                              * @param typeVariableSource       The type variable source to use for locating type variables.
                              * @param annotationTokens         The type variable's type annotation tokens.
-                             * @param boundaryAnnotationTokens A mapping of the type variable boundss type annotation tokens by their indices.
+                             * @param boundaryAnnotationTokens A mapping of the type variable bounds' type annotation tokens by their indices.
                              * @param symbol                   The type variable's symbol.
                              * @param boundTypeTokens          Tokenized representations of the type variables bound types.
                              */
@@ -4578,6 +4600,11 @@ public interface TypePool {
                     }
 
                     @Override
+                    public String getPathPrefix() {
+                        throw new IllegalStateException("A generic array type cannot be the owner of a nested type: " + this);
+                    }
+
+                    @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && componentTypeToken.equals(((ForGenericArray) other).componentTypeToken);
@@ -4685,6 +4712,11 @@ public interface TypePool {
                     @Override
                     public boolean isPrimaryBound(TypePool typePool) {
                         throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public String getPathPrefix() {
+                        throw new IllegalStateException("A lower bound wildcard cannot be the owner of a nested type: " + this);
                     }
 
                     @Override
@@ -4803,6 +4835,11 @@ public interface TypePool {
                     @Override
                     public boolean isPrimaryBound(TypePool typePool) {
                         throw new IllegalStateException("A wildcard type cannot be a type variable bound: " + this);
+                    }
+
+                    @Override
+                    public String getPathPrefix() {
+                        throw new IllegalStateException("An upper bound wildcard cannot be the owner of a nested type: " + this);
                     }
 
                     @Override
@@ -4928,6 +4965,11 @@ public interface TypePool {
                     }
 
                     @Override
+                    public String getPathPrefix() {
+                        return EMPTY_TYPE_PATH;
+                    }
+
+                    @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && name.equals(((ForParameterizedType) other).name)
@@ -4986,6 +5028,11 @@ public interface TypePool {
                                                      String typePath,
                                                      Map<String, List<AnnotationToken>> annotationTokens) {
                             return new LazyParameterizedType(typePool, typeVariableSource, typePath, annotationTokens, name, parameterTypeTokens, ownerTypeToken);
+                        }
+
+                        @Override
+                        public String getPathPrefix() {
+                            return ownerTypeToken.getPathPrefix() + OWNER_TYPE_PATH;
                         }
 
                         @Override
@@ -5094,17 +5141,17 @@ public interface TypePool {
 
                             @Override
                             public TypeList.Generic getTypeArguments() {
-                                return new LazyTokenList(typePool, typeVariableSource, typePath, annotationTokens, parameterTypeTokens);
+                                return new LazyTokenList(typePool, typeVariableSource, ownerTypeToken.getPathPrefix() + typePath, annotationTokens, parameterTypeTokens);
                             }
 
                             @Override
                             public Generic getOwnerType() {
-                                return ownerTypeToken.toGenericType(typePool, typeVariableSource, typePath + OWNER_TYPE_PATH, annotationTokens);
+                                return ownerTypeToken.toGenericType(typePool, typeVariableSource, typePath, annotationTokens);
                             }
 
                             @Override
                             public AnnotationList getDeclaredAnnotations() {
-                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(ownerTypeToken.getPathPrefix() + typePath));
                             }
                         }
                     }
@@ -6257,7 +6304,7 @@ public interface TypePool {
                  * @param rawTypeDescriptor  A descriptor of the generic type's erasure.
                  * @param annotationTokens   The tokenized type's type annotation tokens or {@code null} if no such annotations are defined.
                  * @param typeVariableSource The closest type variable source of this generic type's declaration context.
-                 * @return A suitable genric type.
+                 * @return A suitable generic type.
                  */
                 protected static Generic of(TypePool typePool,
                                             GenericTypeToken genericTypeToken,
