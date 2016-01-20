@@ -1512,20 +1512,19 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(fieldType.getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(fieldType.getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(1));
+        assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));
         assertThat(fieldType.getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(fieldType.getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(2));
+        assertThat(fieldType.getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(4));
         assertThat(fieldType.getOwnerType().getSort(), is(TypeDefinition.Sort.PARAMETERIZED));
         assertThat(fieldType.getOwnerType().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getOwnerType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(3));
-        ;
+        assertThat(fieldType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(1));
         assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().size(), is(1));
         assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(4));
+        assertThat(fieldType.getOwnerType().getTypeArguments().getOnly().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(2));
     }
 
     @Test
