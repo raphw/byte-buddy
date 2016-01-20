@@ -891,8 +891,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
                 .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Nested.Inner.class),
-                        TypeDescription.Generic.Builder.parameterizedType(Nested.class, Void.class)
-                                .build(),
+                        TypeDescription.Generic.Builder.parameterizedType(Nested.class, Void.class).build(),
                         Collections.<TypeDefinition>emptyList())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                         .build())

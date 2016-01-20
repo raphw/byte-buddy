@@ -3367,6 +3367,11 @@ public interface TypePool {
                         }
 
                         @Override
+                        public Generic getOwnerType() {
+                            return UNDEFINED; // TODO: Test
+                        }
+
+                        @Override
                         public Generic getComponentType() {
                             return UNDEFINED;
                         }
@@ -3622,6 +3627,14 @@ public interface TypePool {
                             }
 
                             @Override
+                            public Generic getOwnerType() {
+                                TypeDescription declaringType = typeDescription.getDeclaringType();
+                                return declaringType == null
+                                        ? UNDEFINED
+                                        : new RawAnnotatedType(typePool, typePath, annotationTokens, declaringType);
+                            }
+
+                            @Override
                             public Generic getComponentType() {
                                 TypeDescription componentType = typeDescription.getComponentType();
                                 return componentType == null
@@ -3631,7 +3644,11 @@ public interface TypePool {
 
                             @Override
                             public AnnotationList getDeclaredAnnotations() {
-                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                                StringBuilder typePath = new StringBuilder(this.typePath);
+                                for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
+                                    typePath = typePath.append(INNER_CLASS_PATH);
+                                }
+                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath.toString()));
                             }
 
                             /**
@@ -4161,7 +4178,7 @@ public interface TypePool {
                                                  TypeVariableSource typeVariableSource,
                                                  String typePath,
                                                  Map<String, List<AnnotationToken>> annotationTokens) {
-                        return new LazyNonGenericType(typePool,
+                        return new Resolution.Raw.RawAnnotatedType(typePool,
                                 typePath,
                                 annotationTokens == null
                                         ? Collections.<String, List<AnnotationToken>>emptyMap()
@@ -4194,72 +4211,6 @@ public interface TypePool {
                         return "TypePool.Default.LazyTypeDescription.GenericTypeToken.ForRawType{" +
                                 "name='" + name + '\'' +
                                 '}';
-                    }
-
-                    /**
-                     * A representation of an annotated non-generic type.
-                     */
-                    protected static class LazyNonGenericType extends Generic.OfNonGenericType {
-
-                        /**
-                         * The type pool to use.
-                         */
-                        private final TypePool typePool;
-
-                        /**
-                         * This type's type path.
-                         */
-                        private final String typePath;
-
-                        /**
-                         * A mapping of this type's type annotation tokens.
-                         */
-                        private final Map<String, List<AnnotationToken>> annotationTokens;
-
-                        /**
-                         * The represented type description.
-                         */
-                        private final TypeDescription typeDescription;
-
-                        /**
-                         * Creates a new lazy non-generic type.
-                         *
-                         * @param typePool         The type pool to use.
-                         * @param typePath         This type's type path.
-                         * @param annotationTokens A mapping of this type's type annotation tokens.
-                         * @param typeDescription  The represented type description.
-                         */
-                        protected LazyNonGenericType(TypePool typePool,
-                                                     String typePath,
-                                                     Map<String, List<AnnotationToken>> annotationTokens,
-                                                     TypeDescription typeDescription) {
-                            this.typePool = typePool;
-                            this.typePath = typePath;
-                            this.annotationTokens = annotationTokens;
-                            this.typeDescription = typeDescription;
-                        }
-
-                        @Override
-                        public TypeDescription asErasure() {
-                            return typeDescription;
-                        }
-
-                        @Override
-                        public Generic getComponentType() {
-                            TypeDescription componentType = typeDescription.getComponentType();
-                            return componentType == null
-                                    ? UNDEFINED
-                                    : new LazyNonGenericType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType); // Impossible to be inner class
-                        }
-
-                        @Override
-                        public AnnotationList getDeclaredAnnotations() {
-                            StringBuilder typePath = new StringBuilder(this.typePath);
-                            for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
-                                typePath = typePath.append(INNER_CLASS_PATH);
-                            }
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath.toString()));
-                        }
                     }
                 }
 
@@ -7161,6 +7112,14 @@ public interface TypePool {
                      */
                     protected LazyNonGenericReceiverType(TypeDescription typeDescription) {
                         this.typeDescription = typeDescription;
+                    }
+
+                    @Override
+                    public Generic getOwnerType() {
+                        TypeDescription declaringType = typeDescription.getDeclaringType();
+                        return declaringType == null
+                                ? UNDEFINED
+                                : new LazyNonGenericReceiverType(declaringType);
                     }
 
                     @Override

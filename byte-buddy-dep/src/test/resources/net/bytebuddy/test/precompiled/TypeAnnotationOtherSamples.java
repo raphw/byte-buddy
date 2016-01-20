@@ -9,10 +9,18 @@ public abstract class TypeAnnotationOtherSamples<T> {
 
     @TypeAnnotation(5) @OtherTypeAnnotation(6) Void qux;
 
-    @TypeAnnotation(7)
-    abstract Void foo(@TypeAnnotation(8) Void v) throws @TypeAnnotation(9) Exception;
+    @TypeAnnotation(7) Qux.@TypeAnnotation(8) Baz baz;
+
+    @TypeAnnotation(9)
+    abstract Void foo(@TypeAnnotation(10) Void v) throws @TypeAnnotation(11) Exception;
 
     class Bar<S> {
         /* empty */
+    }
+
+    static class Qux {
+        class Baz {
+            /* empty */
+        }
     }
 }

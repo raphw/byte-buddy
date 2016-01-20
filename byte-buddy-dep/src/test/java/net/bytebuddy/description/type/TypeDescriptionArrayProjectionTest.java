@@ -121,4 +121,11 @@ public class TypeDescriptionArrayProjectionTest extends AbstractTypeDescriptionT
     public void testGenericInnerTypeAnnotationReceiverTypeOnMethod() throws Exception {
         super.testGenericInnerTypeAnnotationReceiverTypeOnMethod();
     }
+
+    @Override
+    @Test
+    @Ignore("The Java reflection API does not currently support nested non-generic types")
+    public void testTypeAnnotationNonGenericInnerType() throws Exception {
+        super.testTypeAnnotationNonGenericInnerType();
+    }
 }

@@ -375,14 +375,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         /**
          * <p>
-         * Returns the owner type of this type.
+         * Returns the owner type of this type. A type's owner type describes a nested type's declaring type.
+         * If it exists, the returned type can be a non-generic or parameterized type. If a class has no
+         * declaring class, {@code null} is returned.
          * </p>
          * <p>
-         * An owner type is only well-defined for parameterized types ({@link Sort#PARAMETERIZED}).
-         * For all other types, this method throws an {@link IllegalStateException}.
+         * An owner type is only well-defined for parameterized types ({@link Sort#PARAMETERIZED}) and
+         * for non-generic types ({@link Sort#NON_GENERIC}).For all other types, this method throws an
+         * {@link IllegalStateException}.
          * </p>
          *
-         * @return This type's owner type or {@code null} if no such owner type exists.
+         * @return This type's owner type or {@code null} if no owner type exists.
          */
         Generic getOwnerType();
 
@@ -2403,11 +2406,29 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             AnnotationReader ofTypeArgument(int index);
 
             /**
+             * <p>
              * Returns a reader for type annotations of a parameterized type's owner type.
+             * </p>
+             * <p>
+             * <b>Important</b>: This feature is not currently implemented by the Java reflection API.
+             * </p>
              *
              * @return An annotation reader for the underlying owner type.
              */
             AnnotationReader ofOwnerType();
+
+            // TODO: Test!
+            /**
+             * <p>
+             * Returns a reader for type annotations of an inner class type's outer type.
+             * </p>
+             * <p>
+             * <b>Important</b>: This feature is not currently implemented by the Java reflection API.
+             * </p>
+             *
+             * @return An annotation reader for the underlying owner type.
+             */
+            AnnotationReader ofOuterClass();
 
             /**
              * Returns a reader for type annotations of an array's component type.
@@ -3260,6 +3281,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
+                public AnnotationReader ofOuterClass() {
+                    return this; // TODO: test
+                }
+
+                @Override
                 public AnnotationReader ofComponentType() {
                     return this;
                 }
@@ -3317,6 +3343,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationReader ofOwnerType() {
+                    return NoOp.INSTANCE;
+                }
+
+                @Override
+                public AnnotationReader ofOuterClass() {
                     return NoOp.INSTANCE;
                 }
 
@@ -3867,11 +3898,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             @Override
-            public Generic getOwnerType() {
-                throw new IllegalStateException("A non-generic type does not imply an owner type: " + this);
-            }
-
-            @Override
             public Sort getSort() {
                 return Sort.NON_GENERIC;
             }
@@ -3999,8 +4025,16 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 @Override
+                public Generic getOwnerType() {
+                    Class<?> declaringClass = this.type.getDeclaringClass();
+                    return declaringClass == null
+                            ? UNDEFINED
+                            : new ForLoadedType(declaringClass, annotationReader.ofOuterClass());
+                }
+
+                @Override
                 public Generic getComponentType() {
-                    Class<?> componentType = this.type.getComponentType();
+                    Class<?> componentType = type.getComponentType();
                     return componentType == null
                             ? UNDEFINED
                             : new ForLoadedType(componentType, annotationReader.ofComponentType());
@@ -4041,6 +4075,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public TypeDescription asErasure() {
                     return typeDescription;
+                }
+
+                @Override
+                public Generic getOwnerType() {
+                    TypeDescription declaringType = typeDescription.getDeclaringType();
+                    return declaringType == null
+                            ? UNDEFINED
+                            : declaringType.asGenericType();
                 }
 
                 @Override

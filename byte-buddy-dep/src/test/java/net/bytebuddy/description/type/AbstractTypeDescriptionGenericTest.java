@@ -1400,7 +1400,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(returnType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(returnType.getDeclaredAnnotations().size(), is(1));
         assertThat(returnType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(7));
+        assertThat(returnType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(9));
     }
 
     @Test
@@ -1414,7 +1414,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(parameterType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(parameterType.getDeclaredAnnotations().size(), is(1));
         assertThat(parameterType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(8));
+        assertThat(parameterType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(10));
     }
 
     @Test
@@ -1428,7 +1428,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(exceptionType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
         assertThat(exceptionType.getDeclaredAnnotations().size(), is(1));
         assertThat(exceptionType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
-        assertThat(exceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(9));
+        assertThat(exceptionType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(11));
     }
 
     @Test
@@ -1543,6 +1543,24 @@ public abstract class AbstractTypeDescriptionGenericTest {
         assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(5));
         assertThat(fieldType.getDeclaredAnnotations().isAnnotationPresent(otherTypeAnnotation), is(true));
         assertThat(fieldType.getDeclaredAnnotations().ofType(otherTypeAnnotation).getValue(otherValue, Integer.class), is(6));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testTypeAnnotationNonGenericInnerType() throws Exception {
+        Class<? extends Annotation> typeAnnotation = (Class<? extends Annotation>) Class.forName(TYPE_ANNOTATION);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotation).getDeclaredMethods().getOnly();
+        Class<?> samples = Class.forName(TYPE_ANNOTATION_OTHER_SAMPLES);
+        TypeDescription.Generic fieldType = describeType(samples.getDeclaredField(BAZ));
+        assertThat(fieldType.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(fieldType.getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldType.getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(fieldType.getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(8));
+        assertThat(fieldType.getOwnerType().getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(fieldType.getOwnerType().getDeclaredAnnotations().size(), is(1));
+        assertThat(fieldType.getOwnerType().getDeclaredAnnotations().isAnnotationPresent(typeAnnotation), is(true));
+        assertThat(fieldType.getOwnerType().getDeclaredAnnotations().ofType(typeAnnotation).getValue(value, Integer.class), is(7));
     }
 
     @SuppressWarnings("unused")
