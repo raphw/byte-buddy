@@ -14,7 +14,7 @@ runtime code generation for the Java virtual machine
 
 Byte Buddy is a code generation library for creating Java classes during the runtime of a Java application and without
 the help of a compiler. Other than the code generation utilities that
-[ship with the Java Class Library](http://docs.oracle.com/javase/6/docs/api/java/lang/reflect/Proxy.html),
+[ship with the Java Class Library](http://docs.oracle.com/javase/8/docs/api/java/lang/reflect/Proxy.html),
 Byte Buddy allows the creation of arbitrary classes and is not limited to implementing interfaces for the creation of
 runtime proxies.
 
