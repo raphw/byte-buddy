@@ -3167,7 +3167,13 @@ public interface TypePool {
                  */
                 boolean isPrimaryBound(TypePool typePool);
 
-                String getPathPrefix();
+                /**
+                 * Returns the type path prefix that needs to be appended to the existing type path before any further navigation on the parameterized
+                 * type. This method must only be called on type tokens that represent parameterized type
+                 *
+                 * @return A type path segment that needs to be appended to the base type path before any further navigation on the parameterized type.
+                 */
+                String getTypePathPrefix();
 
                 /**
                  * Represents a generic type token for a formal type variable.
@@ -3303,7 +3309,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         throw new IllegalStateException("A primitive type cannot be the owner of a nested type: " + this);
                     }
 
@@ -3400,7 +3406,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         throw new IllegalStateException("An unbound wildcard cannot be the owner of a nested type: " + this);
                     }
 
@@ -4169,7 +4175,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         throw new IllegalStateException("A non-generic type cannot be the owner of a nested type: " + this);
                     }
 
@@ -4288,7 +4294,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         throw new IllegalStateException("A type variable cannot be the owner of a nested type: " + this);
                     }
 
@@ -4600,7 +4606,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         throw new IllegalStateException("A generic array type cannot be the owner of a nested type: " + this);
                     }
 
@@ -4715,7 +4721,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         throw new IllegalStateException("A lower bound wildcard cannot be the owner of a nested type: " + this);
                     }
 
@@ -4838,7 +4844,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         throw new IllegalStateException("An upper bound wildcard cannot be the owner of a nested type: " + this);
                     }
 
@@ -4965,7 +4971,7 @@ public interface TypePool {
                     }
 
                     @Override
-                    public String getPathPrefix() {
+                    public String getTypePathPrefix() {
                         return String.valueOf(OWNER_TYPE_PATH);
                     }
 
@@ -5031,8 +5037,8 @@ public interface TypePool {
                         }
 
                         @Override
-                        public String getPathPrefix() {
-                            return ownerTypeToken.getPathPrefix() + OWNER_TYPE_PATH;
+                        public String getTypePathPrefix() {
+                            return ownerTypeToken.getTypePathPrefix() + OWNER_TYPE_PATH;
                         }
 
                         @Override
@@ -5141,7 +5147,7 @@ public interface TypePool {
 
                             @Override
                             public TypeList.Generic getTypeArguments() {
-                                return new LazyTokenList(typePool, typeVariableSource, ownerTypeToken.getPathPrefix() + typePath, annotationTokens, parameterTypeTokens);
+                                return new LazyTokenList(typePool, typeVariableSource, typePath + ownerTypeToken.getTypePathPrefix(), annotationTokens, parameterTypeTokens);
                             }
 
                             @Override
@@ -5151,7 +5157,7 @@ public interface TypePool {
 
                             @Override
                             public AnnotationList getDeclaredAnnotations() {
-                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(ownerTypeToken.getPathPrefix() + typePath));
+                                return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath + ownerTypeToken.getTypePathPrefix()));
                             }
                         }
                     }
