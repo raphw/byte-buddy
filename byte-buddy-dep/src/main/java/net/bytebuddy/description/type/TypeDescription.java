@@ -4111,7 +4111,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * Creates a new raw type representation.
                  *
                  * @param typeDescription     The represented non-generic type.
-                 * @param declaredAnnotations This type's type annotations.
                  */
                 public OfErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
@@ -5900,6 +5899,34 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             /**
+             * Creates a raw type of a type description where the supplied owner type is used as .
+             *
+             * @param type      The type to represent as a raw type.
+             * @param ownerType The raw type's (annotated) declaring type or {@code null} if no owner type should be declared.
+             * @return A builder for creating a raw type.
+             */
+            public static Builder rawType(Class<?> type, Generic ownerType) {
+                return rawType(new ForLoadedType(type), ownerType);
+            }
+
+            /**
+             * Creates a raw type of a type description.
+             *
+             * @param type      The type to represent as a raw type.
+             * @param ownerType The raw type's (annotated) declaring type or {@code null} if no owner type should be declared.
+             * @return A builder for creating a raw type.
+             */
+            public static Builder rawType(TypeDescription type, Generic ownerType) {
+                TypeDescription declaringType = type.getDeclaringType();
+                if (declaringType == null && ownerType != null) {
+                    throw new IllegalArgumentException(type + " does not have a declaring type: " + ownerType);
+                } else if (ownerType != null && !ownerType.asErasure().equals(type)) {
+                    throw new IllegalArgumentException(ownerType + " is not the declaring type of " + type);
+                }
+                return new Builder.OfNonGenericType(type, ownerType);
+            }
+
+            /**
              * Creates an unbound wildcard without type annotations.
              *
              * @return A description of an unbound wildcard without type annotations.
@@ -6295,28 +6322,57 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final TypeDescription typeDescription;
 
                 /**
+                 * The raw type's (annotated) declaring type.
+                 */
+                private final Generic ownerType;
+
+                /**
                  * Creates a builder for a non-generic type.
                  *
                  * @param typeDescription The type's erasure.
                  */
                 protected OfNonGenericType(TypeDescription typeDescription) {
-                    this(typeDescription, Collections.<AnnotationDescription>emptyList());
+                    this(typeDescription, typeDescription.getDeclaringType());
                 }
 
                 /**
                  * Creates a builder for a non-generic type.
                  *
                  * @param typeDescription The type's erasure.
+                 * @param ownerType       The raw type's raw declaring type.
+                 */
+                private OfNonGenericType(TypeDescription typeDescription, TypeDescription ownerType) {
+                    this(typeDescription, ownerType == null
+                            ? Generic.UNDEFINED
+                            : ownerType.asGenericType());
+                }
+
+                /**
+                 * Creates a builder for a non-generic type.
+                 *
+                 * @param typeDescription The type's erasure.
+                 * @param ownerType       The raw type's (annotated) declaring type.
+                 */
+                protected OfNonGenericType(TypeDescription typeDescription, Generic ownerType) {
+                    this(typeDescription, ownerType, Collections.<AnnotationDescription>emptyList());
+                }
+
+                /**
+                 * Creates a builder for a non-generic type.
+                 *
+                 * @param typeDescription The type's erasure.
+                 * @param ownerType       The raw type's (annotated) declaring type.
                  * @param annotations     The type's type annotations.
                  */
-                protected OfNonGenericType(TypeDescription typeDescription, List<? extends AnnotationDescription> annotations) {
+                protected OfNonGenericType(TypeDescription typeDescription, Generic ownerType, List<? extends AnnotationDescription> annotations) {
                     super(annotations);
+                    this.ownerType = ownerType;
                     this.typeDescription = typeDescription;
                 }
 
                 @Override
                 protected Builder doAnnotate(List<? extends AnnotationDescription> annotations) {
-                    return new OfNonGenericType(typeDescription, CompoundList.of(this.annotations, annotations));
+                    return new OfNonGenericType(typeDescription, ownerType, CompoundList.of(this.annotations, annotations));
                 }
 
                 @Override
@@ -6324,20 +6380,24 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     if (typeDescription.represents(void.class) && !annotations.isEmpty()) {
                         throw new IllegalArgumentException("The void non-type cannot be annotated");
                     }
-                    return new Generic.OfNonGenericType.OfErasure(typeDescription, annotations);
+                    return new Generic.OfNonGenericType.Latent(typeDescription, ownerType, annotations);
                 }
 
                 @Override
                 public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && super.equals(other)
-                            && typeDescription.equals(((OfNonGenericType) other).typeDescription);
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    if (!super.equals(other)) return false;
+                    OfNonGenericType that = (OfNonGenericType) other;
+                    return typeDescription.equals(that.typeDescription)
+                            && (ownerType != null ? ownerType.equals(that.ownerType) : that.ownerType == null);
                 }
 
                 @Override
                 public int hashCode() {
                     int result = super.hashCode();
                     result = 31 * result + typeDescription.hashCode();
+                    result = 31 * result + (ownerType != null ? ownerType.hashCode() : 0);
                     return result;
                 }
 
@@ -6345,6 +6405,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public String toString() {
                     return "TypeDescription.Generic.Builder.OfNonGenericType{" +
                             "annotations=" + annotations +
+                            ", ownerType=" + ownerType +
                             ", typeDescription=" + typeDescription +
                             '}';
                 }
