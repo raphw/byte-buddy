@@ -24,7 +24,7 @@ public abstract class AbstractAttributeAppenderTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    protected TypeDescription instrumentedType;
+    protected TypeDescription instrumentedType, typeErasure;
 
     @Mock
     protected AnnotationValueFilter annotationValueFilter;
@@ -50,6 +50,9 @@ public abstract class AbstractAttributeAppenderTest {
         when(annotatedTypeVariableBound.asGenericType()).thenReturn(annotatedTypeVariableBound);
         when(simpleAnnotatedType.accept(any(TypeDescription.Generic.Visitor.class))).thenCallRealMethod();
         when(simpleAnnotatedType.asGenericType()).thenReturn(simpleAnnotatedType);
+        when(simpleAnnotatedType.asErasure()).thenReturn(typeErasure);
+        when(annotatedTypeVariable.asErasure()).thenReturn(typeErasure);
+        when(annotatedTypeVariableBound.asErasure()).thenReturn(typeErasure);
     }
 
     @Retention(RetentionPolicy.SOURCE)

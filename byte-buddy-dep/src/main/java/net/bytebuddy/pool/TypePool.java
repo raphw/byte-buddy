@@ -3137,9 +3137,9 @@ public interface TypePool {
                 char WILDCARD_TYPE_PATH = '*';
 
                 /**
-                 * Represents a owner type step within a type path.
+                 * Represents a (reversed) step to an inner class within a type path.
                  */
-                char OWNER_TYPE_PATH = '.';
+                char INNER_CLASS_PATH = '.';
 
                 /**
                  * Represents an index type delimiter within a type path.
@@ -4249,12 +4249,16 @@ public interface TypePool {
                             TypeDescription componentType = typeDescription.getComponentType();
                             return componentType == null
                                     ? UNDEFINED
-                                    : new LazyNonGenericType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType);
+                                    : new LazyNonGenericType(typePool, typePath + COMPONENT_TYPE_PATH, annotationTokens, componentType); // Impossible to be inner class
                         }
 
                         @Override
                         public AnnotationList getDeclaredAnnotations() {
-                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath));
+                            StringBuilder typePath = new StringBuilder(this.typePath);
+                            for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
+                                typePath = typePath.append(INNER_CLASS_PATH);
+                            }
+                            return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(typePath.toString()));
                         }
                     }
                 }
@@ -4972,7 +4976,7 @@ public interface TypePool {
 
                     @Override
                     public String getTypePathPrefix() {
-                        return String.valueOf(OWNER_TYPE_PATH);
+                        return String.valueOf(INNER_CLASS_PATH);
                     }
 
                     @Override
@@ -5038,7 +5042,7 @@ public interface TypePool {
 
                         @Override
                         public String getTypePathPrefix() {
-                            return ownerTypeToken.getTypePathPrefix() + OWNER_TYPE_PATH;
+                            return ownerTypeToken.getTypePathPrefix() + INNER_CLASS_PATH;
                         }
 
                         @Override
@@ -7043,7 +7047,7 @@ public interface TypePool {
                     private String getTypePath() {
                         StringBuilder typePath = new StringBuilder();
                         for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
-                            typePath.append(GenericTypeToken.OWNER_TYPE_PATH);
+                            typePath = typePath.append(GenericTypeToken.INNER_CLASS_PATH);
                         }
                         return typePath.toString();
                     }
@@ -7168,7 +7172,7 @@ public interface TypePool {
                     public AnnotationList getDeclaredAnnotations() {
                         StringBuilder typePath = new StringBuilder();
                         for (int index = 0; index < typeDescription.getSegmentCount(); index++) {
-                            typePath.append(GenericTypeToken.OWNER_TYPE_PATH);
+                            typePath = typePath.append(GenericTypeToken.INNER_CLASS_PATH);
                         }
                         return LazyAnnotationDescription.asListOfNullable(typePool, receiverTypeAnnotationTokens.get(typePath.toString()));
                     }

@@ -438,9 +438,9 @@ public interface AnnotationAppender {
         private static final char WILDCARD_TYPE_PATH = '*';
 
         /**
-         * Represents a owner type step within a type path.
+         * Represents a (reversed) type step to an inner class within a type path.
          */
-        private static final char OWNER_TYPE_PATH = '.';
+        private static final char INNER_CLASS_PATH = '.';
 
         /**
          * Represents an index tzpe delimiter within a type path.
@@ -665,7 +665,7 @@ public interface AnnotationAppender {
         public AnnotationAppender onParameterizedType(TypeDescription.Generic parameterizedType) {
             StringBuilder typePath = new StringBuilder(this.typePath);
             for (int index = 0; index < parameterizedType.asErasure().getSegmentCount(); index++) {
-                typePath.append(OWNER_TYPE_PATH);
+                typePath = typePath.append(INNER_CLASS_PATH);
             }
             AnnotationAppender annotationAppender = apply(parameterizedType, typePath.toString());
             TypeDescription.Generic ownerType = parameterizedType.getOwnerType();
@@ -692,12 +692,16 @@ public interface AnnotationAppender {
 
         @Override
         public AnnotationAppender onNonGenericType(TypeDescription.Generic typeDescription) {
-            AnnotationAppender annotationAppender = apply(typeDescription, typePath);
+            StringBuilder typePath = new StringBuilder(this.typePath);
+            for (int index = 0; index < typeDescription.asErasure().getSegmentCount(); index++) {
+                typePath = typePath.append(INNER_CLASS_PATH);
+            }
+            AnnotationAppender annotationAppender = apply(typeDescription, typePath.toString());
             if (typeDescription.isArray()) {
                 annotationAppender = typeDescription.getComponentType().accept(new ForTypeAnnotations(annotationAppender,
                         annotationValueFilter,
                         typeReference,
-                        typePath + COMPONENT_TYPE_PATH));
+                        this.typePath + COMPONENT_TYPE_PATH)); // Impossible to be inner class
             }
             return annotationAppender;
         }
