@@ -601,6 +601,11 @@ public abstract class AbstractMethodDescriptionTest {
         assertThat(describe(firstMethod).isGenericDeclaration(), is(false));
     }
 
+    @Test
+    public void testStaticMethodNoReceiverType() throws Exception {
+        assertThat(describe(firstMethod).getReceiverType(), nullValue(TypeDescription.Generic.class));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
 
