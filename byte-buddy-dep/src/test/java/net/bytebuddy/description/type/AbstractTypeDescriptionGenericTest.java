@@ -62,13 +62,14 @@ public abstract class AbstractTypeDescriptionGenericTest {
 
     protected abstract TypeDescription.Generic describeInterfaceType(Class<?> type, int index);
 
-    @Test(expected = IllegalStateException.class)
-    public void testNonGenericTypeNoOwnerType() throws Exception {
-        describeType(NonGeneric.class.getDeclaredField(FOO)).getOwnerType();
+    @Test
+    public void testNonGenericTypeOwnerType() throws Exception {
+        assertThat(describeType(NonGeneric.class.getDeclaredField(FOO)).getOwnerType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describeType(NonGeneric.class.getDeclaredField(BAR)).getOwnerType(), is(TypeDefinition.Sort.describe(NonGeneric.class)));
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testNonGenericTypeNoParameters() throws Exception {
+    public void testNonGenericTypeNoTypeArguments() throws Exception {
         describeType(NonGeneric.class.getDeclaredField(FOO)).getTypeArguments();
     }
 
@@ -534,7 +535,7 @@ public abstract class AbstractTypeDescriptionGenericTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testGenericArrayTypeNoParameters() throws Exception {
+    public void testGenericArrayTypeNoTypeArguments() throws Exception {
         describeType(SimpleGenericArrayType.class.getDeclaredField(FOO)).getTypeArguments();
     }
 
@@ -1582,6 +1583,12 @@ public abstract class AbstractTypeDescriptionGenericTest {
     public static class NonGeneric {
 
         Object foo;
+
+        Inner bar;
+
+        class Inner {
+            /* empty */
+        }
     }
 
     @SuppressWarnings("unused")
