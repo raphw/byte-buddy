@@ -354,6 +354,54 @@ public interface MethodAttributeAppender {
     }
 
     /**
+     * A method attribute appender that writes a receiver type.
+     */
+    class ForReceiverType implements MethodAttributeAppender, Factory {
+
+        /**
+         * The receiver type for which annotations are appended to the instrumented method.
+         */
+        private final TypeDescription.Generic receiverType;
+
+        /**
+         * Creates a new attribute appender that writes a receiver type.
+         *
+         * @param receiverType The receiver type for which annotations are appended to the instrumented method.
+         */
+        public ForReceiverType(TypeDescription.Generic receiverType) {
+            this.receiverType = receiverType;
+        }
+
+        @Override
+        public MethodAttributeAppender make(TypeDescription typeDescription) {
+            return this;
+        }
+
+        @Override
+        public void apply(MethodVisitor methodVisitor, MethodDescription methodDescription, AnnotationValueFilter annotationValueFilter) {
+            receiverType.accept(AnnotationAppender.ForTypeAnnotations.ofReceiverType(new AnnotationAppender.Default(new AnnotationAppender.Target.OnMethod(methodVisitor)), annotationValueFilter));
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return this == other || !(other == null || getClass() != other.getClass())
+                    && receiverType.equals(((ForReceiverType) other).receiverType);
+        }
+
+        @Override
+        public int hashCode() {
+            return receiverType.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "MethodAttributeAppender.ForReceiverType{" +
+                    "receiverType=" + receiverType +
+                    '}';
+        }
+    }
+
+    /**
      * A method attribute appender that combines several method attribute appenders to be represented as a single
      * method attribute appender.
      */
