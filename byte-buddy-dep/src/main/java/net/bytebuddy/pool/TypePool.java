@@ -4966,7 +4966,7 @@ public interface TypePool {
 
                     @Override
                     public String getPathPrefix() {
-                        return EMPTY_TYPE_PATH;
+                        return String.valueOf(OWNER_TYPE_PATH);
                     }
 
                     @Override
@@ -6346,7 +6346,7 @@ public interface TypePool {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return LazyAnnotationDescription.asListOfNullable(typePool, annotationTokens.get(GenericTypeToken.EMPTY_TYPE_PATH));
+                    return resolve().getDeclaredAnnotations();
                 }
 
                 /**
