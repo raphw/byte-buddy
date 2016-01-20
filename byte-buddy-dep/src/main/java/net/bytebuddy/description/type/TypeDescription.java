@@ -2417,8 +2417,6 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
              */
             AnnotationReader ofOwnerType();
 
-            // TODO: Test!
-
             /**
              * <p>
              * Returns a reader for type annotations of an inner class type's outer type.
@@ -3283,7 +3281,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationReader ofOuterClass() {
-                    return this; // TODO: test
+                    return this;
                 }
 
                 @Override
@@ -4047,19 +4045,44 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
+            /**
+             * A latent description of a non-generic type.
+             */
             public static class Latent extends OfNonGenericType {
 
+                /**
+                 * The non-generic type's raw type.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * The non-generic type's declaring type.
+                 */
                 private final TypeDescription.Generic declaringType;
 
+                /**
+                 * The non-generic type's annotations.
+                 */
                 private final List<? extends AnnotationDescription> annotationDescriptions;
 
+                /**
+                 * Creates a non-generic type with an implicit owner type.
+                 *
+                 * @param typeDescription        The non-generic type's raw type.
+                 * @param annotationDescriptions The non-generic type's annotations.
+                 */
                 protected Latent(TypeDescription typeDescription, List<? extends AnnotationDescription> annotationDescriptions) {
                     this(typeDescription, typeDescription.getDeclaringType(), annotationDescriptions);
                 }
 
-                protected Latent(TypeDescription typeDescription, TypeDescription declaringType, List<? extends AnnotationDescription> annotationDescriptions) {
+                /**
+                 * Creates a non-generic type with a raw owner type.
+                 *
+                 * @param typeDescription        The non-generic type's raw type.
+                 * @param declaringType          The non-generic type's declaring type.
+                 * @param annotationDescriptions The non-generic type's annotations.
+                 */
+                private Latent(TypeDescription typeDescription, TypeDescription declaringType, List<? extends AnnotationDescription> annotationDescriptions) {
                     this(typeDescription,
                             declaringType == null
                                     ? UNDEFINED
@@ -4067,6 +4090,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             annotationDescriptions);
                 }
 
+                /**
+                 * Creates a non-generic type.
+                 *
+                 * @param typeDescription        The non-generic type's raw type.
+                 * @param declaringType          The non-generic type's declaring type.
+                 * @param annotationDescriptions The non-generic type's annotations.
+                 */
                 protected Latent(TypeDescription typeDescription, Generic declaringType, List<? extends AnnotationDescription> annotationDescriptions) {
                     this.typeDescription = typeDescription;
                     this.declaringType = declaringType;
@@ -4110,7 +4140,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * Creates a new raw type representation.
                  *
-                 * @param typeDescription     The represented non-generic type.
+                 * @param typeDescription The represented non-generic type.
                  */
                 public OfErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
@@ -5920,7 +5950,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 TypeDescription declaringType = type.getDeclaringType();
                 if (declaringType == null && ownerType != null) {
                     throw new IllegalArgumentException(type + " does not have a declaring type: " + ownerType);
-                } else if (ownerType != null && !ownerType.asErasure().equals(type)) {
+                } else if (declaringType != null && (ownerType == null || !declaringType.equals(type))) {
                     throw new IllegalArgumentException(ownerType + " is not the declaring type of " + type);
                 }
                 return new Builder.OfNonGenericType(type, ownerType);

@@ -56,6 +56,24 @@ public class TypeDescriptionGenericAnnotationReaderTest {
     }
 
     @Test
+    public void testAnnotationReaderNoOpTest() throws Exception {
+        assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofComponentType(),
+                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+        assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofOuterClass(),
+                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+        assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofOwnerType(),
+                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+        assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofTypeArgument(0),
+                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+        assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofTypeVariableBoundType(0),
+                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+        assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofWildcardLowerBoundType(0),
+                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+        assertThat(TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE.ofWildcardUpperBoundType(0),
+                is((TypeDescription.Generic.AnnotationReader)TypeDescription.Generic.AnnotationReader.NoOp.INSTANCE));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.NoOp.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForComponentType.class).apply();
@@ -107,12 +125,6 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                     }
                 }).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedTypeVariableType.class).apply();
-    }
-
-    @Test
-    public void testName() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedExceptionType.class).apply();
-
-
     }
 }

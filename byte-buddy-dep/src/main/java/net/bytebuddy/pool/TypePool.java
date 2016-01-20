@@ -3368,7 +3368,7 @@ public interface TypePool {
 
                         @Override
                         public Generic getOwnerType() {
-                            return UNDEFINED; // TODO: Test
+                            return UNDEFINED;
                         }
 
                         @Override

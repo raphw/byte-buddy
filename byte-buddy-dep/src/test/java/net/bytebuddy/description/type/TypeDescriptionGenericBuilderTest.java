@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Ignore;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.lang.reflect.*;
 import java.util.ArrayList;
@@ -15,6 +16,7 @@ import java.util.List;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGenericTest {
 
@@ -56,7 +58,7 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoOwnerTypeWhenRequired() throws Exception {
-        TypeDescription.Generic.Builder.parameterizedType(Foo.Bar.class, Object.class);
+        TypeDescription.Generic.Builder.parameterizedType(Foo.Inner.class, Object.class);
     }
 
     @Test
@@ -72,17 +74,17 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
 
     @Test(expected = IllegalArgumentException.class)
     public void testIllegalOwnerType() throws Exception {
-        TypeDescription.Generic.Builder.parameterizedType(Foo.Bar.class, Object.class, Collections.<Type>singletonList(Foo.class));
+        TypeDescription.Generic.Builder.parameterizedType(Foo.Inner.class, Object.class, Collections.<Type>singletonList(Foo.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNonGenericOwnerType() throws Exception {
-        TypeDescription.Generic.Builder.parameterizedType(Foo.Bar.class, Foo.class, Collections.<Type>singletonList(Foo.class));
+        TypeDescription.Generic.Builder.parameterizedType(Foo.Inner.class, Foo.class, Collections.<Type>singletonList(Foo.class));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testGenericOwnerType() throws Exception {
-        TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Foo.Qux.class),
+        TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Foo.Nested.class),
                 TypeDescription.Generic.Builder.parameterizedType(Foo.class, Object.class).build(),
                 Collections.<TypeDefinition>singletonList(TypeDescription.OBJECT));
     }
@@ -117,10 +119,30 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
         TypeDescription.Generic.Builder.parameterizedType(Object.class).build();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testMissingOwnerType() throws Exception {
+        TypeDescription.Generic.Builder.rawType(Bar.Inner.class, TypeDescription.Generic.UNDEFINED);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIncompatibleType() throws Exception {
+        TypeDescription.Generic.Builder.rawType(Bar.Inner.class, TypeDescription.Generic.OBJECT);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testIncompatibleOwnerTypeWhenNonRequired() throws Exception {
+        TypeDescription.Generic.Builder.rawType(Object.class, TypeDescription.Generic.OBJECT);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfGenericArrayType.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfNonGenericType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfNonGenericType.class).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.asGenericType()).thenReturn(Mockito.mock(TypeDescription.Generic.class));
+            }
+        }).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfParameterizedType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.Builder.OfTypeVariable.class).apply();
     }
@@ -180,11 +202,19 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     @SuppressWarnings("unused")
     private static class Foo<T> {
 
-        private class Bar<S> {
+        private class Inner<S> {
             /* empty */
         }
 
-        private static class Qux<S> {
+        private static class Nested<S> {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    private class Bar {
+
+        private class Inner {
             /* empty */
         }
     }
