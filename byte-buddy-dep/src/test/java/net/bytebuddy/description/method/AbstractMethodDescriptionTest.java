@@ -602,8 +602,12 @@ public abstract class AbstractMethodDescriptionTest {
     }
 
     @Test
-    public void testStaticMethodNoReceiverType() throws Exception {
+    public void testImplicitReceiverTypes() throws Exception {
         assertThat(describe(firstMethod).getReceiverType(), nullValue(TypeDescription.Generic.class));
+        assertThat(describe(secondMethod).getReceiverType(), is(TypeDefinition.Sort.describe(Sample.class)));
+        assertThat(describe(firstConstructor).getReceiverType(), is(TypeDefinition.Sort.describe(AbstractMethodDescriptionTest.class)));
+        assertThat(describe(AbstractMethodDescriptionTest.class.getDeclaredConstructor()).getReceiverType(),
+                is(TypeDefinition.Sort.describe(AbstractMethodDescriptionTest.class)));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
