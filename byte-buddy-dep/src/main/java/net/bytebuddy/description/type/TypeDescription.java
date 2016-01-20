@@ -596,7 +596,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public Generic onNonGenericType(Generic typeDescription) {
                     return typeDescription.isArray()
                             ? new OfGenericArray.Latent(onNonGenericType(typeDescription.getComponentType()), Collections.<AnnotationDescription>emptyList())
-                            : new OfNonGenericType.Latent(typeDescription.asErasure(), Collections.<AnnotationDescription>emptyList());
+                            : new OfNonGenericType.OfErasure(typeDescription.asErasure());
                 }
 
                 @Override
@@ -2081,7 +2081,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     protected Generic onSimpleType(Generic typeDescription) {
                         return typeMatcher.matches(typeDescription.asErasure())
-                                ? new OfNonGenericType.Latent(TargetType.DESCRIPTION, typeDescription.getDeclaredAnnotations())
+                                ? new OfNonGenericType.Latent(TargetType.DESCRIPTION, typeDescription.getOwnerType(), typeDescription.getDeclaredAnnotations())
                                 : typeDescription;
                     }
 
@@ -2418,6 +2418,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             AnnotationReader ofOwnerType();
 
             // TODO: Test!
+
             /**
              * <p>
              * Returns a reader for type annotations of an inner class type's outer type.
@@ -4046,10 +4047,60 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
-            /**
-             * Represents a non-generic type for a loaded {@link TypeDescription}.
-             */
             public static class Latent extends OfNonGenericType {
+
+                private final TypeDescription typeDescription;
+
+                private final TypeDescription.Generic declaringType;
+
+                private final List<? extends AnnotationDescription> annotationDescriptions;
+
+                protected Latent(TypeDescription typeDescription, List<? extends AnnotationDescription> annotationDescriptions) {
+                    this(typeDescription, typeDescription.getDeclaringType(), annotationDescriptions);
+                }
+
+                protected Latent(TypeDescription typeDescription, TypeDescription declaringType, List<? extends AnnotationDescription> annotationDescriptions) {
+                    this(typeDescription,
+                            declaringType == null
+                                    ? UNDEFINED
+                                    : declaringType.asGenericType(),
+                            annotationDescriptions);
+                }
+
+                protected Latent(TypeDescription typeDescription, Generic declaringType, List<? extends AnnotationDescription> annotationDescriptions) {
+                    this.typeDescription = typeDescription;
+                    this.declaringType = declaringType;
+                    this.annotationDescriptions = annotationDescriptions;
+                }
+
+                @Override
+                public Generic getOwnerType() {
+                    return declaringType;
+                }
+
+                @Override
+                public Generic getComponentType() {
+                    TypeDescription componentType = typeDescription.getComponentType();
+                    return componentType == null
+                            ? UNDEFINED
+                            : componentType.asGenericType();
+                }
+
+                @Override
+                public AnnotationList getDeclaredAnnotations() {
+                    return new AnnotationList.Explicit(annotationDescriptions);
+                }
+
+                @Override
+                public TypeDescription asErasure() {
+                    return typeDescription;
+                }
+            }
+
+            /**
+             * Represents a non-generic type for an erasure as a {@link TypeDescription}.
+             */
+            public static class OfErasure extends OfNonGenericType {
 
                 /**
                  * The represented non-generic type.
@@ -4057,19 +4108,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 private final TypeDescription typeDescription;
 
                 /**
-                 * This type's type annotations.
-                 */
-                private final List<? extends AnnotationDescription> declaredAnnotations;
-
-                /**
                  * Creates a new raw type representation.
                  *
                  * @param typeDescription     The represented non-generic type.
                  * @param declaredAnnotations This type's type annotations.
                  */
-                public Latent(TypeDescription typeDescription, List<? extends AnnotationDescription> declaredAnnotations) {
+                public OfErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
-                    this.declaredAnnotations = declaredAnnotations;
                 }
 
                 @Override
@@ -4095,7 +4140,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationList getDeclaredAnnotations() {
-                    return new AnnotationList.Explicit(declaredAnnotations);
+                    return new AnnotationList.Empty();
                 }
             }
         }
@@ -5008,7 +5053,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 public static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenericDeclaration()
                             ? new ForGenerifiedErasure(typeDescription)
-                            : new OfNonGenericType.Latent(typeDescription, Collections.<AnnotationDescription>emptyList());
+                            : new OfNonGenericType.OfErasure(typeDescription);
                 }
 
                 @Override
@@ -6279,7 +6324,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     if (typeDescription.represents(void.class) && !annotations.isEmpty()) {
                         throw new IllegalArgumentException("The void non-type cannot be annotated");
                     }
-                    return new Generic.OfNonGenericType.Latent(typeDescription, annotations);
+                    return new Generic.OfNonGenericType.OfErasure(typeDescription, annotations);
                 }
 
                 @Override
@@ -6594,7 +6639,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public Generic asGenericType() {
-            return new Generic.OfNonGenericType.Latent(this, Collections.<AnnotationDescription>emptyList());
+            return new Generic.OfNonGenericType.OfErasure(this);
         }
 
         @Override
