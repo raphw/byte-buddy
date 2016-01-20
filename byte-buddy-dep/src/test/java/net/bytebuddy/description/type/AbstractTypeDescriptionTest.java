@@ -553,6 +553,7 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         assertThat(describe(GenericSample.class).isGenericDeclaration(), is(true));
         assertThat(describe(GenericSample.Inner.class).isGenericDeclaration(), is(true));
         assertThat(describe(GenericSample.Nested.class).isGenericDeclaration(), is(false));
+        assertThat(describe(GenericSample.NestedInterface.class).isGenericDeclaration(), is(false));
         assertThat(describe(Object.class).isGenericDeclaration(), is(false));
     }
 
@@ -702,6 +703,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         }
 
         class Inner {
+            /* empty */
+        }
+
+        interface NestedInterface {
             /* empty */
         }
     }

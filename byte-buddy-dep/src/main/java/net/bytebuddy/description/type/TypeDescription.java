@@ -4927,14 +4927,34 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
+            /**
+             * Represents a type erasure as a parameterized type where any type variable is used as a type argument
+             * of the parameterized type and where the declaring type is defined as the type's owner type.
+             */
             public static class ForGenerifiedErasure extends OfParameterizedType {
 
+                /**
+                 * The represented type erasure.
+                 */
                 private final TypeDescription typeDescription;
 
+                /**
+                 * Creates a new parameterized type for a generified erasure.
+                 *
+                 * @param typeDescription The represented type erasure.
+                 */
                 protected ForGenerifiedErasure(TypeDescription typeDescription) {
                     this.typeDescription = typeDescription;
                 }
 
+                /**
+                 * Resolves a type description to be represented as a generic type where any type with generic properties is
+                 * represented as a parameterized type and any type without such properties is represented as a non-generic
+                 * type.
+                 *
+                 * @param typeDescription The type erasure to represent.
+                 * @return An appropriate generic type description of the supplied type erasure.
+                 */
                 public static Generic of(TypeDescription typeDescription) {
                     return typeDescription.isGenericDeclaration()
                             ? new ForGenerifiedErasure(typeDescription)
@@ -4964,10 +4984,21 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     return typeDescription;
                 }
 
+                /**
+                 * A type list of type variables that represents type variables as generic type arguments without type annotations.
+                 */
                 protected static class NonAnnotatedTypeVariableList extends TypeList.Generic.AbstractBase {
 
+                    /**
+                     * The type variables that this list represents.
+                     */
                     private final List<? extends Generic> typeVariables;
 
+                    /**
+                     * Creates a new list of type variables as non-annotated type arguments.
+                     *
+                     * @param typeVariables The type variables that this list represents.
+                     */
                     protected NonAnnotatedTypeVariableList(List<? extends Generic> typeVariables) {
                         this.typeVariables = typeVariables;
                     }

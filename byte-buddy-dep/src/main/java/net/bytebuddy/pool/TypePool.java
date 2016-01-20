@@ -6938,20 +6938,43 @@ public interface TypePool {
                     }
                 }
 
+                /**
+                 * A lazy description of a parameterized receiver type.
+                 */
                 private class LazyParameterizedReceiverType extends Generic.OfParameterizedType {
 
+                    /**
+                     * The erasure of the type to be represented as a parameterized receiver type.
+                     */
                     private final TypeDescription typeDescription;
 
+                    /**
+                     * The receiver type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * Creates a new lazy parameterized receiver type of the method's declaring type.
+                     */
                     protected LazyParameterizedReceiverType() {
                         this(LazyTypeDescription.this);
                     }
 
+                    /**
+                     * Creates a new lazy parameterized receiver type of the supplied receiver type with an empty type path.
+                     *
+                     * @param typeDescription The erasure of the type to be represented as a parameterized receiver type.
+                     */
                     protected LazyParameterizedReceiverType(TypeDescription typeDescription) {
                         this(typeDescription, GenericTypeToken.EMPTY_TYPE_PATH);
                     }
 
+                    /**
+                     * Creates a new lazy parameterized receiver type of the supplied receiver type.
+                     *
+                     * @param typeDescription The erasure of the type to be represented as a parameterized receiver type.
+                     * @param typePath        The receiver type's type path.
+                     */
                     private LazyParameterizedReceiverType(TypeDescription typeDescription, String typePath) {
                         this.typeDescription = typeDescription;
                         this.typePath = typePath;
@@ -6980,10 +7003,21 @@ public interface TypePool {
                         return typeDescription;
                     }
 
+                    /**
+                     * A list of generic types representing the receiver type's type arguments.
+                     */
                     protected class TypeArgumentList extends TypeList.Generic.AbstractBase {
 
+                        /**
+                         * The type variables of the represented receiver type.
+                         */
                         private final List<? extends Generic> typeVariables;
 
+                        /**
+                         * Creates a new type argument list.
+                         *
+                         * @param typeVariables The type variables of the represented receiver type.
+                         */
                         protected TypeArgumentList(List<? extends Generic> typeVariables) {
                             this.typeVariables = typeVariables;
                         }
@@ -6998,12 +7032,27 @@ public interface TypePool {
                             return typeVariables.size();
                         }
 
+                        /**
+                         * Represents a type variable as a type argument with type annotations.
+                         */
                         protected class AnnotatedTypeVariable extends OfTypeVariable {
 
+                            /**
+                             * The type variable's description.
+                             */
                             private final Generic typeVariable;
 
+                            /**
+                             * The type variable's index.
+                             */
                             private final int index;
 
+                            /**
+                             * Creates a new description of an annotated type variable as a type argument.
+                             *
+                             * @param typeVariable The type variable's description.
+                             * @param index        The type variable's index.
+                             */
                             protected AnnotatedTypeVariable(Generic typeVariable, int index) {
                                 this.typeVariable = typeVariable;
                                 this.index = index;
@@ -7034,20 +7083,43 @@ public interface TypePool {
                     }
                 }
 
+                /**
+                 * A lazy description of a non-generic receiver type.
+                 */
                 protected class LazyNonGenericReceiverType extends Generic.OfNonGenericType {
 
+                    /**
+                     * The type description of the non-generic receiver type.
+                     */
                     private final TypeDescription typeDescription;
 
+                    /**
+                     * The represented type's type path.
+                     */
                     private final String typePath;
 
+                    /**
+                     * Creates a new non-generic receiver type of the method's declaring type.
+                     */
                     protected LazyNonGenericReceiverType() {
                         this(LazyTypeDescription.this);
                     }
 
+                    /**
+                     * Creates a new non-generic receiver type of the supplied type with an empty type path.
+                     *
+                     * @param typeDescription The type to represent as a non-generic receiver type.
+                     */
                     protected LazyNonGenericReceiverType(TypeDescription typeDescription) {
                         this(typeDescription, GenericTypeToken.EMPTY_TYPE_PATH);
                     }
 
+                    /**
+                     * Creates a new non-generic receiver type of the supplied type with the given type path.
+                     *
+                     * @param typeDescription The type to represent as a non-generic receiver type.
+                     * @param typePath        The type's type path.
+                     */
                     protected LazyNonGenericReceiverType(TypeDescription typeDescription, String typePath) {
                         this.typeDescription = typeDescription;
                         this.typePath = typePath;

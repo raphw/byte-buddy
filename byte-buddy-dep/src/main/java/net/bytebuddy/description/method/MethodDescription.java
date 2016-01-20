@@ -147,7 +147,7 @@ public interface MethodDescription extends TypeVariableSource,
     int getStackSize();
 
     /**
-     * Checks if this method represents a Java 8+ default method.
+     * Checks if this method represents a default (defender) method.
      *
      * @return {@code true} if this method is a default method.
      */
@@ -231,6 +231,11 @@ public interface MethodDescription extends TypeVariableSource,
      */
     boolean isDefaultValue(Object value);
 
+    /**
+     * Returns this methods receiver type. A receiver type is undefined for {@code static} methods
+     * where {@code null} is returned.
+     * @return This method's (annotated) receiver type.
+     */
     TypeDescription.Generic getReceiverType();
 
     /**

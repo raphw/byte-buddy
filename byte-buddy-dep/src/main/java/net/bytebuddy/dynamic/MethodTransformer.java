@@ -257,7 +257,7 @@ public interface MethodTransformer {
 
             @Override
             public TypeDescription.Generic getReceiverType() {
-                return methodDescription.getReceiverType(); // TODO: Token!
+                return methodDescription.getReceiverType();
             }
 
             /**
