@@ -3,7 +3,7 @@ package net.bytebuddy.matcher;
 /**
  * An element matcher that matches a class loader for being a parent of the given class loader.
  *
- * @param <T>The exact type of the class loader that is matched.
+ * @param <T> The exact type of the class loader that is matched.
  */
 public class ClassLoaderParentMatcher<T extends ClassLoader> implements ElementMatcher<T> {
 

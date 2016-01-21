@@ -666,6 +666,26 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testTakesArgumentGeneric() throws Exception {
+        assertThat(ElementMatchers.takesGenericArgument(0, GenericMethodType.class.getTypeParameters()[0])
+                .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
+        assertThat(ElementMatchers.takesGenericArgument(0, Exception.class)
+                .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
+    }
+
+    @Test
+    public void testTakesArgument() throws Exception {
+        assertThat(ElementMatchers.takesArgument(0, Void.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
+        assertThat(ElementMatchers.takesArgument(0, Object.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(false));
+        assertThat(ElementMatchers.takesArgument(1, int.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
+        assertThat(ElementMatchers.takesArgument(1, Integer.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+    }
+
+    @Test
     public void testTakesArgumentsLength() throws Exception {
         assertThat(ElementMatchers.takesArguments(1)
                 .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(FOO, Void.class))), is(true));
