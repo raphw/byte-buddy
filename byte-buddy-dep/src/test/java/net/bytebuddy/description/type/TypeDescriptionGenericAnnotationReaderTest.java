@@ -83,16 +83,16 @@ public class TypeDescriptionGenericAnnotationReaderTest {
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForWildcardUpperBoundType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForLegacyVm.class).apply();
         final Iterator<Method> methods = CompoundList.of(Arrays.asList(Object.class.getDeclaredMethods()), Arrays.asList(String.class.getDeclaredMethods())).iterator();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.class)
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {
                     @Override
                     public Method create() {
                         return methods.next();
                     }
                 }).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.Resolved.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.Resolved.class).apply();
         final Iterator<Field> fields = Arrays.asList(Thread.class.getDeclaredFields()).iterator();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedFieldType.class)
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedFieldType.class)
                 .create(new ObjectPropertyAssertion.Creator<Field>() {
                     @Override
                     public Field create() {
@@ -100,16 +100,16 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                     }
                 }).apply();
         final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Number.class).iterator();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedInterfaceType.class)
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedInterfaceType.class)
                 .create(new ObjectPropertyAssertion.Creator<Class<?>>() {
                     @Override
                     public Class<?> create() {
                         return types.next();
                     }
                 }).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedParameterizedType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedParameterizedType.class).apply();
         final Iterator<Method> methods2 = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedReturnType.class)
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedReturnType.class)
                 .create(new ObjectPropertyAssertion.Creator<Method>() {
                     @Override
                     public Method create() {
@@ -117,14 +117,14 @@ public class TypeDescriptionGenericAnnotationReaderTest {
                     }
                 }).apply();
         final Iterator<Class<?>> types2 = Arrays.<Class<?>>asList(Object.class, String.class, Integer.class, Number.class).iterator();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperClass.class)
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedSuperClass.class)
                 .create(new ObjectPropertyAssertion.Creator<Class<?>>() {
                     @Override
                     public Class<?> create() {
                         return types2.next();
                     }
                 }).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedTypeVariableType.class).apply();
-        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedExceptionType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedTypeVariableType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedExceptionType.class).apply();
     }
 }

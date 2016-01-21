@@ -35,7 +35,7 @@ public class ParameterListForLoadedExectutableDispatcherTest {
     @Test
     public void testObjectProperties() throws Exception {
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(ParameterList.ForLoadedExecutable.Dispatcher.ForModernVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(ParameterList.ForLoadedExecutable.Dispatcher.ForJava8CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods.next();

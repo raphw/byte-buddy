@@ -516,7 +516,7 @@ public class ByteArrayClassLoader extends ClassLoader {
         static {
             SynchronizationEngine synchronizationEngine;
             try {
-                synchronizationEngine = SynchronizationEngine.ForModernVm.resolve();
+                synchronizationEngine = SynchronizationEngine.ForJava7CapableVm.resolve();
             } catch (Exception ignored) {
                 synchronizationEngine = SynchronizationEngine.ForLegacyVm.INSTANCE;
             }
@@ -654,7 +654,7 @@ public class ByteArrayClassLoader extends ClassLoader {
             /**
              * A synchronization engine for a VM that is aware of parallel-capable class loaders.
              */
-            class ForModernVm implements SynchronizationEngine, PrivilegedAction<SynchronizationEngine> {
+            class ForJava7CapableVm implements SynchronizationEngine, PrivilegedAction<SynchronizationEngine> {
 
                 /**
                  * The {@code ClassLoader#getClassLoadingLock(String)} method.
@@ -666,7 +666,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                  *
                  * @param method The {@code ClassLoader#getClassLoadingLock(String)} method.
                  */
-                protected ForModernVm(Method method) {
+                protected ForJava7CapableVm(Method method) {
                     this.method = method;
                 }
 
@@ -677,7 +677,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                  * @throws NoSuchMethodException If the executing VM is not a modern VM.
                  */
                 protected static SynchronizationEngine resolve() throws NoSuchMethodException {
-                    return AccessController.doPrivileged(new ForModernVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class)));
+                    return AccessController.doPrivileged(new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class)));
                 }
 
                 @Override
@@ -700,7 +700,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && method.equals(((ForModernVm) other).method);
+                            && method.equals(((ForJava7CapableVm) other).method);
                 }
 
                 @Override
@@ -710,7 +710,7 @@ public class ByteArrayClassLoader extends ClassLoader {
 
                 @Override
                 public String toString() {
-                    return "ByteArrayClassLoader.ChildFirst.SynchronizationEngine.ForModernVm{method=" + method + '}';
+                    return "ByteArrayClassLoader.ChildFirst.SynchronizationEngine.ForJava7CapableVm{method=" + method + '}';
                 }
             }
         }

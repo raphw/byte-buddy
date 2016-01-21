@@ -24,7 +24,7 @@ public class JavaInstanceMethodTypeDispatcherTest {
     @Test
     public void testObjectProperties() throws Exception {
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(JavaInstance.MethodType.Dispatcher.ForModernVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(JavaInstance.MethodType.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods.next();

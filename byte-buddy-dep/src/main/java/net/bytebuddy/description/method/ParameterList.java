@@ -120,7 +120,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
         static {
             Dispatcher dispatcher;
             try {
-                dispatcher = new Dispatcher.ForModernVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
+                dispatcher = new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.reflect.Executable").getDeclaredMethod("getParameterCount"));
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception ignored) {
@@ -231,7 +231,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
             /**
              * A dispatcher for a legacy VM that does support the {@code java.lang.reflect.Parameter} type.
              */
-            class ForModernVm implements Dispatcher {
+            class ForJava8CapableVm implements Dispatcher {
 
                 /**
                  * The {@code java.lang.reflect.Executable#getParameterCount()} method.
@@ -243,7 +243,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                  *
                  * @param getParameterCount The {@code java.lang.reflect.Executable#getParameterCount()} method.
                  */
-                protected ForModernVm(Method getParameterCount) {
+                protected ForJava8CapableVm(Method getParameterCount) {
                     this.getParameterCount = getParameterCount;
                 }
 
@@ -271,7 +271,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
                 @Override
                 public boolean equals(Object other) {
                     return this == other || !(other == null || getClass() != other.getClass())
-                            && getParameterCount.equals(((ForModernVm) other).getParameterCount);
+                            && getParameterCount.equals(((ForJava8CapableVm) other).getParameterCount);
                 }
 
                 @Override
@@ -281,7 +281,7 @@ public interface ParameterList<T extends ParameterDescription> extends Filterabl
 
                 @Override
                 public String toString() {
-                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForModernVm{" +
+                    return "ParameterList.ForLoadedExecutable.Dispatcher.ForJava8CapableVm{" +
                             "getParameterCount=" + getParameterCount +
                             '}';
                 }

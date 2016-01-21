@@ -2357,7 +2357,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             /**
              * The dispatcher to use.
              */
-            Dispatcher DISPATCHER = Dispatcher.ForModernVm.make();
+            Dispatcher DISPATCHER = Dispatcher.ForJava8CapableVm.make();
 
             /**
              * Resolves the underlying {@link AnnotatedElement}.
@@ -2568,7 +2568,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 /**
                  * A dispatcher for a modern JVM that supports type annotations.
                  */
-                class ForModernVm implements Dispatcher {
+                class ForJava8CapableVm implements Dispatcher {
 
                     /**
                      * The {@code java.lang.Class#getAnnotatedSuperclass} method.
@@ -2622,14 +2622,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * @param getAnnotatedReceiverType   The {@code java.lang.reflect.Executable#getAnnotatedReceiverType} method.
                      * @param getType                    The {@code java.lang.reflect.AnnotatedType#getType} method.
                      */
-                    protected ForModernVm(Method getAnnotatedSuperclass,
-                                          Method getAnnotatedInterfaces,
-                                          Method getAnnotatedType,
-                                          Method getAnnotatedReturnType,
-                                          Method getAnnotatedParameterTypes,
-                                          Method getAnnotatedExceptionTypes,
-                                          Method getAnnotatedReceiverType,
-                                          Method getType) {
+                    protected ForJava8CapableVm(Method getAnnotatedSuperclass,
+                                                Method getAnnotatedInterfaces,
+                                                Method getAnnotatedType,
+                                                Method getAnnotatedReturnType,
+                                                Method getAnnotatedParameterTypes,
+                                                Method getAnnotatedExceptionTypes,
+                                                Method getAnnotatedReceiverType,
+                                                Method getType) {
                         this.getAnnotatedSuperclass = getAnnotatedSuperclass;
                         this.getAnnotatedInterfaces = getAnnotatedInterfaces;
                         this.getAnnotatedType = getAnnotatedType;
@@ -2648,7 +2648,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      */
                     protected static Dispatcher make() {
                         try {
-                            return new Dispatcher.ForModernVm(Class.class.getDeclaredMethod("getAnnotatedSuperclass"),
+                            return new ForJava8CapableVm(Class.class.getDeclaredMethod("getAnnotatedSuperclass"),
                                     Class.class.getDeclaredMethod("getAnnotatedInterfaces"),
                                     Field.class.getDeclaredMethod("getAnnotatedType"),
                                     Method.class.getDeclaredMethod("getAnnotatedReturnType"),
@@ -2716,7 +2716,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     public boolean equals(Object other) {
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
-                        ForModernVm that = (ForModernVm) other;
+                        ForJava8CapableVm that = (ForJava8CapableVm) other;
                         return getAnnotatedSuperclass.equals(that.getAnnotatedSuperclass)
                                 && getAnnotatedInterfaces.equals(that.getAnnotatedInterfaces)
                                 && getAnnotatedType.equals(that.getAnnotatedType)
@@ -2742,7 +2742,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                     @Override
                     public String toString() {
-                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm{" +
+                        return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm{" +
                                 "getAnnotatedSuperclass=" + getAnnotatedSuperclass +
                                 ", getAnnotatedInterfaces=" + getAnnotatedInterfaces +
                                 ", getAnnotatedType=" + getAnnotatedType +
@@ -2791,7 +2791,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.Resolved{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.Resolved{" +
                                     ", annotatedElement=" + annotatedElement +
                                     '}';
                         }
@@ -2839,7 +2839,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedTypeVariableType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedTypeVariableType{" +
                                     ", typeVariable=" + typeVariable +
                                     '}';
                         }
@@ -2880,8 +2880,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @return The outer instance.
                          */
-                        private ForModernVm getOuter() {
-                            return ForModernVm.this;
+                        private ForJava8CapableVm getOuter() {
+                            return ForJava8CapableVm.this;
                         }
 
                         @Override
@@ -2898,7 +2898,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedSuperClass{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedSuperClass{" +
                                     "dispatcher=" + getOuter() +
                                     ", type=" + type +
                                     '}';
@@ -2947,8 +2947,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @return The outer instance.
                          */
-                        private ForModernVm getOuter() {
-                            return ForModernVm.this;
+                        private ForJava8CapableVm getOuter() {
+                            return ForJava8CapableVm.this;
                         }
 
                         @Override
@@ -2966,7 +2966,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedInterfaceType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedInterfaceType{" +
                                     "dispatcher=" + getOuter() +
                                     ", type=" + type +
                                     ", index=" + index +
@@ -3009,8 +3009,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @return The outer instance.
                          */
-                        private ForModernVm getOuter() {
-                            return ForModernVm.this;
+                        private ForJava8CapableVm getOuter() {
+                            return ForJava8CapableVm.this;
                         }
 
                         @Override
@@ -3027,7 +3027,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedFieldType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedFieldType{" +
                                     "dispatcher=" + getOuter() +
                                     ", field=" + field +
                                     '}';
@@ -3069,8 +3069,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @return The outer instance.
                          */
-                        private ForModernVm getOuter() {
-                            return ForModernVm.this;
+                        private ForJava8CapableVm getOuter() {
+                            return ForJava8CapableVm.this;
                         }
 
                         @Override
@@ -3087,7 +3087,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedReturnType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedReturnType{" +
                                     "dispatcher=" + getOuter() +
                                     ", method=" + method +
                                     '}';
@@ -3136,8 +3136,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @return The outer instance.
                          */
-                        private ForModernVm getOuter() {
-                            return ForModernVm.this;
+                        private ForJava8CapableVm getOuter() {
+                            return ForJava8CapableVm.this;
                         }
 
                         @Override
@@ -3155,7 +3155,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedParameterizedType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedParameterizedType{" +
                                     "dispatcher=" + getOuter() +
                                     ", executable=" + executable +
                                     ", index=" + index +
@@ -3205,8 +3205,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                          *
                          * @return The outer instance.
                          */
-                        private ForModernVm getOuter() {
-                            return ForModernVm.this;
+                        private ForJava8CapableVm getOuter() {
+                            return ForJava8CapableVm.this;
                         }
 
                         @Override
@@ -3224,7 +3224,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                         @Override
                         public String toString() {
-                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForModernVm.AnnotatedExceptionType{" +
+                            return "TypeDescription.Generic.AnnotationReader.Dispatcher.ForJava8CapableVm.AnnotatedExceptionType{" +
                                     "dispatcher=" + getOuter() +
                                     ", executable=" + executable +
                                     ", index=" + index +

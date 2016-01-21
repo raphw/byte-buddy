@@ -190,7 +190,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
      *
      * @param <T> The type of the {@code java.lang.reflect.Executable} that this list represents.
      */
-    abstract class ForLoadedParameter<T> extends InDefinedShape.AbstractBase {
+    abstract class ForLoadedParameter<T extends AccessibleObject> extends InDefinedShape.AbstractBase {
 
         /**
          * A dispatcher for reading properties from {@code java.lang.reflect.Executable} instances.
@@ -205,7 +205,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             try {
                 Class<?> executableType = Class.forName("java.lang.reflect.Executable");
                 Class<?> parameterType = Class.forName("java.lang.reflect.Parameter");
-                dispatcher = new Dispatcher.ForModernVm(executableType.getDeclaredMethod("getParameters"),
+                dispatcher = new Dispatcher.ForJava8CapableVm(executableType.getDeclaredMethod("getParameters"),
                         parameterType.getDeclaredMethod("getName"),
                         parameterType.getDeclaredMethod("isNamePresent"),
                         parameterType.getDeclaredMethod("getModifiers"));
@@ -277,7 +277,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
              * @param index      The parameter's index.
              * @return The parameter's modifiers.
              */
-            int getModifiers(Object executable, int index);
+            int getModifiers(AccessibleObject executable, int index);
 
             /**
              * Returns {@code true} if the given parameter has an explicit name.
@@ -286,7 +286,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
              * @param index      The parameter's index.
              * @return {@code true} if the given parameter has an explicit name.
              */
-            boolean isNamePresent(Object executable, int index);
+            boolean isNamePresent(AccessibleObject executable, int index);
 
             /**
              * Returns the given parameter's implicit or explicit name.
@@ -295,12 +295,12 @@ public interface ParameterDescription extends AnnotatedCodeElement,
              * @param index      The parameter's index.
              * @return The parameter's name.
              */
-            String getName(Object executable, int index);
+            String getName(AccessibleObject executable, int index);
 
             /**
              * A dispatcher for VMs that support the {@code java.lang.reflect.Parameter} API for Java 8+.
              */
-            class ForModernVm implements Dispatcher {
+            class ForJava8CapableVm implements Dispatcher {
 
                 /**
                  * A reference to {@code java.lang.reflect.Executable#getParameters}.
@@ -330,7 +330,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                  * @param isNamePresent A reference to {@code java.lang.reflect.Parameter#isNamePresent}.
                  * @param getModifiers  A reference to {@code java.lang.reflect.Parameter#getModifiers}.
                  */
-                protected ForModernVm(Method getParameters, Method getName, Method isNamePresent, Method getModifiers) {
+                protected ForJava8CapableVm(Method getParameters, Method getName, Method isNamePresent, Method getModifiers) {
                     this.getParameters = getParameters;
                     this.getName = getName;
                     this.isNamePresent = isNamePresent;
@@ -338,7 +338,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 }
 
                 @Override
-                public int getModifiers(Object executable, int index) {
+                public int getModifiers(AccessibleObject executable, int index) {
                     try {
                         return (Integer) getModifiers.invoke(getParameter(executable, index));
                     } catch (IllegalAccessException exception) {
@@ -349,7 +349,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 }
 
                 @Override
-                public boolean isNamePresent(Object executable, int index) {
+                public boolean isNamePresent(AccessibleObject executable, int index) {
                     try {
                         return (Boolean) isNamePresent.invoke(getParameter(executable, index));
                     } catch (IllegalAccessException exception) {
@@ -360,7 +360,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 }
 
                 @Override
-                public String getName(Object executable, int index) {
+                public String getName(AccessibleObject executable, int index) {
                     try {
                         return (String) getName.invoke(getParameter(executable, index));
                     } catch (IllegalAccessException exception) {
@@ -391,7 +391,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
-                    ForModernVm legal = (ForModernVm) other;
+                    ForJava8CapableVm legal = (ForJava8CapableVm) other;
                     return getParameters.equals(legal.getParameters)
                             && getName.equals(legal.getName)
                             && isNamePresent.equals(legal.isNamePresent)
@@ -409,7 +409,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
                 @Override
                 public String toString() {
-                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForModernVm{" +
+                    return "ParameterDescription.ForLoadedParameter.Dispatcher.ForJava8CapableVm{" +
                             "getParameters=" + getParameters +
                             ", getName=" + getName +
                             ", isNamePresent=" + isNamePresent +
@@ -430,17 +430,17 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                 INSTANCE;
 
                 @Override
-                public int getModifiers(Object executable, int index) {
+                public int getModifiers(AccessibleObject executable, int index) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
                 }
 
                 @Override
-                public boolean isNamePresent(Object executable, int index) {
+                public boolean isNamePresent(AccessibleObject executable, int index) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
                 }
 
                 @Override
-                public String getName(Object executable, int index) {
+                public String getName(AccessibleObject executable, int index) {
                     throw new IllegalStateException("Cannot dispatch method for java.lang.reflect.Parameter");
                 }
 

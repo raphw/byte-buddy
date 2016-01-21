@@ -67,7 +67,7 @@ public interface JavaInstance {
             Dispatcher dispatcher;
             try {
                 Class<?> methodType = JavaType.METHOD_TYPE.load();
-                dispatcher = new Dispatcher.ForModernVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
+                dispatcher = new Dispatcher.ForJava7CapableVm(methodType.getDeclaredMethod("returnType"), methodType.getDeclaredMethod("parameterArray"));
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception ignored) {
@@ -317,7 +317,7 @@ public interface JavaInstance {
             /**
              * A dispatcher for virtual machines that are aware of the {@code java.lang.invoke.MethodType} type that was added in Java version 7.
              */
-            class ForModernVm implements Dispatcher {
+            class ForJava7CapableVm implements Dispatcher {
 
                 /**
                  * A reference to {@code java.lang.invoke.MethodType#returnType}.
@@ -335,7 +335,7 @@ public interface JavaInstance {
                  * @param returnType     A reference to {@code java.lang.invoke.MethodType#returnType}.
                  * @param parameterArray A reference to {@code java.lang.invoke.MethodType#returnType}.
                  */
-                protected ForModernVm(Method returnType, Method parameterArray) {
+                protected ForJava7CapableVm(Method returnType, Method parameterArray) {
                     this.returnType = returnType;
                     this.parameterArray = parameterArray;
                 }
@@ -366,7 +366,7 @@ public interface JavaInstance {
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
-                    ForModernVm that = (ForModernVm) other;
+                    ForJava7CapableVm that = (ForJava7CapableVm) other;
                     return returnType.equals(that.returnType) && parameterArray.equals(that.parameterArray);
                 }
 
@@ -379,7 +379,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodType.Dispatcher.ForModernVm{" +
+                    return "JavaInstance.MethodType.Dispatcher.ForJava7CapableVm{" +
                             "returnType=" + returnType +
                             ", parameterArray=" + parameterArray +
                             '}';
@@ -435,7 +435,7 @@ public interface JavaInstance {
                 Class<?> methodHandleInfo = Class.forName("java.lang.invoke.MethodHandleInfo");
                 Class<?> methodType = JavaType.METHOD_TYPE.load();
                 try {
-                    dispatcher = new Dispatcher.ForModernVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
+                    dispatcher = new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
                             methodHandleInfo.getDeclaredMethod("getName"),
                             methodHandleInfo.getDeclaredMethod("getDeclaringClass"),
                             methodHandleInfo.getDeclaredMethod("getReferenceKind"),
@@ -446,7 +446,7 @@ public interface JavaInstance {
                 } catch (RuntimeException exception) {
                     throw exception;
                 } catch (Exception ignored) {
-                    dispatcher = new Dispatcher.ForIntermediateVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
+                    dispatcher = new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
                             methodHandleInfo.getDeclaredMethod("getName"),
                             methodHandleInfo.getDeclaredMethod("getDeclaringClass"),
                             methodHandleInfo.getDeclaredMethod("getReferenceKind"),
@@ -1040,7 +1040,7 @@ public interface JavaInstance {
              * A dispatcher for introspecting a {@code java.lang.invoke.MethodHandle} instance on a virtual machine that officially supports this
              * introspection, i.e. Java versions 8+.
              */
-            class ForModernVm extends AbstractBase {
+            class ForJava8CapableVm extends AbstractBase {
 
                 /**
                  * A reference to the {@code java.lang.invoke.MethodHandles.Lookup#revealDirect} method.
@@ -1059,14 +1059,14 @@ public interface JavaInstance {
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
                  * @param revealDirect      A reference to the {@code java.lang.invoke.MethodHandles.Lookup#revealDirect} method.
                  */
-                protected ForModernVm(Method publicLookup,
-                                      Method getName,
-                                      Method getDeclaringClass,
-                                      Method getReferenceKind,
-                                      Method getMethodType,
-                                      Method returnType,
-                                      Method parameterArray,
-                                      Method revealDirect) {
+                protected ForJava8CapableVm(Method publicLookup,
+                                            Method getName,
+                                            Method getDeclaringClass,
+                                            Method getReferenceKind,
+                                            Method getMethodType,
+                                            Method returnType,
+                                            Method parameterArray,
+                                            Method revealDirect) {
                     super(publicLookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray);
                     this.revealDirect = revealDirect;
                 }
@@ -1092,7 +1092,7 @@ public interface JavaInstance {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     if (!super.equals(other)) return false;
-                    ForModernVm that = (ForModernVm) other;
+                    ForJava8CapableVm that = (ForJava8CapableVm) other;
                     return revealDirect.equals(that.revealDirect);
                 }
 
@@ -1105,7 +1105,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodHandle.Dispatcher.ForModernVm{" +
+                    return "JavaInstance.MethodHandle.Dispatcher.ForJava8CapableVm{" +
                             "publicLookup=" + publicLookup +
                             ", getName=" + getName +
                             ", getDeclaringClass=" + getDeclaringClass +
@@ -1121,7 +1121,7 @@ public interface JavaInstance {
             /**
              * A dispatcher that extracts the information of a method handle by using private APIs that are available in Java 7+.
              */
-            class ForIntermediateVm extends AbstractBase implements PrivilegedAction<Dispatcher> {
+            class ForJava7CapableVm extends AbstractBase implements PrivilegedAction<Dispatcher> {
 
                 /**
                  * A reference to the {@code java.lang.invoke.MethodInfo} constructor.
@@ -1140,7 +1140,7 @@ public interface JavaInstance {
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
                  * @param methodInfo        A reference to the {@code java.lang.invoke.MethodInfo} constructor.
                  */
-                protected ForIntermediateVm(Method publicLookup,
+                protected ForJava7CapableVm(Method publicLookup,
                                             Method getName,
                                             Method getDeclaringClass,
                                             Method getReferenceKind,
@@ -1187,7 +1187,7 @@ public interface JavaInstance {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     if (!super.equals(other)) return false;
-                    ForIntermediateVm that = (ForIntermediateVm) other;
+                    ForJava7CapableVm that = (ForJava7CapableVm) other;
                     return methodInfo.equals(that.methodInfo);
                 }
 
@@ -1200,7 +1200,7 @@ public interface JavaInstance {
 
                 @Override
                 public String toString() {
-                    return "JavaInstance.MethodHandle.Dispatcher.ForIntermediateVm{" +
+                    return "JavaInstance.MethodHandle.Dispatcher.ForJava7CapableVm{" +
                             "publicLookup=" + publicLookup +
                             ", getName=" + getName +
                             ", getDeclaringClass=" + getDeclaringClass +

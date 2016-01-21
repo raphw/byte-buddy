@@ -24,7 +24,7 @@ public class JavaInstanceMethodHandleDispatcherTest {
     @Test
     public void testObjectProperties() throws Exception {
         final Iterator<Method> methods1 = Arrays.asList(Foo.class.getDeclaredMethods()).iterator();
-        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.Dispatcher.ForModernVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.Dispatcher.ForJava8CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods1.next();
@@ -32,7 +32,7 @@ public class JavaInstanceMethodHandleDispatcherTest {
         }).apply();
         final Iterator<Method> methods2 = Arrays.asList(Foo.class.getDeclaredMethods()).iterator();
         final Iterator<Constructor<?>> constructors2 = Arrays.asList(Foo.class.getDeclaredConstructors()).iterator();
-        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.Dispatcher.ForIntermediateVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
+        ObjectPropertyAssertion.of(JavaInstance.MethodHandle.Dispatcher.ForJava7CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
             @Override
             public Method create() {
                 return methods2.next();
