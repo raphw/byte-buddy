@@ -74,6 +74,16 @@ public class SuperCallBinderTest extends AbstractAnnotationBinderTest<SuperCall>
     }
 
     @Test
+    public void testConstructorIsNotInvokeable() throws Exception {
+        when(targetParameterType.represents(any(Class.class))).thenReturn(true);
+        when(source.isConstructor()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = SuperCall.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        verifyZeroInteractions(implementationTarget);
+        assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(SuperCall.Binder.class).apply();
     }

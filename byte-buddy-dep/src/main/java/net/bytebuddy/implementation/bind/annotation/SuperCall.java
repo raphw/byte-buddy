@@ -72,6 +72,8 @@ public @interface SuperCall {
             TypeDescription targetType = target.getType().asErasure();
             if (!targetType.represents(Runnable.class) && !targetType.represents(Callable.class) && !targetType.represents(Object.class)) {
                 throw new IllegalStateException("A super method call proxy can only be assigned to Runnable or Callable types: " + target);
+            } else if (source.isConstructor()) {
+                return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
             Implementation.SpecialMethodInvocation specialMethodInvocation = annotation.loadSilent().fallbackToDefault()
                     ? implementationTarget.invokeDominant(source.asSignatureToken())

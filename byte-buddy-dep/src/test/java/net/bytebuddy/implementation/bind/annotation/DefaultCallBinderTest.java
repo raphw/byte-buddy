@@ -113,6 +113,16 @@ public class DefaultCallBinderTest extends AbstractAnnotationBinderTest<DefaultC
     }
 
     @Test
+    public void testConstructorIsNotInvokeable() throws Exception {
+        when(targetParameterType.represents(any(Class.class))).thenReturn(true);
+        when(source.isConstructor()).thenReturn(true);
+        MethodDelegationBinder.ParameterBinding<?> parameterBinding = DefaultCall.Binder.INSTANCE
+                .bind(annotationDescription, source, target, implementationTarget, assigner);
+        verifyZeroInteractions(implementationTarget);
+        assertThat(parameterBinding.isValid(), is(false));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(DefaultCall.Binder.class).apply();
         ObjectPropertyAssertion.of(DefaultCall.Binder.DefaultMethodLocator.Implicit.class).apply();
