@@ -14,6 +14,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -132,6 +133,15 @@ public class TypeDescriptionGenericBuilderTest extends AbstractTypeDescriptionGe
     @Test(expected = IllegalArgumentException.class)
     public void testIncompatibleOwnerTypeWhenNonRequired() throws Exception {
         TypeDescription.Generic.Builder.rawType(Object.class, TypeDescription.Generic.OBJECT);
+    }
+
+    @Test
+    public void testExplicitOwnerTypeOfNonGenericType() throws Exception {
+        TypeDescription.Generic ownerType = TypeDescription.Generic.Builder.rawType(Bar.class).build();
+        TypeDescription.Generic typeDescription = TypeDescription.Generic.Builder.rawType(Bar.Inner.class, ownerType).build();
+        assertThat(typeDescription.getSort(), is(TypeDefinition.Sort.NON_GENERIC));
+        assertThat(typeDescription.represents(Bar.Inner.class), is(true));
+        assertThat(typeDescription.getOwnerType(), sameInstance(ownerType));
     }
 
     @Test

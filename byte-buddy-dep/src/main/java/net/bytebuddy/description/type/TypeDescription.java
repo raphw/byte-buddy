@@ -5950,7 +5950,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 TypeDescription declaringType = type.getDeclaringType();
                 if (declaringType == null && ownerType != null) {
                     throw new IllegalArgumentException(type + " does not have a declaring type: " + ownerType);
-                } else if (declaringType != null && (ownerType == null || !declaringType.equals(type))) {
+                } else if (declaringType != null && (ownerType == null || !declaringType.equals(ownerType.asErasure()))) {
                     throw new IllegalArgumentException(ownerType + " is not the declaring type of " + type);
                 }
                 return new Builder.OfNonGenericType(type, ownerType);

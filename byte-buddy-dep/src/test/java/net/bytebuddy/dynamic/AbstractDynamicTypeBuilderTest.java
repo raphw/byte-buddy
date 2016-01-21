@@ -24,7 +24,10 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.test.utility.*;
+import net.bytebuddy.test.utility.CallTraceable;
+import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -885,17 +888,36 @@ public abstract class AbstractDynamicTypeBuilderTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @SuppressWarnings("unchecked")
-    @Ignore("Seems correctly resolved in the class file")
+    public void testAnnotationTypeOnNestedType() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Field field = createPlain()
+                .defineField(FOO, TypeDescription.Generic.Builder.rawType(new TypeDescription.ForLoadedType(Nested.Inner.class),
+                        TypeDescription.Generic.Builder.rawType(Nested.class).build())
+                        .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
+                        .build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded()
+                .getDeclaredField(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    @Ignore("The Java reflection API does not currently support nested generic types")
     public void testAnnotationTypeOnNestedParameterizedType() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Field field = createPlain()
-                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(Nested.Inner.class),
-                        TypeDescription.Generic.Builder.parameterizedType(Nested.class, Void.class).build(),
+                .defineField(FOO, TypeDescription.Generic.Builder.parameterizedType(new TypeDescription.ForLoadedType(GenericNested.Inner.class),
+                        TypeDescription.Generic.Builder.parameterizedType(GenericNested.class, Void.class).build(),
                         Collections.<TypeDefinition>emptyList())
                         .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, INTEGER_VALUE).build())
                         .build())
-                .visit(DebuggingWrapper.makeDefault())
                 .make()
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
@@ -1050,6 +1072,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         }
     }
 
+    @SuppressWarnings("unused")
     private static class Holder<foo> {
 
         List<?> list;
@@ -1057,7 +1080,16 @@ public abstract class AbstractDynamicTypeBuilderTest {
         List<foo> fooList;
     }
 
-    public static class Nested<T> {
+    @SuppressWarnings("unused")
+    public static class Nested {
+
+        public class Inner {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class GenericNested<T> {
 
         public class Inner {
             /* empty */
