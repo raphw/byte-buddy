@@ -3342,12 +3342,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public AnnotationReader ofOwnerType() {
-                    return NoOp.INSTANCE;
+                    return ForOwnerType.of(this);
                 }
 
                 @Override
                 public AnnotationReader ofOuterClass() {
-                    return NoOp.INSTANCE;
+                    return ForOwnerType.of(this);
                 }
 
                 @Override
@@ -3834,6 +3834,71 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 @Override
                 public String toString() {
                     return "TypeDescription.Generic.AnnotationReader.ForComponentType{"
+                            + "annotationReader=" + annotationReader
+                            + '}';
+                }
+            }
+
+            class ForOwnerType extends Delegator.Chained {
+
+                /**
+                 * The {@code java.lang.reflect.AnnotatedType#getAnnotatedOwnerType} method.
+                 */
+                private static final Method GET_ANNOTATED_OWNER_TYPE;
+
+                /*
+                 * Reads the {@code java.lang.reflect.AnnotatedType#getAnnotatedOwnerType} method.
+                 */
+                static {
+                    Method getAnnotatedOwnerType;
+                    try {
+                        getAnnotatedOwnerType = Class.forName("java.lang.reflect.AnnotatedType").getDeclaredMethod("getAnnotatedOwnerType");
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception exception) {
+                        getAnnotatedOwnerType = null;
+                    }
+                    GET_ANNOTATED_OWNER_TYPE = getAnnotatedOwnerType;
+                }
+
+                /**
+                 * Creates a chained annotation reader for reading an owner type if it is accessible.
+                 *
+                 * @param annotationReader The annotation reader from which to delegate.
+                 * @return An annotation reader for the resolved type's owner type.
+                 */
+                private static AnnotationReader of(AnnotationReader annotationReader) {
+                    return GET_ANNOTATED_OWNER_TYPE == null
+                            ? NoOp.INSTANCE
+                            : new ForOwnerType(annotationReader);
+                }
+
+                /**
+                 * Creates a chained annotation reader for reading an owner type if it is accessible.
+                 *
+                 * @param annotationReader The annotation reader from which to delegate.
+                 */
+                protected ForOwnerType(AnnotationReader annotationReader) {
+                    super(annotationReader);
+                }
+
+                @Override
+                protected AnnotatedElement resolve(AnnotatedElement annotatedElement) {
+                    try {
+                        AnnotatedElement annotatedOwnerType = (AnnotatedElement) GET_ANNOTATED_OWNER_TYPE.invoke(annotatedElement);
+                        return annotatedOwnerType == null
+                                ? NoOp.INSTANCE
+                                : annotatedOwnerType;
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedType#getAnnotatedOwnerType", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedType#getAnnotatedOwnerType", exception.getCause());
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.AnnotationReader.ForOwnerType{"
                             + "annotationReader=" + annotationReader
                             + '}';
                 }

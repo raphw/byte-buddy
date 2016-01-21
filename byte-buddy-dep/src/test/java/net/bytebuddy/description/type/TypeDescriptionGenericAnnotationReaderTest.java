@@ -77,6 +77,7 @@ public class TypeDescriptionGenericAnnotationReaderTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.NoOp.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForComponentType.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForOwnerType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForTypeArgument.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForTypeVariableBoundType.class).apply();
         ObjectPropertyAssertion.of(TypeDescription.Generic.AnnotationReader.ForWildcardLowerBoundType.class).apply();
