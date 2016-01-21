@@ -3862,7 +3862,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
 
                 /**
-                 * Creates a chained annotation reader for reading an owner type if it is accessible.
+                 * Creates a chained annotation reader for reading an owner type if it is accessible. This method checks if annotated
+                 * owner types are available on the executing VM (Java 9+). If this is not the case, a non-operational annotation
+                 * reader is returned.
                  *
                  * @param annotationReader The annotation reader from which to delegate.
                  * @return An annotation reader for the resolved type's owner type.
