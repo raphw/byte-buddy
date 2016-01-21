@@ -377,7 +377,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                  * @param index      The index of the parameter.
                  * @return The parameter for the given index.
                  */
-                private Object getParameter(Object executable, int index) {
+                private Object getParameter(AccessibleObject executable, int index) {
                     try {
                         return Array.get(getParameters.invoke(executable), index);
                     } catch (IllegalAccessException exception) {
