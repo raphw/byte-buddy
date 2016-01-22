@@ -4,6 +4,7 @@ import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -50,6 +51,15 @@ public class ByteBuddyAgentAttachmentProviderTest {
                 return types.next();
             }
         }).apply();
+        ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Accessor.Simple.Dispatcher.ForLegacyVm.class).apply();
+        final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
+        ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Accessor.Simple.Dispatcher.ForJava9CapableVm.class)
+                .create(new ObjectPropertyAssertion.Creator<Method>() {
+                    @Override
+                    public Method create() {
+                        return methods.next();
+                    }
+                }).apply();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Accessor.Unavailable.class).apply();
     }
 }

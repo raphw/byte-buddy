@@ -7,6 +7,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
@@ -389,6 +391,11 @@ public class ByteBuddyAgent {
             class Simple implements Accessor {
 
                 /**
+                 * A dispatcher for reading the current process's process id.
+                 */
+                private static final Dispatcher DISPATCHER = Dispatcher.ForJava9CapableVm.make();
+
+                /**
                  * The {@code com.sun.tools.attach.VirtualMachine} class.
                  */
                 private final Class<?> virtualMachineType;
@@ -431,11 +438,7 @@ public class ByteBuddyAgent {
                  * @return An appropriate accessor.
                  */
                 protected static Accessor of(Class<?> virtualMachineType) {
-                    String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
-                    int processIdIndex = runtimeName.indexOf('@');
-                    return processIdIndex == -1
-                            ? Unavailable.INSTANCE
-                            : new Simple(virtualMachineType, runtimeName.substring(0, processIdIndex));
+                    return DISPATCHER.resolve(virtualMachineType);
                 }
 
                 @Override
@@ -475,6 +478,122 @@ public class ByteBuddyAgent {
                             "virtualMachineType=" + virtualMachineType +
                             ", processId='" + processId + '\'' +
                             '}';
+                }
+
+                /**
+                 * A dispatcher for reading a process id of the current process.
+                 */
+                protected interface Dispatcher {
+
+                    /**
+                     * Resolves an accessor for the supplied virtual machine type.
+                     *
+                     * @param virtualMachineType The virtual machine type to attach to.
+                     * @return A suitable accessor.
+                     */
+                    Accessor resolve(Class<?> virtualMachineType);
+
+                    /**
+                     * A dispatcher for a legacy VM that cannot read the current process's id via a process handle.
+                     */
+                    enum ForLegacyVm implements Dispatcher {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        @Override
+                        public Accessor resolve(Class<?> virtualMachineType) {
+                            String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
+                            int processIdIndex = runtimeName.indexOf('@');
+                            return processIdIndex == -1
+                                    ? Unavailable.INSTANCE
+                                    : new Simple(virtualMachineType, runtimeName.substring(0, processIdIndex));
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "ByteBuddyAgent.AttachmentProvider.Accessor.Simple.Dispatcher.ForLegacyVm." + name();
+                        }
+                    }
+
+                    /**
+                     * A dispatcher for reading a process id of the current process via a process handle.
+                     */
+                    class ForJava9CapableVm implements Dispatcher {
+
+                        /**
+                         * The {@code java.lang.ProcessHandle#current()} method.
+                         */
+                        private final Method current;
+
+                        /**
+                         * The {@code java.lang.ProcessHandle#getPid()} method.
+                         */
+                        private final Method getPid;
+
+                        /**
+                         * Creates a new Java 9 capable dispatcher for reading the current process's id.
+                         *
+                         * @param current The {@code java.lang.ProcessHandle#current()} method.
+                         * @param getPid  The {@code java.lang.ProcessHandle#getPid()} method.
+                         */
+                        protected ForJava9CapableVm(Method current, Method getPid) {
+                            this.current = current;
+                            this.getPid = getPid;
+                        }
+
+                        /**
+                         * Attempts to create a dispatcher for a Java 9 VM and falls back to a legacy dispatcher
+                         * if this is not possible.
+                         *
+                         * @return A dispatcher for the current VM.
+                         */
+                        public static Dispatcher make() {
+                            try {
+                                Class<?> processHandle = Class.forName("java.lang.ProcessHandle");
+                                return new ForJava9CapableVm(processHandle.getDeclaredMethod("current"),
+                                        processHandle.getDeclaredMethod("getPid"));
+                            } catch (Exception ignored) {
+                                return ForLegacyVm.INSTANCE;
+                            }
+                        }
+
+                        @Override
+                        public Accessor resolve(Class<?> virtualMachineType) {
+                            try {
+                                return new Simple(virtualMachineType, (String) getPid.invoke(current.invoke(STATIC_MEMBER)));
+                            } catch (IllegalAccessException exception) {
+                                throw new UnsupportedOperationException("Not yet implemented");
+                            } catch (InvocationTargetException exception) {
+                                throw new UnsupportedOperationException("Not yet implemented");
+                            }
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            ForJava9CapableVm that = (ForJava9CapableVm) other;
+                            return current.equals(that.current) && getPid.equals(that.getPid);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = current.hashCode();
+                            result = 31 * result + getPid.hashCode();
+                            return result;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "ByteBuddyAgent.AttachmentProvider.Accessor.Simple.Dispatcher.ForJava9CapableVm{" +
+                                    "current=" + current +
+                                    ", getPid=" + getPid +
+                                    '}';
+                        }
+                    }
                 }
             }
         }
