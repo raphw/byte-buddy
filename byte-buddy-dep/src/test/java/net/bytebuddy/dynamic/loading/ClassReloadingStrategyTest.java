@@ -66,7 +66,7 @@ public class ClassReloadingStrategyTest {
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
-        String randomName = RandomString.make();
+        String randomName = FOO + RandomString.make();
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
