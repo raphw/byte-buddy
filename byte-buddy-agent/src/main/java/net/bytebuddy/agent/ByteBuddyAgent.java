@@ -552,9 +552,8 @@ public class ByteBuddyAgent {
                          */
                         public static Dispatcher make() {
                             try {
-                                Class<?> processHandle = Class.forName("java.lang.ProcessHandle");
-                                return new ForJava9CapableVm(processHandle.getDeclaredMethod("current"),
-                                        processHandle.getDeclaredMethod("getPid"));
+                                return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getDeclaredMethod("current"),
+                                        Class.forName("java.lang.ProcessHandle").getDeclaredMethod("getPid"));
                             } catch (RuntimeException exception) {
                                 throw exception;
                             } catch (Exception ignored) {
