@@ -23,7 +23,6 @@ import org.objectweb.asm.MethodVisitor;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandleInfo;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.util.ArrayList;
@@ -40,81 +39,32 @@ public class LambdaMetaFactory {
 
     private static final AtomicInteger lambdaNameCounter = new AtomicInteger();
 
-    Class<?> targetClass;               // The class calling the meta-factory via invokedynamic "class X"
-
-    MethodType invokedType;             // The type of the invoked method "(CC)II"
-
-    Class<?> samBase;                   // The type of the returned instance "interface JJ"
-
-    String samMethodName;               // Name of the SAM method "foo"
-
-    MethodType samMethodType;           // Type of the SAM method "(Object)Object"
-
-    MethodHandle implMethod;            // Raw method handle for the implementation method
-
-    MethodHandleInfo implInfo;          // Info about the implementation method handle "MethodHandleInfo[5 CC.impl(int)String]"
-
-    int implKind;                       // Invocation kind for implementation "5"=invokevirtual
-
-    boolean implIsInstanceMethod;       // Is the implementation an instance method "true"
-
-    Class<?> implDefiningClass;         // Type defining the implementation "class CC"
-
-    MethodType implMethodType;          // Type of the implementation method "(int)String"
-
-    MethodType instantiatedMethodType;  // Instantiated erased functional interface method type "(Integer)Object"
-
-    boolean isSerializable;             // Should the returned instance be serializable
-
-    Class<?>[] markerInterfaces;        // Additional marker interfaces to be implemented
-
-    MethodType[] additionalBridges;     // Signatures of additional methods to bridge
-
     public byte[] metaFactory(MethodHandles.Lookup caller,
                               String invokedName,
                               MethodType invokedType,
                               MethodType samMethodType,
                               MethodHandle implMethod,
                               MethodType instantiatedMethodType) throws Exception {
-        this.targetClass = caller.lookupClass();
 
-        this.samBase = invokedType.returnType();
-
-        this.samMethodName = samMethodName;
-        this.samMethodType = samMethodType;
-
-        this.implMethod = implMethod;
-        this.implInfo = caller.revealDirect(implMethod);
-        this.implKind = implInfo.getReferenceKind();
-        this.implIsInstanceMethod =
-                implKind == MethodHandleInfo.REF_invokeVirtual ||
-                        implKind == MethodHandleInfo.REF_invokeSpecial ||
-                        implKind == MethodHandleInfo.REF_invokeInterface;
-        this.implDefiningClass = implInfo.getDeclaringClass();
-        this.implMethodType = implInfo.getMethodType();
-        this.instantiatedMethodType = instantiatedMethodType;
-        this.isSerializable = isSerializable;
-        this.markerInterfaces = markerInterfaces;
-        this.additionalBridges = additionalBridges;
-
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(invokedType);
+        JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(invokedType);
+        JavaInstance.MethodType lambdaMethodType = JavaInstance.MethodType.of(samMethodType);
 
         DynamicType.Builder<?> builder = new ByteBuddy()
-                .subclass(samBase)
+                .subclass(lambdaMethodType.getReturnType())
                 .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL)
-                .implement(markerInterfaces)
-                .name(targetClass.getName() + "$$Lambda$" + lambdaNameCounter.incrementAndGet());
+                .implement(factoryMethodType.getReturnType())
+                .name(caller.lookupClass().getName() + "$$Lambda$" + lambdaNameCounter.incrementAndGet());
         int index = 0;
-        for (TypeDescription parameterTypes : methodType.getParameterTypes()) {
+        for (TypeDescription parameterTypes : factoryMethodType.getParameterTypes()) {
             builder = builder.defineField("arg$" + index++, parameterTypes, Visibility.PUBLIC, FieldManifestation.FINAL);
         }
-        if (!methodType.getParameterTypes().isEmpty()) {
-            builder = builder.defineMethod("get$Lambda", methodType.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
+        if (!factoryMethodType.getParameterTypes().isEmpty()) {
+            builder = builder.defineMethod("get$Lambda", factoryMethodType.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
                     .intercept(new FactoryImplementation());
         }
         byte[] classFile = builder.defineConstructor(Visibility.PRIVATE)
                 .intercept(SuperMethodCall.INSTANCE.andThen(new ConstructorImplementation()))
-                .method(named(invokedName).and(takesArguments(methodType.getParameterTypes())).and(returns(methodType.getReturnType())))
+                .method(named(invokedName).and(takesArguments(factoryMethodType.getParameterTypes())).and(returns(factoryMethodType.getReturnType())))
                 .intercept(new LambdaMethodImplementation())
                 // Serialization
                 .make()
