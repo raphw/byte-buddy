@@ -405,7 +405,7 @@ public @interface Morph {
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 TypeDescription forwardingType = implementationContext.register(this);
                 return new Compound(
-                        TypeCreation.forType(forwardingType),
+                        TypeCreation.of(forwardingType),
                         Duplication.SINGLE,
                         specialMethodInvocation.getMethodDescription().isStatic()
                                 ? Trivial.INSTANCE

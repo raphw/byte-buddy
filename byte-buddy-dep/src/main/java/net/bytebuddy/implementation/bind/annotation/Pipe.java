@@ -315,7 +315,7 @@ public @interface Pipe {
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 TypeDescription forwardingType = implementationContext.register(this);
                 return new Compound(
-                        TypeCreation.forType(forwardingType),
+                        TypeCreation.of(forwardingType),
                         Duplication.SINGLE,
                         MethodVariableAccess.allArgumentsOf(sourceMethod),
                         MethodInvocation.invoke(forwardingType.getDeclaredMethods().filter(isConstructor()).getOnly())

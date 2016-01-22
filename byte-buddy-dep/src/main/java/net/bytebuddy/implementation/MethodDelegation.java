@@ -964,7 +964,7 @@ public class MethodDelegation implements Implementation.Composable {
             @Override
             public StackManipulation getPreparingStackAssignment(TypeDescription instrumentedType) {
                 return new StackManipulation.Compound(
-                        TypeCreation.forType(typeDescription),
+                        TypeCreation.of(typeDescription),
                         Duplication.SINGLE);
             }
 

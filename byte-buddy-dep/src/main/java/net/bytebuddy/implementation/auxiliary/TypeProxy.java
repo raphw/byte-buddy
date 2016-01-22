@@ -161,7 +161,7 @@ public class TypeProxy implements AuxiliaryType {
             TypeDescription abstractMethodError = new TypeDescription.ForLoadedType(AbstractMethodError.class);
             MethodDescription constructor = abstractMethodError.getDeclaredMethods()
                     .filter(isConstructor().and(takesArguments(0))).getOnly();
-            implementation = new Compound(TypeCreation.forType(abstractMethodError),
+            implementation = new Compound(TypeCreation.of(abstractMethodError),
                     Duplication.SINGLE,
                     MethodInvocation.invoke(constructor),
                     Throw.INSTANCE);
@@ -477,7 +477,7 @@ public class TypeProxy implements AuxiliaryType {
                 constructorValue[index++] = DefaultValue.of(parameterType);
             }
             return new Compound(
-                    TypeCreation.forType(proxyType),
+                    TypeCreation.of(proxyType),
                     Duplication.SINGLE,
                     new Compound(constructorValue),
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor().and(takesArguments(constructorParameters))).getOnly()),
@@ -671,7 +671,7 @@ public class TypeProxy implements AuxiliaryType {
                             true,
                             serializableProxy));
             return new Compound(
-                    TypeCreation.forType(proxyType),
+                    TypeCreation.of(proxyType),
                     Duplication.SINGLE,
                     MethodInvocation.invoke(proxyType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     Duplication.SINGLE,
