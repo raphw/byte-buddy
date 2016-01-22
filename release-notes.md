@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 21. January 2016: version 1.0.3
+
+- Added support for Java 9 owner type annotations.
+- Fixed bug in type builder validation that prohibited annotations on owner types for non-generic types.
+- Added additional element matchers for matching an index parameter type.
+
 ### 20. January 2016: version 1.0.2
 
 - Fixed resolution of type paths for inner classes.

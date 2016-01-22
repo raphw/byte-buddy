@@ -3839,6 +3839,9 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 }
             }
 
+            /**
+             *  A chained annotation reader for reading an owner type.
+             */
             class ForOwnerType extends Delegator.Chained {
 
                 /**

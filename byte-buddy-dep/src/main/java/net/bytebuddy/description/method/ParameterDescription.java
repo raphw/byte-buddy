@@ -1,5 +1,6 @@
 package net.bytebuddy.description.method;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.ByteCodeElement;
 import net.bytebuddy.description.ModifierReviewable;
 import net.bytebuddy.description.NamedElement;
@@ -377,7 +378,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
                  * @param index      The index of the parameter.
                  * @return The parameter for the given index.
                  */
-                private Object getParameter(Object executable, int index) {
+                private Object getParameter(AccessibleObject executable, int index) {
                     try {
                         return Array.get(getParameters.invoke(executable), index);
                     } catch (IllegalAccessException exception) {
@@ -467,16 +468,19 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             }
 
             @Override
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by findbugs")
             public MethodDescription.InDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedMethod(executable);
             }
 
             @Override
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by findbugs")
             public TypeDescription.Generic getType() {
                 return new TypeDescription.Generic.LazyProjection.OfMethodParameter(executable, index, executable.getParameterTypes());
             }
 
             @Override
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by findbugs")
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
             }
@@ -498,16 +502,19 @@ public interface ParameterDescription extends AnnotatedCodeElement,
             }
 
             @Override
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by findbugs")
             public MethodDescription.InDefinedShape getDeclaringMethod() {
                 return new MethodDescription.ForLoadedConstructor(executable);
             }
 
             @Override
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by findbugs")
             public TypeDescription.Generic getType() {
                 return new TypeDescription.Generic.LazyProjection.OfConstructorParameter(executable, index, executable.getParameterTypes());
             }
 
             @Override
+            @SuppressFBWarnings(value = "BC_UNCONFIRMED_CAST", justification = "The implicit field type casting is not understood by findbugs")
             public AnnotationList getDeclaredAnnotations() {
                 return new AnnotationList.ForLoadedAnnotations(executable.getParameterAnnotations()[index]);
             }

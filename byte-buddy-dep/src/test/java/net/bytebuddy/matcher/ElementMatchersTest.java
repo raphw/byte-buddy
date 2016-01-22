@@ -671,6 +671,8 @@ public class ElementMatchersTest {
                 .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(true));
         assertThat(ElementMatchers.takesGenericArgument(0, Exception.class)
                 .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
+        assertThat(ElementMatchers.takesGenericArgument(1, GenericMethodType.class.getTypeParameters()[0])
+                .matches(new MethodDescription.ForLoadedMethod(GenericMethodType.class.getDeclaredMethod(FOO, Exception.class))), is(false));
     }
 
     @Test
@@ -682,6 +684,8 @@ public class ElementMatchersTest {
         assertThat(ElementMatchers.takesArgument(1, int.class)
                 .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(true));
         assertThat(ElementMatchers.takesArgument(1, Integer.class)
+                .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
+        assertThat(ElementMatchers.takesArgument(2, int.class)
                 .matches(new MethodDescription.ForLoadedMethod(TakesArguments.class.getDeclaredMethod(BAR, String.class, int.class))), is(false));
     }
 
