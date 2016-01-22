@@ -563,7 +563,7 @@ public class ByteBuddyAgent {
                         @Override
                         public Accessor resolve(Class<?> virtualMachineType) {
                             try {
-                                return new Simple(virtualMachineType, (String) getPid.invoke(current.invoke(STATIC_MEMBER)));
+                                return new Simple(virtualMachineType, getPid.invoke(current.invoke(STATIC_MEMBER)).toString());
                             } catch (IllegalAccessException exception) {
                                 throw new UnsupportedOperationException("Not yet implemented");
                             } catch (InvocationTargetException exception) {
