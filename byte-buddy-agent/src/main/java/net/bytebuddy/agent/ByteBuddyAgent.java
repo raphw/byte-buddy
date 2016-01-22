@@ -555,6 +555,8 @@ public class ByteBuddyAgent {
                                 Class<?> processHandle = Class.forName("java.lang.ProcessHandle");
                                 return new ForJava9CapableVm(processHandle.getDeclaredMethod("current"),
                                         processHandle.getDeclaredMethod("getPid"));
+                            } catch (RuntimeException exception) {
+                                throw exception;
                             } catch (Exception ignored) {
                                 return ForLegacyVm.INSTANCE;
                             }
