@@ -8,6 +8,7 @@ import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import net.bytebuddy.utility.RandomString;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -56,6 +57,27 @@ public class ClassReloadingStrategyTest {
         assertThat(foo.foo(), is(BAR));
         classReloadingStrategy.reset(Foo.class);
         assertThat(foo.foo(), is(FOO));
+    }
+
+    @Test
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    public void testFromAgentClassWithAuxiliaryReloadingStrategy() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        Foo foo = new Foo();
+        assertThat(foo.foo(), is(FOO));
+        ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.fromInstalledAgent();
+        String randomName = RandomString.make();
+        new ByteBuddy()
+                .redefine(Foo.class)
+                .method(named(FOO))
+                .intercept(FixedValue.value(BAR))
+                .make()
+                .include(new ByteBuddy().subclass(Object.class).name(randomName).make())
+                .load(Foo.class.getClassLoader(), classReloadingStrategy);
+        assertThat(foo.foo(), is(BAR));
+        classReloadingStrategy.reset(Foo.class);
+        assertThat(foo.foo(), is(FOO));
+        assertThat(Class.forName(randomName), notNullValue(Class.class));
     }
 
     @Test
