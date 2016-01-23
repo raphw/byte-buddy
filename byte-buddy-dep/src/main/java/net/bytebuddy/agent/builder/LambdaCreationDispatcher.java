@@ -22,55 +22,62 @@ import net.bytebuddy.utility.JavaInstance;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
-public class LambdaMetaFactory {
+public class LambdaCreationDispatcher {
 
-    private static final Set<ClassFileTransformer> CLASS_FILE_TRANSFORMERS = new LinkedHashSet<ClassFileTransformer>();
+    private static final String LAMBDA_FACTORY = "get$Lambda";
+
+    private static final String FIELD_PREFIX = "arg$";
+
+    private static final String LAMBDA_TYPE_INFIX = "$$Lambda$";
+
+    private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
     private static final AtomicInteger lambdaNameCounter = new AtomicInteger();
 
-    public byte[] metaFactory(MethodHandles.Lookup caller,
-                              String invokedName,
-                              MethodType invokedType,
-                              MethodType samMethodType,
-                              MethodHandle implMethod,
-                              MethodType instantiatedMethodType) throws Exception {
-
-        JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(invokedType);
-        JavaInstance.MethodType lambdaMethodType = JavaInstance.MethodType.of(samMethodType);
-
+    public static byte[] createClass(Object callerClassLookup,
+                                     Class<?> lookupClass,
+                                     String functionalMethodName,
+                                     Object functionalMethodType,
+                                     Object expectedMethodType,
+                                     Object targetMethodHandle,
+                                     Set<ClassFileTransformer> classFileTransformers) throws Exception {
+        JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(expectedMethodType);
+        JavaInstance.MethodType lambdaMethodType = JavaInstance.MethodType.of(functionalMethodType);
+        JavaInstance.MethodHandle lambdaImplementationHandle = JavaInstance.MethodHandle.of(targetMethodHandle, callerClassLookup);
+        String lambdaClassName = lookupClass.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
         DynamicType.Builder<?> builder = new ByteBuddy()
                 .subclass(lambdaMethodType.getReturnType())
                 .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL)
                 .implement(factoryMethodType.getReturnType())
-                .name(caller.lookupClass().getName() + "$$Lambda$" + lambdaNameCounter.incrementAndGet());
+                .name(lambdaClassName);
         int index = 0;
         for (TypeDescription parameterTypes : factoryMethodType.getParameterTypes()) {
-            builder = builder.defineField("arg$" + index++, parameterTypes, Visibility.PUBLIC, FieldManifestation.FINAL);
+            builder = builder.defineField(FIELD_PREFIX + index++, parameterTypes, Visibility.PUBLIC, FieldManifestation.FINAL);
         }
         if (!factoryMethodType.getParameterTypes().isEmpty()) {
-            builder = builder.defineMethod("get$Lambda", factoryMethodType.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
+            builder = builder.defineMethod(LAMBDA_FACTORY, factoryMethodType.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
                     .intercept(new FactoryImplementation());
         }
         byte[] classFile = builder.defineConstructor(Visibility.PRIVATE)
                 .intercept(SuperMethodCall.INSTANCE.andThen(new ConstructorImplementation()))
-                .method(named(invokedName).and(takesArguments(factoryMethodType.getParameterTypes())).and(returns(factoryMethodType.getReturnType())))
-                .intercept(new LambdaMethodImplementation())
+                .method(named(functionalMethodName).and(takesArguments(factoryMethodType.getParameterTypes())).and(returns(factoryMethodType.getReturnType())))
+                .intercept(new LambdaMethodImplementation(lambdaImplementationHandle))
                 // Serialization
                 .make()
                 .getBytes();
-        for (ClassFileTransformer classFileTransformer : CLASS_FILE_TRANSFORMERS) {
-            byte[] transformedClassFile = classFileTransformer.transform(null, null, null, null, classFile);
+        for (ClassFileTransformer classFileTransformer : classFileTransformers) {
+            byte[] transformedClassFile = classFileTransformer.transform(lookupClass.getClassLoader(),
+                    lambdaClassName.replace('.', '/'),
+                    NOT_PREVIOUSLY_DEFINED,
+                    lookupClass.getProtectionDomain(),
+                    classFile);
             classFile = transformedClassFile == null
                     ? classFile
                     : transformedClassFile;
@@ -100,17 +107,17 @@ public class LambdaMetaFactory {
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                List<StackManipulation> fieldAssignment = new ArrayList<StackManipulation>(instrumentedType.getDeclaredFields().size());
+                List<StackManipulation> fieldAssignments = new ArrayList<StackManipulation>(instrumentedType.getDeclaredFields().size() * 3);
                 List<FieldDescription.InDefinedShape> fieldDescriptions = instrumentedType.getDeclaredFields();
                 for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
-                    fieldAssignment.add(new StackManipulation.Compound(
-                            MethodVariableAccess.REFERENCE.loadOffset(0),
-                            MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()),
-                            FieldAccess.forField(fieldDescriptions.get(parameterDescription.getIndex())).putter()
-                    ));
+                    fieldAssignments.add(MethodVariableAccess.REFERENCE.loadOffset(0));
+                    fieldAssignments.add(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()));
+                    fieldAssignments.add(FieldAccess.forField(fieldDescriptions.get(parameterDescription.getIndex())).putter());
                 }
-                return new Size(new StackManipulation.Compound(fieldAssignment).apply(methodVisitor, implementationContext)
-                        .getMaximalSize(), instrumentedMethod.getStackSize());
+                return new Size(new StackManipulation.Compound(
+                        new StackManipulation.Compound(fieldAssignments),
+                        MethodReturn.VOID
+                ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
         }
     }
@@ -150,9 +157,15 @@ public class LambdaMetaFactory {
 
     private static class LambdaMethodImplementation implements Implementation {
 
+        private final JavaInstance.MethodHandle lambdaImplementationHandle;
+
+        public LambdaMethodImplementation(JavaInstance.MethodHandle lambdaImplementationHandle) {
+            this.lambdaImplementationHandle = lambdaImplementationHandle;
+        }
+
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(implementationTarget.getInstrumentedType());
+            return new Appender(lambdaImplementationHandle.asMethodDescription(), implementationTarget.getInstrumentedType().getDeclaredFields());
         }
 
         @Override
@@ -162,15 +175,28 @@ public class LambdaMetaFactory {
 
         private static class Appender implements ByteCodeAppender {
 
-            private final TypeDescription instrumentedType;
+            private final MethodDescription lambdaDispatcherMethod;
 
-            public Appender(TypeDescription instrumentedType) {
-                this.instrumentedType = instrumentedType;
+            private final List<FieldDescription.InDefinedShape> declaredFields;
+
+            public Appender(MethodDescription lambdaDispatcherMethod, List<FieldDescription.InDefinedShape> declaredFields) {
+                this.lambdaDispatcherMethod = lambdaDispatcherMethod;
+                this.declaredFields = declaredFields;
             }
 
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                return null;
+                List<StackManipulation> fieldAccess = new ArrayList<StackManipulation>(declaredFields.size() * 2);
+                for (FieldDescription.InDefinedShape fieldDescription : declaredFields) {
+                    fieldAccess.add(MethodVariableAccess.REFERENCE.loadOffset(0));
+                    fieldAccess.add(FieldAccess.forField(fieldDescription).getter());
+                }
+                return new Size(new StackManipulation.Compound(
+                        new StackManipulation.Compound(fieldAccess),
+                        MethodVariableAccess.allArgumentsOf(lambdaDispatcherMethod),
+                        MethodInvocation.invoke(lambdaDispatcherMethod),
+                        MethodReturn.returning(lambdaDispatcherMethod.getReturnType().asErasure())
+                ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
         }
     }
