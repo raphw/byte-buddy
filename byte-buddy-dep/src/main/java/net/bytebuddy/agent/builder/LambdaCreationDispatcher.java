@@ -47,6 +47,7 @@ public class LambdaCreationDispatcher {
                                      Object functionalMethodType,
                                      Object expectedMethodType,
                                      Object targetMethodHandle,
+                                     boolean serializable, // TODO: Determine
                                      Set<ClassFileTransformer> classFileTransformers) throws Exception {
         JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(expectedMethodType);
         JavaInstance.MethodType lambdaMethodType = JavaInstance.MethodType.of(functionalMethodType);
@@ -69,7 +70,7 @@ public class LambdaCreationDispatcher {
                 .intercept(SuperMethodCall.INSTANCE.andThen(new ConstructorImplementation()))
                 .method(named(functionalMethodName).and(takesArguments(factoryMethodType.getParameterTypes())).and(returns(factoryMethodType.getReturnType())))
                 .intercept(new LambdaMethodImplementation(lambdaImplementationHandle))
-                // Serialization
+                // TODO: Serialization
                 .make()
                 .getBytes();
         for (ClassFileTransformer classFileTransformer : classFileTransformers) {
