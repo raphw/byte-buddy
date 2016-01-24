@@ -2025,6 +2025,25 @@ public interface AgentBuilder {
             this.transformation = transformation;
         }
 
+        public static boolean removeLambdaTransformer(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
+            try {
+                @SuppressWarnings("unchecked")
+                Map<ClassFileTransformer, Class<?>> classFileTransformers = ((Map<ClassFileTransformer, Class<?>>) ClassLoader.getSystemClassLoader()
+                        .loadClass(LambdaFactory.class.getName())
+                        .getDeclaredField("CLASS_FILE_TRANSFORMERS")
+                        .get(null));
+                try {
+                    return classFileTransformers.remove(classFileTransformer) != null;
+                } finally {
+                    if (classFileTransformers.isEmpty()) {
+                        ClassReloadingStrategy.of(instrumentation).reset(Class.forName("java.lang.invoke.LambdaMetafactory"));
+                    }
+                }
+            } catch (Exception exception) {
+                throw new IllegalStateException("Cannot rest lambda meta factory", exception);
+            }
+        }
+
         @Override
         public Identified type(RawMatcher matcher) {
             return new Matched(matcher, Transformer.NoOp.INSTANCE);
@@ -2206,7 +2225,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder enableLambdaInstrumentation(boolean enable) {
+        public AgentBuilder enableLambdaInstrumentation(boolean enabled) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2216,7 +2235,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
-                    enable
+                    enabled
                             ? LambdaInstrumentationStrategy.ENABLED
                             : LambdaInstrumentationStrategy.DISABLED,
                     transformation);
@@ -2625,7 +2644,7 @@ public interface AgentBuilder {
                     return IGNORE_ORIGINAL;
                 }
 
-                void foo () {
+                void foo() {
                     Object o = null;
                     System.out.println(o);
                 }
