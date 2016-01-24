@@ -167,6 +167,10 @@ public interface ClassInjector {
             this.forbidExisting = forbidExisting;
         }
 
+        public static ClassInjector ofSystemClassLoader() {
+            return new UsingReflection(ClassLoader.getSystemClassLoader());
+        }
+
         @Override
         public Map<TypeDescription, Class<?>> inject(Map<? extends TypeDescription, byte[]> types) {
             synchronized (classLoader) {

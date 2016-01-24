@@ -2,6 +2,7 @@ package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -22,7 +23,10 @@ import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
 import java.io.File;
 import java.io.PrintStream;
@@ -2237,6 +2241,7 @@ public interface AgentBuilder {
             if (nativeMethodStrategy.isEnabled(instrumentation)) {
                 instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
             }
+            lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
             if (redefinitionStrategy.isEnabled()) {
                 RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
@@ -2445,19 +2450,177 @@ public interface AgentBuilder {
 
             ENABLED {
                 @Override
-                protected void apply(Instrumentation instrumentation) {
-
+                protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
+                    Class<?> lambdaMetaFactory;
+                    try {
+                        lambdaMetaFactory = Class.forName("java.lang.invoke.LambdaMetafactory");
+                    } catch (ClassNotFoundException exception) {
+                        throw new IllegalStateException("Cannot find meta factory", exception);
+                    }
+                    ClassInjector classInjector = ClassInjector.UsingReflection.ofSystemClassLoader();
+                    TypeDescription dispatcherType = new TypeDescription.ForLoadedType(LambdaCreationDispatcher.class);
+                    Class<?> loadedDispatcher = classInjector
+                            .inject(Collections.singletonMap(dispatcherType, ClassFileLocator.ForClassLoader.read(LambdaInstrumentationStrategy.class).resolve()))
+                            .get(dispatcherType);
+                    try {
+                        @SuppressWarnings("unchecked")
+                        Set<ClassFileTransformer> classFileTransformers = (Set<ClassFileTransformer>) loadedDispatcher.getDeclaredField("CLASS_FILE_TRANSFORMERS").get(null);
+                        try {
+                            if (!classFileTransformers.isEmpty()) {
+                                return;
+                            }
+                        } finally {
+                            classFileTransformers.add(classFileTransformer);
+                        }
+                    } catch (Exception exception) {
+                        throw new IllegalStateException("Could not access class file transformers", exception);
+                    }
+                    byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE)
+                            .redefine(lambdaMetaFactory)
+                            .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named("metafactory"), new MetaFactoryRedirection()))
+                            .make();
                 }
             },
 
             DISABLED {
                 @Override
-                protected void apply(Instrumentation instrumentation) {
+                protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
                     /* do nothing */
                 }
             };
 
-            protected abstract void apply(Instrumentation instrumentation);
+            protected abstract void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
+
+            /*
+            public static CallSite metafactory(MethodHandles.Lookup caller,
+                                               String invokedName,
+                                               MethodType invokedType,
+                                               MethodType samMethodType,
+                                               MethodHandle implMethod,
+                                               MethodType instantiatedMethodType)
+                    throws Exception {
+                Unsafe unsafe = Unsafe.getUnsafe();
+                final Class<?> lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+                        (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaCreationDispatcher").getDeclaredMethod("make",
+                                Object.class,
+                                String.class,
+                                Object.class,
+                                Object.class,
+                                Object.class).invoke(null, caller, invokedName, invokedType, samMethodType, implMethod),
+                        null);
+                unsafe.ensureClassInitialized(lambdaClass);
+                //IMPL_LOOKUP not lookup()
+                return invokedType.parameterCount() == 0
+                        ? new ConstantCallSite(MethodHandles.constant(lambdaClass, lambdaClass.getDeclaredConstructors()[0].newInstance()))
+                        : new ConstantCallSite(MethodHandles.lookup().findStatic(lambdaClass, "get$Lambda", invokedType));
+            }
+            */
+            protected static class MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+
+                private static final MethodVisitor IGNORE_ORIGINAL = null;
+
+                @Override
+                public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
+                    methodVisitor.visitLdcInsn("net.bytebuddy.agent.builder.LambdaCreationDispatcher");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
+                    methodVisitor.visitLdcInsn("make");
+                    methodVisitor.visitInsn(Opcodes.ICONST_5);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/String;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_3);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;", false);
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitInsn(Opcodes.ICONST_5);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_3);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 4);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
+                    Label firstJump = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFNE, firstJump);
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;", false);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Constructor", "newInstance", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodHandles", "constant", "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
+                    Label secondJump = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, secondJump);
+                    methodVisitor.visitLabel(firstJump);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"sun/misc/Unsafe", "java/lang/Class"}, 0, null);
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodHandles", "lookup", "()Ljava/lang/invoke/MethodHandles$Lookup;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitLdcInsn("get$Lambda");
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "findStatic", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
+                    methodVisitor.visitLabel(secondJump);
+                    methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/invoke/ConstantCallSite"});
+                    methodVisitor.visitInsn(Opcodes.ARETURN);
+                    methodVisitor.visitMaxs(8, 8);
+                    methodVisitor.visitEnd();
+                    return IGNORE_ORIGINAL;
+                }
+            }
         }
 
         /**

@@ -22,14 +22,14 @@ import net.bytebuddy.utility.JavaInstance;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
 public class LambdaCreationDispatcher {
+
+    private static final Set<ClassFileTransformer> CLASS_FILE_TRANSFORMERS = Collections.synchronizedSet(new LinkedHashSet<ClassFileTransformer>());
 
     private static final String LAMBDA_FACTORY = "get$Lambda";
 
@@ -41,17 +41,16 @@ public class LambdaCreationDispatcher {
 
     private static final AtomicInteger lambdaNameCounter = new AtomicInteger();
 
-    public static byte[] createClass(Object callerClassLookup,
-                                     Class<?> lookupClass,
-                                     String functionalMethodName,
-                                     Object functionalMethodType,
-                                     Object expectedMethodType,
-                                     Object targetMethodHandle,
-                                     boolean serializable, // TODO: Determine
-                                     Set<ClassFileTransformer> classFileTransformers) throws Exception {
+    public static byte[] make(Object callerClassLookup,
+                              String functionalMethodName,
+                              Object functionalMethodType,
+                              Object expectedMethodType,
+                              Object targetMethodHandle,
+                              boolean serializable) throws Exception {
         JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(expectedMethodType);
         JavaInstance.MethodType lambdaMethodType = JavaInstance.MethodType.of(functionalMethodType);
         JavaInstance.MethodHandle lambdaImplementationHandle = JavaInstance.MethodHandle.of(targetMethodHandle, callerClassLookup);
+        Class<?> lookupClass = null; // From callerClassLookup!
         String lambdaClassName = lookupClass.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
         DynamicType.Builder<?> builder = new ByteBuddy()
                 .subclass(lambdaMethodType.getReturnType())
@@ -73,7 +72,7 @@ public class LambdaCreationDispatcher {
                 // TODO: Serialization
                 .make()
                 .getBytes();
-        for (ClassFileTransformer classFileTransformer : classFileTransformers) {
+        for (ClassFileTransformer classFileTransformer : CLASS_FILE_TRANSFORMERS) {
             byte[] transformedClassFile = classFileTransformer.transform(lookupClass.getClassLoader(),
                     lambdaClassName.replace('.', '/'),
                     NOT_PREVIOUSLY_DEFINED,

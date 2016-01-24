@@ -434,28 +434,26 @@ public interface JavaInstance {
         static {
             Dispatcher.Initializable dispatcher;
             try {
-                Class<?> methodHandleInfo = Class.forName("java.lang.invoke.MethodHandleInfo");
-                Class<?> methodType = JavaType.METHOD_TYPE.load();
                 try {
                     dispatcher = new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                            methodHandleInfo.getDeclaredMethod("getName"),
-                            methodHandleInfo.getDeclaredMethod("getDeclaringClass"),
-                            methodHandleInfo.getDeclaredMethod("getReferenceKind"),
-                            methodHandleInfo.getDeclaredMethod("getMethodType"),
-                            methodType.getDeclaredMethod("returnType"),
-                            methodType.getDeclaredMethod("parameterArray"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
                             JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
                 } catch (RuntimeException exception) {
                     throw exception;
                 } catch (Exception ignored) {
                     dispatcher = new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                            methodHandleInfo.getDeclaredMethod("getName"),
-                            methodHandleInfo.getDeclaredMethod("getDeclaringClass"),
-                            methodHandleInfo.getDeclaredMethod("getReferenceKind"),
-                            methodHandleInfo.getDeclaredMethod("getMethodType"),
-                            methodType.getDeclaredMethod("returnType"),
-                            methodType.getDeclaredMethod("parameterArray"),
-                            methodHandleInfo.getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
                 }
             } catch (RuntimeException exception) {
                 throw exception;
