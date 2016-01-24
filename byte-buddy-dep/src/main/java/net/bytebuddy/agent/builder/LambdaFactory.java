@@ -32,6 +32,7 @@ public class LambdaFactory {
                             Object.class,
                             Object.class,
                             Object.class,
+                            boolean.class,
                             Collection.class));
                 }
             }
@@ -63,7 +64,7 @@ public class LambdaFactory {
                               Object implMethod) throws LambdaConversionException {
         try {
             return (byte[]) CLASS_FILE_TRANSFORMERS.values().iterator().next()
-                    .invoke(null, caller, invokedName, invokedType, samMethodType, implMethod, CLASS_FILE_TRANSFORMERS.keySet());
+                    .invoke(null, caller, invokedName, invokedType, samMethodType, implMethod, false, CLASS_FILE_TRANSFORMERS.keySet());
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
         }

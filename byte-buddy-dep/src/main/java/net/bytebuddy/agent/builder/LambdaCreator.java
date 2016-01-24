@@ -9,6 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import net.bytebuddy.implementation.ExceptionMethod;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -22,6 +23,10 @@ import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.utility.JavaInstance;
 import org.objectweb.asm.MethodVisitor;
 
+import java.io.NotSerializableException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.lang.instrument.ClassFileTransformer;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -47,6 +52,7 @@ public class LambdaCreator {
                               Object factoryMethod,
                               Object implementedMethod,
                               Object targetMethod,
+                              boolean enforceSerialization,
                               Collection<? extends ClassFileTransformer> classFileTransformers) throws Exception {
         JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(factoryMethod);
         JavaInstance.MethodType implementedMethodType = JavaInstance.MethodType.of(implementedMethod);
@@ -68,13 +74,20 @@ public class LambdaCreator {
                     .withParameters(factoryMethodType.getParameterTypes())
                     .intercept(new FactoryImplementation());
         }
+        if (enforceSerialization || factoryMethodType.getReturnType().isAssignableTo(Serializable.class)) {
+            builder = builder.defineMethod("writeReplace", Object.class).intercept(null); // TODO:
+        } else {
+            builder = builder.defineMethod("readObject", ObjectInputStream.class)
+                    .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"))
+                    .defineMethod("writeObject", ObjectOutputStream.class)
+                    .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"));
+        }
         byte[] classFile = builder.defineConstructor(factoryMethodType.getParameterTypes().isEmpty() ? Visibility.PUBLIC : Visibility.PRIVATE)
                 .intercept(SuperMethodCall.INSTANCE.andThen(new ConstructorImplementation()))
                 .method(named(functionalMethodName)
                         .and(takesArguments(implementedMethodType.getParameterTypes()))
                         .and(returns(implementedMethodType.getReturnType())))
                 .intercept(new LambdaMethodImplementation(targetMethodHandle))
-                // TODO: Serialization
                 .make()
                 .getBytes();
         for (ClassFileTransformer classFileTransformer : classFileTransformers) {
