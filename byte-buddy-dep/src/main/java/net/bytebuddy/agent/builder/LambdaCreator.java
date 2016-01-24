@@ -8,6 +8,7 @@ import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
@@ -22,14 +23,14 @@ import net.bytebuddy.utility.JavaInstance;
 import org.objectweb.asm.MethodVisitor;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
-public class LambdaCreationDispatcher {
-
-    private static final Set<ClassFileTransformer> CLASS_FILE_TRANSFORMERS = Collections.synchronizedSet(new LinkedHashSet<ClassFileTransformer>());
+public class LambdaCreator {
 
     private static final String LAMBDA_FACTORY = "get$Lambda";
 
@@ -41,42 +42,46 @@ public class LambdaCreationDispatcher {
 
     private static final AtomicInteger lambdaNameCounter = new AtomicInteger();
 
-    public static byte[] make(Object callerClassLookup,
+    public static byte[] make(Object callerTypeLookup,
                               String functionalMethodName,
-                              Object functionalMethodType,
-                              Object expectedMethodType,
-                              Object targetMethodHandle,
-                              boolean serializable) throws Exception {
-        JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(expectedMethodType);
-        JavaInstance.MethodType lambdaMethodType = JavaInstance.MethodType.of(functionalMethodType);
-        JavaInstance.MethodHandle lambdaImplementationHandle = JavaInstance.MethodHandle.of(targetMethodHandle, callerClassLookup);
-        Class<?> lookupClass = null; // From callerClassLookup!
-        String lambdaClassName = lookupClass.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
+                              Object factoryMethod,
+                              Object implementedMethod,
+                              Object targetMethod,
+                              Collection<? extends ClassFileTransformer> classFileTransformers) throws Exception {
+        JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(factoryMethod);
+        JavaInstance.MethodType implementedMethodType = JavaInstance.MethodType.of(implementedMethod);
+        JavaInstance.MethodHandle targetMethodHandle = JavaInstance.MethodHandle.of(targetMethod, callerTypeLookup);
+        Class<?> lookupType = JavaInstance.MethodHandle.lookupType(callerTypeLookup);
+        String lambdaClassName = lookupType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
         DynamicType.Builder<?> builder = new ByteBuddy()
-                .subclass(lambdaMethodType.getReturnType())
-                .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL)
-                .implement(factoryMethodType.getReturnType())
+                .subclass(factoryMethodType.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, implementedMethodType.getParameterTypes().isEmpty()
+                        ? Visibility.PUBLIC
+                        : Visibility.PACKAGE_PRIVATE)
                 .name(lambdaClassName);
         int index = 0;
-        for (TypeDescription parameterTypes : factoryMethodType.getParameterTypes()) {
+        for (TypeDescription parameterTypes : implementedMethodType.getParameterTypes()) {
             builder = builder.defineField(FIELD_PREFIX + index++, parameterTypes, Visibility.PUBLIC, FieldManifestation.FINAL);
         }
-        if (!factoryMethodType.getParameterTypes().isEmpty()) {
+        if (!implementedMethodType.getParameterTypes().isEmpty()) {
             builder = builder.defineMethod(LAMBDA_FACTORY, factoryMethodType.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
+                    .withParameters(factoryMethodType.getParameterTypes())
                     .intercept(new FactoryImplementation());
         }
-        byte[] classFile = builder.defineConstructor(Visibility.PRIVATE)
+        byte[] classFile = builder.defineConstructor(factoryMethodType.getParameterTypes().isEmpty() ? Visibility.PUBLIC : Visibility.PRIVATE)
                 .intercept(SuperMethodCall.INSTANCE.andThen(new ConstructorImplementation()))
-                .method(named(functionalMethodName).and(takesArguments(factoryMethodType.getParameterTypes())).and(returns(factoryMethodType.getReturnType())))
-                .intercept(new LambdaMethodImplementation(lambdaImplementationHandle))
+                .method(named(functionalMethodName)
+                        .and(takesArguments(implementedMethodType.getParameterTypes()))
+                        .and(returns(implementedMethodType.getReturnType())))
+                .intercept(new LambdaMethodImplementation(targetMethodHandle))
                 // TODO: Serialization
                 .make()
                 .getBytes();
-        for (ClassFileTransformer classFileTransformer : CLASS_FILE_TRANSFORMERS) {
-            byte[] transformedClassFile = classFileTransformer.transform(lookupClass.getClassLoader(),
+        for (ClassFileTransformer classFileTransformer : classFileTransformers) {
+            byte[] transformedClassFile = classFileTransformer.transform(lookupType.getClassLoader(),
                     lambdaClassName.replace('.', '/'),
                     NOT_PREVIOUSLY_DEFINED,
-                    lookupClass.getProtectionDomain(),
+                    lookupType.getProtectionDomain(),
                     classFile);
             classFile = transformedClassFile == null
                     ? classFile
@@ -200,4 +205,5 @@ public class LambdaCreationDispatcher {
             }
         }
     }
+
 }

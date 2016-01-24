@@ -33,9 +33,9 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
 
-import static net.bytebuddy.matcher.ElementMatchers.isAnnotatedWith;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
@@ -245,6 +245,16 @@ public class AgentBuilderDefaultApplicationTest {
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
         }
+    }
+
+    @Test
+    public void testName() throws Exception {
+        new AgentBuilder.Default()
+                .enableLambdaInstrumentation(true)
+                .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
+                .installOn(ByteBuddyAgent.install());
+        Callable<String> r = () -> FOO;
+        assertThat(r.call(), is(BAR));
     }
 
     @Retention(RetentionPolicy.RUNTIME)

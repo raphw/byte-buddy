@@ -168,10 +168,11 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         }
         try {
             engine.apply(instrumentation, classDefinitions);
-            ClassInjector classInjector = classLoader == null
-                    ? bootstrapInjection.make(instrumentation)
-                    : new ClassInjector.UsingReflection(classLoader);
-            loadedClasses.putAll(classInjector.inject(unloadedClasses));
+            if (!unloadedClasses.isEmpty()) {
+                loadedClasses.putAll((classLoader == null
+                        ? bootstrapInjection.make(instrumentation)
+                        : new ClassInjector.UsingReflection(classLoader)).inject(unloadedClasses));
+            }
         } catch (ClassNotFoundException exception) {
             throw new IllegalArgumentException("Could not locate classes for redefinition", exception);
         } catch (UnmodifiableClassException exception) {

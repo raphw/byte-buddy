@@ -41,7 +41,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <code.level>1.6</code.level>
+        <code.level>1.8</code.level>
         <pitest.target>net.bytebuddy</pitest.target>
         <cobertura.exclude.benchmark.generated>net/bytebuddy/benchmark/generated/**/*.class</cobertura.exclude.benchmark.generated>
         <cobertura.exclude.benchmark.jmh>org/openjdk/jmh/infra/generated/**/*.class</cobertura.exclude.benchmark.jmh>

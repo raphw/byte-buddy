@@ -8,6 +8,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
+import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
@@ -2458,19 +2459,21 @@ public interface AgentBuilder {
                         throw new IllegalStateException("Cannot find meta factory", exception);
                     }
                     ClassInjector classInjector = ClassInjector.UsingReflection.ofSystemClassLoader();
-                    TypeDescription dispatcherType = new TypeDescription.ForLoadedType(LambdaCreationDispatcher.class);
+                    TypeDescription dispatcherType = new TypeDescription.ForLoadedType(LambdaFactory.class);
                     Class<?> loadedDispatcher = classInjector
-                            .inject(Collections.singletonMap(dispatcherType, ClassFileLocator.ForClassLoader.read(LambdaInstrumentationStrategy.class).resolve()))
+                            .inject(Collections.singletonMap(dispatcherType, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
                             .get(dispatcherType);
                     try {
                         @SuppressWarnings("unchecked")
-                        Set<ClassFileTransformer> classFileTransformers = (Set<ClassFileTransformer>) loadedDispatcher.getDeclaredField("CLASS_FILE_TRANSFORMERS").get(null);
+                        Map<ClassFileTransformer, Class<?>> classFileTransformers = (Map<ClassFileTransformer, Class<?>>) loadedDispatcher
+                                .getDeclaredField("CLASS_FILE_TRANSFORMERS")
+                                .get(null);
                         try {
                             if (!classFileTransformers.isEmpty()) {
                                 return;
                             }
                         } finally {
-                            classFileTransformers.add(classFileTransformer);
+                            classFileTransformers.put(classFileTransformer, LambdaCreator.class);
                         }
                     } catch (Exception exception) {
                         throw new IllegalStateException("Could not access class file transformers", exception);
@@ -2478,7 +2481,8 @@ public interface AgentBuilder {
                     byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE)
                             .redefine(lambdaMetaFactory)
                             .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named("metafactory"), new MetaFactoryRedirection()))
-                            .make();
+                            .make()
+                            .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
                 }
             },
 
@@ -2501,7 +2505,7 @@ public interface AgentBuilder {
                     throws Exception {
                 Unsafe unsafe = Unsafe.getUnsafe();
                 final Class<?> lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
-                        (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaCreationDispatcher").getDeclaredMethod("make",
+                        (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
                                 Object.class,
                                 String.class,
                                 Object.class,
@@ -2509,10 +2513,9 @@ public interface AgentBuilder {
                                 Object.class).invoke(null, caller, invokedName, invokedType, samMethodType, implMethod),
                         null);
                 unsafe.ensureClassInitialized(lambdaClass);
-                //IMPL_LOOKUP not lookup()
                 return invokedType.parameterCount() == 0
-                        ? new ConstantCallSite(MethodHandles.constant(lambdaClass, lambdaClass.getDeclaredConstructors()[0].newInstance()))
-                        : new ConstantCallSite(MethodHandles.lookup().findStatic(lambdaClass, "get$Lambda", invokedType));
+                        ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
+                        : new ConstantCallSite(MethodHandles.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
             }
             */
             protected static class MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
@@ -2527,7 +2530,7 @@ public interface AgentBuilder {
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                     methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
                     methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
-                    methodVisitor.visitLdcInsn("net.bytebuddy.agent.builder.LambdaCreationDispatcher");
+                    methodVisitor.visitLdcInsn(LambdaFactory.class.getName());
                     methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
                     methodVisitor.visitLdcInsn("make");
                     methodVisitor.visitInsn(Opcodes.ICONST_5);
@@ -2591,7 +2594,8 @@ public interface AgentBuilder {
                     methodVisitor.visitJumpInsn(Opcodes.IFNE, firstJump);
                     methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                     methodVisitor.visitInsn(Opcodes.DUP);
-                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "returnType", "()Ljava/lang/Class;", false);
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
                     methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;", false);
                     methodVisitor.visitInsn(Opcodes.ICONST_0);
@@ -2607,7 +2611,7 @@ public interface AgentBuilder {
                     methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"sun/misc/Unsafe", "java/lang/Class"}, 0, null);
                     methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                     methodVisitor.visitInsn(Opcodes.DUP);
-                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodHandles", "lookup", "()Ljava/lang/invoke/MethodHandles$Lookup;", false);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
                     methodVisitor.visitLdcInsn("get$Lambda");
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
@@ -2619,6 +2623,11 @@ public interface AgentBuilder {
                     methodVisitor.visitMaxs(8, 8);
                     methodVisitor.visitEnd();
                     return IGNORE_ORIGINAL;
+                }
+
+                void foo () {
+                    Object o = null;
+                    System.out.println(o);
                 }
             }
         }
