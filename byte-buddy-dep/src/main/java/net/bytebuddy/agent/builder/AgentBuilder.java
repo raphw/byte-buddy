@@ -105,7 +105,7 @@ public interface AgentBuilder {
      * @param byteBuddy The Byte Buddy instance to be used.
      * @return A new instance of this agent builder which makes use of the given {@code byteBuddy} instance.
      */
-    AgentBuilder withByteBuddy(ByteBuddy byteBuddy);
+    AgentBuilder with(ByteBuddy byteBuddy);
 
     /**
      * Defines the given {@link net.bytebuddy.agent.builder.AgentBuilder.Listener} to be notified by the created agent.
@@ -116,7 +116,7 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder which creates an agent that informs the given listener about
      * events.
      */
-    AgentBuilder withListener(Listener listener);
+    AgentBuilder with(Listener listener);
 
     /**
      * Defines the use of the given binary locator for locating binary data to given class names.
@@ -124,7 +124,7 @@ public interface AgentBuilder {
      * @param binaryLocator The binary locator to use.
      * @return A new instance of this agent builder which uses the given binary locator for looking up class files.
      */
-    AgentBuilder withBinaryLocator(BinaryLocator binaryLocator);
+    AgentBuilder with(BinaryLocator binaryLocator);
 
     /**
      * Defines the use of the given definition handler that determines if a type should be rebased or redefined.
@@ -132,24 +132,7 @@ public interface AgentBuilder {
      * @param typeStrategy The definition handler to use.
      * @return A new instance of this agent builder which uses the given definition handler.
      */
-    AgentBuilder withTypeStrategy(TypeStrategy typeStrategy);
-
-    /**
-     * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
-     * applied when preserving non-native methods. The use of this prefix is also registered when installing the
-     * final agent with an {@link java.lang.instrument.Instrumentation}.
-     *
-     * @param prefix The prefix to be used.
-     * @return A new instance of this agent builder which uses the given native method prefix.
-     */
-    AgentBuilder withNativeMethodPrefix(String prefix);
-
-    /**
-     * Disables the use of a native method prefix for instrumented methods.
-     *
-     * @return A new instance of this agent builder which does not use a native method prefix.
-     */
-    AgentBuilder withoutNativeMethodPrefix();
+    AgentBuilder with(TypeStrategy typeStrategy);
 
     /**
      * Defines classes to be loaded using the given access control context.
@@ -157,7 +140,7 @@ public interface AgentBuilder {
      * @param accessControlContext The access control context to be used for loading classes.
      * @return A new instance of this agent builder which uses the given access control context for class loading.
      */
-    AgentBuilder withAccessControlContext(AccessControlContext accessControlContext);
+    AgentBuilder with(AccessControlContext accessControlContext);
 
     /**
      * Defines a given initialization strategy to be applied to generated types. An initialization strategy is responsible
@@ -168,7 +151,7 @@ public interface AgentBuilder {
      * @param initializationStrategy The initialization strategy to use.
      * @return A new instance of this agent builder that applies the given initialization strategy.
      */
-    AgentBuilder withInitializationStrategy(InitializationStrategy initializationStrategy);
+    AgentBuilder with(InitializationStrategy initializationStrategy);
 
     /**
      * Specifies a strategy for modifying existing types.
@@ -176,7 +159,7 @@ public interface AgentBuilder {
      * @param redefinitionStrategy The redefinition strategy to apply.
      * @return A new instance of this agent builder that applies the given redefinition strategy.
      */
-    AgentBuilder withRedefinitionStrategy(RedefinitionStrategy redefinitionStrategy);
+    AgentBuilder with(RedefinitionStrategy redefinitionStrategy);
 
     /**
      * Enables class injection of auxiliary classes into the bootstrap class loader.
@@ -194,6 +177,23 @@ public interface AgentBuilder {
      * @return An agent builder with bootstrap class loader class injection disabled.
      */
     AgentBuilder disableBootstrapInjection();
+
+    /**
+     * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
+     * applied when preserving non-native methods. The use of this prefix is also registered when installing the
+     * final agent with an {@link java.lang.instrument.Instrumentation}.
+     *
+     * @param prefix The prefix to be used.
+     * @return A new instance of this agent builder which uses the given native method prefix.
+     */
+    AgentBuilder withNativeMethodPrefix(String prefix);
+
+    /**
+     * Disables the use of a native method prefix for instrumented methods.
+     *
+     * @return A new instance of this agent builder which does not use a native method prefix.
+     */
+    AgentBuilder withoutNativeMethodPrefix();
 
     AgentBuilder enableLambdaInstrumentation(boolean enable);
 
@@ -2036,7 +2036,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withByteBuddy(ByteBuddy byteBuddy) {
+        public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2051,7 +2051,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withListener(Listener listener) {
+        public AgentBuilder with(Listener listener) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2066,7 +2066,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withTypeStrategy(TypeStrategy typeStrategy) {
+        public AgentBuilder with(TypeStrategy typeStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2081,7 +2081,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
+        public AgentBuilder with(BinaryLocator binaryLocator) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2126,7 +2126,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withAccessControlContext(AccessControlContext accessControlContext) {
+        public AgentBuilder with(AccessControlContext accessControlContext) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2141,7 +2141,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withRedefinitionStrategy(RedefinitionStrategy redefinitionStrategy) {
+        public AgentBuilder with(RedefinitionStrategy redefinitionStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -2156,7 +2156,7 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withInitializationStrategy(InitializationStrategy initializationStrategy) {
+        public AgentBuilder with(InitializationStrategy initializationStrategy) {
             return new Default(byteBuddy,
                     binaryLocator,
                     typeStrategy,
@@ -3239,23 +3239,23 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder withByteBuddy(ByteBuddy byteBuddy) {
-                return materialize().withByteBuddy(byteBuddy);
+            public AgentBuilder with(ByteBuddy byteBuddy) {
+                return materialize().with(byteBuddy);
             }
 
             @Override
-            public AgentBuilder withListener(Listener listener) {
-                return materialize().withListener(listener);
+            public AgentBuilder with(Listener listener) {
+                return materialize().with(listener);
             }
 
             @Override
-            public AgentBuilder withTypeStrategy(TypeStrategy typeStrategy) {
-                return materialize().withTypeStrategy(typeStrategy);
+            public AgentBuilder with(TypeStrategy typeStrategy) {
+                return materialize().with(typeStrategy);
             }
 
             @Override
-            public AgentBuilder withBinaryLocator(BinaryLocator binaryLocator) {
-                return materialize().withBinaryLocator(binaryLocator);
+            public AgentBuilder with(BinaryLocator binaryLocator) {
+                return materialize().with(binaryLocator);
             }
 
             @Override
@@ -3269,18 +3269,18 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder withAccessControlContext(AccessControlContext accessControlContext) {
-                return materialize().withAccessControlContext(accessControlContext);
+            public AgentBuilder with(AccessControlContext accessControlContext) {
+                return materialize().with(accessControlContext);
             }
 
             @Override
-            public AgentBuilder withInitializationStrategy(InitializationStrategy initializationStrategy) {
-                return materialize().withInitializationStrategy(initializationStrategy);
+            public AgentBuilder with(InitializationStrategy initializationStrategy) {
+                return materialize().with(initializationStrategy);
             }
 
             @Override
-            public AgentBuilder withRedefinitionStrategy(RedefinitionStrategy redefinitionStrategy) {
-                return materialize().withRedefinitionStrategy(redefinitionStrategy);
+            public AgentBuilder with(RedefinitionStrategy redefinitionStrategy) {
+                return materialize().with(redefinitionStrategy);
             }
 
             @Override

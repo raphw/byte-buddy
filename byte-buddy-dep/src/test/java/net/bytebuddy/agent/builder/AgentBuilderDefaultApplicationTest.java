@@ -85,8 +85,8 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentWithoutSelfInitialization() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
-                .withInitializationStrategy(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(binaryLocator)
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -102,7 +102,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentSelfInitialization() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
+                .with(binaryLocator)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new BarTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -118,7 +118,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentSelfInitializationAuxiliaryTypeEager() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
+                .with(binaryLocator)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -134,7 +134,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentSelfInitializationAuxiliaryTypeLazy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
+                .with(binaryLocator)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxBazTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -150,8 +150,8 @@ public class AgentBuilderDefaultApplicationTest {
     public void testAgentWithoutSelfInitializationWithNativeMethodPrefix() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
-                .withInitializationStrategy(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(binaryLocator)
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
                 .withNativeMethodPrefix(QUX)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
@@ -176,10 +176,10 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
-                .withInitializationStrategy(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .withTypeStrategy(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(binaryLocator)
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -198,10 +198,10 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         assertThat(classLoader.loadClass(SimpleType.class.getName()).getName(), is(SimpleType.class.getName())); // ensure that class is loaded
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
-                .withInitializationStrategy(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
-                .withTypeStrategy(AgentBuilder.TypeStrategy.Default.REDEFINE)
-                .withRedefinitionStrategy(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+                .with(binaryLocator)
+                .with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE)
+                .with(AgentBuilder.TypeStrategy.Default.REDEFINE)
+                .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new FooTransformer())
                 .installOnByteBuddyAgent();
         try {
@@ -217,7 +217,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testChainedAgent() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         AgentBuilder agentBuilder = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
+                .with(binaryLocator)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new QuxTransformer());
         ClassFileTransformer firstTransformer = agentBuilder.installOnByteBuddyAgent();
         ClassFileTransformer secondTransformer = agentBuilder.installOnByteBuddyAgent();
@@ -235,7 +235,7 @@ public class AgentBuilderDefaultApplicationTest {
     public void testSignatureTypesAreAvailableAfterLoad() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
-                .withBinaryLocator(binaryLocator)
+                .with(binaryLocator)
                 .type(isAnnotatedWith(ShouldRebase.class), ElementMatchers.is(classLoader)).transform(new ConstructorTransformer())
                 .installOnByteBuddyAgent();
         try {
