@@ -195,6 +195,8 @@ public interface AgentBuilder {
      */
     AgentBuilder disableBootstrapInjection();
 
+    AgentBuilder enableLambdaInstrumentation(boolean enable);
+
     /**
      * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
      * agent builder.
@@ -1946,6 +1948,8 @@ public interface AgentBuilder {
          */
         private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+        private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
+
         /**
          * The transformation object for handling type transformations.
          */
@@ -1974,6 +1978,7 @@ public interface AgentBuilder {
                     InitializationStrategy.SelfInjection.SPLIT,
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
+                    LambdaInstrumentationStrategy.DISABLED,
                     Transformation.Ignored.INSTANCE);
         }
 
@@ -2000,6 +2005,7 @@ public interface AgentBuilder {
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                          LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
@@ -2010,6 +2016,7 @@ public interface AgentBuilder {
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+            this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.transformation = transformation;
         }
 
@@ -2039,6 +2046,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2053,6 +2061,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2067,6 +2076,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2081,6 +2091,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2095,6 +2106,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2109,6 +2121,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2123,6 +2136,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2137,6 +2151,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2151,6 +2166,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2165,6 +2181,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2179,6 +2196,24 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
+                    lambdaInstrumentationStrategy,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder enableLambdaInstrumentation(boolean enable) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    typeStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    enable
+                            ? LambdaInstrumentationStrategy.ENABLED
+                            : LambdaInstrumentationStrategy.DISABLED,
                     transformation);
         }
 
@@ -2404,6 +2439,25 @@ public interface AgentBuilder {
                             '}';
                 }
             }
+        }
+
+        protected enum LambdaInstrumentationStrategy {
+
+            ENABLED {
+                @Override
+                protected void apply(Instrumentation instrumentation) {
+
+                }
+            },
+
+            DISABLED {
+                @Override
+                protected void apply(Instrumentation instrumentation) {
+                    /* do nothing */
+                }
+            };
+
+            protected abstract void apply(Instrumentation instrumentation);
         }
 
         /**
@@ -3240,6 +3294,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder enableLambdaInstrumentation(boolean enable) {
+                return materialize().enableLambdaInstrumentation(enable);
+            }
+
+            @Override
             public ClassFileTransformer makeRaw() {
                 return materialize().makeRaw();
             }
@@ -3269,6 +3328,7 @@ public interface AgentBuilder {
                         initializationStrategy,
                         redefinitionStrategy,
                         bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer), transformation));
             }
 
