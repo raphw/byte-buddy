@@ -2025,22 +2025,13 @@ public interface AgentBuilder {
             this.transformation = transformation;
         }
 
-        public static boolean removeLambdaTransformer(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
-            try {
-                @SuppressWarnings("unchecked")
-                Map<ClassFileTransformer, Class<?>> classFileTransformers = ((Map<ClassFileTransformer, Class<?>>) ClassLoader.getSystemClassLoader()
-                        .loadClass(LambdaFactory.class.getName())
-                        .getDeclaredField("CLASS_FILE_TRANSFORMERS")
-                        .get(null));
+        public static void releaseLambdaTransformer(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
+            if (LambdaFactory.release(classFileTransformer)) {
                 try {
-                    return classFileTransformers.remove(classFileTransformer) != null;
-                } finally {
-                    if (classFileTransformers.isEmpty()) {
-                        ClassReloadingStrategy.of(instrumentation).reset(Class.forName("java.lang.invoke.LambdaMetafactory"));
-                    }
+                    ClassReloadingStrategy.of(instrumentation).reset(Class.forName("java.lang.invoke.LambdaMetafactory"));
+                } catch (Exception exception) {
+                    throw new IllegalStateException("Could not release lambda transformer", exception);
                 }
-            } catch (Exception exception) {
-                throw new IllegalStateException("Cannot rest lambda meta factory", exception);
             }
         }
 
@@ -2514,8 +2505,10 @@ public interface AgentBuilder {
 
             protected abstract void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
 
-            /*
-            public static CallSite metafactory(MethodHandles.Lookup caller,
+            /**
+             * Implements the {@code LambdaMetafactory} class as follows:
+             * <pre>
+             public static CallSite metafactory(MethodHandles.Lookup caller,
                                                String invokedName,
                                                MethodType invokedType,
                                                MethodType samMethodType,
@@ -2536,6 +2529,7 @@ public interface AgentBuilder {
                         ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
                         : new ConstantCallSite(MethodHandles.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
             }
+             </pre>
             */
             protected static class MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
