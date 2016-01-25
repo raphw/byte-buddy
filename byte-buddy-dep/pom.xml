@@ -36,7 +36,7 @@
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-util</artifactId>
-            <!--<scope>test</scope>TODO-->
+            <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>junit</groupId>

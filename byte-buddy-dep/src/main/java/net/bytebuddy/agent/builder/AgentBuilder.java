@@ -50,6 +50,7 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -2467,28 +2468,34 @@ public interface AgentBuilder {
             }
         }
 
-        protected enum LambdaInstrumentationStrategy {
+        protected enum LambdaInstrumentationStrategy implements Callable<Class<?>> {
 
             ENABLED {
                 @Override
                 protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
-                    Class<?> lambdaMetaFactory;
-                    try {
-                        lambdaMetaFactory = Class.forName("java.lang.invoke.LambdaMetafactory");
-                    } catch (ClassNotFoundException exception) {
-                        throw new IllegalStateException("Cannot find meta factory", exception);
-                    }
-                    ClassInjector.UsingReflection.ofSystemClassLoader().inject(Collections.singletonMap(new TypeDescription.ForLoadedType(LambdaFactory.class),
-                            ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()));
-                    if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy))) {
+                    if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy), this)) {
+                        Class<?> lambdaMetaFactory;
+                        try {
+                            lambdaMetaFactory = Class.forName("java.lang.invoke.LambdaMetafactory");
+                        } catch (ClassNotFoundException ignored) {
+                            return;
+                        }
                         byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE)
                                 .redefine(lambdaMetaFactory)
                                 .visit(new AsmVisitorWrapper.ForDeclaredMethods()
-                                        .method(named("metafactory"), new MetaFactoryRedirection())
-                                        .method(named("altMetafactory"), new AlternativeMetaFactoryRedirection()))
+                                        .method(named("metafactory"), MetaFactoryRedirection.INSTANCE)
+                                        .method(named("altMetafactory"), AlternativeMetaFactoryRedirection.INSTANCE))
                                 .make()
                                 .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
                     }
+                }
+
+                @Override
+                public Class<?> call() throws Exception {
+                    TypeDescription lambdaFactory = new TypeDescription.ForLoadedType(LambdaFactory.class);
+                    return ClassInjector.UsingReflection.ofSystemClassLoader()
+                            .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
+                            .get(lambdaFactory);
                 }
             },
 
@@ -2497,10 +2504,25 @@ public interface AgentBuilder {
                 protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
                     /* do nothing */
                 }
+
+                @Override
+                public Class<?> call() throws Exception {
+                    throw new IllegalStateException();
+                }
             };
 
+            /**
+             * Indicates that an original implementation can be ignored when redefining a method.
+             */
             protected static final MethodVisitor IGNORE_ORIGINAL = null;
 
+            /**
+             * Applies a transformation to lambda instances if applicable.
+             *
+             * @param byteBuddy            The Byte Buddy instance to use.
+             * @param instrumentation      The instrumentation instance for applying a redefinition.
+             * @param classFileTransformer The class file transformer to apply.
+             */
             protected abstract void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
 
             protected static class LambdaInstanceFactory {
@@ -2854,32 +2876,49 @@ public interface AgentBuilder {
             }
 
             /**
-             * Implements the {@code LambdaMetafactory} class as follows:
+             * Implements the regular lambda meta factory. The implementation represents the following code:
              * <pre>
-             * public static CallSite metafactory(MethodHandles.Lookup caller,
-             * String invokedName,
-             * MethodType invokedType,
-             * MethodType samMethodType,
-             * MethodHandle implMethod,
-             * MethodType instantiatedMethodType)
-             * throws Exception {
-             * Unsafe unsafe = Unsafe.getUnsafe();
-             * final Class<?> lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
-             * (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
-             * Object.class,
-             * String.class,
-             * Object.class,
-             * Object.class,
-             * Object.class).invoke(null, caller, invokedName, invokedType, samMethodType, implMethod),
-             * null);
-             * unsafe.ensureClassInitialized(lambdaClass);
-             * return invokedType.parameterCount() == 0
-             * ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
-             * : new ConstantCallSite(MethodHandles.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
-             * }
-             * </pre>
+             * <code>public static CallSite metafactory(MethodHandles.Lookup caller,
+             *     String invokedName,
+             *     MethodType invokedType,
+             *     MethodType samMethodType,
+             *     MethodHandle implMethod,
+             *     MethodType instantiatedMethodType) throws Exception {
+             *   Unsafe unsafe = Unsafe.getUnsafe();
+             *   {@code Class<?>} lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+             *       (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
+             *           Object.class,
+             *           String.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           boolean.class,
+             *           List.class,
+             *           List.class).invoke(null,
+             *               caller,
+             *               invokedName,
+             *               invokedType,
+             *               samMethodType,
+             *               implMethod,
+             *               instantiatedMethodType,
+             *               false,
+             *               Collections.emptyList(),
+             *               Collections.emptyList()),
+             *       null);
+             *   unsafe.ensureClassInitialized(lambdaClass);
+             *   return invokedType.parameterCount() == 0
+             *     ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
+             *     : new ConstantCallSite(MethodHandles.Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
+             * </code></pre>
              */
-            protected static class MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+            protected enum MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
                 @Override
                 public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
                     methodVisitor.visitCode();
@@ -3016,9 +3055,75 @@ public interface AgentBuilder {
                     methodVisitor.visitEnd();
                     return IGNORE_ORIGINAL;
                 }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection" + name();
+                }
             }
-            
-            protected static class AlternativeMetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+
+            /**
+             * Implements the alternative lambda meta factory. The implementation represents the following code:
+             * <pre>
+             * <code>public static CallSite altMetafactory(MethodHandles.Lookup caller,
+             *     String invokedName,
+             *     MethodType invokedType,
+             *     Object... args) throws Exception {
+             *   int flags = (Integer) args[3];
+             *   int argIndex = 4;
+             *   {@code Class<?>[]} markerInterface;
+             *   if ((flags & FLAG_MARKERS) != 0) {
+             *     int markerCount = (Integer) args[argIndex++];
+             *     markerInterface = new {@code Class<?>}[markerCount];
+             *     System.arraycopy(args, argIndex, markerInterface, 0, markerCount);
+             *     argIndex += markerCount;
+             *   } else {
+             *     markerInterface = new {@code Class<?>}[0];
+             *   }
+             *   MethodType[] additionalBridge;
+             *   if ((flags & FLAG_BRIDGES) != 0) {
+             *     int bridgeCount = (Integer) args[argIndex++];
+             *     additionalBridge = new MethodType[bridgeCount];
+             *     System.arraycopy(args, argIndex, additionalBridge, 0, bridgeCount);
+             *     // argIndex += bridgeCount;
+             *   } else {
+             *     additionalBridge = new MethodType[0];
+             *   }
+             *   Unsafe unsafe = Unsafe.getUnsafe();
+             *   Class<?> lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+             *       (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
+             *           Object.class,
+             *           String.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           boolean.class,
+             *           List.class,
+             *           List.class).invoke(null,
+             *               caller,
+             *               invokedName,
+             *               invokedType,
+             *               args[0],
+             *               args[1],
+             *               args[2],
+             *               (flags & FLAG_SERIALIZABLE) != 0,
+             *               Arrays.asList(markerInterface),
+             *               Arrays.asList(additionalBridge)),
+             *       null);
+             *   unsafe.ensureClassInitialized(lambdaClass);
+             *   return invokedType.parameterCount() == 0
+             *     ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
+             *     : new ConstantCallSite(MethodHandles.Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
+             * }</code>
+             * </pre>
+             */
+            protected enum AlternativeMetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
 
                 @Override
                 public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
@@ -3246,6 +3351,11 @@ public interface AgentBuilder {
                     methodVisitor.visitMaxs(9, 10);
                     methodVisitor.visitEnd();
                     return IGNORE_ORIGINAL;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection." + name();
                 }
             }
         }

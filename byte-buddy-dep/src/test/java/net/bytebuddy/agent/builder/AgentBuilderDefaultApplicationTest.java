@@ -15,6 +15,7 @@ import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.packaging.SimpleType;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.JavaVersionRule;
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -22,7 +23,10 @@ import org.junit.rules.MethodRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
@@ -33,7 +37,6 @@ import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
-import java.util.function.Function;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
@@ -47,6 +50,8 @@ public class AgentBuilderDefaultApplicationTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
+    private static final String LAMBDA_SAMPLE_FACTORY = "net.bytebuddy.test.precompiled.LambdaSampleFactory";
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -58,6 +63,9 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
+
+    @Rule
+    public MethodRule javaVersionRule = new JavaVersionRule();
 
     private ClassLoader classLoader;
 
@@ -76,6 +84,15 @@ public class AgentBuilderDefaultApplicationTest {
                         Baz.class,
                         QuxBaz.class,
                         SimpleType.class),
+                DEFAULT_PROTECTION_DOMAIN,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+    }
+
+    private ClassLoader lambdaSamples() throws Exception {
+        return new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
                 DEFAULT_PROTECTION_DOMAIN,
                 AccessController.getContext(),
                 ByteArrayClassLoader.PersistenceHandler.MANIFEST,
@@ -250,15 +267,21 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
     public void testNonCapturingLambda() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
-                .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
+                .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.install());
         try {
-            Callable<String> r = () -> FOO;
-            assertThat(r.call(), is(BAR));
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            @SuppressWarnings("unchecked")
+            Callable<String> instance = (Callable<String>) sampleFactory.getDeclaredMethod("nonCapturing").invoke(sampleFactory.newInstance());
+            assertThat(instance.call(), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
@@ -266,16 +289,21 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
     public void testArgumentCapturingLambda() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
-                .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
+                .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.install());
         try {
-            String foo = FOO;
-            Callable<String> r = () -> foo;
-            assertThat(r.call(), is(BAR));
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            @SuppressWarnings("unchecked")
+            Callable<String> instance = (Callable<String>) sampleFactory.getDeclaredMethod("argumentCapturing", String.class).invoke(sampleFactory.newInstance(), FOO);
+            assertThat(instance.call(), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
@@ -285,15 +313,21 @@ public class AgentBuilderDefaultApplicationTest {
     private String foo = FOO;
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
     public void testInstanceCapturingLambda() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
-                .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
+                .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
                 .installOn(ByteBuddyAgent.install());
         try {
-            Callable<String> r = () -> foo;
-            assertThat(r.call(), is(BAR));
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            @SuppressWarnings("unchecked")
+            Callable<String> instance = (Callable<String>) sampleFactory.getDeclaredMethod("instanceCapturing").invoke(sampleFactory.newInstance());
+            assertThat(instance.call(), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
@@ -301,15 +335,20 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
     public void testNonCapturingLambdaWithArguments() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
-                .type(isSubTypeOf(Function.class)).transform((builder, typeDescription) -> builder.method(named("apply")).intercept(FixedValue.value(BAR)))
+                .type(isSubTypeOf(Class.forName("java.util.function.Function"))).transform(new SingleMethodReplacer("apply"))
                 .installOn(ByteBuddyAgent.install());
         try {
-            Function<String, String> r = (bar) -> bar;
-            assertThat(r.apply(FOO), is(BAR));
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            Object instance = sampleFactory.getDeclaredMethod("nonCapturingWithArguments").invoke(sampleFactory.newInstance());
+            assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
@@ -317,16 +356,20 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
     public void testCapturingLambdaWithArguments() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
-                .type(isSubTypeOf(Function.class)).transform((builder, typeDescription) -> builder.method(named("apply")).intercept(FixedValue.value(BAR)))
+                .type(isSubTypeOf(Class.forName("java.util.function.Function"))).transform(new SingleMethodReplacer("apply"))
                 .installOn(ByteBuddyAgent.install());
         try {
-            String qux = QUX;
-            Function<String, String> r = (bar) -> bar + qux;
-            assertThat(r.apply(FOO), is(BAR));
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            Object instance = sampleFactory.getDeclaredMethod("capturingWithArguments", String.class).invoke(sampleFactory.newInstance(), FOO);
+            assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
@@ -334,24 +377,28 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce
     public void testSerializableLambda() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
                 .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
-                .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
                 .installOn(ByteBuddyAgent.install());
         try {
-            String foo = FOO;
-            Callable<String> r = (Callable<String> & Serializable) () -> foo;
-            assertThat(r.call(), is(BAR));
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            @SuppressWarnings("unchecked")
+            Callable<String> instance = (Callable<String>) sampleFactory.getDeclaredMethod("serializable", String.class).invoke(sampleFactory.newInstance(), FOO);
+            assertThat(instance.call(), is(FOO));
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
-            objectOutputStream.writeObject(r);
+            objectOutputStream.writeObject(instance);
             objectOutputStream.close();
             ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(outputStream.toByteArray()));
             @SuppressWarnings("unchecked")
             Callable<String> deserialized = (Callable<String>) objectInputStream.readObject();
-            assertThat(deserialized.call(), is(BAR));
+            assertThat(deserialized.call(), is(FOO));
             objectInputStream.close();
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
@@ -475,6 +522,20 @@ public class AgentBuilderDefaultApplicationTest {
         @Override
         public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
             return builder.constructor(ElementMatchers.any()).intercept(SuperMethodCall.INSTANCE);
+        }
+    }
+
+    private static class SingleMethodReplacer implements AgentBuilder.Transformer {
+
+        private final String methodName;
+
+        public SingleMethodReplacer(String methodName) {
+            this.methodName = methodName;
+        }
+
+        @Override
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+            return builder.method(named(methodName)).intercept(FixedValue.value(BAR));
         }
     }
 }

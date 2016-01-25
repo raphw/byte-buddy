@@ -4,6 +4,7 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.invoke.LambdaConversionException;
 import java.lang.reflect.Method;
 import java.util.*;
+import java.util.concurrent.Callable;
 
 public class LambdaFactory {
 
@@ -18,11 +19,10 @@ public class LambdaFactory {
         this.dispatcher = dispatcher;
     }
 
-    public static boolean register(ClassFileTransformer classFileTransformer, Object lambdaCreator) {
+    public static boolean register(ClassFileTransformer classFileTransformer, Object lambdaCreator, Callable<Class<?>> injector) {
         try {
             @SuppressWarnings("unchecked")
-            Map<ClassFileTransformer, LambdaFactory> classFileTransformers = (Map<ClassFileTransformer, LambdaFactory>) ClassLoader.getSystemClassLoader()
-                    .loadClass(LambdaFactory.class.getName())
+            Map<ClassFileTransformer, Object> classFileTransformers = (Map<ClassFileTransformer, Object>) injector.call()
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);
             synchronized (classFileTransformers) {
@@ -50,7 +50,7 @@ public class LambdaFactory {
     public static boolean release(ClassFileTransformer classFileTransformer) {
         try {
             @SuppressWarnings("unchecked")
-            Map<ClassFileTransformer, LambdaFactory> classFileTransformers = (Map<ClassFileTransformer, LambdaFactory>) ClassLoader.getSystemClassLoader()
+            Map<ClassFileTransformer, ?> classFileTransformers = (Map<ClassFileTransformer, ?>) ClassLoader.getSystemClassLoader()
                     .loadClass(LambdaFactory.class.getName())
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);
@@ -99,15 +99,15 @@ public class LambdaFactory {
                               boolean serializable,
                               List<Class<?>> markerInterfaces,
                               List<?> additionalBridges) throws LambdaConversionException {
-            return CLASS_FILE_TRANSFORMERS.values().iterator().next().invoke(caller,
-                    invokedName,
-                    invokedType,
-                    samMethodType,
-                    implMethod,
-                    instantiatedMethodType,
-                    serializable,
-                    markerInterfaces,
-                    additionalBridges,
-                    CLASS_FILE_TRANSFORMERS.keySet());
+        return CLASS_FILE_TRANSFORMERS.values().iterator().next().invoke(caller,
+                invokedName,
+                invokedType,
+                samMethodType,
+                implMethod,
+                instantiatedMethodType,
+                serializable,
+                markerInterfaces,
+                additionalBridges,
+                CLASS_FILE_TRANSFORMERS.keySet());
     }
 }
