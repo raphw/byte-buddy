@@ -44,17 +44,17 @@ public class LambdaFactoryTest implements Callable<Class<?>> {
         try {
             assertThat(call()
                     .getDeclaredMethod("make", Object.class, String.class, Object.class, Object.class, Object.class, Object.class, boolean.class, List.class, List.class)
-                    .invoke(null, a1, FOO, a3, a4, a5, a6, true, a8, a9), is(BAR));
+                    .invoke(null, a1, FOO, a3, a4, a5, a6, true, a8, a9), is((Object) BAR));
             assertThat(pseudoFactory.args[0], is(a1));
-            assertThat(pseudoFactory.args[1], is(FOO));
+            assertThat(pseudoFactory.args[1], is((Object) FOO));
             assertThat(pseudoFactory.args[2], is(a3));
             assertThat(pseudoFactory.args[3], is(a4));
             assertThat(pseudoFactory.args[4], is(a5));
             assertThat(pseudoFactory.args[5], is(a6));
-            assertThat(pseudoFactory.args[6], is(true));
-            assertThat(pseudoFactory.args[7], is(a8));
-            assertThat(pseudoFactory.args[8], is(a9));
-            assertThat(pseudoFactory.args[9], is(Collections.singleton(classFileTransformer)));
+            assertThat(pseudoFactory.args[6], is((Object) true));
+            assertThat(pseudoFactory.args[7], is((Object) a8));
+            assertThat(pseudoFactory.args[8], is((Object) a9));
+            assertThat(pseudoFactory.args[9], is((Object) Collections.singleton(classFileTransformer)));
         } finally {
             assertThat(LambdaFactory.release(classFileTransformer), is(true));
         }

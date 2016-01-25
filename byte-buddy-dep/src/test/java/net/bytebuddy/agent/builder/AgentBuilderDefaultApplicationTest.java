@@ -310,8 +310,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    private String foo = FOO;
-
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce
@@ -348,7 +346,7 @@ public class AgentBuilderDefaultApplicationTest {
         try {
             Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
             Object instance = sampleFactory.getDeclaredMethod("nonCapturingWithArguments").invoke(sampleFactory.newInstance());
-            assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is(BAR));
+            assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
@@ -369,7 +367,7 @@ public class AgentBuilderDefaultApplicationTest {
         try {
             Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
             Object instance = sampleFactory.getDeclaredMethod("capturingWithArguments", String.class).invoke(sampleFactory.newInstance(), FOO);
-            assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is(BAR));
+            assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
