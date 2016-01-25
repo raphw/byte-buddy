@@ -35,7 +35,7 @@ public class Foo {
                         List.class).invoke(null, caller, invokedName, invokedType, samMethodType, implMethod, instantiatedMethodType, false, Collections.emptyList()),
                 null);
         unsafe.ensureClassInitialized(lambdaClass);
-        return invokedType.parameterCount() == 0
+        return invokedType.parameterCount() == 0 // lookup() == IMPL_LOOKUP
                 ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
                 : new ConstantCallSite(MethodHandles.lookup().findStatic(lambdaClass, "get$Lambda", invokedType));
     }
@@ -69,5 +69,10 @@ public class Foo {
         return invokedType.parameterCount() == 0
                 ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
                 : new ConstantCallSite(MethodHandles.lookup().findStatic(lambdaClass, "get$Lambda", invokedType));
+    }
+
+    void qux () {
+        Object o = null;
+        byte[] b = (byte[]) o;
     }
 }
