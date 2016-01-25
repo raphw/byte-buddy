@@ -7,6 +7,7 @@ import net.bytebuddy.test.packaging.VisibilityFieldTestHelper;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.asm.Type;
+import org.objectweb.asm.Opcodes;
 
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -184,6 +185,12 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(genericField).toGenericString(), is(genericField.toGenericString()));
     }
 
+    @Test
+    public void testGetActualModifiers() throws Exception {
+        assertThat(describe(first).getActualModifiers(), is(first.getModifiers()));
+        assertThat(describe(DeprecationSample.class.getDeclaredField("foo")).getActualModifiers(), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_PRIVATE));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
 
@@ -235,5 +242,11 @@ public abstract class AbstractFieldDescriptionTest {
     public static class PackagePrivateFieldType {
 
         public PackagePrivateType packagePrivateType;
+    }
+
+    private static class DeprecationSample {
+
+        @Deprecated
+        private Void foo;
     }
 }

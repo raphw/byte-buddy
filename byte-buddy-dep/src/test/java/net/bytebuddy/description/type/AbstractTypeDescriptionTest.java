@@ -272,6 +272,13 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    public void testActualModifiersDeprecation() throws Exception {
+        assertThat(describe(DeprecationSample.class).getActualModifiers(false), is(Opcodes.ACC_DEPRECATED));
+        assertThat(describe(DeprecationSample.class).getActualModifiers(true), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_SUPER));
+    }
+
+    @Test
     public void testSuperClass() throws Exception {
         assertThat(describe(Object.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
         assertThat(describe(SampleInterface.class).getSuperClass(), nullValue(TypeDescription.Generic.class));
@@ -718,5 +725,10 @@ public abstract class AbstractTypeDescriptionTest extends AbstractTypeDescriptio
         interface NestedInterface {
             /* empty */
         }
+    }
+
+    @Deprecated
+    private static class DeprecationSample {
+        /* empty */
     }
 }

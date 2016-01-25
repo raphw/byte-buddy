@@ -610,9 +610,18 @@ public abstract class AbstractMethodDescriptionTest {
                 is(TypeDefinition.Sort.describe(AbstractMethodDescriptionTest.class)));
     }
 
+    @Test
+    @SuppressWarnings("deprecation")
+    public void testGetActualModifiers() throws Exception {
+        assertThat(describe(firstMethod).getActualModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC));
+        assertThat(describe(firstMethod).getActualModifiers(true), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC));
+        assertThat(describe(firstMethod).getActualModifiers(false), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC | Opcodes.ACC_ABSTRACT));
+        assertThat(describe(DeprecationSample.class.getDeclaredMethod("foo")).getActualModifiers(), is(Opcodes.ACC_PRIVATE | Opcodes.ACC_DEPRECATED));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
-
+        /* empty */
     }
 
     @SuppressWarnings("unused")
@@ -746,6 +755,14 @@ public abstract class AbstractMethodDescriptionTest {
         }
 
         <Q> void qux() {
+            /* empty */
+        }
+    }
+
+    private static class DeprecationSample {
+
+        @Deprecated
+        private void foo() {
             /* empty */
         }
     }
