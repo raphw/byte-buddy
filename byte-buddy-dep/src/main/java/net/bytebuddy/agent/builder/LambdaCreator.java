@@ -16,6 +16,11 @@ import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
+import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
+import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
@@ -51,12 +56,14 @@ public class LambdaCreator {
                               String functionalMethodName,
                               Object factoryMethod,
                               Object implementedMethod,
-                              Object targetMethod,
+                              Object targetMethodHandle,
+                              Object implementationMethodHandle,
                               boolean enforceSerialization,
+                              List<Class<?>> markerInterfaces,
                               Collection<? extends ClassFileTransformer> classFileTransformers) throws Exception {
         JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(factoryMethod);
         JavaInstance.MethodType implementedMethodType = JavaInstance.MethodType.of(implementedMethod);
-        JavaInstance.MethodHandle targetMethodHandle = JavaInstance.MethodHandle.of(targetMethod, callerTypeLookup);
+        MethodDescription.InDefinedShape targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, callerTypeLookup).asMethodDescription();
         Class<?> lookupType = JavaInstance.MethodHandle.lookupType(callerTypeLookup);
         String lambdaClassName = lookupType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
         DynamicType.Builder<?> builder = new ByteBuddy()
@@ -64,6 +71,7 @@ public class LambdaCreator {
                 .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, implementedMethodType.getParameterTypes().isEmpty()
                         ? Visibility.PUBLIC
                         : Visibility.PACKAGE_PRIVATE)
+                .implement(markerInterfaces)
                 .name(lambdaClassName);
         int index = 0;
         for (TypeDescription parameterTypes : implementedMethodType.getParameterTypes()) {
@@ -75,7 +83,10 @@ public class LambdaCreator {
                     .intercept(new FactoryImplementation());
         }
         if (enforceSerialization || factoryMethodType.getReturnType().isAssignableTo(Serializable.class)) {
-            builder = builder.defineMethod("writeReplace", Object.class).intercept(null); // TODO:
+            builder = builder.defineMethod("writeReplace", Object.class)
+                    .intercept(new SerializationImplementation(new TypeDescription.ForLoadedType(lookupType),
+                            targetMethod,
+                            JavaInstance.MethodHandle.of(implementationMethodHandle)));
         } else {
             builder = builder.defineMethod("readObject", ObjectInputStream.class)
                     .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"))
@@ -87,7 +98,7 @@ public class LambdaCreator {
                 .method(named(functionalMethodName)
                         .and(takesArguments(implementedMethodType.getParameterTypes()))
                         .and(returns(implementedMethodType.getReturnType())))
-                .intercept(new LambdaMethodImplementation(targetMethodHandle))
+                .intercept(new LambdaMethodImplementation(targetMethod))
                 .make()
                 .getBytes();
         for (ClassFileTransformer classFileTransformer : classFileTransformers) {
@@ -175,15 +186,15 @@ public class LambdaCreator {
 
     private static class LambdaMethodImplementation implements Implementation {
 
-        private final JavaInstance.MethodHandle lambdaImplementationHandle;
+        private final MethodDescription.InDefinedShape targetMethod;
 
-        public LambdaMethodImplementation(JavaInstance.MethodHandle lambdaImplementationHandle) {
-            this.lambdaImplementationHandle = lambdaImplementationHandle;
+        public LambdaMethodImplementation(MethodDescription.InDefinedShape targetMethod) {
+            this.targetMethod = targetMethod;
         }
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(lambdaImplementationHandle.asMethodDescription(), implementationTarget.getInstrumentedType().getDeclaredFields());
+            return new Appender(targetMethod, implementationTarget.getInstrumentedType().getDeclaredFields());
         }
 
         @Override
@@ -216,6 +227,58 @@ public class LambdaCreator {
                         MethodReturn.returning(lambdaDispatcherMethod.getReturnType().asErasure())
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
             }
+        }
+    }
+
+    private static class SerializationImplementation implements Implementation {
+
+        private final TypeDescription targetType;
+
+        private final MethodDescription targetMethod;
+
+        private final JavaInstance.MethodHandle implementationMethod;
+
+        public SerializationImplementation(TypeDescription targetType, MethodDescription targetMethod, JavaInstance.MethodHandle implementationMethod) {
+            this.targetType = targetType;
+            this.targetMethod = targetMethod;
+            this.implementationMethod = implementationMethod;
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            TypeDescription serializedLambda;
+            try {
+                serializedLambda = new TypeDescription.ForLoadedType(Class.forName("java.lang.invoke.SerializableLambda"));
+            } catch (ClassNotFoundException exception) {
+                throw new IllegalStateException("Cannot find serializable lambda class", exception);
+            }
+            MethodDescription.InDefinedShape implementationMethod = this.implementationMethod.asMethodDescription();
+            List<StackManipulation> lambdaArguments = new ArrayList<StackManipulation>(implementationTarget.getInstrumentedType().getDeclaredFields().size());
+            for (FieldDescription.InDefinedShape fieldDescription : implementationTarget.getInstrumentedType().getDeclaredFields()) {
+                lambdaArguments.add(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(0),
+                        FieldAccess.forField(fieldDescription).getter(),
+                        Assigner.DEFAULT.assign(fieldDescription.getType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
+            }
+            return new ByteCodeAppender.Simple(new StackManipulation.Compound(
+                    TypeCreation.of(serializedLambda),
+                    Duplication.SINGLE,
+                    ClassConstant.of(targetType),
+                    new TextConstant(implementationTarget.getInstrumentedType().getInternalName()),
+                    new TextConstant(targetMethod.getInternalName()),
+                    new TextConstant(targetMethod.getDescriptor()),
+                    IntegerConstant.forValue(this.implementationMethod.getHandleType().getIdentifier()),
+                    new TextConstant(implementationMethod.getDeclaringType().getInternalName()),
+                    new TextConstant(implementationMethod.getInternalName()),
+                    new TextConstant(implementationMethod.getDescriptor()),
+                    ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(lambdaArguments),
+                    MethodInvocation.invoke(serializedLambda.getDeclaredMethods().filter(isConstructor()).getOnly()),
+                    MethodReturn.REFERENCE
+            ));
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
         }
     }
 
