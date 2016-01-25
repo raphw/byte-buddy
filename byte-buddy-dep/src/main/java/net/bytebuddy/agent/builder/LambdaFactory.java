@@ -1,9 +1,11 @@
 package net.bytebuddy.agent.builder;
 
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.invoke.LambdaConversionException;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
@@ -40,10 +42,25 @@ public class LambdaFactory {
         this.dispatcher = dispatcher;
     }
 
+    /**
+     * Registers a class file transformer together with a factory for creating a lambda expression. It is possible to call this method independently
+     * of the class loader's context as the supplied injector makes sure that the manipulated collection is the one that is held by the system class
+     * loader.
+     *
+     * @param classFileTransformer The class file transformer to register.
+     * @param classFileFactory     The lambda class file factory to use. This factory must define a visible instance method with the signature
+     *                             {@code byte[] make(Object, String, Object, Object, Object, Object, boolean, List, List, Collection}. The arguments provided
+     *                             are the invokedynamic call site's lookup object, the lambda method's name, the lambda method's type, the factory method's
+     *                             type, the target method's handle, the specialized method type of the lambda expression, a boolean to indicate
+     *                             serializability, a list of marker interfaces, a list of additional bridges and a collection of class file transformers to
+     *                             apply.
+     * @param injector             A callable injector that returns the {@link LambdaFactory} loaded by the system class loader.
+     * @return {@code true} if this is the first registered transformer. This indicates that the {@code LambdaMetafactory} must be instrumented to delegate
+     * to this alternative factory.
+     */
     @SuppressWarnings("all")
-    public static boolean register(ClassFileTransformer classFileTransformer, Object lambdaCreator, Callable<Class<?>> injector) {
+    public static boolean register(ClassFileTransformer classFileTransformer, Object classFileFactory, Callable<Class<?>> injector) {
         try {
-            @SuppressWarnings("unchecked")
             Map<ClassFileTransformer, Object> classFileTransformers = (Map<ClassFileTransformer, Object>) injector.call()
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);
@@ -51,7 +68,7 @@ public class LambdaFactory {
                 try {
                     return classFileTransformers.isEmpty();
                 } finally {
-                    classFileTransformers.put(classFileTransformer, new LambdaFactory(lambdaCreator, lambdaCreator.getClass().getDeclaredMethod("make",
+                    classFileTransformers.put(classFileTransformer, new LambdaFactory(classFileFactory, classFileFactory.getClass().getDeclaredMethod("make",
                             Object.class,
                             String.class,
                             Object.class,
@@ -69,10 +86,16 @@ public class LambdaFactory {
         }
     }
 
+    /**
+     * Releases a class file transformer.
+     *
+     * @param classFileTransformer The class file transformer to release.
+     * @return {@code true} if the removed transformer was the last class file transformer registered. This indicates that the {@code LambdaMetafactory} must
+     * be instrumented to no longer delegate to this alternative factory.
+     */
     @SuppressWarnings("all")
     public static boolean release(ClassFileTransformer classFileTransformer) {
         try {
-            @SuppressWarnings("unchecked")
             Map<ClassFileTransformer, ?> classFileTransformers = (Map<ClassFileTransformer, ?>) ClassLoader.getSystemClassLoader()
                     .loadClass(LambdaFactory.class.getName())
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
@@ -85,6 +108,21 @@ public class LambdaFactory {
         }
     }
 
+    /**
+     * Applies this lambda meta factory.
+     *
+     * @param caller                 A lookup context representing the creating class of this lambda expression.
+     * @param invokedName            The name of the lambda expression's represented method.
+     * @param invokedType            The type of the lambda expression's represented method.
+     * @param samMethodType          The type of the lambda expression's factory method.
+     * @param implMethod             A handle representing the target of the lambda expression's method.
+     * @param instantiatedMethodType A specialization of the type of the lambda expression's represented method.
+     * @param serializable           {@code true} if the lambda expression should be serializable.
+     * @param markerInterfaces       A list of interfaces for the lambda expression to represent.
+     * @param additionalBridges      A list of additional bridge methods to be implemented by the lambda expression.
+     * @param classFileTransformers  A collection of class file transformers to apply when creating the class.
+     * @return A binary representation of the transformed class file.
+     */
     private byte[] invoke(Object caller,
                           String invokedName,
                           Object invokedType,
@@ -94,7 +132,7 @@ public class LambdaFactory {
                           boolean serializable,
                           List<Class<?>> markerInterfaces,
                           List<?> additionalBridges,
-                          Set<ClassFileTransformer> classFileTransformers) {
+                          Collection<ClassFileTransformer> classFileTransformers) {
 
         try {
             return (byte[]) dispatcher.invoke(target,
@@ -113,6 +151,20 @@ public class LambdaFactory {
         }
     }
 
+    /**
+     * Dispatches the creation of a new class representing a class file.
+     *
+     * @param caller                 A lookup context representing the creating class of this lambda expression.
+     * @param invokedName            The name of the lambda expression's represented method.
+     * @param invokedType            The type of the lambda expression's represented method.
+     * @param samMethodType          The type of the lambda expression's factory method.
+     * @param implMethod             A handle representing the target of the lambda expression's method.
+     * @param instantiatedMethodType A specialization of the type of the lambda expression's represented method.
+     * @param serializable           {@code true} if the lambda expression should be serializable.
+     * @param markerInterfaces       A list of interfaces for the lambda expression to represent.
+     * @param additionalBridges      A list of additional bridge methods to be implemented by the lambda expression.
+     * @return A binary representation of the transformed class file.
+     */
     public static byte[] make(Object caller,
                               String invokedName,
                               Object invokedType,
@@ -121,7 +173,7 @@ public class LambdaFactory {
                               Object instantiatedMethodType,
                               boolean serializable,
                               List<Class<?>> markerInterfaces,
-                              List<?> additionalBridges) throws LambdaConversionException {
+                              List<?> additionalBridges) {
         return CLASS_FILE_TRANSFORMERS.values().iterator().next().invoke(caller,
                 invokedName,
                 invokedType,
