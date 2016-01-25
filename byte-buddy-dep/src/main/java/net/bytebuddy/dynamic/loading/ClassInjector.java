@@ -167,6 +167,11 @@ public interface ClassInjector {
             this.forbidExisting = forbidExisting;
         }
 
+        /**
+         * Creates a class injector for the system class loader.
+         *
+         * @return A class injector for the system class loader.
+         */
         public static ClassInjector ofSystemClassLoader() {
             return new UsingReflection(ClassLoader.getSystemClassLoader());
         }

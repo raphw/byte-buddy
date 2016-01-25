@@ -1279,7 +1279,7 @@ public interface AgentBuilder {
                     Dispatcher dispatcher;
                     try {
                         TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                        dispatcher = new Dispatcher.Available(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
+                        dispatcher = new Dispatcher.Available(ClassInjector.UsingReflection.ofSystemClassLoader()
                                 .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
                                 .get(nexusType)
                                 .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
@@ -1986,6 +1986,10 @@ public interface AgentBuilder {
          */
         private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+        /**
+         * A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the instrumentation
+         * of classes that represent lambda expressions.
+         */
         private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
         /**
@@ -2023,16 +2027,18 @@ public interface AgentBuilder {
         /**
          * Creates a new default agent builder.
          *
-         * @param byteBuddy                  The Byte Buddy instance to be used.
-         * @param binaryLocator              The binary locator to use.
-         * @param typeStrategy               The definition handler to use.
-         * @param listener                   The listener to notify on transformations.
-         * @param nativeMethodStrategy       The native method strategy to apply.
-         * @param accessControlContext       The access control context to use for loading classes.
-         * @param initializationStrategy     The initialization strategy to use for transformed types.
-         * @param redefinitionStrategy       The redefinition strategy to apply.
-         * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
-         * @param transformation             The transformation object for handling type transformations.
+         * @param byteBuddy                     The Byte Buddy instance to be used.
+         * @param binaryLocator                 The binary locator to use.
+         * @param typeStrategy                  The definition handler to use.
+         * @param listener                      The listener to notify on transformations.
+         * @param nativeMethodStrategy          The native method strategy to apply.
+         * @param accessControlContext          The access control context to use for loading classes.
+         * @param initializationStrategy        The initialization strategy to use for transformed types.
+         * @param redefinitionStrategy          The redefinition strategy to apply.
+         * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the
+         *                                      instrumentation of classes that represent lambda expressions.
+         * @param transformation                The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
@@ -2374,7 +2380,6 @@ public interface AgentBuilder {
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
                     && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
                     && transformation.equals(aDefault.transformation);
-
         }
 
         @Override
@@ -2641,7 +2646,7 @@ public interface AgentBuilder {
                                    boolean serializable,
                                    List<Class<?>> markerInterfaces,
                                    List<?> additionalBridges,
-                                   Collection<? extends ClassFileTransformer> classFileTransformers) throws Exception {
+                                   Collection<? extends ClassFileTransformer> classFileTransformers) {
                     JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.of(factoryMethodType);
                     JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.of(lambdaMethodType);
                     JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, targetTypeLookup);
@@ -2698,14 +2703,18 @@ public interface AgentBuilder {
                     }
                     byte[] classFile = builder.make().getBytes();
                     for (ClassFileTransformer classFileTransformer : classFileTransformers) {
-                        byte[] transformedClassFile = classFileTransformer.transform(targetType.getClassLoader(),
-                                lambdaClassName.replace('.', '/'),
-                                NOT_PREVIOUSLY_DEFINED,
-                                targetType.getProtectionDomain(),
-                                classFile);
-                        classFile = transformedClassFile == null
-                                ? classFile
-                                : transformedClassFile;
+                        try {
+                            byte[] transformedClassFile = classFileTransformer.transform(targetType.getClassLoader(),
+                                    lambdaClassName.replace('.', '/'),
+                                    NOT_PREVIOUSLY_DEFINED,
+                                    targetType.getProtectionDomain(),
+                                    classFile);
+                            classFile = transformedClassFile == null
+                                    ? classFile
+                                    : transformedClassFile;
+                        } catch (Exception ignored) {
+                            /* do nothing */
+                        }
                     }
                     return classFile;
                 }
