@@ -74,12 +74,10 @@ public class LambdaCreator {
         String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
         DynamicType.Builder<?> builder = byteBuddy
                 .subclass(factoryMethod.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, lambdaMethod.getParameterTypes().isEmpty()
-                        ? Visibility.PUBLIC
-                        : Visibility.PACKAGE_PRIVATE)
+                .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, Visibility.PUBLIC)
                 .implement(markerInterfaces)
                 .name(lambdaClassName)
-                .defineConstructor(factoryMethod.getParameterTypes().isEmpty() ? Visibility.PUBLIC : Visibility.PRIVATE)
+                .defineConstructor(Visibility.PUBLIC)
                 .withParameters(factoryMethod.getParameterTypes())
                 .intercept(new ConstructorImplementation())
                 .method(named(lambdaMethodName)

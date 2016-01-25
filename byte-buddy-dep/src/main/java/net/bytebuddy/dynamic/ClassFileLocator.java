@@ -520,8 +520,8 @@ public interface ClassFileLocator {
         public Resolution locate(String typeName) {
             try {
                 ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoadingDelegate.getClassLoader(), typeName);
-                try {
                     instrumentation.addTransformer(classFileTransformer, true);
+                try {
                     instrumentation.retransformClasses(classLoadingDelegate.locate(typeName));
                     byte[] binaryRepresentation = classFileTransformer.getBinaryRepresentation();
                     return binaryRepresentation == null

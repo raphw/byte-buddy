@@ -250,45 +250,86 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     public void testNonCapturingLambda() throws Exception {
-        new AgentBuilder.Default()
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
                 .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
                 .installOn(ByteBuddyAgent.install());
-        Callable<String> r = () -> FOO;
-        assertThat(r.call(), is(BAR));
+        try {
+            Callable<String> r = () -> FOO;
+            assertThat(r.call(), is(BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
     }
 
     @Test
     public void testArgumentCapturingLambda() throws Exception {
-        new AgentBuilder.Default()
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
                 .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
                 .installOn(ByteBuddyAgent.install());
-        String foo = FOO;
-        Callable<String> r = () -> foo;
-        assertThat(r.call(), is(BAR));
+        try {
+            String foo = FOO;
+            Callable<String> r = () -> foo;
+            assertThat(r.call(), is(BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
     }
 
     private String foo = FOO;
 
     @Test
     public void testInstanceCapturingLambda() throws Exception {
-        new AgentBuilder.Default()
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
                 .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
                 .installOn(ByteBuddyAgent.install());
-        Callable<String> r = () -> foo;
-        assertThat(r.call(), is(BAR));
+        try {
+            Callable<String> r = () -> foo;
+            assertThat(r.call(), is(BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
     }
 
     @Test
-    public void testLambdaWithArguments() throws Exception {
-        new AgentBuilder.Default()
+    public void testNonCapturingLambdaWithArguments() throws Exception {
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
                 .enableLambdaInstrumentation(true)
                 .type(isSubTypeOf(Function.class)).transform((builder, typeDescription) -> builder.method(named("apply")).intercept(FixedValue.value(BAR)))
                 .installOn(ByteBuddyAgent.install());
-        Function<String, String> r = (bar) -> foo + bar;
-        assertThat(r.apply(QUX), is(BAR));
+        try {
+            Function<String, String> r = (bar) -> bar;
+            assertThat(r.apply(FOO), is(BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
+    }
+
+    @Test
+    public void testCapturingLambdaWithArguments() throws Exception {
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
+                .enableLambdaInstrumentation(true)
+                .type(isSubTypeOf(Function.class)).transform((builder, typeDescription) -> builder.method(named("apply")).intercept(FixedValue.value(BAR)))
+                .installOn(ByteBuddyAgent.install());
+        try {
+            String qux = QUX;
+            Function<String, String> r = (bar) -> bar + qux;
+            assertThat(r.apply(FOO), is(BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
     }
 
     @Retention(RetentionPolicy.RUNTIME)
