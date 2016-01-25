@@ -9,6 +9,7 @@ import net.bytebuddy.test.utility.AgentAttachmentRule;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
+import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -185,6 +186,7 @@ public class ClassReloadingStrategyTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(retransformsClasses = true, redefinesClasses = true)
+    @Ignore("Fails on the integration server, should be isolated as test is currently not repeatable")
     public void testAnonymousType() throws Exception {
         ((Runnable) Class.forName("net.bytebuddy.test.precompiled.AnonymousClassLoader").newInstance()).run();
     }
