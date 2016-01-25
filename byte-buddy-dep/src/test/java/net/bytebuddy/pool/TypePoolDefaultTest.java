@@ -6,6 +6,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.objectweb.asm.Opcodes;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.junit.Assert.fail;
@@ -43,6 +44,14 @@ public class TypePoolDefaultTest {
     }
 
     @Test
+    @SuppressWarnings("deprecation")
+    public void testNoDeprecationFlag() throws Exception {
+        assertThat(typePool.describe(DeprecationSample.class.getName()).resolve().getModifiers() & Opcodes.ACC_DEPRECATED, is(0));
+        assertThat(typePool.describe(DeprecationSample.class.getName()).resolve().getDeclaredFields().filter(named("foo")).getOnly().getModifiers(), is(0));
+        assertThat(typePool.describe(DeprecationSample.class.getName()).resolve().getDeclaredMethods().filter(named("foo")).getOnly().getModifiers(), is(0));
+    }
+
+    @Test
     public void testGenericsObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(TypePool.Default.GenericTypeRegistrant.RejectingSignatureVisitor.class).applyBasic();
@@ -73,5 +82,17 @@ public class TypePoolDefaultTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(TypePool.Default.class).apply();
+    }
+
+    @Deprecated
+    private static class DeprecationSample {
+
+        @Deprecated
+        Void foo;
+
+        @Deprecated
+        void foo() {
+            /* empty */
+        }
     }
 }
