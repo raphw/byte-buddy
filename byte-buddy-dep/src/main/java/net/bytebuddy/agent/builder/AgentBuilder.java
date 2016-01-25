@@ -192,8 +192,9 @@ public interface AgentBuilder {
      * <p>
      * <b>Important</b>: If this feature is active, it is important to release the built class file transformer when
      * deactivating it. Normally, it is sufficient to call {@link Instrumentation#removeTransformer(ClassFileTransformer)}.
-     * When this feature is enabled, it is however also required to invoke {@link Default#releaseLambdaTransformer(ClassFileTransformer, Instrumentation)}.
-     * Otherwise, the executing VMs class loader retains a reference to the class file transformer what can cause a memory leak.
+     * When this feature is enabled, it is however also required to invoke
+     * {@link LambdaInstrumentationStrategy#release(ClassFileTransformer, Instrumentation)}. Otherwise, the executing VMs class
+     * loader retains a reference to the class file transformer what can cause a memory leak.
      * </p>
      *
      * @param lambdaInstrumentationStrategy {@code true} if this feature should be enabled.
@@ -1973,6 +1974,23 @@ public interface AgentBuilder {
         protected static final MethodVisitor IGNORE_ORIGINAL = null;
 
         /**
+         * Releases the supplied class file transformer when it was built with {@link AgentBuilder#with(LambdaInstrumentationStrategy)} enabled.
+         * Subsequently, the class file transformer is no longer applied when a class that represents a lambda expression is created.
+         *
+         * @param classFileTransformer The class file transformer to release.
+         * @param instrumentation      The instrumentation instance that is used to potentially rollback the instrumentation of the {@code LambdaMetafactory}.
+         */
+        public static void release(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
+            if (LambdaFactory.release(classFileTransformer)) {
+                try {
+                    ClassReloadingStrategy.of(instrumentation).reset(Class.forName("java.lang.invoke.LambdaMetafactory"));
+                } catch (Exception exception) {
+                    throw new IllegalStateException("Could not release lambda transformer", exception);
+                }
+            }
+        }
+
+        /**
          * Applies a transformation to lambda instances if applicable.
          *
          * @param byteBuddy            The Byte Buddy instance to use.
@@ -3348,23 +3366,6 @@ public interface AgentBuilder {
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.transformation = transformation;
-        }
-
-        /**
-         * Releases the supplied class file transformer when it was built with {@link AgentBuilder#with(LambdaInstrumentationStrategy)} enabled.
-         * Subsequently, the class file transformer is no longer applied when a class that represents a lambda expression is created.
-         *
-         * @param classFileTransformer The class file transformer to release.
-         * @param instrumentation      The instrumentation instance that is used to potentially rollback the instrumentation of the {@code LambdaMetafactory}.
-         */
-        public static void releaseLambdaTransformer(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
-            if (LambdaFactory.release(classFileTransformer)) {
-                try {
-                    ClassReloadingStrategy.of(instrumentation).reset(Class.forName("java.lang.invoke.LambdaMetafactory"));
-                } catch (Exception exception) {
-                    throw new IllegalStateException("Could not release lambda transformer", exception);
-                }
-            }
         }
 
         @Override

@@ -284,7 +284,7 @@ public class AgentBuilderDefaultApplicationTest {
             assertThat(instance.call(), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
         }
     }
 
@@ -306,7 +306,7 @@ public class AgentBuilderDefaultApplicationTest {
             assertThat(instance.call(), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
         }
     }
 
@@ -328,7 +328,7 @@ public class AgentBuilderDefaultApplicationTest {
             assertThat(instance.call(), is(BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
         }
     }
 
@@ -349,7 +349,7 @@ public class AgentBuilderDefaultApplicationTest {
             assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
         }
     }
 
@@ -370,7 +370,7 @@ public class AgentBuilderDefaultApplicationTest {
             assertThat(instance.getClass().getMethod("apply", Object.class).invoke(instance, FOO), is((Object) BAR));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
         }
     }
 
@@ -400,7 +400,7 @@ public class AgentBuilderDefaultApplicationTest {
             objectInputStream.close();
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
-            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
         }
     }
 
