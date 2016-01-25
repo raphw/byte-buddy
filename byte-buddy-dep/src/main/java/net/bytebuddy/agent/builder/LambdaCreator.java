@@ -69,6 +69,7 @@ public class LambdaCreator {
         JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.of(factoryMethodType);
         JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.of(lambdaMethodType);
         JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, targetTypeLookup);
+        JavaInstance.MethodType specializedLambdaMethod = JavaInstance.MethodType.of(specializedLambdaMethodType);
         Class<?> targetType = JavaInstance.MethodHandle.lookupType(targetTypeLookup);
         String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
         DynamicType.Builder<?> builder = byteBuddy
@@ -84,10 +85,10 @@ public class LambdaCreator {
                 .method(named(lambdaMethodName)
                         .and(takesArguments(lambdaMethod.getParameterTypes()))
                         .and(returns(lambdaMethod.getReturnType())))
-                .intercept(new LambdaMethodImplementation(targetMethod.asMethodDescription()));
+                .intercept(new LambdaMethodImplementation(targetMethod.asMethodDescription(), specializedLambdaMethod));
         int index = 0;
         for (TypeDescription capturedType : factoryMethod.getParameterTypes()) {
-            builder = builder.defineField(FIELD_PREFIX + index++, capturedType, Visibility.PUBLIC, FieldManifestation.FINAL);
+            builder = builder.defineField(FIELD_PREFIX + ++index, capturedType, Visibility.PRIVATE, FieldManifestation.FINAL);
         }
         if (!factoryMethod.getParameterTypes().isEmpty()) {
             builder = builder.defineMethod(LAMBDA_FACTORY, factoryMethod.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
@@ -201,13 +202,16 @@ public class LambdaCreator {
 
         private final MethodDescription.InDefinedShape targetMethod;
 
-        public LambdaMethodImplementation(MethodDescription.InDefinedShape targetMethod) {
+        private final JavaInstance.MethodType specializedLambdaMethod;
+
+        public LambdaMethodImplementation(MethodDescription.InDefinedShape targetMethod, JavaInstance.MethodType specializedLambdaMethod) {
             this.targetMethod = targetMethod;
+            this.specializedLambdaMethod = specializedLambdaMethod;
         }
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
-            return new Appender(targetMethod, implementationTarget.getInstrumentedType().getDeclaredFields());
+            return new Appender(targetMethod, specializedLambdaMethod, implementationTarget.getInstrumentedType().getDeclaredFields());
         }
 
         @Override
@@ -221,8 +225,13 @@ public class LambdaCreator {
 
             private final List<FieldDescription.InDefinedShape> declaredFields;
 
-            public Appender(MethodDescription lambdaDispatcherMethod, List<FieldDescription.InDefinedShape> declaredFields) {
+            private final JavaInstance.MethodType specializedLambdaMethod;
+
+            public Appender(MethodDescription lambdaDispatcherMethod,
+                            JavaInstance.MethodType specializedLambdaMethod,
+                            List<FieldDescription.InDefinedShape> declaredFields) {
                 this.lambdaDispatcherMethod = lambdaDispatcherMethod;
+                this.specializedLambdaMethod = specializedLambdaMethod;
                 this.declaredFields = declaredFields;
             }
 
@@ -233,9 +242,16 @@ public class LambdaCreator {
                     fieldAccess.add(MethodVariableAccess.REFERENCE.loadOffset(0));
                     fieldAccess.add(FieldAccess.forField(fieldDescription).getter());
                 }
+                List<StackManipulation> parameterAccess = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size() * 2);
+                for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                    parameterAccess.add(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()));
+                    parameterAccess.add(Assigner.DEFAULT.assign(parameterDescription.getType(),
+                            specializedLambdaMethod.getParameterTypes().get(parameterDescription.getIndex()).asGenericType(),
+                            Assigner.Typing.DYNAMIC));
+                }
                 return new Size(new StackManipulation.Compound(
                         new StackManipulation.Compound(fieldAccess),
-//                        MethodVariableAccess.allArgumentsOf(lambdaDispatcherMethod),
+                        new StackManipulation.Compound(parameterAccess),
                         MethodInvocation.invoke(lambdaDispatcherMethod),
                         MethodReturn.returning(lambdaDispatcherMethod.getReturnType().asErasure())
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());

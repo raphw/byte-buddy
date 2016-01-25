@@ -2,7 +2,6 @@ package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.agent.ByteBuddyAgent;
 import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.dynamic.loading.ByteArrayClassLoader;
@@ -22,11 +21,7 @@ import org.junit.Test;
 import org.junit.rules.MethodRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.Opcodes;
-import org.objectweb.asm.util.TraceClassVisitor;
 
-import java.io.PrintWriter;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
@@ -37,6 +32,7 @@ import java.security.ProtectionDomain;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
@@ -263,7 +259,7 @@ public class AgentBuilderDefaultApplicationTest {
     }
 
     @Test
-    public void testCapturingLambda() throws Exception {
+    public void testArgumentCapturingLambda() throws Exception {
         new AgentBuilder.Default()
                 .enableLambdaInstrumentation(true)
                 .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
@@ -273,15 +269,26 @@ public class AgentBuilderDefaultApplicationTest {
         assertThat(r.call(), is(BAR));
     }
 
-    @Test
-    public void testfoo() throws Exception {
-        String foo = FOO;
-        Callable<String> r = () -> foo;
-        ClassReader classReader = new ClassReader(ClassFileLocator.AgentBased.of(ByteBuddyAgent.install(), r.getClass())
-                .locate(new TypeDescription.ForLoadedType(r.getClass()).getName())
-                .resolve());
-        classReader.accept(new TraceClassVisitor(new PrintWriter(System.out)), Opcodes.ASM5);
+    private String foo = FOO;
 
+    @Test
+    public void testInstanceCapturingLambda() throws Exception {
+        new AgentBuilder.Default()
+                .enableLambdaInstrumentation(true)
+                .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
+                .installOn(ByteBuddyAgent.install());
+        Callable<String> r = () -> foo;
+        assertThat(r.call(), is(BAR));
+    }
+
+    @Test
+    public void testLambdaWithArguments() throws Exception {
+        new AgentBuilder.Default()
+                .enableLambdaInstrumentation(true)
+                .type(isSubTypeOf(Function.class)).transform((builder, typeDescription) -> builder.method(named("apply")).intercept(FixedValue.value(BAR)))
+                .installOn(ByteBuddyAgent.install());
+        Function<String, String> r = (bar) -> foo + bar;
+        assertThat(r.apply(QUX), is(BAR));
     }
 
     @Retention(RetentionPolicy.RUNTIME)
