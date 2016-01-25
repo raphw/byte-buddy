@@ -1991,6 +1991,18 @@ public interface AgentBuilder {
         }
 
         /**
+         * Returns an enabled lambda instrumentation strategy for {@code true}.
+         *
+         * @param enabled If lambda instrumentation should be enabled.
+         * @return {@code true} if the returned strategy should be enabled.
+         */
+        public static LambdaInstrumentationStrategy of(boolean enabled) {
+            return enabled
+                    ? ENABLED
+                    : DISABLED;
+        }
+
+        /**
          * Applies a transformation to lambda instances if applicable.
          *
          * @param byteBuddy            The Byte Buddy instance to use.
@@ -1998,6 +2010,15 @@ public interface AgentBuilder {
          * @param classFileTransformer The class file transformer to apply.
          */
         protected abstract void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
+
+        /**
+         * Indicates if this strategy enables instrumentation of the {@code LambdaMetafactory}.
+         *
+         * @return {@code true} if this strategy is enabled.
+         */
+        public boolean isEnabled() {
+            return this == ENABLED;
+        }
 
         @Override
         public String toString() {

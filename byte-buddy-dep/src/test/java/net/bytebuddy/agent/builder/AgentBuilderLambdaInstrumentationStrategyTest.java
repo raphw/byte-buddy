@@ -1,28 +1,31 @@
 package net.bytebuddy.agent.builder;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
-import java.util.Collections;
-import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class AgentBuilderLambdaInstrumentationStrategyTest implements Callable<Class<?>> {
+public class AgentBuilderLambdaInstrumentationStrategyTest {
+
+    @Test
+    public void testEnabled() throws Exception {
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.of(true).isEnabled(), is(true));
+        assertThat(AgentBuilder.LambdaInstrumentationStrategy.of(false).isEnabled(), is(false));
+    }
 
     @Test
     public void testEnabledStrategyNeverThrowsException() throws Exception {
         ClassFileTransformer initialClassFileTransformer = mock(ClassFileTransformer.class);
-        assertThat(LambdaFactory.register(initialClassFileTransformer, mock(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class), this), is(true));
+        assertThat(LambdaFactory.register(initialClassFileTransformer,
+                mock(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.class),
+                AgentBuilder.LambdaInstrumentationStrategy.ENABLED), is(true));
         try {
             ByteBuddy byteBuddy = mock(ByteBuddy.class);
             Instrumentation instrumentation = mock(Instrumentation.class);
@@ -68,13 +71,5 @@ public class AgentBuilderLambdaInstrumentationStrategyTest implements Callable<C
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation.Appender.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation.Appender.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.SerializationImplementation.class).apply();
-    }
-
-    @Override
-    public Class<?> call() throws Exception {
-        TypeDescription lambdaFactory = new TypeDescription.ForLoadedType(LambdaFactory.class);
-        return ClassInjector.UsingReflection.ofSystemClassLoader()
-                .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
-                .get(lambdaFactory);
     }
 }

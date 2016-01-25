@@ -1,8 +1,5 @@
 package net.bytebuddy.agent.builder;
 
-import net.bytebuddy.description.type.TypeDescription;
-import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Rule;
@@ -14,12 +11,11 @@ import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.*;
-import java.util.concurrent.Callable;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
-public class LambdaFactoryTest implements Callable<Class<?>> {
+public class LambdaFactoryTest {
 
     private static final String FOO = "foo";
 
@@ -40,9 +36,9 @@ public class LambdaFactoryTest implements Callable<Class<?>> {
     @Test
     public void testValidFactory() throws Exception {
         PseudoFactory pseudoFactory = new PseudoFactory();
-        assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, this), is(true));
+        assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.ENABLED), is(true));
         try {
-            assertThat(call()
+            assertThat(AgentBuilder.LambdaInstrumentationStrategy.ENABLED.call()
                     .getDeclaredMethod("make", Object.class, String.class, Object.class, Object.class, Object.class, Object.class, boolean.class, List.class, List.class)
                     .invoke(null, a1, FOO, a3, a4, a5, a6, true, a8, a9), is((Object) BAR));
             assertThat(pseudoFactory.args[0], is(a1));
@@ -69,8 +65,8 @@ public class LambdaFactoryTest implements Callable<Class<?>> {
     public void testPreviousTransformer() throws Exception {
         PseudoFactory pseudoFactory = new PseudoFactory();
         try {
-            assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, this), is(true));
-            assertThat(LambdaFactory.register(otherTransformer, pseudoFactory, this), is(false));
+            assertThat(LambdaFactory.register(classFileTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.ENABLED), is(true));
+            assertThat(LambdaFactory.register(otherTransformer, pseudoFactory, AgentBuilder.LambdaInstrumentationStrategy.ENABLED), is(false));
         } finally {
             assertThat(LambdaFactory.release(classFileTransformer), is(false));
             assertThat(LambdaFactory.release(otherTransformer), is(true));
@@ -79,7 +75,7 @@ public class LambdaFactoryTest implements Callable<Class<?>> {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalTransformer() throws Exception {
-        LambdaFactory.register(classFileTransformer, new Object(), this);
+        LambdaFactory.register(classFileTransformer, new Object(), AgentBuilder.LambdaInstrumentationStrategy.ENABLED);
     }
 
     @Test
@@ -117,14 +113,6 @@ public class LambdaFactoryTest implements Callable<Class<?>> {
                 return methods.next();
             }
         }).apply();
-    }
-
-    @Override
-    public Class<?> call() throws Exception {
-        TypeDescription lambdaFactory = new TypeDescription.ForLoadedType(LambdaFactory.class);
-        return ClassInjector.UsingReflection.ofSystemClassLoader()
-                .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
-                .get(lambdaFactory);
     }
 
     public static class PseudoFactory {
