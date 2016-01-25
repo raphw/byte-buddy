@@ -41,6 +41,7 @@ import java.util.concurrent.Callable;
 import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 
 @RunWith(Parameterized.class)
@@ -291,6 +292,27 @@ public class AgentBuilderDefaultApplicationTest {
     @Test
     @JavaVersionRule.Enforce(8)
     @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    public void testNonCapturingLambdaIsConstant() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
+                .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
+                .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
+                .installOn(ByteBuddyAgent.install());
+        try {
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            assertThat(sampleFactory.getDeclaredMethod("nonCapturing").invoke(sampleFactory.newInstance()),
+                    sameInstance(sampleFactory.getDeclaredMethod("nonCapturing").invoke(sampleFactory.newInstance())));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testLambdaFactoryIsReset() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -322,6 +344,27 @@ public class AgentBuilderDefaultApplicationTest {
             @SuppressWarnings("unchecked")
             Callable<String> instance = (Callable<String>) sampleFactory.getDeclaredMethod("argumentCapturing", String.class).invoke(sampleFactory.newInstance(), FOO);
             assertThat(instance.call(), is(BAR));
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
+    public void testArgumentCapturingLambdaIsNotConstant() throws Exception {
+        assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
+        ClassLoader classLoader = lambdaSamples();
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
+                .with(AgentBuilder.LambdaInstrumentationStrategy.ENABLED)
+                .type(isSubTypeOf(Callable.class)).transform(new SingleMethodReplacer("call"))
+                .installOn(ByteBuddyAgent.install());
+        try {
+            Class<?> sampleFactory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+            assertThat(sampleFactory.getDeclaredMethod("argumentCapturing", String.class).invoke(sampleFactory.newInstance(), FOO),
+                    not(sameInstance(sampleFactory.getDeclaredMethod("argumentCapturing", String.class).invoke(sampleFactory.newInstance(), FOO))));
         } finally {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.LambdaInstrumentationStrategy.release(classFileTransformer, ByteBuddyAgent.getInstrumentation());
