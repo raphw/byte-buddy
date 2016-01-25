@@ -2215,7 +2215,7 @@ public interface AgentBuilder {
                         classFile = transformedClassFile == null
                                 ? classFile
                                 : transformedClassFile;
-                    } catch (Exception ignored) {
+                    } catch (Throwable ignored) {
                             /* do nothing */
                     }
                 }

@@ -82,6 +82,8 @@ public class LambdaFactory {
                             Collection.class)));
                 }
             }
+        } catch (RuntimeException exception) {
+            throw exception;
         } catch (Exception exception) {
             throw new IllegalStateException("Could not register class file transformer", exception);
         }
@@ -105,6 +107,8 @@ public class LambdaFactory {
             synchronized (classFileTransformers) {
                 return classFileTransformers.remove(classFileTransformer) != null && classFileTransformers.isEmpty();
             }
+        } catch (RuntimeException exception) {
+            throw exception;
         } catch (Exception exception) {
             throw new IllegalStateException("Could not release class file transformer", exception);
         }
@@ -148,8 +152,10 @@ public class LambdaFactory {
                     markerInterfaces,
                     additionalBridges,
                     classFileTransformers);
+        } catch (RuntimeException exception) {
+            throw exception;
         } catch (Exception exception) {
-            throw new IllegalStateException(exception);
+            throw new IllegalStateException("Cannot create class for lambda expression", exception);
         }
     }
 
