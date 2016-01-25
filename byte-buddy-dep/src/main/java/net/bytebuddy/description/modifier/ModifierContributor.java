@@ -52,7 +52,7 @@ public interface ModifierContributor {
          */
         int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
                 | Opcodes.ACC_ABSTRACT | Opcodes.ACC_INTERFACE | Opcodes.ACC_ANNOTATION | Opcodes.ACC_DEPRECATED
-                | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC | Opcodes.ACC_DEPRECATED;
+                | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC;
     }
 
     /**
@@ -65,7 +65,7 @@ public interface ModifierContributor {
          */
         int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
                 | Opcodes.ACC_DEPRECATED | Opcodes.ACC_ENUM | Opcodes.ACC_FINAL | Opcodes.ACC_STATIC
-                | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE | Opcodes.ACC_DEPRECATED;
+                | Opcodes.ACC_SYNTHETIC | Opcodes.ACC_TRANSIENT | Opcodes.ACC_VOLATILE;
     }
 
     /**
@@ -79,7 +79,7 @@ public interface ModifierContributor {
         int MASK = Opcodes.ACC_PUBLIC | Opcodes.ACC_PROTECTED | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC
                 | Opcodes.ACC_BRIDGE | Opcodes.ACC_FINAL | Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT
                 | Opcodes.ACC_STATIC | Opcodes.ACC_STRICT | Opcodes.ACC_SYNCHRONIZED | Opcodes.ACC_SYNTHETIC
-                | Opcodes.ACC_VARARGS | Opcodes.ACC_DEPRECATED;
+                | Opcodes.ACC_VARARGS;
     }
 
     /**

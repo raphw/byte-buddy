@@ -159,7 +159,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
+                    FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getActualModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
@@ -251,7 +251,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getModifiers(),
+                    FieldVisitor fieldVisitor = classVisitor.visitField(fieldDescription.getActualModifiers(),
                             fieldDescription.getInternalName(),
                             fieldDescription.getDescriptor(),
                             fieldDescription.getGenericSignature(),
@@ -483,7 +483,7 @@ public interface TypeWriter<T> {
 
                 @Override
                 public void apply(ClassVisitor classVisitor, Implementation.Context implementationContext, AnnotationValueFilter.Factory annotationValueFilterFactory) {
-                    MethodVisitor methodVisitor = classVisitor.visitMethod(getMethod().getAdjustedModifiers(getSort().isImplemented()),
+                    MethodVisitor methodVisitor = classVisitor.visitMethod(getMethod().getActualModifiers(getSort().isImplemented()),
                             getMethod().getInternalName(),
                             getMethod().getDescriptor(),
                             getMethod().getGenericSignature(),
@@ -1068,7 +1068,7 @@ public interface TypeWriter<T> {
                         if (!bridgeMethod.getReturnType().asErasure().isAssignableFrom(bridgeTarget.getReturnType().asErasure())) {
                             throw new IllegalStateException("Cannot implement bridge " + bridgeMethod + " to " + bridgeTarget);
                         }
-                        MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getAdjustedModifiers(true),
+                        MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getActualModifiers(true),
                                 bridgeMethod.getInternalName(),
                                 bridgeMethod.getDescriptor(),
                                 MethodDescription.NON_GENERIC_SIGNATURE,
@@ -3017,7 +3017,7 @@ public interface TypeWriter<T> {
                  */
                 protected FieldVisitor redefine(FieldPool.Record record, Object defaultValue) {
                     FieldDescription instrumentedField = record.getField();
-                    return new AttributeObtainingFieldVisitor(super.visitField(instrumentedField.getModifiers(),
+                    return new AttributeObtainingFieldVisitor(super.visitField(instrumentedField.getActualModifiers(),
                             instrumentedField.getInternalName(),
                             instrumentedField.getDescriptor(),
                             instrumentedField.getGenericSignature(),
@@ -3036,7 +3036,7 @@ public interface TypeWriter<T> {
                         } else {
                             TypeInitializerInjection injectedCode = new TypeInitializerInjection(new TypeInitializerDelegate(instrumentedType, RandomString.make()));
                             this.injectedCode = injectedCode;
-                            return super.visitMethod(injectedCode.getInjectorProxyMethod().getModifiers(),
+                            return super.visitMethod(injectedCode.getInjectorProxyMethod().getActualModifiers(),
                                     injectedCode.getInjectorProxyMethod().getInternalName(),
                                     injectedCode.getInjectorProxyMethod().getDescriptor(),
                                     injectedCode.getInjectorProxyMethod().getGenericSignature(),
@@ -3061,14 +3061,14 @@ public interface TypeWriter<T> {
                 protected MethodVisitor redefine(MethodDescription methodDescription, boolean abstractOrigin) {
                     MethodPool.Record record = methodPool.target(methodDescription);
                     if (!record.getSort().isDefined()) {
-                        return super.visitMethod(methodDescription.getModifiers(),
+                        return super.visitMethod(methodDescription.getActualModifiers(),
                                 methodDescription.getInternalName(),
                                 methodDescription.getDescriptor(),
                                 methodDescription.getGenericSignature(),
                                 methodDescription.getExceptionTypes().asErasures().toInternalNames());
                     }
                     MethodDescription implementedMethod = record.getMethod();
-                    MethodVisitor methodVisitor = super.visitMethod(implementedMethod.getAdjustedModifiers(record.getSort().isImplemented()),
+                    MethodVisitor methodVisitor = super.visitMethod(implementedMethod.getActualModifiers(record.getSort().isImplemented()),
                             implementedMethod.getInternalName(),
                             implementedMethod.getDescriptor(),
                             implementedMethod.getGenericSignature(),
@@ -3221,7 +3221,7 @@ public interface TypeWriter<T> {
                         record.applyBody(actualMethodVisitor, implementationContext, annotationValueFilterFactory);
                         actualMethodVisitor.visitEnd();
                         mv = resolution.isRebased()
-                                ? cv.visitMethod(resolution.getResolvedMethod().getModifiers(),
+                                ? cv.visitMethod(resolution.getResolvedMethod().getActualModifiers(),
                                 resolution.getResolvedMethod().getInternalName(),
                                 resolution.getResolvedMethod().getDescriptor(),
                                 resolution.getResolvedMethod().getGenericSignature(),
