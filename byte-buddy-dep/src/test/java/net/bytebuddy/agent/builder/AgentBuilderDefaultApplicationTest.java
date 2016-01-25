@@ -268,7 +268,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testNonCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -290,7 +290,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testArgumentCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -312,7 +312,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testInstanceCapturingLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -334,7 +334,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testNonCapturingLambdaWithArguments() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -355,7 +355,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testCapturingLambdaWithArguments() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
@@ -376,7 +376,7 @@ public class AgentBuilderDefaultApplicationTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce
+    @AgentAttachmentRule.Enforce(redefinesClasses = true)
     public void testSerializableLambda() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         ClassLoader classLoader = lambdaSamples();
