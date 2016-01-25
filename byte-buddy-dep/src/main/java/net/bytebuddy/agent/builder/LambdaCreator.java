@@ -16,6 +16,7 @@ import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.TypeCreation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
@@ -49,7 +50,7 @@ public class LambdaCreator {
 
     private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
-    private static final AtomicInteger lambdaNameCounter = new AtomicInteger();
+    private static final AtomicInteger LAMBDA_NAME_COUNTER = new AtomicInteger();
 
     private final ByteBuddy byteBuddy;
 
@@ -63,15 +64,16 @@ public class LambdaCreator {
                        Object lambdaMethodType,
                        Object targetMethodHandle,
                        Object specializedLambdaMethodType,
-                       boolean enforceSerialization,
+                       boolean serializable,
                        List<Class<?>> markerInterfaces,
+                       List<?> additionalBridges,
                        Collection<? extends ClassFileTransformer> classFileTransformers) throws Exception {
         JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.of(factoryMethodType);
         JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.of(lambdaMethodType);
         JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, targetTypeLookup);
         JavaInstance.MethodType specializedLambdaMethod = JavaInstance.MethodType.of(specializedLambdaMethodType);
         Class<?> targetType = JavaInstance.MethodHandle.lookupType(targetTypeLookup);
-        String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
+        String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + LAMBDA_NAME_COUNTER.incrementAndGet();
         DynamicType.Builder<?> builder = byteBuddy
                 .subclass(factoryMethod.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, Visibility.PUBLIC)
@@ -93,16 +95,32 @@ public class LambdaCreator {
                     .withParameters(factoryMethod.getParameterTypes())
                     .intercept(new FactoryImplementation());
         }
-        if (enforceSerialization || factoryMethod.getReturnType().isAssignableTo(Serializable.class) || markerInterfaces.contains(Serializable.class)) {
+        if (serializable) {
+            if (!markerInterfaces.contains(Serializable.class)) {
+                builder = builder.implement(Serializable.class);
+            }
             builder = builder.defineMethod("writeReplace", Object.class)
                     .intercept(new SerializationImplementation(new TypeDescription.ForLoadedType(targetType),
+                            factoryMethod.getReturnType(),
+                            lambdaMethodName,
+                            lambdaMethod,
                             targetMethod,
                             JavaInstance.MethodType.of(specializedLambdaMethodType)));
-        } else {
-            builder = builder.defineMethod("readObject", ObjectInputStream.class)
+        } else if (factoryMethod.getReturnType().isAssignableTo(Serializable.class)) {
+            builder = builder.defineMethod("readObject", void.class, Visibility.PRIVATE, MethodManifestation.FINAL)
+                    .withParameters(ObjectInputStream.class)
+                    .throwing(NotSerializableException.class)
                     .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"))
-                    .defineMethod("writeObject", ObjectOutputStream.class)
+                    .defineMethod("writeObject", void.class, Visibility.PRIVATE, MethodManifestation.FINAL)
+                    .withParameters(ObjectOutputStream.class)
+                    .throwing(NotSerializableException.class)
                     .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"));
+        }
+        for (Object additionalBridgeType : additionalBridges) {
+            JavaInstance.MethodType additionalBridge = JavaInstance.MethodType.of(additionalBridgeType);
+            builder = builder.defineMethod(lambdaMethodName, additionalBridge.getReturnType(), MethodManifestation.BRIDGE, Visibility.PUBLIC)
+                    .withParameters(additionalBridge.getParameterTypes())
+                    .intercept(new BridgeMethodImplementation(lambdaMethodName, lambdaMethod));
         }
         byte[] classFile = builder.visit(DebuggingWrapper.makeDefault()).make().getBytes();
         for (ClassFileTransformer classFileTransformer : classFileTransformers) {
@@ -261,23 +279,37 @@ public class LambdaCreator {
 
         private final TypeDescription targetType;
 
-        private final JavaInstance.MethodHandle targetMethodHandle;
+        private final TypeDescription lambdaType;
 
-        private final JavaInstance.MethodType specializedMethodType;
+        private final String lambdaMethodName;
 
-        public SerializationImplementation(TypeDescription targetType, JavaInstance.MethodHandle targetMethodHandle, JavaInstance.MethodType specializedMethodType) {
+        private final JavaInstance.MethodType lambdaMethod;
+
+        private final JavaInstance.MethodHandle targetMethod;
+
+        private final JavaInstance.MethodType specializedMethod;
+
+        public SerializationImplementation(TypeDescription targetType,
+                                           TypeDescription lambdaType,
+                                           String lambdaMethodName,
+                                           JavaInstance.MethodType lambdaMethod,
+                                           JavaInstance.MethodHandle targetMethod,
+                                           JavaInstance.MethodType specializedMethod) {
             this.targetType = targetType;
-            this.targetMethodHandle = targetMethodHandle;
-            this.specializedMethodType = specializedMethodType;
+            this.lambdaType = lambdaType;
+            this.lambdaMethodName = lambdaMethodName;
+            this.lambdaMethod = lambdaMethod;
+            this.targetMethod = targetMethod;
+            this.specializedMethod = specializedMethod;
         }
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
             TypeDescription serializedLambda;
             try {
-                serializedLambda = new TypeDescription.ForLoadedType(Class.forName("java.lang.invoke.SerializableLambda"));
+                serializedLambda = new TypeDescription.ForLoadedType(Class.forName("java.lang.invoke.SerializedLambda"));
             } catch (ClassNotFoundException exception) {
-                throw new IllegalStateException("Cannot find serializable lambda class", exception);
+                throw new IllegalStateException("Cannot find class for lambda serialization", exception);
             }
             List<StackManipulation> lambdaArguments = new ArrayList<StackManipulation>(implementationTarget.getInstrumentedType().getDeclaredFields().size());
             for (FieldDescription.InDefinedShape fieldDescription : implementationTarget.getInstrumentedType().getDeclaredFields()) {
@@ -289,13 +321,14 @@ public class LambdaCreator {
                     TypeCreation.of(serializedLambda),
                     Duplication.SINGLE,
                     ClassConstant.of(targetType),
-                    new TextConstant(implementationTarget.getInstrumentedType().getInternalName()),
-                    new TextConstant(targetMethodHandle.getName()),
-                    new TextConstant(targetMethodHandle.getDescriptor()),
-                    IntegerConstant.forValue(targetMethodHandle.getHandleType().getIdentifier()),
-                    new TextConstant(targetMethodHandle.getInstanceType().getInternalName()),
-                    new TextConstant(targetMethodHandle.getName()),
-                    new TextConstant(specializedMethodType.getDescriptor()),
+                    new TextConstant(lambdaType.getInternalName()),
+                    new TextConstant(lambdaMethodName),
+                    new TextConstant(lambdaMethod.getDescriptor()),
+                    IntegerConstant.forValue(targetMethod.getHandleType().getIdentifier()),
+                    new TextConstant(targetMethod.getOwnerType().getInternalName()),
+                    new TextConstant(targetMethod.getName()),
+                    new TextConstant(targetMethod.getDescriptor()),
+                    new TextConstant(specializedMethod.getDescriptor()),
                     ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(lambdaArguments),
                     MethodInvocation.invoke(serializedLambda.getDeclaredMethods().filter(isConstructor()).getOnly()),
                     MethodReturn.REFERENCE
@@ -308,4 +341,51 @@ public class LambdaCreator {
         }
     }
 
+    private static class BridgeMethodImplementation implements Implementation {
+
+        private final String lambdaMethodName;
+
+        private final JavaInstance.MethodType lambdaMethod;
+
+        public BridgeMethodImplementation(String lambdaMethodName, JavaInstance.MethodType lambdaMethod) {
+            this.lambdaMethodName = lambdaMethodName;
+            this.lambdaMethod = lambdaMethod;
+        }
+
+        @Override
+        public ByteCodeAppender appender(Target implementationTarget) {
+            return new Appender(implementationTarget.invokeSuper(new MethodDescription.SignatureToken(lambdaMethodName,
+                    lambdaMethod.getReturnType(),
+                    lambdaMethod.getParameterTypes())));
+        }
+
+        @Override
+        public InstrumentedType prepare(InstrumentedType instrumentedType) {
+            return instrumentedType;
+        }
+
+        protected static class Appender implements ByteCodeAppender {
+
+            private final SpecialMethodInvocation bridgeMethodInvocation;
+
+            protected Appender(SpecialMethodInvocation bridgeMethodInvocation) {
+                this.bridgeMethodInvocation = bridgeMethodInvocation;
+            }
+
+            @Override
+            public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                return new Compound(new Simple(
+                        MethodVariableAccess.allArgumentsOf(instrumentedMethod)
+                                .asBridgeOf(bridgeMethodInvocation.getMethodDescription())
+                                .prependThisReference(),
+                        bridgeMethodInvocation,
+                        bridgeMethodInvocation.getMethodDescription().getReturnType().asErasure().isAssignableTo(instrumentedMethod.getReturnType().asErasure())
+                                ? StackManipulation.Trivial.INSTANCE
+                                : TypeCasting.to(instrumentedMethod.getReceiverType().asErasure()),
+                        MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+
+                )).apply(methodVisitor, implementationContext, instrumentedMethod);
+            }
+        }
+    }
 }

@@ -22,6 +22,7 @@ import org.junit.rules.MethodRule;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.*;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.instrument.ClassFileTransformer;
@@ -330,6 +331,39 @@ public class AgentBuilderDefaultApplicationTest {
             ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
             AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
         }
+    }
+
+    @Test
+    public void testSerializableLambda() throws Exception {
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default()
+                .with(binaryLocator)
+                .enableLambdaInstrumentation(true)
+                .type(isSubTypeOf(Callable.class)).transform((builder, typeDescription) -> builder.method(named("call")).intercept(FixedValue.value(BAR)))
+                .installOn(ByteBuddyAgent.install());
+        try {
+            String foo = FOO;
+            Callable<String> r = (Callable<String> & Serializable) () -> foo;
+            assertThat(r.call(), is(BAR));
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ObjectOutputStream objectOutputStream = new ObjectOutputStream(outputStream);
+            objectOutputStream.writeObject(r);
+            objectOutputStream.close();
+            ObjectInputStream objectInputStream = new ObjectInputStream(new ByteArrayInputStream(outputStream.toByteArray()));
+            @SuppressWarnings("unchecked")
+            Callable<String> deserialized = (Callable<String>) objectInputStream.readObject();
+            assertThat(deserialized.call(), is(BAR));
+            objectInputStream.close();
+        } finally {
+            ByteBuddyAgent.getInstrumentation().removeTransformer(classFileTransformer);
+            AgentBuilder.Default.releaseLambdaTransformer(classFileTransformer, ByteBuddyAgent.getInstrumentation());
+        }
+    }
+
+    @Test
+    public void testFoo() throws Exception {
+        Callable<String> r = (Callable<String> & Serializable) () -> "foo";
+        r.call();
+
     }
 
     @Retention(RetentionPolicy.RUNTIME)

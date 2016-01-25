@@ -38,6 +38,7 @@ public class LambdaFactory {
                             Object.class,
                             boolean.class,
                             List.class,
+                            List.class
                             Collection.class)));
                 }
             }
@@ -54,8 +55,7 @@ public class LambdaFactory {
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);
             synchronized (classFileTransformers) {
-                classFileTransformers.remove(classFileTransformer);
-                return classFileTransformers.isEmpty();
+                return classFileTransformers.remove(classFileTransformer) != null && classFileTransformers.isEmpty();
             }
         } catch (Exception exception) {
             throw new IllegalStateException("Could not release class file transformer", exception);
@@ -68,8 +68,9 @@ public class LambdaFactory {
                           Object samMethodType,
                           Object implMethod,
                           Object instantiatedMethodType,
-                          boolean enforceSerialization,
+                          boolean serializable,
                           List<Class<?>> markerInterfaces,
+                          List<?> additionalBridges,
                           Set<ClassFileTransformer> classFileTransformers) {
 
         try {
@@ -80,8 +81,9 @@ public class LambdaFactory {
                     samMethodType,
                     implMethod,
                     instantiatedMethodType,
-                    enforceSerialization,
+                    serializable,
                     markerInterfaces,
+                    additionalBridges,
                     classFileTransformers);
         } catch (Exception exception) {
             throw new IllegalStateException(exception);
@@ -94,16 +96,18 @@ public class LambdaFactory {
                               Object samMethodType,
                               Object implMethod,
                               Object instantiatedMethodType,
-                              boolean enforceSerialization,
-                              List<Class<?>> markerInterfaces) throws LambdaConversionException {
+                              boolean serializable,
+                              List<Class<?>> markerInterfaces,
+                              List<?> additionalBridges) throws LambdaConversionException {
             return CLASS_FILE_TRANSFORMERS.values().iterator().next().invoke(caller,
                     invokedName,
                     invokedType,
                     samMethodType,
                     implMethod,
                     instantiatedMethodType,
-                    enforceSerialization,
+                    serializable,
                     markerInterfaces,
+                    additionalBridges,
                     CLASS_FILE_TRANSFORMERS.keySet());
     }
 }

@@ -32,7 +32,8 @@ public class Foo {
                         Object.class,
                         Object.class,
                         boolean.class,
-                        List.class).invoke(null, caller, invokedName, invokedType, samMethodType, implMethod, instantiatedMethodType, false, Collections.emptyList()),
+                        List.class,
+                        List.class).invoke(null, caller, invokedName, invokedType, samMethodType, implMethod, instantiatedMethodType, false, Collections.emptyList(), Collections.emptyList()),
                 null);
         unsafe.ensureClassInitialized(lambdaClass);
         return invokedType.parameterCount() == 0 // lookup() == IMPL_LOOKUP
@@ -45,13 +46,25 @@ public class Foo {
                                           MethodType invokedType,
                                           Object... args) throws Exception {
         int flags = (Integer) args[3];
+        int argIndex = 4;
         Class<?>[] markerInterface;
         if ((flags & FLAG_MARKERS) != 0) {
-            int markerCount = (Integer) args[4];
+            int markerCount = (Integer) args[argIndex++];
             markerInterface = new Class<?>[markerCount];
-            System.arraycopy(args, 5, markerInterface, 0, markerCount);
+            System.arraycopy(args, argIndex, markerInterface, 0, markerCount);
+            argIndex += markerCount;
         } else {
             markerInterface = new Class<?>[0];
+        }
+        MethodType[] additionalBridge;
+        if ((flags & FLAG_BRIDGES) != 0) {
+            int bridgeCount = (Integer) args[argIndex++];
+            additionalBridge = new MethodType[bridgeCount];
+            System.arraycopy(args, argIndex, additionalBridge, 0, bridgeCount);
+            // argIndex += bridgeCount;
+        }
+        else {
+            additionalBridge = new MethodType[0];
         }
         Unsafe unsafe = Unsafe.getUnsafe();
         final Class<?> lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
@@ -63,16 +76,12 @@ public class Foo {
                         Object.class,
                         Object.class,
                         boolean.class,
-                        List.class).invoke(null, caller, invokedName, invokedType, args[0], args[1], args[2], ((flags & FLAG_SERIALIZABLE) != 0), Arrays.asList(markerInterface)),
+                        List.class,
+                        List.class).invoke(null, caller, invokedName, invokedType, args[0], args[1], args[2], ((flags & FLAG_SERIALIZABLE) != 0), Arrays.asList(markerInterface), Arrays.asList(additionalBridge)),
                 null);
         unsafe.ensureClassInitialized(lambdaClass);
-        return invokedType.parameterCount() == 0
+        return invokedType.parameterCount() == 0 // lookup() == IMPL_LOOKUP
                 ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
                 : new ConstantCallSite(MethodHandles.lookup().findStatic(lambdaClass, "get$Lambda", invokedType));
-    }
-
-    void qux () {
-        Object o = null;
-        byte[] b = (byte[]) o;
     }
 }
