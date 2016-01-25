@@ -2473,7 +2473,9 @@ public interface AgentBuilder {
                     if (LambdaFactory.register(classFileTransformer, new LambdaCreator(byteBuddy))) {
                         byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE)
                                 .redefine(lambdaMetaFactory)
-                                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named("metafactory"), new MetaFactoryRedirection()))
+                                .visit(new AsmVisitorWrapper.ForDeclaredMethods()
+                                        .method(named("metafactory"), new MetaFactoryRedirection())
+                                        .method(named("altMetafactory"), new AlternativeMetaFactoryRedirection()))
                                 .make()
                                 .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
                     }
@@ -2633,7 +2635,7 @@ public interface AgentBuilder {
                     methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"sun/misc/Unsafe", "java/lang/Class"}, 0, null);
                     methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                     methodVisitor.visitInsn(Opcodes.DUP);
-                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
                     methodVisitor.visitLdcInsn("get$Lambda");
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
@@ -2818,7 +2820,7 @@ public interface AgentBuilder {
                     methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"java/lang/Class"}, 0, null);
                     methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
                     methodVisitor.visitInsn(Opcodes.DUP);
-                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodHandles", "lookup", "()Ljava/lang/invoke/MethodHandles$Lookup;", false);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
                     methodVisitor.visitLdcInsn("get$Lambda");
                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);

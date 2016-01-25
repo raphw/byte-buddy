@@ -11,7 +11,6 @@ import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.ExceptionMethod;
 import net.bytebuddy.implementation.Implementation;
-import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.Duplication;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
@@ -58,60 +57,60 @@ public class LambdaCreator {
         this.byteBuddy = byteBuddy;
     }
 
-    public byte[] make(Object callerTypeLookup,
-                              String functionalMethodName,
-                              Object factoryMethod,
-                              Object implementedMethod,
-                              Object targetMethodHandle,
-                              Object specializedMethodType,
-                              boolean enforceSerialization,
-                              List<Class<?>> markerInterfaces,
-                              Collection<? extends ClassFileTransformer> classFileTransformers) throws Exception {
-        JavaInstance.MethodType factoryMethodType = JavaInstance.MethodType.of(factoryMethod);
-        JavaInstance.MethodType implementedMethodType = JavaInstance.MethodType.of(implementedMethod);
-        JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, callerTypeLookup);
-        Class<?> lookupType = JavaInstance.MethodHandle.lookupType(callerTypeLookup);
-        String lambdaClassName = lookupType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
+    public byte[] make(Object targetTypeLookup,
+                       String lambdaMethodName,
+                       Object factoryMethodType,
+                       Object lambdaMethodType,
+                       Object targetMethodHandle,
+                       Object specializedLambdaMethodType,
+                       boolean enforceSerialization,
+                       List<Class<?>> markerInterfaces,
+                       Collection<? extends ClassFileTransformer> classFileTransformers) throws Exception {
+        JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.of(factoryMethodType);
+        JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.of(lambdaMethodType);
+        JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, targetTypeLookup);
+        Class<?> targetType = JavaInstance.MethodHandle.lookupType(targetTypeLookup);
+        String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
         DynamicType.Builder<?> builder = byteBuddy
-                .subclass(factoryMethodType.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, implementedMethodType.getParameterTypes().isEmpty()
+                .subclass(factoryMethod.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, lambdaMethod.getParameterTypes().isEmpty()
                         ? Visibility.PUBLIC
                         : Visibility.PACKAGE_PRIVATE)
                 .implement(markerInterfaces)
-                .name(lambdaClassName);
+                .name(lambdaClassName)
+                .defineConstructor(factoryMethod.getParameterTypes().isEmpty() ? Visibility.PUBLIC : Visibility.PRIVATE)
+                .withParameters(factoryMethod.getParameterTypes())
+                .intercept(new ConstructorImplementation())
+                .method(named(lambdaMethodName)
+                        .and(takesArguments(lambdaMethod.getParameterTypes()))
+                        .and(returns(lambdaMethod.getReturnType())))
+                .intercept(new LambdaMethodImplementation(targetMethod.asMethodDescription()));
         int index = 0;
-        for (TypeDescription parameterTypes : implementedMethodType.getParameterTypes()) {
-            builder = builder.defineField(FIELD_PREFIX + index++, parameterTypes, Visibility.PUBLIC, FieldManifestation.FINAL);
+        for (TypeDescription capturedType : factoryMethod.getParameterTypes()) {
+            builder = builder.defineField(FIELD_PREFIX + index++, capturedType, Visibility.PUBLIC, FieldManifestation.FINAL);
         }
-        if (!implementedMethodType.getParameterTypes().isEmpty()) {
-            builder = builder.defineMethod(LAMBDA_FACTORY, factoryMethodType.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
-                    .withParameters(factoryMethodType.getParameterTypes())
+        if (!factoryMethod.getParameterTypes().isEmpty()) {
+            builder = builder.defineMethod(LAMBDA_FACTORY, factoryMethod.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
+                    .withParameters(factoryMethod.getParameterTypes())
                     .intercept(new FactoryImplementation());
         }
-        if (enforceSerialization || factoryMethodType.getReturnType().isAssignableTo(Serializable.class)) {
+        if (enforceSerialization || factoryMethod.getReturnType().isAssignableTo(Serializable.class) || markerInterfaces.contains(Serializable.class)) {
             builder = builder.defineMethod("writeReplace", Object.class)
-                    .intercept(new SerializationImplementation(new TypeDescription.ForLoadedType(lookupType),
+                    .intercept(new SerializationImplementation(new TypeDescription.ForLoadedType(targetType),
                             targetMethod,
-                            JavaInstance.MethodType.of(specializedMethodType)));
+                            JavaInstance.MethodType.of(specializedLambdaMethodType)));
         } else {
             builder = builder.defineMethod("readObject", ObjectInputStream.class)
                     .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"))
                     .defineMethod("writeObject", ObjectOutputStream.class)
                     .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"));
         }
-        byte[] classFile = builder.defineConstructor(factoryMethodType.getParameterTypes().isEmpty() ? Visibility.PUBLIC : Visibility.PRIVATE)
-                .intercept(SuperMethodCall.INSTANCE.andThen(new ConstructorImplementation()))
-                .method(named(functionalMethodName)
-                        .and(takesArguments(implementedMethodType.getParameterTypes()))
-                        .and(returns(implementedMethodType.getReturnType())))
-                .intercept(new LambdaMethodImplementation(targetMethod.asMethodDescription()))
-                .make()
-                .getBytes();
+        byte[] classFile = builder.visit(DebuggingWrapper.makeDefault()).make().getBytes();
         for (ClassFileTransformer classFileTransformer : classFileTransformers) {
-            byte[] transformedClassFile = classFileTransformer.transform(lookupType.getClassLoader(),
+            byte[] transformedClassFile = classFileTransformer.transform(targetType.getClassLoader(),
                     lambdaClassName.replace('.', '/'),
                     NOT_PREVIOUSLY_DEFINED,
-                    lookupType.getProtectionDomain(),
+                    targetType.getProtectionDomain(),
                     classFile);
             classFile = transformedClassFile == null
                     ? classFile
@@ -121,6 +120,12 @@ public class LambdaCreator {
     }
 
     private static class ConstructorImplementation implements Implementation {
+
+        protected static final MethodDescription.InDefinedShape OBJECT_CONSTRUCTOR;
+
+        static {
+            OBJECT_CONSTRUCTOR = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
+        }
 
         @Override
         public ByteCodeAppender appender(Target implementationTarget) {
@@ -150,6 +155,8 @@ public class LambdaCreator {
                     fieldAssignments.add(FieldAccess.forField(fieldDescriptions.get(parameterDescription.getIndex())).putter());
                 }
                 return new Size(new StackManipulation.Compound(
+                        MethodVariableAccess.REFERENCE.loadOffset(0),
+                        MethodInvocation.invoke(OBJECT_CONSTRUCTOR),
                         new StackManipulation.Compound(fieldAssignments),
                         MethodReturn.VOID
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
@@ -180,9 +187,9 @@ public class LambdaCreator {
             @Override
             public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                 return new Size(new StackManipulation.Compound(
-                        MethodVariableAccess.allArgumentsOf(instrumentedMethod),
                         TypeCreation.of(instrumentedType),
                         Duplication.SINGLE,
+                        MethodVariableAccess.allArgumentsOf(instrumentedMethod),
                         MethodInvocation.invoke(instrumentedType.getDeclaredMethods().filter(isConstructor()).getOnly()),
                         MethodReturn.REFERENCE
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
@@ -228,7 +235,7 @@ public class LambdaCreator {
                 }
                 return new Size(new StackManipulation.Compound(
                         new StackManipulation.Compound(fieldAccess),
-                        MethodVariableAccess.allArgumentsOf(lambdaDispatcherMethod),
+//                        MethodVariableAccess.allArgumentsOf(lambdaDispatcherMethod),
                         MethodInvocation.invoke(lambdaDispatcherMethod),
                         MethodReturn.returning(lambdaDispatcherMethod.getReturnType().asErasure())
                 ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
