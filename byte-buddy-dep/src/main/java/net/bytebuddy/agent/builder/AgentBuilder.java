@@ -71,8 +71,16 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public interface AgentBuilder {
 
     /**
+     * <p>
      * Matches a type being loaded in order to apply the supplied
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by
+     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
+     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to
+     * exclude class loaders such as for example the bootstrap class loader.
+     * </p>
      *
      * @param matcher A matcher that decides if the entailed
      *                {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for a type that
@@ -84,13 +92,21 @@ public interface AgentBuilder {
     Identified type(RawMatcher matcher);
 
     /**
+     * <p>
      * Matches a type being loaded in order to apply the supplied
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by
+     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
+     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to exclude
+     * class loaders such as for example the bootstrap class loader by using
+     * {@link AgentBuilder#type(ElementMatcher, ElementMatcher)} instead.
+     * </p>
      *
      * @param typeMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being loaded that
-     *                    decides if the entailed
-     *                    {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for that
-     *                    type.
+     *                    decides if the entailed {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should
+     *                    be applied for that type.
      * @return A definable that represents this agent builder which allows for the definition of one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code typeMatcher}
      * indicates a match.
@@ -98,8 +114,15 @@ public interface AgentBuilder {
     Identified type(ElementMatcher<? super TypeDescription> typeMatcher);
 
     /**
+     * <p>
      * Matches a type being loaded in order to apply the supplied
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by
+     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
+     * to ignore name spaces that are irrelevant to instrumentation.
+     * </p>
      *
      * @param typeMatcher        An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being
      *                           loaded that decides if the entailed
@@ -232,9 +255,29 @@ public interface AgentBuilder {
     /**
      * Disables injection of auxiliary classes into the bootstrap class path.
      *
-     * @return An agent builder with bootstrap class loader class injection disabled.
+     * @return A new instance of this agent builder which does not apply bootstrap class loader injection.
      */
     AgentBuilder disableBootstrapInjection();
+
+    /**
+     * <p>
+     * Excludes any type that is matched by the provided matcher from instrumentation. By default, Byte Buddy does not
+     * instrument synthetic types.
+     * </p>
+     * <p>
+     * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
+     * as possible. Byte Buddy can determine a type's name without parsing its class file and can therefore discard such
+     * types prematurely. When a different property of a type - such as for example its modifiers or its annotations is
+     * accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
+     * of a name should always be done as a first step and even if it does not influence the selection of what types are
+     * matched. Without changing this property, the class file of every type is being parsed!
+     * </p>
+     *
+     * @param ignoredTypes A matcher that identifies types that should not be instrumented.
+     * @return A new instance of this agent builder that ignores all types that are matched by the provided matcher.
+     * All previous matchers for ignored types are discarded.
+     */
+    AgentBuilder ignore(ElementMatcher<? super TypeDescription> ignoredTypes);
 
     /**
      * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
@@ -1665,10 +1708,11 @@ public interface AgentBuilder {
             /**
              * Considers a loaded class for modification.
              *
-             * @param type The type that is to be considered.
+             * @param type         The type that is to be considered.
+             * @param ignoredTypes A matcher that indicates what types are explicitly ignored.
              * @return {@code true} if the class is considered to be redefined.
              */
-            boolean consider(Class<?> type);
+            boolean consider(Class<?> type, ElementMatcher<? super TypeDescription> ignoredTypes);
 
             /**
              * Applies the represented type modification on all collected types.
@@ -1721,11 +1765,12 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(Class<?> type) {
+                public boolean consider(Class<?> type, ElementMatcher<? super TypeDescription> ignoredTypes) {
                     Default.Transformation.Resolution resolution = transformation.resolve(new TypeDescription.ForLoadedType(type),
                             type.getClassLoader(),
                             type,
-                            type.getProtectionDomain());
+                            type.getProtectionDomain(),
+                            ignoredTypes);
                     return resolution.isResolved() && entries.add(new Entry(type, resolution));
                 }
 
@@ -1885,9 +1930,9 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public boolean consider(Class<?> type) {
+                public boolean consider(Class<?> type, ElementMatcher<? super TypeDescription> ignoredTypes) {
                     return transformation.resolve(new TypeDescription.ForLoadedType(type),
-                            type.getClassLoader(), type, type.getProtectionDomain()).isResolved() && types.add(type);
+                            type.getClassLoader(), type, type.getProtectionDomain(), ignoredTypes).isResolved() && types.add(type);
                 }
 
                 @Override
@@ -1923,6 +1968,15 @@ public interface AgentBuilder {
 
         /**
          * A strategy that enables instrumentation of the {@code LambdaMetafactory} if such a factory exists on the current VM.
+         * Classes representing lambda expressions that are created by Byte Buddy are fully compatible to those created by
+         * the JVM and can be serialized or deserialized to one another. The classes do however show a few differences:
+         * <ul>
+         * <li>Byte Buddy's classes are public with a public constructor. Doing so, it is not necessary to instantiate a
+         * non-capturing lambda expression by reflection. This is done because Byte Buddy is not necessarily capable
+         * of using reflection due to an active security manager.</li>
+         * <li>Byte Buddy's classes are not marked as synthetic as an agent builder does not instrument synthetic classes
+         * by default.</li>
+         * </ul>
          */
         ENABLED {
             @Override
@@ -2104,7 +2158,7 @@ public interface AgentBuilder {
                 String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + LAMBDA_NAME_COUNTER.incrementAndGet();
                 DynamicType.Builder<?> builder = byteBuddy
                         .subclass(factoryMethod.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
-                        .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, Visibility.PUBLIC)
+                        .modifiers(TypeManifestation.FINAL, Visibility.PUBLIC)
                         .implement(markerInterfaces)
                         .name(lambdaClassName)
                         .defineConstructor(Visibility.PUBLIC)
@@ -3317,6 +3371,8 @@ public interface AgentBuilder {
          */
         private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
+        private final ElementMatcher<? super TypeDescription> ignoredTypes;
+
         /**
          * The transformation object for handling type transformations.
          */
@@ -3346,6 +3402,7 @@ public interface AgentBuilder {
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     LambdaInstrumentationStrategy.DISABLED,
+                    isSynthetic(),
                     Transformation.Ignored.INSTANCE);
         }
 
@@ -3375,6 +3432,7 @@ public interface AgentBuilder {
                           RedefinitionStrategy redefinitionStrategy,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
                           LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
+                          ElementMatcher<? super TypeDescription> ignoredTypes,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
@@ -3386,6 +3444,7 @@ public interface AgentBuilder {
             this.redefinitionStrategy = redefinitionStrategy;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
             this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
+            this.ignoredTypes = ignoredTypes;
             this.transformation = transformation;
         }
 
@@ -3416,6 +3475,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3431,6 +3491,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3446,6 +3507,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3461,6 +3523,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3476,6 +3539,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3491,6 +3555,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3506,6 +3571,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3521,6 +3587,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3536,6 +3603,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3551,6 +3619,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3566,6 +3635,23 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    typeStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3581,6 +3667,7 @@ public interface AgentBuilder {
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
                     lambdaInstrumentationStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3594,6 +3681,7 @@ public interface AgentBuilder {
                     accessControlContext,
                     initializationStrategy,
                     bootstrapInjectionStrategy,
+                    ignoredTypes,
                     transformation);
         }
 
@@ -3610,7 +3698,7 @@ public interface AgentBuilder {
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
                     TypeDescription typeDescription = new TypeDescription.ForLoadedType(type);
                     try {
-                        if (!instrumentation.isModifiableClass(type) || !collector.consider(type)) {
+                        if (!instrumentation.isModifiableClass(type) || !collector.consider(type, ignoredTypes)) {
                             try {
                                 try {
                                     listener.onIgnored(typeDescription);
@@ -3685,6 +3773,7 @@ public interface AgentBuilder {
                     && redefinitionStrategy == aDefault.redefinitionStrategy
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
                     && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
+                    && ignoredTypes.equals(aDefault.ignoredTypes)
                     && transformation.equals(aDefault.transformation);
         }
 
@@ -3700,6 +3789,7 @@ public interface AgentBuilder {
             result = 31 * result + redefinitionStrategy.hashCode();
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
             result = 31 * result + lambdaInstrumentationStrategy.hashCode();
+            result = 31 * result + ignoredTypes.hashCode();
             result = 31 * result + transformation.hashCode();
             return result;
         }
@@ -3717,6 +3807,7 @@ public interface AgentBuilder {
                     ", redefinitionStrategy=" + redefinitionStrategy +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
                     ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
+                    ", ignoredTypes=" + ignoredTypes +
                     ", transformation=" + transformation +
                     '}';
         }
@@ -3950,12 +4041,14 @@ public interface AgentBuilder {
              * @param classLoader         The class loader of the type being transformed.
              * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
              * @param protectionDomain    The protection domain of the type being transformed.
+             * @param ignoredTypes        A matcher for types that are explicitly ignored.
              * @return A resolution for the given type.
              */
             Resolution resolve(TypeDescription typeDescription,
                                ClassLoader classLoader,
                                Class<?> classBeingRedefined,
-                               ProtectionDomain protectionDomain);
+                               ProtectionDomain protectionDomain,
+                               ElementMatcher<? super TypeDescription> ignoredTypes);
 
             /**
              * A resolution to a transformation.
@@ -4063,7 +4156,7 @@ public interface AgentBuilder {
                 public Resolution resolve(TypeDescription typeDescription,
                                           ClassLoader classLoader,
                                           Class<?> classBeingRedefined,
-                                          ProtectionDomain protectionDomain) {
+                                          ProtectionDomain protectionDomain, ElementMatcher<? super TypeDescription> ignoredTypes) {
                     return new Resolution.Unresolved(typeDescription);
                 }
 
@@ -4103,8 +4196,9 @@ public interface AgentBuilder {
                 public Transformation.Resolution resolve(TypeDescription typeDescription,
                                                          ClassLoader classLoader,
                                                          Class<?> classBeingRedefined,
-                                                         ProtectionDomain protectionDomain) {
-                    return rawMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
+                                                         ProtectionDomain protectionDomain,
+                                                         ElementMatcher<? super TypeDescription> ignoredTypes) {
+                    return !ignoredTypes.matches(typeDescription) && rawMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
                             ? new Resolution(typeDescription, classLoader, protectionDomain, transformer)
                             : new Transformation.Resolution.Unresolved(typeDescription);
                 }
@@ -4346,9 +4440,10 @@ public interface AgentBuilder {
                 public Resolution resolve(TypeDescription typeDescription,
                                           ClassLoader classLoader,
                                           Class<?> classBeingRedefined,
-                                          ProtectionDomain protectionDomain) {
+                                          ProtectionDomain protectionDomain,
+                                          ElementMatcher<? super TypeDescription> ignoredTypes) {
                     for (Transformation transformation : transformations) {
-                        Resolution resolution = transformation.resolve(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+                        Resolution resolution = transformation.resolve(typeDescription, classLoader, classBeingRedefined, protectionDomain, ignoredTypes);
                         if (resolution.isResolved()) {
                             return resolution;
                         }
@@ -4422,6 +4517,8 @@ public interface AgentBuilder {
              */
             private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+            private final ElementMatcher<? super TypeDescription> ignoredTypes;
+
             /**
              * The transformation object for handling type transformations.
              */
@@ -4448,15 +4545,17 @@ public interface AgentBuilder {
                                         AccessControlContext accessControlContext,
                                         InitializationStrategy initializationStrategy,
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                                        ElementMatcher<? super TypeDescription> ignoredTypes,
                                         Transformation transformation) {
-                this.binaryLocator = binaryLocator;
-                this.initializationStrategy = initializationStrategy;
-                this.typeStrategy = typeStrategy;
                 this.byteBuddy = byteBuddy;
-                this.nativeMethodStrategy = nativeMethodStrategy;
-                this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
-                this.accessControlContext = accessControlContext;
+                this.binaryLocator = binaryLocator;
+                this.typeStrategy = typeStrategy;
                 this.listener = listener;
+                this.nativeMethodStrategy = nativeMethodStrategy;
+                this.accessControlContext = accessControlContext;
+                this.initializationStrategy = initializationStrategy;
+                this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+                this.ignoredTypes = ignoredTypes;
                 this.transformation = transformation;
             }
 
@@ -4479,7 +4578,8 @@ public interface AgentBuilder {
                                     : new TypeDescription.ForLoadedType(classBeingRedefined),
                             classLoader,
                             classBeingRedefined,
-                            protectionDomain).apply(initializationStrategy,
+                            protectionDomain,
+                            ignoredTypes).apply(initializationStrategy,
                             classFileLocator,
                             typeStrategy,
                             byteBuddy,
@@ -4508,6 +4608,7 @@ public interface AgentBuilder {
                         && nativeMethodStrategy.equals(that.nativeMethodStrategy)
                         && bootstrapInjectionStrategy.equals(that.bootstrapInjectionStrategy)
                         && accessControlContext.equals(that.accessControlContext)
+                        && ignoredTypes.equals(that.ignoredTypes)
                         && transformation.equals(that.transformation);
             }
 
@@ -4521,6 +4622,7 @@ public interface AgentBuilder {
                 result = 31 * result + nativeMethodStrategy.hashCode();
                 result = 31 * result + bootstrapInjectionStrategy.hashCode();
                 result = 31 * result + accessControlContext.hashCode();
+                result = 31 * result + ignoredTypes.hashCode();
                 result = 31 * result + transformation.hashCode();
                 return result;
             }
@@ -4536,6 +4638,7 @@ public interface AgentBuilder {
                         ", nativeMethodStrategy=" + nativeMethodStrategy +
                         ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
                         ", accessControlContext=" + accessControlContext +
+                        ", ignoredTypes=" + ignoredTypes +
                         ", transformation=" + transformation +
                         '}';
             }
@@ -4610,16 +4713,6 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder enableNativeMethodPrefix(String prefix) {
-                return materialize().enableNativeMethodPrefix(prefix);
-            }
-
-            @Override
-            public AgentBuilder disableNativeMethodPrefix() {
-                return materialize().disableNativeMethodPrefix();
-            }
-
-            @Override
             public AgentBuilder with(AccessControlContext accessControlContext) {
                 return materialize().with(accessControlContext);
             }
@@ -4635,6 +4728,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
+                return materialize().with(lambdaInstrumentationStrategy);
+            }
+
+            @Override
             public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
                 return materialize().enableBootstrapInjection(folder, instrumentation);
             }
@@ -4645,8 +4743,18 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
-                return materialize().with(lambdaInstrumentationStrategy);
+            public AgentBuilder enableNativeMethodPrefix(String prefix) {
+                return materialize().enableNativeMethodPrefix(prefix);
+            }
+
+            @Override
+            public AgentBuilder disableNativeMethodPrefix() {
+                return materialize().disableNativeMethodPrefix();
+            }
+
+            @Override
+            public AgentBuilder ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
+                return materialize().ignore(ignoredTypes);
             }
 
             @Override
@@ -4680,6 +4788,7 @@ public interface AgentBuilder {
                         redefinitionStrategy,
                         bootstrapInjectionStrategy,
                         lambdaInstrumentationStrategy,
+                        ignoredTypes,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer), transformation));
             }
 
