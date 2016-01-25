@@ -2253,7 +2253,7 @@ public interface AgentBuilder {
                 /**
                  * A reference to the {@link Object} class's default constructor.
                  */
-                protected final MethodDescription.InDefinedShape objectConstructor;
+                private final MethodDescription.InDefinedShape objectConstructor;
 
                 /**
                  * Creates a new constructor implementation.
