@@ -211,6 +211,28 @@ public interface AgentBuilder {
      */
     AgentBuilder withoutNativeMethodPrefix();
 
+    /**
+     * <p>
+     * Enables or disables management of the JVM's {@code LambdaMetafactory} which is responsible for creating classes that
+     * implement lambda expressions. Without this feature enabled, classes that are represented by lambda expressions are
+     * not instrumented by the JVM such that Java agents have no effect on them when a lambda expression's class is loaded
+     * for the first time.
+     * </p>
+     * <p>
+     * When activating this feature, Byte Buddy instruments the {@code LambdaMetafactory} and takes over the responsibility
+     * of creating classes that represent lambda expressions. In doing so, Byte Buddy has the opportunity to apply the built
+     * class file transformer. If the current VM does not support lambda expressions, activating this feature has no effect.
+     * </p>
+     * <p>
+     * <b>Important</b>: If this feature is active, it is important to release the built class file transformer when
+     * deactivating it. Normally, it is sufficient to call {@link Instrumentation#removeTransformer(ClassFileTransformer)}.
+     * When this feature is enabled, it is however also required to invoke {@link Default#releaseLambdaTransformer(ClassFileTransformer, Instrumentation)}.
+     * Otherwise, the executing VMs class loader retains a reference to the class file transformer what can cause a memory leak.
+     * </p>
+     *
+     * @param enable {@code true} if this feature should be enabled.
+     * @return A new instance of this agent builder where this feature is explicitly enabled or disabled.
+     */
     AgentBuilder enableLambdaInstrumentation(boolean enable);
 
     /**
@@ -2036,6 +2058,13 @@ public interface AgentBuilder {
             this.transformation = transformation;
         }
 
+        /**
+         * Releases the supplied class file transformer when it was built with {@link AgentBuilder#enableLambdaInstrumentation(boolean)} enabled.
+         * Subsequently, the class file transformer is no longer applied when a class that represents a lambda expression is created.
+         *
+         * @param classFileTransformer The class file transformer to release.
+         * @param instrumentation      The instrumentation instance that is used to potentially rollback the instrumentation of the {@code LambdaMetafactory}.
+         */
         public static void releaseLambdaTransformer(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
             if (LambdaFactory.release(classFileTransformer)) {
                 try {
@@ -2343,6 +2372,7 @@ public interface AgentBuilder {
                     && initializationStrategy == aDefault.initializationStrategy
                     && redefinitionStrategy == aDefault.redefinitionStrategy
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
+                    && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
                     && transformation.equals(aDefault.transformation);
 
         }
@@ -2358,6 +2388,7 @@ public interface AgentBuilder {
             result = 31 * result + initializationStrategy.hashCode();
             result = 31 * result + redefinitionStrategy.hashCode();
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
+            result = 31 * result + lambdaInstrumentationStrategy.hashCode();
             result = 31 * result + transformation.hashCode();
             return result;
         }
@@ -2374,6 +2405,7 @@ public interface AgentBuilder {
                     ", initializationStrategy=" + initializationStrategy +
                     ", redefinitionStrategy=" + redefinitionStrategy +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                    ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
                     ", transformation=" + transformation +
                     '}';
         }
@@ -2468,8 +2500,14 @@ public interface AgentBuilder {
             }
         }
 
+        /**
+         * Implements the instrumentation of the {@code LambdaMetafactory} if this feature is enabled.
+         */
         protected enum LambdaInstrumentationStrategy implements Callable<Class<?>> {
 
+            /**
+             * A strategy that enables instrumentation of the {@code LambdaMetafactory} if such a factory exists on the current VM.
+             */
             ENABLED {
                 @Override
                 protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
@@ -2499,6 +2537,9 @@ public interface AgentBuilder {
                 }
             },
 
+            /**
+             * A strategy that does not instrument the {@code LambdaMetafactory}.
+             */
             DISABLED {
                 @Override
                 protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
@@ -2507,7 +2548,7 @@ public interface AgentBuilder {
 
                 @Override
                 public Class<?> call() throws Exception {
-                    throw new IllegalStateException();
+                    throw new IllegalStateException("Cannot inject LambdaFactory from disabled instrumentation strategy");
                 }
             };
 
@@ -2530,24 +2571,67 @@ public interface AgentBuilder {
                 return "AgentBuilder.Default.LambdaInstrumentationStrategy." + name();
             }
 
+            /**
+             * A factory that creates instances that represent lambda expressions.
+             */
             protected static class LambdaInstanceFactory {
 
+                /**
+                 * The name of a factory for a lambda expression.
+                 */
                 private static final String LAMBDA_FACTORY = "get$Lambda";
 
+                /**
+                 * A prefix for a field that represents a property of a lambda expression.
+                 */
                 private static final String FIELD_PREFIX = "arg$";
 
-                private static final String LAMBDA_TYPE_INFIX = "$$Lambda$";
+                /**
+                 * The infix to use for naming classes that represent lambda expression. The additional prefix
+                 * is necessary because the subsequent counter is not sufficient to keep names unique compared
+                 * to the original factory.
+                 */
+                private static final String LAMBDA_TYPE_INFIX = "$$Lambda$ByteBuddy$";
 
+                /**
+                 * A type-safe constant to express that a class is not already loaded when applying a class file transformer.
+                 */
                 private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
 
+                /**
+                 * A counter for naming lambda expressions randomly.
+                 */
                 private static final AtomicInteger LAMBDA_NAME_COUNTER = new AtomicInteger();
 
+                /**
+                 * The Byte Buddy instance to use for creating lambda objects.
+                 */
                 private final ByteBuddy byteBuddy;
 
+                /**
+                 * Creates a new lambda instance factory.
+                 *
+                 * @param byteBuddy The Byte Buddy instance to use for creating lambda objects.
+                 */
                 protected LambdaInstanceFactory(ByteBuddy byteBuddy) {
                     this.byteBuddy = byteBuddy;
                 }
 
+                /**
+                 * Applies this lambda meta factory.
+                 *
+                 * @param targetTypeLookup            A lookup context representing the creating class of this lambda expression.
+                 * @param lambdaMethodName            The name of the lambda expression's represented method.
+                 * @param factoryMethodType           The type of the lambda expression's represented method.
+                 * @param lambdaMethodType            The type of the lambda expression's factory method.
+                 * @param targetMethodHandle          A handle representing the target of the lambda expression's method.
+                 * @param specializedLambdaMethodType A specialization of the type of the lambda expression's represented method.
+                 * @param serializable                {@code true} if the lambda expression should be serializable.
+                 * @param markerInterfaces            A list of interfaces for the lambda expression to represent.
+                 * @param additionalBridges           A list of additional bridge methods to be implemented by the lambda expression.
+                 * @param classFileTransformers       A collection of class file transformers to apply when creating the class.
+                 * @return A binary representation of the transformed class file.
+                 */
                 public byte[] make(Object targetTypeLookup,
                                    String lambdaMethodName,
                                    Object factoryMethodType,
@@ -2644,12 +2728,24 @@ public interface AgentBuilder {
                             '}';
                 }
 
+                /**
+                 * Implements a lambda class's constructor.
+                 */
                 protected enum ConstructorImplementation implements Implementation {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
+                    /**
+                     * A reference to the {@link Object} class's default constructor.
+                     */
                     protected final MethodDescription.InDefinedShape objectConstructor;
 
+                    /**
+                     * Creates a new constructor implementation.
+                     */
                     ConstructorImplementation() {
                         objectConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
                     }
@@ -2669,10 +2765,21 @@ public interface AgentBuilder {
                         return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation." + name();
                     }
 
+                    /**
+                     * An appender to implement the constructor.
+                     */
                     protected static class Appender implements ByteCodeAppender {
 
+                        /**
+                         * The fields that are declared by the instrumented type.
+                         */
                         private final List<FieldDescription.InDefinedShape> declaredFields;
 
+                        /**
+                         * Creates a new appender.
+                         *
+                         * @param declaredFields The fields that are declared by the instrumented type.
+                         */
                         protected Appender(List<FieldDescription.InDefinedShape> declaredFields) {
                             this.declaredFields = declaredFields;
                         }
@@ -2713,8 +2820,14 @@ public interface AgentBuilder {
                     }
                 }
 
+                /**
+                 * An implementation of a instance factory for a lambda expression's class.
+                 */
                 protected enum FactoryImplementation implements Implementation {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override
@@ -2732,10 +2845,21 @@ public interface AgentBuilder {
                         return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation." + name();
                     }
 
+                    /**
+                     * An appender for a lambda expression factory.
+                     */
                     protected static class Appender implements ByteCodeAppender {
 
+                        /**
+                         * The instrumented type.
+                         */
                         private final TypeDescription instrumentedType;
 
+                        /**
+                         * Creates a new appender.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         */
                         protected Appender(TypeDescription instrumentedType) {
                             this.instrumentedType = instrumentedType;
                         }
@@ -2771,13 +2895,28 @@ public interface AgentBuilder {
                     }
                 }
 
+                /**
+                 * Implements a lambda expression's functional method.
+                 */
                 protected static class LambdaMethodImplementation implements Implementation {
 
+                    /**
+                     * The target method of the lambda expression.
+                     */
                     private final MethodDescription.InDefinedShape targetMethod;
 
+                    /**
+                     * The specialized type of the lambda method.
+                     */
                     private final JavaInstance.MethodType specializedLambdaMethod;
 
-                    public LambdaMethodImplementation(MethodDescription.InDefinedShape targetMethod, JavaInstance.MethodType specializedLambdaMethod) {
+                    /**
+                     * Creates a implementation of a lambda expression's functional method.
+                     *
+                     * @param targetMethod            The target method of the lambda expression.
+                     * @param specializedLambdaMethod The specialized type of the lambda method.
+                     */
+                    protected LambdaMethodImplementation(MethodDescription.InDefinedShape targetMethod, JavaInstance.MethodType specializedLambdaMethod) {
                         this.targetMethod = targetMethod;
                         this.specializedLambdaMethod = specializedLambdaMethod;
                     }
@@ -2816,18 +2955,37 @@ public interface AgentBuilder {
                                 '}';
                     }
 
+                    /**
+                     * An appender for a lambda expression's functional method.
+                     */
                     protected static class Appender implements ByteCodeAppender {
 
-                        private final MethodDescription lambdaDispatcherMethod;
+                        /**
+                         * The target method of the lambda expression.
+                         */
+                        private final MethodDescription targetMethod;
 
-                        private final List<FieldDescription.InDefinedShape> declaredFields;
-
+                        /**
+                         * The specialized type of the lambda method.
+                         */
                         private final JavaInstance.MethodType specializedLambdaMethod;
 
-                        protected Appender(MethodDescription lambdaDispatcherMethod,
-                                        JavaInstance.MethodType specializedLambdaMethod,
-                                        List<FieldDescription.InDefinedShape> declaredFields) {
-                            this.lambdaDispatcherMethod = lambdaDispatcherMethod;
+                        /**
+                         * The instrumented type's declared fields.
+                         */
+                        private final List<FieldDescription.InDefinedShape> declaredFields;
+
+                        /**
+                         * Creates an appender of a lambda expression's functional method.
+                         *
+                         * @param targetMethod            The target method of the lambda expression.
+                         * @param specializedLambdaMethod The specialized type of the lambda method.
+                         * @param declaredFields          The instrumented type's declared fields.
+                         */
+                        protected Appender(MethodDescription targetMethod,
+                                           JavaInstance.MethodType specializedLambdaMethod,
+                                           List<FieldDescription.InDefinedShape> declaredFields) {
+                            this.targetMethod = targetMethod;
                             this.specializedLambdaMethod = specializedLambdaMethod;
                             this.declaredFields = declaredFields;
                         }
@@ -2849,8 +3007,8 @@ public interface AgentBuilder {
                             return new Size(new StackManipulation.Compound(
                                     new StackManipulation.Compound(fieldAccess),
                                     new StackManipulation.Compound(parameterAccess),
-                                    MethodInvocation.invoke(lambdaDispatcherMethod),
-                                    MethodReturn.returning(lambdaDispatcherMethod.getReturnType().asErasure())
+                                    MethodInvocation.invoke(targetMethod),
+                                    MethodReturn.returning(targetMethod.getReturnType().asErasure())
                             ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                         }
 
@@ -2859,14 +3017,14 @@ public interface AgentBuilder {
                             if (this == other) return true;
                             if (other == null || getClass() != other.getClass()) return false;
                             Appender appender = (Appender) other;
-                            return lambdaDispatcherMethod.equals(appender.lambdaDispatcherMethod)
+                            return targetMethod.equals(appender.targetMethod)
                                     && declaredFields.equals(appender.declaredFields)
                                     && specializedLambdaMethod.equals(appender.specializedLambdaMethod);
                         }
 
                         @Override
                         public int hashCode() {
-                            int result = lambdaDispatcherMethod.hashCode();
+                            int result = targetMethod.hashCode();
                             result = 31 * result + declaredFields.hashCode();
                             result = 31 * result + specializedLambdaMethod.hashCode();
                             return result;
@@ -2875,34 +3033,65 @@ public interface AgentBuilder {
                         @Override
                         public String toString() {
                             return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation.Appender{" +
-                                    "lambdaDispatcherMethod=" + lambdaDispatcherMethod +
-                                    ", declaredFields=" + declaredFields +
+                                    "targetMethod=" + targetMethod +
                                     ", specializedLambdaMethod=" + specializedLambdaMethod +
+                                    ", declaredFields=" + declaredFields +
                                     '}';
                         }
                     }
                 }
 
+                /**
+                 * Implements the {@code writeReplace} method for serializable lambda expressions.
+                 */
                 protected static class SerializationImplementation implements Implementation {
 
+                    /**
+                     * The lambda expression's declaring type.
+                     */
                     private final TypeDescription targetType;
 
+                    /**
+                     * The lambda expression's functional type.
+                     */
                     private final TypeDescription lambdaType;
 
+                    /**
+                     * The lambda expression's functional method name.
+                     */
                     private final String lambdaMethodName;
 
+                    /**
+                     * The method type of the lambda expression's functional method.
+                     */
                     private final JavaInstance.MethodType lambdaMethod;
 
+                    /**
+                     * A handle that references the lambda expressions invocation target.
+                     */
                     private final JavaInstance.MethodHandle targetMethod;
 
+                    /**
+                     * The specialized method type of the lambda expression's functional method.
+                     */
                     private final JavaInstance.MethodType specializedMethod;
 
-                    public SerializationImplementation(TypeDescription targetType,
-                                                       TypeDescription lambdaType,
-                                                       String lambdaMethodName,
-                                                       JavaInstance.MethodType lambdaMethod,
-                                                       JavaInstance.MethodHandle targetMethod,
-                                                       JavaInstance.MethodType specializedMethod) {
+                    /**
+                     * Creates a new implementation for a serializable's lambda expression's {@code writeReplace} method.
+                     *
+                     * @param targetType        The lambda expression's declaring type.
+                     * @param lambdaType        The lambda expression's functional type.
+                     * @param lambdaMethodName  The lambda expression's functional method name.
+                     * @param lambdaMethod      The method type of the lambda expression's functional method.
+                     * @param targetMethod      A handle that references the lambda expressions invocation target.
+                     * @param specializedMethod The specialized method type of the lambda expression's functional method.
+                     */
+                    protected SerializationImplementation(TypeDescription targetType,
+                                                          TypeDescription lambdaType,
+                                                          String lambdaMethodName,
+                                                          JavaInstance.MethodType lambdaMethod,
+                                                          JavaInstance.MethodHandle targetMethod,
+                                                          JavaInstance.MethodType specializedMethod) {
                         this.targetType = targetType;
                         this.lambdaType = lambdaType;
                         this.lambdaMethodName = lambdaMethodName;
@@ -2985,13 +3174,28 @@ public interface AgentBuilder {
                     }
                 }
 
+                /**
+                 * Implements an explicit bridge method for a lambda expression.
+                 */
                 protected static class BridgeMethodImplementation implements Implementation {
 
+                    /**
+                     * The name of the lambda expression's functional method.
+                     */
                     private final String lambdaMethodName;
 
+                    /**
+                     * The actual type of the lambda expression's functional method.
+                     */
                     private final JavaInstance.MethodType lambdaMethod;
 
-                    public BridgeMethodImplementation(String lambdaMethodName, JavaInstance.MethodType lambdaMethod) {
+                    /**
+                     * Creates a new bridge method implementation for a lambda expression.
+                     *
+                     * @param lambdaMethodName The name of the lambda expression's functional method.
+                     * @param lambdaMethod     The actual type of the lambda expression's functional method.
+                     */
+                    protected BridgeMethodImplementation(String lambdaMethodName, JavaInstance.MethodType lambdaMethod) {
                         this.lambdaMethodName = lambdaMethodName;
                         this.lambdaMethod = lambdaMethod;
                     }
@@ -3031,22 +3235,33 @@ public interface AgentBuilder {
                                 '}';
                     }
 
+                    /**
+                     * An appender for implementing a bridge method for a lambda expression.
+                     */
                     protected static class Appender implements ByteCodeAppender {
 
-                        private final SpecialMethodInvocation bridgeMethodInvocation;
+                        /**
+                         * The invocation of the bridge's target method.
+                         */
+                        private final SpecialMethodInvocation bridgeTargetInvocation;
 
-                        protected Appender(SpecialMethodInvocation bridgeMethodInvocation) {
-                            this.bridgeMethodInvocation = bridgeMethodInvocation;
+                        /**
+                         * Creates a new appender for invoking a lambda expression's bridge method target.
+                         *
+                         * @param bridgeTargetInvocation The invocation of the bridge's target method.
+                         */
+                        protected Appender(SpecialMethodInvocation bridgeTargetInvocation) {
+                            this.bridgeTargetInvocation = bridgeTargetInvocation;
                         }
 
                         @Override
                         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
                             return new Compound(new Simple(
                                     MethodVariableAccess.allArgumentsOf(instrumentedMethod)
-                                            .asBridgeOf(bridgeMethodInvocation.getMethodDescription())
+                                            .asBridgeOf(bridgeTargetInvocation.getMethodDescription())
                                             .prependThisReference(),
-                                    bridgeMethodInvocation,
-                                    bridgeMethodInvocation.getMethodDescription().getReturnType().asErasure().isAssignableTo(instrumentedMethod.getReturnType().asErasure())
+                                    bridgeTargetInvocation,
+                                    bridgeTargetInvocation.getMethodDescription().getReturnType().asErasure().isAssignableTo(instrumentedMethod.getReturnType().asErasure())
                                             ? StackManipulation.Trivial.INSTANCE
                                             : TypeCasting.to(instrumentedMethod.getReceiverType().asErasure()),
                                     MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
@@ -3057,18 +3272,18 @@ public interface AgentBuilder {
                         @Override
                         public boolean equals(Object other) {
                             return this == other || !(other == null || getClass() != other.getClass())
-                                    && bridgeMethodInvocation.equals(((Appender) other).bridgeMethodInvocation);
+                                    && bridgeTargetInvocation.equals(((Appender) other).bridgeTargetInvocation);
                         }
 
                         @Override
                         public int hashCode() {
-                            return bridgeMethodInvocation.hashCode();
+                            return bridgeTargetInvocation.hashCode();
                         }
 
                         @Override
                         public String toString() {
                             return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation.Appender{" +
-                                    "bridgeMethodInvocation=" + bridgeMethodInvocation +
+                                    "bridgeTargetInvocation=" + bridgeTargetInvocation +
                                     '}';
                         }
                     }

@@ -1063,7 +1063,8 @@ public interface JavaInstance {
                             && getReferenceKind.equals(that.getReferenceKind)
                             && getMethodType.equals(that.getMethodType)
                             && returnType.equals(that.returnType)
-                            && parameterArray.equals(that.parameterArray);
+                            && parameterArray.equals(that.parameterArray)
+                            && lookupClass.equals(that.lookupClass);
                 }
 
                 @Override
@@ -1075,6 +1076,7 @@ public interface JavaInstance {
                     result = 31 * result + getMethodType.hashCode();
                     result = 31 * result + returnType.hashCode();
                     result = 31 * result + parameterArray.hashCode();
+                    result = 31 * result + lookupClass.hashCode();
                     return result;
                 }
             }
@@ -1158,6 +1160,7 @@ public interface JavaInstance {
                             ", getMethodType=" + getMethodType +
                             ", returnType=" + returnType +
                             ", parameterArray=" + parameterArray +
+                            ", lookupClass=" + lookupClass +
                             ", revealDirect=" + revealDirect +
                             '}';
                 }
@@ -1255,6 +1258,7 @@ public interface JavaInstance {
                             ", getMethodType=" + getMethodType +
                             ", returnType=" + returnType +
                             ", parameterArray=" + parameterArray +
+                            ", lookupClass=" + lookupClass +
                             ", methodInfo=" + methodInfo +
                             '}';
                 }

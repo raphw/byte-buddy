@@ -12,6 +12,7 @@ import org.mockito.Mock;
 
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -79,6 +80,32 @@ public class LambdaFactoryTest implements Callable<Class<?>> {
     @Test(expected = IllegalStateException.class)
     public void testIllegalTransformer() throws Exception {
         LambdaFactory.register(classFileTransformer, new Object(), this);
+    }
+
+    @Test
+    public void testTypeAndMethodArePublic() throws Exception {
+        assertThat(Modifier.isPublic(LambdaFactory.class.getModifiers()), is(true));
+        assertThat(Modifier.isPublic(LambdaFactory.class.getDeclaredMethod("make",
+                Object.class,
+                String.class,
+                Object.class,
+                Object.class,
+                Object.class,
+                Object.class,
+                boolean.class,
+                List.class,
+                List.class).getModifiers()), is(true));
+        assertThat(Modifier.isStatic(LambdaFactory.class.getDeclaredMethod("make",
+                Object.class,
+                String.class,
+                Object.class,
+                Object.class,
+                Object.class,
+                Object.class,
+                boolean.class,
+                List.class,
+                List.class).getModifiers()), is(true));
+
     }
 
     @Test

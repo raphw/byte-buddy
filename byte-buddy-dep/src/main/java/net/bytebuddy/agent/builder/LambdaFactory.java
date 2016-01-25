@@ -50,7 +50,7 @@ public class LambdaFactory {
      * @param classFileTransformer The class file transformer to register.
      * @param classFileFactory     The lambda class file factory to use. This factory must define a visible instance method with the signature
      *                             {@code byte[] make(Object, String, Object, Object, Object, Object, boolean, List, List, Collection}. The arguments provided
-     *                             are the invokedynamic call site's lookup object, the lambda method's name, the lambda method's type, the factory method's
+     *                             are the invokedynamic call site's lookup object, the lambda method's name, the factory method's type, the lambda method's
      *                             type, the target method's handle, the specialized method type of the lambda expression, a boolean to indicate
      *                             serializability, a list of marker interfaces, a list of additional bridges and a collection of class file transformers to
      *                             apply.
@@ -113,8 +113,8 @@ public class LambdaFactory {
      *
      * @param caller                 A lookup context representing the creating class of this lambda expression.
      * @param invokedName            The name of the lambda expression's represented method.
-     * @param invokedType            The type of the lambda expression's represented method.
-     * @param samMethodType          The type of the lambda expression's factory method.
+     * @param invokedType            The type of the lambda expression's factory method.
+     * @param samMethodType          The type of the lambda expression's represented method.
      * @param implMethod             A handle representing the target of the lambda expression's method.
      * @param instantiatedMethodType A specialization of the type of the lambda expression's represented method.
      * @param serializable           {@code true} if the lambda expression should be serializable.
@@ -156,8 +156,8 @@ public class LambdaFactory {
      *
      * @param caller                 A lookup context representing the creating class of this lambda expression.
      * @param invokedName            The name of the lambda expression's represented method.
-     * @param invokedType            The type of the lambda expression's represented method.
-     * @param samMethodType          The type of the lambda expression's factory method.
+     * @param invokedType            The type of the lambda expression's factory method.
+     * @param samMethodType          The type of the lambda expression's represented method.
      * @param implMethod             A handle representing the target of the lambda expression's method.
      * @param instantiatedMethodType A specialization of the type of the lambda expression's represented method.
      * @param serializable           {@code true} if the lambda expression should be serializable.
