@@ -38,7 +38,7 @@ public class LambdaFactory {
                             Object.class,
                             boolean.class,
                             List.class,
-                            List.class
+                            List.class,
                             Collection.class)));
                 }
             }

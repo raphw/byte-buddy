@@ -122,7 +122,7 @@ public class LambdaCreator {
                     .withParameters(additionalBridge.getParameterTypes())
                     .intercept(new BridgeMethodImplementation(lambdaMethodName, lambdaMethod));
         }
-        byte[] classFile = builder.visit(DebuggingWrapper.makeDefault()).make().getBytes();
+        byte[] classFile = builder.make().getBytes();
         for (ClassFileTransformer classFileTransformer : classFileTransformers) {
             byte[] transformedClassFile = classFileTransformer.transform(targetType.getClassLoader(),
                     lambdaClassName.replace('.', '/'),
