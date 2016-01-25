@@ -359,13 +359,6 @@ public class AgentBuilderDefaultApplicationTest {
         }
     }
 
-    @Test
-    public void testFoo() throws Exception {
-        Callable<String> r = (Callable<String> & Serializable) () -> "foo";
-        r.call();
-
-    }
-
     @Retention(RetentionPolicy.RUNTIME)
     public @interface ShouldRebase {
         /* empty */
