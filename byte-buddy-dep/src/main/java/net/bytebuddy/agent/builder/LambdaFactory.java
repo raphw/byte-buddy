@@ -6,19 +6,41 @@ import java.lang.reflect.Method;
 import java.util.*;
 import java.util.concurrent.Callable;
 
+/**
+ * This class serves as a dispatcher for creating lambda expression objects when Byte Buddy is configured to instrument the
+ * {@code java.lang.invoke.LambdaMetafactory}. For this purpose, this class is injected into the class path to serve as a VM-global
+ * singleton and for becoming reachable from the JVM's meta factory. This class keeps a reference to all registered transformers which need
+ * to be explicitly deregistered in order to avoid a memory leak.
+ */
 public class LambdaFactory {
 
+    /**
+     * A mapping of all registered class file transformers and their lambda factories, linked in their application order.
+     */
     public static final Map<ClassFileTransformer, LambdaFactory> CLASS_FILE_TRANSFORMERS = new LinkedHashMap<ClassFileTransformer, LambdaFactory>();
 
+    /**
+     * The target instance that is a factory for creating lambdas.
+     */
     private final Object target;
 
+    /**
+     * The dispatcher method to invoke for creating a new lambda instance.
+     */
     private final Method dispatcher;
 
+    /**
+     * Creates a new lambda factory.
+     *
+     * @param target     The target instance that is a factory for creating lambdas.
+     * @param dispatcher The dispatcher method to invoke for creating a new lambda instance.
+     */
     private LambdaFactory(Object target, Method dispatcher) {
         this.target = target;
         this.dispatcher = dispatcher;
     }
 
+    @SuppressWarnings("all")
     public static boolean register(ClassFileTransformer classFileTransformer, Object lambdaCreator, Callable<Class<?>> injector) {
         try {
             @SuppressWarnings("unchecked")
@@ -47,6 +69,7 @@ public class LambdaFactory {
         }
     }
 
+    @SuppressWarnings("all")
     public static boolean release(ClassFileTransformer classFileTransformer) {
         try {
             @SuppressWarnings("unchecked")
@@ -109,5 +132,28 @@ public class LambdaFactory {
                 markerInterfaces,
                 additionalBridges,
                 CLASS_FILE_TRANSFORMERS.keySet());
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        LambdaFactory that = (LambdaFactory) other;
+        return target.equals(that.target) && dispatcher.equals(that.dispatcher);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = target.hashCode();
+        result = 31 * result + dispatcher.hashCode();
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "LambdaFactory{" +
+                "target=" + target +
+                ", dispatcher=" + dispatcher +
+                '}';
     }
 }
