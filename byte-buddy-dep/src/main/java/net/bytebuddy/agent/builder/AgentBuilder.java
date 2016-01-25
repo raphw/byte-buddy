@@ -3371,6 +3371,9 @@ public interface AgentBuilder {
          */
         private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
+        /**
+         * A matcher that indicates any type that should be excluded from instrumentation.
+         */
         private final ElementMatcher<? super TypeDescription> ignoredTypes;
 
         /**
@@ -3420,6 +3423,7 @@ public interface AgentBuilder {
          * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
          * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the
          *                                      instrumentation of classes that represent lambda expressions.
+         * @param ignoredTypes                  A matcher that indicates any type that should be excluded from instrumentation.
          * @param transformation                The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
@@ -4517,6 +4521,9 @@ public interface AgentBuilder {
              */
             private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+            /**
+             * A matcher that indicates any type that should be excluded from instrumentation.
+             */
             private final ElementMatcher<? super TypeDescription> ignoredTypes;
 
             /**
@@ -4535,6 +4542,7 @@ public interface AgentBuilder {
              * @param accessControlContext       The access control context to use for loading classes.
              * @param initializationStrategy     The initialization strategy to use for transformed types.
              * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+             * @param ignoredTypes               A matcher that indicates any type that should be excluded from instrumentation.
              * @param transformation             The transformation object for handling type transformations.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
