@@ -1,5 +1,6 @@
 package net.bytebuddy.utility;
 
+import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.test.utility.JavaVersionRule;
@@ -35,6 +36,7 @@ public class JavaInstanceMethodTypeTest {
         JavaInstance.MethodType methodType = JavaInstance.MethodType.of(Foo.class.getDeclaredMethod(BAR, Void.class));
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
+        assertThat(methodType.getDescriptor(), is(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(BAR, Void.class)).getDescriptor()));
     }
 
     @Test

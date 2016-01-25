@@ -252,6 +252,11 @@ public interface JavaInstance {
             return new ArrayList<TypeDescription>(parameterTypes);
         }
 
+        /**
+         * Returns the method descriptor of this method type representation.
+         *
+         * @return The method descriptor of this method type representation.
+         */
         public String getDescriptor() {
             StringBuilder stringBuilder = new StringBuilder("(");
             for (TypeDescription parameterType : parameterTypes) {
@@ -714,6 +719,7 @@ public interface JavaInstance {
             return JavaType.METHOD_HANDLE.getTypeStub();
         }
 
+        // TODO: Good idea? Might not be a method!
         public MethodDescription.InDefinedShape asMethodDescription() {
             return ownerType.getDeclaredMethods().filter(named(name).and(returns(returnType).and(takesArguments(parameterTypes)))).getOnly();
         }
@@ -763,6 +769,11 @@ public interface JavaInstance {
             return new ArrayList<TypeDescription>(parameterTypes);
         }
 
+        /**
+         * Returns the method descriptor of this method handle representation.
+         *
+         * @return The method descriptor of this method handle representation.
+         */
         public String getDescriptor() {
             StringBuilder stringBuilder = new StringBuilder("(");
             for (TypeDescription parameterType : parameterTypes) {
@@ -804,6 +815,12 @@ public interface JavaInstance {
                     '}';
         }
 
+        /**
+         * Returns the lookup type of the provided {@code java.lang.invoke.MethodHandles$Lookup} instance.
+         *
+         * @param callerClassLookup An instance of {@code java.lang.invoke.MethodHandles$Lookup}.
+         * @return The instance's lookup type.
+         */
         public static Class<?> lookupType(Object callerClassLookup) {
             return DISPATCHER.lookupType(callerClassLookup);
         }
@@ -890,6 +907,12 @@ public interface JavaInstance {
                  */
                 Object publicLookup();
 
+                /**
+                 * Returns the lookup type of a given {@code java.lang.invoke.MethodHandles$Lookup} instance.
+                 *
+                 * @param lookup A {@code java.lang.invoke.MethodHandles$Lookup} instance.
+                 * @return The provided instance's lookup type.
+                 */
                 Class<?> lookupType(Object lookup);
             }
 
@@ -933,6 +956,9 @@ public interface JavaInstance {
                  */
                 protected final Method parameterArray;
 
+                /**
+                 * A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
+                 */
                 protected final Method lookupClass;
 
                 /**
@@ -945,6 +971,7 @@ public interface JavaInstance {
                  * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
                  * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
+                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
                  */
                 protected AbstractBase(Method publicLookup,
                                        Method getName,
@@ -1102,7 +1129,7 @@ public interface JavaInstance {
                  * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
                  * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
-                 * @param lookupClass
+                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
                  * @param revealDirect      A reference to the {@code java.lang.invoke.MethodHandles.Lookup#revealDirect} method.
                  */
                 protected ForJava8CapableVm(Method publicLookup,
@@ -1186,7 +1213,7 @@ public interface JavaInstance {
                  * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
                  * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
-                 * @param lookupClass
+                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
                  * @param methodInfo        A reference to the {@code java.lang.invoke.MethodInfo} constructor.
                  */
                 protected ForJava7CapableVm(Method publicLookup,
