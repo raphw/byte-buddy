@@ -2525,6 +2525,11 @@ public interface AgentBuilder {
              */
             protected abstract void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
 
+            @Override
+            public String toString() {
+                return "AgentBuilder.Default.LambdaInstrumentationStrategy." + name();
+            }
+
             protected static class LambdaInstanceFactory {
 
                 private static final String LAMBDA_FACTORY = "get$Lambda";
@@ -2539,7 +2544,7 @@ public interface AgentBuilder {
 
                 private final ByteBuddy byteBuddy;
 
-                public LambdaInstanceFactory(ByteBuddy byteBuddy) {
+                protected LambdaInstanceFactory(ByteBuddy byteBuddy) {
                     this.byteBuddy = byteBuddy;
                 }
 
@@ -2566,7 +2571,7 @@ public interface AgentBuilder {
                             .name(lambdaClassName)
                             .defineConstructor(Visibility.PUBLIC)
                             .withParameters(factoryMethod.getParameterTypes())
-                            .intercept(new ConstructorImplementation())
+                            .intercept(ConstructorImplementation.INSTANCE)
                             .method(named(lambdaMethodName)
                                     .and(takesArguments(lambdaMethod.getParameterTypes()))
                                     .and(returns(lambdaMethod.getReturnType())))
@@ -2578,7 +2583,7 @@ public interface AgentBuilder {
                     if (!factoryMethod.getParameterTypes().isEmpty()) {
                         builder = builder.defineMethod(LAMBDA_FACTORY, factoryMethod.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
                                 .withParameters(factoryMethod.getParameterTypes())
-                                .intercept(new FactoryImplementation());
+                                .intercept(FactoryImplementation.INSTANCE);
                     }
                     if (serializable) {
                         if (!markerInterfaces.contains(Serializable.class)) {
@@ -2621,17 +2626,37 @@ public interface AgentBuilder {
                     return classFile;
                 }
 
-                private static class ConstructorImplementation implements Implementation {
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && byteBuddy.equals(((LambdaInstanceFactory) other).byteBuddy);
+                }
 
-                    protected static final MethodDescription.InDefinedShape OBJECT_CONSTRUCTOR;
+                @Override
+                public int hashCode() {
+                    return byteBuddy.hashCode();
+                }
 
-                    static {
-                        OBJECT_CONSTRUCTOR = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory{" +
+                            "byteBuddy=" + byteBuddy +
+                            '}';
+                }
+
+                protected enum ConstructorImplementation implements Implementation {
+
+                    INSTANCE;
+
+                    protected final MethodDescription.InDefinedShape objectConstructor;
+
+                    ConstructorImplementation() {
+                        objectConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
                     }
 
                     @Override
                     public ByteCodeAppender appender(Target implementationTarget) {
-                        return new Appender(implementationTarget.getInstrumentedType());
+                        return new Appender(implementationTarget.getInstrumentedType().getDeclaredFields());
                     }
 
                     @Override
@@ -2639,34 +2664,58 @@ public interface AgentBuilder {
                         return instrumentedType;
                     }
 
-                    private static class Appender implements ByteCodeAppender {
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation." + name();
+                    }
 
-                        private final TypeDescription instrumentedType;
+                    protected static class Appender implements ByteCodeAppender {
 
-                        public Appender(TypeDescription instrumentedType) {
-                            this.instrumentedType = instrumentedType;
+                        private final List<FieldDescription.InDefinedShape> declaredFields;
+
+                        protected Appender(List<FieldDescription.InDefinedShape> declaredFields) {
+                            this.declaredFields = declaredFields;
                         }
 
                         @Override
                         public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
-                            List<StackManipulation> fieldAssignments = new ArrayList<StackManipulation>(instrumentedType.getDeclaredFields().size() * 3);
-                            List<FieldDescription.InDefinedShape> fieldDescriptions = instrumentedType.getDeclaredFields();
+                            List<StackManipulation> fieldAssignments = new ArrayList<StackManipulation>(declaredFields.size() * 3);
                             for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
                                 fieldAssignments.add(MethodVariableAccess.REFERENCE.loadOffset(0));
                                 fieldAssignments.add(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()));
-                                fieldAssignments.add(FieldAccess.forField(fieldDescriptions.get(parameterDescription.getIndex())).putter());
+                                fieldAssignments.add(FieldAccess.forField(declaredFields.get(parameterDescription.getIndex())).putter());
                             }
                             return new Size(new StackManipulation.Compound(
                                     MethodVariableAccess.REFERENCE.loadOffset(0),
-                                    MethodInvocation.invoke(OBJECT_CONSTRUCTOR),
+                                    MethodInvocation.invoke(INSTANCE.objectConstructor),
                                     new StackManipulation.Compound(fieldAssignments),
                                     MethodReturn.VOID
                             ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                         }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && declaredFields.equals(((Appender) other).declaredFields);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return declaredFields.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation.Appender{" +
+                                    "declaredFields=" + declaredFields +
+                                    '}';
+                        }
                     }
                 }
 
-                private static class FactoryImplementation implements Implementation {
+                protected enum FactoryImplementation implements Implementation {
+
+                    INSTANCE;
 
                     @Override
                     public ByteCodeAppender appender(Target implementationTarget) {
@@ -2678,11 +2727,16 @@ public interface AgentBuilder {
                         return instrumentedType;
                     }
 
-                    private static class Appender implements ByteCodeAppender {
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation." + name();
+                    }
+
+                    protected static class Appender implements ByteCodeAppender {
 
                         private final TypeDescription instrumentedType;
 
-                        public Appender(TypeDescription instrumentedType) {
+                        protected Appender(TypeDescription instrumentedType) {
                             this.instrumentedType = instrumentedType;
                         }
 
@@ -2696,10 +2750,28 @@ public interface AgentBuilder {
                                     MethodReturn.REFERENCE
                             ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                         }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && instrumentedType.equals(((Appender) other).instrumentedType);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return instrumentedType.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation.Appender{" +
+                                    "instrumentedType=" + instrumentedType +
+                                    '}';
+                        }
                     }
                 }
 
-                private static class LambdaMethodImplementation implements Implementation {
+                protected static class LambdaMethodImplementation implements Implementation {
 
                     private final MethodDescription.InDefinedShape targetMethod;
 
@@ -2720,7 +2792,31 @@ public interface AgentBuilder {
                         return instrumentedType;
                     }
 
-                    private static class Appender implements ByteCodeAppender {
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        LambdaMethodImplementation that = (LambdaMethodImplementation) other;
+                        return targetMethod.equals(that.targetMethod)
+                                && specializedLambdaMethod.equals(that.specializedLambdaMethod);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = targetMethod.hashCode();
+                        result = 31 * result + specializedLambdaMethod.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation{" +
+                                "targetMethod=" + targetMethod +
+                                ", specializedLambdaMethod=" + specializedLambdaMethod +
+                                '}';
+                    }
+
+                    protected static class Appender implements ByteCodeAppender {
 
                         private final MethodDescription lambdaDispatcherMethod;
 
@@ -2728,7 +2824,7 @@ public interface AgentBuilder {
 
                         private final JavaInstance.MethodType specializedLambdaMethod;
 
-                        public Appender(MethodDescription lambdaDispatcherMethod,
+                        protected Appender(MethodDescription lambdaDispatcherMethod,
                                         JavaInstance.MethodType specializedLambdaMethod,
                                         List<FieldDescription.InDefinedShape> declaredFields) {
                             this.lambdaDispatcherMethod = lambdaDispatcherMethod;
@@ -2757,10 +2853,37 @@ public interface AgentBuilder {
                                     MethodReturn.returning(lambdaDispatcherMethod.getReturnType().asErasure())
                             ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                         }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            Appender appender = (Appender) other;
+                            return lambdaDispatcherMethod.equals(appender.lambdaDispatcherMethod)
+                                    && declaredFields.equals(appender.declaredFields)
+                                    && specializedLambdaMethod.equals(appender.specializedLambdaMethod);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = lambdaDispatcherMethod.hashCode();
+                            result = 31 * result + declaredFields.hashCode();
+                            result = 31 * result + specializedLambdaMethod.hashCode();
+                            return result;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation.Appender{" +
+                                    "lambdaDispatcherMethod=" + lambdaDispatcherMethod +
+                                    ", declaredFields=" + declaredFields +
+                                    ", specializedLambdaMethod=" + specializedLambdaMethod +
+                                    '}';
+                        }
                     }
                 }
 
-                private static class SerializationImplementation implements Implementation {
+                protected static class SerializationImplementation implements Implementation {
 
                     private final TypeDescription targetType;
 
@@ -2824,9 +2947,45 @@ public interface AgentBuilder {
                     public InstrumentedType prepare(InstrumentedType instrumentedType) {
                         return instrumentedType;
                     }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        SerializationImplementation that = (SerializationImplementation) other;
+                        return targetType.equals(that.targetType)
+                                && lambdaType.equals(that.lambdaType)
+                                && lambdaMethodName.equals(that.lambdaMethodName)
+                                && lambdaMethod.equals(that.lambdaMethod)
+                                && targetMethod.equals(that.targetMethod)
+                                && specializedMethod.equals(that.specializedMethod);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = targetType.hashCode();
+                        result = 31 * result + lambdaType.hashCode();
+                        result = 31 * result + lambdaMethodName.hashCode();
+                        result = 31 * result + lambdaMethod.hashCode();
+                        result = 31 * result + targetMethod.hashCode();
+                        result = 31 * result + specializedMethod.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.SerializationImplementation{" +
+                                "targetType=" + targetType +
+                                ", lambdaType=" + lambdaType +
+                                ", lambdaMethodName='" + lambdaMethodName + '\'' +
+                                ", lambdaMethod=" + lambdaMethod +
+                                ", targetMethod=" + targetMethod +
+                                ", specializedMethod=" + specializedMethod +
+                                '}';
+                    }
                 }
 
-                private static class BridgeMethodImplementation implements Implementation {
+                protected static class BridgeMethodImplementation implements Implementation {
 
                     private final String lambdaMethodName;
 
@@ -2847,6 +3006,29 @@ public interface AgentBuilder {
                     @Override
                     public InstrumentedType prepare(InstrumentedType instrumentedType) {
                         return instrumentedType;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        BridgeMethodImplementation that = (BridgeMethodImplementation) other;
+                        return lambdaMethodName.equals(that.lambdaMethodName) && lambdaMethod.equals(that.lambdaMethod);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = lambdaMethodName.hashCode();
+                        result = 31 * result + lambdaMethod.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation{" +
+                                "lambdaMethodName='" + lambdaMethodName + '\'' +
+                                ", lambdaMethod=" + lambdaMethod +
+                                '}';
                     }
 
                     protected static class Appender implements ByteCodeAppender {
@@ -2870,6 +3052,24 @@ public interface AgentBuilder {
                                     MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
 
                             )).apply(methodVisitor, implementationContext, instrumentedMethod);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && bridgeMethodInvocation.equals(((Appender) other).bridgeMethodInvocation);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return bridgeMethodInvocation.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation.Appender{" +
+                                    "bridgeMethodInvocation=" + bridgeMethodInvocation +
+                                    '}';
                         }
                     }
                 }
@@ -3058,7 +3258,7 @@ public interface AgentBuilder {
 
                 @Override
                 public String toString() {
-                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection" + name();
+                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection." + name();
                 }
             }
 
