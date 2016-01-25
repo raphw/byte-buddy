@@ -2678,7 +2678,7 @@ public interface AgentBuilder {
                         if (!markerInterfaces.contains(Serializable.class)) {
                             builder = builder.implement(Serializable.class);
                         }
-                        builder = builder.defineMethod("writeReplace", Object.class)
+                        builder = builder.defineMethod("writeReplace", Object.class, Visibility.PRIVATE)
                                 .intercept(new SerializationImplementation(new TypeDescription.ForLoadedType(targetType),
                                         factoryMethod.getReturnType(),
                                         lambdaMethodName,
@@ -2686,11 +2686,11 @@ public interface AgentBuilder {
                                         targetMethod,
                                         JavaInstance.MethodType.of(specializedLambdaMethodType)));
                     } else if (factoryMethod.getReturnType().isAssignableTo(Serializable.class)) {
-                        builder = builder.defineMethod("readObject", void.class, Visibility.PRIVATE, MethodManifestation.FINAL)
+                        builder = builder.defineMethod("readObject", void.class, Visibility.PRIVATE)
                                 .withParameters(ObjectInputStream.class)
                                 .throwing(NotSerializableException.class)
                                 .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"))
-                                .defineMethod("writeObject", void.class, Visibility.PRIVATE, MethodManifestation.FINAL)
+                                .defineMethod("writeObject", void.class, Visibility.PRIVATE)
                                 .withParameters(ObjectOutputStream.class)
                                 .throwing(NotSerializableException.class)
                                 .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"));
