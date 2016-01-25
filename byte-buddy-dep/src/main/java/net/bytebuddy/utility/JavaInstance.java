@@ -23,8 +23,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
-
 /**
  * Returns a Java instance of an object that has a special meaning to the Java virtual machine and that is not
  * available to Java in versions 6.
@@ -717,11 +715,6 @@ public interface JavaInstance {
         @Override
         public TypeDescription getInstanceType() {
             return JavaType.METHOD_HANDLE.getTypeStub();
-        }
-
-        // TODO: Good idea? Might not be a method!
-        public MethodDescription.InDefinedShape asMethodDescription() {
-            return ownerType.getDeclaredMethods().filter(named(name).and(returns(returnType).and(takesArguments(parameterTypes)))).getOnly();
         }
 
         /**

@@ -2664,7 +2664,7 @@ public interface AgentBuilder {
                             .method(named(lambdaMethodName)
                                     .and(takesArguments(lambdaMethod.getParameterTypes()))
                                     .and(returns(lambdaMethod.getReturnType())))
-                            .intercept(new LambdaMethodImplementation(targetMethod.asMethodDescription(), specializedLambdaMethod));
+                            .intercept(new LambdaMethodImplementation(targetMethod, specializedLambdaMethod));
                     int index = 0;
                     for (TypeDescription capturedType : factoryMethod.getParameterTypes()) {
                         builder = builder.defineField(FIELD_PREFIX + ++index, capturedType, Visibility.PRIVATE, FieldManifestation.FINAL);
@@ -2910,9 +2910,9 @@ public interface AgentBuilder {
                 protected static class LambdaMethodImplementation implements Implementation {
 
                     /**
-                     * The target method of the lambda expression.
+                     * The handle of the target method of the lambda expression.
                      */
-                    private final MethodDescription.InDefinedShape targetMethod;
+                    private final JavaInstance.MethodHandle targetMethod;
 
                     /**
                      * The specialized type of the lambda method.
@@ -2925,14 +2925,21 @@ public interface AgentBuilder {
                      * @param targetMethod            The target method of the lambda expression.
                      * @param specializedLambdaMethod The specialized type of the lambda method.
                      */
-                    protected LambdaMethodImplementation(MethodDescription.InDefinedShape targetMethod, JavaInstance.MethodType specializedLambdaMethod) {
+                    protected LambdaMethodImplementation(JavaInstance.MethodHandle targetMethod, JavaInstance.MethodType specializedLambdaMethod) {
                         this.targetMethod = targetMethod;
                         this.specializedLambdaMethod = specializedLambdaMethod;
                     }
 
                     @Override
                     public ByteCodeAppender appender(Target implementationTarget) {
-                        return new Appender(targetMethod, specializedLambdaMethod, implementationTarget.getInstrumentedType().getDeclaredFields());
+                        return new Appender(targetMethod.getOwnerType()
+                                .getDeclaredMethods()
+                                .filter(named(targetMethod.getName())
+                                        .and(returns(targetMethod.getReturnType()))
+                                        .and(takesArguments(targetMethod.getParameterTypes())))
+                                .getOnly(),
+                                specializedLambdaMethod,
+                                implementationTarget.getInstrumentedType().getDeclaredFields());
                     }
 
                     @Override

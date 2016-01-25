@@ -61,6 +61,7 @@ public class LambdaFactory {
     @SuppressWarnings("all")
     public static boolean register(ClassFileTransformer classFileTransformer, Object classFileFactory, Callable<Class<?>> injector) {
         try {
+            @SuppressWarnings("unchecked")
             Map<ClassFileTransformer, Object> classFileTransformers = (Map<ClassFileTransformer, Object>) injector.call()
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);
@@ -96,6 +97,7 @@ public class LambdaFactory {
     @SuppressWarnings("all")
     public static boolean release(ClassFileTransformer classFileTransformer) {
         try {
+            @SuppressWarnings("unchecked")
             Map<ClassFileTransformer, ?> classFileTransformers = (Map<ClassFileTransformer, ?>) ClassLoader.getSystemClassLoader()
                     .loadClass(LambdaFactory.class.getName())
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
