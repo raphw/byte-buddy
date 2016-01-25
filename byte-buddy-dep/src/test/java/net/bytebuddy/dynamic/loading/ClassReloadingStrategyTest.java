@@ -169,7 +169,7 @@ public class ClassReloadingStrategyTest {
         new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.RETRANSFORMATION);
     }
 
-    @Test//(expected = IllegalStateException.class)
+    @Test
     public void testResetNotSupported() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
@@ -252,6 +252,7 @@ public class ClassReloadingStrategyTest {
 
     public static class Bar {
 
+        @SuppressWarnings("unused")
         public String foo() {
             Bar bar = new Bar();
             return Math.random() < 0
@@ -262,6 +263,7 @@ public class ClassReloadingStrategyTest {
 
     public static class Qux {
 
+        @SuppressWarnings("unused")
         public String foo() {
             Qux qux = new Qux();
             return Math.random() < 0
