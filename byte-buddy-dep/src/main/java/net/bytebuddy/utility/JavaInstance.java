@@ -252,6 +252,14 @@ public interface JavaInstance {
             return new ArrayList<TypeDescription>(parameterTypes);
         }
 
+        public String getDescriptor() {
+            StringBuilder stringBuilder = new StringBuilder("(");
+            for (TypeDescription parameterType : parameterTypes) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+        }
+
         @Override
         public Object asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder("(");
@@ -753,6 +761,14 @@ public interface JavaInstance {
          */
         public List<TypeDescription> getParameterTypes() {
             return new ArrayList<TypeDescription>(parameterTypes);
+        }
+
+        public String getDescriptor() {
+            StringBuilder stringBuilder = new StringBuilder("(");
+            for (TypeDescription parameterType : parameterTypes) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
         }
 
         @Override

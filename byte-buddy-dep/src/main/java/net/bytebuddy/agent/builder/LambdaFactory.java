@@ -18,7 +18,7 @@ public class LambdaFactory {
         this.dispatcher = dispatcher;
     }
 
-    public static boolean register(ClassFileTransformer classFileTransformer, Class<?> factory) {
+    public static boolean register(ClassFileTransformer classFileTransformer, Object lambdaCreator) {
         try {
             @SuppressWarnings("unchecked")
             Map<ClassFileTransformer, LambdaFactory> classFileTransformers = (Map<ClassFileTransformer, LambdaFactory>) ClassLoader.getSystemClassLoader()
@@ -29,9 +29,10 @@ public class LambdaFactory {
                 try {
                     return classFileTransformers.isEmpty();
                 } finally {
-                    classFileTransformers.put(classFileTransformer, new LambdaFactory(factory, factory.getDeclaredMethod("make",
+                    classFileTransformers.put(classFileTransformer, new LambdaFactory(lambdaCreator, lambdaCreator.getClass().getDeclaredMethod("make",
                             Object.class,
                             String.class,
+                            Object.class,
                             Object.class,
                             Object.class,
                             Object.class,
@@ -66,6 +67,7 @@ public class LambdaFactory {
                           Object invokedType,
                           Object samMethodType,
                           Object implMethod,
+                          Object instantiatedMethodType,
                           boolean enforceSerialization,
                           List<Class<?>> markerInterfaces,
                           Set<ClassFileTransformer> classFileTransformers) {
@@ -77,6 +79,7 @@ public class LambdaFactory {
                     invokedType,
                     samMethodType,
                     implMethod,
+                    instantiatedMethodType,
                     enforceSerialization,
                     markerInterfaces,
                     classFileTransformers);
@@ -90,6 +93,7 @@ public class LambdaFactory {
                               Object invokedType,
                               Object samMethodType,
                               Object implMethod,
+                              Object instantiatedMethodType,
                               boolean enforceSerialization,
                               List<Class<?>> markerInterfaces) throws LambdaConversionException {
             return CLASS_FILE_TRANSFORMERS.values().iterator().next().invoke(caller,
@@ -97,6 +101,7 @@ public class LambdaFactory {
                     invokedType,
                     samMethodType,
                     implMethod,
+                    instantiatedMethodType,
                     enforceSerialization,
                     markerInterfaces,
                     CLASS_FILE_TRANSFORMERS.keySet());
