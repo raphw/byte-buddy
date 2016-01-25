@@ -122,7 +122,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -155,7 +156,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -191,7 +193,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -221,7 +224,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -253,7 +257,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -285,7 +290,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -313,7 +319,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -337,7 +344,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -357,7 +365,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -387,7 +396,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -419,7 +429,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -451,7 +462,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -480,7 +492,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -517,7 +530,8 @@ public class AgentBuilderDefaultTest {
                 .with(typeStrategy)
                 .with(listener)
                 .with(accessControlContext)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
     }
@@ -534,7 +548,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -559,7 +574,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -575,7 +591,7 @@ public class AgentBuilderDefaultTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testEmptyPrefixThrowsException() throws Exception {
-        new AgentBuilder.Default(byteBuddy).enableNativeMethodPrefix("");
+        new AgentBuilder.Default(byteBuddy).withNativeMethodPrefix("");
     }
 
     @Test
@@ -595,7 +611,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -632,7 +649,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -656,7 +674,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -681,7 +700,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
@@ -706,7 +726,8 @@ public class AgentBuilderDefaultTest {
                 .with(binaryLocator)
                 .with(typeStrategy)
                 .with(listener)
-                .disableNativeMethodPrefix()
+                .withoutNativeMethodPrefix()
+                .enableLambdaInstrumentation(false)
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);

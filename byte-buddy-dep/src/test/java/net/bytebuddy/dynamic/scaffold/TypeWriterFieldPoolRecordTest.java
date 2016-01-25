@@ -67,7 +67,7 @@ public class TypeWriterFieldPoolRecordTest {
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(fieldDescription.getModifiers()).thenReturn(MODIFIER);
+        when(fieldDescription.getActualModifiers()).thenReturn(MODIFIER);
         when(fieldDescription.getInternalName()).thenReturn(FOO);
         when(fieldDescription.getDescriptor()).thenReturn(BAR);
         when(fieldDescription.getGenericSignature()).thenReturn(QUX);

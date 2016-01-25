@@ -30,7 +30,7 @@ public class TypeCreation implements StackManipulation {
      * @param typeDescription The type to be create.
      * @return A stack manipulation that represents the creation of the given type.
      */
-    public static StackManipulation forType(TypeDescription typeDescription) {
+    public static StackManipulation of(TypeDescription typeDescription) {
         if (typeDescription.isArray() || typeDescription.isPrimitive() || typeDescription.isAbstract()) {
             throw new IllegalArgumentException(typeDescription + " is not instantiable");
         }

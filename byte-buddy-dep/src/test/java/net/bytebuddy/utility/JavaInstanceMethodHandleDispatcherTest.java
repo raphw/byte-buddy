@@ -88,5 +88,19 @@ public class JavaInstanceMethodHandleDispatcherTest {
         abstract void a15();
 
         abstract void a16();
+
+        abstract void a17();
+
+        abstract void a18();
+
+        abstract void a19();
+
+        abstract void a20();
+
+        abstract void a21();
+
+        abstract void a22();
+
+        abstract void a23();
     }
 }

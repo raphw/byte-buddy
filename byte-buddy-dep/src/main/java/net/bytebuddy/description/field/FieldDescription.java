@@ -7,6 +7,7 @@ import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.matcher.ElementMatcher;
+import org.objectweb.asm.Opcodes;
 import org.objectweb.asm.signature.SignatureWriter;
 
 import java.lang.reflect.Field;
@@ -34,6 +35,14 @@ public interface FieldDescription extends ByteCodeElement,
      * @return The type of the described field.
      */
     TypeDescription.Generic getType();
+
+    /**
+     * Returns the field's actual modifiers as it is present in a class file, i.e. its modifiers including
+     * a flag if this field is deprecated.
+     *
+     * @return The field's actual modifiers.
+     */
+    int getActualModifiers();
 
     /**
      * Returns a signature token representing this field.
@@ -110,6 +119,13 @@ public interface FieldDescription extends ByteCodeElement,
                     || typeDescription.equals(getDeclaringType())
                     || (isProtected() && getDeclaringType().asErasure().isAssignableFrom(typeDescription))
                     || (!isPrivate() && typeDescription.isSamePackage(getDeclaringType().asErasure())));
+        }
+
+        @Override
+        public int getActualModifiers() {
+            return getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
+                    ? Opcodes.ACC_DEPRECATED
+                    : EMPTY_MASK);
         }
 
         @Override

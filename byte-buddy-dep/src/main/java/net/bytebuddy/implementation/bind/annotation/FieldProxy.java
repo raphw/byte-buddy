@@ -1218,7 +1218,7 @@ public @interface FieldProxy {
             public Size apply(MethodVisitor methodVisitor, Implementation.Context implementationContext) {
                 TypeDescription auxiliaryType = implementationContext.register(this);
                 return new Compound(
-                        TypeCreation.forType(auxiliaryType),
+                        TypeCreation.of(auxiliaryType),
                         Duplication.SINGLE,
                         accessedField.isStatic()
                                 ? Trivial.INSTANCE

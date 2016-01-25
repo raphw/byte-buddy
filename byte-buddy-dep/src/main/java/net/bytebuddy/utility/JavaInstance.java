@@ -250,6 +250,19 @@ public interface JavaInstance {
             return new ArrayList<TypeDescription>(parameterTypes);
         }
 
+        /**
+         * Returns the method descriptor of this method type representation.
+         *
+         * @return The method descriptor of this method type representation.
+         */
+        public String getDescriptor() {
+            StringBuilder stringBuilder = new StringBuilder("(");
+            for (TypeDescription parameterType : parameterTypes) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+        }
+
         @Override
         public Object asConstantPoolValue() {
             StringBuilder stringBuilder = new StringBuilder("(");
@@ -432,28 +445,28 @@ public interface JavaInstance {
         static {
             Dispatcher.Initializable dispatcher;
             try {
-                Class<?> methodHandleInfo = Class.forName("java.lang.invoke.MethodHandleInfo");
-                Class<?> methodType = JavaType.METHOD_TYPE.load();
                 try {
                     dispatcher = new Dispatcher.ForJava8CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                            methodHandleInfo.getDeclaredMethod("getName"),
-                            methodHandleInfo.getDeclaredMethod("getDeclaringClass"),
-                            methodHandleInfo.getDeclaredMethod("getReferenceKind"),
-                            methodHandleInfo.getDeclaredMethod("getMethodType"),
-                            methodType.getDeclaredMethod("returnType"),
-                            methodType.getDeclaredMethod("parameterArray"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
+                            JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
                             JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("revealDirect", JavaType.METHOD_HANDLE.load()));
                 } catch (RuntimeException exception) {
                     throw exception;
                 } catch (Exception ignored) {
                     dispatcher = new Dispatcher.ForJava7CapableVm(Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup"),
-                            methodHandleInfo.getDeclaredMethod("getName"),
-                            methodHandleInfo.getDeclaredMethod("getDeclaringClass"),
-                            methodHandleInfo.getDeclaredMethod("getReferenceKind"),
-                            methodHandleInfo.getDeclaredMethod("getMethodType"),
-                            methodType.getDeclaredMethod("returnType"),
-                            methodType.getDeclaredMethod("parameterArray"),
-                            methodHandleInfo.getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getName"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getDeclaringClass"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getReferenceKind"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredMethod("getMethodType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("returnType"),
+                            JavaType.METHOD_TYPE.load().getDeclaredMethod("parameterArray"),
+                            JavaType.METHOD_HANDLES_LOOKUP.load().getDeclaredMethod("lookupClass"),
+                            Class.forName("java.lang.invoke.MethodHandleInfo").getDeclaredConstructor(JavaType.METHOD_HANDLE.load()));
                 }
             } catch (RuntimeException exception) {
                 throw exception;
@@ -749,6 +762,19 @@ public interface JavaInstance {
             return new ArrayList<TypeDescription>(parameterTypes);
         }
 
+        /**
+         * Returns the method descriptor of this method handle representation.
+         *
+         * @return The method descriptor of this method handle representation.
+         */
+        public String getDescriptor() {
+            StringBuilder stringBuilder = new StringBuilder("(");
+            for (TypeDescription parameterType : parameterTypes) {
+                stringBuilder.append(parameterType.getDescriptor());
+            }
+            return stringBuilder.append(')').append(returnType.getDescriptor()).toString();
+        }
+
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;
@@ -780,6 +806,16 @@ public interface JavaInstance {
                     ", returnType=" + returnType +
                     ", parameterTypes=" + parameterTypes +
                     '}';
+        }
+
+        /**
+         * Returns the lookup type of the provided {@code java.lang.invoke.MethodHandles$Lookup} instance.
+         *
+         * @param callerClassLookup An instance of {@code java.lang.invoke.MethodHandles$Lookup}.
+         * @return The instance's lookup type.
+         */
+        public static Class<?> lookupType(Object callerClassLookup) {
+            return DISPATCHER.lookupType(callerClassLookup);
         }
 
         /**
@@ -863,6 +899,14 @@ public interface JavaInstance {
                  * @return A public {@code java.lang.invoke.MethodHandles.Lookup} instance.
                  */
                 Object publicLookup();
+
+                /**
+                 * Returns the lookup type of a given {@code java.lang.invoke.MethodHandles$Lookup} instance.
+                 *
+                 * @param lookup A {@code java.lang.invoke.MethodHandles$Lookup} instance.
+                 * @return The provided instance's lookup type.
+                 */
+                Class<?> lookupType(Object lookup);
             }
 
             /**
@@ -906,6 +950,11 @@ public interface JavaInstance {
                 protected final Method parameterArray;
 
                 /**
+                 * A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
+                 */
+                protected final Method lookupClass;
+
+                /**
                  * Creates a legal dispatcher.
                  *
                  * @param publicLookup      A reference to {@code java.lang.invoke.MethodHandles#publicLookup}.
@@ -915,6 +964,7 @@ public interface JavaInstance {
                  * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
                  * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
+                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
                  */
                 protected AbstractBase(Method publicLookup,
                                        Method getName,
@@ -922,7 +972,8 @@ public interface JavaInstance {
                                        Method getReferenceKind,
                                        Method getMethodType,
                                        Method returnType,
-                                       Method parameterArray) {
+                                       Method parameterArray,
+                                       Method lookupClass) {
                     this.publicLookup = publicLookup;
                     this.getName = getName;
                     this.getDeclaringClass = getDeclaringClass;
@@ -930,6 +981,7 @@ public interface JavaInstance {
                     this.getMethodType = getMethodType;
                     this.returnType = returnType;
                     this.parameterArray = parameterArray;
+                    this.lookupClass = lookupClass;
                 }
 
                 @Override
@@ -1010,6 +1062,17 @@ public interface JavaInstance {
                 }
 
                 @Override
+                public Class<?> lookupType(Object lookup) {
+                    try {
+                        return (Class<?>) lookupClass.invoke(lookup);
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access java.lang.reflect.MethodHandles.Lookup#lookupClass", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error invoking java.lang.reflect.MethodHandles.Lookup#lookupClass", exception.getCause());
+                    }
+                }
+
+                @Override
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
@@ -1020,7 +1083,8 @@ public interface JavaInstance {
                             && getReferenceKind.equals(that.getReferenceKind)
                             && getMethodType.equals(that.getMethodType)
                             && returnType.equals(that.returnType)
-                            && parameterArray.equals(that.parameterArray);
+                            && parameterArray.equals(that.parameterArray)
+                            && lookupClass.equals(that.lookupClass);
                 }
 
                 @Override
@@ -1032,6 +1096,7 @@ public interface JavaInstance {
                     result = 31 * result + getMethodType.hashCode();
                     result = 31 * result + returnType.hashCode();
                     result = 31 * result + parameterArray.hashCode();
+                    result = 31 * result + lookupClass.hashCode();
                     return result;
                 }
             }
@@ -1057,6 +1122,7 @@ public interface JavaInstance {
                  * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
                  * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
+                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
                  * @param revealDirect      A reference to the {@code java.lang.invoke.MethodHandles.Lookup#revealDirect} method.
                  */
                 protected ForJava8CapableVm(Method publicLookup,
@@ -1066,8 +1132,9 @@ public interface JavaInstance {
                                             Method getMethodType,
                                             Method returnType,
                                             Method parameterArray,
+                                            Method lookupClass,
                                             Method revealDirect) {
-                    super(publicLookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray);
+                    super(publicLookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray, lookupClass);
                     this.revealDirect = revealDirect;
                 }
 
@@ -1113,6 +1180,7 @@ public interface JavaInstance {
                             ", getMethodType=" + getMethodType +
                             ", returnType=" + returnType +
                             ", parameterArray=" + parameterArray +
+                            ", lookupClass=" + lookupClass +
                             ", revealDirect=" + revealDirect +
                             '}';
                 }
@@ -1138,6 +1206,7 @@ public interface JavaInstance {
                  * @param getMethodType     A reference to {@code java.lang.invoke.MethodHandleInfo#getMethodType}.
                  * @param returnType        A reference to {@code java.lang.invoke.MethodType#returnType}.
                  * @param parameterArray    A reference to {@code java.lang.invoke.MethodType#parameterArray}.
+                 * @param lookupClass       A reference to {@code java.lang.invoke.MethodHandles$Lookup#lookupClass} method.
                  * @param methodInfo        A reference to the {@code java.lang.invoke.MethodInfo} constructor.
                  */
                 protected ForJava7CapableVm(Method publicLookup,
@@ -1147,8 +1216,9 @@ public interface JavaInstance {
                                             Method getMethodType,
                                             Method returnType,
                                             Method parameterArray,
+                                            Method lookupClass,
                                             Constructor<?> methodInfo) {
-                    super(publicLookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray);
+                    super(publicLookup, getName, getDeclaringClass, getReferenceKind, getMethodType, returnType, parameterArray, lookupClass);
                     this.methodInfo = methodInfo;
                 }
 
@@ -1208,6 +1278,7 @@ public interface JavaInstance {
                             ", getMethodType=" + getMethodType +
                             ", returnType=" + returnType +
                             ", parameterArray=" + parameterArray +
+                            ", lookupClass=" + lookupClass +
                             ", methodInfo=" + methodInfo +
                             '}';
                 }
@@ -1231,6 +1302,11 @@ public interface JavaInstance {
                 @Override
                 public Object publicLookup() {
                     throw new IllegalStateException("Unsupported type on current JVM: java.lang.invoke.MethodHandle");
+                }
+
+                @Override
+                public Class<?> lookupType(Object lookup) {
+                    throw new IllegalStateException(); // TODO
                 }
 
                 @Override

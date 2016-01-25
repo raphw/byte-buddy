@@ -687,7 +687,7 @@ public class MethodCall implements Implementation.Composable {
 
             @Override
             public StackManipulation resolve(MethodDescription invokedMethod, MethodDescription instrumentedMethod, TypeDescription instrumentedType, Assigner assigner, Assigner.Typing typing) {
-                return new StackManipulation.Compound(TypeCreation.forType(invokedMethod.getDeclaringType().asErasure()), Duplication.SINGLE);
+                return new StackManipulation.Compound(TypeCreation.of(invokedMethod.getDeclaringType().asErasure()), Duplication.SINGLE);
             }
 
             @Override

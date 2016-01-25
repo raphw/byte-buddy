@@ -168,16 +168,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
     TypeDescription getEnclosingType();
 
     /**
-     * <p>
      * Returns the type's actual modifiers as present in the class file. For example, a type cannot be {@code private}.
-     * but it modifiers might reflect this property nevertheless if a class was defined as a private inner class.
-     * </p>
-     * <p>
-     * Unfortunately, the modifier for marking a {@code static} class collides with the {@code SUPER} modifier such
-     * that these flags are indistinguishable. Therefore, the flag must be specified manually.
-     * </p>
+     * but it modifiers might reflect this property nevertheless if a class was defined as a private inner class. The
+     * returned modifiers take also into account if the type is marked as {@link Deprecated}.
      *
-     * @param superFlag {@code true} if the super flag should be set.
+     * @param superFlag {@code true} if the modifier's super flag should be set.
      * @return The type's actual modifiers.
      */
     int getActualModifiers(boolean superFlag);
@@ -6877,13 +6872,15 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
         @Override
         public int getActualModifiers(boolean superFlag) {
-            int actualModifiers;
+            int actualModifiers = getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
+                    ? Opcodes.ACC_DEPRECATED
+                    : EMPTY_MASK);
             if (isPrivate()) {
-                actualModifiers = getModifiers() & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
+                actualModifiers = actualModifiers & ~(Opcodes.ACC_PRIVATE | Opcodes.ACC_STATIC);
             } else if (isProtected()) {
-                actualModifiers = getModifiers() & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
+                actualModifiers = actualModifiers & ~(Opcodes.ACC_PROTECTED | Opcodes.ACC_STATIC) | Opcodes.ACC_PUBLIC;
             } else {
-                actualModifiers = getModifiers() & ~Opcodes.ACC_STATIC;
+                actualModifiers = actualModifiers & ~Opcodes.ACC_STATIC;
             }
             return superFlag ? (actualModifiers | Opcodes.ACC_SUPER) : actualModifiers;
         }

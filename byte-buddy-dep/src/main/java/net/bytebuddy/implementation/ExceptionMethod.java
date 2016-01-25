@@ -180,7 +180,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             @Override
             public StackManipulation make() {
                 return new StackManipulation.Compound(
-                        TypeCreation.forType(exceptionType),
+                        TypeCreation.of(exceptionType),
                         Duplication.SINGLE,
                         MethodInvocation.invoke(targetConstructor));
             }
@@ -241,7 +241,7 @@ public class ExceptionMethod implements Implementation, ByteCodeAppender {
             @Override
             public StackManipulation make() {
                 return new StackManipulation.Compound(
-                        TypeCreation.forType(exceptionType),
+                        TypeCreation.of(exceptionType),
                         Duplication.SINGLE,
                         new TextConstant(message),
                         MethodInvocation.invoke(targetConstructor));

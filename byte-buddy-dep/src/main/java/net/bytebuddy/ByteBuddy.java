@@ -1093,7 +1093,7 @@ public class ByteBuddy {
                 for (String value : values) {
                     FieldDescription fieldDescription = instrumentedType.getDeclaredFields().filter(named(value)).getOnly();
                     stackManipulation = new StackManipulation.Compound(stackManipulation,
-                            TypeCreation.forType(instrumentedType),
+                            TypeCreation.of(instrumentedType),
                             Duplication.SINGLE,
                             new TextConstant(value),
                             IntegerConstant.forValue(ordinal++),

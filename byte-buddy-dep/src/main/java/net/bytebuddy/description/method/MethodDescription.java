@@ -86,12 +86,21 @@ public interface MethodDescription extends TypeVariableSource,
     TypeList.Generic getExceptionTypes();
 
     /**
-     * Returns this method modifier but adjusts its state of being abstract.
+     * Returns this method's actual modifiers as it is present in a class file, i.e. includes a flag if this method
+     * is marked {@link Deprecated}.
+     *
+     * @return The method's actual modifiers.
+     */
+    int getActualModifiers();
+
+    /**
+     * Returns this method's actual modifiers as it is present in a class file, i.e. includes a flag if this method
+     * is marked {@link Deprecated} and adjusts the modifiers for being abstract or not.
      *
      * @param nonAbstract {@code true} if the method should be treated as non-abstract.
-     * @return The adjusted modifiers.
+     * @return The method's actual modifiers.
      */
-    int getAdjustedModifiers(boolean nonAbstract);
+    int getActualModifiers(boolean nonAbstract);
 
     /**
      * Checks if this method description represents a constructor.
@@ -410,10 +419,18 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         @Override
-        public int getAdjustedModifiers(boolean nonAbstract) {
+        public int getActualModifiers() {
+            return getActualModifiers(!isAbstract());
+        }
+
+        @Override
+        public int getActualModifiers(boolean nonAbstract) {
+            int actualModifiers = getModifiers() | (getDeclaredAnnotations().isAnnotationPresent(Deprecated.class)
+                    ? Opcodes.ACC_DEPRECATED
+                    : EMPTY_MASK);
             return nonAbstract
-                    ? getModifiers() & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
-                    : getModifiers() & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
+                    ? actualModifiers & ~(Opcodes.ACC_ABSTRACT | Opcodes.ACC_NATIVE)
+                    : actualModifiers & ~Opcodes.ACC_NATIVE | Opcodes.ACC_ABSTRACT;
         }
 
         @Override

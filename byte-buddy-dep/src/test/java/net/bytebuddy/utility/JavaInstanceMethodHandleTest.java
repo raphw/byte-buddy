@@ -35,6 +35,7 @@ public class JavaInstanceMethodHandleTest {
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
         assertThat(methodHandle.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodHandle.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Void.class)));
+        assertThat(methodHandle.getDescriptor(), is(new MethodDescription.ForLoadedMethod(Foo.class.getDeclaredMethod(BAR, Void.class)).getDescriptor()));
     }
 
     @Test

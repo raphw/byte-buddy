@@ -2734,7 +2734,7 @@ public interface TypePool {
                                           List<FieldToken> fieldTokens,
                                           List<MethodToken> methodTokens) {
                 this.typePool = typePool;
-                this.modifiers = modifiers & ~Opcodes.ACC_SUPER;
+                this.modifiers = modifiers & ~(Opcodes.ACC_SUPER | Opcodes.ACC_DEPRECATED);
                 this.name = Type.getObjectType(name).getClassName();
                 this.superClassDescriptor = superClassInternalName == null
                         ? NO_SUPER_CLASS
@@ -6579,7 +6579,7 @@ public interface TypePool {
                                              GenericTypeToken.Resolution.ForField signatureResolution,
                                              Map<String, List<AnnotationToken>> typeAnnotationTokens,
                                              List<AnnotationToken> annotationTokens) {
-                    this.modifiers = modifiers;
+                    this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
                     this.name = name;
                     this.descriptor = descriptor;
                     this.signatureResolution = signatureResolution;
@@ -6745,7 +6745,7 @@ public interface TypePool {
                                               Map<Integer, List<AnnotationToken>> parameterAnnotationTokens,
                                               List<MethodToken.ParameterToken> parameterTokens,
                                               AnnotationDescription.AnnotationValue<?, ?> defaultValue) {
-                    this.modifiers = modifiers;
+                    this.modifiers = modifiers & ~Opcodes.ACC_DEPRECATED;
                     this.internalName = internalName;
                     Type methodType = Type.getMethodType(methodDescriptor);
                     Type returnType = methodType.getReturnType();

@@ -2,30 +2,44 @@ package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.modifier.*;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassInjector;
+import net.bytebuddy.dynamic.loading.ClassReloadingStrategy;
+import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
+import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
+import net.bytebuddy.implementation.ExceptionMethod;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
-import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
-import net.bytebuddy.implementation.bytecode.Removal;
-import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.*;
+import net.bytebuddy.implementation.bytecode.assign.Assigner;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.collection.ArrayFactory;
 import net.bytebuddy.implementation.bytecode.constant.ClassConstant;
 import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
+import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
+import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.pool.TypePool;
+import net.bytebuddy.utility.JavaInstance;
+import org.objectweb.asm.Label;
 import org.objectweb.asm.MethodVisitor;
+import org.objectweb.asm.Opcodes;
+import org.objectweb.asm.Type;
 
-import java.io.File;
-import java.io.PrintStream;
+import java.io.*;
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
@@ -36,6 +50,8 @@ import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.concurrent.Callable;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static net.bytebuddy.matcher.ElementMatchers.*;
 
@@ -194,6 +210,47 @@ public interface AgentBuilder {
      * @return An agent builder with bootstrap class loader class injection disabled.
      */
     AgentBuilder disableBootstrapInjection();
+
+    /**
+     * Enables the use of the given native method prefix for instrumented methods. Note that this prefix is also
+     * applied when preserving non-native methods. The use of this prefix is also registered when installing the
+     * final agent with an {@link java.lang.instrument.Instrumentation}.
+     *
+     * @param prefix The prefix to be used.
+     * @return A new instance of this agent builder which uses the given native method prefix.
+     */
+    AgentBuilder withNativeMethodPrefix(String prefix);
+
+    /**
+     * Disables the use of a native method prefix for instrumented methods.
+     *
+     * @return A new instance of this agent builder which does not use a native method prefix.
+     */
+    AgentBuilder withoutNativeMethodPrefix();
+
+    /**
+     * <p>
+     * Enables or disables management of the JVM's {@code LambdaMetafactory} which is responsible for creating classes that
+     * implement lambda expressions. Without this feature enabled, classes that are represented by lambda expressions are
+     * not instrumented by the JVM such that Java agents have no effect on them when a lambda expression's class is loaded
+     * for the first time.
+     * </p>
+     * <p>
+     * When activating this feature, Byte Buddy instruments the {@code LambdaMetafactory} and takes over the responsibility
+     * of creating classes that represent lambda expressions. In doing so, Byte Buddy has the opportunity to apply the built
+     * class file transformer. If the current VM does not support lambda expressions, activating this feature has no effect.
+     * </p>
+     * <p>
+     * <b>Important</b>: If this feature is active, it is important to release the built class file transformer when
+     * deactivating it. Normally, it is sufficient to call {@link Instrumentation#removeTransformer(ClassFileTransformer)}.
+     * When this feature is enabled, it is however also required to invoke {@link Default#releaseLambdaTransformer(ClassFileTransformer, Instrumentation)}.
+     * Otherwise, the executing VMs class loader retains a reference to the class file transformer what can cause a memory leak.
+     * </p>
+     *
+     * @param enable {@code true} if this feature should be enabled.
+     * @return A new instance of this agent builder where this feature is explicitly enabled or disabled.
+     */
+    AgentBuilder enableLambdaInstrumentation(boolean enable);
 
     /**
      * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
@@ -1239,7 +1296,7 @@ public interface AgentBuilder {
                     Dispatcher dispatcher;
                     try {
                         TypeDescription nexusType = new TypeDescription.ForLoadedType(Nexus.class);
-                        dispatcher = new Dispatcher.Available(new ClassInjector.UsingReflection(ClassLoader.getSystemClassLoader())
+                        dispatcher = new Dispatcher.Available(ClassInjector.UsingReflection.ofSystemClassLoader()
                                 .inject(Collections.singletonMap(nexusType, ClassFileLocator.ForClassLoader.read(Nexus.class).resolve()))
                                 .get(nexusType)
                                 .getDeclaredMethod("register", String.class, ClassLoader.class, int.class, Object.class));
@@ -1947,6 +2004,12 @@ public interface AgentBuilder {
         private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
         /**
+         * A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the instrumentation
+         * of classes that represent lambda expressions.
+         */
+        private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
+
+        /**
          * The transformation object for handling type transformations.
          */
         private final Transformation transformation;
@@ -1974,22 +2037,25 @@ public interface AgentBuilder {
                     InitializationStrategy.SelfInjection.SPLIT,
                     RedefinitionStrategy.DISABLED,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
+                    LambdaInstrumentationStrategy.DISABLED,
                     Transformation.Ignored.INSTANCE);
         }
 
         /**
          * Creates a new default agent builder.
          *
-         * @param byteBuddy                  The Byte Buddy instance to be used.
-         * @param binaryLocator              The binary locator to use.
-         * @param typeStrategy               The definition handler to use.
-         * @param listener                   The listener to notify on transformations.
-         * @param nativeMethodStrategy       The native method strategy to apply.
-         * @param accessControlContext       The access control context to use for loading classes.
-         * @param initializationStrategy     The initialization strategy to use for transformed types.
-         * @param redefinitionStrategy       The redefinition strategy to apply.
-         * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
-         * @param transformation             The transformation object for handling type transformations.
+         * @param byteBuddy                     The Byte Buddy instance to be used.
+         * @param binaryLocator                 The binary locator to use.
+         * @param typeStrategy                  The definition handler to use.
+         * @param listener                      The listener to notify on transformations.
+         * @param nativeMethodStrategy          The native method strategy to apply.
+         * @param accessControlContext          The access control context to use for loading classes.
+         * @param initializationStrategy        The initialization strategy to use for transformed types.
+         * @param redefinitionStrategy          The redefinition strategy to apply.
+         * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
+         * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the
+         *                                      instrumentation of classes that represent lambda expressions.
+         * @param transformation                The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
                           BinaryLocator binaryLocator,
@@ -2000,6 +2066,7 @@ public interface AgentBuilder {
                           InitializationStrategy initializationStrategy,
                           RedefinitionStrategy redefinitionStrategy,
                           BootstrapInjectionStrategy bootstrapInjectionStrategy,
+                          LambdaInstrumentationStrategy lambdaInstrumentationStrategy,
                           Transformation transformation) {
             this.byteBuddy = byteBuddy;
             this.binaryLocator = binaryLocator;
@@ -2010,7 +2077,25 @@ public interface AgentBuilder {
             this.initializationStrategy = initializationStrategy;
             this.redefinitionStrategy = redefinitionStrategy;
             this.bootstrapInjectionStrategy = bootstrapInjectionStrategy;
+            this.lambdaInstrumentationStrategy = lambdaInstrumentationStrategy;
             this.transformation = transformation;
+        }
+
+        /**
+         * Releases the supplied class file transformer when it was built with {@link AgentBuilder#enableLambdaInstrumentation(boolean)} enabled.
+         * Subsequently, the class file transformer is no longer applied when a class that represents a lambda expression is created.
+         *
+         * @param classFileTransformer The class file transformer to release.
+         * @param instrumentation      The instrumentation instance that is used to potentially rollback the instrumentation of the {@code LambdaMetafactory}.
+         */
+        public static void releaseLambdaTransformer(ClassFileTransformer classFileTransformer, Instrumentation instrumentation) {
+            if (LambdaFactory.release(classFileTransformer)) {
+                try {
+                    ClassReloadingStrategy.of(instrumentation).reset(Class.forName("java.lang.invoke.LambdaMetafactory"));
+                } catch (Exception exception) {
+                    throw new IllegalStateException("Could not release lambda transformer", exception);
+                }
+            }
         }
 
         @Override
@@ -2039,6 +2124,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2053,6 +2139,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2067,6 +2154,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2081,6 +2169,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2095,6 +2184,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2109,6 +2199,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2123,6 +2214,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2137,6 +2229,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2151,6 +2244,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2165,6 +2259,7 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     new BootstrapInjectionStrategy.Enabled(folder, instrumentation),
+                    lambdaInstrumentationStrategy,
                     transformation);
         }
 
@@ -2179,6 +2274,24 @@ public interface AgentBuilder {
                     initializationStrategy,
                     redefinitionStrategy,
                     BootstrapInjectionStrategy.Disabled.INSTANCE,
+                    lambdaInstrumentationStrategy,
+                    transformation);
+        }
+
+        @Override
+        public AgentBuilder enableLambdaInstrumentation(boolean enabled) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    typeStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    enabled
+                            ? LambdaInstrumentationStrategy.ENABLED
+                            : LambdaInstrumentationStrategy.DISABLED,
                     transformation);
         }
 
@@ -2202,6 +2315,7 @@ public interface AgentBuilder {
             if (nativeMethodStrategy.isEnabled(instrumentation)) {
                 instrumentation.setNativeMethodPrefix(classFileTransformer, nativeMethodStrategy.getPrefix());
             }
+            lambdaInstrumentationStrategy.apply(byteBuddy, instrumentation, classFileTransformer);
             if (redefinitionStrategy.isEnabled()) {
                 RedefinitionStrategy.Collector collector = redefinitionStrategy.makeCollector(transformation);
                 for (Class<?> type : instrumentation.getAllLoadedClasses()) {
@@ -2281,8 +2395,8 @@ public interface AgentBuilder {
                     && initializationStrategy == aDefault.initializationStrategy
                     && redefinitionStrategy == aDefault.redefinitionStrategy
                     && bootstrapInjectionStrategy.equals(aDefault.bootstrapInjectionStrategy)
+                    && lambdaInstrumentationStrategy.equals(aDefault.lambdaInstrumentationStrategy)
                     && transformation.equals(aDefault.transformation);
-
         }
 
         @Override
@@ -2296,6 +2410,7 @@ public interface AgentBuilder {
             result = 31 * result + initializationStrategy.hashCode();
             result = 31 * result + redefinitionStrategy.hashCode();
             result = 31 * result + bootstrapInjectionStrategy.hashCode();
+            result = 31 * result + lambdaInstrumentationStrategy.hashCode();
             result = 31 * result + transformation.hashCode();
             return result;
         }
@@ -2312,6 +2427,7 @@ public interface AgentBuilder {
                     ", initializationStrategy=" + initializationStrategy +
                     ", redefinitionStrategy=" + redefinitionStrategy +
                     ", bootstrapInjectionStrategy=" + bootstrapInjectionStrategy +
+                    ", lambdaInstrumentationStrategy=" + lambdaInstrumentationStrategy +
                     ", transformation=" + transformation +
                     '}';
         }
@@ -2402,6 +2518,1292 @@ public interface AgentBuilder {
                             "folder=" + folder +
                             ", instrumentation=" + instrumentation +
                             '}';
+                }
+            }
+        }
+
+        /**
+         * Implements the instrumentation of the {@code LambdaMetafactory} if this feature is enabled.
+         */
+        protected enum LambdaInstrumentationStrategy implements Callable<Class<?>> {
+
+            /**
+             * A strategy that enables instrumentation of the {@code LambdaMetafactory} if such a factory exists on the current VM.
+             */
+            ENABLED {
+                @Override
+                protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
+                    if (LambdaFactory.register(classFileTransformer, new LambdaInstanceFactory(byteBuddy), this)) {
+                        Class<?> lambdaMetaFactory;
+                        try {
+                            lambdaMetaFactory = Class.forName("java.lang.invoke.LambdaMetafactory");
+                        } catch (ClassNotFoundException ignored) {
+                            return;
+                        }
+                        byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE)
+                                .redefine(lambdaMetaFactory)
+                                .visit(new AsmVisitorWrapper.ForDeclaredMethods()
+                                        .method(named("metafactory"), MetaFactoryRedirection.INSTANCE)
+                                        .method(named("altMetafactory"), AlternativeMetaFactoryRedirection.INSTANCE))
+                                .make()
+                                .load(lambdaMetaFactory.getClassLoader(), ClassReloadingStrategy.of(instrumentation));
+                    }
+                }
+
+                @Override
+                public Class<?> call() throws Exception {
+                    TypeDescription lambdaFactory = new TypeDescription.ForLoadedType(LambdaFactory.class);
+                    return ClassInjector.UsingReflection.ofSystemClassLoader()
+                            .inject(Collections.singletonMap(lambdaFactory, ClassFileLocator.ForClassLoader.read(LambdaFactory.class).resolve()))
+                            .get(lambdaFactory);
+                }
+            },
+
+            /**
+             * A strategy that does not instrument the {@code LambdaMetafactory}.
+             */
+            DISABLED {
+                @Override
+                protected void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer) {
+                    /* do nothing */
+                }
+
+                @Override
+                public Class<?> call() throws Exception {
+                    throw new IllegalStateException("Cannot inject LambdaFactory from disabled instrumentation strategy");
+                }
+            };
+
+            /**
+             * Indicates that an original implementation can be ignored when redefining a method.
+             */
+            protected static final MethodVisitor IGNORE_ORIGINAL = null;
+
+            /**
+             * Applies a transformation to lambda instances if applicable.
+             *
+             * @param byteBuddy            The Byte Buddy instance to use.
+             * @param instrumentation      The instrumentation instance for applying a redefinition.
+             * @param classFileTransformer The class file transformer to apply.
+             */
+            protected abstract void apply(ByteBuddy byteBuddy, Instrumentation instrumentation, ClassFileTransformer classFileTransformer);
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Default.LambdaInstrumentationStrategy." + name();
+            }
+
+            /**
+             * A factory that creates instances that represent lambda expressions.
+             */
+            protected static class LambdaInstanceFactory {
+
+                /**
+                 * The name of a factory for a lambda expression.
+                 */
+                private static final String LAMBDA_FACTORY = "get$Lambda";
+
+                /**
+                 * A prefix for a field that represents a property of a lambda expression.
+                 */
+                private static final String FIELD_PREFIX = "arg$";
+
+                /**
+                 * The infix to use for naming classes that represent lambda expression. The additional prefix
+                 * is necessary because the subsequent counter is not sufficient to keep names unique compared
+                 * to the original factory.
+                 */
+                private static final String LAMBDA_TYPE_INFIX = "$$Lambda$ByteBuddy$";
+
+                /**
+                 * A type-safe constant to express that a class is not already loaded when applying a class file transformer.
+                 */
+                private static final Class<?> NOT_PREVIOUSLY_DEFINED = null;
+
+                /**
+                 * A counter for naming lambda expressions randomly.
+                 */
+                private static final AtomicInteger LAMBDA_NAME_COUNTER = new AtomicInteger();
+
+                /**
+                 * The Byte Buddy instance to use for creating lambda objects.
+                 */
+                private final ByteBuddy byteBuddy;
+
+                /**
+                 * Creates a new lambda instance factory.
+                 *
+                 * @param byteBuddy The Byte Buddy instance to use for creating lambda objects.
+                 */
+                protected LambdaInstanceFactory(ByteBuddy byteBuddy) {
+                    this.byteBuddy = byteBuddy;
+                }
+
+                /**
+                 * Applies this lambda meta factory.
+                 *
+                 * @param targetTypeLookup            A lookup context representing the creating class of this lambda expression.
+                 * @param lambdaMethodName            The name of the lambda expression's represented method.
+                 * @param factoryMethodType           The type of the lambda expression's represented method.
+                 * @param lambdaMethodType            The type of the lambda expression's factory method.
+                 * @param targetMethodHandle          A handle representing the target of the lambda expression's method.
+                 * @param specializedLambdaMethodType A specialization of the type of the lambda expression's represented method.
+                 * @param serializable                {@code true} if the lambda expression should be serializable.
+                 * @param markerInterfaces            A list of interfaces for the lambda expression to represent.
+                 * @param additionalBridges           A list of additional bridge methods to be implemented by the lambda expression.
+                 * @param classFileTransformers       A collection of class file transformers to apply when creating the class.
+                 * @return A binary representation of the transformed class file.
+                 */
+                public byte[] make(Object targetTypeLookup,
+                                   String lambdaMethodName,
+                                   Object factoryMethodType,
+                                   Object lambdaMethodType,
+                                   Object targetMethodHandle,
+                                   Object specializedLambdaMethodType,
+                                   boolean serializable,
+                                   List<Class<?>> markerInterfaces,
+                                   List<?> additionalBridges,
+                                   Collection<? extends ClassFileTransformer> classFileTransformers) {
+                    JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.of(factoryMethodType);
+                    JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.of(lambdaMethodType);
+                    JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, targetTypeLookup);
+                    JavaInstance.MethodType specializedLambdaMethod = JavaInstance.MethodType.of(specializedLambdaMethodType);
+                    Class<?> targetType = JavaInstance.MethodHandle.lookupType(targetTypeLookup);
+                    String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + LAMBDA_NAME_COUNTER.incrementAndGet();
+                    DynamicType.Builder<?> builder = byteBuddy
+                            .subclass(factoryMethod.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
+                            .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, Visibility.PUBLIC)
+                            .implement(markerInterfaces)
+                            .name(lambdaClassName)
+                            .defineConstructor(Visibility.PUBLIC)
+                            .withParameters(factoryMethod.getParameterTypes())
+                            .intercept(ConstructorImplementation.INSTANCE)
+                            .method(named(lambdaMethodName)
+                                    .and(takesArguments(lambdaMethod.getParameterTypes()))
+                                    .and(returns(lambdaMethod.getReturnType())))
+                            .intercept(new LambdaMethodImplementation(targetMethod, specializedLambdaMethod));
+                    int index = 0;
+                    for (TypeDescription capturedType : factoryMethod.getParameterTypes()) {
+                        builder = builder.defineField(FIELD_PREFIX + ++index, capturedType, Visibility.PRIVATE, FieldManifestation.FINAL);
+                    }
+                    if (!factoryMethod.getParameterTypes().isEmpty()) {
+                        builder = builder.defineMethod(LAMBDA_FACTORY, factoryMethod.getReturnType(), Visibility.PRIVATE, Ownership.STATIC)
+                                .withParameters(factoryMethod.getParameterTypes())
+                                .intercept(FactoryImplementation.INSTANCE);
+                    }
+                    if (serializable) {
+                        if (!markerInterfaces.contains(Serializable.class)) {
+                            builder = builder.implement(Serializable.class);
+                        }
+                        builder = builder.defineMethod("writeReplace", Object.class, Visibility.PRIVATE)
+                                .intercept(new SerializationImplementation(new TypeDescription.ForLoadedType(targetType),
+                                        factoryMethod.getReturnType(),
+                                        lambdaMethodName,
+                                        lambdaMethod,
+                                        targetMethod,
+                                        JavaInstance.MethodType.of(specializedLambdaMethodType)));
+                    } else if (factoryMethod.getReturnType().isAssignableTo(Serializable.class)) {
+                        builder = builder.defineMethod("readObject", void.class, Visibility.PRIVATE)
+                                .withParameters(ObjectInputStream.class)
+                                .throwing(NotSerializableException.class)
+                                .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"))
+                                .defineMethod("writeObject", void.class, Visibility.PRIVATE)
+                                .withParameters(ObjectOutputStream.class)
+                                .throwing(NotSerializableException.class)
+                                .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"));
+                    }
+                    for (Object additionalBridgeType : additionalBridges) {
+                        JavaInstance.MethodType additionalBridge = JavaInstance.MethodType.of(additionalBridgeType);
+                        builder = builder.defineMethod(lambdaMethodName, additionalBridge.getReturnType(), MethodManifestation.BRIDGE, Visibility.PUBLIC)
+                                .withParameters(additionalBridge.getParameterTypes())
+                                .intercept(new BridgeMethodImplementation(lambdaMethodName, lambdaMethod));
+                    }
+                    byte[] classFile = builder.make().getBytes();
+                    for (ClassFileTransformer classFileTransformer : classFileTransformers) {
+                        try {
+                            byte[] transformedClassFile = classFileTransformer.transform(targetType.getClassLoader(),
+                                    lambdaClassName.replace('.', '/'),
+                                    NOT_PREVIOUSLY_DEFINED,
+                                    targetType.getProtectionDomain(),
+                                    classFile);
+                            classFile = transformedClassFile == null
+                                    ? classFile
+                                    : transformedClassFile;
+                        } catch (Exception ignored) {
+                            /* do nothing */
+                        }
+                    }
+                    return classFile;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && byteBuddy.equals(((LambdaInstanceFactory) other).byteBuddy);
+                }
+
+                @Override
+                public int hashCode() {
+                    return byteBuddy.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory{" +
+                            "byteBuddy=" + byteBuddy +
+                            '}';
+                }
+
+                /**
+                 * Implements a lambda class's constructor.
+                 */
+                protected enum ConstructorImplementation implements Implementation {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * A reference to the {@link Object} class's default constructor.
+                     */
+                    protected final MethodDescription.InDefinedShape objectConstructor;
+
+                    /**
+                     * Creates a new constructor implementation.
+                     */
+                    ConstructorImplementation() {
+                        objectConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
+                    }
+
+                    @Override
+                    public ByteCodeAppender appender(Target implementationTarget) {
+                        return new Appender(implementationTarget.getInstrumentedType().getDeclaredFields());
+                    }
+
+                    @Override
+                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation." + name();
+                    }
+
+                    /**
+                     * An appender to implement the constructor.
+                     */
+                    protected static class Appender implements ByteCodeAppender {
+
+                        /**
+                         * The fields that are declared by the instrumented type.
+                         */
+                        private final List<FieldDescription.InDefinedShape> declaredFields;
+
+                        /**
+                         * Creates a new appender.
+                         *
+                         * @param declaredFields The fields that are declared by the instrumented type.
+                         */
+                        protected Appender(List<FieldDescription.InDefinedShape> declaredFields) {
+                            this.declaredFields = declaredFields;
+                        }
+
+                        @Override
+                        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                            List<StackManipulation> fieldAssignments = new ArrayList<StackManipulation>(declaredFields.size() * 3);
+                            for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                                fieldAssignments.add(MethodVariableAccess.REFERENCE.loadOffset(0));
+                                fieldAssignments.add(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()));
+                                fieldAssignments.add(FieldAccess.forField(declaredFields.get(parameterDescription.getIndex())).putter());
+                            }
+                            return new Size(new StackManipulation.Compound(
+                                    MethodVariableAccess.REFERENCE.loadOffset(0),
+                                    MethodInvocation.invoke(INSTANCE.objectConstructor),
+                                    new StackManipulation.Compound(fieldAssignments),
+                                    MethodReturn.VOID
+                            ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && declaredFields.equals(((Appender) other).declaredFields);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return declaredFields.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.ConstructorImplementation.Appender{" +
+                                    "declaredFields=" + declaredFields +
+                                    '}';
+                        }
+                    }
+                }
+
+                /**
+                 * An implementation of a instance factory for a lambda expression's class.
+                 */
+                protected enum FactoryImplementation implements Implementation {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public ByteCodeAppender appender(Target implementationTarget) {
+                        return new Appender(implementationTarget.getInstrumentedType());
+                    }
+
+                    @Override
+                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation." + name();
+                    }
+
+                    /**
+                     * An appender for a lambda expression factory.
+                     */
+                    protected static class Appender implements ByteCodeAppender {
+
+                        /**
+                         * The instrumented type.
+                         */
+                        private final TypeDescription instrumentedType;
+
+                        /**
+                         * Creates a new appender.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         */
+                        protected Appender(TypeDescription instrumentedType) {
+                            this.instrumentedType = instrumentedType;
+                        }
+
+                        @Override
+                        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                            return new Size(new StackManipulation.Compound(
+                                    TypeCreation.of(instrumentedType),
+                                    Duplication.SINGLE,
+                                    MethodVariableAccess.allArgumentsOf(instrumentedMethod),
+                                    MethodInvocation.invoke(instrumentedType.getDeclaredMethods().filter(isConstructor()).getOnly()),
+                                    MethodReturn.REFERENCE
+                            ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && instrumentedType.equals(((Appender) other).instrumentedType);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return instrumentedType.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.FactoryImplementation.Appender{" +
+                                    "instrumentedType=" + instrumentedType +
+                                    '}';
+                        }
+                    }
+                }
+
+                /**
+                 * Implements a lambda expression's functional method.
+                 */
+                protected static class LambdaMethodImplementation implements Implementation {
+
+                    /**
+                     * The handle of the target method of the lambda expression.
+                     */
+                    private final JavaInstance.MethodHandle targetMethod;
+
+                    /**
+                     * The specialized type of the lambda method.
+                     */
+                    private final JavaInstance.MethodType specializedLambdaMethod;
+
+                    /**
+                     * Creates a implementation of a lambda expression's functional method.
+                     *
+                     * @param targetMethod            The target method of the lambda expression.
+                     * @param specializedLambdaMethod The specialized type of the lambda method.
+                     */
+                    protected LambdaMethodImplementation(JavaInstance.MethodHandle targetMethod, JavaInstance.MethodType specializedLambdaMethod) {
+                        this.targetMethod = targetMethod;
+                        this.specializedLambdaMethod = specializedLambdaMethod;
+                    }
+
+                    @Override
+                    public ByteCodeAppender appender(Target implementationTarget) {
+                        return new Appender(targetMethod.getOwnerType()
+                                .getDeclaredMethods()
+                                .filter(named(targetMethod.getName())
+                                        .and(returns(targetMethod.getReturnType()))
+                                        .and(takesArguments(targetMethod.getParameterTypes())))
+                                .getOnly(),
+                                specializedLambdaMethod,
+                                implementationTarget.getInstrumentedType().getDeclaredFields());
+                    }
+
+                    @Override
+                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        LambdaMethodImplementation that = (LambdaMethodImplementation) other;
+                        return targetMethod.equals(that.targetMethod)
+                                && specializedLambdaMethod.equals(that.specializedLambdaMethod);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = targetMethod.hashCode();
+                        result = 31 * result + specializedLambdaMethod.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation{" +
+                                "targetMethod=" + targetMethod +
+                                ", specializedLambdaMethod=" + specializedLambdaMethod +
+                                '}';
+                    }
+
+                    /**
+                     * An appender for a lambda expression's functional method.
+                     */
+                    protected static class Appender implements ByteCodeAppender {
+
+                        /**
+                         * The target method of the lambda expression.
+                         */
+                        private final MethodDescription targetMethod;
+
+                        /**
+                         * The specialized type of the lambda method.
+                         */
+                        private final JavaInstance.MethodType specializedLambdaMethod;
+
+                        /**
+                         * The instrumented type's declared fields.
+                         */
+                        private final List<FieldDescription.InDefinedShape> declaredFields;
+
+                        /**
+                         * Creates an appender of a lambda expression's functional method.
+                         *
+                         * @param targetMethod            The target method of the lambda expression.
+                         * @param specializedLambdaMethod The specialized type of the lambda method.
+                         * @param declaredFields          The instrumented type's declared fields.
+                         */
+                        protected Appender(MethodDescription targetMethod,
+                                           JavaInstance.MethodType specializedLambdaMethod,
+                                           List<FieldDescription.InDefinedShape> declaredFields) {
+                            this.targetMethod = targetMethod;
+                            this.specializedLambdaMethod = specializedLambdaMethod;
+                            this.declaredFields = declaredFields;
+                        }
+
+                        @Override
+                        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                            List<StackManipulation> fieldAccess = new ArrayList<StackManipulation>(declaredFields.size() * 2);
+                            for (FieldDescription.InDefinedShape fieldDescription : declaredFields) {
+                                fieldAccess.add(MethodVariableAccess.REFERENCE.loadOffset(0));
+                                fieldAccess.add(FieldAccess.forField(fieldDescription).getter());
+                            }
+                            List<StackManipulation> parameterAccess = new ArrayList<StackManipulation>(instrumentedMethod.getParameters().size() * 2);
+                            for (ParameterDescription parameterDescription : instrumentedMethod.getParameters()) {
+                                parameterAccess.add(MethodVariableAccess.of(parameterDescription.getType()).loadOffset(parameterDescription.getOffset()));
+                                parameterAccess.add(Assigner.DEFAULT.assign(parameterDescription.getType(),
+                                        specializedLambdaMethod.getParameterTypes().get(parameterDescription.getIndex()).asGenericType(),
+                                        Assigner.Typing.DYNAMIC));
+                            }
+                            return new Size(new StackManipulation.Compound(
+                                    new StackManipulation.Compound(fieldAccess),
+                                    new StackManipulation.Compound(parameterAccess),
+                                    MethodInvocation.invoke(targetMethod),
+                                    MethodReturn.returning(targetMethod.getReturnType().asErasure())
+                            ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            if (this == other) return true;
+                            if (other == null || getClass() != other.getClass()) return false;
+                            Appender appender = (Appender) other;
+                            return targetMethod.equals(appender.targetMethod)
+                                    && declaredFields.equals(appender.declaredFields)
+                                    && specializedLambdaMethod.equals(appender.specializedLambdaMethod);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = targetMethod.hashCode();
+                            result = 31 * result + declaredFields.hashCode();
+                            result = 31 * result + specializedLambdaMethod.hashCode();
+                            return result;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.LambdaMethodImplementation.Appender{" +
+                                    "targetMethod=" + targetMethod +
+                                    ", specializedLambdaMethod=" + specializedLambdaMethod +
+                                    ", declaredFields=" + declaredFields +
+                                    '}';
+                        }
+                    }
+                }
+
+                /**
+                 * Implements the {@code writeReplace} method for serializable lambda expressions.
+                 */
+                protected static class SerializationImplementation implements Implementation {
+
+                    /**
+                     * The lambda expression's declaring type.
+                     */
+                    private final TypeDescription targetType;
+
+                    /**
+                     * The lambda expression's functional type.
+                     */
+                    private final TypeDescription lambdaType;
+
+                    /**
+                     * The lambda expression's functional method name.
+                     */
+                    private final String lambdaMethodName;
+
+                    /**
+                     * The method type of the lambda expression's functional method.
+                     */
+                    private final JavaInstance.MethodType lambdaMethod;
+
+                    /**
+                     * A handle that references the lambda expressions invocation target.
+                     */
+                    private final JavaInstance.MethodHandle targetMethod;
+
+                    /**
+                     * The specialized method type of the lambda expression's functional method.
+                     */
+                    private final JavaInstance.MethodType specializedMethod;
+
+                    /**
+                     * Creates a new implementation for a serializable's lambda expression's {@code writeReplace} method.
+                     *
+                     * @param targetType        The lambda expression's declaring type.
+                     * @param lambdaType        The lambda expression's functional type.
+                     * @param lambdaMethodName  The lambda expression's functional method name.
+                     * @param lambdaMethod      The method type of the lambda expression's functional method.
+                     * @param targetMethod      A handle that references the lambda expressions invocation target.
+                     * @param specializedMethod The specialized method type of the lambda expression's functional method.
+                     */
+                    protected SerializationImplementation(TypeDescription targetType,
+                                                          TypeDescription lambdaType,
+                                                          String lambdaMethodName,
+                                                          JavaInstance.MethodType lambdaMethod,
+                                                          JavaInstance.MethodHandle targetMethod,
+                                                          JavaInstance.MethodType specializedMethod) {
+                        this.targetType = targetType;
+                        this.lambdaType = lambdaType;
+                        this.lambdaMethodName = lambdaMethodName;
+                        this.lambdaMethod = lambdaMethod;
+                        this.targetMethod = targetMethod;
+                        this.specializedMethod = specializedMethod;
+                    }
+
+                    @Override
+                    public ByteCodeAppender appender(Target implementationTarget) {
+                        TypeDescription serializedLambda;
+                        try {
+                            serializedLambda = new TypeDescription.ForLoadedType(Class.forName("java.lang.invoke.SerializedLambda"));
+                        } catch (ClassNotFoundException exception) {
+                            throw new IllegalStateException("Cannot find class for lambda serialization", exception);
+                        }
+                        List<StackManipulation> lambdaArguments = new ArrayList<StackManipulation>(implementationTarget.getInstrumentedType().getDeclaredFields().size());
+                        for (FieldDescription.InDefinedShape fieldDescription : implementationTarget.getInstrumentedType().getDeclaredFields()) {
+                            lambdaArguments.add(new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(0),
+                                    FieldAccess.forField(fieldDescription).getter(),
+                                    Assigner.DEFAULT.assign(fieldDescription.getType(), TypeDescription.Generic.OBJECT, Assigner.Typing.STATIC)));
+                        }
+                        return new ByteCodeAppender.Simple(new StackManipulation.Compound(
+                                TypeCreation.of(serializedLambda),
+                                Duplication.SINGLE,
+                                ClassConstant.of(targetType),
+                                new TextConstant(lambdaType.getInternalName()),
+                                new TextConstant(lambdaMethodName),
+                                new TextConstant(lambdaMethod.getDescriptor()),
+                                IntegerConstant.forValue(targetMethod.getHandleType().getIdentifier()),
+                                new TextConstant(targetMethod.getOwnerType().getInternalName()),
+                                new TextConstant(targetMethod.getName()),
+                                new TextConstant(targetMethod.getDescriptor()),
+                                new TextConstant(specializedMethod.getDescriptor()),
+                                ArrayFactory.forType(TypeDescription.Generic.OBJECT).withValues(lambdaArguments),
+                                MethodInvocation.invoke(serializedLambda.getDeclaredMethods().filter(isConstructor()).getOnly()),
+                                MethodReturn.REFERENCE
+                        ));
+                    }
+
+                    @Override
+                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        SerializationImplementation that = (SerializationImplementation) other;
+                        return targetType.equals(that.targetType)
+                                && lambdaType.equals(that.lambdaType)
+                                && lambdaMethodName.equals(that.lambdaMethodName)
+                                && lambdaMethod.equals(that.lambdaMethod)
+                                && targetMethod.equals(that.targetMethod)
+                                && specializedMethod.equals(that.specializedMethod);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = targetType.hashCode();
+                        result = 31 * result + lambdaType.hashCode();
+                        result = 31 * result + lambdaMethodName.hashCode();
+                        result = 31 * result + lambdaMethod.hashCode();
+                        result = 31 * result + targetMethod.hashCode();
+                        result = 31 * result + specializedMethod.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.SerializationImplementation{" +
+                                "targetType=" + targetType +
+                                ", lambdaType=" + lambdaType +
+                                ", lambdaMethodName='" + lambdaMethodName + '\'' +
+                                ", lambdaMethod=" + lambdaMethod +
+                                ", targetMethod=" + targetMethod +
+                                ", specializedMethod=" + specializedMethod +
+                                '}';
+                    }
+                }
+
+                /**
+                 * Implements an explicit bridge method for a lambda expression.
+                 */
+                protected static class BridgeMethodImplementation implements Implementation {
+
+                    /**
+                     * The name of the lambda expression's functional method.
+                     */
+                    private final String lambdaMethodName;
+
+                    /**
+                     * The actual type of the lambda expression's functional method.
+                     */
+                    private final JavaInstance.MethodType lambdaMethod;
+
+                    /**
+                     * Creates a new bridge method implementation for a lambda expression.
+                     *
+                     * @param lambdaMethodName The name of the lambda expression's functional method.
+                     * @param lambdaMethod     The actual type of the lambda expression's functional method.
+                     */
+                    protected BridgeMethodImplementation(String lambdaMethodName, JavaInstance.MethodType lambdaMethod) {
+                        this.lambdaMethodName = lambdaMethodName;
+                        this.lambdaMethod = lambdaMethod;
+                    }
+
+                    @Override
+                    public ByteCodeAppender appender(Target implementationTarget) {
+                        return new Appender(implementationTarget.invokeSuper(new MethodDescription.SignatureToken(lambdaMethodName,
+                                lambdaMethod.getReturnType(),
+                                lambdaMethod.getParameterTypes())));
+                    }
+
+                    @Override
+                    public InstrumentedType prepare(InstrumentedType instrumentedType) {
+                        return instrumentedType;
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        if (this == other) return true;
+                        if (other == null || getClass() != other.getClass()) return false;
+                        BridgeMethodImplementation that = (BridgeMethodImplementation) other;
+                        return lambdaMethodName.equals(that.lambdaMethodName) && lambdaMethod.equals(that.lambdaMethod);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = lambdaMethodName.hashCode();
+                        result = 31 * result + lambdaMethod.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation{" +
+                                "lambdaMethodName='" + lambdaMethodName + '\'' +
+                                ", lambdaMethod=" + lambdaMethod +
+                                '}';
+                    }
+
+                    /**
+                     * An appender for implementing a bridge method for a lambda expression.
+                     */
+                    protected static class Appender implements ByteCodeAppender {
+
+                        /**
+                         * The invocation of the bridge's target method.
+                         */
+                        private final SpecialMethodInvocation bridgeTargetInvocation;
+
+                        /**
+                         * Creates a new appender for invoking a lambda expression's bridge method target.
+                         *
+                         * @param bridgeTargetInvocation The invocation of the bridge's target method.
+                         */
+                        protected Appender(SpecialMethodInvocation bridgeTargetInvocation) {
+                            this.bridgeTargetInvocation = bridgeTargetInvocation;
+                        }
+
+                        @Override
+                        public Size apply(MethodVisitor methodVisitor, Context implementationContext, MethodDescription instrumentedMethod) {
+                            return new Compound(new Simple(
+                                    MethodVariableAccess.allArgumentsOf(instrumentedMethod)
+                                            .asBridgeOf(bridgeTargetInvocation.getMethodDescription())
+                                            .prependThisReference(),
+                                    bridgeTargetInvocation,
+                                    bridgeTargetInvocation.getMethodDescription().getReturnType().asErasure().isAssignableTo(instrumentedMethod.getReturnType().asErasure())
+                                            ? StackManipulation.Trivial.INSTANCE
+                                            : TypeCasting.to(instrumentedMethod.getReceiverType().asErasure()),
+                                    MethodReturn.returning(instrumentedMethod.getReturnType().asErasure())
+
+                            )).apply(methodVisitor, implementationContext, instrumentedMethod);
+                        }
+
+                        @Override
+                        public boolean equals(Object other) {
+                            return this == other || !(other == null || getClass() != other.getClass())
+                                    && bridgeTargetInvocation.equals(((Appender) other).bridgeTargetInvocation);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return bridgeTargetInvocation.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "AgentBuilder.Default.LambdaInstrumentationStrategy.LambdaInstanceFactory.BridgeMethodImplementation.Appender{" +
+                                    "bridgeTargetInvocation=" + bridgeTargetInvocation +
+                                    '}';
+                        }
+                    }
+                }
+            }
+
+            /**
+             * Implements the regular lambda meta factory. The implementation represents the following code:
+             * <pre>
+             * <code>public static CallSite metafactory(MethodHandles.Lookup caller,
+             *     String invokedName,
+             *     MethodType invokedType,
+             *     MethodType samMethodType,
+             *     MethodHandle implMethod,
+             *     MethodType instantiatedMethodType) throws Exception {
+             *   Unsafe unsafe = Unsafe.getUnsafe();
+             *   {@code Class<?>} lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+             *       (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
+             *           Object.class,
+             *           String.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           boolean.class,
+             *           List.class,
+             *           List.class).invoke(null,
+             *               caller,
+             *               invokedName,
+             *               invokedType,
+             *               samMethodType,
+             *               implMethod,
+             *               instantiatedMethodType,
+             *               false,
+             *               Collections.emptyList(),
+             *               Collections.emptyList()),
+             *       null);
+             *   unsafe.ensureClassInitialized(lambdaClass);
+             *   return invokedType.parameterCount() == 0
+             *     ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
+             *     : new ConstantCallSite(MethodHandles.Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
+             * </code></pre>
+             */
+            protected enum MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
+                    methodVisitor.visitCode();
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
+                    methodVisitor.visitLdcInsn("net.bytebuddy.agent.builder.LambdaFactory");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
+                    methodVisitor.visitLdcInsn("make");
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 9);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/String;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_3);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_5);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 6);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Boolean", "TYPE", "Ljava/lang/Class;");
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 7);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/util/List;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 8);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/util/List;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;", false);
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 9);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_3);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 4);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_5);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 5);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 6);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Collections", "emptyList", "()Ljava/util/List;", false);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 8);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Collections", "emptyList", "()Ljava/util/List;", false);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
+                    Label conditionalDefault = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFNE, conditionalDefault);
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "returnType", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;", false);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Constructor", "newInstance", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodHandles", "constant", "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
+                    Label conditionalAlternative = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, conditionalAlternative);
+                    methodVisitor.visitLabel(conditionalDefault);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{"sun/misc/Unsafe", "java/lang/Class"}, 0, null);
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitLdcInsn("get$Lambda");
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "findStatic", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
+                    methodVisitor.visitLabel(conditionalAlternative);
+                    methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/invoke/CallSite"});
+                    methodVisitor.visitInsn(Opcodes.ARETURN);
+                    methodVisitor.visitMaxs(8, 8);
+                    methodVisitor.visitEnd();
+                    return IGNORE_ORIGINAL;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.MetaFactoryRedirection." + name();
+                }
+            }
+
+            /**
+             * Implements the alternative lambda meta factory. The implementation represents the following code:
+             * <pre>
+             * <code>public static CallSite altMetafactory(MethodHandles.Lookup caller,
+             *     String invokedName,
+             *     MethodType invokedType,
+             *     Object... args) throws Exception {
+             *   int flags = (Integer) args[3];
+             *   int argIndex = 4;
+             *   {@code Class<?>[]} markerInterface;
+             *   if ((flags & FLAG_MARKERS) != 0) {
+             *     int markerCount = (Integer) args[argIndex++];
+             *     markerInterface = new {@code Class<?>}[markerCount];
+             *     System.arraycopy(args, argIndex, markerInterface, 0, markerCount);
+             *     argIndex += markerCount;
+             *   } else {
+             *     markerInterface = new {@code Class<?>}[0];
+             *   }
+             *   MethodType[] additionalBridge;
+             *   if ((flags & FLAG_BRIDGES) != 0) {
+             *     int bridgeCount = (Integer) args[argIndex++];
+             *     additionalBridge = new MethodType[bridgeCount];
+             *     System.arraycopy(args, argIndex, additionalBridge, 0, bridgeCount);
+             *     // argIndex += bridgeCount;
+             *   } else {
+             *     additionalBridge = new MethodType[0];
+             *   }
+             *   Unsafe unsafe = Unsafe.getUnsafe();
+             *   Class<?> lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+             *       (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
+             *           Object.class,
+             *           String.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           Object.class,
+             *           boolean.class,
+             *           List.class,
+             *           List.class).invoke(null,
+             *               caller,
+             *               invokedName,
+             *               invokedType,
+             *               args[0],
+             *               args[1],
+             *               args[2],
+             *               (flags & FLAG_SERIALIZABLE) != 0,
+             *               Arrays.asList(markerInterface),
+             *               Arrays.asList(additionalBridge)),
+             *       null);
+             *   unsafe.ensureClassInitialized(lambdaClass);
+             *   return invokedType.parameterCount() == 0
+             *     ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
+             *     : new ConstantCallSite(MethodHandles.Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
+             * }</code>
+             * </pre>
+             */
+            protected enum AlternativeMetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
+                    methodVisitor.visitCode();
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitInsn(Opcodes.ICONST_3);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+                    methodVisitor.visitVarInsn(Opcodes.ISTORE, 4);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitVarInsn(Opcodes.ISTORE, 5);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 4);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitInsn(Opcodes.IAND);
+                    Label markerInterfaceLoop = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFEQ, markerInterfaceLoop);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 5);
+                    methodVisitor.visitIincInsn(5, 1);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+                    methodVisitor.visitVarInsn(Opcodes.ISTORE, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 7);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 5);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V", false);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 5);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 7);
+                    methodVisitor.visitInsn(Opcodes.IADD);
+                    methodVisitor.visitVarInsn(Opcodes.ISTORE, 5);
+                    Label markerInterfaceExit = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, markerInterfaceExit);
+                    methodVisitor.visitLabel(markerInterfaceLoop);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 2, new Object[]{Opcodes.INTEGER, Opcodes.INTEGER}, 0, null);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
+                    methodVisitor.visitLabel(markerInterfaceExit);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"[Ljava/lang/Class;"}, 0, null);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 4);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitInsn(Opcodes.IAND);
+                    Label additionalBridgesLoop = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFEQ, additionalBridgesLoop);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 5);
+                    methodVisitor.visitIincInsn(5, 1);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "java/lang/Integer");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Integer", "intValue", "()I", false);
+                    methodVisitor.visitVarInsn(Opcodes.ISTORE, 8);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 8);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/invoke/MethodType");
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 5);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 8);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/System", "arraycopy", "(Ljava/lang/Object;ILjava/lang/Object;II)V", false);
+                    Label additionalBridgesExit = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, additionalBridgesExit);
+                    methodVisitor.visitLabel(additionalBridgesLoop);
+                    methodVisitor.visitFrame(Opcodes.F_SAME, 0, null, 0, null);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/invoke/MethodType");
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
+                    methodVisitor.visitLabel(additionalBridgesExit);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"[Ljava/lang/invoke/MethodType;"}, 0, null);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 8);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 8);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "lookupClass", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/ClassLoader", "getSystemClassLoader", "()Ljava/lang/ClassLoader;", false);
+                    methodVisitor.visitLdcInsn("net.bytebuddy.agent.builder.LambdaFactory");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/ClassLoader", "loadClass", "(Ljava/lang/String;)Ljava/lang/Class;", false);
+                    methodVisitor.visitLdcInsn("make");
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 9);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Class");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/String;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_3);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_5);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/lang/Object;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 6);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/Boolean", "TYPE", "Ljava/lang/Class;");
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 7);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/util/List;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 8);
+                    methodVisitor.visitLdcInsn(Type.getType("Ljava/util/List;"));
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredMethod", "(Ljava/lang/String;[Ljava/lang/Class;)Ljava/lang/reflect/Method;", false);
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 9);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 1);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_3);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_4);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitInsn(Opcodes.ICONST_5);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
+                    methodVisitor.visitInsn(Opcodes.ICONST_2);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 6);
+                    methodVisitor.visitVarInsn(Opcodes.ILOAD, 4);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    methodVisitor.visitInsn(Opcodes.IAND);
+                    Label callSiteConditional = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFEQ, callSiteConditional);
+                    methodVisitor.visitInsn(Opcodes.ICONST_1);
+                    Label callSiteAlternative = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, callSiteAlternative);
+                    methodVisitor.visitLabel(callSiteConditional);
+                    methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", "sun/misc/Unsafe"}, 7, new Object[]{"sun/misc/Unsafe", "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER});
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitLabel(callSiteAlternative);
+                    methodVisitor.visitFrame(Opcodes.F_FULL, 9, new Object[]{"java/lang/invoke/MethodHandles$Lookup", "java/lang/String", "java/lang/invoke/MethodType", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER, "[Ljava/lang/Class;", "[Ljava/lang/invoke/MethodType;", "sun/misc/Unsafe"}, 8, new Object[]{"sun/misc/Unsafe", "java/lang/Class", "java/lang/reflect/Method", Opcodes.NULL, "[Ljava/lang/Object;", "[Ljava/lang/Object;", Opcodes.INTEGER, Opcodes.INTEGER});
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/Boolean", "valueOf", "(Z)Ljava/lang/Boolean;", false);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 7);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 6);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;", false);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, 8);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 7);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/util/Arrays", "asList", "([Ljava/lang/Object;)Ljava/util/List;", false);
+                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
+                    methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ASTORE, 9);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 8);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 9);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "ensureClassInitialized", "(Ljava/lang/Class;)V", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "parameterCount", "()I", false);
+                    Label callSiteJump = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.IFNE, callSiteJump);
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodType", "returnType", "()Ljava/lang/Class;", false);
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 9);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/Class", "getDeclaredConstructors", "()[Ljava/lang/reflect/Constructor;", false);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitInsn(Opcodes.AALOAD);
+                    methodVisitor.visitInsn(Opcodes.ICONST_0);
+                    methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, "java/lang/Object");
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Constructor", "newInstance", "([Ljava/lang/Object;)Ljava/lang/Object;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "java/lang/invoke/MethodHandles", "constant", "(Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/invoke/MethodHandle;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
+                    Label callSiteExit = new Label();
+                    methodVisitor.visitJumpInsn(Opcodes.GOTO, callSiteExit);
+                    methodVisitor.visitLabel(callSiteJump);
+                    methodVisitor.visitFrame(Opcodes.F_APPEND, 1, new Object[]{"java/lang/Class"}, 0, null);
+                    methodVisitor.visitTypeInsn(Opcodes.NEW, "java/lang/invoke/ConstantCallSite");
+                    methodVisitor.visitInsn(Opcodes.DUP);
+                    methodVisitor.visitFieldInsn(Opcodes.GETSTATIC, "java/lang/invoke/MethodHandles$Lookup", "IMPL_LOOKUP", "Ljava/lang/invoke/MethodHandles$Lookup;");
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 9);
+                    methodVisitor.visitLdcInsn("get$Lambda");
+                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 2);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/invoke/MethodHandles$Lookup", "findStatic", "(Ljava/lang/Class;Ljava/lang/String;Ljava/lang/invoke/MethodType;)Ljava/lang/invoke/MethodHandle;", false);
+                    methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL, "java/lang/invoke/ConstantCallSite", "<init>", "(Ljava/lang/invoke/MethodHandle;)V", false);
+                    methodVisitor.visitLabel(callSiteExit);
+                    methodVisitor.visitFrame(Opcodes.F_SAME1, 0, null, 1, new Object[]{"java/lang/invoke/CallSite"});
+                    methodVisitor.visitInsn(Opcodes.ARETURN);
+                    methodVisitor.visitMaxs(9, 10);
+                    methodVisitor.visitEnd();
+                    return IGNORE_ORIGINAL;
+                }
+
+                @Override
+                public String toString() {
+                    return "AgentBuilder.Default.LambdaInstrumentationStrategy.AlternativeMetaFactoryRedirection." + name();
                 }
             }
         }
@@ -3240,6 +4642,11 @@ public interface AgentBuilder {
             }
 
             @Override
+            public AgentBuilder enableLambdaInstrumentation(boolean enable) {
+                return materialize().enableLambdaInstrumentation(enable);
+            }
+
+            @Override
             public ClassFileTransformer makeRaw() {
                 return materialize().makeRaw();
             }
@@ -3269,6 +4676,7 @@ public interface AgentBuilder {
                         initializationStrategy,
                         redefinitionStrategy,
                         bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer), transformation));
             }
 
