@@ -3,22 +3,25 @@ package net.bytebuddy.agent.builder;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.invoke.LambdaConversionException;
 import java.lang.reflect.Method;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.Map;
+import java.util.*;
 
 public class LambdaFactory {
 
-    public static final Map<ClassFileTransformer, Method> CLASS_FILE_TRANSFORMERS = new LinkedHashMap<ClassFileTransformer, Method>();
+    public static final Map<ClassFileTransformer, LambdaFactory> CLASS_FILE_TRANSFORMERS = new LinkedHashMap<ClassFileTransformer, LambdaFactory>();
 
-    private LambdaFactory() {
-        throw new UnsupportedOperationException("This instance is meant as a lambda factory dispatcher and should not be instantiated");
+    private final Object target;
+
+    private final Method dispatcher;
+
+    private LambdaFactory(Object target, Method dispatcher) {
+        this.target = target;
+        this.dispatcher = dispatcher;
     }
 
     public static boolean register(ClassFileTransformer classFileTransformer, Class<?> factory) {
         try {
             @SuppressWarnings("unchecked")
-            Map<ClassFileTransformer, Method> classFileTransformers = (Map<ClassFileTransformer, Method>) ClassLoader.getSystemClassLoader()
+            Map<ClassFileTransformer, LambdaFactory> classFileTransformers = (Map<ClassFileTransformer, LambdaFactory>) ClassLoader.getSystemClassLoader()
                     .loadClass(LambdaFactory.class.getName())
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);
@@ -26,14 +29,15 @@ public class LambdaFactory {
                 try {
                     return classFileTransformers.isEmpty();
                 } finally {
-                    classFileTransformers.put(classFileTransformer, factory.getDeclaredMethod("make",
+                    classFileTransformers.put(classFileTransformer, new LambdaFactory(factory, factory.getDeclaredMethod("make",
                             Object.class,
                             String.class,
                             Object.class,
                             Object.class,
                             Object.class,
                             boolean.class,
-                            Collection.class));
+                            List.class,
+                            Collection.class)));
                 }
             }
         } catch (Exception exception) {
@@ -44,7 +48,7 @@ public class LambdaFactory {
     public static boolean release(ClassFileTransformer classFileTransformer) {
         try {
             @SuppressWarnings("unchecked")
-            Map<ClassFileTransformer, Method> classFileTransformers = (Map<ClassFileTransformer, Method>) ClassLoader.getSystemClassLoader()
+            Map<ClassFileTransformer, LambdaFactory> classFileTransformers = (Map<ClassFileTransformer, LambdaFactory>) ClassLoader.getSystemClassLoader()
                     .loadClass(LambdaFactory.class.getName())
                     .getDeclaredField("CLASS_FILE_TRANSFORMERS")
                     .get(null);
@@ -57,16 +61,44 @@ public class LambdaFactory {
         }
     }
 
+    private byte[] invoke(Object caller,
+                          String invokedName,
+                          Object invokedType,
+                          Object samMethodType,
+                          Object implMethod,
+                          boolean enforceSerialization,
+                          List<Class<?>> markerInterfaces,
+                          Set<ClassFileTransformer> classFileTransformers) {
+
+        try {
+            return (byte[]) dispatcher.invoke(target,
+                    caller,
+                    invokedName,
+                    invokedType,
+                    samMethodType,
+                    implMethod,
+                    enforceSerialization,
+                    markerInterfaces,
+                    classFileTransformers);
+        } catch (Exception exception) {
+            throw new IllegalStateException(exception);
+        }
+    }
+
     public static byte[] make(Object caller,
                               String invokedName,
                               Object invokedType,
                               Object samMethodType,
-                              Object implMethod) throws LambdaConversionException {
-        try {
-            return (byte[]) CLASS_FILE_TRANSFORMERS.values().iterator().next()
-                    .invoke(null, caller, invokedName, invokedType, samMethodType, implMethod, false, CLASS_FILE_TRANSFORMERS.keySet());
-        } catch (Exception exception) {
-            throw new IllegalStateException(exception);
-        }
+                              Object implMethod,
+                              boolean enforceSerialization,
+                              List<Class<?>> markerInterfaces) throws LambdaConversionException {
+            return CLASS_FILE_TRANSFORMERS.values().iterator().next().invoke(caller,
+                    invokedName,
+                    invokedType,
+                    samMethodType,
+                    implMethod,
+                    enforceSerialization,
+                    markerInterfaces,
+                    CLASS_FILE_TRANSFORMERS.keySet());
     }
 }

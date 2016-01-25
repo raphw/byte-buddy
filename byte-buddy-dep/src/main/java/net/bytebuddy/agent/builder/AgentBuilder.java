@@ -2637,11 +2637,6 @@ public interface AgentBuilder {
                     methodVisitor.visitEnd();
                     return IGNORE_ORIGINAL;
                 }
-
-                void foo() {
-                    Object o = null;
-                    System.out.println(o);
-                }
             }
         }
 

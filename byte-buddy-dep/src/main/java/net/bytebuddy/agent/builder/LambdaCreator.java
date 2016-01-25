@@ -52,7 +52,13 @@ public class LambdaCreator {
 
     private static final AtomicInteger lambdaNameCounter = new AtomicInteger();
 
-    public static byte[] make(Object callerTypeLookup,
+    private final ByteBuddy byteBuddy;
+
+    protected LambdaCreator(ByteBuddy byteBuddy) {
+        this.byteBuddy = byteBuddy;
+    }
+
+    public byte[] make(Object callerTypeLookup,
                               String functionalMethodName,
                               Object factoryMethod,
                               Object implementedMethod,
@@ -66,7 +72,7 @@ public class LambdaCreator {
         MethodDescription.InDefinedShape targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, callerTypeLookup).asMethodDescription();
         Class<?> lookupType = JavaInstance.MethodHandle.lookupType(callerTypeLookup);
         String lambdaClassName = lookupType.getName() + LAMBDA_TYPE_INFIX + lambdaNameCounter.incrementAndGet();
-        DynamicType.Builder<?> builder = new ByteBuddy()
+        DynamicType.Builder<?> builder = byteBuddy
                 .subclass(factoryMethodType.getReturnType(), ConstructorStrategy.Default.NO_CONSTRUCTORS)
                 .modifiers(SyntheticState.SYNTHETIC, TypeManifestation.FINAL, implementedMethodType.getParameterTypes().isEmpty()
                         ? Visibility.PUBLIC
