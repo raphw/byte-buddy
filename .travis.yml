@@ -1,6 +1,14 @@
 language: java
 
-sudo: false
+# Travis is currently running OracleJDK v8_31 which exposes a VM bug during the build.
+# sudo: false
+
+sudo: required
+
+install: true
+
+script:
+  - sudo apt-get update && sudo apt-get install oracle-java8-installer
 
 script: mvn verify -Pintegration
 
