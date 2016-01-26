@@ -1,6 +1,14 @@
 Byte Buddy release notes
 ------------------------
 
+### 26. January 2016: version 1.1.0
+
+- Refactored `AgentBuilder` API to be more streamlined with the general API and improved documentation.
+- Added possibility to instrument classes that implement lambda expressions.
+- Added possibility to explicitly ignore types from an `AgentBuilder`. By default, synthetic types are ignored.
+- Proper treatment of deprecation which is now written into the class file as part of the resolved modifier and filtered on reading.
+- Added support for Java 9 APIs for process id retrieval.
+
 ### 21. January 2016: version 1.0.3
 
 - Added support for Java 9 owner type annotations.
