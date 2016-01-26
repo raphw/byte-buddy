@@ -2811,8 +2811,8 @@ public interface AgentBuilder {
 
         /**
          * Implements the regular lambda meta factory. The implementation represents the following code:
-         * <pre>
-         * <code>public static CallSite metafactory(MethodHandles.Lookup caller,
+         * <blockquote><pre>
+         * public static CallSite metafactory(MethodHandles.Lookup caller,
          *     String invokedName,
          *     MethodType invokedType,
          *     MethodType samMethodType,
@@ -2844,7 +2844,7 @@ public interface AgentBuilder {
          *   return invokedType.parameterCount() == 0
          *     ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
          *     : new ConstantCallSite(MethodHandles.Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
-         * </code></pre>
+         * </pre></blockquote>
          */
         protected enum MetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
@@ -2998,15 +2998,15 @@ public interface AgentBuilder {
 
         /**
          * Implements the alternative lambda meta factory. The implementation represents the following code:
-         * <pre>
-         * <code>public static CallSite altMetafactory(MethodHandles.Lookup caller,
+         * <blockquote><pre>
+         * public static CallSite altMetafactory(MethodHandles.Lookup caller,
          *     String invokedName,
          *     MethodType invokedType,
          *     Object... args) throws Exception {
          *   int flags = (Integer) args[3];
          *   int argIndex = 4;
          *   {@code Class<?>[]} markerInterface;
-         *   if ((flags & FLAG_MARKERS) != 0) {
+         *   if ((flags {@code &} FLAG_MARKERS) != 0) {
          *     int markerCount = (Integer) args[argIndex++];
          *     markerInterface = new {@code Class<?>}[markerCount];
          *     System.arraycopy(args, argIndex, markerInterface, 0, markerCount);
@@ -3015,7 +3015,7 @@ public interface AgentBuilder {
          *     markerInterface = new {@code Class<?>}[0];
          *   }
          *   MethodType[] additionalBridge;
-         *   if ((flags & FLAG_BRIDGES) != 0) {
+         *   if ((flags {@code &} FLAG_BRIDGES) != 0) {
          *     int bridgeCount = (Integer) args[argIndex++];
          *     additionalBridge = new MethodType[bridgeCount];
          *     System.arraycopy(args, argIndex, additionalBridge, 0, bridgeCount);
@@ -3024,7 +3024,7 @@ public interface AgentBuilder {
          *     additionalBridge = new MethodType[0];
          *   }
          *   Unsafe unsafe = Unsafe.getUnsafe();
-         *   Class<?> lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
+         *   {@code Class<?>} lambdaClass = unsafe.defineAnonymousClass(caller.lookupClass(),
          *       (byte[]) ClassLoader.getSystemClassLoader().loadClass("net.bytebuddy.agent.builder.LambdaFactory").getDeclaredMethod("make",
          *           Object.class,
          *           String.class,
@@ -3041,7 +3041,7 @@ public interface AgentBuilder {
          *               args[0],
          *               args[1],
          *               args[2],
-         *               (flags & FLAG_SERIALIZABLE) != 0,
+         *               (flags {@code &} FLAG_SERIALIZABLE) != 0,
          *               Arrays.asList(markerInterface),
          *               Arrays.asList(additionalBridge)),
          *       null);
@@ -3049,8 +3049,8 @@ public interface AgentBuilder {
          *   return invokedType.parameterCount() == 0
          *     ? new ConstantCallSite(MethodHandles.constant(invokedType.returnType(), lambdaClass.getDeclaredConstructors()[0].newInstance()))
          *     : new ConstantCallSite(MethodHandles.Lookup.IMPL_LOOKUP.findStatic(lambdaClass, "get$Lambda", invokedType));
-         * }</code>
-         * </pre>
+         * }
+         * </pre></blockquote>
          */
         protected enum AlternativeMetaFactoryRedirection implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
