@@ -789,7 +789,7 @@ public @interface FieldProxy {
              * @param instrumentedType The instrumented type from which a field is to be accessed.
              * @return A corresponding lookup engine.
              */
-            protected abstract LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType);
+            protected abstract LookupStrategy lookup(TypeDescription typeDescription, TypeDescription instrumentedType);
 
             /**
              * A resolution represents the result of a field location.
@@ -894,7 +894,7 @@ public @interface FieldProxy {
             /**
              * A lookup engine is responsible for finding a specific field in a type hierarchy.
              */
-            protected abstract static class LookupEngine {
+            protected abstract static class LookupStrategy {
 
                 /**
                  * Locates a field if possible and returns a corresponding resolution.
@@ -908,7 +908,7 @@ public @interface FieldProxy {
                 /**
                  * Represents a lookup engine that can only produce illegal look-ups.
                  */
-                protected static class Illegal extends LookupEngine {
+                protected static class Illegal extends LookupStrategy {
 
                     @Override
                     protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
@@ -927,14 +927,14 @@ public @interface FieldProxy {
 
                     @Override
                     public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.LookupEngine.Illegal{}";
+                        return "FieldProxy.Binder.FieldLocator.LookupStrategy.Illegal{}";
                     }
                 }
 
                 /**
                  * Represents a lookup engine that tries to find the most specific field in a class hierarchy.
                  */
-                protected static class ForHierarchy extends LookupEngine {
+                protected static class ForHierarchy extends LookupStrategy {
 
                     /**
                      * The name of the field to be found.
@@ -977,7 +977,7 @@ public @interface FieldProxy {
 
                     @Override
                     public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.LookupEngine.ForHierarchy{" +
+                        return "FieldProxy.Binder.FieldLocator.LookupStrategy.ForHierarchy{" +
                                 "fieldName='" + fieldName + '\'' +
                                 '}';
                     }
@@ -986,7 +986,7 @@ public @interface FieldProxy {
                 /**
                  * Represents a lookup engine that tries to find a field for a given type.
                  */
-                protected static class ForExplicitType extends LookupEngine {
+                protected static class ForExplicitType extends LookupStrategy {
 
                     /**
                      * The name of the field.
@@ -1036,7 +1036,7 @@ public @interface FieldProxy {
 
                     @Override
                     public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.LookupEngine.ForExplicitType{" +
+                        return "FieldProxy.Binder.FieldLocator.LookupStrategy.ForExplicitType{" +
                                 "fieldName='" + fieldName + '\'' +
                                 ", typeDescription=" + typeDescription +
                                 '}';
@@ -1083,10 +1083,10 @@ public @interface FieldProxy {
                 }
 
                 @Override
-                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
+                protected LookupStrategy lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
                     return typeDescription.represents(void.class)
-                            ? new LookupEngine.ForHierarchy(fieldName)
-                            : new LookupEngine.ForExplicitType(fieldName, typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription);
+                            ? new LookupStrategy.ForHierarchy(fieldName)
+                            : new LookupStrategy.ForExplicitType(fieldName, typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription);
                 }
 
                 @Override
@@ -1114,8 +1114,8 @@ public @interface FieldProxy {
             protected static class Illegal extends FieldLocator {
 
                 @Override
-                protected LookupEngine lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
-                    return new LookupEngine.Illegal();
+                protected LookupStrategy lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
+                    return new LookupStrategy.Illegal();
                 }
 
                 @Override

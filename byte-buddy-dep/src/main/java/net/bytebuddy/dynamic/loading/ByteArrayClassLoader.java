@@ -508,19 +508,19 @@ public class ByteArrayClassLoader extends ClassLoader {
         /**
          * The synchronization engine for the executing JVM.
          */
-        private static final SynchronizationEngine SYNCHRONIZATION_ENGINE;
+        private static final SynchronizationStrategy SYNCHRONIZATION_STRATEGY;
 
         /*
          * Sets up the suitable synchronization engine (Java 8+ or earlier).
          */
         static {
-            SynchronizationEngine synchronizationEngine;
+            SynchronizationStrategy synchronizationStrategy;
             try {
-                synchronizationEngine = SynchronizationEngine.ForJava7CapableVm.resolve();
+                synchronizationStrategy = SynchronizationStrategy.ForJava7CapableVm.resolve();
             } catch (Exception ignored) {
-                synchronizationEngine = SynchronizationEngine.ForLegacyVm.INSTANCE;
+                synchronizationStrategy = SynchronizationStrategy.ForLegacyVm.INSTANCE;
             }
-            SYNCHRONIZATION_ENGINE = synchronizationEngine;
+            SYNCHRONIZATION_STRATEGY = synchronizationStrategy;
         }
 
         /**
@@ -544,7 +544,7 @@ public class ByteArrayClassLoader extends ClassLoader {
 
         @Override
         protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            synchronized (SYNCHRONIZATION_ENGINE.classLoadingLock(name, this)) {
+            synchronized (SYNCHRONIZATION_STRATEGY.classLoadingLock(name, this)) {
                 Class<?> type = findLoadedClass(name);
                 if (type != null) {
                     return type;
@@ -619,7 +619,7 @@ public class ByteArrayClassLoader extends ClassLoader {
         /**
          * An engine for receiving a <i>class loading lock</i> when loading a class.
          */
-        protected interface SynchronizationEngine {
+        protected interface SynchronizationStrategy {
 
             /**
              * Receives the class loading lock.
@@ -633,7 +633,7 @@ public class ByteArrayClassLoader extends ClassLoader {
             /**
              * A synchronization engine for a VM that is not aware of parallel-capable class loaders.
              */
-            enum ForLegacyVm implements SynchronizationEngine {
+            enum ForLegacyVm implements SynchronizationStrategy {
 
                 /**
                  * The singleton instance.
@@ -647,14 +647,14 @@ public class ByteArrayClassLoader extends ClassLoader {
 
                 @Override
                 public String toString() {
-                    return "ByteArrayClassLoader.ChildFirst.SynchronizationEngine.ForLegacyVm." + name();
+                    return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForLegacyVm." + name();
                 }
             }
 
             /**
              * A synchronization engine for a VM that is aware of parallel-capable class loaders.
              */
-            class ForJava7CapableVm implements SynchronizationEngine, PrivilegedAction<SynchronizationEngine> {
+            class ForJava7CapableVm implements SynchronizationStrategy, PrivilegedAction<SynchronizationStrategy> {
 
                 /**
                  * The {@code ClassLoader#getClassLoadingLock(String)} method.
@@ -676,7 +676,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                  * @return A modern synchronization engine.
                  * @throws NoSuchMethodException If the executing VM is not a modern VM.
                  */
-                protected static SynchronizationEngine resolve() throws NoSuchMethodException {
+                protected static SynchronizationStrategy resolve() throws NoSuchMethodException {
                     return AccessController.doPrivileged(new ForJava7CapableVm(ClassLoader.class.getDeclaredMethod("getClassLoadingLock", String.class)));
                 }
 
@@ -692,7 +692,7 @@ public class ByteArrayClassLoader extends ClassLoader {
                 }
 
                 @Override
-                public SynchronizationEngine run() {
+                public SynchronizationStrategy run() {
                     method.setAccessible(true);
                     return this;
                 }
@@ -710,7 +710,7 @@ public class ByteArrayClassLoader extends ClassLoader {
 
                 @Override
                 public String toString() {
-                    return "ByteArrayClassLoader.ChildFirst.SynchronizationEngine.ForJava7CapableVm{method=" + method + '}';
+                    return "ByteArrayClassLoader.ChildFirst.SynchronizationStrategy.ForJava7CapableVm{method=" + method + '}';
                 }
             }
         }

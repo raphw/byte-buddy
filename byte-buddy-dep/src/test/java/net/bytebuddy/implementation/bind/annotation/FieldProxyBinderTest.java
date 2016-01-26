@@ -237,9 +237,9 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         ObjectPropertyAssertion.of(FieldProxy.Binder.StaticFieldConstructor.class).apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Legal.class).apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Illegal.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupEngine.ForHierarchy.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupEngine.ForExplicitType.class).apply();
-        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupEngine.Illegal.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupStrategy.ForHierarchy.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupStrategy.ForExplicitType.class).apply();
+        ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.LookupStrategy.Illegal.class).apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Resolution.Resolved.class).apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.FieldLocator.Resolution.Unresolved.class).apply();
         ObjectPropertyAssertion.of(FieldProxy.Binder.InstanceFieldConstructor.class).apply();

@@ -51,9 +51,9 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     private final Instrumentation instrumentation;
 
     /**
-     * An engine which performs the actual redefinition of a {@link java.lang.Class}.
+     * An strategy which performs the actual redefinition of a {@link java.lang.Class}.
      */
-    private final Engine engine;
+    private final Strategy strategy;
 
     /**
      * The strategy to apply for injecting classes into the bootstrap class loader.
@@ -67,30 +67,30 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
     /**
      * Creates a class reloading strategy for the given instrumentation using an explicit transformation strategy which
-     * is represented by an {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine}. The given instrumentation
-     * must support the engine's transformation type.
+     * is represented by an {@link Strategy}. The given instrumentation
+     * must support the strategy's transformation type.
      *
      * @param instrumentation The instrumentation to be used by this reloading strategy.
-     * @param engine          An engine which performs the actual redefinition of a {@link java.lang.Class}.
+     * @param strategy        A strategy which performs the actual redefinition of a {@link java.lang.Class}.
      */
-    public ClassReloadingStrategy(Instrumentation instrumentation, Engine engine) {
-        this(instrumentation, engine.validate(instrumentation), BootstrapInjection.Disabled.INSTANCE, Collections.<String, Class<?>>emptyMap());
+    public ClassReloadingStrategy(Instrumentation instrumentation, Strategy strategy) {
+        this(instrumentation, strategy.validate(instrumentation), BootstrapInjection.Disabled.INSTANCE, Collections.<String, Class<?>>emptyMap());
     }
 
     /**
      * Creates a new class reloading strategy.
      *
      * @param instrumentation    The instrumentation to be used by this reloading strategy.
-     * @param engine             An engine which performs the actual redefinition of a {@link java.lang.Class}.
+     * @param strategy           An strategy which performs the actual redefinition of a {@link java.lang.Class}.
      * @param bootstrapInjection The bootstrap class loader injection strategy to use.
      * @param preregisteredTypes The preregistered types of this instance.
      */
     protected ClassReloadingStrategy(Instrumentation instrumentation,
-                                     Engine engine,
+                                     Strategy strategy,
                                      BootstrapInjection bootstrapInjection,
                                      Map<String, Class<?>> preregisteredTypes) {
         this.instrumentation = instrumentation;
-        this.engine = engine;
+        this.strategy = strategy;
         this.bootstrapInjection = bootstrapInjection;
         this.preregisteredTypes = preregisteredTypes;
     }
@@ -105,15 +105,15 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * @return A suitable class reloading strategy.
      */
     public static ClassReloadingStrategy of(Instrumentation instrumentation) {
-        Engine engine;
-        if (instrumentation.isRetransformClassesSupported()) {
-            engine = Engine.RETRANSFORMATION;
-        } else if (instrumentation.isRedefineClassesSupported()) {
-            engine = Engine.REDEFINITION;
+        Strategy strategy;
+        if (instrumentation.isRedefineClassesSupported()) {
+            strategy = Strategy.REDEFINITION;
+        } else if (instrumentation.isRetransformClassesSupported()) {
+            strategy = Strategy.RETRANSFORMATION;
         } else {
             throw new IllegalArgumentException("Instrumentation does not support manipulation of loaded classes: " + instrumentation);
         }
-        return new ClassReloadingStrategy(instrumentation, engine);
+        return new ClassReloadingStrategy(instrumentation, strategy);
     }
 
     /**
@@ -170,7 +170,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             }
         }
         try {
-            engine.apply(instrumentation, classDefinitions);
+            strategy.apply(instrumentation, classDefinitions);
             if (!unloadedClasses.isEmpty()) {
                 loadedClasses.putAll((classLoader == null
                         ? bootstrapInjection.make(instrumentation)
@@ -207,18 +207,8 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      */
     public ClassReloadingStrategy reset(ClassFileLocator classFileLocator, Class<?>... type) throws IOException {
         if (type.length > 0) {
-            if (!instrumentation.isRedefineClassesSupported()) {
-                throw new IllegalStateException("Classes can only be reset when redefinition is supported");
-            }
-            Map<Class<?>, ClassDefinition> classDefinitions = new HashMap<Class<?>, ClassDefinition>(type.length);
-            for (Class<?> aType : type) {
-                int anonymousLoaderIndex = aType.getName().indexOf('/');
-                classDefinitions.put(aType, new ClassDefinition(aType, classFileLocator.locate(anonymousLoaderIndex == -1
-                        ? aType.getName()
-                        : aType.getName().substring(0, anonymousLoaderIndex)).resolve()));
-            }
             try {
-                engine.apply(instrumentation, classDefinitions);
+                strategy.reset(instrumentation, classFileLocator, Arrays.asList(type));
             } catch (ClassNotFoundException exception) {
                 throw new IllegalArgumentException("Cannot locate types " + Arrays.toString(type), exception);
             } catch (UnmodifiableClassException exception) {
@@ -235,7 +225,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * @return A class reloading strategy with bootstrap injection enabled.
      */
     public ClassReloadingStrategy enableBootstrapInjection(File folder) {
-        return new ClassReloadingStrategy(instrumentation, engine, new BootstrapInjection.Enabled(folder), preregisteredTypes);
+        return new ClassReloadingStrategy(instrumentation, strategy, new BootstrapInjection.Enabled(folder), preregisteredTypes);
     }
 
     /**
@@ -253,7 +243,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                     ? typeName
                     : typeName.substring(0, anonymousLoaderIndex), aType);
         }
-        return new ClassReloadingStrategy(instrumentation, engine, bootstrapInjection, preregisteredTypes);
+        return new ClassReloadingStrategy(instrumentation, strategy, bootstrapInjection, preregisteredTypes);
     }
 
     @Override
@@ -262,7 +252,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         if (other == null || getClass() != other.getClass()) return false;
         ClassReloadingStrategy that = (ClassReloadingStrategy) other;
         return instrumentation.equals(that.instrumentation)
-                && engine == that.engine
+                && strategy == that.strategy
                 && bootstrapInjection.equals(that.bootstrapInjection)
                 && preregisteredTypes.equals(that.preregisteredTypes);
     }
@@ -270,7 +260,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     @Override
     public int hashCode() {
         int result = instrumentation.hashCode();
-        result = 31 * result + engine.hashCode();
+        result = 31 * result + strategy.hashCode();
         result = 31 * result + bootstrapInjection.hashCode();
         result = 31 * result + preregisteredTypes.hashCode();
         return result;
@@ -280,41 +270,65 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
     public String toString() {
         return "ClassReloadingStrategy{" +
                 "instrumentation=" + instrumentation +
-                ", engine=" + engine +
+                ", strategy=" + strategy +
                 ", bootstrapInjection=" + bootstrapInjection +
                 ", preregisteredTypes=" + preregisteredTypes +
                 '}';
     }
 
     /**
-     * An engine which performs the actual redefinition of a {@link java.lang.Class}.
+     * A strategy which performs the actual redefinition of a {@link java.lang.Class}.
      */
-    public enum Engine {
+    public enum Strategy {
 
         /**
-         * Redefines a class using
-         * {@link java.lang.instrument.Instrumentation#redefineClasses(java.lang.instrument.ClassDefinition...)}.
+         * <p>
+         * Redefines a class using {@link java.lang.instrument.Instrumentation#redefineClasses(java.lang.instrument.ClassDefinition...)}.
+         * </p>
+         * <p>
+         * This strategy can be more efficient. However, the redefinition strategy does not allow to reset VM anonymous classes (e.g.
+         * classes that represent lambda expressions).
+         * </p>
          */
         REDEFINITION(true) {
             @Override
-            protected void apply(Instrumentation instrumentation,
-                                 Map<Class<?>, ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException {
+            protected void apply(Instrumentation instrumentation, Map<Class<?>, ClassDefinition> classDefinitions)
+                    throws UnmodifiableClassException, ClassNotFoundException {
                 instrumentation.redefineClasses(classDefinitions.values().toArray(new ClassDefinition[classDefinitions.size()]));
             }
 
             @Override
-            protected Engine validate(Instrumentation instrumentation) {
+            protected Strategy validate(Instrumentation instrumentation) {
                 if (!instrumentation.isRedefineClassesSupported()) {
                     throw new IllegalArgumentException("Does not support redefinition: " + instrumentation);
                 }
                 return this;
             }
+
+            @Override
+            public void reset(Instrumentation instrumentation, ClassFileLocator classFileLocator, List<Class<?>> types)
+                    throws IOException, UnmodifiableClassException, ClassNotFoundException {
+                Map<Class<?>, ClassDefinition> classDefinitions = new HashMap<Class<?>, ClassDefinition>(types.size());
+                for (Class<?> type : types) {
+                    int anonymousLoaderIndex = type.getName().indexOf('/');
+                    classDefinitions.put(type, new ClassDefinition(type, classFileLocator.locate(anonymousLoaderIndex == -1
+                            ? type.getName()
+                            : type.getName().substring(0, anonymousLoaderIndex)).resolve()));
+                }
+                apply(instrumentation, classDefinitions);
+            }
         },
 
         /**
+         * <p>
          * Redefines a class using
          * {@link java.lang.instrument.Instrumentation#retransformClasses(Class[])}. This requires synchronization on
          * the {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy#instrumentation} object.
+         * </p>
+         * <p>
+         * This strategy can require more time to be applied but does not struggle to reset VM anonymous classes (e.g. classes
+         * that represent lambda expressions).
+         * </p>
          */
         RETRANSFORMATION(false) {
             @Override
@@ -332,13 +346,28 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
             }
 
             @Override
-            protected Engine validate(Instrumentation instrumentation) {
+            protected Strategy validate(Instrumentation instrumentation) {
                 if (!instrumentation.isRetransformClassesSupported()) {
                     throw new IllegalArgumentException("Does not support retransformation: " + instrumentation);
                 }
                 return this;
             }
+
+            @Override
+            public void reset(Instrumentation instrumentation, ClassFileLocator classFileLocator, List<Class<?>> types) throws IOException, UnmodifiableClassException, ClassNotFoundException {
+                instrumentation.addTransformer(ClassResettingTransformer.INSTANCE, true);
+                try {
+                    instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
+                } finally {
+                    instrumentation.removeTransformer(ClassResettingTransformer.INSTANCE);
+                }
+            }
         };
+
+        /**
+         * Indicates that a class is not redefined.
+         */
+        private static final byte[] NO_REDEFINITION = null;
 
         /**
          * Instructs a {@link java.lang.instrument.ClassFileTransformer} to redefine classes.
@@ -346,44 +375,43 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
         private static final boolean REDEFINE_CLASSES = true;
 
         /**
-         * {@code true} if the {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION} engine
+         * {@code true} if the {@link Strategy#REDEFINITION} strategy
          * is used.
          */
         private final boolean redefinition;
 
         /**
-         * Creates a new engine.
+         * Creates a new strategy.
          *
-         * @param redefinition {@code true} if the {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION} engine
-         *                     is used.
+         * @param redefinition {@code true} if the {@link Strategy#REDEFINITION} strategy is used.
          */
-        Engine(boolean redefinition) {
+        Strategy(boolean redefinition) {
             this.redefinition = redefinition;
         }
 
         /**
-         * Applies this engine for the given arguments.
+         * Applies this strategy for the given arguments.
          *
          * @param instrumentation  The instrumentation to be used for applying the redefinition.
          * @param classDefinitions A mapping of the classes to be redefined to their redefinition.
          * @throws UnmodifiableClassException If a class is not modifiable.
          * @throws ClassNotFoundException     If a class was not found.
          */
-        protected abstract void apply(Instrumentation instrumentation,
-                                      Map<Class<?>, ClassDefinition> classDefinitions) throws UnmodifiableClassException, ClassNotFoundException;
+        protected abstract void apply(Instrumentation instrumentation, Map<Class<?>, ClassDefinition> classDefinitions)
+                throws UnmodifiableClassException, ClassNotFoundException;
 
         /**
-         * Validates that this engine supports a given transformation type.
+         * Validates that this strategy supports a given transformation type.
          *
          * @param instrumentation The instrumentation instance being used.
-         * @return This engine.
+         * @return This strategy.
          */
-        protected abstract Engine validate(Instrumentation instrumentation);
+        protected abstract Strategy validate(Instrumentation instrumentation);
 
         /**
-         * Returns {@code true} if this engine represents {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION}.
+         * Returns {@code true} if this strategy represents {@link Strategy#REDEFINITION}.
          *
-         * @return {@code true} if this engine represents {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy.Engine#REDEFINITION}.
+         * @return {@code true} if this strategy represents {@link Strategy#REDEFINITION}.
          */
         public boolean isRedefinition() {
             return redefinition;
@@ -391,18 +419,25 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
         @Override
         public String toString() {
-            return "ClassReloadingStrategy.Engine." + name();
+            return "ClassReloadingStrategy.Strategy." + name();
         }
+
+        /**
+         * Resets the provided types to their original format.
+         *
+         * @param instrumentation  The instrumentation instance to use for class redefinition or retransformation.
+         * @param classFileLocator The class file locator to use.
+         * @param types            The types to reset.
+         * @throws IOException                If an IO exception occurs.
+         * @throws UnmodifiableClassException If a class is not modifiable.
+         * @throws ClassNotFoundException     If a class could not be found.
+         */
+        public abstract void reset(Instrumentation instrumentation, ClassFileLocator classFileLocator, List<Class<?>> types) throws IOException, UnmodifiableClassException, ClassNotFoundException;
 
         /**
          * A class file transformer that applies a given {@link java.lang.instrument.ClassDefinition}.
          */
         protected static class ClassRedefinitionTransformer implements ClassFileTransformer {
-
-            /**
-             * Indicates that a class is not redefined.
-             */
-            private static final byte[] NO_REDEFINITION = null;
 
             /**
              * A mapping of classes to be redefined to their redefined class definitions.
@@ -445,7 +480,32 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
 
             @Override
             public String toString() {
-                return "ClassReloadingStrategy.Engine.ClassRedefinitionTransformer{redefinedClasses=" + redefinedClasses + '}';
+                return "ClassReloadingStrategy.Strategy.ClassRedefinitionTransformer{redefinedClasses=" + redefinedClasses + '}';
+            }
+        }
+
+        /**
+         * A transformer that indicates that a class file should not be transformed.
+         */
+        protected enum ClassResettingTransformer implements ClassFileTransformer {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public byte[] transform(ClassLoader classLoader,
+                                    String internalTypeName,
+                                    Class<?> classBeingRedefined,
+                                    ProtectionDomain protectionDomain,
+                                    byte[] classfileBuffer) {
+                return NO_REDEFINITION;
+            }
+
+            @Override
+            public String toString() {
+                return "ClassReloadingStrategy.Strategy.ClassResettingTransformer." + name();
             }
         }
     }

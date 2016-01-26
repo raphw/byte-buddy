@@ -59,9 +59,12 @@ public class ClassReloadingStrategyTest {
                 .intercept(FixedValue.value(BAR))
                 .make()
                 .load(Foo.class.getClassLoader(), classReloadingStrategy);
-        assertThat(foo.foo(), is(BAR));
-        classReloadingStrategy.reset(Foo.class);
-        assertThat(foo.foo(), is(FOO));
+        try {
+            assertThat(foo.foo(), is(BAR));
+        } finally {
+            classReloadingStrategy.reset(Foo.class);
+            assertThat(foo.foo(), is(FOO));
+        }
     }
 
     @Test
@@ -79,9 +82,12 @@ public class ClassReloadingStrategyTest {
                 .make()
                 .include(new ByteBuddy().subclass(Object.class).name(randomName).make())
                 .load(Foo.class.getClassLoader(), classReloadingStrategy);
-        assertThat(foo.foo(), is(BAR));
-        classReloadingStrategy.reset(Foo.class);
-        assertThat(foo.foo(), is(FOO));
+        try {
+            assertThat(foo.foo(), is(BAR));
+        } finally {
+            classReloadingStrategy.reset(Foo.class);
+            assertThat(foo.foo(), is(FOO));
+        }
         assertThat(Class.forName(randomName), notNullValue(Class.class));
     }
 
@@ -95,9 +101,12 @@ public class ClassReloadingStrategyTest {
                 .name(Bar.class.getName())
                 .make()
                 .load(Bar.class.getClassLoader(), classReloadingStrategy);
-        assertThat(bar.foo(), is(BAR));
-        classReloadingStrategy.reset(Bar.class);
-        assertThat(bar.foo(), is(FOO));
+        try {
+            assertThat(bar.foo(), is(BAR));
+        } finally {
+            classReloadingStrategy.reset(Bar.class);
+            assertThat(bar.foo(), is(FOO));
+        }
     }
 
     @Test
@@ -107,35 +116,41 @@ public class ClassReloadingStrategyTest {
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
-                ClassReloadingStrategy.Engine.REDEFINITION);
+                ClassReloadingStrategy.Strategy.REDEFINITION);
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
                 .intercept(FixedValue.value(BAR))
                 .make()
                 .load(Foo.class.getClassLoader(), classReloadingStrategy);
-        assertThat(foo.foo(), is(BAR));
-        classReloadingStrategy.reset(Foo.class);
-        assertThat(foo.foo(), is(FOO));
+        try {
+            assertThat(foo.foo(), is(BAR));
+        } finally {
+            classReloadingStrategy.reset(Foo.class);
+            assertThat(foo.foo(), is(FOO));
+        }
     }
 
     @Test
-    @AgentAttachmentRule.Enforce(retransformsClasses = true, redefinesClasses = true)
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testRetransformationReloadingStrategy() throws Exception {
         assertThat(ByteBuddyAgent.install(), instanceOf(Instrumentation.class));
         Foo foo = new Foo();
         assertThat(foo.foo(), is(FOO));
         ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(ByteBuddyAgent.getInstrumentation(),
-                ClassReloadingStrategy.Engine.RETRANSFORMATION);
+                ClassReloadingStrategy.Strategy.RETRANSFORMATION);
         new ByteBuddy()
                 .redefine(Foo.class)
                 .method(named(FOO))
                 .intercept(FixedValue.value(BAR))
                 .make()
                 .load(Foo.class.getClassLoader(), classReloadingStrategy);
-        assertThat(foo.foo(), is(BAR));
-        classReloadingStrategy.reset(Foo.class);
-        assertThat(foo.foo(), is(FOO));
+        try {
+            assertThat(foo.foo(), is(BAR));
+        } finally {
+            classReloadingStrategy.reset(Foo.class);
+            assertThat(foo.foo(), is(FOO));
+        }
     }
 
     @Test
@@ -166,25 +181,25 @@ public class ClassReloadingStrategyTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoRedefinition() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.REDEFINITION);
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.REDEFINITION);
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testNoRetransformation() throws Exception {
-        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Engine.RETRANSFORMATION);
+        new ClassReloadingStrategy(mock(Instrumentation.class), ClassReloadingStrategy.Strategy.RETRANSFORMATION);
     }
 
     @Test
     public void testResetNotSupported() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Engine.RETRANSFORMATION).reset();
+        new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Strategy.RETRANSFORMATION).reset();
     }
 
     @Test
     public void testEngineSelfReport() throws Exception {
-        assertThat(ClassReloadingStrategy.Engine.REDEFINITION.isRedefinition(), is(true));
-        assertThat(ClassReloadingStrategy.Engine.RETRANSFORMATION.isRedefinition(), is(false));
+        assertThat(ClassReloadingStrategy.Strategy.REDEFINITION.isRedefinition(), is(true));
+        assertThat(ClassReloadingStrategy.Strategy.RETRANSFORMATION.isRedefinition(), is(false));
     }
 
     @Test
@@ -202,7 +217,7 @@ public class ClassReloadingStrategyTest {
         @SuppressWarnings("unchecked")
         Callable<String> instance = (Callable<String>) factory.getDeclaredMethod("nonCapturing").invoke(factory.newInstance());
         // Anonymous types can only be reset to their original format, if a retransformation is applied.
-        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Engine.RETRANSFORMATION)
+        ClassReloadingStrategy classReloadingStrategy = new ClassReloadingStrategy(instrumentation, ClassReloadingStrategy.Strategy.RETRANSFORMATION)
                 .preregistered(instance.getClass());
         ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.of(instrumentation, instance.getClass());
         try {
@@ -242,7 +257,7 @@ public class ClassReloadingStrategyTest {
 
     @Test
     public void testTransformerHandlesNullValue() throws Exception {
-        assertThat(new ClassReloadingStrategy.Engine.ClassRedefinitionTransformer(Collections.<Class<?>, ClassDefinition>emptyMap()).transform(null,
+        assertThat(new ClassReloadingStrategy.Strategy.ClassRedefinitionTransformer(Collections.<Class<?>, ClassDefinition>emptyMap()).transform(null,
                 null,
                 null,
                 null,
@@ -259,8 +274,9 @@ public class ClassReloadingStrategyTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.Engine.class).apply();
-        ObjectPropertyAssertion.of(ClassReloadingStrategy.Engine.ClassRedefinitionTransformer.class).applyBasic();
+        ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.class).apply();
+        ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.ClassRedefinitionTransformer.class).applyBasic();
+        ObjectPropertyAssertion.of(ClassReloadingStrategy.Strategy.ClassResettingTransformer.class).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Enabled.class).apply();
         ObjectPropertyAssertion.of(ClassReloadingStrategy.BootstrapInjection.Disabled.class).apply();
     }
