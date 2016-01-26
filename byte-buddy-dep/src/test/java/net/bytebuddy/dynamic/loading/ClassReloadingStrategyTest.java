@@ -6,10 +6,10 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.FixedValue;
 import net.bytebuddy.test.utility.AgentAttachmentRule;
+import net.bytebuddy.test.utility.ClassFileExtraction;
 import net.bytebuddy.test.utility.JavaVersionRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import net.bytebuddy.utility.RandomString;
-import org.junit.Ignore;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.MethodRule;
@@ -17,7 +17,9 @@ import org.mockito.ArgumentCaptor;
 
 import java.lang.instrument.ClassDefinition;
 import java.lang.instrument.Instrumentation;
+import java.security.AccessController;
 import java.util.Collections;
+import java.util.concurrent.Callable;
 
 import static junit.framework.TestCase.assertEquals;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -28,6 +30,8 @@ import static org.mockito.Mockito.*;
 public class ClassReloadingStrategyTest {
 
     private static final String FOO = "foo", BAR = "bar";
+
+    private static final String LAMBDA_SAMPLE_FACTORY = "net.bytebuddy.test.precompiled.LambdaSampleFactory";
 
     @Rule
     public MethodRule agentAttachmentRule = new AgentAttachmentRule();
@@ -185,18 +189,41 @@ public class ClassReloadingStrategyTest {
 
     @Test
     @JavaVersionRule.Enforce(8)
-    @AgentAttachmentRule.Enforce(retransformsClasses = true, redefinesClasses = true)
-    @Ignore("Fails on the integration server, should be isolated as test is currently not repeatable")
+    @AgentAttachmentRule.Enforce(retransformsClasses = true)
     public void testAnonymousType() throws Exception {
-        ((Runnable) Class.forName("net.bytebuddy.test.precompiled.AnonymousClassLoader").newInstance()).run();
+        ClassLoader classLoader = new ByteArrayClassLoader(null,
+                ClassFileExtraction.of(Class.forName(LAMBDA_SAMPLE_FACTORY)),
+                null,
+                AccessController.getContext(),
+                ByteArrayClassLoader.PersistenceHandler.MANIFEST,
+                PackageDefinitionStrategy.NoOp.INSTANCE);
+        Instrumentation instrumentation = ByteBuddyAgent.install();
+        Class<?> factory = classLoader.loadClass(LAMBDA_SAMPLE_FACTORY);
+        @SuppressWarnings("unchecked")
+        Callable<String> instance = (Callable<String>) factory.getDeclaredMethod("nonCapturing").invoke(factory.newInstance());
+        ClassReloadingStrategy classReloadingStrategy = ClassReloadingStrategy.of(instrumentation).preregistered(instance.getClass());
+        ClassFileLocator classFileLocator = ClassFileLocator.AgentBased.of(instrumentation, instance.getClass());
+        try {
+            assertThat(instance.call(), is(FOO));
+            new ByteBuddy()
+                    .redefine(instance.getClass(), classFileLocator)
+                    .method(named("call"))
+                    .intercept(FixedValue.value(BAR))
+                    .make()
+                    .load(instance.getClass().getClassLoader(), classReloadingStrategy);
+            assertThat(instance.call(), is(BAR));
+        } finally {
+            classReloadingStrategy.reset(classFileLocator, instance.getClass());
+            assertThat(instance.call(), is(FOO));
+        }
     }
 
     @Test
     public void testResetEmptyNoEffectImplicitLocator() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
-        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ClassReloadingStrategy.of(instrumentation).reset();
-        verify(instrumentation, times(2)).isRedefineClassesSupported();
+        verify(instrumentation, times(2)).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
     }
 
@@ -204,9 +231,9 @@ public class ClassReloadingStrategyTest {
     public void testResetEmptyNoEffect() throws Exception {
         Instrumentation instrumentation = mock(Instrumentation.class);
         ClassFileLocator classFileLocator = mock(ClassFileLocator.class);
-        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
         ClassReloadingStrategy.of(instrumentation).reset(classFileLocator);
-        verify(instrumentation, times(2)).isRedefineClassesSupported();
+        verify(instrumentation, times(2)).isRetransformClassesSupported();
         verifyNoMoreInteractions(instrumentation);
         verifyZeroInteractions(classFileLocator);
     }

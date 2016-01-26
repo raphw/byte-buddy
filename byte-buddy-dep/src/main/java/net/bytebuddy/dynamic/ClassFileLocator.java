@@ -5,7 +5,6 @@ import net.bytebuddy.utility.StreamDrainer;
 
 import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
-import java.lang.instrument.IllegalClassFormatException;
 import java.lang.instrument.Instrumentation;
 import java.lang.reflect.Field;
 import java.security.AccessControlContext;
@@ -1035,9 +1034,9 @@ public interface ClassFileLocator {
                                     String internalName,
                                     Class<?> redefinedType,
                                     ProtectionDomain protectionDomain,
-                                    byte[] classFile) throws IllegalClassFormatException {
+                                    byte[] binaryRepresentation) {
                 if (internalName != null && isChild(classLoader) && typeName.equals(internalName.replace('/', '.'))) {
-                    this.binaryRepresentation = classFile;
+                    this.binaryRepresentation = binaryRepresentation;
                 }
                 return DO_NOT_TRANSFORM;
             }

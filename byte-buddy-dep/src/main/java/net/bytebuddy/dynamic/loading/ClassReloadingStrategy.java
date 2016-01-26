@@ -6,7 +6,10 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 
 import java.io.File;
 import java.io.IOException;
-import java.lang.instrument.*;
+import java.lang.instrument.ClassDefinition;
+import java.lang.instrument.ClassFileTransformer;
+import java.lang.instrument.Instrumentation;
+import java.lang.instrument.UnmodifiableClassException;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -96,17 +99,17 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
      * Creates a class reloading strategy for the given instrumentation. The given instrumentation must either
      * support {@link java.lang.instrument.Instrumentation#isRedefineClassesSupported()} or
      * {@link java.lang.instrument.Instrumentation#isRetransformClassesSupported()}. If both modes are supported,
-     * classes will be transformed using a class redefinition.
+     * classes will be transformed using a class retransformation.
      *
      * @param instrumentation The instrumentation to be used by this reloading strategy.
      * @return A suitable class reloading strategy.
      */
     public static ClassReloadingStrategy of(Instrumentation instrumentation) {
         Engine engine;
-        if (instrumentation.isRedefineClassesSupported()) {
-            engine = Engine.REDEFINITION;
-        } else if (instrumentation.isRetransformClassesSupported()) {
+        if (instrumentation.isRetransformClassesSupported()) {
             engine = Engine.RETRANSFORMATION;
+        } else if (instrumentation.isRedefineClassesSupported()) {
+            engine = Engine.REDEFINITION;
         } else {
             throw new IllegalArgumentException("Instrumentation does not support manipulation of loaded classes: " + instrumentation);
         }
@@ -421,7 +424,7 @@ public class ClassReloadingStrategy implements ClassLoadingStrategy {
                                     String internalTypeName,
                                     Class<?> classBeingRedefined,
                                     ProtectionDomain protectionDomain,
-                                    byte[] classfileBuffer) throws IllegalClassFormatException {
+                                    byte[] classfileBuffer) {
                 if (internalTypeName == null) {
                     return NO_REDEFINITION;
                 }
