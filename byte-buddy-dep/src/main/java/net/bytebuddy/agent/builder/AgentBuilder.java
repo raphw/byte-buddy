@@ -985,7 +985,8 @@ public interface AgentBuilder {
         enum SelfInjection implements InitializationStrategy {
 
             /**
-             * A form of self-injection where auxiliary types that are a subtype of the instrumented type are loaded lazily and
+             * A form of self-injection where auxiliary types that are annotated by
+             * {@link net.bytebuddy.implementation.auxiliary.AuxiliaryType.SignatureRelevant} of the instrumented type are loaded lazily and
              * any other auxiliary type is loaded eagerly.
              */
             SPLIT {
