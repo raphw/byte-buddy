@@ -18,7 +18,6 @@ import java.lang.reflect.Method;
 import java.security.AccessControlContext;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -103,7 +102,7 @@ public interface JavaInstance {
          * @param methodType A method type object to represent as a {@link JavaInstance}.
          * @return The method type represented as a {@code JavaInstance}.
          */
-        public static MethodType of(Object methodType) {
+        public static MethodType ofLoaded(Object methodType) {
             if (!JavaType.METHOD_TYPE.getTypeStub().isInstance(methodType)) {
                 throw new IllegalArgumentException("Expected method type object: " + methodType);
             }
@@ -246,8 +245,8 @@ public interface JavaInstance {
          *
          * @return The parameter types of this method type.
          */
-        public List<TypeDescription> getParameterTypes() {
-            return new ArrayList<TypeDescription>(parameterTypes);
+        public TypeList getParameterTypes() {
+            return new TypeList.Explicit(parameterTypes);
         }
 
         /**
@@ -530,8 +529,8 @@ public interface JavaInstance {
          * @param methodHandle The loaded method handle to represent.
          * @return A representation of the loaded method handle
          */
-        public static MethodHandle of(Object methodHandle) {
-            return of(methodHandle, DISPATCHER.publicLookup(), AccessController.getContext());
+        public static MethodHandle ofLoaded(Object methodHandle) {
+            return ofLoaded(methodHandle, DISPATCHER.publicLookup(), AccessController.getContext());
         }
 
         /**
@@ -543,8 +542,8 @@ public interface JavaInstance {
          * @param lookup       The lookup object to use for analyzing the method handle.
          * @return A representation of the loaded method handle
          */
-        public static MethodHandle of(Object methodHandle, Object lookup) {
-            return of(methodHandle, lookup, AccessController.getContext());
+        public static MethodHandle ofLoaded(Object methodHandle, Object lookup) {
+            return ofLoaded(methodHandle, lookup, AccessController.getContext());
         }
 
         /**
@@ -556,8 +555,8 @@ public interface JavaInstance {
          * @param accessControlContext The access control context to be used for making private methods accessible when using Java 7.
          * @return A representation of the loaded method handle
          */
-        public static MethodHandle of(Object methodHandle, AccessControlContext accessControlContext) {
-            return of(methodHandle, DISPATCHER.publicLookup(), accessControlContext);
+        public static MethodHandle ofLoaded(Object methodHandle, AccessControlContext accessControlContext) {
+            return ofLoaded(methodHandle, DISPATCHER.publicLookup(), accessControlContext);
         }
 
         /**
@@ -570,7 +569,7 @@ public interface JavaInstance {
          * @param accessControlContext The access control context to be used for making private methods accessible when using Java 7.
          * @return A representation of the loaded method handle
          */
-        public static MethodHandle of(Object methodHandle, Object lookup, AccessControlContext accessControlContext) {
+        public static MethodHandle ofLoaded(Object methodHandle, Object lookup, AccessControlContext accessControlContext) {
             if (!JavaType.METHOD_HANDLE.getTypeStub().isInstance(methodHandle)) {
                 throw new IllegalArgumentException("Expected method handle object: " + methodHandle);
             } else if (!JavaType.METHOD_HANDLES_LOOKUP.getTypeStub().isInstance(lookup)) {
@@ -758,8 +757,8 @@ public interface JavaInstance {
          *
          * @return The parameter types represented by this instance.
          */
-        public List<TypeDescription> getParameterTypes() {
-            return new ArrayList<TypeDescription>(parameterTypes);
+        public TypeList getParameterTypes() {
+            return new TypeList.Explicit(parameterTypes);
         }
 
         /**

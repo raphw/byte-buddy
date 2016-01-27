@@ -474,7 +474,7 @@ public class MethodCallTest extends AbstractImplementationTest {
     public void testJava7TypesExplicit() throws Exception {
         DynamicType.Loaded<SimpleMethod> loaded = implement(SimpleMethod.class,
                 MethodCall.invoke(Foo.class.getDeclaredMethod(BAR, Object.class, Object.class))
-                        .with(JavaInstance.MethodHandle.of(makeMethodHandle()), JavaInstance.MethodType.of(makeMethodType(void.class))),
+                        .with(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle()), JavaInstance.MethodType.ofLoaded(makeMethodType(void.class))),
                 SimpleMethod.class.getClassLoader(),
                 named(FOO));
         assertThat(loaded.getLoadedAuxiliaryTypes().size(), is(0));

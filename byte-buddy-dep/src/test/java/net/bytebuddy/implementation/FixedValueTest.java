@@ -75,7 +75,7 @@ public class FixedValueTest extends AbstractImplementationTest {
     public void testMethodHandleConstantPool() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(JavaInstance.MethodHandle.of(Qux.class.getDeclaredMethod("bar")))).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
-        assertThat(JavaInstance.MethodHandle.of(qux.newInstance().bar()), is(JavaInstance.MethodHandle.of(makeMethodHandle())));
+        assertThat(JavaInstance.MethodHandle.ofLoaded(qux.newInstance().bar()), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test
@@ -83,7 +83,7 @@ public class FixedValueTest extends AbstractImplementationTest {
     public void testMethodHandleConstantPoolValue() throws Exception {
         Class<? extends Qux> qux = implement(Qux.class, FixedValue.value(makeMethodHandle())).getLoaded();
         assertThat(qux.getDeclaredFields().length, is(0));
-        assertThat(JavaInstance.MethodHandle.of(qux.newInstance().bar()), is(JavaInstance.MethodHandle.of(makeMethodHandle())));
+        assertThat(JavaInstance.MethodHandle.ofLoaded(qux.newInstance().bar()), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test

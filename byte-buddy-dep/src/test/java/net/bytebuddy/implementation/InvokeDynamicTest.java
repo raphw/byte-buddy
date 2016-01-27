@@ -141,7 +141,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         assertThat(arguments[4], is((Object) FOO));
         assertThat(arguments[5], is((Object) CLASS));
         assertThat(arguments[6], is(makeMethodType(CLASS)));
-        assertThat(JavaInstance.MethodHandle.of(arguments[7]), is(JavaInstance.MethodHandle.of(makeMethodHandle())));
+        assertThat(JavaInstance.MethodHandle.ofLoaded(arguments[7]), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test
@@ -167,7 +167,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
         assertThat(arguments[4], is((Object) FOO));
         assertThat(arguments[5], is((Object) CLASS));
         assertThat(arguments[6], is(makeMethodType(CLASS)));
-        assertThat(JavaInstance.MethodHandle.of(arguments[7]), is(JavaInstance.MethodHandle.of(makeMethodHandle())));
+        assertThat(JavaInstance.MethodHandle.ofLoaded(arguments[7]), is(JavaInstance.MethodHandle.ofLoaded(makeMethodHandle())));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -195,7 +195,7 @@ public class InvokeDynamicTest extends AbstractImplementationTest {
                         .withDoubleValue(DOUBLE)
                         .withType(new TypeDescription.ForLoadedType(CLASS))
                         .withEnumeration(new EnumerationDescription.ForLoadedEnumeration(makeEnum()))
-                        .withInstance(JavaInstance.MethodType.of(makeMethodType(CLASS)), JavaInstance.MethodHandle.of(makeMethodHandle()))
+                        .withInstance(JavaInstance.MethodType.ofLoaded(makeMethodType(CLASS)), JavaInstance.MethodHandle.ofLoaded(makeMethodHandle()))
                         .withValue(FOO, CLASS, makeEnum(), makeMethodType(CLASS), makeMethodHandle(), value),
                 getClass().getClassLoader(),
                 isDeclaredBy(Simple.class));

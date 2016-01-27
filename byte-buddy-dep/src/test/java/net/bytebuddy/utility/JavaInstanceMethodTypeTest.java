@@ -99,7 +99,7 @@ public class JavaInstanceMethodTypeTest {
     public void testMethodTypeOfLoadedMethodType() throws Exception {
         Object loadedMethodType = JavaType.METHOD_TYPE.load().getDeclaredMethod("methodType", Class.class, Class[].class)
                 .invoke(null, void.class, new Class<?>[]{Object.class});
-        JavaInstance.MethodType methodType = JavaInstance.MethodType.of(loadedMethodType);
+        JavaInstance.MethodType methodType = JavaInstance.MethodType.ofLoaded(loadedMethodType);
         assertThat(methodType.getReturnType(), is(TypeDescription.VOID));
         assertThat(methodType.getParameterTypes(), is((List<TypeDescription>) new TypeList.ForLoadedTypes(Object.class)));
     }

@@ -2151,10 +2151,10 @@ public interface AgentBuilder {
                                List<Class<?>> markerInterfaces,
                                List<?> additionalBridges,
                                Collection<? extends ClassFileTransformer> classFileTransformers) {
-                JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.of(factoryMethodType);
-                JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.of(lambdaMethodType);
-                JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.of(targetMethodHandle, targetTypeLookup);
-                JavaInstance.MethodType specializedLambdaMethod = JavaInstance.MethodType.of(specializedLambdaMethodType);
+                JavaInstance.MethodType factoryMethod = JavaInstance.MethodType.ofLoaded(factoryMethodType);
+                JavaInstance.MethodType lambdaMethod = JavaInstance.MethodType.ofLoaded(lambdaMethodType);
+                JavaInstance.MethodHandle targetMethod = JavaInstance.MethodHandle.ofLoaded(targetMethodHandle, targetTypeLookup);
+                JavaInstance.MethodType specializedLambdaMethod = JavaInstance.MethodType.ofLoaded(specializedLambdaMethodType);
                 Class<?> targetType = JavaInstance.MethodHandle.lookupType(targetTypeLookup);
                 String lambdaClassName = targetType.getName() + LAMBDA_TYPE_INFIX + LAMBDA_NAME_COUNTER.incrementAndGet();
                 DynamicType.Builder<?> builder = byteBuddy
@@ -2188,7 +2188,7 @@ public interface AgentBuilder {
                                     lambdaMethodName,
                                     lambdaMethod,
                                     targetMethod,
-                                    JavaInstance.MethodType.of(specializedLambdaMethodType)));
+                                    JavaInstance.MethodType.ofLoaded(specializedLambdaMethodType)));
                 } else if (factoryMethod.getReturnType().isAssignableTo(Serializable.class)) {
                     builder = builder.defineMethod("readObject", void.class, Visibility.PRIVATE)
                             .withParameters(ObjectInputStream.class)
@@ -2200,7 +2200,7 @@ public interface AgentBuilder {
                             .intercept(ExceptionMethod.throwing(NotSerializableException.class, "Non-serializable lambda"));
                 }
                 for (Object additionalBridgeType : additionalBridges) {
-                    JavaInstance.MethodType additionalBridge = JavaInstance.MethodType.of(additionalBridgeType);
+                    JavaInstance.MethodType additionalBridge = JavaInstance.MethodType.ofLoaded(additionalBridgeType);
                     builder = builder.defineMethod(lambdaMethodName, additionalBridge.getReturnType(), MethodManifestation.BRIDGE, Visibility.PUBLIC)
                             .withParameters(additionalBridge.getParameterTypes())
                             .intercept(new BridgeMethodImplementation(lambdaMethodName, lambdaMethod));

@@ -114,12 +114,12 @@ public abstract class FixedValue implements Implementation {
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_HANDLE.getTypeStub().isAssignableFrom(type)) {
-            return new ForPoolValue(MethodHandleConstant.of(JavaInstance.MethodHandle.of(fixedValue)),
+            return new ForPoolValue(MethodHandleConstant.of(JavaInstance.MethodHandle.ofLoaded(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);
         } else if (JavaType.METHOD_TYPE.getTypeStub().represents(type)) {
-            return new ForPoolValue(MethodTypeConstant.of(JavaInstance.MethodType.of(fixedValue)),
+            return new ForPoolValue(MethodTypeConstant.of(JavaInstance.MethodType.ofLoaded(fixedValue)),
                     new TypeDescription.ForLoadedType(type),
                     Assigner.DEFAULT,
                     Assigner.Typing.STATIC);

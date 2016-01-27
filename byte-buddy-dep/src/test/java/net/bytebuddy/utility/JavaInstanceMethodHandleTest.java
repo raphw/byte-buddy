@@ -132,9 +132,9 @@ public class JavaInstanceMethodHandleTest {
     public void testMethodHandleOfLoadedMethodHandle() throws Exception {
         Method publicLookup = Class.forName("java.lang.invoke.MethodHandles").getDeclaredMethod("publicLookup");
         Object lookup = publicLookup.invoke(null);
-        Method unreflect = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
-        Object methodHandleLoaded = unreflect.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
-        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.of(methodHandleLoaded);
+        Method unreflected = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
+        Object methodHandleLoaded = unreflected.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
+        JavaInstance.MethodHandle methodHandle = JavaInstance.MethodHandle.ofLoaded(methodHandleLoaded);
         assertThat(methodHandle.getHandleType(), is(JavaInstance.MethodHandle.HandleType.INVOKE_VIRTUAL));
         assertThat(methodHandle.getName(), is(BAR));
         assertThat(methodHandle.getOwnerType(), is((TypeDescription) new TypeDescription.ForLoadedType(Foo.class)));
@@ -145,7 +145,7 @@ public class JavaInstanceMethodHandleTest {
     @Test(expected = IllegalArgumentException.class)
     @JavaVersionRule.Enforce(value = 7, hotSpot = 7)
     public void testMethodHandleLoadedIllegal() throws Exception {
-        JavaInstance.MethodHandle.of(new Object());
+        JavaInstance.MethodHandle.ofLoaded(new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -155,7 +155,7 @@ public class JavaInstanceMethodHandleTest {
         Object lookup = publicLookup.invoke(null);
         Method unreflect = Class.forName("java.lang.invoke.MethodHandles$Lookup").getDeclaredMethod("unreflect", Method.class);
         Object methodHandleLoaded = unreflect.invoke(lookup, Foo.class.getDeclaredMethod(BAR, Void.class));
-        JavaInstance.MethodHandle.of(methodHandleLoaded, new Object());
+        JavaInstance.MethodHandle.ofLoaded(methodHandleLoaded, new Object());
     }
 
     @Test(expected = IllegalArgumentException.class)

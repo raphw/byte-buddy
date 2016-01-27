@@ -215,9 +215,9 @@ public class InvokeDynamic implements Implementation.Composable {
             if (argument instanceof Class) {
                 argument = new TypeDescription.ForLoadedType((Class<?>) argument);
             } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(argument)) {
-                argument = JavaInstance.MethodHandle.of(argument);
+                argument = JavaInstance.MethodHandle.ofLoaded(argument);
             } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(argument)) {
-                argument = JavaInstance.MethodType.of(argument);
+                argument = JavaInstance.MethodType.ofLoaded(argument);
             }
             arguments.add(argument);
         }
@@ -1289,9 +1289,9 @@ public class InvokeDynamic implements Implementation.Composable {
                     } else if (value instanceof Enum<?>) {
                         return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                     } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                        return new ForJavaInstance(JavaInstance.MethodHandle.of(value));
+                        return new ForJavaInstance(JavaInstance.MethodHandle.ofLoaded(value));
                     } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                        return new ForJavaInstance(JavaInstance.MethodType.of(value));
+                        return new ForJavaInstance(JavaInstance.MethodType.ofLoaded(value));
                     } else {
                         return ForStaticField.of(value);
                     }

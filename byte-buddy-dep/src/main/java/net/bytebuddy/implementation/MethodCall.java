@@ -1152,9 +1152,9 @@ public class MethodCall implements Implementation.Composable {
                 } else if (value instanceof Class) {
                     return new ForClassConstant(new TypeDescription.ForLoadedType((Class<?>) value));
                 } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
-                    return new ForJavaInstance(JavaInstance.MethodHandle.of(value));
+                    return new ForJavaInstance(JavaInstance.MethodHandle.ofLoaded(value));
                 } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
-                    return new ForJavaInstance(JavaInstance.MethodType.of(value));
+                    return new ForJavaInstance(JavaInstance.MethodType.ofLoaded(value));
                 } else if (value instanceof Enum<?>) {
                     return new ForEnumerationValue(new EnumerationDescription.ForLoadedEnumeration((Enum<?>) value));
                 } else {
