@@ -2946,7 +2946,6 @@ public interface AgentBuilder {
                 methodVisitor.visitInsn(Opcodes.AASTORE);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "java/lang/reflect/Method", "invoke", "(Ljava/lang/Object;[Ljava/lang/Object;)Ljava/lang/Object;", false);
                 methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
-                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, "[B");
                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                 methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL, "sun/misc/Unsafe", "defineAnonymousClass", "(Ljava/lang/Class;[B[Ljava/lang/Object;)Ljava/lang/Class;", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 7);
