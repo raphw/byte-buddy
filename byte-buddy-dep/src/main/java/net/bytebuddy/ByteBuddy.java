@@ -214,7 +214,7 @@ public class ByteBuddy {
      * </p>
      *
      * @param superClass The super class or interface type to extend.
-     * @param <T>       A loaded type that the generated class is guaranteed to inherit.
+     * @param <T>        A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
      */
     public <T> DynamicType.Builder<T> subclass(Class<T> superClass) {
@@ -225,7 +225,7 @@ public class ByteBuddy {
      * Creates a new builder for subclassing the provided type. If the provided type is an interface, a new class implementing
      * this interface type is created.
      *
-     * @param superClass           The super class or interface type to extend.
+     * @param superClass          The super class or interface type to extend.
      * @param constructorStrategy A constructor strategy that determines the
      * @param <T>                 A loaded type that the generated class is guaranteed to inherit.
      * @return A type builder for creating a new class extending the provided class or interface.
@@ -498,6 +498,13 @@ public class ByteBuddy {
      * The class file of the redefined type is located by querying the redefined type's class loader by name. For specifying an
      * alternative {@link ClassFileLocator}, use {@link ByteBuddy#redefine(Class, ClassFileLocator)}.
      * </p>
+     * <p>
+     * When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy}, it
+     * is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
+     * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
+     * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
+     * where the class initializer is retained <i>as is</i>.
+     * </p>
      *
      * @param type The type that is being redefined.
      * @param <T>  The loaded type of the redefined type.
@@ -508,8 +515,17 @@ public class ByteBuddy {
     }
 
     /**
+     * <p>
      * Redefines the given type where any intercepted method that is declared by the redefined type is fully replaced
      * by the new implementation.
+     * </p>
+     * <p>
+     * When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy}, it
+     * is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
+     * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
+     * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
+     * where the class initializer is retained <i>as is</i>.
+     * </p>
      *
      * @param type             The type that is being redefined.
      * @param classFileLocator The class file locator that is queried for the redefined type's class file.
@@ -524,6 +540,13 @@ public class ByteBuddy {
      * <p>
      * Redefines the given type where any intercepted method that is declared by the redefined type is fully replaced
      * by the new implementation.
+     * </p>
+     * <p>
+     * When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy}, it
+     * is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
+     * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
+     * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
+     * where the class initializer is retained <i>as is</i>.
      * </p>
      *
      * @param type             The type that is being redefined.
