@@ -499,8 +499,8 @@ public class ByteBuddy {
      * alternative {@link ClassFileLocator}, use {@link ByteBuddy#redefine(Class, ClassFileLocator)}.
      * </p>
      * <p>
-     * When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy}, it
-     * is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
+     * <b>Note</b>: When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy},
+     * it is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
      * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
      * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
      * where the class initializer is retained <i>as is</i>.
@@ -520,8 +520,8 @@ public class ByteBuddy {
      * by the new implementation.
      * </p>
      * <p>
-     * When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy}, it
-     * is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
+     * <b>Note</b>: When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy},
+     * it is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
      * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
      * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
      * where the class initializer is retained <i>as is</i>.
@@ -542,8 +542,8 @@ public class ByteBuddy {
      * by the new implementation.
      * </p>
      * <p>
-     * When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy}, it
-     * is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
+     * <b>Note</b>: When a user redefines a class with the purpose of reloading this class using a {@link net.bytebuddy.dynamic.loading.ClassReloadingStrategy},
+     * it is important that no fields or methods are added to the redefined class. Note that some {@link Implementation}s implicitly add fields or methods.
      * Finally, Byte Buddy might be forced to add a method if a redefined class already defines a class initializer. This can be disabled by setting
      * {@link ByteBuddy#with(Implementation.Context.Factory)} to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled.Factory}
      * where the class initializer is retained <i>as is</i>.
