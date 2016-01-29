@@ -458,7 +458,14 @@ public interface AgentBuilder {
             },
 
             /**
+             * <p>
              * A definition handler that performs a redefinition for all types.
+             * </p>
+             * <p>
+             * Note that the default agent builder is configured to apply a self initialization where a static class initializer
+             * is added to the redefined class. This can be disabled by rather using a {@link InitializationStrategy.Minimal} or
+             * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
+             * </p>
              */
             REDEFINE {
                 @Override
