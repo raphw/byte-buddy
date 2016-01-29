@@ -463,7 +463,7 @@ public interface AgentBuilder {
              * </p>
              * <p>
              * Note that the default agent builder is configured to apply a self initialization where a static class initializer
-             * is added to the redefined class. This can be disabled by rather using a {@link InitializationStrategy.Minimal} or
+             * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
              * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
              * </p>
              */
@@ -1642,6 +1642,11 @@ public interface AgentBuilder {
          * {@link net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy#RETRANSFORMATION} if this is a factual or
          * potential limitation.
          * </p>
+         * <p>
+         * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
+         * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
+         * the constrains given by this type strategy.
+         * </p>
          */
         REDEFINITION {
             @Override
@@ -1659,8 +1664,15 @@ public interface AgentBuilder {
         },
 
         /**
+         * <p>
          * Applies a <b>retransformation</b> to all classes that are already loaded and that would have been transformed if
          * the built agent was registered before they were loaded.
+         * </p>
+         * <p>
+         * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
+         * a redefinition instead of rebasing classes such as {@link TypeStrategy.Default#REDEFINE}. Also, consider
+         * the constrains given by this type strategy.
+         * </p>
          */
         RETRANSFORMATION {
             @Override
