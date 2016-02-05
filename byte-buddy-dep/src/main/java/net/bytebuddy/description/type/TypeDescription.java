@@ -2539,7 +2539,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param type The type to represent.
                  * @return A suitable annotation reader.
                  */
-                AnnotationReader resolveSuperClass(Class<?> type);
+                AnnotationReader resolveSuperClassType(Class<?> type);
 
                 /**
                  * Resolves a loaded type's interface type's type annotations.
@@ -2548,7 +2548,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param index The index of the interface.
                  * @return A suitable annotation reader.
                  */
-                AnnotationReader resolveInterface(Class<?> type, int index);
+                AnnotationReader resolveInterfaceType(Class<?> type, int index);
 
                 /**
                  * Resolves a loaded field's type's type annotations.
@@ -2556,7 +2556,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                  * @param field The field to represent.
                  * @return A suitable annotation reader.
                  */
-                AnnotationReader resolve(Field field);
+                AnnotationReader resolveFieldType(Field field);
 
                 /**
                  * Resolves a loaded method's return type's type annotations.
@@ -2594,6 +2594,14 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                 Generic resolveReceiverType(AccessibleObject executable);
 
                 /**
+                 * Resolves the annotated type as generic type description.
+                 *
+                 * @param annotatedType The loaded annotated type.
+                 * @return A description of the supplied annotated type.
+                 */
+                Generic resolve(AnnotatedElement annotatedType);
+
+                /**
                  * A dispatcher for {@link AnnotationReader}s on a legacy VM that does not support type annotations.
                  */
                 enum ForLegacyVm implements Dispatcher {
@@ -2609,17 +2617,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
-                    public AnnotationReader resolveSuperClass(Class<?> type) {
+                    public AnnotationReader resolveSuperClassType(Class<?> type) {
                         return NoOp.INSTANCE;
                     }
 
                     @Override
-                    public AnnotationReader resolveInterface(Class<?> type, int index) {
+                    public AnnotationReader resolveInterfaceType(Class<?> type, int index) {
                         return NoOp.INSTANCE;
                     }
 
                     @Override
-                    public AnnotationReader resolve(Field field) {
+                    public AnnotationReader resolveFieldType(Field field) {
                         return NoOp.INSTANCE;
                     }
 
@@ -2641,6 +2649,11 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public Generic resolveReceiverType(AccessibleObject executable) {
                         return UNDEFINED;
+                    }
+
+                    @Override
+                    public Generic resolve(AnnotatedElement annotatedType) {
+                        throw new IllegalStateException("Loaded annotated type cannot be represented on this VM");
                     }
 
                     @Override
@@ -2753,17 +2766,17 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
 
                     @Override
-                    public AnnotationReader resolveSuperClass(Class<?> type) {
+                    public AnnotationReader resolveSuperClassType(Class<?> type) {
                         return new AnnotatedSuperClass(type);
                     }
 
                     @Override
-                    public AnnotationReader resolveInterface(Class<?> type, int index) {
+                    public AnnotationReader resolveInterfaceType(Class<?> type, int index) {
                         return new AnnotatedInterfaceType(type, index);
                     }
 
                     @Override
-                    public AnnotationReader resolve(Field field) {
+                    public AnnotationReader resolveFieldType(Field field) {
                         return new AnnotatedFieldType(field);
                     }
 
@@ -2785,14 +2798,24 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     public Generic resolveReceiverType(AccessibleObject executable) {
                         try {
-                            AnnotatedElement annotatedReceiver = (AnnotatedElement) getAnnotatedReceiverType.invoke(executable);
-                            return annotatedReceiver == null
-                                    ? UNDEFINED
-                                    : Sort.describe((java.lang.reflect.Type) getType.invoke(annotatedReceiver), new Resolved(annotatedReceiver));
-                        } catch (InvocationTargetException exception) {
-                            throw new IllegalStateException("Could not access receiver type", exception);
+                            return resolve((AnnotatedElement) getAnnotatedReceiverType.invoke(executable));
                         } catch (IllegalAccessException exception) {
-                            throw new IllegalStateException("Error when accessing receiver type", exception.getCause());
+                            throw new IllegalStateException("Cannot access java.lang.reflect.Executable#getAnnotatedReceiverType", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.reflect.Executable#getAnnotatedReceiverType", exception.getCause());
+                        }
+                    }
+
+                    @Override
+                    public Generic resolve(AnnotatedElement annotatedType) {
+                        try {
+                            return annotatedType == null
+                                    ? UNDEFINED
+                                    : Sort.describe((java.lang.reflect.Type) getType.invoke(annotatedType), new Resolved(annotatedType));
+                        } catch (IllegalAccessException exception) {
+                            throw new IllegalStateException("Cannot access java.lang.reflect.AnnotatedType#getType", exception);
+                        } catch (InvocationTargetException exception) {
+                            throw new IllegalStateException("Error invoking java.lang.reflect.AnnotatedType#getType", exception.getCause());
                         }
                     }
 
@@ -5857,7 +5880,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveSuperClass(type);
+                    return AnnotationReader.DISPATCHER.resolveSuperClassType(type);
                 }
             }
 
@@ -5892,7 +5915,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolve(field);
+                    return AnnotationReader.DISPATCHER.resolveFieldType(field);
                 }
             }
 

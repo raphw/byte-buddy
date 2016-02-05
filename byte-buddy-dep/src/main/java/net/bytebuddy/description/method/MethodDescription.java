@@ -1014,6 +1014,11 @@ public interface MethodDescription extends TypeVariableSource,
         private final Object defaultValue;
 
         /**
+         * The receiver type of this method or {@code null} if the receiver type is defined implicitly.
+         */
+        private final TypeDescription.Generic receiverType;
+
+        /**
          * Creates a new latent method description. All provided types are attached to this instance before they are returned.
          *
          * @param declaringType The declaring type of the method.
@@ -1028,7 +1033,8 @@ public interface MethodDescription extends TypeVariableSource,
                     token.getParameterTokens(),
                     token.getExceptionTypes(),
                     token.getAnnotations(),
-                    token.getDefaultValue());
+                    token.getDefaultValue(),
+                    token.getReceiverType());
         }
 
         /**
@@ -1043,6 +1049,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @param exceptionTypes      This method's exception types.
          * @param declaredAnnotations The annotations of this method.
          * @param defaultValue        The default value of this method or {@code null} if no default annotation value is defined.
+         * @param receiverType        The receiver type of this method or {@code null} if the receiver type is defined implicitly.
          */
         public Latent(TypeDescription declaringType,
                       String internalName,
@@ -1052,7 +1059,8 @@ public interface MethodDescription extends TypeVariableSource,
                       List<? extends ParameterDescription.Token> parameterTokens,
                       List<? extends TypeDescription.Generic> exceptionTypes,
                       List<? extends AnnotationDescription> declaredAnnotations,
-                      Object defaultValue) {
+                      Object defaultValue,
+                      TypeDescription.Generic receiverType) {
             this.declaringType = declaringType;
             this.internalName = internalName;
             this.modifiers = modifiers;
@@ -1062,6 +1070,7 @@ public interface MethodDescription extends TypeVariableSource,
             this.exceptionTypes = exceptionTypes;
             this.declaredAnnotations = declaredAnnotations;
             this.defaultValue = defaultValue;
+            this.receiverType = receiverType;
         }
 
         @Override
@@ -1107,6 +1116,13 @@ public interface MethodDescription extends TypeVariableSource,
         @Override
         public Object getDefaultValue() {
             return defaultValue;
+        }
+
+        @Override
+        public TypeDescription.Generic getReceiverType() {
+            return receiverType == null
+                    ? super.getReceiverType()
+                    : receiverType.accept(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.of(this));
         }
 
         /**

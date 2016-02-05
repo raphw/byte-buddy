@@ -470,11 +470,11 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
         assertThat(type.getInterfaces().length, is(2));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().ofType(typeAnnotationType)
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 0).asList().ofType(typeAnnotationType)
                 .getValue(value, Integer.class), is(QUX * 2));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 1).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 1).asList().ofType(typeAnnotationType)
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 1).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 1).asList().ofType(typeAnnotationType)
                 .getValue(value, Integer.class), is(QUX * 3));
     }
 

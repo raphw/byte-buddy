@@ -27,10 +27,7 @@ import net.bytebuddy.utility.CompoundList;
 
 import java.io.*;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.lang.reflect.Type;
+import java.lang.reflect.*;
 import java.util.*;
 import java.util.jar.*;
 import java.util.logging.Logger;
@@ -1260,6 +1257,45 @@ public interface DynamicType {
             MethodDefinition<S> transform(MethodTransformer methodTransformer);
 
             /**
+             * A builder for a method definition with a receiver type.
+             *
+             * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
+             */
+            interface ReceiverTypeDefinition<U> extends MethodDefinition<U> {
+
+                /**
+                 * Defines the supplied (annotated) receiver type for the previously defined or matched method.
+                 *
+                 * @param receiverType The receiver type to define on the previously defined or matched method.
+                 * @return A new builder that is equal to this builder but with the given type defined as the
+                 * receiver on the previously defined or matched method.
+                 */
+                MethodDefinition<U> receiverType(AnnotatedElement receiverType);
+
+                /**
+                 * Defines the supplied (annotated) receiver type for the previously defined or matched method.
+                 *
+                 * @param receiverType The receiver type to define on the previously defined or matched method.
+                 * @return A new builder that is equal to this builder but with the given type defined as the
+                 * receiver on the previously defined or matched method.
+                 */
+                MethodDefinition<U> receiverType(TypeDescription.Generic receiverType);
+
+                /**
+                 * An abstract base implementation of a method definition that can accept a receiver type.
+                 *
+                 * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
+                 */
+                abstract class AbstractBase<V> extends MethodDefinition.AbstractBase<V> implements ReceiverTypeDefinition<V> {
+
+                    @Override
+                    public MethodDefinition<V> receiverType(AnnotatedElement receiverType) {
+                        return receiverType(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(receiverType));
+                    }
+                }
+            }
+
+            /**
              * A builder for defining an implementation of a method.
              *
              * @param <U> A loaded type that the built type is guaranteed to be a subclass of.
@@ -1285,14 +1321,14 @@ public interface DynamicType {
                  * @return A new builder where the previously defined or matched method is implemented by the
                  * supplied implementation.
                  */
-                MethodDefinition<U> intercept(Implementation implementation);
+                MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation);
 
                 /**
                  * Defines the previously defined or matched method to be {@code abstract}.
                  *
                  * @return A new builder where the previously defined or matched method is implemented to be abstract.
                  */
-                MethodDefinition<U> withoutCode();
+                MethodDefinition.ReceiverTypeDefinition<U> withoutCode();
 
                 /**
                  * Defines the previously defined or matched method to return the supplied value as an annotation default value. The
@@ -1303,7 +1339,7 @@ public interface DynamicType {
                  * @param value The value to be defined as a default value.
                  * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
                  */
-                MethodDefinition<U> defaultValue(Object value);
+                MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value);
 
                 /**
                  * Defines the previously defined or matched method to return the supplied value as an annotation default value. The
@@ -1313,7 +1349,7 @@ public interface DynamicType {
                  * @param type  The type of the annotation property.
                  * @return A builder where the previously defined or matched method is implemented to return an annotation default value.
                  */
-                MethodDefinition<U> defaultValue(Object value, Class<?> type);
+                MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value, Class<?> type);
 
                 /**
                  * A builder for optionally defining an implementation of a method.
@@ -1332,7 +1368,7 @@ public interface DynamicType {
                 abstract class AbstractBase<V> implements ImplementationDefinition<V> {
 
                     @Override
-                    public MethodDefinition<V> defaultValue(Object value, Class<?> type) {
+                    public MethodDefinition.ReceiverTypeDefinition<V> defaultValue(Object value, Class<?> type) {
                         return defaultValue(AnnotationDescription.ForLoadedAnnotation.describe(value, new TypeDescription.ForLoadedType(type)));
                     }
                 }
@@ -1471,22 +1507,22 @@ public interface DynamicType {
                             }
 
                             @Override
-                            public MethodDefinition<X> intercept(Implementation implementation) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> intercept(Implementation implementation) {
                                 return materialize().intercept(implementation);
                             }
 
                             @Override
-                            public MethodDefinition<X> withoutCode() {
+                            public MethodDefinition.ReceiverTypeDefinition<X> withoutCode() {
                                 return materialize().withoutCode();
                             }
 
                             @Override
-                            public MethodDefinition<X> defaultValue(Object value) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value) {
                                 return materialize().defaultValue(value);
                             }
 
                             @Override
-                            public MethodDefinition<X> defaultValue(Object value, Class<?> type) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value, Class<?> type) {
                                 return materialize().defaultValue(value, type);
                             }
 
@@ -1754,22 +1790,22 @@ public interface DynamicType {
                             }
 
                             @Override
-                            public MethodDefinition<X> intercept(Implementation implementation) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> intercept(Implementation implementation) {
                                 return materialize().intercept(implementation);
                             }
 
                             @Override
-                            public MethodDefinition<X> withoutCode() {
+                            public MethodDefinition.ReceiverTypeDefinition<X> withoutCode() {
                                 return materialize().withoutCode();
                             }
 
                             @Override
-                            public MethodDefinition<X> defaultValue(Object value) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value) {
                                 return materialize().defaultValue(value);
                             }
 
                             @Override
-                            public MethodDefinition<X> defaultValue(Object value, Class<?> type) {
+                            public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value, Class<?> type) {
                                 return materialize().defaultValue(value, type);
                             }
 
@@ -1896,22 +1932,22 @@ public interface DynamicType {
                                 }
 
                                 @Override
-                                public MethodDefinition<X> intercept(Implementation implementation) {
+                                public MethodDefinition.ReceiverTypeDefinition<X> intercept(Implementation implementation) {
                                     return materialize().intercept(implementation);
                                 }
 
                                 @Override
-                                public MethodDefinition<X> withoutCode() {
+                                public MethodDefinition.ReceiverTypeDefinition<X> withoutCode() {
                                     return materialize().withoutCode();
                                 }
 
                                 @Override
-                                public MethodDefinition<X> defaultValue(Object value) {
+                                public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value) {
                                     return materialize().defaultValue(value);
                                 }
 
                                 @Override
-                                public MethodDefinition<X> defaultValue(Object value, Class<?> type) {
+                                public MethodDefinition.ReceiverTypeDefinition<X> defaultValue(Object value, Class<?> type) {
                                     return materialize().defaultValue(value, type);
                                 }
 
@@ -2099,7 +2135,7 @@ public interface DynamicType {
                  *
                  * @param <V> A loaded type that the built type is guaranteed to be a subclass of.
                  */
-                protected abstract static class Adapter<V> extends MethodDefinition.AbstractBase<V> {
+                protected abstract static class Adapter<V> extends MethodDefinition.ReceiverTypeDefinition.AbstractBase<V> {
 
                     /**
                      * The handler that determines how a method is implemented.
@@ -3185,12 +3221,12 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition<U> intercept(Implementation implementation) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation) {
                         return materialize(new MethodRegistry.Handler.ForImplementation(implementation));
                     }
 
                     @Override
-                    public MethodDefinition<U> withoutCode() {
+                    public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
                                 token.getTypeVariableTokens(),
@@ -3203,7 +3239,7 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition<U> defaultValue(Object value) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value) {
                         return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
                                 ModifierContributor.Resolver.of(MethodManifestation.ABSTRACT).resolve(token.getModifiers()),
                                 token.getTypeVariableTokens(),
@@ -3221,7 +3257,7 @@ public interface DynamicType {
                      * @param handler The handler for implementing the method.
                      * @return A method definition for the given handler.
                      */
-                    private MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
+                    private MethodDefinition.ReceiverTypeDefinition<U> materialize(MethodRegistry.Handler handler) {
                         return new AnnotationAdapter(handler);
                     }
 
@@ -3478,7 +3514,7 @@ public interface DynamicType {
                          * @param handler The handler that determines how a method is implemented.
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler) {
-                            this(handler, MethodAttributeAppender.ForInstrumentedMethod.EXCLUDING_RECEIVER, MethodTransformer.NoOp.INSTANCE);
+                            this(handler, MethodAttributeAppender.ForInstrumentedMethod.INCLUDING_RECEIVER, MethodTransformer.NoOp.INSTANCE);
                         }
 
                         /**
@@ -3490,6 +3526,19 @@ public interface DynamicType {
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
                             super(handler, methodAttributeAppenderFactory, methodTransformer);
+                        }
+
+                        @Override
+                        public MethodDefinition<U> receiverType(TypeDescription.Generic receiverType) {
+                            return new MethodDefinitionAdapter(new MethodDescription.Token(token.getName(),
+                                    token.getModifiers(),
+                                    token.getTypeVariableTokens(),
+                                    token.getReturnType(),
+                                    token.getParameterTokens(),
+                                    token.getExceptionTypes(),
+                                    token.getAnnotations(),
+                                    token.getDefaultValue(),
+                                    receiverType)).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                         }
 
                         @Override
@@ -3602,17 +3651,17 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition<U> intercept(Implementation implementation) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation) {
                         return materialize(new MethodRegistry.Handler.ForImplementation(implementation));
                     }
 
                     @Override
-                    public MethodDefinition<U> withoutCode() {
+                    public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
                     }
 
                     @Override
-                    public MethodDefinition<U> defaultValue(Object value) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value) {
                         return materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
                     }
 
@@ -3622,7 +3671,7 @@ public interface DynamicType {
                      * @param handler The handler that implementes any method matched by this instances matcher.
                      * @return A method definition where any matched method is implemented by the supplied handler.
                      */
-                    private MethodDefinition<U> materialize(MethodRegistry.Handler handler) {
+                    private MethodDefinition.ReceiverTypeDefinition<U> materialize(MethodRegistry.Handler handler) {
                         return new AnnotationAdapter(handler);
                     }
 
@@ -3679,6 +3728,13 @@ public interface DynamicType {
                          */
                         protected AnnotationAdapter(MethodRegistry.Handler handler, MethodAttributeAppender.Factory methodAttributeAppenderFactory, MethodTransformer methodTransformer) {
                             super(handler, methodAttributeAppenderFactory, methodTransformer);
+                        }
+
+                        @Override
+                        public MethodDefinition<U> receiverType(TypeDescription.Generic receiverType) {
+                            return new AnnotationAdapter(handler,
+                                    new MethodAttributeAppender.Factory.Compound(methodAttributeAppenderFactory, new MethodAttributeAppender.ForReceiverType(receiverType)),
+                                    methodTransformer);
                         }
 
                         @Override
@@ -3788,22 +3844,22 @@ public interface DynamicType {
                     }
 
                     @Override
-                    public MethodDefinition<U> intercept(Implementation implementation) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> intercept(Implementation implementation) {
                         return interfaceType().intercept(implementation);
                     }
 
                     @Override
-                    public MethodDefinition<U> withoutCode() {
+                    public MethodDefinition.ReceiverTypeDefinition<U> withoutCode() {
                         return interfaceType().withoutCode();
                     }
 
                     @Override
-                    public MethodDefinition<U> defaultValue(Object value) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value) {
                         return interfaceType().defaultValue(value);
                     }
 
                     @Override
-                    public MethodDefinition<U> defaultValue(Object value, Class<?> type) {
+                    public MethodDefinition.ReceiverTypeDefinition<U> defaultValue(Object value, Class<?> type) {
                         return interfaceType().defaultValue(value, type);
                     }
 

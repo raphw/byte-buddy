@@ -583,8 +583,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getLoaded();
         assertThat(type.getInterfaces().length, is(1));
         assertThat(type.getInterfaces()[0], is((Object) Runnable.class));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterface(type, 0).asList().ofType(typeAnnotationType)
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveInterfaceType(type, 0).asList().ofType(typeAnnotationType)
                 .getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -602,8 +602,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .getLoaded()
                 .getDeclaredField(FOO);
         assertThat(field.getType(), is((Object) Object.class));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().ofType(typeAnnotationType)
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).asList().ofType(typeAnnotationType)
                 .getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -779,8 +779,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList().ofType(typeAnnotationType)
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).asList().ofType(typeAnnotationType)
                 .getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -799,8 +799,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardUpperBoundType(0).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardUpperBoundType(0).asList()
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).ofWildcardUpperBoundType(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).ofWildcardUpperBoundType(0).asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -819,8 +819,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardLowerBoundType(0).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).ofWildcardLowerBoundType(0).asList()
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).ofWildcardLowerBoundType(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).ofWildcardLowerBoundType(0).asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -840,8 +840,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList()
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofComponentType().asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofComponentType().asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -860,8 +860,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofComponentType().asList()
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofComponentType().asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofComponentType().asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -880,8 +880,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).ofTypeArgument(0).asList()
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).ofTypeArgument(0).asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -900,8 +900,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList()
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
@@ -922,8 +922,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded()
                 .getDeclaredField(FOO);
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList().size(), is(1));
-        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolve(field).asList()
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).asList().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveFieldType(field).asList()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 

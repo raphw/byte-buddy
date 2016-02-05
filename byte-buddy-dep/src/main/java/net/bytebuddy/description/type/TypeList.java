@@ -704,7 +704,7 @@ public interface TypeList extends FilterableList<TypeDescription, TypeList> {
 
                 @Override
                 protected AnnotationReader getAnnotationReader() {
-                    return AnnotationReader.DISPATCHER.resolveInterface(type, index);
+                    return AnnotationReader.DISPATCHER.resolveInterfaceType(type, index);
                 }
             }
         }

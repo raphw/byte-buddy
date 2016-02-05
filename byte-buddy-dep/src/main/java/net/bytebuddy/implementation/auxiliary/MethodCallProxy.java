@@ -204,7 +204,8 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.<ParameterDescription.Token>emptyList(),
                     Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.<AnnotationDescription>emptyList(),
-                    MethodDescription.NO_DEFAULT_VALUE);
+                    MethodDescription.NO_DEFAULT_VALUE,
+                    TypeDescription.Generic.UNDEFINED);
             nodes.put(callMethod.asSignatureToken(), new MethodGraph.Node.Simple(callMethod));
             MethodDescription runMethod = new MethodDescription.Latent(new TypeDescription.ForLoadedType(Runnable.class),
                     "run",
@@ -214,7 +215,8 @@ public class MethodCallProxy implements AuxiliaryType {
                     Collections.<ParameterDescription.Token>emptyList(),
                     Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
-                    MethodDescription.NO_DEFAULT_VALUE);
+                    MethodDescription.NO_DEFAULT_VALUE,
+                    TypeDescription.Generic.UNDEFINED);
             nodes.put(runMethod.asSignatureToken(), new MethodGraph.Node.Simple(runMethod));
             MethodGraph methodGraph = new MethodGraph.Simple(nodes);
             this.methodGraph = new MethodGraph.Linked.Delegation(methodGraph, methodGraph, Collections.<TypeDescription, MethodGraph>emptyMap());

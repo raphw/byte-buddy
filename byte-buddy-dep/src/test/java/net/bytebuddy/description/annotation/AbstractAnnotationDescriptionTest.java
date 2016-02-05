@@ -415,7 +415,8 @@ public abstract class AbstractAnnotationDescriptionTest {
                 Collections.<ParameterDescription.Token>emptyList(),
                 Collections.<TypeDescription.Generic>emptyList(),
                 Collections.<AnnotationDescription>emptyList(),
-                MethodDescription.NO_DEFAULT_VALUE)), is(rawValue));
+                MethodDescription.NO_DEFAULT_VALUE,
+                TypeDescription.Generic.UNDEFINED)), is(rawValue));
         assertThat(annotation.annotationType().getDeclaredMethod(methodName)
                 .invoke(describe(annotation).prepare(annotation.annotationType()).load()), is(loadedValue));
     }
