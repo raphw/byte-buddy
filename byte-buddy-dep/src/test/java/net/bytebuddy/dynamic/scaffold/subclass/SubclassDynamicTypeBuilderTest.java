@@ -513,7 +513,7 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
     @Test
     @JavaVersionRule.Enforce(8)
     @SuppressWarnings("unchecked")
-    public void testReceiverType() throws Exception {
+    public void testReceiverTypeDefinition() throws Exception {
         Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
         MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
         Method method = createPlain()
@@ -526,6 +526,27 @@ public class SubclassDynamicTypeBuilderTest extends AbstractDynamicTypeBuilderTe
                 .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredMethod(FOO);
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations().size(), is(1));
+        assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations()
+                .ofType(typeAnnotationType).getValue(value, Integer.class), is(BAZ));
+    }
+
+    @Test
+    @JavaVersionRule.Enforce(8)
+    @SuppressWarnings("unchecked")
+    public void testReceiverTypeInterception() throws Exception {
+        Class<? extends Annotation> typeAnnotationType = (Class<? extends Annotation>) Class.forName(TYPE_VARIABLE_NAME);
+        MethodDescription.InDefinedShape value = new TypeDescription.ForLoadedType(typeAnnotationType).getDeclaredMethods().filter(named(VALUE)).getOnly();
+        Method method = createPlain()
+                .method(named("toString"))
+                .intercept(StubMethod.INSTANCE)
+                .receiverType(TypeDescription.Generic.Builder.rawType(TargetType.class)
+                        .annotate(AnnotationDescription.Builder.ofType(typeAnnotationType).define(VALUE, BAZ).build())
+                        .build())
+                .make()
+                .load(typeAnnotationType.getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded()
+                .getDeclaredMethod("toString");
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations().size(), is(1));
         assertThat(TypeDescription.Generic.AnnotationReader.DISPATCHER.resolveReceiverType(method).getDeclaredAnnotations()
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(BAZ));
