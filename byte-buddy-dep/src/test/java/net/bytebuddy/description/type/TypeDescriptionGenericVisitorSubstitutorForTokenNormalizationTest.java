@@ -14,7 +14,8 @@ import org.mockito.Mockito;
 
 import java.util.Collections;
 
-import static org.hamcrest.core.Is.is;
+import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.sameInstance;
 import static org.junit.Assert.assertThat;
 import static org.mockito.Mockito.when;
 
@@ -26,7 +27,10 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription.Generic source, target;
+    private TypeDescription target;
+
+    @Mock
+    private TypeDescription.Generic source;
 
     @Mock
     private AnnotationDescription annotationDescription;
@@ -39,18 +43,22 @@ public class TypeDescriptionGenericVisitorSubstitutorForTokenNormalizationTest {
 
     @Test
     public void testTargetType() throws Exception {
-        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onSimpleType(TargetType.DESCRIPTION.asGenericType()), is(target));
+        TypeDescription.Generic typeDescription = new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target)
+                .onSimpleType(new TypeDescription.Generic.OfNonGenericType.Latent(TargetType.DESCRIPTION, Collections.singletonList(annotationDescription)));
+        assertThat(typeDescription.asErasure(), is(target));
+        assertThat(typeDescription.getDeclaredAnnotations(), is(Collections.singletonList(annotationDescription)));
     }
 
     @Test
     public void testNotTargetType() throws Exception {
-        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onSimpleType(source), is(source));
+        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onSimpleType(source), sameInstance(source));
     }
 
     @Test
     public void testTypeVariable() throws Exception {
-        assertThat(new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onTypeVariable(source),
-                is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription))));
+        TypeDescription.Generic typeDescription = new TypeDescription.Generic.Visitor.Substitutor.ForTokenNormalization(target).onTypeVariable(source);
+        assertThat(typeDescription, is((TypeDescription.Generic) new TypeDescription.Generic.OfTypeVariable.Symbolic(FOO, Collections.singletonList(annotationDescription))));
+        assertThat(typeDescription.getDeclaredAnnotations(), is(Collections.singletonList(annotationDescription)));
     }
 
     @Test

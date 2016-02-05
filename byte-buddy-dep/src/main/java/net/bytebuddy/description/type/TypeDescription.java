@@ -1890,7 +1890,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * The declaring type which is filled in for {@link TargetType}.
                      */
-                    private final Generic declaringType;
+                    private final TypeDescription declaringType;
 
                     /**
                      * The source which is used for locating type variables.
@@ -1900,10 +1900,20 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * Creates a visitor for attaching type variables.
                      *
+                     * @param declaringType      The declaring type which is filled in for {@link TargetType} in its erased form.
+                     * @param typeVariableSource The source which is used for locating type variables.
+                     */
+                    protected ForAttachment(TypeDefinition declaringType, TypeVariableSource typeVariableSource) {
+                        this(declaringType.asErasure(), typeVariableSource);
+                    }
+
+                    /**
+                     * Creates a visitor for attaching type variables.
+                     *
                      * @param declaringType      The declaring type which is filled in for {@link TargetType}.
                      * @param typeVariableSource The source which is used for locating type variables.
                      */
-                    protected ForAttachment(Generic declaringType, TypeVariableSource typeVariableSource) {
+                    protected ForAttachment(TypeDescription declaringType, TypeVariableSource typeVariableSource) {
                         this.declaringType = declaringType;
                         this.typeVariableSource = typeVariableSource;
                     }
@@ -1915,7 +1925,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * @return A substitutor that attaches visited types to the given field's type context.
                      */
                     public static ForAttachment of(FieldDescription fieldDescription) {
-                        return new ForAttachment(fieldDescription.getDeclaringType().asGenericType(), fieldDescription.getDeclaringType().asErasure());
+                        return new ForAttachment(fieldDescription.getDeclaringType(), fieldDescription.getDeclaringType().asErasure());
                     }
 
                     /**
@@ -1925,7 +1935,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * @return A substitutor that attaches visited types to the given method's type context.
                      */
                     public static ForAttachment of(MethodDescription methodDescription) {
-                        return new ForAttachment(methodDescription.getDeclaringType().asGenericType(), methodDescription);
+                        return new ForAttachment(methodDescription.getDeclaringType(), methodDescription);
                     }
 
                     /**
@@ -1935,7 +1945,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * @return A substitutor that attaches visited types to the given parameter's type context.
                      */
                     public static ForAttachment of(ParameterDescription parameterDescription) {
-                        return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType().asGenericType(), parameterDescription.getDeclaringMethod());
+                        return new ForAttachment(parameterDescription.getDeclaringMethod().getDeclaringType(), parameterDescription.getDeclaringMethod());
                     }
 
                     /**
@@ -1945,7 +1955,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * @return A substitutor that attaches visited types to the given type's type context.
                      */
                     public static ForAttachment of(TypeDescription typeDescription) {
-                        return new ForAttachment(typeDescription.asGenericType(), typeDescription);
+                        return new ForAttachment(typeDescription, typeDescription);
                     }
 
                     @Override
@@ -1961,7 +1971,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     @Override
                     protected Generic onSimpleType(Generic typeDescription) {
                         return typeDescription.represents(TargetType.class)
-                                ? declaringType
+                                ? new OfNonGenericType.Latent(declaringType, typeDescription.getDeclaredAnnotations())
                                 : typeDescription;
                     }
 
@@ -2290,7 +2300,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     /**
                      * The type description to substitute all {@link TargetType} representations with.
                      */
-                    private final TypeDescription.Generic typeDescription;
+                    private final TypeDescription typeDescription;
 
                     /**
                      * Creates a new token normalization visitor.
@@ -2298,22 +2308,13 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                      * @param typeDescription The type description to substitute all {@link TargetType}
                      */
                     public ForTokenNormalization(TypeDescription typeDescription) {
-                        this(typeDescription.asGenericType());
-                    }
-
-                    /**
-                     * Creates a new token normalization visitor.
-                     *
-                     * @param typeDescription The type description to substitute all {@link TargetType}
-                     */
-                    public ForTokenNormalization(Generic typeDescription) {
                         this.typeDescription = typeDescription;
                     }
 
                     @Override
                     protected Generic onSimpleType(Generic typeDescription) {
                         return typeDescription.represents(TargetType.class)
-                                ? this.typeDescription
+                                ? new OfNonGenericType.Latent(this.typeDescription, typeDescription.getDeclaredAnnotations())
                                 : typeDescription;
                     }
 

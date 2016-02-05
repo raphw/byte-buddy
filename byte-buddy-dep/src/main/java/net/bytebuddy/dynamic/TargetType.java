@@ -19,7 +19,7 @@ public final class TargetType {
      *
      * @param typeDescription The type description that might represent the {@link TargetType} placeholder.
      * @param targetType      The actual target type.
-     * @return The resolved type description.
+     * @return A description of the resolved type.
      */
     public static TypeDescription resolve(TypeDescription typeDescription, TypeDescription targetType) {
         int arity = 0;

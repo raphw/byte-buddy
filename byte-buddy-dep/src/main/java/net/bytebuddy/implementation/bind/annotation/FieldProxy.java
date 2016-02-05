@@ -1086,7 +1086,7 @@ public @interface FieldProxy {
                 protected LookupStrategy lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
                     return typeDescription.represents(void.class)
                             ? new LookupStrategy.ForHierarchy(fieldName)
-                            : new LookupStrategy.ForExplicitType(fieldName, typeDescription.represents(TargetType.class) ? instrumentedType : typeDescription);
+                            : new LookupStrategy.ForExplicitType(fieldName, TargetType.resolve(typeDescription, instrumentedType));
                 }
 
                 @Override

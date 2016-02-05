@@ -3,12 +3,14 @@ package net.bytebuddy.description.type;
 import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+import org.mockito.Mockito;
 
 import java.util.List;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
+import static org.mockito.Mockito.when;
 
 public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
 
@@ -52,7 +54,13 @@ public class TypeDescriptionGenericVisitorSubstitutorForAttachmentTest {
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.class).apply();
+        ObjectPropertyAssertion.of(TypeDescription.Generic.Visitor.Substitutor.ForAttachment.class)
+                .refine(new ObjectPropertyAssertion.Refinement<TypeDefinition>() {
+                    @Override
+                    public void apply(TypeDefinition mock) {
+                        when(mock.asErasure()).thenReturn(Mockito.mock(TypeDescription.class));
+                    }
+                }).apply();
     }
 
     @SuppressWarnings("unused")
