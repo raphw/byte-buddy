@@ -96,7 +96,8 @@ public class AndroidClassLoadingStrategy implements ClassLoadingStrategy {
     }
 
     /**
-     * Creates a new Android class loading strategy that uses the given folder for storing classes.
+     * Creates a new Android class loading strategy that uses the given folder for storing classes. The directory is not cleared
+     * by Byte Buddy after the application terminates. This remains the responsibility of the user.
      *
      * @param privateDirectory A directory that is <b>not shared with other applications</b> to be used for storing
      *                         generated classes and their processed forms.
