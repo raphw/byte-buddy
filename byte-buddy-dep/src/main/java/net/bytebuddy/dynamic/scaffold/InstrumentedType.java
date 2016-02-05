@@ -878,11 +878,11 @@ public interface InstrumentedType extends TypeDescription {
                         throw new IllegalStateException("Static method " + methodDescription + " defines a non-null receiver " + receiverType);
                     }
                 } else if (methodDescription.isConstructor()) {
-                    TypeDescription declaringType = getDeclaringType();
-                    if (!methodDescription.getDeclaringType().equals(declaringType == null ? this : declaringType)) {
-                        throw new IllegalStateException("Constructor " + methodDescription + " defines an illegal receiver " + receiverType);
+                    TypeDescription enclosingType = getEnclosingType();
+                    if (receiverType == null || !receiverType.asErasure().equals(enclosingType == null ? this : enclosingType)) {
+//                        throw new IllegalStateException("Constructor " + methodDescription + " defines an illegal receiver " + receiverType);
                     }
-                } else if (!equals(receiverType)) {
+                } else if (/* methodDescription.isMethod() */ receiverType == null || !equals(receiverType.asErasure())) {
                     throw new IllegalStateException("Method " + methodDescription + " defines an illegal receiver " + receiverType);
                 }
             }
