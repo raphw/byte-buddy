@@ -5,7 +5,7 @@ Byte Buddy release notes
 
 - Fixed interface assertion of the custom binder types to accept default methods.
 - Improved documentation.
-- 
+ 
 ### 26. January 2016: version 1.1.0
 
 - Refactored `AgentBuilder` API to be more streamlined with the general API and improved documentation.
