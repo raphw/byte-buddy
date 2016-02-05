@@ -880,7 +880,7 @@ public interface InstrumentedType extends TypeDescription {
                 } else if (methodDescription.isConstructor()) {
                     TypeDescription enclosingType = getEnclosingType();
                     if (receiverType == null || !receiverType.asErasure().equals(enclosingType == null ? this : enclosingType)) {
-//                        throw new IllegalStateException("Constructor " + methodDescription + " defines an illegal receiver " + receiverType);
+                        throw new IllegalStateException("Constructor " + methodDescription + " defines an illegal receiver " + receiverType);
                     }
                 } else if (/* methodDescription.isMethod() */ receiverType == null || !equals(receiverType.asErasure())) {
                     throw new IllegalStateException("Method " + methodDescription + " defines an illegal receiver " + receiverType);

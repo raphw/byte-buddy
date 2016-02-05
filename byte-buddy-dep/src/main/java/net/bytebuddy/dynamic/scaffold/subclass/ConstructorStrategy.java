@@ -9,6 +9,7 @@ import net.bytebuddy.implementation.SuperMethodCall;
 import net.bytebuddy.implementation.attribute.MethodAttributeAppender;
 import net.bytebuddy.matcher.LatentMatcher;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -54,7 +55,7 @@ public interface ConstructorStrategy {
          */
         NO_CONSTRUCTORS {
             @Override
-            public List<MethodDescription.Token> extractConstructors(TypeDescription superClass) {
+            protected List<MethodDescription.Token> doExtractConstructors(TypeDescription superClass) {
                 return Collections.emptyList();
             }
 
@@ -71,7 +72,7 @@ public interface ConstructorStrategy {
          */
         DEFAULT_CONSTRUCTOR {
             @Override
-            public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+            protected List<MethodDescription.Token> doExtractConstructors(TypeDescription instrumentedType) {
                 TypeDescription.Generic superClass = instrumentedType.getSuperClass();
                 MethodList<?> defaultConstructors = superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
@@ -100,11 +101,11 @@ public interface ConstructorStrategy {
          */
         IMITATE_SUPER_CLASS {
             @Override
-            public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+            protected List<MethodDescription.Token> doExtractConstructors(TypeDescription instrumentedType) {
                 TypeDescription.Generic superClass = instrumentedType.getSuperClass();
                 return (superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
-                        : superClass.getDeclaredMethods().filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
+                        : superClass.getDeclaredMethods().filter(isConstructor().and(isVisibleTo(instrumentedType)))).asTokenList(is(instrumentedType));
             }
 
             @Override
@@ -123,7 +124,7 @@ public interface ConstructorStrategy {
          */
         IMITATE_SUPER_CLASS_PUBLIC {
             @Override
-            public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+            protected List<MethodDescription.Token> doExtractConstructors(TypeDescription instrumentedType) {
                 TypeDescription.Generic superClass = instrumentedType.getSuperClass();
                 return (superClass == null
                         ? new MethodList.Empty<MethodDescription.InGenericShape>()
@@ -140,8 +141,34 @@ public interface ConstructorStrategy {
         };
 
         @Override
+        public List<MethodDescription.Token> extractConstructors(TypeDescription instrumentedType) {
+            List<MethodDescription.Token> tokens = doExtractConstructors(instrumentedType), stripped = new ArrayList<MethodDescription.Token>(tokens.size());
+            for (MethodDescription.Token token : tokens) {
+                stripped.add(new MethodDescription.Token(token.getName(),
+                        token.getModifiers(),
+                        token.getTypeVariableTokens(),
+                        token.getReturnType(),
+                        token.getParameterTokens(),
+                        token.getExceptionTypes(),
+                        token.getAnnotations(),
+                        token.getDefaultValue(),
+                        TypeDescription.Generic.UNDEFINED));
+            }
+            return stripped;
+        }
+
+        /**
+         * Extracts the relevant method tokens of the instrumented type's constructors.
+         *
+         * @param instrumentedType The type for which to extract the constructors.
+         * @return A list of relevant method tokens.
+         */
+        protected abstract List<MethodDescription.Token> doExtractConstructors(TypeDescription instrumentedType);
+
+        @Override
         public String toString() {
             return "ConstructorStrategy.Default." + name();
         }
+
     }
 }

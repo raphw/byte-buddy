@@ -1,9 +1,15 @@
 package net.bytebuddy.dynamic.scaffold.subclass;
 
 import net.bytebuddy.description.ByteCodeElement;
+import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
+import net.bytebuddy.description.type.TypeVariableToken;
 import net.bytebuddy.dynamic.MethodTransformer;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.MethodRegistry;
@@ -17,16 +23,20 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TestRule;
 import org.mockito.Mock;
+import org.objectweb.asm.Opcodes;
 
-import java.util.List;
+import java.util.Collections;
 
-import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
 
 public class ConstructorStrategyDefaultTest {
+
+    private static final String FOO  = "foo";
+
+    private static final int MODIFIERS = 42;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -38,13 +48,18 @@ public class ConstructorStrategyDefaultTest {
     private InstrumentedType instrumentedType;
 
     @Mock
-    private TypeDescription.Generic superClass;
+    private TypeDescription.Generic superClass, typeDescription;
 
     @Mock
-    private MethodList<?> methodList, filteredMethodList;
+    private MethodDescription.InGenericShape methodDescription;
 
     @Mock
-    private ByteCodeElement.Token.TokenList<MethodDescription.Token> filteredMethodTokenList;
+    private MethodDescription.Token token;
+
+    @Mock
+    private Object defaultValue;
+
+    private MethodDescription.Token stripped;
 
     @Before
     @SuppressWarnings("unchecked")
@@ -54,8 +69,28 @@ public class ConstructorStrategyDefaultTest {
                 any(MethodAttributeAppender.Factory.class),
                 any(MethodTransformer.class))).thenReturn(methodRegistry);
         when(instrumentedType.getSuperClass()).thenReturn(superClass);
-        when(superClass.getDeclaredMethods()).thenReturn((MethodList) methodList);
-        when(filteredMethodList.asTokenList(ElementMatchers.is(instrumentedType))).thenReturn(filteredMethodTokenList);
+        when(superClass.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InGenericShape>(methodDescription));
+        when(methodDescription.isConstructor()).thenReturn(true);
+        when(methodDescription.isVisibleTo(instrumentedType)).thenReturn(true);
+        when(methodDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(token.getName()).thenReturn(FOO);
+        when(token.getModifiers()).thenReturn(MODIFIERS);
+        when(token.getTypeVariableTokens()).thenReturn(new ByteCodeElement.Token.TokenList<TypeVariableToken>());
+        when(token.getReturnType()).thenReturn(typeDescription);
+        when(token.getParameterTokens()).thenReturn(new ByteCodeElement.Token.TokenList<ParameterDescription.Token>());
+        when(token.getExceptionTypes()).thenReturn(new TypeList.Generic.Empty());
+        when(token.getAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(token.getDefaultValue()).thenReturn(defaultValue);
+        when(token.getReceiverType()).thenReturn(typeDescription);
+        stripped = new MethodDescription.Token(FOO,
+                MODIFIERS,
+                Collections.<TypeVariableToken>emptyList(),
+                typeDescription,
+                Collections.<ParameterDescription.Token>emptyList(),
+                Collections.<TypeDescription.Generic>emptyList(),
+                Collections.<AnnotationDescription>emptyList(),
+                defaultValue,
+                TypeDescription.Generic.UNDEFINED);
     }
 
     @Test
@@ -69,9 +104,7 @@ public class ConstructorStrategyDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testImitateSuperClassStrategy() throws Exception {
-        when(methodList.filter(isConstructor().<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn((MethodList) filteredMethodList);
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.extractConstructors(instrumentedType),
-                is((List<MethodDescription.Token>) filteredMethodTokenList));
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
@@ -85,9 +118,8 @@ public class ConstructorStrategyDefaultTest {
     @Test
     @SuppressWarnings("unchecked")
     public void testImitateSuperClassPublicStrategy() throws Exception {
-        when(methodList.filter(isPublic().and(isConstructor()))).thenReturn((MethodList) filteredMethodList);
-        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.extractConstructors(instrumentedType),
-                is((List<MethodDescription.Token>) filteredMethodTokenList));
+        when(methodDescription.getModifiers()).thenReturn(Opcodes.ACC_PUBLIC);
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
         assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
@@ -99,28 +131,31 @@ public class ConstructorStrategyDefaultTest {
     }
 
     @Test
+    public void testImitateSuperClassPublicStrategyDoesNotSeeNonPublic() throws Exception {
+        when(methodDescription.getModifiers()).thenReturn(0);
+        assertThat(ConstructorStrategy.Default.IMITATE_SUPER_CLASS_PUBLIC.extractConstructors(instrumentedType).size(), is(0));
+    }
+
+    @Test
     @SuppressWarnings("unchecked")
     public void testDefaultConstructorStrategy() throws Exception {
-        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType)))).thenReturn((MethodList) filteredMethodList);
-        when(filteredMethodList.size()).thenReturn(1);
-        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType),
-                is((List<MethodDescription.Token>) filteredMethodTokenList));
+        when(methodDescription.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InGenericShape>());
+        assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType), is(Collections.singletonList(stripped)));
         assertThat(ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.inject(methodRegistry), is(methodRegistry));
         verify(methodRegistry).append(any(LatentMatcher.class),
                 any(MethodRegistry.Handler.class),
                 eq(MethodAttributeAppender.NoOp.INSTANCE),
                 eq(MethodTransformer.NoOp.INSTANCE));
         verifyNoMoreInteractions(methodRegistry);
-        verify(instrumentedType, atLeastOnce()).getSuperClass();
+        verify(instrumentedType).getSuperClass();
         verifyNoMoreInteractions(instrumentedType);
     }
 
     @Test(expected = IllegalArgumentException.class)
     @SuppressWarnings("unchecked")
     public void testDefaultConstructorStrategyNoDefault() throws Exception {
-        when(methodList.filter(isConstructor().and(takesArguments(0)).<MethodDescription>and(isVisibleTo(instrumentedType))))
-                .thenReturn((MethodList) filteredMethodList);
-        when(filteredMethodList.size()).thenReturn(0);
+        when(methodDescription.getParameters())
+                .thenReturn(new ParameterList.Explicit<ParameterDescription.InGenericShape>(mock(ParameterDescription.InGenericShape.class)));
         ConstructorStrategy.Default.DEFAULT_CONSTRUCTOR.extractConstructors(instrumentedType);
     }
 
