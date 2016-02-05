@@ -163,7 +163,7 @@ public @interface Morph {
             }
             MethodList<?> methodCandidates = typeDescription.getDeclaredMethods().filter(isAbstract());
             if (methodCandidates.size() != 1) {
-                throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
+                throw new IllegalArgumentException(typeDescription + " must declare exactly one abstract method");
             }
             MethodDescription methodDescription = methodCandidates.getOnly();
             if (!methodDescription.getReturnType().asErasure().represents(Object.class)) {

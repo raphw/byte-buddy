@@ -201,7 +201,7 @@ public @interface FieldProxy {
             }
             MethodList<?> methodCandidates = typeDescription.getDeclaredMethods().filter(isAbstract());
             if (methodCandidates.size() != 1) {
-                throw new IllegalArgumentException(typeDescription + " must declare exactly one non-static method");
+                throw new IllegalArgumentException(typeDescription + " must declare exactly one abstract method");
             }
             return methodCandidates.getOnly();
         }
