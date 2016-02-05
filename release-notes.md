@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 5. February 2016: version 1.2.0
+
+- Added support for receiver type retention during type redefinition and rebasement.
+- Added support for receiver type definitions.
+
 ### 5. February 2016: version 1.1.1
 
 - Fixed interface assertion of the custom binder types to accept default methods.
