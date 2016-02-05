@@ -1155,12 +1155,76 @@ public class InstrumentedTypeDefaultTest {
                 .validated();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testNonNullReceiverStaticMethod() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        Opcodes.ACC_STATIC,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInconsistentReceiverNonStaticMethod() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(FOO,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInconsistentReceiverConstructor() throws Exception {
+        makePlainInstrumentedType()
+                .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.OBJECT))
+                .validated();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInconsistentReceiverConstructorInnerClass() throws Exception {
+        InstrumentedType.Default.of(new TypeDescription.ForLoadedType(Foo.class))
+                .withMethod(new MethodDescription.Token(MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                        ModifierContributor.EMPTY_MASK,
+                        Collections.<TypeVariableToken>emptyList(),
+                        TypeDescription.Generic.OBJECT,
+                        Collections.<ParameterDescription.Token>emptyList(),
+                        Collections.<TypeDescription.Generic>emptyList(),
+                        Collections.<AnnotationDescription>emptyList(),
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDefinition.Sort.describe(Foo.class)))
+                .validated();
+    }
+
     public @interface SampleAnnotation {
         /* empty */
     }
 
     @Target({})
     public @interface IncompatibleAnnotation {
+        /* empty */
+    }
+
+    private class Foo {
         /* empty */
     }
 }

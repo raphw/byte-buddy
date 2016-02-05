@@ -1492,7 +1492,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     public Boolean onNonGenericType(Generic typeDescription) {
                         return typeDescription.asErasure().isAssignableTo(Throwable.class);
                     }
-                };
+                },
+
+                /**
+                 * A validator for a method receiver type.
+                 */
+                RECEIVER(false, false, false, false);
 
                 /**
                  * {@code true} if this validator accepts array types.

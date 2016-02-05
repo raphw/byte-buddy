@@ -870,6 +870,21 @@ public interface InstrumentedType extends TypeDescription {
                 if (defaultValue != null && !methodDescription.isDefaultValue(defaultValue)) {
                     throw new IllegalStateException("Illegal default value " + defaultValue + "for " + methodDescription);
                 }
+                Generic receiverType = methodDescription.getReceiverType();
+                if (receiverType != null && !receiverType.accept(Generic.Visitor.Validator.RECEIVER)) {
+                    throw new IllegalStateException("Illegal receiver type " + receiverType + " for " + methodDescription);
+                } else if (methodDescription.isStatic()) {
+                    if (receiverType != null) {
+                        throw new IllegalStateException("Static method " + methodDescription + " defines a non-null receiver " + receiverType);
+                    }
+                } else if (methodDescription.isConstructor()) {
+                    TypeDescription declaringType = getDeclaringType();
+                    if (!methodDescription.getDeclaringType().equals(declaringType == null ? this : declaringType)) {
+                        throw new IllegalStateException("Constructor " + methodDescription + " defines an illegal receiver " + receiverType);
+                    }
+                } else if (!equals(receiverType)) {
+                    throw new IllegalStateException("Method " + methodDescription + " defines an illegal receiver " + receiverType);
+                }
             }
             return this;
         }
