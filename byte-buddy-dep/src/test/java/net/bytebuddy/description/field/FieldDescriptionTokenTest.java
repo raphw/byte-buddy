@@ -29,6 +29,9 @@ public class FieldDescriptionTokenTest {
     private TypeDescription.Generic type, visitedType;
 
     @Mock
+    private TypeDescription typeDescription, rawType;
+
+    @Mock
     private AnnotationDescription annotation;
 
     @Mock
@@ -55,6 +58,13 @@ public class FieldDescriptionTokenTest {
     public void testVisitor() throws Exception {
         assertThat(new FieldDescription.Token(FOO, MODIFIERS, type, Collections.singletonList(annotation)).accept(visitor),
                 is(new FieldDescription.Token(FOO, MODIFIERS, visitedType, Collections.singletonList(annotation))));
+    }
+
+    @Test
+    public void testSignatureTokenTransformation() throws Exception {
+        when(type.accept(new TypeDescription.Generic.Visitor.Reducing(typeDescription))).thenReturn(rawType);
+        assertThat(new FieldDescription.Token(FOO, MODIFIERS, type, Collections.singletonList(annotation)).asSignatureToken(typeDescription),
+                is(new FieldDescription.SignatureToken(FOO, rawType)));
     }
 
     @Test

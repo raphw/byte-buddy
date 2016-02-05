@@ -479,6 +479,16 @@ public interface FieldDescription extends ByteCodeElement,
                     annotations);
         }
 
+        /**
+         * Creates a signature token that represents the method that is represented by this token.
+         *
+         * @param declaringType The declaring type of the field that this token represents.
+         * @return A signature token representing this token.
+         */
+        public SignatureToken asSignatureToken(TypeDescription declaringType) {
+            return new SignatureToken(name, type.accept(new TypeDescription.Generic.Visitor.Reducing(declaringType)));
+        }
+
         @Override
         public boolean equals(Object other) {
             if (this == other) return true;

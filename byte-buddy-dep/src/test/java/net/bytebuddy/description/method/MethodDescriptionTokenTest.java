@@ -29,13 +29,16 @@ public class MethodDescriptionTokenTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription.Generic returnType, visitedReturnType, exceptionType, visitedExceptionType;
+    private TypeDescription.Generic returnType, visitedReturnType, exceptionType, visitedExceptionType, parameterType;
 
     @Mock
     private ParameterDescription.Token parameterToken, visitedParameterToken;
 
     @Mock
     private TypeVariableToken typeVariableToken, visitedTypeVariableToken;
+
+    @Mock
+    private TypeDescription typeDescription, rawReturnType, rawParameterType;
 
     @Mock
     private AnnotationDescription annotation;
@@ -97,6 +100,24 @@ public class MethodDescriptionTokenTest {
                         Collections.singletonList(visitedExceptionType),
                         Collections.singletonList(annotation),
                         defaultValue)));
+    }
+
+    @Test
+    public void testSignatureTokenTransformation() throws Exception {
+        when(returnType.accept(new TypeDescription.Generic.Visitor.Reducing(typeDescription, Collections.singletonList(typeVariableToken))))
+                .thenReturn(rawReturnType);
+        when(parameterToken.getType()).thenReturn(parameterType);
+        when(parameterType.accept(new TypeDescription.Generic.Visitor.Reducing(typeDescription, Collections.singletonList(typeVariableToken))))
+                .thenReturn(rawParameterType);
+        assertThat(new MethodDescription.Token(FOO,
+                        MODIFIERS,
+                        Collections.singletonList(typeVariableToken),
+                        returnType,
+                        Collections.singletonList(parameterToken),
+                        Collections.singletonList(exceptionType),
+                        Collections.singletonList(annotation),
+                        defaultValue).asSignatureToken(typeDescription),
+                is(new MethodDescription.SignatureToken(FOO, rawReturnType, Collections.singletonList(rawParameterType))));
     }
 
     @Test

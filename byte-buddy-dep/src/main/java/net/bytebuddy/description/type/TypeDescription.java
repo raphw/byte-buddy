@@ -2341,6 +2341,94 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                     }
                 }
             }
+
+            /**
+             * A visitor that reduces a detached generic type to its erasure.
+             */
+            class Reducing implements Visitor<TypeDescription> {
+
+                /**
+                 * The generic type's declaring type.
+                 */
+                private final TypeDescription declaringType;
+
+                /**
+                 * Any type variables that are directly declared by the member that declares the type being reduced.
+                 */
+                private final List<? extends TypeVariableToken> typeVariableTokens;
+
+                /**
+                 * Creates a new reducing type visitor.
+                 *
+                 * @param declaringType The generic type's declaring type.
+                 */
+                public Reducing(TypeDescription declaringType) {
+                    this(declaringType, Collections.<TypeVariableToken>emptyList());
+                }
+
+                /**
+                 * Creates a new reducing type visitor.
+                 *
+                 * @param declaringType      The generic type's declaring type.
+                 * @param typeVariableTokens Any type variables that are directly declared by the member that declares the type being reduced.
+                 */
+                public Reducing(TypeDescription declaringType, List<? extends TypeVariableToken> typeVariableTokens) {
+                    this.declaringType = declaringType;
+                    this.typeVariableTokens = typeVariableTokens;
+                }
+
+                @Override
+                public TypeDescription onGenericArray(Generic genericArray) {
+                    return genericArray.asErasure();
+                }
+
+                @Override
+                public TypeDescription onWildcard(Generic wildcard) {
+                    throw new IllegalStateException("A wildcard cannot be a top-level type: " + wildcard);
+                }
+
+                @Override
+                public TypeDescription onParameterizedType(Generic parameterizedType) {
+                    return parameterizedType.asErasure();
+                }
+
+                @Override
+                public TypeDescription onTypeVariable(Generic typeVariable) {
+                    for (TypeVariableToken typeVariableToken : typeVariableTokens) {
+                        if (typeVariable.getSymbol().equals(typeVariableToken.getSymbol())) {
+                            return typeVariableToken.getBounds().get(0).accept(this);
+                        }
+                    }
+                    return declaringType.findVariable(typeVariable.getSymbol()).asErasure();
+                }
+
+                @Override
+                public TypeDescription onNonGenericType(Generic typeDescription) {
+                    return typeDescription.asErasure();
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    return this == other || !(other == null || getClass() != other.getClass())
+                            && declaringType.equals(((Reducing) other).declaringType)
+                            && typeVariableTokens.equals(((Reducing) other).typeVariableTokens);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = declaringType.hashCode();
+                    result = 31 * result + typeVariableTokens.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TypeDescription.Generic.Visitor.Reducing{" +
+                            "declaringType=" + declaringType +
+                            ", typeVariableTokens=" + typeVariableTokens +
+                            '}';
+                }
+            }
         }
 
         /**
@@ -3835,7 +3923,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
             }
 
             /**
-             *  A chained annotation reader for reading an owner type.
+             * A chained annotation reader for reading an owner type.
              */
             class ForOwnerType extends Delegator.Chained {
 

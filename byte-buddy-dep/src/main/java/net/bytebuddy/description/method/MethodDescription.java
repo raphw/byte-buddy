@@ -243,6 +243,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * Returns this methods receiver type. A receiver type is undefined for {@code static} methods
      * where {@code null} is returned.
+     *
      * @return This method's (annotated) receiver type.
      */
     TypeDescription.Generic getReceiverType();
@@ -1460,6 +1461,21 @@ public interface MethodDescription extends TypeVariableSource,
                     getExceptionTypes().accept(visitor),
                     annotations,
                     defaultValue);
+        }
+
+        /**
+         * Creates a signature token that represents the method that is represented by this token.
+         *
+         * @param declaringType The declaring type of the method that this token represents.
+         * @return A signature token representing this token.
+         */
+        public SignatureToken asSignatureToken(TypeDescription declaringType) {
+            TypeDescription.Generic.Visitor<TypeDescription> visitor = new TypeDescription.Generic.Visitor.Reducing(declaringType, typeVariables);
+            List<TypeDescription> parameters = new ArrayList<TypeDescription>(parameterTokens.size());
+            for (ParameterDescription.Token parameter : parameterTokens) {
+                parameters.add(parameter.getType().accept(visitor));
+            }
+            return new SignatureToken(name, returnType.accept(visitor), parameters);
         }
 
         @Override
