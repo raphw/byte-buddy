@@ -147,7 +147,8 @@ public interface MethodTransformer {
                             token.getParameterTokens(),
                             token.getExceptionTypes(),
                             token.getAnnotations(),
-                            token.getDefaultValue());
+                            token.getDefaultValue(),
+                            token.getReceiverType());
                 }
 
                 @Override

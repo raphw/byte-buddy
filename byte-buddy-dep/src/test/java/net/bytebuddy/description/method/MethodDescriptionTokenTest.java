@@ -29,7 +29,7 @@ public class MethodDescriptionTokenTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private TypeDescription.Generic returnType, visitedReturnType, exceptionType, visitedExceptionType, parameterType;
+    private TypeDescription.Generic returnType, visitedReturnType, exceptionType, visitedExceptionType, parameterType, receiverType, visitedReceiverType;
 
     @Mock
     private ParameterDescription.Token parameterToken, visitedParameterToken;
@@ -60,6 +60,7 @@ public class MethodDescriptionTokenTest {
         when(visitedExceptionType.asGenericType()).thenReturn(visitedExceptionType);
         when(exceptionType.accept((TypeDescription.Generic.Visitor) visitor)).thenReturn(visitedExceptionType);
         when(parameterToken.accept(visitor)).thenReturn(visitedParameterToken);
+        when(receiverType.accept((TypeDescription.Generic.Visitor) visitor)).thenReturn(visitedReceiverType);
     }
 
     @Test
@@ -71,7 +72,8 @@ public class MethodDescriptionTokenTest {
                 Collections.singletonList(parameterToken),
                 Collections.singletonList(exceptionType),
                 Collections.singletonList(annotation),
-                defaultValue);
+                defaultValue,
+                receiverType);
         assertThat(token.getName(), is(FOO));
         assertThat(token.getModifiers(), is(MODIFIERS));
         assertThat(token.getTypeVariableTokens(), is(Collections.singletonList(typeVariableToken)));
@@ -80,6 +82,7 @@ public class MethodDescriptionTokenTest {
         assertThat(token.getExceptionTypes(), is(Collections.singletonList(exceptionType)));
         assertThat(token.getAnnotations(), is(Collections.singletonList(annotation)));
         assertThat(token.getDefaultValue(), is(defaultValue));
+        assertThat(token.getReceiverType(), is(receiverType));
     }
 
     @Test
@@ -91,7 +94,8 @@ public class MethodDescriptionTokenTest {
                         Collections.singletonList(parameterToken),
                         Collections.singletonList(exceptionType),
                         Collections.singletonList(annotation),
-                        defaultValue).accept(visitor),
+                        defaultValue,
+                        receiverType).accept(visitor),
                 is(new MethodDescription.Token(FOO,
                         MODIFIERS,
                         Collections.singletonList(visitedTypeVariableToken),
@@ -99,7 +103,8 @@ public class MethodDescriptionTokenTest {
                         Collections.singletonList(visitedParameterToken),
                         Collections.singletonList(visitedExceptionType),
                         Collections.singletonList(annotation),
-                        defaultValue)));
+                        defaultValue,
+                        visitedReceiverType)));
     }
 
     @Test
@@ -116,7 +121,8 @@ public class MethodDescriptionTokenTest {
                         Collections.singletonList(parameterToken),
                         Collections.singletonList(exceptionType),
                         Collections.singletonList(annotation),
-                        defaultValue).asSignatureToken(typeDescription),
+                        defaultValue,
+                        receiverType).asSignatureToken(typeDescription),
                 is(new MethodDescription.SignatureToken(FOO, rawReturnType, Collections.singletonList(rawParameterType))));
     }
 

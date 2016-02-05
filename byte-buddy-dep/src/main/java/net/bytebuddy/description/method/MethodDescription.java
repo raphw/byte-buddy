@@ -611,6 +611,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         @Override
         public MethodDescription.Token asToken(ElementMatcher<? super TypeDescription> matcher) {
+            TypeDescription.Generic receiverType = getReceiverType();
             return new MethodDescription.Token(getInternalName(),
                     getModifiers(),
                     getTypeVariables().asTokenList(matcher),
@@ -618,7 +619,10 @@ public interface MethodDescription extends TypeVariableSource,
                     getParameters().asTokenList(matcher),
                     getExceptionTypes().accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)),
                     getDeclaredAnnotations(),
-                    getDefaultValue());
+                    getDefaultValue(),
+                    receiverType == null
+                            ? TypeDescription.Generic.UNDEFINED
+                            : receiverType.accept(new TypeDescription.Generic.Visitor.Substitutor.ForDetachment(matcher)));
         }
 
         @Override
@@ -1283,7 +1287,7 @@ public interface MethodDescription extends TypeVariableSource,
         /**
          * A list of tokens representing the method's type variables.
          */
-        private final List<? extends TypeVariableToken> typeVariables;
+        private final List<? extends TypeVariableToken> typeVariableTokens;
 
         /**
          * The return type of the represented method.
@@ -1311,7 +1315,13 @@ public interface MethodDescription extends TypeVariableSource,
         private final Object defaultValue;
 
         /**
+         * The receiver type of the represented method or {@code null} if the receiver type is implicit.
+         */
+        private final TypeDescription.Generic receiverType;
+
+        /**
          * Creates a new method token representing a constructor without any parameters, exception types, type variables or annotations.
+         * All types must be represented in an detached format.
          *
          * @param modifiers The constructor's modifiers.
          */
@@ -1321,6 +1331,7 @@ public interface MethodDescription extends TypeVariableSource,
 
         /**
          * Creates a new method token representing a method without any parameters, exception types, type variables or annotations.
+         * All types must be represented in an detached format.
          *
          * @param name       The name of the method.
          * @param modifiers  The modifiers of the method.
@@ -1331,7 +1342,7 @@ public interface MethodDescription extends TypeVariableSource,
         }
 
         /**
-         * Creates a new method token with simple values.
+         * Creates a new method token with simple values. All types must be represented in an detached format.
          *
          * @param name           The internal name of the represented method.
          * @param modifiers      The modifiers of the represented method.
@@ -1346,37 +1357,41 @@ public interface MethodDescription extends TypeVariableSource,
                     new ParameterDescription.Token.TypeList(parameterTypes),
                     Collections.<TypeDescription.Generic>emptyList(),
                     Collections.<AnnotationDescription>emptyList(),
-                    NO_DEFAULT_VALUE);
+                    NO_DEFAULT_VALUE,
+                    TypeDescription.Generic.UNDEFINED);
         }
 
         /**
-         * Creates a new token for a method description.
+         * Creates a new token for a method description. All types must be represented in an detached format.
          *
-         * @param name            The internal name of the represented method.
-         * @param modifiers       The modifiers of the represented method.
-         * @param typeVariables   The type variables of the the represented method.
-         * @param returnType      The return type of the represented method.
-         * @param parameterTokens The parameter tokens of the represented method.
-         * @param exceptionTypes  The exception types of the represented method.
-         * @param annotations     The annotations of the represented method.
-         * @param defaultValue    The default value of the represented method or {@code null} if no such value exists.
+         * @param name               The internal name of the represented method.
+         * @param modifiers          The modifiers of the represented method.
+         * @param typeVariableTokens The type variables of the the represented method.
+         * @param returnType         The return type of the represented method.
+         * @param parameterTokens    The parameter tokens of the represented method.
+         * @param exceptionTypes     The exception types of the represented method.
+         * @param annotations        The annotations of the represented method.
+         * @param defaultValue       The default value of the represented method or {@code null} if no such value exists.
+         * @param receiverType       The receiver type of the represented method or {@code null} if the receiver type is implicit.
          */
         public Token(String name,
                      int modifiers,
-                     List<? extends TypeVariableToken> typeVariables,
+                     List<? extends TypeVariableToken> typeVariableTokens,
                      TypeDescription.Generic returnType,
                      List<? extends ParameterDescription.Token> parameterTokens,
                      List<? extends TypeDescription.Generic> exceptionTypes,
                      List<? extends AnnotationDescription> annotations,
-                     Object defaultValue) {
+                     Object defaultValue,
+                     TypeDescription.Generic receiverType) {
             this.name = name;
             this.modifiers = modifiers;
-            this.typeVariables = typeVariables;
+            this.typeVariableTokens = typeVariableTokens;
             this.returnType = returnType;
             this.parameterTokens = parameterTokens;
             this.exceptionTypes = exceptionTypes;
             this.annotations = annotations;
             this.defaultValue = defaultValue;
+            this.receiverType = receiverType;
         }
 
         /**
@@ -1403,7 +1418,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @return A a list of tokens representing the method's type variables.
          */
         public TokenList<TypeVariableToken> getTypeVariableTokens() {
-            return new TokenList<TypeVariableToken>(typeVariables);
+            return new TokenList<TypeVariableToken>(typeVariableTokens);
         }
 
         /**
@@ -1451,6 +1466,15 @@ public interface MethodDescription extends TypeVariableSource,
             return defaultValue;
         }
 
+        /**
+         * Returns the receiver type of this token or {@code null} if the receiver type is implicit.
+         *
+         * @return The receiver type of this token or {@code null} if the receiver type is implicit.
+         */
+        public TypeDescription.Generic getReceiverType() {
+            return receiverType;
+        }
+
         @Override
         public Token accept(TypeDescription.Generic.Visitor<? extends TypeDescription.Generic> visitor) {
             return new Token(name,
@@ -1460,7 +1484,10 @@ public interface MethodDescription extends TypeVariableSource,
                     getParameterTokens().accept(visitor),
                     getExceptionTypes().accept(visitor),
                     annotations,
-                    defaultValue);
+                    defaultValue,
+                    receiverType == null
+                            ? TypeDescription.Generic.UNDEFINED
+                            : receiverType.accept(visitor));
         }
 
         /**
@@ -1470,7 +1497,7 @@ public interface MethodDescription extends TypeVariableSource,
          * @return A signature token representing this token.
          */
         public SignatureToken asSignatureToken(TypeDescription declaringType) {
-            TypeDescription.Generic.Visitor<TypeDescription> visitor = new TypeDescription.Generic.Visitor.Reducing(declaringType, typeVariables);
+            TypeDescription.Generic.Visitor<TypeDescription> visitor = new TypeDescription.Generic.Visitor.Reducing(declaringType, typeVariableTokens);
             List<TypeDescription> parameters = new ArrayList<TypeDescription>(parameterTokens.size());
             for (ParameterDescription.Token parameter : parameterTokens) {
                 parameters.add(parameter.getType().accept(visitor));
@@ -1485,24 +1512,26 @@ public interface MethodDescription extends TypeVariableSource,
             Token token = (Token) other;
             return modifiers == token.modifiers
                     && name.equals(token.name)
-                    && typeVariables.equals(token.typeVariables)
+                    && typeVariableTokens.equals(token.typeVariableTokens)
                     && returnType.equals(token.returnType)
                     && parameterTokens.equals(token.parameterTokens)
                     && exceptionTypes.equals(token.exceptionTypes)
                     && annotations.equals(token.annotations)
-                    && (defaultValue != null ? defaultValue.equals(token.defaultValue) : token.defaultValue == null);
+                    && (defaultValue != null ? defaultValue.equals(token.defaultValue) : token.defaultValue == null)
+                    && (receiverType != null ? receiverType.equals(token.receiverType) : token.receiverType == null);
         }
 
         @Override
         public int hashCode() {
             int result = name.hashCode();
             result = 31 * result + modifiers;
-            result = 31 * result + typeVariables.hashCode();
+            result = 31 * result + typeVariableTokens.hashCode();
             result = 31 * result + returnType.hashCode();
             result = 31 * result + parameterTokens.hashCode();
             result = 31 * result + exceptionTypes.hashCode();
             result = 31 * result + annotations.hashCode();
             result = 31 * result + (defaultValue != null ? defaultValue.hashCode() : 0);
+            result = 31 * result + (receiverType != null ? receiverType.hashCode() : 0);
             return result;
         }
 
@@ -1511,12 +1540,13 @@ public interface MethodDescription extends TypeVariableSource,
             return "MethodDescription.Token{" +
                     "name='" + name + '\'' +
                     ", modifiers=" + modifiers +
-                    ", typeVariables=" + typeVariables +
+                    ", typeVariableTokens=" + typeVariableTokens +
                     ", returnType=" + returnType +
                     ", parameterTokens=" + parameterTokens +
                     ", exceptionTypes=" + exceptionTypes +
                     ", annotations=" + annotations +
                     ", defaultValue=" + defaultValue +
+                    ", receiverType=" + receiverType +
                     '}';
         }
     }

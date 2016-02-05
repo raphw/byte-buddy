@@ -1056,7 +1056,8 @@ public abstract class AbstractDynamicTypeBuilderTest {
                             Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, QUX).build()))),
                     Collections.singletonList(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(Exception.class)),
                     Collections.singletonList(AnnotationDescription.Builder.ofType(SampleAnnotation.class).define(FOO, BAR).build()),
-                    MethodDescription.NO_DEFAULT_VALUE));
+                    MethodDescription.NO_DEFAULT_VALUE,
+                    TypeDescription.Generic.UNDEFINED));
         }
 
         @Override

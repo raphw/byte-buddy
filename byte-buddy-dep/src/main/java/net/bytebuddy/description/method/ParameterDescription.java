@@ -949,6 +949,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
 
         /**
          * Creates a new parameter token without an explicit name, an explicit modifier or annotations.
+         * The parameter type must be represented in its detached format.
          *
          * @param type The type of the represented parameter.
          */
@@ -957,7 +958,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         /**
-         * Creates a new parameter token without an explicit name or an explicit modifier.
+         * Creates a new parameter token without an explicit name or an explicit modifier. The parameter type must be represented in its detached format.
          *
          * @param type        The type of the represented parameter.
          * @param annotations The annotations of the parameter.
@@ -967,7 +968,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         /**
-         * Creates a parameter token without annotations.
+         * Creates a parameter token without annotations. The parameter type must be represented in its detached format.
          *
          * @param type The type of the represented parameter.
          * @param name            The name of the parameter or {@code null} if no explicit name is defined.
@@ -978,7 +979,7 @@ public interface ParameterDescription extends AnnotatedCodeElement,
         }
 
         /**
-         * Creates a new parameter token.
+         * Creates a new parameter token. The parameter type must be represented in its detached format.
          *
          * @param type        The type of the represented parameter.
          * @param annotations The annotations of the parameter.

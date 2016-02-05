@@ -3175,7 +3175,8 @@ public interface DynamicType {
                                 token.getParameterTokens(),
                                 CompoundList.of(token.getExceptionTypes(), new TypeList.Generic.Explicit(new ArrayList<TypeDefinition>(types))),
                                 token.getAnnotations(),
-                                token.getDefaultValue()));
+                                token.getDefaultValue(),
+                                token.getReceiverType()));
                     }
 
                     @Override
@@ -3197,7 +3198,8 @@ public interface DynamicType {
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),
                                 token.getAnnotations(),
-                                token.getDefaultValue())).materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
+                                token.getDefaultValue(),
+                                token.getReceiverType())).materialize(MethodRegistry.Handler.ForAbstractMethod.INSTANCE);
                     }
 
                     @Override
@@ -3209,7 +3211,8 @@ public interface DynamicType {
                                 token.getParameterTokens(),
                                 token.getExceptionTypes(),
                                 token.getAnnotations(),
-                                value)).materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
+                                value,
+                                token.getReceiverType())).materialize(MethodRegistry.Handler.ForAnnotationValue.of(value));
                     }
 
                     /**
@@ -3280,7 +3283,8 @@ public interface DynamicType {
                                     MethodDefinitionAdapter.this.token.getParameterTokens(),
                                     MethodDefinitionAdapter.this.token.getExceptionTypes(),
                                     MethodDefinitionAdapter.this.token.getAnnotations(),
-                                    MethodDefinitionAdapter.this.token.getDefaultValue()));
+                                    MethodDefinitionAdapter.this.token.getDefaultValue(),
+                                    MethodDefinitionAdapter.this.token.getReceiverType()));
                         }
 
                         @Override
@@ -3357,7 +3361,8 @@ public interface DynamicType {
                                     CompoundList.of(MethodDefinitionAdapter.this.token.getParameterTokens(), token),
                                     MethodDefinitionAdapter.this.token.getExceptionTypes(),
                                     MethodDefinitionAdapter.this.token.getAnnotations(),
-                                    MethodDefinitionAdapter.this.token.getDefaultValue()));
+                                    MethodDefinitionAdapter.this.token.getDefaultValue(),
+                                    MethodDefinitionAdapter.this.token.getReceiverType()));
                         }
 
                         /**
@@ -3427,7 +3432,8 @@ public interface DynamicType {
                                     CompoundList.of(MethodDefinitionAdapter.this.token.getParameterTokens(), token),
                                     MethodDefinitionAdapter.this.token.getExceptionTypes(),
                                     MethodDefinitionAdapter.this.token.getAnnotations(),
-                                    MethodDefinitionAdapter.this.token.getDefaultValue()));
+                                    MethodDefinitionAdapter.this.token.getDefaultValue(),
+                                    MethodDefinitionAdapter.this.token.getReceiverType()));
                         }
 
                         /**
@@ -3495,7 +3501,8 @@ public interface DynamicType {
                                     token.getParameterTokens(),
                                     token.getExceptionTypes(),
                                     CompoundList.of(token.getAnnotations(), new ArrayList<AnnotationDescription>(annotations)),
-                                    token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
+                                    token.getDefaultValue(),
+                                    token.getReceiverType())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                         }
 
                         @Override
@@ -3512,7 +3519,8 @@ public interface DynamicType {
                                     parameterTokens,
                                     token.getExceptionTypes(),
                                     token.getAnnotations(),
-                                    token.getDefaultValue())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
+                                    token.getDefaultValue(),
+                                    token.getReceiverType())).new AnnotationAdapter(handler, methodAttributeAppenderFactory, methodTransformer);
                         }
 
                         @Override

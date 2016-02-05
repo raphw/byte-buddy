@@ -781,7 +781,8 @@ public class InstrumentedTypeDefaultTest {
                         Arrays.asList(
                                 AnnotationDescription.Builder.ofType(SampleAnnotation.class).build(),
                                 AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
-                        ), MethodDescription.NO_DEFAULT_VALUE))
+                        ), MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -795,7 +796,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.singletonList(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -821,7 +823,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -837,7 +840,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -851,7 +855,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -868,7 +873,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -882,7 +888,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -896,7 +903,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -911,7 +919,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -925,7 +934,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -939,7 +949,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, ILLEGAL_NAME, 0)),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -953,7 +964,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.VOID)),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -967,7 +979,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.singletonList(new ParameterDescription.Token(TypeDefinition.Sort.describe(PackagePrivateType.TYPE))),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -981,7 +994,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.singletonList(new ParameterDescription.Token(TypeDefinition.Sort.describe(PackagePrivateType.TYPE))),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated(), notNullValue(TypeDescription.class));
     }
 
@@ -997,7 +1011,8 @@ public class InstrumentedTypeDefaultTest {
                                 new ParameterDescription.Token(TypeDescription.Generic.OBJECT, FOO, 0)
                         ), Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1011,7 +1026,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.singletonList(new ParameterDescription.Token(TypeDescription.Generic.OBJECT, FOO, -1)),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1027,7 +1043,8 @@ public class InstrumentedTypeDefaultTest {
                                 AnnotationDescription.Builder.ofType(SampleAnnotation.class).build()
                         ))), Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1042,7 +1059,8 @@ public class InstrumentedTypeDefaultTest {
                                 AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build()
                         ))), Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1056,7 +1074,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDescription.Generic.OBJECT),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1071,7 +1090,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.singletonList(TypeDescription.Generic.Builder.rawType(Exception.class)
                         .build(AnnotationDescription.Builder.ofType(IncompatibleAnnotation.class).build())),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1085,7 +1105,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDefinition.Sort.describe(PackagePrivateType.EXCEPTION_TYPE)),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1099,7 +1120,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.singletonList(TypeDefinition.Sort.describe(PackagePrivateType.EXCEPTION_TYPE)),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated(), notNullValue(TypeDescription.class));
     }
 
@@ -1113,7 +1135,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Arrays.asList(TypeDefinition.Sort.describe(Exception.class), TypeDefinition.Sort.describe(Exception.class)),
                         Collections.<AnnotationDescription>emptyList(),
-                        MethodDescription.NO_DEFAULT_VALUE))
+                        MethodDescription.NO_DEFAULT_VALUE,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 
@@ -1127,7 +1150,8 @@ public class InstrumentedTypeDefaultTest {
                         Collections.<ParameterDescription.Token>emptyList(),
                         Collections.<TypeDescription.Generic>emptyList(),
                         Collections.<AnnotationDescription>emptyList(),
-                        FOO))
+                        FOO,
+                        TypeDescription.Generic.UNDEFINED))
                 .validated();
     }
 

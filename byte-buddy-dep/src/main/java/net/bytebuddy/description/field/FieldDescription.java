@@ -410,7 +410,7 @@ public interface FieldDescription extends ByteCodeElement,
         private final List<? extends AnnotationDescription> annotations;
 
         /**
-         * Creates a new field token without annotations.
+         * Creates a new field token without annotations. The field type must be represented in its detached form.
          *
          * @param name      The name of the represented field.
          * @param modifiers The modifiers of the represented field.
@@ -421,7 +421,7 @@ public interface FieldDescription extends ByteCodeElement,
         }
 
         /**
-         * Creates a new field token.
+         * Creates a new field token. The field type must be represented in its detached form.
          *
          * @param name        The name of the represented field.
          * @param modifiers   The modifiers of the represented field.
