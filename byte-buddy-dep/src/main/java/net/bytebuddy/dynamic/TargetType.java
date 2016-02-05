@@ -14,6 +14,26 @@ public final class TargetType {
     public static final TypeDescription DESCRIPTION = new TypeDescription.ForLoadedType(TargetType.class);
 
     /**
+     * Resolves the given type description to the supplied target type if it represents the {@link TargetType} placeholder.
+     * Array types are resolved to their component type and rebuilt as an array of the actual target type, if necessary.
+     *
+     * @param typeDescription The type description that might represent the {@link TargetType} placeholder.
+     * @param targetType      The actual target type.
+     * @return The resolved type description.
+     */
+    public static TypeDescription resolve(TypeDescription typeDescription, TypeDescription targetType) {
+        int arity = 0;
+        TypeDescription componentType = typeDescription;
+        while (componentType.isArray()) {
+            componentType = componentType.getComponentType();
+            arity++;
+        }
+        return componentType.represents(TargetType.class)
+                ? TypeDescription.ArrayProjection.of(targetType, arity)
+                : typeDescription;
+    }
+
+    /**
      * An unusable constructor to avoid instance creation.
      */
     private TargetType() {

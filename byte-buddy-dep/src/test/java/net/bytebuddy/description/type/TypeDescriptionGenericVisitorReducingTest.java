@@ -1,5 +1,6 @@
 package net.bytebuddy.description.type;
 
+import net.bytebuddy.dynamic.TargetType;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Before;
@@ -94,6 +95,16 @@ public class TypeDescriptionGenericVisitorReducingTest {
         verifyNoMoreInteractions(typeVariableToken);
         verify(declaringType).findVariable(FOO);
         verifyNoMoreInteractions(declaringType);
+    }
+
+    @Test
+    public void testTargetTypeResolution() throws Exception {
+        assertThat(visitor.onGenericArray(TargetType.DESCRIPTION.asGenericType()), is(declaringType));
+        assertThat(visitor.onParameterizedType(TargetType.DESCRIPTION.asGenericType()), is(declaringType));
+        assertThat(visitor.onNonGenericType(TargetType.DESCRIPTION.asGenericType()), is(declaringType));
+        when(typeDescription.getSymbol()).thenReturn(BAR);
+        when(declaringType.findVariable(BAR)).thenReturn(TargetType.DESCRIPTION.asGenericType());
+        assertThat(visitor.onTypeVariable(typeDescription), is(declaringType));
     }
 
     @Test

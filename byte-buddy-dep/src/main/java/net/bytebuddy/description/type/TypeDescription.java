@@ -2379,7 +2379,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public TypeDescription onGenericArray(Generic genericArray) {
-                    return genericArray.asErasure();
+                    return TargetType.resolve(genericArray.asErasure(), declaringType);
                 }
 
                 @Override
@@ -2389,7 +2389,7 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
 
                 @Override
                 public TypeDescription onParameterizedType(Generic parameterizedType) {
-                    return parameterizedType.asErasure();
+                    return TargetType.resolve(parameterizedType.asErasure(), declaringType);
                 }
 
                 @Override
@@ -2399,12 +2399,12 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
                             return typeVariableToken.getBounds().get(0).accept(this);
                         }
                     }
-                    return declaringType.findVariable(typeVariable.getSymbol()).asErasure();
+                    return TargetType.resolve(declaringType.findVariable(typeVariable.getSymbol()).asErasure(), declaringType);
                 }
 
                 @Override
                 public TypeDescription onNonGenericType(Generic typeDescription) {
-                    return typeDescription.asErasure();
+                    return TargetType.resolve(typeDescription.asErasure(), declaringType);
                 }
 
                 @Override

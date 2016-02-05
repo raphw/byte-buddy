@@ -7,7 +7,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import java.util.Arrays;
 import java.util.List;
 
-import static net.bytebuddy.matcher.ElementMatchers.is;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
@@ -91,7 +90,7 @@ public interface LatentMatcher<T> {
 
         @Override
         public ElementMatcher<? super FieldDescription> resolve(TypeDescription instrumentedType) {
-            return new ResolvedMatcher(instrumentedType, token);
+            return new ResolvedMatcher(token.asSignatureToken(instrumentedType));
         }
 
         @Override
@@ -118,52 +117,39 @@ public interface LatentMatcher<T> {
         protected static class ResolvedMatcher implements ElementMatcher<FieldDescription> {
 
             /**
-             * The instrumented type.
+             * The signature token representing the matched field.
              */
-            private final TypeDescription instrumentedType;
+            private final FieldDescription.SignatureToken signatureToken;
 
             /**
-             * The token that is matched.
-             */
-            private final FieldDescription.Token token;
-
-            /**
-             * Creates a new resolved matcher of a latent field matcher for a field token.
+             * Creates a new resolved matcher.
              *
-             * @param instrumentedType The instrumented type.
-             * @param token            The token that is matched.
+             * @param signatureToken The signature token representing the matched field.
              */
-            protected ResolvedMatcher(TypeDescription instrumentedType, FieldDescription.Token token) {
-                this.instrumentedType = instrumentedType;
-                this.token = token;
+            protected ResolvedMatcher(FieldDescription.SignatureToken signatureToken) {
+                this.signatureToken = signatureToken;
             }
 
             @Override
             public boolean matches(FieldDescription target) {
-                return target.asToken(is(instrumentedType)).equals(token);
+                return target.asSignatureToken().equals(signatureToken);
             }
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ResolvedMatcher that = (ResolvedMatcher) other;
-                return instrumentedType.equals(that.instrumentedType)
-                        && token.equals(that.token);
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && signatureToken.equals(((ResolvedMatcher) other).signatureToken);
             }
 
             @Override
             public int hashCode() {
-                int result = instrumentedType.hashCode();
-                result = 31 * result + token.hashCode();
-                return result;
+                return signatureToken.hashCode();
             }
 
             @Override
             public String toString() {
                 return "LatentMatcher.ForFieldToken.ResolvedMatcher{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", token=" + token +
+                        "signatureToken=" + signatureToken +
                         '}';
             }
         }
@@ -190,7 +176,7 @@ public interface LatentMatcher<T> {
 
         @Override
         public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-            return new ResolvedMatcher(instrumentedType, token);
+            return new ResolvedMatcher(token.asSignatureToken(instrumentedType));
         }
 
         @Override
@@ -217,52 +203,39 @@ public interface LatentMatcher<T> {
         protected static class ResolvedMatcher implements ElementMatcher<MethodDescription> {
 
             /**
-             * The instrumented type.
+             * The signature token representing the matched field.
              */
-            private final TypeDescription instrumentedType;
+            private final MethodDescription.SignatureToken signatureToken;
 
             /**
-             * The token that is matched.
-             */
-            private final MethodDescription.Token token;
-
-            /**
-             * Creates a new resolved method of a latent method matcher for a method token.
+             * Creates a new resolved matcher.
              *
-             * @param instrumentedType The instrumented type.
-             * @param token            The token that is matched.
+             * @param signatureToken The signature token representing the matched field.
              */
-            protected ResolvedMatcher(TypeDescription instrumentedType, MethodDescription.Token token) {
-                this.instrumentedType = instrumentedType;
-                this.token = token;
+            protected ResolvedMatcher(MethodDescription.SignatureToken signatureToken) {
+                this.signatureToken = signatureToken;
             }
 
             @Override
             public boolean matches(MethodDescription target) {
-                return target.asToken(is(instrumentedType)).equals(token);
+                return target.asSignatureToken().equals(signatureToken);
             }
 
             @Override
             public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                ResolvedMatcher that = (ResolvedMatcher) other;
-                return instrumentedType.equals(that.instrumentedType)
-                        && token.equals(that.token);
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && signatureToken.equals(((ResolvedMatcher) other).signatureToken);
             }
 
             @Override
             public int hashCode() {
-                int result = instrumentedType.hashCode();
-                result = 31 * result + token.hashCode();
-                return result;
+                return signatureToken.hashCode();
             }
 
             @Override
             public String toString() {
                 return "LatentMatcher.ForMethodToken.ResolvedMatcher{" +
-                        "instrumentedType=" + instrumentedType +
-                        ", token=" + token +
+                        "signatureToken=" + signatureToken +
                         '}';
             }
         }

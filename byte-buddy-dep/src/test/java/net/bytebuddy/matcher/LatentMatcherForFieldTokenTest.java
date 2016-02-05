@@ -22,7 +22,10 @@ public class LatentMatcherForFieldTokenTest {
     public TestRule mockitoRule = new MockitoRule(this);
 
     @Mock
-    private FieldDescription.Token token, otherToken;
+    private FieldDescription.Token token;
+
+    @Mock
+    private FieldDescription.SignatureToken signatureToken, otherSignatureToken;
 
     @Mock
     private TypeDescription instrumentedType;
@@ -38,13 +41,15 @@ public class LatentMatcherForFieldTokenTest {
 
     @Test
     public void testMatch() throws Exception {
-        when(fieldDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(token);
+        when(fieldDescription.asSignatureToken()).thenReturn(signatureToken);
+        when(token.asSignatureToken(instrumentedType)).thenReturn(signatureToken);
         assertThat(new LatentMatcher.ForFieldToken(token).resolve(instrumentedType).matches(fieldDescription), is(true));
     }
 
     @Test
     public void testNoMatch() throws Exception {
-        when(fieldDescription.asToken(ElementMatchers.is(instrumentedType))).thenReturn(otherToken);
+        when(fieldDescription.asSignatureToken()).thenReturn(otherSignatureToken);
+        when(token.asSignatureToken(instrumentedType)).thenReturn(signatureToken);
         assertThat(new LatentMatcher.ForFieldToken(token).resolve(instrumentedType).matches(fieldDescription), is(false));
     }
 
