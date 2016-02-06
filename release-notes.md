@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. February 2016: version 1.2.1
+
+- Added validation for receiver types
+- Set receiver types to be implicit when extracting constructors of a super type.
+
 ### 5. February 2016: version 1.2.0
 
 - Added support for receiver type retention during type redefinition and rebasement.
