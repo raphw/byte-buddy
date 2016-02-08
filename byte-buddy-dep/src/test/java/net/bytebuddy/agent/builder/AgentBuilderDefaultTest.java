@@ -507,6 +507,10 @@ public class AgentBuilderDefaultTest {
     public void testSuccessfulWithRedefinitionMatched() throws Exception {
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenReturn(true);
+        ClassFileLocator.Resolution resolution = mock(ClassFileLocator.Resolution.class);
+        when(resolution.isResolved()).thenReturn(true);
+        when(resolution.resolve()).thenReturn(QUX);
+        when(classFileLocator.locate(REDEFINED.getName())).thenReturn(resolution);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
@@ -519,9 +523,7 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
-        verify(listener).onComplete(REDEFINED.getName());
-        verifyNoMoreInteractions(listener);
+        verifyZeroInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).getAllLoadedClasses();
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -530,17 +532,9 @@ public class AgentBuilderDefaultTest {
         verifyNoMoreInteractions(instrumentation);
         verify(rawMatcher).matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain());
         verifyNoMoreInteractions(rawMatcher);
-        verify(initializationStrategy).dispatcher();
-        verifyNoMoreInteractions(initializationStrategy);
-        verify(dispatcher).apply(builder);
-        verify(dispatcher).register(dynamicType,
-                REDEFINED.getClassLoader(),
-                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
-                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
-                        REDEFINED.getClassLoader(),
-                        REDEFINED.getProtectionDomain(),
-                        accessControlContext));
-        verifyNoMoreInteractions(dispatcher);
+        verifyZeroInteractions(dispatcher);
+        verify(resolution).resolve();
+        verifyNoMoreInteractions(resolution);
     }
 
     @Test(expected = IllegalArgumentException.class)

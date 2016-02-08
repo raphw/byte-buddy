@@ -1633,14 +1633,8 @@ public interface AgentBuilder {
         /**
          * <p>
          * Applies a <b>redefinition</b> to all classes that are already loaded and that would have been transformed if
-         * the built agent was registered before they were loaded.
-         * </p>
-         * <p>
-         * <b>Important</b>: If a redefined class was previously instrumented, this instrumentation information is lost
-         * during the instrumentation. The redefinition is applied upon the original byte code that is provided by a class
-         * loader and not upon the code in its currently transformed format. Use
-         * {@link net.bytebuddy.agent.builder.AgentBuilder.RedefinitionStrategy#RETRANSFORMATION} if this is a factual or
-         * potential limitation.
+         * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is <b>not</b>
+         * registered for applying retransformations.
          * </p>
          * <p>
          * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
@@ -1666,7 +1660,8 @@ public interface AgentBuilder {
         /**
          * <p>
          * Applies a <b>retransformation</b> to all classes that are already loaded and that would have been transformed if
-         * the built agent was registered before they were loaded.
+         * the built agent was registered before they were loaded. The created {@link ClassFileTransformer} is registered
+         * for applying retransformations.
          * </p>
          * <p>
          * <b>Note</b>: When applying a redefinition, it is normally required to use a {@link TypeStrategy} that applies
@@ -1735,29 +1730,17 @@ public interface AgentBuilder {
             boolean consider(Class<?> type, ElementMatcher<? super TypeDescription> ignoredTypes);
 
             /**
-             * Applies the represented type modification on all collected types.
+             * Applies this collector.
              *
-             * @param instrumentation            The instrumentation to use.
-             * @param byteBuddy                  The Byte Buddy configuration to use.
-             * @param binaryLocator              The binary locator to use.
-             * @param typeStrategy               The type strategy to use.
-             * @param listener                   The listener to report to.
-             * @param nativeMethodStrategy       The native method strategy to apply.
-             * @param accessControlContext       The access control context to use.
-             * @param initializationStrategy     The initialization strategy to use.
-             * @param bootstrapInjectionStrategy The bootstrap injection strategy to use.
-             * @throws UnmodifiableClassException If an unmodifiable class is attempted to be modified.
-             * @throws ClassNotFoundException     If a class cannot be found while redefining another class.
+             * @param instrumentation The instrumentation instance to apply the transformation for.
+             * @param binaryLocator   The binary locator to use.
+             * @param listener        the listener to notify.
+             * @throws UnmodifiableClassException If a class is not modifiable.
+             * @throws ClassNotFoundException     If a class could not be found.
              */
             void apply(Instrumentation instrumentation,
-                       ByteBuddy byteBuddy,
                        BinaryLocator binaryLocator,
-                       TypeStrategy typeStrategy,
-                       Listener listener,
-                       Default.NativeMethodStrategy nativeMethodStrategy,
-                       AccessControlContext accessControlContext,
-                       InitializationStrategy initializationStrategy,
-                       Default.BootstrapInjectionStrategy bootstrapInjectionStrategy) throws UnmodifiableClassException, ClassNotFoundException;
+                       Listener listener) throws UnmodifiableClassException, ClassNotFoundException;
 
             /**
              * A collector that applies a <b>redefinition</b> of already loaded classes.
@@ -1786,40 +1769,26 @@ public interface AgentBuilder {
 
                 @Override
                 public boolean consider(Class<?> type, ElementMatcher<? super TypeDescription> ignoredTypes) {
-                    Default.Transformation.Resolution resolution = transformation.resolve(new TypeDescription.ForLoadedType(type),
+                    return transformation.resolve(new TypeDescription.ForLoadedType(type),
                             type.getClassLoader(),
                             type,
                             type.getProtectionDomain(),
-                            ignoredTypes);
-                    return resolution.isResolved() && entries.add(new Entry(type, resolution));
+                            ignoredTypes).isResolved() && entries.add(new Entry(type));
                 }
 
                 @Override
-                public void apply(Instrumentation instrumentation,
-                                  ByteBuddy byteBuddy,
-                                  BinaryLocator binaryLocator,
-                                  TypeStrategy typeStrategy,
-                                  Listener listener,
-                                  Default.NativeMethodStrategy nativeMethodStrategy,
-                                  AccessControlContext accessControlContext,
-                                  InitializationStrategy initializationStrategy,
-                                  Default.BootstrapInjectionStrategy bootstrapInjectionStrategy) throws UnmodifiableClassException, ClassNotFoundException {
+                public void apply(Instrumentation instrumentation, BinaryLocator binaryLocator, Listener listener) throws UnmodifiableClassException, ClassNotFoundException {
                     List<ClassDefinition> classDefinitions = new ArrayList<ClassDefinition>(entries.size());
                     for (Entry entry : entries) {
                         TypeDescription typeDescription = new TypeDescription.ForLoadedType(entry.getType());
                         try {
-                            classDefinitions.add(entry.resolve(initializationStrategy,
-                                    binaryLocator.classFileLocator(entry.getType().getClassLoader()),
-                                    typeStrategy,
-                                    byteBuddy,
-                                    nativeMethodStrategy,
-                                    bootstrapInjectionStrategy,
-                                    accessControlContext,
-                                    listener));
+                            classDefinitions.add(entry.resolve(binaryLocator.classFileLocator(entry.getType().getClassLoader())));
                         } catch (Throwable throwable) {
-                            listener.onError(typeDescription.getName(), throwable);
-                        } finally {
-                            listener.onComplete(typeDescription.getName());
+                            try {
+                                listener.onError(typeDescription.getName(), throwable);
+                            } finally {
+                                listener.onComplete(typeDescription.getName());
+                            }
                         }
                     }
                     if (!classDefinitions.isEmpty()) {
@@ -1846,17 +1815,12 @@ public interface AgentBuilder {
                     private final Class<?> type;
 
                     /**
-                     * The resolved transformation for this type.
+                     * Creates a new entry for a given type.
+                     *
+                     * @param type The type to be redefined.
                      */
-                    private final Default.Transformation.Resolution resolution;
-
-                    /**
-                     * @param type       The type to be redefined.
-                     * @param resolution The resolved transformation for this type.
-                     */
-                    protected Entry(Class<?> type, Default.Transformation.Resolution resolution) {
+                    protected Entry(Class<?> type) {
                         this.type = type;
-                        this.resolution = resolution;
                     }
 
                     /**
@@ -1869,34 +1833,14 @@ public interface AgentBuilder {
                     }
 
                     /**
-                     * Resolves this entry into a fully defined class redefinition.
+                     * Resolves the entry to a class definition.
                      *
-                     * @param initializationStrategy     The initialization strategy to use.
-                     * @param classFileLocator           The class file locator to use.
-                     * @param typeStrategy               The type strategy to use.
-                     * @param byteBuddy                  The Byte Buddy configuration to use.
-                     * @param nativeMethodStrategy       The native method strategy to use.
-                     * @param bootstrapInjectionStrategy The bootstrap injection strategy to use.
-                     * @param accessControlContext       The access control context to use.
-                     * @param listener                   The listener to report to.
-                     * @return An appropriate class definition.
+                     * @param classFileLocator The class file locator for locating the redefine type's class file.
+                     * @return A class definition representing the redefined class.
+                     * @throws IOException If an IO exception occurs.
                      */
-                    protected ClassDefinition resolve(InitializationStrategy initializationStrategy,
-                                                      ClassFileLocator classFileLocator,
-                                                      TypeStrategy typeStrategy,
-                                                      ByteBuddy byteBuddy,
-                                                      Default.NativeMethodStrategy nativeMethodStrategy,
-                                                      Default.BootstrapInjectionStrategy bootstrapInjectionStrategy,
-                                                      AccessControlContext accessControlContext,
-                                                      Listener listener) {
-                        return new ClassDefinition(type, resolution.apply(initializationStrategy,
-                                classFileLocator,
-                                typeStrategy,
-                                byteBuddy,
-                                nativeMethodStrategy,
-                                bootstrapInjectionStrategy,
-                                accessControlContext,
-                                listener));
+                    protected ClassDefinition resolve(ClassFileLocator classFileLocator) throws IOException {
+                        return new ClassDefinition(type, classFileLocator.locate(type.getName()).resolve());
                     }
 
                     @Override
@@ -1904,21 +1848,18 @@ public interface AgentBuilder {
                         if (this == other) return true;
                         if (other == null || getClass() != other.getClass()) return false;
                         Entry entry = (Entry) other;
-                        return type.equals(entry.type) && resolution.equals(entry.resolution);
+                        return type.equals(entry.type);
                     }
 
                     @Override
                     public int hashCode() {
-                        int result = type.hashCode();
-                        result = 31 * result + resolution.hashCode();
-                        return result;
+                        return type.hashCode();
                     }
 
                     @Override
                     public String toString() {
                         return "AgentBuilder.RedefinitionStrategy.Collector.ForRedefinition.Entry{" +
                                 "type=" + type +
-                                ", resolution=" + resolution +
                                 '}';
                     }
                 }
@@ -1956,15 +1897,7 @@ public interface AgentBuilder {
                 }
 
                 @Override
-                public void apply(Instrumentation instrumentation,
-                                  ByteBuddy byteBuddy,
-                                  BinaryLocator binaryLocator,
-                                  TypeStrategy typeStrategy,
-                                  Listener listener,
-                                  Default.NativeMethodStrategy nativeMethodStrategy,
-                                  AccessControlContext accessControlContext,
-                                  InitializationStrategy initializationStrategy,
-                                  Default.BootstrapInjectionStrategy bootstrapInjectionStrategy) throws UnmodifiableClassException {
+                public void apply(Instrumentation instrumentation, BinaryLocator binaryLocator, Listener listener) throws UnmodifiableClassException {
                     if (!types.isEmpty()) {
                         instrumentation.retransformClasses(types.toArray(new Class<?>[types.size()]));
                     }
@@ -3745,15 +3678,7 @@ public interface AgentBuilder {
                     }
                 }
                 try {
-                    collector.apply(instrumentation,
-                            byteBuddy,
-                            binaryLocator,
-                            typeStrategy,
-                            listener,
-                            nativeMethodStrategy,
-                            accessControlContext,
-                            initializationStrategy,
-                            bootstrapInjectionStrategy);
+                    collector.apply(instrumentation, binaryLocator, listener);
                 } catch (UnmodifiableClassException exception) {
                     throw new IllegalStateException("Cannot modify at least one class: " + collector, exception);
                 } catch (ClassNotFoundException exception) {
