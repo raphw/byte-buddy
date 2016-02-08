@@ -69,6 +69,15 @@ public class ClassByImplementationBenchmarkTest {
     }
 
     @Test
+    public void testBaseline() throws Exception {
+        ExampleInterface instance = classByImplementationBenchmark.baseline();
+        assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));
+        assertThat(instance.getClass().getSuperclass(), CoreMatchers.<Class<?>>is(Object.class));
+        assertThat(classByImplementationBenchmark.benchmarkByteBuddy().getClass(), not(CoreMatchers.<Class<?>>is(instance.getClass())));
+        assertReturnValues(instance);
+    }
+
+    @Test
     public void testByteBuddyClassCreation() throws Exception {
         ExampleInterface instance = classByImplementationBenchmark.benchmarkByteBuddy();
         assertThat(Arrays.asList(instance.getClass().getInterfaces()), hasItem(ClassByImplementationBenchmark.BASE_CLASS));

@@ -59,6 +59,16 @@ public class TrivialClassCreationBenchmark {
     }
 
     /**
+     * Returns a non-instrumented class as a baseline.
+     *
+     * @return A reference to {@link Object}.
+     */
+    @Benchmark
+    public Class<?> baseline() {
+        return Object.class;
+    }
+
+    /**
      * Performs a benchmark for a trivial class creation using Byte Buddy.
      *
      * @return The created instance, in order to avoid JIT removal.

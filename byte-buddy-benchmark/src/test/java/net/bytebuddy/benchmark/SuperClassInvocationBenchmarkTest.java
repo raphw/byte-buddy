@@ -14,6 +14,11 @@ public class SuperClassInvocationBenchmarkTest extends AbstractBlackHoleTest {
     }
 
     @Test
+    public void testBaseline() throws Exception {
+        superClassInvocationBenchmark.baseline(blackHole);
+    }
+
+    @Test
     public void testByteBuddyWithAnnotationsBenchmark() throws Exception {
         superClassInvocationBenchmark.benchmarkByteBuddyWithAnnotations(blackHole);
     }

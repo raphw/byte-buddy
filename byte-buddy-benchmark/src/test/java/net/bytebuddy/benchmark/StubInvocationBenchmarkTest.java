@@ -14,6 +14,11 @@ public class StubInvocationBenchmarkTest extends AbstractBlackHoleTest {
     }
 
     @Test
+    public void testBaseline() throws Exception {
+        stubInvocationBenchmark.baseline(blackHole);
+    }
+
+    @Test
     public void testByteBuddyBenchmark() throws Exception {
         stubInvocationBenchmark.benchmarkByteBuddy(blackHole);
     }

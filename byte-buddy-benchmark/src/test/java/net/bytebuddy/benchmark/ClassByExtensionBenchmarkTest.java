@@ -67,6 +67,13 @@ public class ClassByExtensionBenchmarkTest {
     }
 
     @Test
+    public void testBaseline() throws Exception {
+        ExampleClass instance = classByExtensionBenchmark.baseline();
+        assertThat(instance.getClass(), CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS));
+        assertReturnValues(instance);
+    }
+
+    @Test
     public void testByteBuddyWithAnnotationsClassCreation() throws Exception {
         ExampleClass instance = classByExtensionBenchmark.benchmarkByteBuddyWithAnnotations();
         assertThat(instance.getClass(), not(CoreMatchers.<Class<?>>is(ClassByExtensionBenchmark.BASE_CLASS)));

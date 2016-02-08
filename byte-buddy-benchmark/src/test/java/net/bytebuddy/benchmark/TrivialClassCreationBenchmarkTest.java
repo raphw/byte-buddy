@@ -19,6 +19,12 @@ public class TrivialClassCreationBenchmarkTest {
     }
 
     @Test
+    public void testBaseline() throws Exception {
+        Class<?> type = trivialClassCreationBenchmark.baseline();
+        assertThat(type, CoreMatchers.<Class<?>>is(TrivialClassCreationBenchmark.BASE_CLASS));
+    }
+
+    @Test
     public void testByteBuddyClassCreation() throws Exception {
         Class<?> type = trivialClassCreationBenchmark.benchmarkByteBuddy();
         assertThat(type, not(CoreMatchers.<Class<?>>is(TrivialClassCreationBenchmark.BASE_CLASS)));

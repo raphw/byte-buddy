@@ -67,6 +67,16 @@ public class ClassByExtensionBenchmark {
     }
 
     /**
+     * Creates a baseline for the benchmark.
+     *
+     * @return A simple object that is not transformed.
+     */
+    @Benchmark
+    public ExampleClass baseline() {
+        return new ExampleClass();
+    }
+
+    /**
      * Performs a benchmark of a class extension using Byte Buddy. This benchmark uses an annotation-based approach
      * which is by its reflective nature more difficult to optimize by the JIT compiler.
      *

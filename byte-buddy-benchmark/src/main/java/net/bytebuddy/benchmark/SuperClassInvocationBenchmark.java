@@ -68,6 +68,11 @@ public class SuperClassInvocationBenchmark {
     private double doubleValue = 42d;
 
     /**
+     * A casual instance that serves as a baseline.
+     */
+    private ExampleClass baselineInstance;
+
+    /**
      * An instance created by Byte Buddy for performing benchmarks on. This instance is created by adding
      * auxiliary classes that allow for an invocation of a method from a delegation target.
      */
@@ -98,10 +103,41 @@ public class SuperClassInvocationBenchmark {
     @Setup
     public void setUp() throws Exception {
         ClassByExtensionBenchmark classByExtensionBenchmark = new ClassByExtensionBenchmark();
+        baselineInstance = classByExtensionBenchmark.baseline();
         byteBuddyWithAnnotationsInstance = classByExtensionBenchmark.benchmarkByteBuddyWithAnnotations();
         byteBuddySpecializedInstance = classByExtensionBenchmark.benchmarkByteBuddySpecialized();
         cglibInstance = classByExtensionBenchmark.benchmarkCglib();
         javassistInstance = classByExtensionBenchmark.benchmarkJavassist();
+    }
+
+    /**
+     * Performs a benchmark for a casual class as a baseline.
+     *
+     * @param blackHole A black hole for avoiding JIT erasure.
+     */
+    @Benchmark
+    @OperationsPerInvocation(20)
+    public void baseline(Blackhole blackHole) {
+        blackHole.consume(baselineInstance.method(booleanValue));
+        blackHole.consume(baselineInstance.method(byteValue));
+        blackHole.consume(baselineInstance.method(shortValue));
+        blackHole.consume(baselineInstance.method(intValue));
+        blackHole.consume(baselineInstance.method(charValue));
+        blackHole.consume(baselineInstance.method(intValue));
+        blackHole.consume(baselineInstance.method(longValue));
+        blackHole.consume(baselineInstance.method(floatValue));
+        blackHole.consume(baselineInstance.method(doubleValue));
+        blackHole.consume(baselineInstance.method(stringValue));
+        blackHole.consume(baselineInstance.method(booleanValue, booleanValue, booleanValue));
+        blackHole.consume(baselineInstance.method(byteValue, byteValue, byteValue));
+        blackHole.consume(baselineInstance.method(shortValue, shortValue, shortValue));
+        blackHole.consume(baselineInstance.method(intValue, intValue, intValue));
+        blackHole.consume(baselineInstance.method(charValue, charValue, charValue));
+        blackHole.consume(baselineInstance.method(intValue, intValue, intValue));
+        blackHole.consume(baselineInstance.method(longValue, longValue, longValue));
+        blackHole.consume(baselineInstance.method(floatValue, floatValue, floatValue));
+        blackHole.consume(baselineInstance.method(doubleValue, doubleValue, doubleValue));
+        blackHole.consume(baselineInstance.method(stringValue, stringValue, stringValue));
     }
 
     /**
