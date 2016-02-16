@@ -3684,7 +3684,7 @@ public interface AgentBuilder {
                 } catch (UnmodifiableClassException exception) {
                     throw new IllegalStateException("Cannot modify at least one class: " + collector, exception);
                 } catch (ClassNotFoundException exception) {
-                    throw new IllegalStateException("Cannot find at least one class class: " + collector, exception);
+                    throw new IllegalStateException("Cannot find at least one class: " + collector, exception);
                 }
             }
             return classFileTransformer;
