@@ -885,7 +885,8 @@ class ToStringAgent {
         .transform(new AgentBuilder.Transformer() {
       @Override
       public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
-                                              TypeDescription typeDescription) {
+                                              TypeDescription typeDescription,
+                                              ClassLoader classloader) {
         return builder.method(named("toString"))
                       .intercept(FixedValue.value("transformed"));
       }
