@@ -473,7 +473,7 @@ public class AgentBuilderDefaultApplicationTest {
     private static class FooTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             return builder.method(named(FOO)).intercept(FixedValue.value(BAR));
         }
     }
@@ -497,7 +497,7 @@ public class AgentBuilderDefaultApplicationTest {
     public static class BarTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -524,7 +524,7 @@ public class AgentBuilderDefaultApplicationTest {
     public static class QuxTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -551,7 +551,7 @@ public class AgentBuilderDefaultApplicationTest {
     public static class QuxBazTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             try {
                 return builder.method(named(FOO)).intercept(MethodDelegation.to(new Interceptor()));
             } catch (Exception exception) {
@@ -579,7 +579,7 @@ public class AgentBuilderDefaultApplicationTest {
     public static class ConstructorTransformer implements AgentBuilder.Transformer {
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             return builder.constructor(ElementMatchers.any()).intercept(SuperMethodCall.INSTANCE);
         }
     }
@@ -593,7 +593,7 @@ public class AgentBuilderDefaultApplicationTest {
         }
 
         @Override
-        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+        public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
             return builder.method(named(methodName)).intercept(FixedValue.value(BAR));
         }
     }

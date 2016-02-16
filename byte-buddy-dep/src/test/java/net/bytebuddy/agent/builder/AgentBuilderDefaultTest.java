@@ -102,7 +102,7 @@ public class AgentBuilderDefaultTest {
         loadedTypeInitializers.put(new TypeDescription.ForLoadedType(REDEFINED), loadedTypeInitializer);
         when(dynamicType.getLoadedTypeInitializers()).thenReturn(loadedTypeInitializers);
         when(dynamicType.getBytes()).thenReturn(BAZ);
-        when(transformer.transform(builder, new TypeDescription.ForLoadedType(REDEFINED))).thenReturn((DynamicType.Builder) builder);
+        when(transformer.transform(builder, new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader())).thenReturn((DynamicType.Builder) builder);
         when(binaryLocator.classFileLocator(REDEFINED.getClassLoader())).thenReturn(classFileLocator);
         when(binaryLocator.typePool(any(ClassFileLocator.class), any(ClassLoader.class))).thenReturn(typePool);
         when(typePool.describe(REDEFINED.getName())).thenReturn(resolution);

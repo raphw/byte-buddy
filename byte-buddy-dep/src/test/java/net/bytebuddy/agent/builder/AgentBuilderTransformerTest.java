@@ -27,21 +27,24 @@ public class AgentBuilderTransformerTest {
     @Mock
     private TypeDescription typeDescription;
 
+    @Mock
+    private ClassLoader classLoader;
+
     @Test
     @SuppressWarnings("unchecked")
     public void testNoOp() throws Exception {
-        assertThat(AgentBuilder.Transformer.NoOp.INSTANCE.transform(builder, typeDescription), sameInstance((DynamicType.Builder) builder));
+        assertThat(AgentBuilder.Transformer.NoOp.INSTANCE.transform(builder, typeDescription, classLoader), sameInstance((DynamicType.Builder) builder));
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testCompound() throws Exception {
-        when(first.transform(builder, typeDescription)).thenReturn((DynamicType.Builder) builder);
-        when(second.transform(builder, typeDescription)).thenReturn((DynamicType.Builder) builder);
-        assertThat(new AgentBuilder.Transformer.Compound(first, second).transform(builder, typeDescription), sameInstance((DynamicType.Builder) builder));
-        verify(first).transform(builder, typeDescription);
+        when(first.transform(builder, typeDescription, classLoader)).thenReturn((DynamicType.Builder) builder);
+        when(second.transform(builder, typeDescription, classLoader)).thenReturn((DynamicType.Builder) builder);
+        assertThat(new AgentBuilder.Transformer.Compound(first, second).transform(builder, typeDescription, classLoader), sameInstance((DynamicType.Builder) builder));
+        verify(first).transform(builder, typeDescription, classLoader);
         verifyNoMoreInteractions(first);
-        verify(second).transform(builder, typeDescription);
+        verify(second).transform(builder, typeDescription, classLoader);
         verifyNoMoreInteractions(second);
     }
 

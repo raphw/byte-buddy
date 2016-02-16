@@ -495,9 +495,11 @@ public interface AgentBuilder {
          *
          * @param builder         The dynamic builder to transform.
          * @param typeDescription The description of the type currently being instrumented.
+         * @param classLoader     The class loader of the instrumented class. Might be {@code null} to
+         *                        represent the bootstrap class loader.
          * @return A transformed version of the supplied {@code builder}.
          */
-        DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription);
+        DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader);
 
         /**
          * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer} that does
@@ -511,7 +513,7 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
                 return builder;
             }
 
@@ -542,9 +544,9 @@ public interface AgentBuilder {
             }
 
             @Override
-            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription) {
+            public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder, TypeDescription typeDescription, ClassLoader classLoader) {
                 for (Transformer transformer : this.transformer) {
-                    builder = transformer.transform(builder, typeDescription);
+                    builder = transformer.transform(builder, typeDescription, classLoader);
                 }
                 return builder;
             }
@@ -4234,7 +4236,7 @@ public interface AgentBuilder {
                         DynamicType.Unloaded<?> dynamicType = dispatcher.apply(transformer.transform(typeStrategy.builder(typeDescription,
                                 byteBuddy,
                                 classFileLocator,
-                                methodNameTransformer.resolve()), typeDescription)).make();
+                                methodNameTransformer.resolve()), typeDescription, classLoader)).make();
                         dispatcher.register(dynamicType, classLoader, new BootstrapClassLoaderCapableInjectorFactory(bootstrapInjectionStrategy,
                                 classLoader,
                                 protectionDomain,
