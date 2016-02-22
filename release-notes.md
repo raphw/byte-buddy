@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. February 2016: version 1.2.2
+
+- Fixed redefinition strategy for `AgentBuilder` where transformations were applied twice.
+- Added `ClassLoader` as a third argument for the `AgentBuilder.Transformer`.
+
 ### 6. February 2016: version 1.2.1
 
 - Added validation for receiver types.

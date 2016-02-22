@@ -564,7 +564,7 @@ public interface DynamicType {
         Builder<T> ignoreAlso(LatentMatcher<? super MethodDescription> ignoredMethods);
 
         /**
-         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param name                The name of the method.
@@ -576,7 +576,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, ModifierContributor.ForMethod... modifierContributor);
 
         /**
-         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param name                 The name of the method.
@@ -588,7 +588,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors);
 
         /**
-         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param name       The name of the method.
@@ -600,7 +600,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, Type returnType, int modifiers);
 
         /**
-         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param name                The name of the method.
@@ -612,7 +612,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, ModifierContributor.ForMethod... modifierContributor);
 
         /**
-         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param name                 The name of the method.
@@ -624,7 +624,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, Collection<? extends ModifierContributor.ForMethod> modifierContributors);
 
         /**
-         * Defines the specified method to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified method to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param name       The name of the method.
@@ -636,7 +636,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineMethod(String name, TypeDefinition returnType, int modifiers);
 
         /**
-         * Defines the specified constructor to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified constructor to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param modifierContributor The constructor's modifiers.
@@ -645,7 +645,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineConstructor(ModifierContributor.ForMethod... modifierContributor);
 
         /**
-         * Defines the specified constructor to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified constructor to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param modifierContributors The constructor's modifiers.
@@ -654,7 +654,7 @@ public interface DynamicType {
         MethodDefinition.ParameterDefinition.Initial<T> defineConstructor(Collection<? extends ModifierContributor.ForMethod> modifierContributors);
 
         /**
-         * Defines the specified constructor to be declared by the instrumented type. Method paramerers or parameter types, declared exceptions and
+         * Defines the specified constructor to be declared by the instrumented type. Method parameters or parameter types, declared exceptions and
          * type variables can be defined in subsequent steps.
          *
          * @param modifiers The constructor's modifiers.
