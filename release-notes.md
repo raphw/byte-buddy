@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 22. February 2016: version 1.2.3
+
+- Fixed return type resolution for overloaded bridge method.
+
 ### 16. February 2016: version 1.2.2
 
 - Fixed redefinition strategy for `AgentBuilder` where transformations were applied twice.
