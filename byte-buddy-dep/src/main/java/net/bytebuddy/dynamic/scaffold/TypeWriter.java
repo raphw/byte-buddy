@@ -20,6 +20,8 @@ import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.implementation.attribute.*;
 import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
+import net.bytebuddy.implementation.bytecode.StackManipulation;
+import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -1065,9 +1067,6 @@ public interface TypeWriter<T> {
                     for (MethodDescription.TypeToken bridgeType : bridgeTypes) {
                         MethodDescription.InDefinedShape bridgeMethod = new AccessorBridge(bridgeTarget, bridgeType, instrumentedType);
                         MethodDescription.InDefinedShape bridgeTarget = new BridgeTarget(this.bridgeTarget, instrumentedType);
-                        if (!bridgeMethod.getReturnType().asErasure().isAssignableFrom(bridgeTarget.getReturnType().asErasure())) {
-                            throw new IllegalStateException("Cannot implement bridge " + bridgeMethod + " to " + bridgeTarget);
-                        }
                         MethodVisitor methodVisitor = classVisitor.visitMethod(bridgeMethod.getActualModifiers(true),
                                 bridgeMethod.getInternalName(),
                                 bridgeMethod.getDescriptor(),
@@ -1078,7 +1077,10 @@ public interface TypeWriter<T> {
                         ByteCodeAppender.Size size = new ByteCodeAppender.Simple(
                                 MethodVariableAccess.allArgumentsOf(bridgeMethod).asBridgeOf(bridgeTarget).prependThisReference(),
                                 MethodInvocation.invoke(bridgeTarget).virtual(instrumentedType),
-                                MethodReturn.returning(bridgeTarget.getReturnType().asErasure())
+                                bridgeTarget.getReturnType().asErasure().isAssignableTo(bridgeMethod.getReturnType().asErasure())
+                                        ? StackManipulation.Trivial.INSTANCE
+                                        : TypeCasting.to(bridgeMethod.getReturnType().asErasure()),
+                                MethodReturn.returning(bridgeMethod.getReturnType().asErasure())
                         ).apply(methodVisitor, implementationContext, bridgeMethod);
                         methodVisitor.visitMaxs(size.getOperandStackSize(), size.getLocalVariableSize());
                         methodVisitor.visitEnd();

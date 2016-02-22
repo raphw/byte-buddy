@@ -24,10 +24,7 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.test.utility.CallTraceable;
-import net.bytebuddy.test.utility.ClassFileExtraction;
-import net.bytebuddy.test.utility.JavaVersionRule;
-import net.bytebuddy.test.utility.MockitoRule;
+import net.bytebuddy.test.utility.*;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -927,14 +924,30 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .ofType(typeAnnotationType).getValue(value, Integer.class), is(INTEGER_VALUE));
     }
 
-    @Test(expected = IllegalStateException.class)
+    @Test
     public void testBridgeResolutionAmbiguous() throws Exception {
-        createPlain()
-                .defineMethod(QUX, String.class)
+        Class<?> type = createPlain()
+                .defineMethod(QUX, String.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(FOO))
-                .defineMethod(QUX, Object.class)
+                .defineMethod(QUX, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(BAR))
-                .make();
+                .visit(DebuggingWrapper.makeDefault())
+                .make()
+                .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
+                .getLoaded();
+        for (Method method : type.getDeclaredMethods()) {
+            if (method.getReturnType() == String.class) {
+                assertThat(method.getName(), is(QUX));
+                assertThat(method.getParameterTypes().length, is(0));
+                assertThat(method.invoke(type.newInstance()), is((Object) BAR));
+            } else if (method.getReturnType() == Object.class) {
+                assertThat(method.getName(), is(QUX));
+                assertThat(method.getParameterTypes().length, is(0));
+                assertThat(method.invoke(type.newInstance()), is((Object) BAR));
+            } else {
+                throw new AssertionError();
+            }
+        }
     }
 
     @Test
