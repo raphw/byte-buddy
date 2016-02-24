@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -44,13 +45,6 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <code.level>1.6</code.level>
         <pitest.target>net.bytebuddy</pitest.target>
-        <cobertura.exclude.benchmark.generated>net/bytebuddy/benchmark/generated/**/*.class</cobertura.exclude.benchmark.generated>
-        <cobertura.exclude.benchmark.jmh>org/openjdk/jmh/infra/generated/**/*.class</cobertura.exclude.benchmark.jmh>
-        <cobertura.exclude.benchmark.runner>net/bytebuddy/benchmark/runner/**/*.class</cobertura.exclude.benchmark.runner>
-        <cobertura.exclude.android.test>net/bytebuddy/android/test/**/*.class</cobertura.exclude.android.test>
-        <distribution.bintray>https://api.bintray.com/maven/raphw/maven/ByteBuddy</distribution.bintray>
-        <shade.source>org.objectweb.asm</shade.source>
-        <shade.target>net.bytebuddy.jar.asm</shade.target>
         <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
         <version.asm>5.0.4</version.asm>
         <version.junit>4.12</version.junit>
@@ -198,17 +192,17 @@
                     <aggregate>true</aggregate>
                     <instrumentation>
                         <excludes>
-                            <exclude>${cobertura.exclude.benchmark.generated}</exclude>
-                            <exclude>${cobertura.exclude.benchmark.jmh}</exclude>
-                            <exclude>${cobertura.exclude.benchmark.runner}</exclude>
-                            <exclude>${cobertura.exclude.android.test}</exclude>
+                            <exclude>net/bytebuddy/benchmark/generated/**/*.class</exclude>
+                            <exclude>org/openjdk/jmh/infra/generated/**/*.class</exclude>
+                            <exclude>net/bytebuddy/benchmark/runner/**/*.class</exclude>
+                            <exclude>net/bytebuddy/android/test/**/*.class</exclude>
                         </excludes>
                     </instrumentation>
                     <formats>
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis. -->
@@ -303,7 +297,7 @@
     <distributionManagement>
         <repository>
             <id>bintray</id>
-            <url>${distribution.bintray}</url>
+            <url>https://api.bintray.com/maven/raphw/maven/ByteBuddy</url>
         </repository>
     </distributionManagement>
 
@@ -426,6 +420,7 @@
                                     <configLocation>checkstyle.xml</configLocation>
                                     <consoleOutput>true</consoleOutput>
                                     <failsOnError>true</failsOnError>
+                                    <excludes>**/generated/**/*</excludes>
                                 </configuration>
                             </execution>
                         </executions>
