@@ -54,30 +54,29 @@
         <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
         <version.asm>5.0.4</version.asm>
         <version.junit>4.12</version.junit>
+        <!-- Version 2.* uses Byte Buddy such that newer versions cannot be used as a dependency -->
         <version.mockito>1.10.19</version.mockito>
         <version.plugin.bundle>2.5.4</version.plugin.bundle>
-        <!-- Compiler error for versions 3.2, 3.3. -->
-        <version.plugin.compiler>3.1</version.plugin.compiler>
+        <version.plugin.compiler>3.5.1</version.plugin.compiler>
         <version.plugin.install>2.5.2</version.plugin.install>
         <version.plugin.deploy>2.8.2</version.plugin.deploy>
         <version.plugin.javadoc>2.10.3</version.plugin.javadoc>
-        <version.plugin.source>2.4</version.plugin.source>
+        <version.plugin.source>3.0.0</version.plugin.source>
         <version.plugin.shade>2.4.1</version.plugin.shade>
         <version.plugin.gpg>1.6</version.plugin.gpg>
         <version.plugin.jxr>2.5</version.plugin.jxr>
         <version.plugin.jar>2.6</version.plugin.jar>
-        <version.plugin.release>2.5.2</version.plugin.release>
+        <version.plugin.release>2.5.3</version.plugin.release>
         <version.plugin.resources>2.7</version.plugin.resources>
-        <version.plugin.surefire>2.18.1</version.plugin.surefire>
-        <version.plugin.pitest>1.1.8</version.plugin.pitest>
+        <version.plugin.surefire>2.19.1</version.plugin.surefire>
+        <version.plugin.pitest>1.1.9</version.plugin.pitest>
         <version.plugin.animal-sniffer>1.14</version.plugin.animal-sniffer>
         <version.plugin.enforcer>1.4.1</version.plugin.enforcer>
-        <!-- Versions 2.6 and 2.7 fail on Travis. -->
-        <version.plugin.cobertura>2.5.2</version.plugin.cobertura>
-        <version.plugin.coveralls>4.0.0</version.plugin.coveralls>
+        <version.plugin.cobertura>2.7</version.plugin.cobertura>
+        <version.plugin.coveralls>4.1.0</version.plugin.coveralls>
         <version.plugin.checkstyle>2.17</version.plugin.checkstyle>
-        <version.plugin.findbugs>3.0.1</version.plugin.findbugs>
-        <version.annotations.findbugs>3.0.1</version.annotations.findbugs>
+        <version.plugin.findbugs>3.0.3</version.plugin.findbugs>
+        <version.annotations.findbugs>3.0.1u2</version.annotations.findbugs>
         <version.plugin.jitwatch>1.0.1</version.plugin.jitwatch>
         <version.plugin.clirr>2.7</version.plugin.clirr>
         <version.android.sdk>4.1.1.4</version.android.sdk>
