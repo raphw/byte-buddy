@@ -934,7 +934,9 @@ public interface DynamicType {
 
                 /**
                  * <p>
-                 * Defines the supplied {@code boolean} value as a default value of the previously defined or matched field.
+                 * Defines the supplied {@code boolean} value as a default value of the previously defined or matched field. The value can only
+                 * be set for numeric fields of type {@code boolean}, {@code byte}, {@code short}, {@code char} or {@code int}. For non-boolean
+                 * fields, the field's value is set to {@code 0} for {@code false} or {@code 1} for {@code true}.
                  * </p>
                  * <p>
                  * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
@@ -949,7 +951,10 @@ public interface DynamicType {
 
                 /**
                  * <p>
-                 * Defines the supplied {@code int} value as a default value of the previously defined or matched field.
+                 * Defines the supplied {@code int} value as a default value of the previously defined or matched field. The value can only
+                 * be set for numeric fields of type {@code boolean}, {@code byte}, {@code short}, {@code char} or {@code int} where the
+                 * value must be within the numeric type's range. The {@code boolean} type is regarded as a numeric type with the possible
+                 * values of {@code 0} and {@code 1} representing {@code false} and {@code true}.
                  * </p>
                  * <p>
                  * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
