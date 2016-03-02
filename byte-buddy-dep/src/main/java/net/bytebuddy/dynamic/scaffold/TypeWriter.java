@@ -22,6 +22,7 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
+import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
@@ -802,7 +803,7 @@ public interface TypeWriter<T> {
                      *
                      * @param visibilityBridge  The visibility bridge.
                      * @param bridgeTarget      The method the visibility bridge invokes.
-                     * @param superClass         The super type of the instrumented type.
+                     * @param superClass        The super type of the instrumented type.
                      * @param attributeAppender The attribute appender to apply to the visibility bridge.
                      */
                     protected OfVisibilityBridge(MethodDescription visibilityBridge,
@@ -1647,6 +1648,11 @@ public interface TypeWriter<T> {
             private static final String RETURNS_VOID = "V";
 
             /**
+             * The descriptor of the {@link String} type.
+             */
+            private static final String STRING_DESCRIPTOR = "Ljava/lang/String;";
+
+            /**
              * The constraint to assert the members against. The constraint is first defined when the general class information is visited.
              */
             private Constraint constraint;
@@ -1715,6 +1721,65 @@ public interface TypeWriter<T> {
 
             @Override
             public FieldVisitor visitField(int modifiers, String name, String descriptor, String signature, Object defaultValue) {
+                if (defaultValue != null) {
+                    if ((modifiers & Opcodes.ACC_STATIC) == 0) {
+                        throw new IllegalStateException("Cannot define a default value for non-static field " + name);
+                    }
+                    Class<?> type;
+                    switch (descriptor.charAt(0)) {
+                        case 'Z':
+                        case 'B':
+                        case 'C':
+                        case 'S':
+                        case 'I':
+                            type = Integer.class;
+                            break;
+                        case 'J':
+                            type = Long.class;
+                            break;
+                        case 'F':
+                            type = Float.class;
+                            break;
+                        case 'D':
+                            type = Double.class;
+                            break;
+                        default:
+                            if (!descriptor.equals(STRING_DESCRIPTOR)) {
+                                throw new IllegalStateException("Cannot define a default value for type of field " + name);
+                            }
+                            type = String.class;
+                    }
+                    if (!type.isInstance(defaultValue)) {
+                        throw new IllegalStateException("Field " + name + " defines an incompatible default value " + defaultValue);
+                    } else if (type == Integer.class) {
+                        int minimum, maximum;
+                        switch (descriptor.charAt(0)) {
+                            case 'Z':
+                                minimum = 0;
+                                maximum = 1;
+                                break;
+                            case 'B':
+                                minimum = Byte.MIN_VALUE;
+                                maximum = Byte.MAX_VALUE;
+                                break;
+                            case 'C':
+                                minimum = Character.MIN_VALUE;
+                                maximum = Character.MAX_VALUE;
+                                break;
+                            case 'S':
+                                minimum = Short.MIN_VALUE;
+                                maximum = Short.MAX_VALUE;
+                                break;
+                            default:
+                                minimum = Integer.MIN_VALUE;
+                                maximum = Integer.MAX_VALUE;
+                        }
+                        int value = (Integer) defaultValue;
+                        if (value < minimum || value > maximum) {
+                            throw new IllegalStateException("Field " + name + " defines an incompatible default value " + defaultValue);
+                        }
+                    }
+                }
                 constraint.assertField(name, (modifiers & Opcodes.ACC_PUBLIC) != 0, (modifiers & Opcodes.ACC_STATIC) != 0, signature != null);
                 return new ValidatingFieldVisitor(super.visitField(modifiers, name, descriptor, signature, defaultValue));
             }
@@ -1751,7 +1816,7 @@ public interface TypeWriter<T> {
                  * @param name      The name of the field.
                  * @param isPublic  {@code true} if this field is public.
                  * @param isStatic  {@code true} if this field is static.
-                 * @param isGeneric {@code true} if this method defines a generic signature.
+                 * @param isGeneric {@code true} if this field defines a generic signature.
                  */
                 void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric);
 
@@ -2199,7 +2264,7 @@ public interface TypeWriter<T> {
                     @Override
                     public void assertField(String name, boolean isPublic, boolean isStatic, boolean isGeneric) {
                         if (isGeneric && !classFileVersion.isAtLeast(ClassFileVersion.JAVA_V5)) {
-                            throw new IllegalStateException("Cannot define generic method '" + name + "' for class file version " + classFileVersion);
+                            throw new IllegalStateException("Cannot define generic field '" + name + "' for class file version " + classFileVersion);
                         }
                     }
 

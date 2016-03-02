@@ -137,6 +137,42 @@ public class TypeWriterDefaultTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testNonStaticFieldWithConstantValue() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, String.class)
+                .value(FOO)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStaticFieldWithIncompatibleConstantValue() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, String.class, Ownership.STATIC)
+                .value(0)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStaticNumericFieldWithIncompatibleConstantValue() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, boolean.class, Ownership.STATIC)
+                .value(Integer.MAX_VALUE)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testStaticFieldWithNonDefinableConstantValue() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, Object.class, Ownership.STATIC)
+                .value(FOO)
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testNonPublicMethodOnInterfaceAssertion() throws Exception {
         new ByteBuddy()
                 .makeInterface()

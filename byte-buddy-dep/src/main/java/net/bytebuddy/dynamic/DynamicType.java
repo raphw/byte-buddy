@@ -933,7 +933,13 @@ public interface DynamicType {
             interface Valuable<U> extends FieldDefinition<U> {
 
                 /**
+                 * <p>
                  * Defines the supplied {@code boolean} value as a default value of the previously defined or matched field.
+                 * </p>
+                 * <p>
+                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
+                 * within a constructor.
+                 * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
                  * @return A new builder that is equal to this builder but with the given default value declared for the
@@ -942,7 +948,13 @@ public interface DynamicType {
                 FieldDefinition.Optional<U> value(boolean value);
 
                 /**
+                 * <p>
                  * Defines the supplied {@code int} value as a default value of the previously defined or matched field.
+                 * </p>
+                 * <p>
+                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
+                 * within a constructor.
+                 * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
                  * @return A new builder that is equal to this builder but with the given default value declared for the
@@ -951,7 +963,13 @@ public interface DynamicType {
                 FieldDefinition.Optional<U> value(int value);
 
                 /**
+                 * <p>
                  * Defines the supplied {@code long} value as a default value of the previously defined or matched field.
+                 * </p>
+                 * <p>
+                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
+                 * within a constructor.
+                 * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
                  * @return A new builder that is equal to this builder but with the given default value declared for the
@@ -960,7 +978,13 @@ public interface DynamicType {
                 FieldDefinition.Optional<U> value(long value);
 
                 /**
+                 * <p>
                  * Defines the supplied {@code float} value as a default value of the previously defined or matched field.
+                 * </p>
+                 * <p>
+                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
+                 * within a constructor.
+                 * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
                  * @return A new builder that is equal to this builder but with the given default value declared for the
@@ -969,7 +993,13 @@ public interface DynamicType {
                 FieldDefinition.Optional<U> value(float value);
 
                 /**
+                 * <p>
                  * Defines the supplied {@code double} value as a default value of the previously defined or matched field.
+                 * </p>
+                 * <p>
+                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
+                 * within a constructor.
+                 * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
                  * @return A new builder that is equal to this builder but with the given default value declared for the
@@ -978,7 +1008,13 @@ public interface DynamicType {
                 FieldDefinition.Optional<U> value(double value);
 
                 /**
+                 * <p>
                  * Defines the supplied {@link String} value as a default value of the previously defined or matched field.
+                 * </p>
+                 * <p>
+                 * A default value is set as a constant pool value and can only be set for {@code static} fields, Any other value must be set
+                 * within a constructor.
+                 * </p>
                  *
                  * @param value The value to define as a default value of the defined field.
                  * @return A new builder that is equal to this builder but with the given default value declared for the

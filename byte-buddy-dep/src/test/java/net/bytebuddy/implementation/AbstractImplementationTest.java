@@ -12,8 +12,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public abstract class AbstractImplementationTest {
 
-    private static final String SUFFIX = "foo";
-
     protected <T> DynamicType.Loaded<T> implement(Class<T> target, Implementation implementation) {
         return implement(target, implementation, target.getClassLoader(), isDeclaredBy(target));
     }
