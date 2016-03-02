@@ -154,6 +154,14 @@ public class TypeWriterDefaultTest {
                 .make();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testStaticFieldWithNullConstantValue() throws Exception {
+        new ByteBuddy()
+                .subclass(Object.class)
+                .defineField(FOO, String.class, Ownership.STATIC)
+                .value(null);
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testStaticNumericFieldWithIncompatibleConstantValue() throws Exception {
         new ByteBuddy()

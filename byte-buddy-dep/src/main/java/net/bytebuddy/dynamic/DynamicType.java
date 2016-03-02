@@ -1076,6 +1076,9 @@ public interface DynamicType {
 
                         @Override
                         public FieldDefinition.Optional<U> value(String value) {
+                            if (value == null) {
+                                throw new IllegalArgumentException("Cannot set null as a default value");
+                            }
                             return defaultValue(value);
                         }
 
