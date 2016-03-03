@@ -22,7 +22,6 @@ import net.bytebuddy.implementation.auxiliary.AuxiliaryType;
 import net.bytebuddy.implementation.bytecode.ByteCodeAppender;
 import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.TypeCasting;
-import net.bytebuddy.implementation.bytecode.constant.IntegerConstant;
 import net.bytebuddy.implementation.bytecode.member.MethodInvocation;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 import net.bytebuddy.implementation.bytecode.member.MethodVariableAccess;
