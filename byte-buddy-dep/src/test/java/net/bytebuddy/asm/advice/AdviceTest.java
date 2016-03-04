@@ -46,6 +46,30 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(QUX, String.class, String.class).invoke(type.newInstance(), FOO, BAR), is((Object) (FOO + BAR)));
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testAdviceWithoutAnnotations() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(QUX), Advice.to(Object.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonAssignableArgument() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(QUX), Advice.to(IllegalAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonExistantArgument() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(FOO), Advice.to(IllegalAdvice.class)))
+                .make();
+    }
+
     public static class Sample {
 
         public String foo() {
@@ -99,6 +123,15 @@ public class AdviceTest {
 
         @Advice.OnMethodExit
         private static void exit(@Advice.Argument(1) String argument) {
+            System.out.println(argument);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Argument(1) Integer argument) {
             System.out.println(argument);
         }
     }
