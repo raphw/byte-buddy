@@ -143,10 +143,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 MethodDescription methodDescription = methods.get(internalName + descriptor);
                 return methodDescription == null
                         ? IGNORE_METHOD
-                        : new TransferingVisitor(AsmAdvice.this.mv, methodDescription);
+                        : new TransferringVisitor(AsmAdvice.this.mv, methodDescription);
             }
 
-            protected class TransferingVisitor extends MethodVisitor {
+            protected class TransferringVisitor extends MethodVisitor {
 
                 private final Map<Integer, ParameterDescription> parameters;
 
@@ -154,7 +154,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 private final Label endOfMethod;
 
-                protected TransferingVisitor(MethodVisitor methodVisitor, MethodDescription inlinedMethod) {
+                protected TransferringVisitor(MethodVisitor methodVisitor, MethodDescription inlinedMethod) {
                     super(Opcodes.ASM5, methodVisitor);
                     parameters = new HashMap<Integer, ParameterDescription>();
                     for (ParameterDescription parameter : inlinedMethod.getParameters()) {
