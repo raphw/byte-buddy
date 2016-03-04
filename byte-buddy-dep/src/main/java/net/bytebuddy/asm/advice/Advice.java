@@ -91,7 +91,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         protected void onMethodEnter() {
-            classReader.accept(new CodeInliner(methodEnter), ClassReader.SKIP_DEBUG);
+            classReader.accept(new CodeCopier(methodEnter), ClassReader.SKIP_DEBUG);
         }
 
         @Override
@@ -114,7 +114,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 default:
                     throw new IllegalStateException("Unexpected termination opcode: " + opcode);
             }
-            classReader.accept(new CodeInliner(methodExit, stackIncrement), ClassReader.SKIP_DEBUG);
+            classReader.accept(new CodeCopier(methodExit, stackIncrement), ClassReader.SKIP_DEBUG);
         }
 
         @Override
@@ -122,17 +122,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             super.visitMaxs(Math.max(maxStack, this.maxStack), Math.max(maxLocals, this.maxLocals));
         }
 
-        protected class CodeInliner extends ClassVisitor {
+        protected class CodeCopier extends ClassVisitor {
 
             private final int stackIncrement;
 
             private final Map<String, MethodDescription> methods;
 
-            protected CodeInliner(Map<String, MethodDescription> methods) {
+            protected CodeCopier(Map<String, MethodDescription> methods) {
                 this(methods, 0);
             }
 
-            protected CodeInliner(Map<String, MethodDescription> methods, int stackIncrement) {
+            protected CodeCopier(Map<String, MethodDescription> methods, int stackIncrement) {
                 super(Opcodes.ASM5);
                 this.stackIncrement = stackIncrement;
                 this.methods = methods;
