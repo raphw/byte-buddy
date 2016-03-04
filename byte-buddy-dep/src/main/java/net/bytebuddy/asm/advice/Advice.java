@@ -41,7 +41,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public static AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         try {
             Map<String, MethodDescription> methodEnter = new HashMap<String, MethodDescription>(), methodExit = new HashMap<String, MethodDescription>();
-            for(MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
+            for (MethodDescription methodDescription : typeDescription.getDeclaredMethods()) {
                 considerAdvice(OnMethodEnter.class, methodEnter, methodDescription);
                 considerAdvice(OnMethodExit.class, methodExit, methodDescription);
             }
@@ -70,6 +70,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     protected class AsmAdvice extends AdviceAdapter {
 
+        private int maxStack = -1;
+
+        private int maxLocals = -1;
+
         protected AsmAdvice(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             super(Opcodes.ASM5, methodVisitor, methodDescription.getActualModifiers(), methodDescription.getInternalName(), methodDescription.getDescriptor());
         }
@@ -81,15 +85,45 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         protected void onMethodExit(int opcode) {
-            new ClassReader(binaryRepresentation).accept(new CodeInliner(methodExit), ClassReader.SKIP_DEBUG);
+            int stackIncrement;
+            switch (opcode) {
+                case Opcodes.RETURN:
+                    stackIncrement = 0;
+                    break;
+                case Opcodes.ARETURN:
+                case Opcodes.ATHROW:
+                case Opcodes.IRETURN:
+                case Opcodes.FRETURN:
+                    stackIncrement = 1;
+                    break;
+                case Opcodes.DRETURN:
+                case Opcodes.LRETURN:
+                    stackIncrement = 2;
+                    break;
+                default:
+                    throw new IllegalStateException("Unexpected opcode: " + opcode);
+            }
+            new ClassReader(binaryRepresentation).accept(new CodeInliner(methodExit, stackIncrement), ClassReader.SKIP_DEBUG);
+        }
+
+        @Override
+        public void visitMaxs(int maxStack, int maxLocals) {
+            super.visitMaxs(Math.max(maxStack, this.maxStack), Math.max(maxLocals, this.maxLocals));
         }
 
         protected class CodeInliner extends ClassVisitor {
 
+            private final int stackIncrement;
+
             private final Map<String, MethodDescription> methods;
 
             protected CodeInliner(Map<String, MethodDescription> methods) {
+                this(methods, 0);
+            }
+
+            protected CodeInliner(Map<String, MethodDescription> methods, int stackIncrement) {
                 super(Opcodes.ASM5);
+                this.stackIncrement = stackIncrement;
                 this.methods = methods;
             }
 
@@ -98,7 +132,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 MethodDescription methodDescription = methods.get(internalName + descriptor);
                 return methodDescription == null
                         ? IGNORE_METHOD
-                        : new TransferingVisitor(AsmAdvice.this);
+                        : new TransferingVisitor(AsmAdvice.this.mv);
             }
 
             protected class TransferingVisitor extends MethodVisitor {
@@ -123,7 +157,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public AnnotationVisitor visitTypeAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
 
@@ -154,7 +188,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitMaxs(int maxStack, int maxLocals) {
-                    /* do nothing */
+                    AsmAdvice.this.maxStack = maxStack + stackIncrement;
+                    AsmAdvice.this.maxLocals = maxLocals;
+                }
+
+                @Override
+                public void visitInsn(int opcode) {
+                    switch (opcode) {
+                        case Opcodes.RETURN:
+                            break;
+                        case Opcodes.IRETURN:
+                        case Opcodes.FRETURN:
+                        case Opcodes.ARETURN:
+                            super.visitInsn(Opcodes.POP);
+                            break;
+                        case Opcodes.LRETURN:
+                        case Opcodes.DRETURN:
+                            super.visitInsn(Opcodes.POP2);
+                            break;
+                        default:
+                            super.visitInsn(opcode);
+                    }
                 }
             }
         }
