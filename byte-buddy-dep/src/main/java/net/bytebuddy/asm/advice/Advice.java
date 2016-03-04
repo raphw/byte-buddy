@@ -148,11 +148,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             protected class TransferingVisitor extends MethodVisitor {
 
-                private final MethodDescription inlinedMethod;
+                private final Map<Integer, ParameterDescription> parameters;
+
+                private final int offsetCorrection;
+
+                private final Label endOfMethod;
 
                 protected TransferingVisitor(MethodVisitor methodVisitor, MethodDescription inlinedMethod) {
                     super(Opcodes.ASM5, methodVisitor);
-                    this.inlinedMethod = inlinedMethod;
+                    parameters = new HashMap<Integer, ParameterDescription>();
+                    for (ParameterDescription parameter : inlinedMethod.getParameters()) {
+                        parameters.put(parameter.getOffset(), parameter);
+                    }
+                    offsetCorrection = instrumentedMethod.getStackSize() - inlinedMethod.getStackSize();
+                    endOfMethod = new Label();
                 }
 
                 @Override
@@ -204,44 +213,50 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitMaxs(int maxStack, int maxLocals) {
                     AsmAdvice.this.maxStack = maxStack + stackIncrement;
                     AsmAdvice.this.maxLocals = maxLocals;
+                    super.visitLabel(endOfMethod);
                 }
 
                 @Override
                 public void visitInsn(int opcode) {
                     switch (opcode) {
                         case Opcodes.RETURN:
+                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
                         case Opcodes.IRETURN:
                         case Opcodes.FRETURN:
-                        case Opcodes.ARETURN:
                             super.visitInsn(Opcodes.POP);
+                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
                         case Opcodes.LRETURN:
                         case Opcodes.DRETURN:
                             super.visitInsn(Opcodes.POP2);
+                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
+                        case Opcodes.ARETURN:
                         default:
                             super.visitInsn(opcode);
                     }
                 }
 
                 @Override
-                public void visitVarInsn(int opcode, int variableOffset) {
-                    for (ParameterDescription parameter : inlinedMethod.getParameters()) {
-                        int parameterOffset = parameter.getOffset();
-                        if (parameterOffset == variableOffset) {
-                            AnnotationDescription.Loadable<Argument> argument = parameter.getDeclaredAnnotations().ofType(Argument.class);
-                            int instrumentedIndex = argument == null
-                                    ? parameter.getIndex()
-                                    : argument.loadSilent().value();
-                            ParameterList<?> instrumentedParameters = instrumentedMethod.getParameters();
-                            if (instrumentedIndex > instrumentedParameters.size()) {
-                                throw new IllegalStateException(instrumentedMethod + " does not define a parameter with index " + instrumentedIndex);
-                            }
-                            variableOffset = instrumentedParameters.get(instrumentedIndex).getOffset();
+                public void visitVarInsn(int opcode, int offset) {
+                    ParameterDescription parameterDescription = parameters.get(offset);
+                    if (parameterDescription != null) {
+                        AnnotationDescription.Loadable<Argument> argument = parameterDescription.getDeclaredAnnotations().ofType(Argument.class);
+                        int targetIndex = argument == null
+                                ? parameterDescription.getIndex()
+                                : argument.loadSilent().value();
+                        ParameterList<?> targetParameters = instrumentedMethod.getParameters();
+                        if (targetIndex >= targetParameters.size()) {
+                            throw new IllegalStateException(instrumentedMethod + " does not define a parameter with index " + targetIndex);
+                        } else if (!targetParameters.get(targetIndex).getType().asErasure().isAssignableTo(parameterDescription.getType().asErasure())) {
+                            throw new IllegalStateException("Cannot assign " + targetParameters.get(targetIndex) + " to " + parameterDescription);
                         }
+                        offset = targetParameters.get(targetIndex).getOffset();
+                    } else {
+                        offset += offsetCorrection;
                     }
-                    super.visitVarInsn(opcode, variableOffset);
+                    super.visitVarInsn(opcode, offset);
                 }
             }
         }
@@ -265,6 +280,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface Argument {
+
         int value();
     }
 }
