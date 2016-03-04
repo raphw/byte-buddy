@@ -1,7 +1,10 @@
 package net.bytebuddy.asm.advice;
 
 import net.bytebuddy.asm.AsmVisitorWrapper;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import org.objectweb.asm.*;
@@ -70,17 +73,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     protected class AsmAdvice extends AdviceAdapter {
 
-        private int maxStack = -1;
+        private static final int NO_VALUE = -1;
 
-        private int maxLocals = -1;
+        private final MethodDescription instrumentedMethod;
+
+        private final ClassReader classReader;
+
+        private int maxStack = NO_VALUE;
+
+        private int maxLocals = NO_VALUE;
 
         protected AsmAdvice(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             super(Opcodes.ASM5, methodVisitor, methodDescription.getActualModifiers(), methodDescription.getInternalName(), methodDescription.getDescriptor());
+            classReader = new ClassReader(binaryRepresentation);
+            this.instrumentedMethod = methodDescription;
         }
 
         @Override
         protected void onMethodEnter() {
-            new ClassReader(binaryRepresentation).accept(new CodeInliner(methodEnter), ClassReader.SKIP_DEBUG);
+            classReader.accept(new CodeInliner(methodEnter), ClassReader.SKIP_DEBUG);
         }
 
         @Override
@@ -101,9 +112,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     stackIncrement = 2;
                     break;
                 default:
-                    throw new IllegalStateException("Unexpected opcode: " + opcode);
+                    throw new IllegalStateException("Unexpected termination opcode: " + opcode);
             }
-            new ClassReader(binaryRepresentation).accept(new CodeInliner(methodExit, stackIncrement), ClassReader.SKIP_DEBUG);
+            classReader.accept(new CodeInliner(methodExit, stackIncrement), ClassReader.SKIP_DEBUG);
         }
 
         @Override
@@ -132,13 +143,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 MethodDescription methodDescription = methods.get(internalName + descriptor);
                 return methodDescription == null
                         ? IGNORE_METHOD
-                        : new TransferingVisitor(AsmAdvice.this.mv);
+                        : new TransferingVisitor(AsmAdvice.this.mv, methodDescription);
             }
 
             protected class TransferingVisitor extends MethodVisitor {
 
-                protected TransferingVisitor(MethodVisitor methodVisitor) {
+                private final MethodDescription inlinedMethod;
+
+                protected TransferingVisitor(MethodVisitor methodVisitor, MethodDescription inlinedMethod) {
                     super(Opcodes.ASM5, methodVisitor);
+                    this.inlinedMethod = inlinedMethod;
                 }
 
                 @Override
@@ -210,6 +224,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             super.visitInsn(opcode);
                     }
                 }
+
+                @Override
+                public void visitVarInsn(int opcode, int variableOffset) {
+                    for (ParameterDescription parameter : inlinedMethod.getParameters()) {
+                        int parameterOffset = parameter.getOffset();
+                        if (parameterOffset == variableOffset) {
+                            AnnotationDescription.Loadable<Argument> argument = parameter.getDeclaredAnnotations().ofType(Argument.class);
+                            int instrumentedIndex = argument == null
+                                    ? parameter.getIndex()
+                                    : argument.loadSilent().value();
+                            ParameterList<?> instrumentedParameters = instrumentedMethod.getParameters();
+                            if (instrumentedIndex > instrumentedParameters.size()) {
+                                throw new IllegalStateException(instrumentedMethod + " does not define a parameter with index " + instrumentedIndex);
+                            }
+                            variableOffset = instrumentedParameters.get(instrumentedIndex).getOffset();
+                        }
+                    }
+                    super.visitVarInsn(opcode, variableOffset);
+                }
             }
         }
     }
@@ -226,5 +259,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodExit {
 
+    }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface Argument {
+        int value();
     }
 }
