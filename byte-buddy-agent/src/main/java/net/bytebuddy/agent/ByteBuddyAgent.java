@@ -310,6 +310,7 @@ public class ByteBuddyAgent {
          * The default attachment provider to be used.
          */
         AttachmentProvider DEFAULT = new Compound(ForJigsawVm.INSTANCE,
+                ForJ9Vm.INSTANCE,
                 ForToolsJarVm.JVM_ROOT,
                 ForToolsJarVm.JDK_ROOT,
                 ForToolsJarVm.MACINTOSH);
@@ -327,9 +328,14 @@ public class ByteBuddyAgent {
         interface Accessor {
 
             /**
-             * The name of the {@code VirtualMachine} class.
+             * The name of the {@code VirtualMachine} class on any OpenJDK or Oracle JDK implementation.
              */
             String VIRTUAL_MACHINE_TYPE_NAME = "com.sun.tools.attach.VirtualMachine";
+
+            /**
+             * The name of the {@code VirtualMachine} class on IBM J9 VMs.
+             */
+            String VIRTUAL_MACHINE_TYPE_NAME_J9 = "com.ibm.tools.attach.VirtualMachine";
 
             /**
              * Determines if this accessor is applicable for the currently running JVM.
@@ -417,8 +423,13 @@ public class ByteBuddyAgent {
                 }
 
                 /**
+                 * <p>
                  * Creates an accessor by reading the process id from the JMX runtime bean and by attempting
                  * to load the {@code com.sun.tools.attach.VirtualMachine} class from the provided class loader.
+                 * </p>
+                 * <p>
+                 * This accessor is supposed to work on any implementation of the OpenJDK or Oracle JDK.
+                 * </p>
                  *
                  * @param classLoader A class loader that is capable of loading the virtual machine type.
                  * @return An appropriate accessor.
@@ -426,6 +437,25 @@ public class ByteBuddyAgent {
                 public static Accessor of(ClassLoader classLoader) {
                     try {
                         return of(classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME));
+                    } catch (ClassNotFoundException ignored) {
+                        return Unavailable.INSTANCE;
+                    }
+                }
+
+                /**
+                 * <p>
+                 * Creates an accessor by reading the process id from the JMX runtime bean and by attempting
+                 * to load the {@code com.ibm.tools.attach.VirtualMachine} class from the provided class loader.
+                 * </p>
+                 * <p>
+                 * This accessor is supposed to work on any implementation of IBM's J9.
+                 * </p>
+                 *
+                 * @return An appropriate accessor.
+                 */
+                public static Accessor ofJ9() {
+                    try {
+                        return of(ClassLoader.getSystemClassLoader().loadClass(VIRTUAL_MACHINE_TYPE_NAME_J9));
                     } catch (ClassNotFoundException ignored) {
                         return Unavailable.INSTANCE;
                     }
@@ -600,7 +630,7 @@ public class ByteBuddyAgent {
         }
 
         /**
-         * An attachment provider that locates the attach API directly from the bootstrap class loader.
+         * An attachment provider that locates the attach API directly from the system class loader.
          */
         enum ForJigsawVm implements AttachmentProvider {
 
@@ -617,6 +647,28 @@ public class ByteBuddyAgent {
             @Override
             public String toString() {
                 return "ByteBuddyAgent.AttachmentProvider.ForJigsawVm." + name();
+            }
+        }
+
+        /**
+         * An attachment provider that locates the attach API directly from the system class loader expecting
+         * an IBM J9 VM.
+         */
+        enum ForJ9Vm implements AttachmentProvider {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public Accessor attempt() {
+                return Accessor.Simple.ofJ9();
+            }
+
+            @Override
+            public String toString() {
+                return "ByteBuddyAgent.AttachmentProvider.ForJ9Vm." + name();
             }
         }
 

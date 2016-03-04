@@ -41,6 +41,7 @@ public class ByteBuddyAgentAttachmentProviderTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForJigsawVm.class).apply();
+        ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForJ9Vm.class).apply();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForToolsJarVm.class).apply();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.ForToolsJarVm.ClassLoaderCreationAction.class).apply();
         ObjectPropertyAssertion.of(ByteBuddyAgent.AttachmentProvider.Compound.class).apply();
