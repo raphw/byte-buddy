@@ -2855,7 +2855,7 @@ public interface DynamicType {
                             fieldRegistry,
                             methodRegistry,
                             typeAttributeAppender,
-                            asmVisitorWrapper,
+                            new AsmVisitorWrapper.Compound(asmVisitorWrapper),
                             classFileVersion,
                             auxiliaryTypeNamingStrategy,
                             annotationValueFilterFactory,
