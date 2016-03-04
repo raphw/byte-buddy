@@ -13,6 +13,8 @@ public class AdviceTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
+    private static final String ENTER = "enter", EXIT = "exit";
+
     @Test
     public void testTrivialAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
@@ -22,6 +24,8 @@ public class AdviceTest {
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
     @Test
@@ -33,6 +37,8 @@ public class AdviceTest {
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), BAR), is((Object) BAR));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
     @Test
@@ -44,13 +50,20 @@ public class AdviceTest {
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(QUX, String.class, String.class).invoke(type.newInstance(), FOO, BAR), is((Object) (FOO + BAR)));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
+        Advice.to(Object.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonExistentArgument() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(QUX), Advice.to(Object.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(FOO), Advice.to(IllegalAdvice.class)))
                 .make();
     }
 
@@ -58,19 +71,13 @@ public class AdviceTest {
     public void testAdviceWithNonAssignableArgument() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(QUX), Advice.to(IllegalAdvice.class)))
-                .make();
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testAdviceWithNonExistantArgument() throws Exception {
-        new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(FOO), Advice.to(IllegalAdvice.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().method(named(BAR), Advice.to(IllegalAdvice.class)))
                 .make();
     }
 
     public static class Sample {
+
+        public static int enter, exit;
 
         public String foo() {
             return FOO;
@@ -90,26 +97,28 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static void enter() {
-            System.out.println("foo");
+            Sample.enter++;
         }
 
         @Advice.OnMethodExit
         private static void exit() {
-            System.out.println("bar");
+            Sample.exit++;
         }
     }
 
     @SuppressWarnings("unused")
     public static class ArgumentAdvice {
 
+        public static int enter, exit;
+
         @Advice.OnMethodEnter
         private static void enter(String argument) {
-            System.out.println(argument);
+            Sample.enter++;
         }
 
         @Advice.OnMethodExit
         private static void exit(String argument) {
-            System.out.println(argument);
+            Sample.exit++;
         }
     }
 
@@ -118,12 +127,12 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static void enter(@Advice.Argument(1) String argument) {
-            System.out.println(argument);
+            Sample.enter++;
         }
 
         @Advice.OnMethodExit
         private static void exit(@Advice.Argument(1) String argument) {
-            System.out.println(argument);
+            Sample.exit++;
         }
     }
 
@@ -131,8 +140,16 @@ public class AdviceTest {
     public static class IllegalAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.Argument(1) Integer argument) {
-            System.out.println(argument);
+        private static void enter(Integer argument) {
+            throw new AssertionError();
         }
     }
+
+    /*
+    TODO:
+    0. Eager consistency check for argument mapping.
+    1. Check if rewrite of local variables works out.
+    2. Rewrite stack map frames being emitted.
+    3. Test use of stack map frames (add advice and methods with branches)
+     */
 }
