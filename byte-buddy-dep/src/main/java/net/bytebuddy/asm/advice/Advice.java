@@ -8,7 +8,6 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import org.objectweb.asm.*;
-import org.objectweb.asm.commons.AdviceAdapter;
 
 import java.io.IOException;
 import java.lang.annotation.*;
@@ -71,7 +70,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return new AsmAdvice(methodVisitor, methodDescription);
     }
 
-    protected class AsmAdvice extends AdviceAdapter {
+    protected class AsmAdvice extends MethodVisitor {
 
         private static final int NO_VALUE = -1;
 
@@ -84,37 +83,36 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         private int maxLocals = NO_VALUE;
 
         protected AsmAdvice(MethodVisitor methodVisitor, MethodDescription methodDescription) {
-            super(Opcodes.ASM5, methodVisitor, methodDescription.getActualModifiers(), methodDescription.getInternalName(), methodDescription.getDescriptor());
+            super(Opcodes.ASM5, methodVisitor);
             classReader = new ClassReader(binaryRepresentation);
             this.instrumentedMethod = methodDescription;
         }
 
         @Override
-        protected void onMethodEnter() {
+        public void visitCode() {
+            super.visitCode();
             classReader.accept(new CodeCopier(methodEnter), ClassReader.SKIP_DEBUG);
         }
 
         @Override
-        protected void onMethodExit(int opcode) {
-            int stackIncrement;
+        public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
-                    stackIncrement = 0;
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
                     break;
-                case Opcodes.ARETURN:
-                case Opcodes.ATHROW:
                 case Opcodes.IRETURN:
                 case Opcodes.FRETURN:
-                    stackIncrement = 1;
+                case Opcodes.ARETURN:
+                case Opcodes.ATHROW:
+                    classReader.accept(new CodeCopier(methodExit, 1), ClassReader.SKIP_DEBUG);
                     break;
                 case Opcodes.DRETURN:
                 case Opcodes.LRETURN:
-                    stackIncrement = 2;
+                    classReader.accept(new CodeCopier(methodExit, 2), ClassReader.SKIP_DEBUG);
                     break;
-                default:
-                    throw new IllegalStateException("Unexpected termination opcode: " + opcode);
             }
-            classReader.accept(new CodeCopier(methodExit, stackIncrement), ClassReader.SKIP_DEBUG);
+            // TODO: Adapt stack map frames to include additional frame!
+            super.visitInsn(opcode);
         }
 
         @Override
@@ -224,6 +222,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             break;
                         case Opcodes.IRETURN:
                         case Opcodes.FRETURN:
+                        case Opcodes.ARETURN:
                             super.visitInsn(Opcodes.POP);
                             super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
@@ -232,7 +231,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             super.visitInsn(Opcodes.POP2);
                             super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
-                        case Opcodes.ARETURN:
                         default:
                             super.visitInsn(opcode);
                     }
