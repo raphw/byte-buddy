@@ -691,7 +691,7 @@ public interface InstrumentedType extends TypeDescription {
                 } else if (!interfaceErasures.add(interfaceType.asErasure())) {
                     throw new IllegalStateException("Already implemented interface " + interfaceType + " for " + this);
                 } else if (!interfaceType.asErasure().isVisibleTo(this)) {
-                    throw new IllegalStateException("Illegal interface type " + interfaceType + " for " + this);
+                    throw new IllegalStateException("Invisible interface type " + interfaceType + " for " + this);
                 }
             }
             TypeList.Generic typeVariables = getTypeVariables();
