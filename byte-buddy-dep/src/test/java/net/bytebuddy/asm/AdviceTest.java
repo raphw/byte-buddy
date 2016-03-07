@@ -3,7 +3,6 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassWriter;
 
@@ -82,7 +81,6 @@ public class AdviceTest {
     public void testAdviceWithEntranceValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(EntranceValueAdvice.class)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -154,6 +152,32 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
+    @Test
+    public void testObsoleteReturnValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ObsoleteReturnValue.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+    @Test
+    public void testUnusedReturnValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(UnusedReturnValue.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
@@ -174,16 +198,6 @@ public class AdviceTest {
     @Test(expected = IllegalArgumentException.class)
     public void testNonStaticAdvice() throws Exception {
         Advice.to(NonStaticAdvice.class);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testObsoleteReturnValue() throws Exception {
-        Advice.to(ObsoleteReturnValue.class);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testUnusedReturnValue() throws Exception {
-        Advice.to(UnusedReturnValue.class);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -226,8 +240,8 @@ public class AdviceTest {
             return argument;
         }
 
-        public String qux(String arg1, String arg2) {
-            return arg1 + arg2;
+        public String qux(String first, String second) {
+            return first + second;
         }
 
         public static String baz() {
@@ -392,7 +406,8 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static int enter() {
-            throw new AssertionError();
+            Sample.enter++;
+            return VALUE;
         }
     }
 
@@ -401,12 +416,13 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static int enter() {
-            throw new AssertionError();
+            Sample.enter++;
+            return VALUE;
         }
 
         @Advice.OnMethodExit
         private static void exit() {
-            throw new AssertionError();
+            Sample.exit++;
         }
     }
 }
