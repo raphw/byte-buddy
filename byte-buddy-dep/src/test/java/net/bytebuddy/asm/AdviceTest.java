@@ -175,6 +175,11 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testObsoleteReturnValue() throws Exception {
+        Advice.to(ObsoleteReturnValue.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testUnusedReturnValue() throws Exception {
         Advice.to(UnusedReturnValue.class);
     }
@@ -328,7 +333,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.EntranceValue int value) {
+        private static void exit(@Advice.Entry int value) {
             if (value != VALUE) {
                 throw new AssertionError();
             }
@@ -340,7 +345,7 @@ public class AdviceTest {
     public static class ReturnValueAdvice {
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.ReturnValue String value) {
+        private static void exit(@Advice.Return String value) {
             if (!value.equals(FOO)) {
                 throw new AssertionError();
             }
@@ -381,10 +386,24 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class ObsoleteReturnValue {
+
+        @Advice.OnMethodEnter
+        private static int enter() {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class UnusedReturnValue {
 
         @Advice.OnMethodEnter
         private static int enter() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodExit
+        private static void exit() {
             throw new AssertionError();
         }
     }

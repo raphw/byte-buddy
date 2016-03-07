@@ -352,7 +352,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
                 boolean valueParameterExpected = dispatcher.isActive() && !dispatcher.getInlinedMethod().getReturnType().asErasure().represents(void.class);
                 for (ParameterDescription parameter : methodDescription.getParameters()) {
-                    if (parameter.getDeclaredAnnotations().isAnnotationPresent(EntranceValue.class)) {
+                    if (parameter.getDeclaredAnnotations().isAnnotationPresent(Entry.class)) {
                         if (valueParameterExpected) {
                             if (!dispatcher.getInlinedMethod().getReturnType().asErasure().isAssignableTo(parameter.getType().asErasure())) {
                                 throw new IllegalStateException(); // TODO: Message
@@ -382,9 +382,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Static methods do not imply a this reference for " + parameter);
                         }
                         accessMappings.put(parameter.getOffset(), AccessMapping.ForMethodArgument.ofThisReference());
-                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(EntranceValue.class)) {
+                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(Entry.class)) {
                         accessMappings.put(parameter.getOffset(), new AccessMapping.ForEntranceValue(instrumentedMethod));
-                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(ReturnValue.class)) {
+                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(Return.class)) {
                         accessMappings.put(parameter.getOffset(), new AccessMapping.ForReturnValue(instrumentedMethod));
                     } else {
                         AnnotationDescription.Loadable<Argument> argument = parameter.getDeclaredAnnotations().ofType(Argument.class);
@@ -541,14 +541,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public @interface EntranceValue {
+    public @interface Entry {
         /* empty */
     }
 
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public @interface ReturnValue {
+    public @interface Return {
         /* empty */
     }
 }
