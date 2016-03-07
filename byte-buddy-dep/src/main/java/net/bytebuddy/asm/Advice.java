@@ -353,10 +353,33 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            enum ForException implements OffsetMapping, Factory {
+
+                INSTANCE;
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                    if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Thrown.class)) {
+                        if (!parameterDescription.getType().asErasure().isAssignableFrom(Throwable.class)) {
+                            throw new IllegalStateException("Throwable must be of subtype Throwable for " + parameterDescription);
+                        }
+                        return this;
+                    } else {
+                        return UNDEFINED;
+                    }
+                }
+
+                @Override
+                public int resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize offset) {
+                    return instrumentedMethod.getStackSize() + offset.getSize() + instrumentedMethod.getReturnType().getStackSize().getSize();
+                }
+            }
+
             class Illegal implements Factory {
 
                 private final List<? extends Class<? extends Annotation>> annotations;
 
+                //@SafeVarargs
                 protected Illegal(Class<? extends Annotation>... annotation) {
                     this(Arrays.asList(annotation));
                 }
@@ -474,12 +497,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             protected static class ForMethodEnter extends Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
-                @SuppressWarnings("all") // Should be @SafeVarargs
+                @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                 protected ForMethodEnter(MethodDescription.InDefinedShape inlinedMethod) {
                     super(inlinedMethod,
                             OffsetMapping.ForParameter.Factory.INSTANCE,
                             OffsetMapping.ForThisReference.Factory.INSTANCE,
-                            new OffsetMapping.Illegal(Enter.class, Return.class));
+                            new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
                 }
 
                 @Override
@@ -501,12 +524,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 private final StackSize additionalSize;
 
+                @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                 protected ForMethodExit(MethodDescription.InDefinedShape inlinedMethod, TypeDescription enterType) {
                     super(inlinedMethod,
                             OffsetMapping.ForParameter.Factory.INSTANCE,
                             OffsetMapping.ForThisReference.Factory.INSTANCE,
                             new OffsetMapping.ForEnterValue.Factory(enterType),
-                            OffsetMapping.ForReturnValue.Factory.INSTANCE);
+                            OffsetMapping.ForReturnValue.Factory.INSTANCE,
+                            inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onException()
+                                    ? OffsetMapping.ForException.INSTANCE
+                                    : new OffsetMapping.Illegal(Thrown.class));
                     additionalSize = enterType.getStackSize();
                 }
 
@@ -742,6 +769,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface Return {
+        /* empty */
+    }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface Thrown {
         /* empty */
     }
 }

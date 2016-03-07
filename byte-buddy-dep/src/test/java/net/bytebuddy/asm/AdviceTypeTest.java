@@ -104,8 +104,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static boolean exit(@Advice.Return boolean result, @Advice.Enter boolean enter) {
-            if (result == exception || !enter) {
+        public static boolean exit(@Advice.Return boolean result, @Advice.Enter boolean enter, @Advice.Thrown Throwable throwable) {
+            if (result == exception || !enter || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -135,8 +135,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static byte exit(@Advice.Return byte result, @Advice.Enter byte enter) {
-            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2) {
+        public static byte exit(@Advice.Return byte result, @Advice.Enter byte enter, @Advice.Thrown Throwable throwable) {
+            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2 || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -166,8 +166,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static short exit(@Advice.Return short result, @Advice.Enter short enter) {
-            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2) {
+        public static short exit(@Advice.Return short result, @Advice.Enter short enter, @Advice.Thrown Throwable throwable) {
+            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2 || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -197,8 +197,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static char exit(@Advice.Return char result, @Advice.Enter char enter) {
-            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2) {
+        public static char exit(@Advice.Return char result, @Advice.Enter char enter, @Advice.Thrown Throwable throwable) {
+            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2 || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -228,8 +228,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static int exit(@Advice.Return int result, @Advice.Enter int enter) {
-            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2) {
+        public static int exit(@Advice.Return int result, @Advice.Enter int enter, @Advice.Thrown Throwable throwable) {
+            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2 || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -259,8 +259,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static long exit(@Advice.Return long result, @Advice.Enter long enter) {
-            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2) {
+        public static long exit(@Advice.Return long result, @Advice.Enter long enter, @Advice.Thrown Throwable throwable) {
+            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2 || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -290,8 +290,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static float exit(@Advice.Return float result, @Advice.Enter float enter) {
-            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2) {
+        public static float exit(@Advice.Return float result, @Advice.Enter float enter, @Advice.Thrown Throwable throwable) {
+            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2 || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -321,8 +321,8 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static double exit(@Advice.Return double result, @Advice.Enter double enter) {
-            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2) {
+        public static double exit(@Advice.Return double result, @Advice.Enter double enter, @Advice.Thrown Throwable throwable) {
+            if (result != (exception ? 0 : VALUE) || enter != VALUE * 2 || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
@@ -352,8 +352,10 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodExit
-        public static Object exit(@Advice.Return Object result, @Advice.Enter Object enter) {
-            if ((exception ? result != null : !result.equals(FOO)) || !enter.equals(FOO + BAR)) {
+        public static Object exit(@Advice.Return Object result, @Advice.Enter Object enter, @Advice.Thrown Throwable throwable) {
+            if ((exception ? result != null : !result.equals(FOO))
+                    || !enter.equals(FOO + BAR)
+                    || (exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
             exit++;
