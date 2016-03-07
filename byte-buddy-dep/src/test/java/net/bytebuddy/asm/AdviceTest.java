@@ -280,12 +280,4 @@ public class AdviceTest {
             throw new AssertionError();
         }
     }
-
-    /*
-    TODO:
-    0. Eager consistency check for argument mapping.
-    1. Check if rewrite of local variables works out.
-    2. Rewrite stack map frames being emitted.
-    3. Test use of stack map frames (add advice and methods with branches)
-     */
 }

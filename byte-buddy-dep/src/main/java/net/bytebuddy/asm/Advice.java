@@ -124,8 +124,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     super.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
                     classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
                     break;
-                case Opcodes.ARETURN:
                 case Opcodes.ATHROW:
+                    if (methodExit.isSkipException()) {
+                        break;
+                    }
+                case Opcodes.ARETURN:
                     super.visitInsn(Opcodes.DUP);
                     super.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
                     classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
@@ -146,7 +149,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                 return dispatcher.isInlined(internalName, descriptor)
-                        ? new TransferringVisitor(AsmAdvice.this.mv, dispatcher.getInlinedMethod())
+                        ? new TransferringVisitor(dispatcher.getInlinedMethod())
                         : IGNORE_METHOD;
             }
 
@@ -154,37 +157,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 private final Map<Integer, AccessMapping> accessMappings;
 
-                private final int offsetCorrection;
+                private final int offset;
 
                 private final Label endOfMethod;
 
-                protected TransferringVisitor(MethodVisitor methodVisitor, MethodDescription inlinedMethod) {
-                    super(Opcodes.ASM5, methodVisitor);
-                    accessMappings = new HashMap<Integer, AccessMapping>();
-                    for (ParameterDescription parameter : inlinedMethod.getParameters()) {
-                        if (parameter.getDeclaredAnnotations().isAnnotationPresent(This.class)) {
-                            if (instrumentedMethod.isStatic()) {
-                                throw new IllegalStateException("Static methods do not imply a this reference for " + parameter);
-                            }
-                            accessMappings.put(parameter.getOffset(), AccessMapping.ForMethodArgument.ofThisReference());
-                        } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(EntranceValue.class)) {
-                            accessMappings.put(parameter.getOffset(), new AccessMapping.ForEntranceValue(instrumentedMethod));
-                        } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(ReturnValue.class)) {
-                            accessMappings.put(parameter.getOffset(), new AccessMapping.ForReturnValue(instrumentedMethod));
-                        } else {
-                            AnnotationDescription.Loadable<Argument> argument = parameter.getDeclaredAnnotations().ofType(Argument.class);
-                            int index = argument == null
-                                    ? parameter.getIndex()
-                                    : argument.loadSilent().value();
-                            if (instrumentedMethod.getParameters().size() <= index) {
-                                throw new IllegalStateException(instrumentedMethod + " does not define a parameter of index " + index);
-                            } else if (!instrumentedMethod.getParameters().get(index).getType().asErasure().isAssignableTo(parameter.getType().asErasure())) {
-                                throw new IllegalStateException(parameter + " is not assignable to " + instrumentedMethod.getParameters().get(index));
-                            }
-                            accessMappings.put(parameter.getOffset(), new AccessMapping.ForMethodArgument(instrumentedMethod.getParameters().get(index).getOffset()));
-                        }
-                    }
-                    offsetCorrection = instrumentedMethod.getStackSize() - inlinedMethod.getStackSize();
+                protected TransferringVisitor(MethodDescription inlinedMethod) {
+                    super(Opcodes.ASM5, AsmAdvice.this.mv);
+                    accessMappings = dispatcher.toAccessMapping(instrumentedMethod);
+                    offset = instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().getStackSize().getSize() - inlinedMethod.getStackSize();
                     endOfMethod = new Label();
                 }
 
@@ -242,31 +222,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitInsn(int opcode) {
                     switch (opcode) {
                         case Opcodes.RETURN:
-                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
                         case Opcodes.IRETURN:
-                            super.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
-                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            storeReturnValue(Opcodes.ISTORE);
                             break;
                         case Opcodes.FRETURN:
-                            super.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
-                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            storeReturnValue(Opcodes.FSTORE);
                             break;
                         case Opcodes.ARETURN:
-                            super.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
-                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            storeReturnValue(Opcodes.ASTORE);
                             break;
                         case Opcodes.LRETURN:
-                            super.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
-                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            storeReturnValue(Opcodes.LSTORE);
                             break;
                         case Opcodes.DRETURN:
-                            super.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
-                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            storeReturnValue(Opcodes.DSTORE);
                             break;
                         default:
                             super.visitInsn(opcode);
+                            return;
                     }
+                    super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                }
+
+                private void storeReturnValue(int opcode) {
+                    super.visitVarInsn(opcode, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
                 }
 
                 @Override
@@ -275,7 +255,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (accessMapping != null) {
                         accessMapping.apply(mv, opcode);
                     } else {
-                        super.visitVarInsn(opcode, offset + offsetCorrection);
+                        super.visitVarInsn(opcode, offset + this.offset);
                     }
                 }
             }
@@ -293,6 +273,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         Dispatcher asExitFrom(Dispatcher dispatcher);
 
         int getValueOffset();
+
+        Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod);
+
+        boolean isSkipException();
 
         enum Inactive implements Dispatcher {
 
@@ -322,9 +306,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return this;
             }
 
+
+
             @Override
             public int getValueOffset() {
                 return 0;
+            }
+
+            @Override
+            public Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod) {
+                throw new IllegalStateException();
+            }
+
+            @Override
+            public boolean isSkipException() {
+                return true;
             }
         }
 
@@ -379,6 +375,40 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return 0;
             }
 
+            @Override
+            public Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod) {
+                Map<Integer, AccessMapping> accessMappings = new HashMap<Integer, AccessMapping>();
+                for (ParameterDescription parameter : methodDescription.getParameters()) {
+                    if (parameter.getDeclaredAnnotations().isAnnotationPresent(This.class)) {
+                        if (instrumentedMethod.isStatic()) {
+                            throw new IllegalStateException("Static methods do not imply a this reference for " + parameter);
+                        }
+                        accessMappings.put(parameter.getOffset(), AccessMapping.ForMethodArgument.ofThisReference());
+                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(EntranceValue.class)) {
+                        accessMappings.put(parameter.getOffset(), new AccessMapping.ForEntranceValue(instrumentedMethod));
+                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(ReturnValue.class)) {
+                        accessMappings.put(parameter.getOffset(), new AccessMapping.ForReturnValue(instrumentedMethod));
+                    } else {
+                        AnnotationDescription.Loadable<Argument> argument = parameter.getDeclaredAnnotations().ofType(Argument.class);
+                        int index = argument == null
+                                ? parameter.getIndex()
+                                : argument.loadSilent().value();
+                        if (instrumentedMethod.getParameters().size() <= index) {
+                            throw new IllegalStateException(instrumentedMethod + " does not define a parameter of index " + index);
+                        } else if (!instrumentedMethod.getParameters().get(index).getType().asErasure().isAssignableTo(parameter.getType().asErasure())) {
+                            throw new IllegalStateException(parameter + " is not assignable to " + instrumentedMethod.getParameters().get(index));
+                        }
+                        accessMappings.put(parameter.getOffset(), new AccessMapping.ForMethodArgument(instrumentedMethod.getParameters().get(index).getOffset()));
+                    }
+                }
+                return accessMappings;
+            }
+
+            @Override
+            public boolean isSkipException() {
+                return !methodDescription.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onException();
+            }
+
             protected static class WithReturnValue implements Dispatcher {
 
                 private final Dispatcher delegator;
@@ -413,6 +443,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public int getValueOffset() {
                     return suppliedType.getStackSize().getSize();
+                }
+
+                @Override
+                public Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod) {
+                    return delegator.toAccessMapping(instrumentedMethod);
+                }
+
+                @Override
+                public boolean isSkipException() {
+                    return delegator.isSkipException();
                 }
             }
         }
@@ -482,7 +522,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodExit {
 
-        // boolean exceptional() default true;
+         boolean onException() default true;
     }
 
     @Documented
