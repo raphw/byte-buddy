@@ -1,30 +1,24 @@
 package net.bytebuddy.asm;
 
-import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
-import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.implementation.bytecode.StackSize;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.lang.annotation.*;
-import java.util.HashMap;
 import java.util.Map;
 
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
-    private static final AnnotationVisitor IGNORE_ANNOTATION = null;
+    private final Dispatcher.Resolved.ForMethodEnter methodEnter;
 
-    private static final MethodVisitor IGNORE_METHOD = null;
-
-    private final Dispatcher methodEnter;
-
-    private final Dispatcher methodExit;
+    private final Dispatcher.Resolved.ForMethodExit methodExit;
 
     private final byte[] binaryRepresentation;
 
-    protected Advice(Dispatcher methodEnter, Dispatcher methodExit, byte[] binaryRepresentation) {
+    protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit, byte[] binaryRepresentation) {
         this.methodEnter = methodEnter;
         this.methodExit = methodExit;
         this.binaryRepresentation = binaryRepresentation;
@@ -45,10 +39,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 methodEnter = resolve(OnMethodEnter.class, methodEnter, methodDescription);
                 methodExit = resolve(OnMethodExit.class, methodExit, methodDescription);
             }
-            if (!methodEnter.isActive() && !methodExit.isActive()) {
+            if (!methodEnter.isAlive() && !methodExit.isAlive()) {
                 throw new IllegalArgumentException("No advice defined by " + typeDescription);
             }
-            return new Advice(methodEnter, methodExit.asExitFrom(methodEnter), classFileLocator.locate(typeDescription.getName()).resolve());
+            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter();
+            return new Advice(methodEnter.asMethodEnter(), methodExit.asMethodExitTo(resolved), classFileLocator.locate(typeDescription.getName()).resolve());
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + typeDescription, exception);
         }
@@ -56,7 +51,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     private static Dispatcher resolve(Class<? extends Annotation> annotation, Dispatcher dispatcher, MethodDescription.InDefinedShape methodDescription) {
         if (methodDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
-            if (dispatcher.isActive()) {
+            if (dispatcher.isAlive()) {
                 throw new IllegalArgumentException("Duplicate advice for " + dispatcher + " and " + methodDescription);
             } else if (!methodDescription.isStatic()) {
                 throw new IllegalArgumentException("Advice for " + methodDescription + " is not static");
@@ -74,97 +69,248 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     protected class AsmAdvice extends MethodVisitor {
 
-        private final MethodDescription instrumentedMethod;
+        private final MethodDescription.InDefinedShape instrumentedMethod;
 
         private final ClassReader classReader;
 
-        protected AsmAdvice(MethodVisitor methodVisitor, MethodDescription methodDescription) {
+        protected AsmAdvice(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
             super(Opcodes.ASM5, methodVisitor);
+            this.instrumentedMethod = instrumentedMethod;
             classReader = new ClassReader(binaryRepresentation);
-            this.instrumentedMethod = methodDescription;
         }
 
         @Override
         public void visitCode() {
             super.visitCode();
+            onMethodEntry();
+        }
+
+        protected void onMethodEntry() {
             classReader.accept(new CodeCopier(methodEnter), ClassReader.SKIP_DEBUG);
         }
 
         @Override
         public void visitVarInsn(int opcode, int offset) {
-            if (offset >= instrumentedMethod.getStackSize()) {
-                offset += methodEnter.getValueOffset() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize();
-            }
-            super.visitVarInsn(opcode, offset);
+            super.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
+                    ? offset
+                    : offset + methodEnter.getAdditionalSize().getSize());
         }
 
         @Override
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
-                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    onMethodExit();
                     break;
                 case Opcodes.IRETURN:
-                    super.visitInsn(Opcodes.DUP);
-                    super.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
-                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    onMethodExit(Opcodes.DUP, Opcodes.ISTORE);
                     break;
                 case Opcodes.FRETURN:
-                    super.visitInsn(Opcodes.DUP);
-                    super.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
-                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    onMethodExit(Opcodes.DUP, Opcodes.FSTORE);
                     break;
                 case Opcodes.DRETURN:
-                    super.visitInsn(Opcodes.DUP2);
-                    super.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
-                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    onMethodExit(Opcodes.DUP2, Opcodes.DSTORE);
                     break;
                 case Opcodes.LRETURN:
-                    super.visitInsn(Opcodes.DUP2);
-                    super.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
-                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    onMethodExit(Opcodes.DUP2, Opcodes.LSTORE);
                     break;
                 case Opcodes.ATHROW:
                     if (methodExit.isSkipException()) {
                         break;
                     }
+                    // TODO: Set dummy value for return value!
+                    break;
                 case Opcodes.ARETURN:
-                    super.visitInsn(Opcodes.DUP);
-                    super.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
-                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    onMethodExit(Opcodes.DUP, Opcodes.ASTORE);
                     break;
             }
             super.visitInsn(opcode);
         }
 
+        private void onMethodExit(int duplication, int store) {
+            super.visitInsn(duplication);
+            super.visitVarInsn(store, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
+            onMethodExit();
+        }
+
+        protected void onMethodExit() {
+            classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+        }
+
         protected class CodeCopier extends ClassVisitor {
 
-            private final Dispatcher dispatcher;
+            private final Dispatcher.Resolved dispatcher;
 
-            protected CodeCopier(Dispatcher dispatcher) {
+            protected CodeCopier(Dispatcher.Resolved dispatcher) {
                 super(Opcodes.ASM5);
                 this.dispatcher = dispatcher;
             }
 
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                return dispatcher.isInlined(internalName, descriptor)
-                        ? new TransferringVisitor(dispatcher.getInlinedMethod())
-                        : IGNORE_METHOD;
+                return dispatcher.apply(internalName, descriptor, AsmAdvice.this.mv, instrumentedMethod);
+            }
+        }
+    }
+
+    protected interface Dispatcher {
+
+        MethodVisitor IGNORE_METHOD = null;
+
+        boolean isAlive();
+
+        Resolved.ForMethodEnter asMethodEnter();
+
+        Resolved.ForMethodExit asMethodExitTo(Resolved.ForMethodEnter dispatcher);
+
+        interface Resolved {
+
+            MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod);
+
+            interface ForMethodEnter extends Resolved {
+
+                StackSize getAdditionalSize();
             }
 
-            protected class TransferringVisitor extends MethodVisitor {
+            interface ForMethodExit extends Resolved {
 
-                private final Map<Integer, AccessMapping> accessMappings;
+                boolean isSkipException();
+            }
+        }
 
-                private final int offset;
+        enum Inactive implements Dispatcher, Resolved.ForMethodEnter, Resolved.ForMethodExit {
 
-                private final Label endOfMethod;
+            INSTANCE;
 
-                protected TransferringVisitor(MethodDescription inlinedMethod) {
-                    super(Opcodes.ASM5, AsmAdvice.this.mv);
-                    accessMappings = dispatcher.toAccessMapping(instrumentedMethod);
-                    offset = instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().getStackSize().getSize() - inlinedMethod.getStackSize();
+            @Override
+            public boolean isAlive() {
+                return false;
+            }
+
+            @Override
+            public boolean isSkipException() {
+                return true;
+            }
+
+            @Override
+            public StackSize getAdditionalSize() {
+                return StackSize.SINGLE;
+            }
+
+            @Override
+            public Resolved.ForMethodEnter asMethodEnter() {
+                return this;
+            }
+
+            @Override
+            public Resolved.ForMethodExit asMethodExitTo(Resolved.ForMethodEnter dispatcher) {
+                return this;
+            }
+
+            @Override
+            public MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                return IGNORE_METHOD;
+            }
+        }
+
+        class ForMethod implements Dispatcher {
+
+            protected final MethodDescription.InDefinedShape inlinedMethod;
+
+            protected ForMethod(MethodDescription.InDefinedShape inlinedMethod) {
+                this.inlinedMethod = inlinedMethod;
+            }
+
+            @Override
+            public boolean isAlive() {
+                return true;
+            }
+
+            @Override
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter() {
+                return new ForMethodEnter(inlinedMethod);
+            }
+
+            @Override
+            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(Dispatcher.Resolved.ForMethodEnter dispatcher) {
+                return new ForMethodExit(inlinedMethod, dispatcher.getAdditionalSize());
+            }
+
+            protected abstract static class Resolved implements Dispatcher.Resolved {
+
+                protected final MethodDescription inlinedMethod;
+
+                protected Resolved(MethodDescription inlinedMethod) {
+                    this.inlinedMethod = inlinedMethod;
+                }
+
+                @Override
+                public MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                    return inlinedMethod.getInternalName().equals(internalName) && inlinedMethod.getDescriptor().equals(descriptor)
+                            ? inline(methodVisitor, instrumentedMethod)
+                            : IGNORE_METHOD;
+                }
+
+                protected abstract MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod);
+            }
+
+            protected static class ForMethodEnter extends Resolved implements Dispatcher.Resolved.ForMethodEnter {
+
+                protected ForMethodEnter(MethodDescription inlinedMethod) {
+                    super(inlinedMethod);
+                }
+
+                @Override
+                public StackSize getAdditionalSize() {
+                    return inlinedMethod.getReturnType().getStackSize();
+                }
+
+                @Override
+                protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                    return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor, instrumentedMethod, inlinedMethod, offsetTranslations);
+                }
+            }
+
+            protected static class ForMethodExit extends Resolved implements Dispatcher.Resolved.ForMethodExit {
+
+                private final StackSize additionalSize;
+
+                protected ForMethodExit(MethodDescription.InDefinedShape inlinedMethod, StackSize additionalSize) {
+                    super(inlinedMethod);
+                    this.additionalSize = additionalSize;
+                }
+
+                @Override
+                public boolean isSkipException() {
+                    return !inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onException();
+                }
+
+                @Override
+                protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                    return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor, instrumentedMethod, inlinedMethod, offsetTranslations);
+                }
+            }
+
+            protected abstract static class CodeTranslationVisitor extends MethodVisitor {
+
+                private static final AnnotationVisitor IGNORE_ANNOTATION = null;
+
+                protected final MethodDescription.InDefinedShape instrumentedMethod;
+
+                protected final MethodDescription.InDefinedShape inlinedMethod;
+
+                private final Map<Integer, Integer> offsetTranslations;
+
+                protected final Label endOfMethod;
+
+                protected CodeTranslationVisitor(MethodVisitor methodVisitor,
+                                                 MethodDescription.InDefinedShape instrumentedMethod,
+                                                 MethodDescription.InDefinedShape inlinedMethod,
+                                                 Map<Integer, Integer> offsetTranslations) {
+                    super(Opcodes.ASM5, methodVisitor);
+                    this.instrumentedMethod = instrumentedMethod;
+                    this.inlinedMethod = inlinedMethod;
+                    this.offsetTranslations = offsetTranslations;
                     endOfMethod = new Label();
                 }
 
@@ -184,12 +330,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public AnnotationVisitor visitParameterAnnotation(int parameter, String descriptor, boolean visible) {
+                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
 
                 @Override
-                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
                     return IGNORE_ANNOTATION;
                 }
 
@@ -199,13 +345,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
+                public void visitCode() {
+                    /* do nothing */
+                }
+
+                @Override
+                public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
+                    /* do nothing */
+                }
+
+                @Override
                 public void visitLineNumber(int line, Label start) {
                     /* do nothing */
                 }
 
                 @Override
-                public void visitCode() {
-                    /* do nothing */
+                public void visitEnd() {
+                    mv.visitLabel(endOfMethod);
                 }
 
                 @Override
@@ -214,296 +370,99 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitEnd() {
-                    super.visitLabel(endOfMethod);
-                }
-
-                @Override
-                public void visitInsn(int opcode) {
-                    switch (opcode) {
-                        case Opcodes.RETURN:
-                            break;
-                        case Opcodes.IRETURN:
-                            storeReturnValue(Opcodes.ISTORE);
-                            break;
-                        case Opcodes.FRETURN:
-                            storeReturnValue(Opcodes.FSTORE);
-                            break;
-                        case Opcodes.ARETURN:
-                            storeReturnValue(Opcodes.ASTORE);
-                            break;
-                        case Opcodes.LRETURN:
-                            storeReturnValue(Opcodes.LSTORE);
-                            break;
-                        case Opcodes.DRETURN:
-                            storeReturnValue(Opcodes.DSTORE);
-                            break;
-                        default:
-                            super.visitInsn(opcode);
-                            return;
-                    }
-                    super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                }
-
-                private void storeReturnValue(int opcode) {
-                    super.visitVarInsn(opcode, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
-                }
-
-                @Override
                 public void visitVarInsn(int opcode, int offset) {
-                    AccessMapping accessMapping = accessMappings.get(offset);
-                    if (accessMapping != null) {
-                        accessMapping.apply(mv, opcode);
-                    } else {
-                        super.visitVarInsn(opcode, offset + this.offset);
+                    Integer translated = offsetTranslations.get(offset);
+                    mv.visitVarInsn(opcode, translated == null
+                            ? adjust(offset + instrumentedMethod.getStackSize() - inlinedMethod.getStackSize())
+                            : translated);
+                }
+
+                protected abstract int adjust(int offset);
+
+                @Override
+                public abstract void visitInsn(int opcode);
+
+                protected static class ReturnValueRetaining extends CodeTranslationVisitor {
+
+                    protected ReturnValueRetaining(MethodVisitor methodVisitor,
+                                                   MethodDescription.InDefinedShape instrumentedMethod,
+                                                   MethodDescription.InDefinedShape inlinedMethod,
+                                                   Map<Integer, Integer> offsetTranslations) {
+                        super(methodVisitor, instrumentedMethod, inlinedMethod, offsetTranslations);
+                    }
+
+                    @Override
+                    public void visitInsn(int opcode) {
+                        switch (opcode) {
+                            case Opcodes.RETURN:
+                                break;
+                            case Opcodes.IRETURN:
+                                mv.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
+                                break;
+                            case Opcodes.LRETURN:
+                                mv.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
+                                break;
+                            case Opcodes.ARETURN:
+                                mv.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                                break;
+                            case Opcodes.FRETURN:
+                                mv.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
+                                break;
+                            case Opcodes.DRETURN:
+                                mv.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
+                                break;
+                            default:
+                                mv.visitInsn(opcode);
+                                return;
+                        }
+                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                    }
+
+                    @Override
+                    protected int adjust(int offset) {
+                        return offset;
                     }
                 }
-            }
-        }
-    }
 
-    protected interface Dispatcher {
+                protected static class ReturnValueDiscarding extends CodeTranslationVisitor {
 
-        boolean isActive();
+                    private final StackSize additionalSize;
 
-        boolean isInlined(String internalName, String descriptor);
+                    protected ReturnValueDiscarding(MethodVisitor methodVisitor,
+                                                    MethodDescription.InDefinedShape instrumentedMethod,
+                                                    MethodDescription.InDefinedShape inlinedMethod,
+                                                    Map<Integer, Integer> offsetTranslations,
+                                                    StackSize additionalSize) {
+                        super(methodVisitor, instrumentedMethod, inlinedMethod, offsetTranslations);
+                        this.additionalSize = additionalSize;
+                    }
 
-        MethodDescription getInlinedMethod();
-
-        Dispatcher asExitFrom(Dispatcher dispatcher);
-
-        int getValueOffset();
-
-        Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod);
-
-        boolean isSkipException();
-
-        enum Inactive implements Dispatcher {
-
-            INSTANCE;
-
-            @Override
-            public boolean isActive() {
-                return false;
-            }
-
-            @Override
-            public boolean isInlined(String internalName, String descriptor) {
-                return false;
-            }
-
-            @Override
-            public MethodDescription getInlinedMethod() {
-                // TODO: Is this meaningful?
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public Dispatcher asExitFrom(Dispatcher dispatcher) {
-                if (!dispatcher.getInlinedMethod().getReturnType().represents(void.class)) {
-                    throw new IllegalStateException(dispatcher + " supplies return value that is never read");
-                }
-                return this;
-            }
-
-            @Override
-            public int getValueOffset() {
-                return 0;
-            }
-
-            @Override
-            public Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod) {
-                throw new IllegalStateException();
-            }
-
-            @Override
-            public boolean isSkipException() {
-                return true;
-            }
-        }
-
-        class ForMethod implements Dispatcher {
-
-            private final MethodDescription.InDefinedShape methodDescription;
-
-            public ForMethod(MethodDescription.InDefinedShape methodDescription) {
-                this.methodDescription = methodDescription;
-            }
-
-            @Override
-            public boolean isActive() {
-                return true;
-            }
-
-            @Override
-            public boolean isInlined(String internalName, String descriptor) {
-                return methodDescription.getInternalName().equals(internalName) && methodDescription.getDescriptor().equals(descriptor);
-            }
-
-            @Override
-            public MethodDescription getInlinedMethod() {
-                return methodDescription;
-            }
-
-            @Override
-            public Dispatcher asExitFrom(Dispatcher dispatcher) {
-                if (!methodDescription.getReturnType().represents(void.class)) {
-                    throw new IllegalStateException(); // TODO: Message
-                }
-                boolean valueParameterExpected = dispatcher.isActive() && !dispatcher.getInlinedMethod().getReturnType().asErasure().represents(void.class);
-                for (ParameterDescription parameter : methodDescription.getParameters()) {
-                    if (parameter.getDeclaredAnnotations().isAnnotationPresent(Entry.class)) {
-                        if (valueParameterExpected) {
-                            if (!dispatcher.getInlinedMethod().getReturnType().asErasure().isAssignableTo(parameter.getType().asErasure())) {
-                                throw new IllegalStateException(); // TODO: Message
-                            }
-                            valueParameterExpected = false;
-                        } else {
-                            throw new IllegalStateException(); // TODO: Message
+                    @Override
+                    public void visitInsn(int opcode) {
+                        switch (opcode) {
+                            case Opcodes.RETURN:
+                                break;
+                            case Opcodes.IRETURN:
+                            case Opcodes.ARETURN:
+                            case Opcodes.FRETURN:
+                                mv.visitInsn(Opcodes.POP);
+                                break;
+                            case Opcodes.LRETURN:
+                            case Opcodes.DRETURN:
+                                mv.visitInsn(Opcodes.POP2);
+                                break;
+                            default:
+                                mv.visitInsn(opcode);
+                                return;
                         }
+                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                    }
+
+                    @Override
+                    protected int adjust(int offset) {
+                        return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + additionalSize.getSize();
                     }
                 }
-                return !dispatcher.isActive() || dispatcher.getInlinedMethod().getReturnType().asErasure().represents(void.class)
-                        ? this
-                        : new WithReturnValue(this, dispatcher.getInlinedMethod().getReturnType().asErasure());
-            }
-
-            @Override
-            public int getValueOffset() {
-                return 0;
-            }
-
-            @Override
-            public Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod) {
-                Map<Integer, AccessMapping> accessMappings = new HashMap<Integer, AccessMapping>();
-                for (ParameterDescription parameter : methodDescription.getParameters()) {
-                    if (parameter.getDeclaredAnnotations().isAnnotationPresent(This.class)) {
-                        if (instrumentedMethod.isStatic()) {
-                            throw new IllegalStateException("Static methods do not imply a this reference for " + parameter);
-                        }
-                        accessMappings.put(parameter.getOffset(), AccessMapping.ForMethodArgument.ofThisReference());
-                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(Entry.class)) {
-                        accessMappings.put(parameter.getOffset(), new AccessMapping.ForEntranceValue(instrumentedMethod));
-                    } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(Return.class)) {
-                        accessMappings.put(parameter.getOffset(), new AccessMapping.ForReturnValue(instrumentedMethod));
-                    } else {
-                        AnnotationDescription.Loadable<Argument> argument = parameter.getDeclaredAnnotations().ofType(Argument.class);
-                        int index = argument == null
-                                ? parameter.getIndex()
-                                : argument.loadSilent().value();
-                        if (instrumentedMethod.getParameters().size() <= index) {
-                            throw new IllegalStateException(instrumentedMethod + " does not define a parameter of index " + index);
-                        } else if (!instrumentedMethod.getParameters().get(index).getType().asErasure().isAssignableTo(parameter.getType().asErasure())) {
-                            throw new IllegalStateException(parameter + " is not assignable to " + instrumentedMethod.getParameters().get(index));
-                        }
-                        accessMappings.put(parameter.getOffset(), new AccessMapping.ForMethodArgument(instrumentedMethod.getParameters().get(index).getOffset()));
-                    }
-                }
-                return accessMappings;
-            }
-
-            @Override
-            public boolean isSkipException() {
-                return !methodDescription.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onException();
-            }
-
-            protected static class WithReturnValue implements Dispatcher {
-
-                private final Dispatcher delegator;
-
-                private final TypeDescription suppliedType;
-
-                protected WithReturnValue(Dispatcher delegator, TypeDescription suppliedType) {
-                    this.delegator = delegator;
-                    this.suppliedType = suppliedType;
-                }
-
-                @Override
-                public boolean isActive() {
-                    return delegator.isActive();
-                }
-
-                @Override
-                public boolean isInlined(String internalName, String descriptor) {
-                    return delegator.isInlined(internalName, descriptor);
-                }
-
-                @Override
-                public MethodDescription getInlinedMethod() {
-                    return delegator.getInlinedMethod();
-                }
-
-                @Override
-                public Dispatcher asExitFrom(Dispatcher dispatcher) {
-                    throw new IllegalStateException();
-                }
-
-                @Override
-                public int getValueOffset() {
-                    return suppliedType.getStackSize().getSize();
-                }
-
-                @Override
-                public Map<Integer, AccessMapping> toAccessMapping(MethodDescription instrumentedMethod) {
-                    return delegator.toAccessMapping(instrumentedMethod);
-                }
-
-                @Override
-                public boolean isSkipException() {
-                    return delegator.isSkipException();
-                }
-            }
-        }
-    }
-
-    protected interface AccessMapping {
-
-        void apply(MethodVisitor methodVisitor, int opcode);
-
-        class ForMethodArgument implements AccessMapping {
-
-            public static AccessMapping ofThisReference() {
-                return new ForMethodArgument(0);
-            }
-
-            private final int offset;
-
-            protected ForMethodArgument(int offset) {
-                this.offset = offset;
-            }
-
-            @Override
-            public void apply(MethodVisitor methodVisitor, int opcode) {
-                methodVisitor.visitVarInsn(opcode, offset);
-            }
-        }
-
-        class ForEntranceValue implements AccessMapping {
-
-            private final MethodDescription instrumentedMethod;
-
-            public ForEntranceValue(MethodDescription instrumentedMethod) {
-                this.instrumentedMethod = instrumentedMethod;
-            }
-
-            @Override
-            public void apply(MethodVisitor methodVisitor, int opcode) {
-                methodVisitor.visitVarInsn(opcode, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().getStackSize().getSize());
-            }
-        }
-
-        class ForReturnValue implements AccessMapping {
-
-            private final MethodDescription instrumentedMethod;
-
-
-            public ForReturnValue(MethodDescription instrumentedMethod) {
-                this.instrumentedMethod = instrumentedMethod;
-            }
-
-            @Override
-            public void apply(MethodVisitor methodVisitor, int opcode) {
-                methodVisitor.visitVarInsn(opcode, instrumentedMethod.getStackSize());
             }
         }
     }
@@ -520,7 +479,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodExit {
 
-         boolean onException() default true;
+        boolean onException() default true;
     }
 
     @Documented
@@ -541,7 +500,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public @interface Entry {
+    public @interface Enter {
         /* empty */
     }
 

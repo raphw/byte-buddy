@@ -3,6 +3,7 @@ package net.bytebuddy.asm;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassWriter;
 
@@ -81,6 +82,7 @@ public class AdviceTest {
     public void testAdviceWithEntranceValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(EntranceValueAdvice.class)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -333,7 +335,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.Entry int value) {
+        private static void exit(@Advice.Enter int value) {
             if (value != VALUE) {
                 throw new AssertionError();
             }
