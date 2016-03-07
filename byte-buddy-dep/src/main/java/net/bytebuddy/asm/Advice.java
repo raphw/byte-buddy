@@ -1,6 +1,8 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -8,6 +10,9 @@ import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.lang.annotation.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
@@ -103,34 +108,54 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     onMethodExit();
                     break;
                 case Opcodes.IRETURN:
-                    onMethodExit(Opcodes.DUP, Opcodes.ISTORE);
+                    onMethodExit(Opcodes.DUP, Opcodes.ISTORE, Opcodes.ILOAD);
                     break;
                 case Opcodes.FRETURN:
-                    onMethodExit(Opcodes.DUP, Opcodes.FSTORE);
+                    onMethodExit(Opcodes.DUP, Opcodes.FSTORE, Opcodes.FLOAD);
                     break;
                 case Opcodes.DRETURN:
-                    onMethodExit(Opcodes.DUP2, Opcodes.DSTORE);
+                    onMethodExit(Opcodes.DUP2, Opcodes.DSTORE, Opcodes.DLOAD);
                     break;
                 case Opcodes.LRETURN:
-                    onMethodExit(Opcodes.DUP2, Opcodes.LSTORE);
+                    onMethodExit(Opcodes.DUP2, Opcodes.LSTORE, Opcodes.LLOAD);
                     break;
                 case Opcodes.ATHROW:
                     if (methodExit.isSkipException()) {
                         break;
+                    } else if (instrumentedMethod.getReturnType().represents(boolean.class)
+                            || instrumentedMethod.getReturnType().represents(byte.class)
+                            || instrumentedMethod.getReturnType().represents(short.class)
+                            || instrumentedMethod.getReturnType().represents(char.class)
+                            || instrumentedMethod.getReturnType().represents(int.class)) {
+                        mv.visitInsn(Opcodes.ICONST_0);
+                        mv.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
+                    } else if (instrumentedMethod.getReturnType().represents(long.class)) {
+                        mv.visitInsn(Opcodes.LCONST_0);
+                        mv.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
+                    } else if (instrumentedMethod.getReturnType().represents(float.class)) {
+                        mv.visitInsn(Opcodes.FCONST_0);
+                        mv.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
+                    } else if (instrumentedMethod.getReturnType().represents(double.class)) {
+                        mv.visitInsn(Opcodes.DCONST_0);
+                        mv.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
+                    } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                        mv.visitInsn(Opcodes.ACONST_NULL);
+                        mv.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
                     }
-                    // TODO: Set dummy value for return value!
+                    onMethodExit();
                     break;
                 case Opcodes.ARETURN:
-                    onMethodExit(Opcodes.DUP, Opcodes.ASTORE);
+                    onMethodExit(Opcodes.DUP, Opcodes.ASTORE, Opcodes.ALOAD);
                     break;
             }
-            super.visitInsn(opcode);
+            mv.visitInsn(opcode);
         }
 
-        private void onMethodExit(int duplication, int store) {
-            super.visitInsn(duplication);
-            super.visitVarInsn(store, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
+        private void onMethodExit(int duplication, int store, int load) {
+            mv.visitInsn(duplication);
+            mv.visitVarInsn(store, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
             onMethodExit();
+            mv.visitVarInsn(load, instrumentedMethod.getStackSize() + methodEnter.getAdditionalSize().getSize());
         }
 
         protected void onMethodExit() {
@@ -175,6 +200,123 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             interface ForMethodExit extends Resolved {
 
                 boolean isSkipException();
+            }
+        }
+
+        interface OffsetMapping {
+
+            int resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize offset);
+
+            interface Factory {
+
+                OffsetMapping UNDEFINED = null;
+
+                OffsetMapping make(ParameterDescription parameterDescription);
+            }
+
+            class ForParameter implements OffsetMapping {
+
+                private final int index;
+
+                protected ForParameter(int index) {
+                    this.index = index;
+                }
+
+                @Override
+                public int resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize offset) {
+                    // TODO: Existence and assignment
+                    return instrumentedMethod.getParameters().get(index).getOffset();
+                }
+
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    INSTANCE;
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription parameterDescription) {
+                        AnnotationDescription.Loadable<Argument> argument = parameterDescription.getDeclaredAnnotations().ofType(Argument.class);
+                        return argument == null
+                                ? UNDEFINED
+                                : new ForParameter(argument.loadSilent().value());
+                    }
+                }
+            }
+
+            enum ForThisReference implements OffsetMapping, Factory {
+
+                INSTANCE;
+
+                @Override
+                public int resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize offset) {
+                    // TODO: static
+                    return 0;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription parameterDescription) {
+                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(This.class)
+                            ? this
+                            : UNDEFINED;
+                }
+            }
+
+            enum ForEnterMethodValue implements OffsetMapping, Factory {
+
+                INSTANCE;
+
+                @Override
+                public int resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize offset) {
+                    // Check supplied value
+                    return instrumentedMethod.getStackSize();
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription parameterDescription) {
+                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Enter.class)
+                            ? this
+                            : UNDEFINED;
+                }
+            }
+
+            enum ForReturnValue implements OffsetMapping, Factory {
+
+                INSTANCE;
+
+                @Override
+                public int resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize offset) {
+                    // Check supplied value
+                    return instrumentedMethod.getStackSize() + offset.getSize();
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription parameterDescription) {
+                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Return.class)
+                            ? this
+                            : UNDEFINED;
+                }
+            }
+
+            class Illegal implements Factory {
+
+                private final List<? extends Class<? extends Annotation>> annotations;
+
+                protected Illegal(Class<? extends Annotation>... annotation) {
+                    this(Arrays.asList(annotation));
+                }
+
+                protected Illegal(List<? extends Class<? extends Annotation>> annotations) {
+                    this.annotations = annotations;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription parameterDescription) {
+                    for (Class<? extends Annotation> annotation : annotations) {
+                        if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
+                            throw new IllegalStateException();
+                        }
+                    }
+                    return UNDEFINED;
+                }
             }
         }
 
@@ -238,10 +380,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             protected abstract static class Resolved implements Dispatcher.Resolved {
 
-                protected final MethodDescription inlinedMethod;
+                protected final MethodDescription.InDefinedShape inlinedMethod;
 
-                protected Resolved(MethodDescription inlinedMethod) {
+                protected final Map<Integer, OffsetMapping> offsetMappings;
+
+                protected Resolved(MethodDescription.InDefinedShape inlinedMethod, OffsetMapping.Factory... factory) {
                     this.inlinedMethod = inlinedMethod;
+                    offsetMappings = new HashMap<Integer, OffsetMapping>();
+                    for (ParameterDescription.InDefinedShape parameterDescription : inlinedMethod.getParameters()) {
+                        OffsetMapping offsetMapping = OffsetMapping.Factory.UNDEFINED;
+                        for (OffsetMapping.Factory aFactory : factory) {
+                            OffsetMapping possible = aFactory.make(parameterDescription);
+                            if (possible != null) {
+                                if (offsetMapping == null) {
+                                    offsetMapping = possible;
+                                } else {
+                                    throw new IllegalStateException(); // TODO
+                                }
+                            }
+                        }
+                        offsetMappings.put(parameterDescription.getOffset(), offsetMapping == null
+                                ? new OffsetMapping.ForParameter(parameterDescription.getIndex())
+                                : offsetMapping);
+                    }
                 }
 
                 @Override
@@ -256,8 +417,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             protected static class ForMethodEnter extends Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
-                protected ForMethodEnter(MethodDescription inlinedMethod) {
-                    super(inlinedMethod);
+                @SuppressWarnings("all") // Should be @SafeVarargs
+                protected ForMethodEnter(MethodDescription.InDefinedShape inlinedMethod) {
+                    super(inlinedMethod,
+                            OffsetMapping.ForParameter.Factory.INSTANCE,
+                            OffsetMapping.ForThisReference.INSTANCE,
+                            new OffsetMapping.Illegal(Enter.class, Return.class));
                 }
 
                 @Override
@@ -267,7 +432,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
-                    return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor, instrumentedMethod, inlinedMethod, offsetTranslations);
+                    Map<Integer, Integer> offsetMappings = new HashMap<Integer, Integer>();
+                    for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
+                        offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, StackSize.ZERO));
+                    }
+                    return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor, instrumentedMethod, inlinedMethod, offsetMappings);
                 }
             }
 
@@ -276,7 +445,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final StackSize additionalSize;
 
                 protected ForMethodExit(MethodDescription.InDefinedShape inlinedMethod, StackSize additionalSize) {
-                    super(inlinedMethod);
+                    super(inlinedMethod,
+                            OffsetMapping.ForParameter.Factory.INSTANCE,
+                            OffsetMapping.ForThisReference.INSTANCE,
+                            OffsetMapping.ForEnterMethodValue.INSTANCE,
+                            OffsetMapping.ForReturnValue.INSTANCE);
                     this.additionalSize = additionalSize;
                 }
 
@@ -287,7 +460,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
-                    return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor, instrumentedMethod, inlinedMethod, offsetTranslations);
+                    Map<Integer, Integer> offsetMappings = new HashMap<Integer, Integer>();
+                    for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
+                        offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, additionalSize));
+                    }
+                    return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor, instrumentedMethod, inlinedMethod, offsetMappings, additionalSize);
                 }
             }
 
@@ -299,18 +476,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 protected final MethodDescription.InDefinedShape inlinedMethod;
 
-                private final Map<Integer, Integer> offsetTranslations;
+                private final Map<Integer, Integer> offsetMappings;
 
                 protected final Label endOfMethod;
 
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodDescription.InDefinedShape inlinedMethod,
-                                                 Map<Integer, Integer> offsetTranslations) {
+                                                 Map<Integer, Integer> offsetMappings) {
                     super(Opcodes.ASM5, methodVisitor);
                     this.instrumentedMethod = instrumentedMethod;
                     this.inlinedMethod = inlinedMethod;
-                    this.offsetTranslations = offsetTranslations;
+                    this.offsetMappings = offsetMappings;
                     endOfMethod = new Label();
                 }
 
@@ -371,10 +548,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitVarInsn(int opcode, int offset) {
-                    Integer translated = offsetTranslations.get(offset);
-                    mv.visitVarInsn(opcode, translated == null
+                    Integer mapped = offsetMappings.get(offset);
+                    mv.visitVarInsn(opcode, mapped == null
                             ? adjust(offset + instrumentedMethod.getStackSize() - inlinedMethod.getStackSize())
-                            : translated);
+                            : mapped);
                 }
 
                 protected abstract int adjust(int offset);
@@ -431,9 +608,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ReturnValueDiscarding(MethodVisitor methodVisitor,
                                                     MethodDescription.InDefinedShape instrumentedMethod,
                                                     MethodDescription.InDefinedShape inlinedMethod,
-                                                    Map<Integer, Integer> offsetTranslations,
+                                                    Map<Integer, Integer> offsetMappings,
                                                     StackSize additionalSize) {
-                        super(methodVisitor, instrumentedMethod, inlinedMethod, offsetTranslations);
+                        super(methodVisitor, instrumentedMethod, inlinedMethod, offsetMappings);
                         this.additionalSize = additionalSize;
                     }
 
