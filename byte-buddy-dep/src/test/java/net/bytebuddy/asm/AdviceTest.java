@@ -211,7 +211,7 @@ public class AdviceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDuplicateAdvice() throws Exception {
-        Advice.to(DuplicateAdvice.class);
+        Advice.to(IllegalStateException.class);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -221,16 +221,31 @@ public class AdviceTest {
         Advice.to(TrivialAdvice.class, classFileLocator);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testNonStaticAdvice() throws Exception {
         Advice.to(NonStaticAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAmbiguousAdvice() throws Exception {
+        Advice.to(AmbiguousAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCannotBindEnterToEnter() throws Exception {
+        Advice.to(EnterToEnterAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testCannotBindEnterToReturn() throws Exception {
+        Advice.to(EnterToReturnAdvice.class);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testAdviceWithNonExistentArgument() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(IllegalAdvice.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(IllegalArgumentAdvice.class)))
                 .make();
     }
 
@@ -238,7 +253,7 @@ public class AdviceTest {
     public void testAdviceWithNonAssignableParameter() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalAdvice.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalArgumentAdvice.class)))
                 .make();
     }
 
@@ -258,6 +273,20 @@ public class AdviceTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonAssignableReturnValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO + QUX), Advice.to(NonAssignableReturnAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonAssignableEnterValue() throws Exception {
+        Advice.to(NonAssignableEnterAdvice.class);
+    }
+
+    @SuppressWarnings("unused")
     public static class Sample {
 
         public static int enter, exit;
@@ -285,6 +314,10 @@ public class AdviceTest {
         public String quxbaz() {
             String foo = FOO, bar = BAR, qux = QUX, baz = BAZ;
             return foo + bar + qux + baz;
+        }
+
+        public void fooqux() {
+            /* do nothing */
         }
     }
 
@@ -454,7 +487,7 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
-    public static class IllegalAdvice {
+    public static class IllegalArgumentAdvice {
 
         @Advice.OnMethodEnter
         private static void enter(Integer argument) {
@@ -490,6 +523,51 @@ public class AdviceTest {
 
         @Advice.OnMethodExit
         private static void enter(@Advice.This String thiz) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class AmbiguousAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Argument(0) @Advice.This String thiz) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EnterToEnterAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Enter Object value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EnterToReturnAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Return Object value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class NonAssignableEnterAdvice {
+
+        @Advice.OnMethodExit
+        private static void enter(@Advice.Enter Object value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class NonAssignableReturnAdvice {
+
+        @Advice.OnMethodExit
+        private static void enter(@Advice.Return Object value) {
             throw new AssertionError();
         }
     }

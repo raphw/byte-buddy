@@ -58,9 +58,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     private static Dispatcher resolve(Class<? extends Annotation> annotation, Dispatcher dispatcher, MethodDescription.InDefinedShape methodDescription) {
         if (methodDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
             if (dispatcher.isAlive()) {
-                throw new IllegalArgumentException("Duplicate advice for " + dispatcher + " and " + methodDescription);
+                throw new IllegalStateException("Duplicate advice for " + dispatcher + " and " + methodDescription);
             } else if (!methodDescription.isStatic()) {
-                throw new IllegalArgumentException("Advice for " + methodDescription + " is not static");
+                throw new IllegalStateException("Advice for " + methodDescription + " is not static");
             }
             return new Dispatcher.ForMethod(methodDescription);
         } else {
@@ -109,16 +109,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     onMethodExit();
                     break;
                 case Opcodes.IRETURN:
-                    onMethodExit(Opcodes.DUP, Opcodes.ISTORE, Opcodes.ILOAD);
+                    onMethodExit(Opcodes.ISTORE, Opcodes.ILOAD);
                     break;
                 case Opcodes.FRETURN:
-                    onMethodExit(Opcodes.DUP, Opcodes.FSTORE, Opcodes.FLOAD);
+                    onMethodExit(Opcodes.FSTORE, Opcodes.FLOAD);
                     break;
                 case Opcodes.DRETURN:
-                    onMethodExit(Opcodes.DUP2, Opcodes.DSTORE, Opcodes.DLOAD);
+                    onMethodExit(Opcodes.DSTORE, Opcodes.DLOAD);
                     break;
                 case Opcodes.LRETURN:
-                    onMethodExit(Opcodes.DUP2, Opcodes.LSTORE, Opcodes.LLOAD);
+                    onMethodExit(Opcodes.LSTORE, Opcodes.LLOAD);
                     break;
                 case Opcodes.ATHROW:
                     if (methodExit.isSkipException()) {
@@ -129,34 +129,37 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             || instrumentedMethod.getReturnType().represents(char.class)
                             || instrumentedMethod.getReturnType().represents(int.class)) {
                         mv.visitInsn(Opcodes.ICONST_0);
-                        mv.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+                        topValue(Opcodes.ISTORE);
                     } else if (instrumentedMethod.getReturnType().represents(long.class)) {
                         mv.visitInsn(Opcodes.LCONST_0);
-                        mv.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+                        topValue(Opcodes.LSTORE);
                     } else if (instrumentedMethod.getReturnType().represents(float.class)) {
                         mv.visitInsn(Opcodes.FCONST_0);
-                        mv.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+                        topValue(Opcodes.FSTORE);
                     } else if (instrumentedMethod.getReturnType().represents(double.class)) {
                         mv.visitInsn(Opcodes.DCONST_0);
-                        mv.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+                        topValue(Opcodes.DSTORE);
                     } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
                         mv.visitInsn(Opcodes.ACONST_NULL);
-                        mv.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+                        topValue(Opcodes.ASTORE);
                     }
                     onMethodExit();
                     break;
                 case Opcodes.ARETURN:
-                    onMethodExit(Opcodes.DUP, Opcodes.ASTORE, Opcodes.ALOAD);
+                    onMethodExit(Opcodes.ASTORE, Opcodes.ALOAD);
                     break;
             }
             mv.visitInsn(opcode);
         }
 
-        private void onMethodExit(int duplication, int store, int load) {
-            mv.visitInsn(duplication);
-            mv.visitVarInsn(store, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+        private void onMethodExit(int store, int load) {
+            topValue(store);
             onMethodExit();
-            mv.visitVarInsn(load, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+            topValue(load);
+        }
+
+        private void topValue(int opcode) {
+            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
         }
 
         protected void onMethodExit() {
@@ -358,7 +361,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
                     for (Class<? extends Annotation> annotation : annotations) {
                         if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
-                            throw new IllegalStateException();
+                            throw new IllegalStateException("Illegal annotation " + annotation + " for " + parameterDescription);
                         }
                     }
                     return UNDEFINED;
@@ -441,7 +444,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 if (offsetMapping == null) {
                                     offsetMapping = possible;
                                 } else {
-                                    throw new IllegalStateException(); // TODO
+                                    throw new IllegalStateException(parameterDescription + " is bound to both " + possible + " and " + offsetMapping);
                                 }
                             }
                         }
