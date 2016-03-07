@@ -156,7 +156,7 @@ public class AdviceTest {
     public void testObsoleteReturnValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ObsoleteReturnValue.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ObsoleteReturnValueAdvice.class)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -169,11 +169,37 @@ public class AdviceTest {
     public void testUnusedReturnValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(UnusedReturnValue.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(UnusedReturnValueAdvice.class)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testVariableMappingAdviceLarger() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(AdviceWithVariableValues.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), FOO + BAR + QUX + BAZ), is((Object) (FOO + BAR + QUX + BAZ)));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testVariableMappingInstrumentedLarger() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(QUX + BAZ), Advice.to(AdviceWithVariableValues.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(QUX + BAZ).invoke(type.newInstance()), is((Object) (FOO + BAR + QUX + BAZ)));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
@@ -209,7 +235,7 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAdviceWithNonAssignableArgument() throws Exception {
+    public void testAdviceWithNonAssignableParameter() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalAdvice.class)))
@@ -221,6 +247,14 @@ public class AdviceTest {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAZ), Advice.to(ThisReferenceAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonAssignableThisReference() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(IllegalThisReferenceAdvice.class)))
                 .make();
     }
 
@@ -247,6 +281,11 @@ public class AdviceTest {
         public static String baz() {
             return FOO;
         }
+
+        public String quxbaz() {
+            String foo = FOO, bar = BAR, qux = QUX, baz = BAZ;
+            return foo + bar + qux + baz;
+        }
     }
 
     @SuppressWarnings("unused")
@@ -259,6 +298,26 @@ public class AdviceTest {
 
         @Advice.OnMethodExit
         private static void exit() {
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class AdviceWithVariableValues {
+
+        @Advice.OnMethodEnter
+        private static int enter() {
+            int foo = VALUE, bar = VALUE * 2;
+            Sample.enter++;
+            return foo + bar;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Enter int enter, @Advice.Return String value) {
+            int foo = VALUE, bar = VALUE * 2;
+            if (foo + bar != enter || !value.equals(FOO + BAR + QUX + BAZ)) {
+                throw new AssertionError();
+            }
             Sample.exit++;
         }
     }
@@ -370,6 +429,31 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class ObsoleteReturnValueAdvice {
+
+        @Advice.OnMethodEnter
+        private static int enter() {
+            Sample.enter++;
+            return VALUE;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class UnusedReturnValueAdvice {
+
+        @Advice.OnMethodEnter
+        private static int enter() {
+            Sample.enter++;
+            return VALUE;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit() {
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class IllegalAdvice {
 
         @Advice.OnMethodEnter
@@ -402,27 +486,11 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
-    public static class ObsoleteReturnValue {
-
-        @Advice.OnMethodEnter
-        private static int enter() {
-            Sample.enter++;
-            return VALUE;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class UnusedReturnValue {
-
-        @Advice.OnMethodEnter
-        private static int enter() {
-            Sample.enter++;
-            return VALUE;
-        }
+    public static class IllegalThisReferenceAdvice {
 
         @Advice.OnMethodExit
-        private static void exit() {
-            Sample.exit++;
+        private static void enter(@Advice.This String thiz) {
+            throw new AssertionError();
         }
     }
 }
