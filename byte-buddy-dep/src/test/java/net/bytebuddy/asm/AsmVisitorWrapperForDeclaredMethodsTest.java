@@ -1,7 +1,5 @@
 package net.bytebuddy.asm;
 
-import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -25,7 +23,7 @@ import static org.mockito.Mockito.*;
 
 public class AsmVisitorWrapperForDeclaredMethodsTest {
 
-    private static final int MODIFIERS = 42;
+    private static final int MODIFIERS = 42, FLAGS = 42;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -93,6 +91,16 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
                 .visitMethod(MODIFIERS, FOO + BAR, QUX, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
         verifyZeroInteractions(matcher);
         verifyZeroInteractions(methodVisitorWrapper);
+    }
+
+    @Test
+    public void testWriterFlags() throws Exception {
+        assertThat(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(FLAGS).mergeWriter(0), is(FLAGS));
+    }
+
+    @Test
+    public void testReaderFlags() throws Exception {
+        assertThat(new AsmVisitorWrapper.ForDeclaredMethods().readerFlags(FLAGS).mergeReader(0), is(FLAGS));
     }
 
     @Test

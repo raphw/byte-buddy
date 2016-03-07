@@ -1,6 +1,5 @@
-package net.bytebuddy.asm.advice;
+package net.bytebuddy.asm;
 
-import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -72,15 +71,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     protected class AsmAdvice extends MethodVisitor {
 
-        private static final int NO_VALUE = -1;
-
         private final MethodDescription instrumentedMethod;
 
         private final ClassReader classReader;
-
-        private int maxStack = NO_VALUE;
-
-        private int maxLocals = NO_VALUE;
 
         protected AsmAdvice(MethodVisitor methodVisitor, MethodDescription methodDescription) {
             super(Opcodes.ASM5, methodVisitor);
@@ -98,41 +91,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
-                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
-                    break;
                 case Opcodes.IRETURN:
                 case Opcodes.FRETURN:
-                case Opcodes.ARETURN:
-                case Opcodes.ATHROW:
-                    classReader.accept(new CodeCopier(methodExit, 1), ClassReader.SKIP_DEBUG);
-                    break;
                 case Opcodes.DRETURN:
                 case Opcodes.LRETURN:
-                    classReader.accept(new CodeCopier(methodExit, 2), ClassReader.SKIP_DEBUG);
+                case Opcodes.ARETURN:
+                case Opcodes.ATHROW:
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
                     break;
             }
             // TODO: Adapt stack map frames to include additional frame!
             super.visitInsn(opcode);
         }
 
-        @Override
-        public void visitMaxs(int maxStack, int maxLocals) {
-            super.visitMaxs(Math.max(maxStack, this.maxStack), Math.max(maxLocals, this.maxLocals));
-        }
-
         protected class CodeCopier extends ClassVisitor {
-
-            private final int stackIncrement;
 
             private final Map<String, MethodDescription> methods;
 
             protected CodeCopier(Map<String, MethodDescription> methods) {
-                this(methods, 0);
-            }
-
-            protected CodeCopier(Map<String, MethodDescription> methods, int stackIncrement) {
                 super(Opcodes.ASM5);
-                this.stackIncrement = stackIncrement;
                 this.methods = methods;
             }
 
@@ -203,15 +182,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitEnd() {
-                    /* do nothing */
+                public void visitMaxs(int maxStack, int maxLocals) {
+                    super.visitLabel(endOfMethod);
                 }
 
                 @Override
-                public void visitMaxs(int maxStack, int maxLocals) {
-                    AsmAdvice.this.maxStack = maxStack + stackIncrement;
-                    AsmAdvice.this.maxLocals = maxLocals;
-                    super.visitLabel(endOfMethod);
+                public void visitEnd() {
+                    /* do nothing */
                 }
 
                 @Override

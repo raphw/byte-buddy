@@ -20,6 +20,11 @@ import java.util.*;
 public interface AsmVisitorWrapper {
 
     /**
+     * Indicates that no flags should be set.
+     */
+    int NO_FLAGS = 0;
+
+    /**
      * Defines the flags that are provided to any {@code ClassWriter} when writing a class. Typically, this gives opportunity to instruct ASM
      * to compute stack map frames or the size of the local variables array and the operand stack. If no specific flags are required for
      * applying this wrapper, the given value is to be returned.
@@ -322,7 +327,7 @@ public interface AsmVisitorWrapper {
      * Note: Inherited methods are <b>not</b> matched by this visitor, even if they are intercepted by a normal interception.
      * </p>
      */
-    class ForDeclaredMethods extends AbstractBase {
+    class ForDeclaredMethods implements AsmVisitorWrapper {
 
         /**
          * The list of entries that describe matched methods in their application order.
@@ -330,10 +335,20 @@ public interface AsmVisitorWrapper {
         private final List<Entry> entries;
 
         /**
+         * The writer flags to set.
+         */
+        private final int writerFlags;
+
+        /**
+         * The reader flags to set.
+         */
+        private final int readerFlags;
+
+        /**
          * Creates a new visitor wrapper for declared methods.
          */
         public ForDeclaredMethods() {
-            this(Collections.<Entry>emptyList());
+            this(Collections.<Entry>emptyList(), NO_FLAGS, NO_FLAGS);
         }
 
         /**
@@ -341,8 +356,10 @@ public interface AsmVisitorWrapper {
          *
          * @param entries The list of entries that describe matched methods in their application order.
          */
-        protected ForDeclaredMethods(List<Entry> entries) {
+        protected ForDeclaredMethods(List<Entry> entries, int writerFlags, int readerFlags) {
             this.entries = entries;
+            this.writerFlags = writerFlags;
+            this.readerFlags = readerFlags;
         }
 
         /**
@@ -354,7 +371,35 @@ public interface AsmVisitorWrapper {
          * @return A new ASM visitor wrapper that applied the given method visitor wrapper if the supplied matcher is matched.
          */
         public ForDeclaredMethods method(ElementMatcher<? super MethodDescription.InDefinedShape> matcher, MethodVisitorWrapper methodVisitorWrapper) {
-            return new ForDeclaredMethods(CompoundList.of(entries, new Entry(matcher, methodVisitorWrapper)));
+            return new ForDeclaredMethods(CompoundList.of(entries, new Entry(matcher, methodVisitorWrapper)), writerFlags, readerFlags);
+        }
+
+        /**
+         * Sets flags for the {@link org.objectweb.asm.ClassWriter} this wrapper is applied to.
+         * @param flags The flags to set for the {@link org.objectweb.asm.ClassWriter}.
+         * @return A new ASM visitor wrapper that sets the supplied writer flags.
+         */
+        public ForDeclaredMethods writerFlags(int flags) {
+            return new ForDeclaredMethods(entries, writerFlags | flags, readerFlags);
+        }
+
+        /**
+         * Sets flags for the {@link org.objectweb.asm.ClassReader} this wrapper is applied to.
+         * @param flags The flags to set for the {@link org.objectweb.asm.ClassReader}.
+         * @return A new ASM visitor wrapper that sets the supplied reader flags.
+         */
+        public ForDeclaredMethods readerFlags(int flags) {
+            return new ForDeclaredMethods(entries, writerFlags, readerFlags | flags);
+        }
+
+        @Override
+        public int mergeWriter(int flags) {
+            return flags | writerFlags;
+        }
+
+        @Override
+        public int mergeReader(int flags) {
+            return flags | readerFlags;
         }
 
         @Override
@@ -365,18 +410,24 @@ public interface AsmVisitorWrapper {
         @Override
         public boolean equals(Object other) {
             return this == other || !(other == null || getClass() != other.getClass())
+                    && writerFlags == ((ForDeclaredMethods) other).writerFlags
+                    && readerFlags == ((ForDeclaredMethods) other).readerFlags
                     && entries.equals(((ForDeclaredMethods) other).entries);
         }
 
         @Override
         public int hashCode() {
-            return entries.hashCode();
+            int result = entries.hashCode();
+            result = 31 * result + writerFlags;
+            result = 31 * result + readerFlags;
+            return result;
         }
 
         @Override
         public String toString() {
             return "AsmVisitorWrapper.ForDeclaredMethods{" +
-                    "entries=" + entries +
+                    ", writerFlags=" + writerFlags +
+                    ", readerFlags=" + readerFlags +
                     '}';
         }
 
