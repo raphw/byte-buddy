@@ -426,6 +426,7 @@ public interface AsmVisitorWrapper {
         @Override
         public String toString() {
             return "AsmVisitorWrapper.ForDeclaredMethods{" +
+                    "entries=" + entries +
                     ", writerFlags=" + writerFlags +
                     ", readerFlags=" + readerFlags +
                     '}';

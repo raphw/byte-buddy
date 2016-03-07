@@ -306,8 +306,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return this;
             }
 
-
-
             @Override
             public int getValueOffset() {
                 return 0;
