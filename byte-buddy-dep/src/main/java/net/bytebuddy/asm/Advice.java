@@ -143,7 +143,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         mv.visitInsn(Opcodes.ACONST_NULL);
                         topValue(Opcodes.ASTORE);
                     }
+                    topValue(Opcodes.ASTORE, 1);
                     onMethodExit();
+                    topValue(Opcodes.ALOAD, 1);
                     break;
                 case Opcodes.ARETURN:
                     onMethodExit(Opcodes.ASTORE, Opcodes.ALOAD);
@@ -154,12 +156,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         private void onMethodExit(int store, int load) {
             topValue(store);
+            mv.visitInsn(Opcodes.ACONST_NULL);
+            topValue(Opcodes.ASTORE, 1);
             onMethodExit();
             topValue(load);
         }
 
         private void topValue(int opcode) {
-            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize());
+            topValue(opcode, 0);
+        }
+
+        private void topValue(int opcode, int offset) {
+            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize() + offset);
         }
 
         protected void onMethodExit() {
@@ -686,7 +694,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected int adjust(int offset) {
-                        return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + additionalSize.getSize();
+                        return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + additionalSize.getSize() + 1;
                     }
                 }
             }
