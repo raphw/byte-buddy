@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassWriter;
 
@@ -14,6 +15,8 @@ public class AdviceTest {
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     private static final String ENTER = "enter", EXIT = "exit";
+
+    private static final int VALUE = 42;
 
     @Test
     public void testTrivialAdvice() throws Exception {
@@ -54,9 +57,46 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
+    @Test
+    public void testAdviceWithThisReference() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThisReferenceAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceWithValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ValueAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testDuplicateAdvice() throws Exception {
+        Advice.to(DuplicateAdvice.class);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNonStaticAdvice() throws Exception {
+        Advice.to(NonStaticAdvice.class);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -113,11 +153,17 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static void enter(String argument) {
+            if (!argument.equals(BAR)) {
+                throw new AssertionError();
+            }
             Sample.enter++;
         }
 
         @Advice.OnMethodExit
         private static void exit(String argument) {
+            if (!argument.equals(BAR)) {
+                throw new AssertionError();
+            }
             Sample.exit++;
         }
     }
@@ -127,11 +173,55 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static void enter(@Advice.Argument(1) String argument) {
+            if (!argument.equals(BAR)) {
+                throw new AssertionError();
+            }
             Sample.enter++;
         }
 
         @Advice.OnMethodExit
         private static void exit(@Advice.Argument(1) String argument) {
+            if (!argument.equals(BAR)) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ThisReferenceAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.This Object thiz) {
+            if (!(thiz instanceof Sample)) {
+                throw new AssertionError();
+            }
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.This Object thiz) {
+            if (!(thiz instanceof Sample)) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ValueAdvice {
+
+        @Advice.OnMethodEnter
+        private static int enter() {
+            Sample.enter++;
+            return VALUE;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Value int value) {
+            if (value != VALUE) {
+                throw new AssertionError();
+            }
             Sample.exit++;
         }
     }
@@ -141,6 +231,29 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         private static void enter(Integer argument) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class DuplicateAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter1() {
+            throw new AssertionError();
+        }
+
+        @Advice.OnMethodEnter
+        private static void enter2() {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class NonStaticAdvice {
+
+        @Advice.OnMethodEnter
+        private void enter() {
             throw new AssertionError();
         }
     }
