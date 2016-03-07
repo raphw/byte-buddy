@@ -2,7 +2,6 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.objectweb.asm.ClassWriter;
 
@@ -71,16 +70,28 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceWithValue() throws Exception {
+    public void testAdviceWithEntranceValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ValueAdvice.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(EntranceValueAdvice.class)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceWithReturnValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ReturnValueAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 0));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
@@ -209,7 +220,7 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
-    public static class ValueAdvice {
+    public static class EntranceValueAdvice {
 
         @Advice.OnMethodEnter
         private static int enter() {
@@ -218,8 +229,20 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.Value int value) {
+        private static void exit(@Advice.EntranceValue int value) {
             if (value != VALUE) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReturnValueAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.ReturnValue String value) {
+            if (!value.equals(FOO)) {
                 throw new AssertionError();
             }
             Sample.exit++;

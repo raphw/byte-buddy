@@ -48,7 +48,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             if (!methodEnter.isActive() && !methodExit.isActive()) {
                 throw new IllegalArgumentException("No advice defined by " + typeDescription);
             }
-            return new Advice(methodEnter, methodExit.bindTo(methodEnter), classFileLocator.locate(typeDescription.getName()).resolve());
+            return new Advice(methodEnter, methodExit.asExitFrom(methodEnter), classFileLocator.locate(typeDescription.getName()).resolve());
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + typeDescription, exception);
         }
@@ -91,16 +91,45 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
+        public void visitVarInsn(int opcode, int offset) {
+            if (offset >= instrumentedMethod.getStackSize()) {
+                offset += methodEnter.getValueOffset() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize();
+            }
+            super.visitVarInsn(opcode, offset);
+        }
+
+        @Override
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    break;
                 case Opcodes.IRETURN:
+                    super.visitInsn(Opcodes.DUP);
+                    super.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    break;
                 case Opcodes.FRETURN:
+                    super.visitInsn(Opcodes.DUP);
+                    super.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    break;
                 case Opcodes.DRETURN:
+                    super.visitInsn(Opcodes.DUP2);
+                    super.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    break;
                 case Opcodes.LRETURN:
+                    super.visitInsn(Opcodes.DUP2);
+                    super.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
+                    classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    break;
                 case Opcodes.ARETURN:
                 case Opcodes.ATHROW:
+                    super.visitInsn(Opcodes.DUP);
+                    super.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + methodEnter.getValueOffset());
                     classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+                    break;
             }
             super.visitInsn(opcode);
         }
@@ -138,8 +167,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException("Static methods do not imply a this reference for " + parameter);
                             }
                             accessMappings.put(parameter.getOffset(), AccessMapping.ForMethodArgument.ofThisReference());
-                        } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(Value.class)) {
-                            accessMappings.put(parameter.getOffset(), new AccessMapping.ForValue(instrumentedMethod));
+                        } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(EntranceValue.class)) {
+                            accessMappings.put(parameter.getOffset(), new AccessMapping.ForEntranceValue(instrumentedMethod));
+                        } else if (parameter.getDeclaredAnnotations().isAnnotationPresent(ReturnValue.class)) {
+                            accessMappings.put(parameter.getOffset(), new AccessMapping.ForReturnValue(instrumentedMethod));
                         } else {
                             AnnotationDescription.Loadable<Argument> argument = parameter.getDeclaredAnnotations().ofType(Argument.class);
                             int index = argument == null
@@ -194,7 +225,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitCode() {
-                    dispatcher.prepare(mv, instrumentedMethod);
+                    /* do nothing */
                 }
 
                 @Override
@@ -214,12 +245,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
                         case Opcodes.IRETURN:
+                            super.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
+                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            break;
                         case Opcodes.FRETURN:
+                            super.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
+                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            break;
                         case Opcodes.ARETURN:
+                            super.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
                             super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
                         case Opcodes.LRETURN:
+                            super.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
+                            super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                            break;
                         case Opcodes.DRETURN:
+                            super.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().asErasure().getStackSize().getSize());
                             super.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                             break;
                         default:
@@ -248,9 +290,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         MethodDescription getInlinedMethod();
 
-        Dispatcher bindTo(Dispatcher methodEnter);
+        Dispatcher asExitFrom(Dispatcher dispatcher);
 
-        void prepare(MethodVisitor methodVisitor, MethodDescription instrumentedMethod); // TODO: Does not work, stack not empty on "exit" method.
+        int getValueOffset();
 
         enum Inactive implements Dispatcher {
 
@@ -273,16 +315,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher bindTo(Dispatcher methodEnter) {
-                if (!methodEnter.getInlinedMethod().getReturnType().represents(void.class)) {
-                    throw new IllegalStateException(methodEnter + " supplies return value that is never read");
+            public Dispatcher asExitFrom(Dispatcher dispatcher) {
+                if (!dispatcher.getInlinedMethod().getReturnType().represents(void.class)) {
+                    throw new IllegalStateException(dispatcher + " supplies return value that is never read");
                 }
                 return this;
             }
 
             @Override
-            public void prepare(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
-                throw new IllegalStateException(); // TODO: Message
+            public int getValueOffset() {
+                return 0;
             }
         }
 
@@ -310,16 +352,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher bindTo(Dispatcher methodEnter) {
+            public Dispatcher asExitFrom(Dispatcher dispatcher) {
                 if (!methodDescription.getReturnType().represents(void.class)) {
                     throw new IllegalStateException(); // TODO: Message
                 }
-                TypeDescription suppliedType = methodEnter.getInlinedMethod().getReturnType().asErasure();
-                boolean valueParameterExpected = !suppliedType.represents(void.class);
+                boolean valueParameterExpected = dispatcher.isActive() && !dispatcher.getInlinedMethod().getReturnType().asErasure().represents(void.class);
                 for (ParameterDescription parameter : methodDescription.getParameters()) {
-                    if (parameter.getDeclaredAnnotations().isAnnotationPresent(Value.class)) {
+                    if (parameter.getDeclaredAnnotations().isAnnotationPresent(EntranceValue.class)) {
                         if (valueParameterExpected) {
-                            if (!suppliedType.isAssignableTo(parameter.getType().asErasure())) {
+                            if (!dispatcher.getInlinedMethod().getReturnType().asErasure().isAssignableTo(parameter.getType().asErasure())) {
                                 throw new IllegalStateException(); // TODO: Message
                             }
                             valueParameterExpected = false;
@@ -328,14 +369,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
                 }
-                return suppliedType.represents(void.class)
+                return !dispatcher.isActive() || dispatcher.getInlinedMethod().getReturnType().asErasure().represents(void.class)
                         ? this
-                        : new WithReturnValue(this, suppliedType);
+                        : new WithReturnValue(this, dispatcher.getInlinedMethod().getReturnType().asErasure());
             }
 
             @Override
-            public void prepare(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
-                /* do nothing */
+            public int getValueOffset() {
+                return 0;
             }
 
             protected static class WithReturnValue implements Dispatcher {
@@ -365,13 +406,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public Dispatcher bindTo(Dispatcher methodEnter) {
+                public Dispatcher asExitFrom(Dispatcher dispatcher) {
                     throw new IllegalStateException();
                 }
 
                 @Override
-                public void prepare(MethodVisitor methodVisitor, MethodDescription instrumentedMethod) {
-                    methodVisitor.visitVarInsn(Type.getType(suppliedType.getDescriptor()).getOpcode(Opcodes.ASTORE), instrumentedMethod.getStackSize());
+                public int getValueOffset() {
+                    return suppliedType.getStackSize().getSize();
                 }
             }
         }
@@ -399,11 +440,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
-        class ForValue implements AccessMapping {
+        class ForEntranceValue implements AccessMapping {
 
             private final MethodDescription instrumentedMethod;
 
-            public ForValue(MethodDescription instrumentedMethod) {
+            public ForEntranceValue(MethodDescription instrumentedMethod) {
+                this.instrumentedMethod = instrumentedMethod;
+            }
+
+            @Override
+            public void apply(MethodVisitor methodVisitor, int opcode) {
+                methodVisitor.visitVarInsn(opcode, instrumentedMethod.getStackSize() + instrumentedMethod.getReturnType().getStackSize().getSize());
+            }
+        }
+
+        class ForReturnValue implements AccessMapping {
+
+            private final MethodDescription instrumentedMethod;
+
+
+            public ForReturnValue(MethodDescription instrumentedMethod) {
                 this.instrumentedMethod = instrumentedMethod;
             }
 
@@ -447,7 +503,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
-    public @interface Value {
+    public @interface EntranceValue {
+        /* empty */
+    }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface ReturnValue {
         /* empty */
     }
 }
