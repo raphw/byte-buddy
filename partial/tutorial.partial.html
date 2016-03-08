@@ -36,9 +36,9 @@
     The Java language comes with a comparatively strict type system. Java requires all variables and objects to be of a
     specific type and any attempt to assign incompatible types always causes an error. These errors are usually
     emitted by the Java compiler or at the very least by the Java runtime when casting a type illegally. Such strict
-    typing is often desireable, for example when writing business applications. Business domains can usually be described
+    typing is often desirable, for example when writing business applications. Business domains can usually be described
     in such an explicit manner where any domain item represents its own type. This way, we can use Java to build very
-    readable and robust applications where mistakes are catched close to their source. Among other things, it is
+    readable and robust applications where mistakes are caught close to their source. Among other things, it is
     Java's type system that is responsible for Java's popularity in enterprise programming.
 </p>
 
@@ -885,7 +885,8 @@ class ToStringAgent {
         .transform(new AgentBuilder.Transformer() {
       @Override
       public DynamicType.Builder<?> transform(DynamicType.Builder<?> builder,
-                                              TypeDescription typeDescription) {
+                                              TypeDescription typeDescription,
+                                              ClassLoader classloader) {
         return builder.method(named("toString"))
                       .intercept(FixedValue.value("transformed"));
       }
