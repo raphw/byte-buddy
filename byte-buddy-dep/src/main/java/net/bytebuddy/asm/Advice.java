@@ -361,7 +361,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
                     if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Thrown.class)) {
                         if (!parameterDescription.getType().asErasure().isAssignableFrom(Throwable.class)) {
-                            throw new IllegalStateException("Throwable must be of subtype Throwable for " + parameterDescription);
+                            throw new IllegalStateException("Parameter type must be a supertype of Throwable for " + parameterDescription);
                         }
                         return this;
                     } else {
@@ -531,7 +531,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             OffsetMapping.ForThisReference.Factory.INSTANCE,
                             new OffsetMapping.ForEnterValue.Factory(enterType),
                             OffsetMapping.ForReturnValue.Factory.INSTANCE,
-                            inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onException()
+                            inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
                                     ? OffsetMapping.ForException.INSTANCE
                                     : new OffsetMapping.Illegal(Thrown.class));
                     additionalSize = enterType.getStackSize();
@@ -539,7 +539,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public boolean isSkipException() {
-                    return !inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onException();
+                    return !inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable();
                 }
 
                 @Override
@@ -740,7 +740,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodExit {
 
-        boolean onException() default true;
+        boolean onThrowable() default true;
     }
 
     @Documented

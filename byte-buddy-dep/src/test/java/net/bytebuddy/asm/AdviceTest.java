@@ -11,8 +11,7 @@ import java.lang.reflect.InvocationTargetException;
 
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.named;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -21,7 +20,7 @@ public class AdviceTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
-    private static final String ENTER = "enter", EXIT = "exit";
+    private static final String ENTER = "enter", EXIT = "exit", THROWABLE = "throwable";
 
     private static final int VALUE = 42;
 
@@ -204,6 +203,35 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
+    @Test
+    public void testExceptionWhenNotThrown() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThrowableAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO)));
+        assertThat(type.getDeclaredField(THROWABLE).get(null), nullValue(Object.class));
+    }
+
+    @Test
+    public void testExceptionWhenThrown() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO + BAR), Advice.to(ThrowableAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+        }
+        assertThat(type.getDeclaredField(THROWABLE).get(null), instanceOf(RuntimeException.class));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
@@ -286,10 +314,22 @@ public class AdviceTest {
         Advice.to(NonAssignableEnterAdvice.class);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void test() throws Exception {
+        Advice.to(IllegalThrowableRequestAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalThrowableType() throws Exception {
+        Advice.to(IllegalThrowableTypeAdvice.class);
+    }
+
     @SuppressWarnings("unused")
     public static class Sample {
 
         public static int enter, exit;
+
+        public static Throwable throwable;
 
         public String foo() {
             return FOO;
@@ -363,7 +403,7 @@ public class AdviceTest {
             Sample.enter++;
         }
 
-        @Advice.OnMethodExit(onException = false)
+        @Advice.OnMethodExit(onThrowable = false)
         private static void exit() {
             Sample.exit++;
         }
@@ -487,6 +527,15 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class ThrowableAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Thrown Throwable throwable) {
+            Sample.throwable = throwable;
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class IllegalArgumentAdvice {
 
         @Advice.OnMethodEnter
@@ -558,7 +607,7 @@ public class AdviceTest {
     public static class NonAssignableEnterAdvice {
 
         @Advice.OnMethodExit
-        private static void enter(@Advice.Enter Object value) {
+        private static void exit(@Advice.Enter Object value) {
             throw new AssertionError();
         }
     }
@@ -567,7 +616,25 @@ public class AdviceTest {
     public static class NonAssignableReturnAdvice {
 
         @Advice.OnMethodExit
-        private static void enter(@Advice.Return Object value) {
+        private static void exit(@Advice.Return Object value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalThrowableRequestAdvice {
+
+        @Advice.OnMethodExit(onThrowable = false)
+        private static void exit(@Advice.Thrown Throwable value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalThrowableTypeAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Thrown Exception value) {
             throw new AssertionError();
         }
     }
