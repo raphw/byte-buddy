@@ -315,6 +315,17 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
+    @Test
+    public void testThisValueSubstitution() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Box.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThisSubstitutionAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) BAR));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
@@ -426,13 +437,29 @@ public class AdviceTest {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
             }
         }).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThrowable.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForEnterValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForEnterValue.Factory.class).apply();
+        final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Illegal.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return types.next();
+            }
+        }).apply();
         final Iterator<StackSize> iterator = Arrays.asList(StackSize.values()).iterator();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
             @Override
             public void apply(MethodDescription.InDefinedShape mock) {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
                 try {
-                when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
+                    when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
                 } catch (Exception exception) {
                     throw new AssertionError(exception);
                 }
@@ -598,16 +625,16 @@ public class AdviceTest {
     public static class ThisReferenceAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.This Object thiz) {
-            if (!(thiz instanceof Sample)) {
+        private static void enter(@Advice.This Sample thiz) {
+            if (thiz == null) {
                 throw new AssertionError();
             }
             Sample.enter++;
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.This Object thiz) {
-            if (!(thiz instanceof Sample)) {
+        private static void exit(@Advice.This Sample thiz) {
+            if (thiz == null) {
                 throw new AssertionError();
             }
             Sample.exit++;
@@ -709,10 +736,33 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class ThisSubstitutionAdvice {
+
+        @Advice.OnMethodEnter
+        @SuppressWarnings("all")
+        private static void enter(@Advice.This Box box) {
+            box = new Box("bar");
+        }
+    }
+
+    public static class Box {
+
+        public final String value;
+
+        public Box(String value) {
+            this.value = value;
+        }
+
+        public String foo() {
+            return value;
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class IllegalArgumentAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(Integer argument) {
+        private static void enter(Object argument) {
             throw new AssertionError();
         }
     }
@@ -744,7 +794,7 @@ public class AdviceTest {
     public static class IllegalThisReferenceAdvice {
 
         @Advice.OnMethodExit
-        private static void enter(@Advice.This String thiz) {
+        private static void enter(@Advice.This Object thiz) {
             throw new AssertionError();
         }
     }
@@ -807,7 +857,7 @@ public class AdviceTest {
     public static class IllegalThrowableTypeAdvice {
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.Thrown Exception value) {
+        private static void exit(@Advice.Thrown Object value) {
             throw new AssertionError();
         }
     }

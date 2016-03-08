@@ -354,7 +354,9 @@ public interface AsmVisitorWrapper {
         /**
          * Creates a new visitor wrapper for declared methods.
          *
-         * @param entries The list of entries that describe matched methods in their application order.
+         * @param entries     The list of entries that describe matched methods in their application order.
+         * @param readerFlags The reader flags to set.
+         * @param writerFlags The writer flags to set.
          */
         protected ForDeclaredMethods(List<Entry> entries, int writerFlags, int readerFlags) {
             this.entries = entries;
@@ -376,6 +378,7 @@ public interface AsmVisitorWrapper {
 
         /**
          * Sets flags for the {@link org.objectweb.asm.ClassWriter} this wrapper is applied to.
+         *
          * @param flags The flags to set for the {@link org.objectweb.asm.ClassWriter}.
          * @return A new ASM visitor wrapper that sets the supplied writer flags.
          */
@@ -385,6 +388,7 @@ public interface AsmVisitorWrapper {
 
         /**
          * Sets flags for the {@link org.objectweb.asm.ClassReader} this wrapper is applied to.
+         *
          * @param flags The flags to set for the {@link org.objectweb.asm.ClassReader}.
          * @return A new ASM visitor wrapper that sets the supplied reader flags.
          */
