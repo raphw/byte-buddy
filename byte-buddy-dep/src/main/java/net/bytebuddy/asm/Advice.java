@@ -70,16 +70,160 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     @Override
     public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
-        return new AsmAdvice(methodVisitor, methodDescription);
+        if (methodDescription.isAbstract() || methodDescription.isNative()) {
+            throw new IllegalStateException("Cannot advice abstract or native method " + methodDescription);
+        }
+        return new ExplicitAdvice(methodVisitor, methodDescription);
     }
 
-    protected class AsmAdvice extends MethodVisitor {
+    protected class BlockAdvice extends MethodVisitor {
 
         private final MethodDescription.InDefinedShape instrumentedMethod;
 
         private final ClassReader classReader;
 
-        protected AsmAdvice(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+        private final Label handler;
+
+        private Label userStart;
+
+        public BlockAdvice(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+            super(Opcodes.ASM5, methodVisitor);
+            this.instrumentedMethod = instrumentedMethod;
+            classReader = new ClassReader(binaryRepresentation);
+            handler = new Label();
+            userStart = new Label();
+        }
+
+        @Override
+        public void visitCode() {
+            super.visitCode();
+            classReader.accept(new CodeCopier(methodEnter), ClassReader.SKIP_DEBUG);
+            mv.visitLabel(userStart);
+        }
+
+        @Override
+        public void visitVarInsn(int opcode, int offset) {
+            super.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
+                    ? offset
+                    : offset + methodEnter.getEnterType().getStackSize().getSize());
+        }
+
+        @Override
+        public void visitInsn(int opcode) {
+            switch (opcode) {
+                case Opcodes.RETURN:
+                    onMethodExit();
+                    break;
+                case Opcodes.IRETURN:
+                    onMethodExit(Opcodes.ISTORE, Opcodes.ILOAD);
+                    break;
+                case Opcodes.FRETURN:
+                    onMethodExit(Opcodes.FSTORE, Opcodes.FLOAD);
+                    break;
+                case Opcodes.DRETURN:
+                    onMethodExit(Opcodes.DSTORE, Opcodes.DLOAD);
+                    break;
+                case Opcodes.LRETURN:
+                    onMethodExit(Opcodes.LSTORE, Opcodes.LLOAD);
+                    break;
+                case Opcodes.ATHROW:
+                    if (Advice.this.methodExit.isSkipException()) {
+                        break;
+                    }
+                    variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    makeDefaultReturn();
+                    onMethodExit();
+                    variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    break;
+                case Opcodes.ARETURN:
+                    onMethodExit(Opcodes.ASTORE, Opcodes.ALOAD);
+                    break;
+            }
+            mv.visitInsn(opcode);
+        }
+
+        private void makeDefaultReturn() {
+            if (instrumentedMethod.getReturnType().represents(boolean.class)
+                    || instrumentedMethod.getReturnType().represents(byte.class)
+                    || instrumentedMethod.getReturnType().represents(short.class)
+                    || instrumentedMethod.getReturnType().represents(char.class)
+                    || instrumentedMethod.getReturnType().represents(int.class)) {
+                mv.visitInsn(Opcodes.ICONST_0);
+                variable(Opcodes.ISTORE);
+            } else if (instrumentedMethod.getReturnType().represents(long.class)) {
+                mv.visitInsn(Opcodes.LCONST_0);
+                variable(Opcodes.LSTORE);
+            } else if (instrumentedMethod.getReturnType().represents(float.class)) {
+                mv.visitInsn(Opcodes.FCONST_0);
+                variable(Opcodes.FSTORE);
+            } else if (instrumentedMethod.getReturnType().represents(double.class)) {
+                mv.visitInsn(Opcodes.DCONST_0);
+                variable(Opcodes.DSTORE);
+            } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                mv.visitInsn(Opcodes.ACONST_NULL);
+                variable(Opcodes.ASTORE);
+            }
+        }
+
+        private void onMethodExit(int store, int load) {
+            variable(store);
+            mv.visitInsn(Opcodes.ACONST_NULL);
+            variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+            onMethodExit();
+            variable(load);
+        }
+
+        private void variable(int opcode) {
+            variable(opcode, 0);
+        }
+
+        private void variable(int opcode, int offset) {
+            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize() + offset);
+        }
+
+        protected void onMethodExit() {
+            Label userEnd = new Label();
+            mv.visitLabel(userEnd);
+            mv.visitTryCatchBlock(userStart, userEnd, handler, null);
+            classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+            userStart = new Label();
+            mv.visitLabel(userStart);
+        }
+
+        @Override
+        public void visitMaxs(int maxStack, int maxLocals) {
+            mv.visitLabel(handler);
+            variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+            makeDefaultReturn();
+            classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+            variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+            mv.visitInsn(Opcodes.ATHROW);
+            super.visitMaxs(maxStack, maxLocals);
+        }
+
+        protected class CodeCopier extends ClassVisitor {
+
+            private final Dispatcher.Resolved dispatcher;
+
+            protected CodeCopier(Dispatcher.Resolved dispatcher) {
+                super(Opcodes.ASM5);
+                this.dispatcher = dispatcher;
+            }
+
+            @Override
+            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+                return dispatcher.apply(internalName, descriptor, BlockAdvice.this.mv, instrumentedMethod);
+            }
+        }
+    }
+
+    protected class ExplicitAdvice extends MethodVisitor {
+
+        private final MethodDescription.InDefinedShape instrumentedMethod;
+
+        private final ClassReader classReader;
+
+        protected ExplicitAdvice(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             classReader = new ClassReader(binaryRepresentation);
@@ -185,7 +329,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                return dispatcher.apply(internalName, descriptor, AsmAdvice.this.mv, instrumentedMethod);
+                return dispatcher.apply(internalName, descriptor, ExplicitAdvice.this.mv, instrumentedMethod);
             }
         }
     }
@@ -487,14 +631,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
-                    if (inlinedMethod.getInternalName().equals(internalName) && inlinedMethod.getDescriptor().equals(descriptor)) {
-                        if (instrumentedMethod.isAbstract() || instrumentedMethod.isNative()) {
-                            throw new IllegalStateException("Cannot advice abstract or native method " + instrumentedMethod);
-                        }
-                        return inline(methodVisitor, instrumentedMethod);
-                    } else {
-                        return IGNORE_METHOD;
-                    }
+                    return inlinedMethod.getInternalName().equals(internalName) && inlinedMethod.getDescriptor().equals(descriptor)
+                            ? inline(methodVisitor, instrumentedMethod)
+                            : IGNORE_METHOD;
                 }
 
                 protected abstract MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod);

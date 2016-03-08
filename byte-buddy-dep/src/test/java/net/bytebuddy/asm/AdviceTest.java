@@ -20,7 +20,7 @@ public class AdviceTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
-    private static final String ENTER = "enter", EXIT = "exit", THROWABLE = "throwable";
+    private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable";
 
     private static final int VALUE = 42;
 
@@ -103,7 +103,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceNotSkipException() throws Exception {
+    public void testAdviceNotSkipExceptionImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO + BAR), Advice.to(TrivialAdvice.class)))
@@ -121,7 +121,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceSkipException() throws Exception {
+    public void testAdviceSkipExceptionImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO + BAR), Advice.to(TrivialAdviceSkipException.class)))
@@ -139,7 +139,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceSkipExceptionDoesNotSkipNonException() throws Exception {
+    public void testAdviceSkipExceptionDoesNotSkipNonExceptionImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(TrivialAdviceSkipException.class)))
@@ -150,6 +150,55 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
+
+    @Test
+    public void testAdviceNotSkipExceptionExplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR + BAZ), Advice.to(TrivialAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceSkipExceptionExplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR + BAZ), Advice.to(TrivialAdviceSkipException.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+//    @Test
+//    public void testAdviceSkipExceptionDoesNotSkipNonExceptionExplicit() throws Exception {
+//        Class<?> type = new ByteBuddy()
+//                .redefine(Sample.class)
+//                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(TrivialAdviceSkipException.class)))
+//                .make()
+//                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+//                .getLoaded();
+//        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+//        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+//        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+//    }
 
     @Test
     public void testObsoleteReturnValue() throws Exception {
@@ -230,6 +279,44 @@ public class AdviceTest {
             assertThat(exception.getCause(), instanceOf(RuntimeException.class));
         }
         assertThat(type.getDeclaredField(THROWABLE).get(null), instanceOf(RuntimeException.class));
+    }
+
+    @Test
+    public void testAdviceThrowOnEnter() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TracableSample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThrowOnEnter.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 0));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+    @Test
+    public void testAdviceThrowOnExit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TracableSample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThrowOnExit.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -335,6 +422,8 @@ public class AdviceTest {
     @SuppressWarnings("unused")
     public static class Sample {
 
+        private Object object;
+
         public static int enter, exit;
 
         public static Throwable throwable;
@@ -367,11 +456,24 @@ public class AdviceTest {
         public void fooqux() {
             /* do nothing */
         }
+
+        public void barbaz() {
+            object.getClass(); // implicit null pointer
+        }
     }
 
     public abstract static class AbstractMethod {
 
         public abstract void foo();
+    }
+
+    public static class TracableSample {
+
+        public static int enter, exit, inside;
+
+        public void foo() {
+            inside++;
+        }
     }
 
     @SuppressWarnings("unused")
@@ -545,6 +647,36 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Thrown Throwable throwable) {
             Sample.throwable = throwable;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ThrowOnEnter {
+
+        @Advice.OnMethodEnter
+        private static void enter() {
+            TracableSample.enter++;
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodExit
+        private static void exit() {
+            TracableSample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ThrowOnExit {
+
+        @Advice.OnMethodEnter
+        private static void enter() {
+            TracableSample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit() {
+            TracableSample.exit++;
+            throw new RuntimeException();
         }
     }
 
