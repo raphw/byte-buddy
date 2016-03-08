@@ -73,7 +73,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         if (methodDescription.isAbstract() || methodDescription.isNative()) {
             throw new IllegalStateException("Cannot advice abstract or native method " + methodDescription);
         }
-        return new ExplicitAdvice(methodVisitor, methodDescription);
+        return methodExit.isSkipException()
+                ? new ExplicitAdvice(methodVisitor, methodDescription)
+                : new BlockAdvice(methodVisitor, methodDescription);
     }
 
     protected class BlockAdvice extends MethodVisitor {
@@ -84,20 +86,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         private final Label handler;
 
-        private Label userStart;
+        private Label userEnd;
 
         public BlockAdvice(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             classReader = new ClassReader(binaryRepresentation);
             handler = new Label();
-            userStart = new Label();
         }
 
         @Override
         public void visitCode() {
             super.visitCode();
             classReader.accept(new CodeCopier(methodEnter), ClassReader.SKIP_DEBUG);
+            Label userStart = new Label();
+            userEnd = new Label();
+            mv.visitTryCatchBlock(userStart, userEnd, handler, null);
             mv.visitLabel(userStart);
         }
 
@@ -125,15 +129,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     break;
                 case Opcodes.LRETURN:
                     onMethodExit(Opcodes.LSTORE, Opcodes.LLOAD);
-                    break;
-                case Opcodes.ATHROW:
-                    if (Advice.this.methodExit.isSkipException()) {
-                        break;
-                    }
-                    variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-                    makeDefaultReturn();
-                    onMethodExit();
-                    variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
                     break;
                 case Opcodes.ARETURN:
                     onMethodExit(Opcodes.ASTORE, Opcodes.ALOAD);
@@ -182,16 +177,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         protected void onMethodExit() {
-            Label userEnd = new Label();
             mv.visitLabel(userEnd);
-            mv.visitTryCatchBlock(userStart, userEnd, handler, null);
             classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
-            userStart = new Label();
+            Label userStart = new Label();
+            userEnd = new Label();
+            mv.visitTryCatchBlock(userStart, userEnd, handler, null);
             mv.visitLabel(userStart);
         }
 
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
+            mv.visitLabel(userEnd);
             mv.visitLabel(handler);
             variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
             makeDefaultReturn();
@@ -263,33 +259,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     break;
                 case Opcodes.LRETURN:
                     onMethodExit(Opcodes.LSTORE, Opcodes.LLOAD);
-                    break;
-                case Opcodes.ATHROW:
-                    if (methodExit.isSkipException()) {
-                        break;
-                    } else if (instrumentedMethod.getReturnType().represents(boolean.class)
-                            || instrumentedMethod.getReturnType().represents(byte.class)
-                            || instrumentedMethod.getReturnType().represents(short.class)
-                            || instrumentedMethod.getReturnType().represents(char.class)
-                            || instrumentedMethod.getReturnType().represents(int.class)) {
-                        mv.visitInsn(Opcodes.ICONST_0);
-                        topValue(Opcodes.ISTORE);
-                    } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                        mv.visitInsn(Opcodes.LCONST_0);
-                        topValue(Opcodes.LSTORE);
-                    } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                        mv.visitInsn(Opcodes.FCONST_0);
-                        topValue(Opcodes.FSTORE);
-                    } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                        mv.visitInsn(Opcodes.DCONST_0);
-                        topValue(Opcodes.DSTORE);
-                    } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                        mv.visitInsn(Opcodes.ACONST_NULL);
-                        topValue(Opcodes.ASTORE);
-                    }
-                    topValue(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-                    onMethodExit();
-                    topValue(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
                     break;
                 case Opcodes.ARETURN:
                     onMethodExit(Opcodes.ASTORE, Opcodes.ALOAD);

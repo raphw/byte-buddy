@@ -4,6 +4,7 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
+import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
@@ -173,7 +174,10 @@ public class AdviceTest {
     public void testAdviceSkipExceptionExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR + BAZ), Advice.to(TrivialAdviceSkipException.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods()
+                        .writerFlags(ClassWriter.COMPUTE_FRAMES)
+                        .readerFlags(ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES)
+                        .method(named(BAR + BAZ), Advice.to(TrivialAdviceSkipException.class)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
