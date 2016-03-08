@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 9. March 2016: version 1.3.0
+
+- Added `Advice` adapter for ASM.
+- Fixed `AsmVisitorWrapper` registration to be stacked instead of replacing a previous value.
+- Added validation for setting field default values what can only be done for `static` fields. Clarified javadoc.
+- Fixed attach functionality to work properly on IBM's J9.
+
 ### 22. February 2016: version 1.2.3
 
 - Fixed return type resolution for overloaded bridge method.
