@@ -4,7 +4,6 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
-import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
@@ -140,19 +139,6 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceSkipExceptionDoesNotSkipNonExceptionImplicit() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(TrivialAdviceSkipException.class)))
-                .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-    }
-
-    @Test
     public void testAdviceNotSkipExceptionExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -174,10 +160,7 @@ public class AdviceTest {
     public void testAdviceSkipExceptionExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods()
-                        .writerFlags(ClassWriter.COMPUTE_FRAMES)
-                        .readerFlags(ClassReader.SKIP_DEBUG | ClassReader.SKIP_FRAMES)
-                        .method(named(BAR + BAZ), Advice.to(TrivialAdviceSkipException.class)))
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR + BAZ), Advice.to(TrivialAdviceSkipException.class)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -191,18 +174,18 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
     }
 
-//    @Test
-//    public void testAdviceSkipExceptionDoesNotSkipNonExceptionExplicit() throws Exception {
-//        Class<?> type = new ByteBuddy()
-//                .redefine(Sample.class)
-//                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(TrivialAdviceSkipException.class)))
-//                .make()
-//                .load(null, ClassLoadingStrategy.Default.WRAPPER)
-//                .getLoaded();
-//        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-//        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-//        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-//    }
+    @Test
+    public void testAdviceSkipExceptionDoesNotSkipNonException() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(TrivialAdviceSkipException.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
 
     @Test
     public void testObsoleteReturnValue() throws Exception {

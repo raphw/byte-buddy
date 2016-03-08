@@ -74,36 +74,41 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             throw new IllegalStateException("Cannot advice abstract or native method " + methodDescription);
         }
         return methodExit.isSkipException()
-                ? new ExplicitAdvice(methodVisitor, methodDescription)
-                : new BlockAdvice(methodVisitor, methodDescription);
+                ? new AdviceVisitor.WithoutExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation)
+                : new AdviceVisitor.WithExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation);
     }
 
-    protected class BlockAdvice extends MethodVisitor {
+    protected abstract static class AdviceVisitor extends MethodVisitor {
 
-        private final MethodDescription.InDefinedShape instrumentedMethod;
+        private static final int NO_OFFSET = 0;
+
+        protected final MethodDescription.InDefinedShape instrumentedMethod;
+
+        private final Dispatcher.Resolved.ForMethodEnter methodEnter;
+
+        private final Dispatcher.Resolved.ForMethodExit methodExit;
 
         private final ClassReader classReader;
 
-        private final Label handler;
-
-        private Label userEnd;
-
-        public BlockAdvice(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+        protected AdviceVisitor(MethodVisitor methodVisitor,
+                                MethodDescription.InDefinedShape instrumentedMethod,
+                                Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                Dispatcher.Resolved.ForMethodExit methodExit,
+                                byte[] binaryRepresentation) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
-            classReader = new ClassReader(binaryRepresentation);
-            handler = new Label();
+            this.methodEnter = methodEnter;
+            this.methodExit = methodExit;
+            this.classReader = new ClassReader(binaryRepresentation);
         }
 
         @Override
         public void visitCode() {
             super.visitCode();
-            classReader.accept(new CodeCopier(methodEnter), ClassReader.SKIP_DEBUG);
-            Label userStart = new Label();
-            userEnd = new Label();
-            mv.visitTryCatchBlock(userStart, userEnd, handler, null);
-            mv.visitLabel(userStart);
+            onMethodStart();
         }
+
+        protected abstract void onMethodStart();
 
         @Override
         public void visitVarInsn(int opcode, int offset) {
@@ -135,29 +140,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     break;
             }
             mv.visitInsn(opcode);
-        }
-
-        private void makeDefaultReturn() {
-            if (instrumentedMethod.getReturnType().represents(boolean.class)
-                    || instrumentedMethod.getReturnType().represents(byte.class)
-                    || instrumentedMethod.getReturnType().represents(short.class)
-                    || instrumentedMethod.getReturnType().represents(char.class)
-                    || instrumentedMethod.getReturnType().represents(int.class)) {
-                mv.visitInsn(Opcodes.ICONST_0);
-                variable(Opcodes.ISTORE);
-            } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                mv.visitInsn(Opcodes.LCONST_0);
-                variable(Opcodes.LSTORE);
-            } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                mv.visitInsn(Opcodes.FCONST_0);
-                variable(Opcodes.FSTORE);
-            } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                mv.visitInsn(Opcodes.DCONST_0);
-                variable(Opcodes.DSTORE);
-            } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                mv.visitInsn(Opcodes.ACONST_NULL);
-                variable(Opcodes.ASTORE);
-            }
         }
 
         private void onMethodExit(int store, int load) {
@@ -168,123 +150,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             variable(load);
         }
 
-        private void variable(int opcode) {
-            variable(opcode, 0);
+        protected abstract void onMethodExit();
+
+        protected void variable(int opcode) {
+            variable(opcode, NO_OFFSET);
         }
 
-        private void variable(int opcode, int offset) {
+        protected void variable(int opcode, int offset) {
             mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize() + offset);
-        }
-
-        protected void onMethodExit() {
-            mv.visitLabel(userEnd);
-            classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
-            Label userStart = new Label();
-            userEnd = new Label();
-            mv.visitTryCatchBlock(userStart, userEnd, handler, null);
-            mv.visitLabel(userStart);
         }
 
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
-            mv.visitLabel(userEnd);
-            mv.visitLabel(handler);
-            variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-            makeDefaultReturn();
-            classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
-            variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
-            mv.visitInsn(Opcodes.ATHROW);
+            onMethodEnd();
             super.visitMaxs(maxStack, maxLocals);
         }
 
-        protected class CodeCopier extends ClassVisitor {
+        protected abstract void onMethodEnd();
 
-            private final Dispatcher.Resolved dispatcher;
-
-            protected CodeCopier(Dispatcher.Resolved dispatcher) {
-                super(Opcodes.ASM5);
-                this.dispatcher = dispatcher;
-            }
-
-            @Override
-            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                return dispatcher.apply(internalName, descriptor, BlockAdvice.this.mv, instrumentedMethod);
-            }
-        }
-    }
-
-    protected class ExplicitAdvice extends MethodVisitor {
-
-        private final MethodDescription.InDefinedShape instrumentedMethod;
-
-        private final ClassReader classReader;
-
-        protected ExplicitAdvice(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
-            super(Opcodes.ASM5, methodVisitor);
-            this.instrumentedMethod = instrumentedMethod;
-            classReader = new ClassReader(binaryRepresentation);
+        protected void appendEnter() {
+            append(methodEnter);
         }
 
-        @Override
-        public void visitCode() {
-            super.visitCode();
-            onMethodEntry();
+        protected void appendExit() {
+            append(methodExit);
         }
 
-        protected void onMethodEntry() {
-            classReader.accept(new CodeCopier(methodEnter), ClassReader.SKIP_DEBUG);
-        }
-
-        @Override
-        public void visitVarInsn(int opcode, int offset) {
-            super.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
-                    ? offset
-                    : offset + methodEnter.getEnterType().getStackSize().getSize());
-        }
-
-        @Override
-        public void visitInsn(int opcode) {
-            switch (opcode) {
-                case Opcodes.RETURN:
-                    onMethodExit();
-                    break;
-                case Opcodes.IRETURN:
-                    onMethodExit(Opcodes.ISTORE, Opcodes.ILOAD);
-                    break;
-                case Opcodes.FRETURN:
-                    onMethodExit(Opcodes.FSTORE, Opcodes.FLOAD);
-                    break;
-                case Opcodes.DRETURN:
-                    onMethodExit(Opcodes.DSTORE, Opcodes.DLOAD);
-                    break;
-                case Opcodes.LRETURN:
-                    onMethodExit(Opcodes.LSTORE, Opcodes.LLOAD);
-                    break;
-                case Opcodes.ARETURN:
-                    onMethodExit(Opcodes.ASTORE, Opcodes.ALOAD);
-                    break;
-            }
-            mv.visitInsn(opcode);
-        }
-
-        private void onMethodExit(int store, int load) {
-            topValue(store);
-            mv.visitInsn(Opcodes.ACONST_NULL);
-            topValue(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-            onMethodExit();
-            topValue(load);
-        }
-
-        private void topValue(int opcode) {
-            topValue(opcode, 0);
-        }
-
-        private void topValue(int opcode, int offset) {
-            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize() + offset);
-        }
-
-        protected void onMethodExit() {
-            classReader.accept(new CodeCopier(methodExit), ClassReader.SKIP_DEBUG);
+        private void append(Dispatcher.Resolved dispatcher) {
+            classReader.accept(new CodeCopier(dispatcher), ClassReader.SKIP_DEBUG);
         }
 
         protected class CodeCopier extends ClassVisitor {
@@ -298,7 +191,104 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                return dispatcher.apply(internalName, descriptor, ExplicitAdvice.this.mv, instrumentedMethod);
+                return dispatcher.apply(internalName, descriptor, AdviceVisitor.this.mv, instrumentedMethod);
+            }
+        }
+
+        protected static class WithExceptionHandling extends AdviceVisitor {
+
+            private static final String ANY_THROWABLE = null;
+
+            private final Label handler;
+
+            private Label userEnd;
+
+            protected WithExceptionHandling(MethodVisitor methodVisitor,
+                                            MethodDescription.InDefinedShape instrumentedMethod,
+                                            Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                            Dispatcher.Resolved.ForMethodExit methodExit,
+                                            byte[] binaryRepresentation) {
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation);
+                handler = new Label();
+            }
+
+            @Override
+            protected void onMethodStart() {
+                appendEnter();
+                Label userStart = new Label();
+                userEnd = new Label();
+                mv.visitTryCatchBlock(userStart, userEnd, handler, null);
+                mv.visitLabel(userStart);
+            }
+
+            @Override
+            protected void onMethodExit() {
+                mv.visitLabel(userEnd);
+                appendExit();
+                Label userStart = new Label();
+                userEnd = new Label();
+                mv.visitTryCatchBlock(userStart, userEnd, handler, ANY_THROWABLE);
+                mv.visitLabel(userStart);
+            }
+
+            @Override
+            protected void onMethodEnd() {
+                mv.visitLabel(userEnd);
+                mv.visitLabel(handler);
+                variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+                storeDefaultReturn();
+                appendExit();
+                variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+                mv.visitInsn(Opcodes.ATHROW);
+            }
+
+            private void storeDefaultReturn() {
+                if (instrumentedMethod.getReturnType().represents(boolean.class)
+                        || instrumentedMethod.getReturnType().represents(byte.class)
+                        || instrumentedMethod.getReturnType().represents(short.class)
+                        || instrumentedMethod.getReturnType().represents(char.class)
+                        || instrumentedMethod.getReturnType().represents(int.class)) {
+                    mv.visitInsn(Opcodes.ICONST_0);
+                    variable(Opcodes.ISTORE);
+                } else if (instrumentedMethod.getReturnType().represents(long.class)) {
+                    mv.visitInsn(Opcodes.LCONST_0);
+                    variable(Opcodes.LSTORE);
+                } else if (instrumentedMethod.getReturnType().represents(float.class)) {
+                    mv.visitInsn(Opcodes.FCONST_0);
+                    variable(Opcodes.FSTORE);
+                } else if (instrumentedMethod.getReturnType().represents(double.class)) {
+                    mv.visitInsn(Opcodes.DCONST_0);
+                    variable(Opcodes.DSTORE);
+                } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                    mv.visitInsn(Opcodes.ACONST_NULL);
+                    variable(Opcodes.ASTORE);
+                }
+            }
+        }
+
+        protected static class WithoutExceptionHandling extends AdviceVisitor {
+
+            protected WithoutExceptionHandling(MethodVisitor methodVisitor,
+                                               MethodDescription.InDefinedShape instrumentedMethod,
+                                               Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                               Dispatcher.Resolved.ForMethodExit methodExit,
+                                               byte[] binaryRepresentation) {
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation);
+            }
+
+            @Override
+            protected void onMethodStart() {
+                appendEnter();
+            }
+
+            @Override
+            protected void onMethodExit() {
+                appendExit();
+            }
+
+            @Override
+            protected void onMethodEnd() {
+                /* do nothing */
             }
         }
     }
