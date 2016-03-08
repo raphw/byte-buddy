@@ -1,13 +1,22 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AnnotationList;
+import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.util.Arrays;
+import java.util.Iterator;
 
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.named;
@@ -404,6 +413,38 @@ public class AdviceTest {
     @Test(expected = IllegalStateException.class)
     public void testIllegalThrowableType() throws Exception {
         Advice.to(IllegalThrowableTypeAdvice.class);
+    }
+
+    @Test
+    public void testObjectProperties() throws Exception {
+        ObjectPropertyAssertion.of(Advice.class).apply();
+        ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodEnter.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+            @Override
+            public void apply(MethodDescription.InDefinedShape mock) {
+                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+            }
+        }).apply();
+        final Iterator<StackSize> iterator = Arrays.asList(StackSize.values()).iterator();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+            @Override
+            public void apply(MethodDescription.InDefinedShape mock) {
+                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+                try {
+                when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
+                } catch (Exception exception) {
+                    throw new AssertionError(exception);
+                }
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getStackSize()).thenReturn(iterator.next());
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueDiscarding.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueRetaining.class).applyBasic();
     }
 
     @SuppressWarnings("unused")

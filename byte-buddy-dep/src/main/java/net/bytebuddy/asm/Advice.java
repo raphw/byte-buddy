@@ -62,7 +62,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             } else if (!methodDescription.isStatic()) {
                 throw new IllegalStateException("Advice for " + methodDescription + " is not static");
             }
-            return new Dispatcher.ForMethod(methodDescription);
+            return new Dispatcher.Active(methodDescription);
         } else {
             return dispatcher;
         }
@@ -76,6 +76,33 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return methodExit.isSkipException()
                 ? new AdviceVisitor.WithoutExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation)
                 : new AdviceVisitor.WithExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation);
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (this == other) return true;
+        if (other == null || getClass() != other.getClass()) return false;
+        Advice advice = (Advice) other;
+        return methodEnter.equals(advice.methodEnter)
+                && methodExit.equals(advice.methodExit)
+                && Arrays.equals(binaryRepresentation, advice.binaryRepresentation);
+    }
+
+    @Override
+    public int hashCode() {
+        int result = methodEnter.hashCode();
+        result = 31 * result + methodExit.hashCode();
+        result = 31 * result + Arrays.hashCode(binaryRepresentation);
+        return result;
+    }
+
+    @Override
+    public String toString() {
+        return "Advice{" +
+                "methodEnter=" + methodEnter +
+                ", methodExit=" + methodExit +
+                ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
+                '}';
     }
 
     protected abstract static class AdviceVisitor extends MethodVisitor {
@@ -193,6 +220,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                 return dispatcher.apply(internalName, descriptor, AdviceVisitor.this.mv, instrumentedMethod);
             }
+
+            @Override
+            public String toString() {
+                return "Advice.AdviceVisitor.CodeCopier{" +
+                        "outer=" + AdviceVisitor.this +
+                        ", dispatcher=" + dispatcher +
+                        '}';
+            }
         }
 
         protected static class WithExceptionHandling extends AdviceVisitor {
@@ -264,6 +299,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     variable(Opcodes.ASTORE);
                 }
             }
+
+            @Override
+            public String toString() {
+                return "Advice.AdviceVisitor.WithExceptionHandling{" +
+                        "instrumentedMethod=" + instrumentedMethod +
+                        '}';
+            }
         }
 
         protected static class WithoutExceptionHandling extends AdviceVisitor {
@@ -289,6 +331,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             protected void onMethodEnd() {
                 /* do nothing */
+            }
+
+            @Override
+            public String toString() {
+                return "Advice.AdviceVisitor.WithoutExceptionHandling{" +
+                        "instrumentedMethod=" + instrumentedMethod +
+                        '}';
             }
         }
     }
@@ -536,13 +585,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
                 return IGNORE_METHOD;
             }
+
+            @Override
+            public String toString() {
+                return "Advice.Dispatcher.Inactive." + name();
+            }
         }
 
-        class ForMethod implements Dispatcher {
+        class Active implements Dispatcher {
 
             protected final MethodDescription.InDefinedShape inlinedMethod;
 
-            protected ForMethod(MethodDescription.InDefinedShape inlinedMethod) {
+            protected Active(MethodDescription.InDefinedShape inlinedMethod) {
                 this.inlinedMethod = inlinedMethod;
             }
 
@@ -553,12 +607,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public Dispatcher.Resolved.ForMethodEnter asMethodEnter() {
-                return new ForMethodEnter(inlinedMethod);
+                return new Resolved.ForMethodEnter(inlinedMethod);
             }
 
             @Override
             public Dispatcher.Resolved.ForMethodExit asMethodExitTo(Dispatcher.Resolved.ForMethodEnter dispatcher) {
-                return new ForMethodExit(inlinedMethod, dispatcher.getEnterType());
+                return new Resolved.ForMethodExit(inlinedMethod, dispatcher.getEnterType());
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass()) && inlinedMethod.equals(((Active) other).inlinedMethod);
+            }
+
+            @Override
+            public int hashCode() {
+                return inlinedMethod.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "Advice.Dispatcher.Active{" +
+                        "inlinedMethod=" + inlinedMethod +
+                        '}';
             }
 
             protected abstract static class Resolved implements Dispatcher.Resolved {
@@ -596,62 +667,108 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 protected abstract MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod);
-            }
 
-            protected static class ForMethodEnter extends Resolved implements Dispatcher.Resolved.ForMethodEnter {
-
-                @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
-                protected ForMethodEnter(MethodDescription.InDefinedShape inlinedMethod) {
-                    super(inlinedMethod,
-                            OffsetMapping.ForParameter.Factory.INSTANCE,
-                            OffsetMapping.ForThisReference.Factory.INSTANCE,
-                            new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Resolved resolved = (Resolved) other;
+                    return inlinedMethod.equals(resolved.inlinedMethod) && offsetMappings.equals(resolved.offsetMappings);
                 }
 
                 @Override
-                public TypeDescription getEnterType() {
-                    return inlinedMethod.getReturnType().asErasure();
+                public int hashCode() {
+                    int result = inlinedMethod.hashCode();
+                    result = 31 * result + offsetMappings.hashCode();
+                    return result;
                 }
 
-                @Override
-                protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
-                    Map<Integer, Integer> offsetMappings = new HashMap<Integer, Integer>();
-                    for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                        offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, StackSize.ZERO));
+                protected static class ForMethodEnter extends Resolved implements Dispatcher.Resolved.ForMethodEnter {
+
+                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
+                    protected ForMethodEnter(MethodDescription.InDefinedShape inlinedMethod) {
+                        super(inlinedMethod,
+                                OffsetMapping.ForParameter.Factory.INSTANCE,
+                                OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
                     }
-                    return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor, instrumentedMethod, inlinedMethod, offsetMappings);
-                }
-            }
 
-            protected static class ForMethodExit extends Resolved implements Dispatcher.Resolved.ForMethodExit {
-
-                private final StackSize additionalSize;
-
-                @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
-                protected ForMethodExit(MethodDescription.InDefinedShape inlinedMethod, TypeDescription enterType) {
-                    super(inlinedMethod,
-                            OffsetMapping.ForParameter.Factory.INSTANCE,
-                            OffsetMapping.ForThisReference.Factory.INSTANCE,
-                            new OffsetMapping.ForEnterValue.Factory(enterType),
-                            OffsetMapping.ForReturnValue.Factory.INSTANCE,
-                            inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
-                                    ? OffsetMapping.ForException.INSTANCE
-                                    : new OffsetMapping.Illegal(Thrown.class));
-                    additionalSize = enterType.getStackSize();
-                }
-
-                @Override
-                public boolean isSkipException() {
-                    return !inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable();
-                }
-
-                @Override
-                protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
-                    Map<Integer, Integer> offsetMappings = new HashMap<Integer, Integer>();
-                    for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                        offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, additionalSize));
+                    @Override
+                    public TypeDescription getEnterType() {
+                        return inlinedMethod.getReturnType().asErasure();
                     }
-                    return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor, instrumentedMethod, inlinedMethod, offsetMappings, additionalSize);
+
+                    @Override
+                    protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                        Map<Integer, Integer> offsetMappings = new HashMap<Integer, Integer>();
+                        for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, StackSize.ZERO));
+                        }
+                        return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor, instrumentedMethod, inlinedMethod, offsetMappings);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.Resolved.ForMethodEnter{" +
+                                "inlinedMethod=" + inlinedMethod +
+                                ", offsetMappings=" + offsetMappings +
+                                '}';
+                    }
+                }
+
+                protected static class ForMethodExit extends Resolved implements Dispatcher.Resolved.ForMethodExit {
+
+                    private final StackSize additionalSize;
+
+                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
+                    protected ForMethodExit(MethodDescription.InDefinedShape inlinedMethod, TypeDescription enterType) {
+                        super(inlinedMethod,
+                                OffsetMapping.ForParameter.Factory.INSTANCE,
+                                OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                new OffsetMapping.ForEnterValue.Factory(enterType),
+                                OffsetMapping.ForReturnValue.Factory.INSTANCE,
+                                inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
+                                        ? OffsetMapping.ForException.INSTANCE
+                                        : new OffsetMapping.Illegal(Thrown.class));
+                        additionalSize = enterType.getStackSize();
+                    }
+
+                    @Override
+                    public boolean isSkipException() {
+                        return !inlinedMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable();
+                    }
+
+                    @Override
+                    protected MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                        Map<Integer, Integer> offsetMappings = new HashMap<Integer, Integer>();
+                        for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, additionalSize));
+                        }
+                        return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor, instrumentedMethod, inlinedMethod, offsetMappings, additionalSize);
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && super.equals(other)
+                                && additionalSize == ((Resolved.ForMethodExit) other).additionalSize;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + additionalSize.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.Resolved.ForMethodExit{" +
+                                "inlinedMethod=" + inlinedMethod +
+                                ", offsetMappings=" + offsetMappings +
+                                ", additionalSize=" + additionalSize +
+                                '}';
+                    }
                 }
             }
 
@@ -786,6 +903,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected int adjust(int offset) {
                         return offset;
                     }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueRetaining{" +
+                                "instrumentedMethod=" + instrumentedMethod +
+                                ", inlinedMethod=" + inlinedMethod +
+                                '}';
+                    }
                 }
 
                 protected static class ReturnValueDiscarding extends CodeTranslationVisitor {
@@ -825,6 +950,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected int adjust(int offset) {
                         return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + additionalSize.getSize() + 1;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueDiscarding{" +
+                                "instrumentedMethod=" + instrumentedMethod +
+                                ", inlinedMethod=" + inlinedMethod +
+                                ", additionalSize=" + additionalSize +
+                                '}';
                     }
                 }
             }
