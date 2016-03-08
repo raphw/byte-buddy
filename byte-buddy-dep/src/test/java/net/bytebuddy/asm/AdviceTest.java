@@ -310,6 +310,14 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testAdviceAbstractMethod() throws Exception {
+        new ByteBuddy()
+                .redefine(AbstractMethod.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(TrivialAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testAdviceWithNonAssignableEnterValue() throws Exception {
         Advice.to(NonAssignableEnterAdvice.class);
     }
@@ -359,6 +367,11 @@ public class AdviceTest {
         public void fooqux() {
             /* do nothing */
         }
+    }
+
+    public abstract static class AbstractMethod {
+
+        public abstract void foo();
     }
 
     @SuppressWarnings("unused")

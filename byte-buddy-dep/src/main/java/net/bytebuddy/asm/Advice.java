@@ -487,9 +487,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
-                    return inlinedMethod.getInternalName().equals(internalName) && inlinedMethod.getDescriptor().equals(descriptor)
-                            ? inline(methodVisitor, instrumentedMethod)
-                            : IGNORE_METHOD;
+                    if (inlinedMethod.getInternalName().equals(internalName) && inlinedMethod.getDescriptor().equals(descriptor)) {
+                        if (instrumentedMethod.isAbstract() || instrumentedMethod.isNative()) {
+                            throw new IllegalStateException("Cannot advice abstract or native method " + instrumentedMethod);
+                        }
+                        return inline(methodVisitor, instrumentedMethod);
+                    } else {
+                        return IGNORE_METHOD;
+                    }
                 }
 
                 protected abstract MethodVisitor inline(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod);
