@@ -326,6 +326,71 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) BAR));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalThisValueSubstitution() throws Exception {
+        new ByteBuddy()
+                .redefine(Box.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(IllegalThisSubstitutionAdvice.class)))
+                .make();
+    }
+
+    @Test
+    public void testParameterValueSubstitution() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Box.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(ParameterSubstitutionAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) BAR));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalParameterValueSubstitution() throws Exception {
+        new ByteBuddy()
+                .redefine(Box.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalParameterSubstitutionAdvice.class)))
+                .make();
+    }
+
+    @Test
+    public void testReturnValueSubstitution() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(ReturnSubstitutionAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), FOO), is((Object) BAR));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalReturnValueSubstitution() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(IllegalReturnSubstitutionAdvice.class)))
+                .make();
+    }
+
+    @Test
+    public void testEnterValueSubstitution() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(EnterSubstitutionAdvice.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalEnterValueSubstitution() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalEnterSubstitutionAdvice.class)))
+                .make();
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
@@ -372,10 +437,26 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void testAdviceWithNonAssignableParameter() throws Exception {
+    public void testAdviceWithNonAssignableParameterImplicit() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalArgumentAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonAssignableParameter() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalArgumentWritableAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonEqualParameter() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(IllegalArgumentReadOnlyAdvice.class)))
                 .make();
     }
 
@@ -396,10 +477,26 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonEqualThisReference() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(IllegalThisReferenceWritableAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testAdviceWithNonAssignableReturnValue() throws Exception {
         new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO + QUX), Advice.to(NonAssignableReturnAdvice.class)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithNonAssignableReturnValueWritable() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO + QUX), Advice.to(NonEqualReturnWritableAdvice.class)))
                 .make();
     }
 
@@ -431,13 +528,15 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodEnter.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ReadOnly.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ReadWrite.class).apply();
+        final int[] value = new int[1];
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
             @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+            public void apply(Advice.Argument mock) {
+                when(mock.value()).thenReturn(value[0]++);
             }
         }).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.Factory.class).apply();
@@ -451,6 +550,12 @@ public class AdviceTest {
             @Override
             public Class<?> create() {
                 return types.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodEnter.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+            @Override
+            public void apply(MethodDescription.InDefinedShape mock) {
+                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
             }
         }).apply();
         final Iterator<StackSize> iterator = Arrays.asList(StackSize.values()).iterator();
@@ -740,8 +845,96 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         @SuppressWarnings("all")
+        private static void enter(@Advice.This(readOnly = false) Box box) {
+            box = new Box(BAR);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalThisSubstitutionAdvice {
+
+        @Advice.OnMethodEnter
+        @SuppressWarnings("all")
         private static void enter(@Advice.This Box box) {
-            box = new Box("bar");
+            box = new Box(BAR);
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ParameterSubstitutionAdvice {
+
+        @Advice.OnMethodEnter
+        @SuppressWarnings("all")
+        private static void enter(@Advice.Argument(value = 0, readOnly = false) String value) {
+            value = BAR;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalParameterSubstitutionAdvice {
+
+        @Advice.OnMethodEnter
+        @SuppressWarnings("all")
+        private static void enter(@Advice.Argument(0) String value) {
+            value = BAR;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EnterSubstitutionAdvice {
+
+        @Advice.OnMethodEnter
+        private static String enter() {
+            return FOO;
+        }
+
+        @Advice.OnMethodExit
+        @SuppressWarnings("all")
+        private static void exit(@Advice.Enter(readOnly = false) String value) {
+            value = BAR;
+            if (!value.equals(BAR)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalEnterSubstitutionAdvice {
+
+        @Advice.OnMethodEnter
+        private static String enter() {
+            return FOO;
+        }
+
+        @Advice.OnMethodExit
+        @SuppressWarnings("all")
+        private static void exit(@Advice.Enter String value) {
+            value = BAR;
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ReturnSubstitutionAdvice {
+
+        @Advice.OnMethodExit
+        @SuppressWarnings("all")
+        private static void exit(@Advice.Return(readOnly = false) String value) {
+            value = BAR;
+            if (!value.equals(BAR)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalReturnSubstitutionAdvice {
+
+        @Advice.OnMethodExit
+        @SuppressWarnings("all")
+        private static void exit(@Advice.Return String value) {
+            value = BAR;
+            throw new AssertionError();
         }
     }
 
@@ -756,13 +949,35 @@ public class AdviceTest {
         public String foo() {
             return value;
         }
+
+        public static String bar(String value) {
+            return value;
+        }
     }
 
     @SuppressWarnings("unused")
     public static class IllegalArgumentAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(Object argument) {
+        private static void enter(Void argument) {
+            throw new AssertionError();
+        }
+    }
+
+    public static class IllegalArgumentReadOnlyAdvice {
+
+        @SuppressWarnings("unused")
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Argument(0) Void argument) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalArgumentWritableAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Argument(value = 0, readOnly = false) Object argument) {
             throw new AssertionError();
         }
     }
@@ -794,7 +1009,16 @@ public class AdviceTest {
     public static class IllegalThisReferenceAdvice {
 
         @Advice.OnMethodExit
-        private static void enter(@Advice.This Object thiz) {
+        private static void enter(@Advice.This Void thiz) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalThisReferenceWritableAdvice {
+
+        @Advice.OnMethodExit
+        private static void enter(@Advice.This(readOnly = false) Object thiz) {
             throw new AssertionError();
         }
     }
@@ -803,7 +1027,7 @@ public class AdviceTest {
     public static class AmbiguousAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.Argument(0) @Advice.This String thiz) {
+        private static void enter(@Advice.Argument(0) @Advice.This Object thiz) {
             throw new AssertionError();
         }
     }
@@ -836,10 +1060,28 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class NonEqualEnterAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Enter(readOnly = false) Object value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class NonAssignableReturnAdvice {
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.Return Object value) {
+        private static void exit(@Advice.Return Void value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class NonEqualReturnWritableAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Return(readOnly = false) Object value) {
             throw new AssertionError();
         }
     }
