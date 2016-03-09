@@ -723,6 +723,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected abstract static class Resolved implements Dispatcher.Resolved {
 
+                /**
+                 * Indicates a read-only mapping for an offset.
+                 */
                 private static final boolean READ_ONLY = true;
 
                 /**
@@ -889,6 +892,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                             /**
                              * Creates a new read-only target mapping.
+                             *
                              * @param offset The mapped offset.
                              */
                             protected ReadOnly(int offset) {
@@ -1088,6 +1092,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new offset mapping for a {@code this} reference.
                          *
+                         * @param readOnly  Determines if the parameter is to be treated as read-only.
                          * @param targetType The type that the advise method expects for the {@code this} reference.
                          */
                         protected ForThisReference(boolean readOnly, TypeDescription targetType) {
@@ -1574,6 +1579,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final MethodDescription.InDefinedShape adviseMethod;
 
+                /**
+                 * A mapping of offsets to resolved target offsets in the instrumented method.
+                 */
                 private final Map<Integer, Resolved.OffsetMapping.Target> offsetMappings;
 
                 /**
@@ -1587,7 +1595,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param methodVisitor      A method visitor for writing the instrumented method's byte code.
                  * @param instrumentedMethod The instrumented method.
                  * @param adviseMethod       The advise method.
-                 * @param offsetMappings     A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
+                 * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
