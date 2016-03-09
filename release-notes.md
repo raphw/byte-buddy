@@ -1,7 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
-### 9. March 2016: version 1.3.0
+### 9. March 2016: version 1.3.1
+
+- Added possibility to use contravariant parameters within the `Advice` adapter for ASM.
+
+### 8. March 2016: version 1.3.0
 
 - Added `Advice` adapter for ASM.
 - Fixed `AsmVisitorWrapper` registration to be stacked instead of replacing a previous value.
