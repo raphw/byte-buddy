@@ -24,7 +24,10 @@ import net.bytebuddy.implementation.bytecode.constant.NullConstant;
 import net.bytebuddy.implementation.bytecode.constant.TextConstant;
 import net.bytebuddy.implementation.bytecode.member.FieldAccess;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
-import net.bytebuddy.test.utility.*;
+import net.bytebuddy.test.utility.CallTraceable;
+import net.bytebuddy.test.utility.ClassFileExtraction;
+import net.bytebuddy.test.utility.JavaVersionRule;
+import net.bytebuddy.test.utility.MockitoRule;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Ignore;
@@ -931,7 +934,6 @@ public abstract class AbstractDynamicTypeBuilderTest {
                 .intercept(FixedValue.value(FOO))
                 .defineMethod(QUX, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(BAR))
-                .visit(DebuggingWrapper.makeDefault())
                 .make()
                 .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.CHILD_FIRST)
                 .getLoaded();
