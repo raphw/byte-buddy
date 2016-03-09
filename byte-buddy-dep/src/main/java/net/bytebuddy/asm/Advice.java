@@ -29,20 +29,20 @@ import java.util.Map;
  * new value to the {@code this} reference of an instrumented method. If no annotation is used on a parameter, it is assigned the {@code n}-th
  * parameter of the instrumented method for the {@code n}-th parameter of the advice method. All parameters must declare the exact same type as
  * the parameters of the instrumented type or the method's declaring type for the {@link This} reference respectively if they are not marked as
- * <i>read only</i>. In the latter case, it suffices that a parameter type is a super type of the corresponding type of the instrumented method.
+ * <i>read-only</i>. In the latter case, it suffices that a parameter type is a super type of the corresponding type of the instrumented method.
  * </p>
  * <p>
  * A method that is annotated with {@link OnMethodExit} can equally annotate its parameters with {@link Argument} and {@link This}. Additionally,
  * it can annotate a parameter with {@link Return} to receive the original method's return value. By reassigning the return value, it is possible
  * to replace the returned value. If an instrumented method does not return a value, this annotation must not be used. If a method returns
  * exceptionally, the parameter is set to its default value, i.e. to {@code 0} for primitive types and to {@code null} for reference types. The
- * parameter's type must be equal to the instrumented method's return type if it is not set to <i>read only</i> where it suffices to declare the
+ * parameter's type must be equal to the instrumented method's return type if it is not set to <i>read-only</i> where it suffices to declare the
  * parameter type to be of any super type to the instrumented method's return type. An exception can be read by annotating a parameter of type
  * {@link Throwable} annotated with {@link Thrown} which is assigned the thrown {@link Throwable} or {@code null} if a method returns normally.
  * Doing so, it is possible to exchange a thrown exception with any checked or unchecked exception.Finally, if a method annotated with
  * {@link OnMethodEnter} exists and this method returns a value, this value can be accessed by a parameter annotated with {@link Enter}.
  * This parameter must declare the same type as type being returned by the method annotated with {@link OnMethodEnter}. If the parameter is marked
- * to be <i>read only</i>, it suffices that the annotated parameter is of a super type of the return type of the method annotated by
+ * to be <i>read-only</i>, it suffices that the annotated parameter is of a super type of the return type of the method annotated by
  * {@link OnMethodEnter}. If no such method exists or this method returns {@code void}, no such parameter must be declared. Any return value
  * of a method that is annotated by {@link OnMethodExit} is discarded.
  * </p>
@@ -966,7 +966,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         private final int index;
 
                         /**
-                         * Determines if the parameter is to be treated as read only.
+                         * Determines if the parameter is to be treated as read-only.
                          */
                         private final boolean readOnly;
 
@@ -979,7 +979,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new offset mapping for a parameter.
                          *
                          * @param argument   The annotation for which the mapping is to be created.
-                         * @param targetType Determines if the parameter is to be treated as read only.
+                         * @param targetType Determines if the parameter is to be treated as read-only.
                          */
                         protected ForParameter(Argument argument, TypeDescription targetType) {
                             this(argument.value(), argument.readOnly(), targetType);
@@ -989,7 +989,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * Creates a new offset mapping for a parameter of the instrumented method.
                          *
                          * @param index      The index of the parameter.
-                         * @param readOnly   Determines if the parameter is to be treated as read only.
+                         * @param readOnly   Determines if the parameter is to be treated as read-only.
                          * @param targetType The type expected by the advise method.
                          */
                         protected ForParameter(int index, boolean readOnly, TypeDescription targetType) {
@@ -1004,7 +1004,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             if (parameters.size() <= index) {
                                 throw new IllegalStateException(instrumentedMethod + " does not define an index " + index);
                             } else if (!readOnly && !parameters.get(index).getType().asErasure().equals(targetType)) {
-                                throw new IllegalStateException("Read only " + targetType + " is not equal to type of " + parameters.get(index));
+                                throw new IllegalStateException("read-only " + targetType + " is not equal to type of " + parameters.get(index));
                             } else if (readOnly && !parameters.get(index).getType().asErasure().isAssignableTo(targetType)) {
                                 throw new IllegalStateException(targetType + " is not assignable to " + parameters.get(index));
                             }
@@ -1076,7 +1076,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         private static final int THIS_REFERENCE = 0;
 
                         /**
-                         * Determines if the parameter is to be treated as read only.
+                         * Determines if the parameter is to be treated as read-only.
                          */
                         private final boolean readOnly;
 
@@ -1100,7 +1100,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             if (instrumentedMethod.isStatic()) {
                                 throw new IllegalStateException("Cannot map this reference for static method " + instrumentedMethod);
                             } else if (!readOnly && !instrumentedMethod.getDeclaringType().equals(targetType)) {
-                                throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not equal to read only " + targetType);
+                                throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not equal to read-only " + targetType);
                             } else if (readOnly && !instrumentedMethod.getDeclaringType().isAssignableTo(targetType)) {
                                 throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not assignable to " + targetType);
                             }
@@ -1174,14 +1174,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         READ_ONLY(true);
 
                         /**
-                         * Determines if the parameter is to be treated as read only.
+                         * Determines if the parameter is to be treated as read-only.
                          */
                         private final boolean readOnly;
 
                         /**
                          * Creates a new offset mapping for an enter value.
                          *
-                         * @param readOnly Determines if the parameter is to be treated as read only.
+                         * @param readOnly Determines if the parameter is to be treated as read-only.
                          */
                         ForEnterValue(boolean readOnly) {
                             this.readOnly = readOnly;
@@ -1190,7 +1190,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Resolves an offset mapping for an enter value.
                          *
-                         * @param readOnly {@code true} if the value is to be treated as read only.
+                         * @param readOnly {@code true} if the value is to be treated as read-only.
                          * @return An appropriate offset mapping.
                          */
                         public static OffsetMapping of(boolean readOnly) {
@@ -1236,7 +1236,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 if (annotation != null) {
                                     boolean readOnly = annotation.loadSilent().readOnly();
                                     if (!readOnly && !enterType.equals(parameterDescription.getType().asErasure())) {
-                                        throw new IllegalStateException("Read only type of " + parameterDescription + " does not equal " + enterType);
+                                        throw new IllegalStateException("read-only type of " + parameterDescription + " does not equal " + enterType);
                                     } else if (readOnly && !enterType.isAssignableTo(parameterDescription.getType().asErasure())) {
                                         throw new IllegalStateException("Cannot assign the type of " + parameterDescription + " to supplied type " + enterType);
                                     }
@@ -1272,7 +1272,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     class ForReturnValue implements OffsetMapping {
 
                         /**
-                         * Determines if the parameter is to be treated as read only.
+                         * Determines if the parameter is to be treated as read-only.
                          */
                         private final boolean readOnly;
 
@@ -1284,7 +1284,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates an offset mapping for accessing the return type of the instrumented method.
                          *
-                         * @param readOnly   Determines if the parameter is to be treated as read only.
+                         * @param readOnly   Determines if the parameter is to be treated as read-only.
                          * @param targetType The expected target type of the return type.
                          */
                         protected ForReturnValue(boolean readOnly, TypeDescription targetType) {
@@ -1295,7 +1295,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize additionalSize) {
                             if (!readOnly && !instrumentedMethod.getReturnType().asErasure().equals(targetType)) {
-                                throw new IllegalStateException("Read only return type of " + instrumentedMethod + " is not equal to " + targetType);
+                                throw new IllegalStateException("read-only return type of " + instrumentedMethod + " is not equal to " + targetType);
                             } else if (readOnly && !instrumentedMethod.getReturnType().asErasure().isAssignableTo(targetType)) {
                                 throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
                             }
@@ -1660,7 +1660,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
                         if (!target.supports(opcode)) {
-                            throw new IllegalStateException("Cannot write to read only variable " + target);
+                            throw new IllegalStateException("Cannot write to read-only variable " + target);
                         }
                         offset = target.getOffset();
                     } else {
@@ -1885,7 +1885,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * type must be equal to the parameter of the instrumented method. If this property is set to {@code true}, the
          * annotated parameter can be any super type of the instrumented methods parameter.
          *
-         * @return {@code true} if this parameter is read only.
+         * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
     }
@@ -1907,7 +1907,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * type must be equal to the parameter of the instrumented method. If this property is set to {@code true}, the
          * annotated parameter can be any super type of the instrumented methods parameter.
          *
-         * @return {@code true} if this parameter is read only.
+         * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
     }
@@ -1929,7 +1929,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * type must be equal to the parameter of the instrumented method. If this property is set to {@code true}, the
          * annotated parameter can be any super type of the instrumented methods parameter.
          *
-         * @return {@code true} if this parameter is read only.
+         * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
     }
@@ -1952,7 +1952,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * type must be equal to the parameter of the instrumented method. If this property is set to {@code true}, the
          * annotated parameter can be any super type of the instrumented methods parameter.
          *
-         * @return {@code true} if this parameter is read only.
+         * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
     }
