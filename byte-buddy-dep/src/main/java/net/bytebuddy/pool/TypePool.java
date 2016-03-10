@@ -277,6 +277,32 @@ public interface TypePool {
     }
 
     /**
+     * An empty type pool that cannot describe any type.
+     */
+    enum Empty implements TypePool {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Resolution describe(String name) {
+            return new Resolution.Illegal(name);
+        }
+
+        @Override
+        public void clear() {
+            /* do nothing */
+        }
+
+        @Override
+        public String toString() {
+            return "TypePool.Empty." + name();
+        }
+    }
+
+    /**
      * A base implementation of a {@link net.bytebuddy.pool.TypePool} that is managing a cache provider and
      * that handles the description of array and primitive types.
      */
@@ -381,6 +407,63 @@ public interface TypePool {
         @Override
         public int hashCode() {
             return cacheProvider.hashCode();
+        }
+
+        /**
+         * Implements a hierarchical view of type pools, similarly to class loader hierarchies. For every lookup, the parent type pool
+         * is asked first if it can resolve a type. Only if the parent (and potentially its parents) are unable to resolve a type,
+         * this instance is queried for a type description.
+         */
+        public abstract static class Hierarchical extends AbstractBase {
+
+            /**
+             * The parent type pool.
+             */
+            private final TypePool parent;
+
+            /**
+             * Creates a hierarchical type pool.
+             *
+             * @param cacheProvider The cache provider to be used.
+             * @param parent        The parent type pool to be used.
+             */
+            protected Hierarchical(CacheProvider cacheProvider, TypePool parent) {
+                super(cacheProvider);
+                this.parent = parent;
+            }
+
+            @Override
+            public Resolution describe(String name) {
+                Resolution resolution = parent.describe(name);
+                return resolution.isResolved()
+                        ? resolution
+                        : super.describe(name);
+            }
+
+            @Override
+            public void clear() {
+                try {
+                    parent.clear();
+                } finally {
+                    super.clear();
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                if (!super.equals(object)) return false;
+                Hierarchical that = (Hierarchical) object;
+                return parent.equals(that.parent);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = super.hashCode();
+                result = 31 * result + parent.hashCode();
+                return result;
+            }
         }
 
         /**
@@ -919,7 +1002,7 @@ public interface TypePool {
      * Java byte code format into a {@link TypeDescription}. The data lookup
      * is delegated to a {@link net.bytebuddy.dynamic.ClassFileLocator}.
      */
-    class Default extends AbstractBase {
+    class Default extends AbstractBase.Hierarchical {
 
         /**
          * Indicates that a visited method should be ignored.
@@ -937,14 +1020,26 @@ public interface TypePool {
         protected final ReaderMode readerMode;
 
         /**
-         * Creates a new default type pool.
+         * Creates a new default type pool without a parent pool.
          *
          * @param cacheProvider    The cache provider to be used.
          * @param classFileLocator The class file locator to be used.
          * @param readerMode       The reader mode to apply by this default type pool.
          */
         public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode) {
-            super(cacheProvider);
+            this(cacheProvider, classFileLocator, readerMode, Empty.INSTANCE);
+        }
+
+        /**
+         * Creates a new default type pool.
+         *
+         * @param cacheProvider    The cache provider to be used.
+         * @param classFileLocator The class file locator to be used.
+         * @param readerMode       The reader mode to apply by this default type pool.
+         * @param parentPool       The parent type pool.
+         */
+        public Default(CacheProvider cacheProvider, ClassFileLocator classFileLocator, ReaderMode readerMode, TypePool parentPool) {
+            super(cacheProvider, parentPool);
             this.classFileLocator = classFileLocator;
             this.readerMode = readerMode;
         }
@@ -8359,5 +8454,4 @@ public interface TypePool {
             }
         }
     }
-
 }
