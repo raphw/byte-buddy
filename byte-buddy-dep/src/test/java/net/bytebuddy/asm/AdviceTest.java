@@ -14,7 +14,9 @@ import org.junit.Test;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.util.Arrays;
 import java.util.Iterator;
 
@@ -316,6 +318,58 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceThrowSuppressed() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TracableSample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThrowSuppressed.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        type.getDeclaredMethod(FOO).invoke(type.newInstance());
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceThrowNotSuppressedOnEnter() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TracableSample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThrowNotSuppressedOnEnter.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(Exception.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 0));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+    @Test
+    public void testAdviceThrowNotSuppressedOnExit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TracableSample.class)
+                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(ThrowNotSuppressedOnExit.class)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(Exception.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(INSIDE).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testThisValueSubstitution() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Box.class)
@@ -524,6 +578,21 @@ public class AdviceTest {
     }
 
     @Test
+    public void testCannotInstantiateSuppressionMarker() throws Exception {
+        Class<?> type = Class.forName(Advice.class.getName() + "$NoSuppression");
+        assertThat(Modifier.isPrivate(type.getModifiers()), is(true));
+        try {
+            Constructor<?> constructor = type.getDeclaredConstructor();
+            assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
+            constructor.setAccessible(true);
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
+        }
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
@@ -575,6 +644,8 @@ public class AdviceTest {
                 when(mock.getStackSize()).thenReturn(iterator.next());
             }
         }).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueDiscarding.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueRetaining.class).applyBasic();
     }
@@ -837,6 +908,46 @@ public class AdviceTest {
         private static void exit() {
             TracableSample.exit++;
             throw new RuntimeException();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ThrowSuppressed {
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        private static void enter() {
+            TracableSample.enter++;
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodExit(suppress = RuntimeException.class)
+        private static void exit() {
+            TracableSample.exit++;
+            throw new RuntimeException();
+        }
+    }
+
+    public static class ThrowNotSuppressedOnEnter {
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        private static void enter() throws Exception {
+            TracableSample.enter++;
+            throw new Exception();
+        }
+    }
+
+    public static class ThrowNotSuppressedOnExit {
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        private static void enter() {
+            TracableSample.enter++;
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodExit(suppress = RuntimeException.class)
+        private static void exit() throws Exception {
+            TracableSample.exit++;
+            throw new Exception();
         }
     }
 

@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static net.bytebuddy.matcher.ElementMatchers.named;
+
 /**
  * <p>
  * Advice wrappers copy the code of blueprint methods to be executed before and/or after a matched method. To achieve this, a {@code static}
@@ -1092,7 +1094,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new offset mapping for a {@code this} reference.
                          *
-                         * @param readOnly  Determines if the parameter is to be treated as read-only.
+                         * @param readOnly   Determines if the parameter is to be treated as read-only.
                          * @param targetType The type that the advise method expects for the {@code this} reference.
                          */
                         protected ForThisReference(boolean readOnly, TypeDescription targetType) {
@@ -1455,6 +1457,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class ForMethodEnter extends Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
+                     * The {@code suppress} property of the {@link OnMethodEnter} type.
+                     */
+                    private static final MethodDescription.InDefinedShape SUPPRESS;
+
+                    /*
+                     * Extracts the suppress property.
+                     */
+                    static {
+                        SUPPRESS = new TypeDescription.ForLoadedType(OnMethodEnter.class).getDeclaredMethods().filter(named("suppress")).getOnly();
+                    }
+
+                    /**
                      * Creates a new resolved dispatcher for implementing method enter advise.
                      *
                      * @param adviseMethod The represented advise method.
@@ -1478,7 +1492,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, StackSize.ZERO));
                         }
-                        return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings);
+                        return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor,
+                                instrumentedMethod,
+                                adviseMethod,
+                                offsetMappings,
+                                adviseMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS, TypeDescription.class));
                     }
 
                     @Override
@@ -1494,6 +1512,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A resolved dispatcher for implementing method exit advise.
                  */
                 protected static class ForMethodExit extends Resolved implements Dispatcher.Resolved.ForMethodExit {
+
+                    /**
+                     * The {@code suppress} method of the {@link OnMethodExit} annotation.
+                     */
+                    private static final MethodDescription.InDefinedShape SUPPRESS;
+
+                    /*
+                     * Extracts the suppress method.
+                     */
+                    static {
+                        SUPPRESS = new TypeDescription.ForLoadedType(OnMethodExit.class).getDeclaredMethods().filter(named("suppress")).getOnly();
+                    }
 
                     /**
                      * The additional stack size to consider when accessing the local variable array.
@@ -1531,7 +1561,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, additionalSize));
                         }
-                        return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings, additionalSize);
+                        return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor,
+                                instrumentedMethod,
+                                adviseMethod,
+                                offsetMappings,
+                                adviseMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class),
+                                additionalSize);
                     }
 
                     @Override
@@ -1560,9 +1595,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
+             * A producer for a default return value if this is applicable.
+             */
+            interface ReturnValueProducer {
+
+                /**
+                 * Sets a default return value for an advised method.
+                 *
+                 * @param methodVisitor The instrumented method's method visitor.
+                 */
+                void makeDefault(MethodVisitor methodVisitor);
+            }
+
+            /**
              * A visitor for translating an advise method's byte code for inlining into the instrumented method.
              */
-            protected abstract static class CodeTranslationVisitor extends MethodVisitor {
+            protected abstract static class CodeTranslationVisitor extends MethodVisitor implements ReturnValueProducer {
 
                 /**
                  * Indicates that an annotation should not be read.
@@ -1585,6 +1633,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private final Map<Integer, Resolved.OffsetMapping.Target> offsetMappings;
 
                 /**
+                 * A handler for optionally suppressing exceptions.
+                 */
+                private final SuppressionHandler suppressionHandler;
+
+                /**
                  * A label indicating the end of the advise byte code.
                  */
                 protected final Label endOfMethod;
@@ -1596,15 +1649,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod The instrumented method.
                  * @param adviseMethod       The advise method.
                  * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
+                 * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviseMethod,
-                                                 Map<Integer, Resolved.OffsetMapping.Target> offsetMappings) {
+                                                 Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
+                                                 TypeDescription throwableType) {
                     super(Opcodes.ASM5, methodVisitor);
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviseMethod = adviseMethod;
                     this.offsetMappings = offsetMappings;
+                    suppressionHandler = throwableType.represents(NoSuppression.class)
+                            ? SuppressionHandler.NoOp.INSTANCE
+                            : new SuppressionHandler.Suppressing(throwableType);
                     endOfMethod = new Label();
                 }
 
@@ -1640,7 +1698,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitCode() {
-                    /* do nothing */
+                    suppressionHandler.onStart(mv, endOfMethod);
                 }
 
                 @Override
@@ -1656,6 +1714,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitEnd() {
                     mv.visitLabel(endOfMethod);
+                    suppressionHandler.onEnd(mv, this);
                 }
 
                 @Override
@@ -1690,6 +1749,124 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public abstract void visitInsn(int opcode);
 
                 /**
+                 * A suppression handler for optionally suppressing exceptions.
+                 */
+                protected interface SuppressionHandler {
+
+                    /**
+                     * Invoked at the start of a method.
+                     *
+                     * @param methodVisitor The method visitor of the instrumented method.
+                     * @param endOfMethod   A label indicating the end of the method.
+                     */
+                    void onStart(MethodVisitor methodVisitor, Label endOfMethod);
+
+                    /**
+                     * Invoked at the end of a method.
+                     *
+                     * @param methodVisitor       The method visitor of the instrumented method.
+                     * @param returnValueProducer A producer for defining a default return value of the advised method.
+                     */
+                    void onEnd(MethodVisitor methodVisitor, ReturnValueProducer returnValueProducer);
+
+                    /**
+                     * A non-operational suppression handler that does not suppress any method.
+                     */
+                    enum NoOp implements SuppressionHandler {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        @Override
+                        public void onStart(MethodVisitor methodVisitor, Label endOfMethod) {
+                            /* do nothing */
+                        }
+
+                        @Override
+                        public void onEnd(MethodVisitor methodVisitor, ReturnValueProducer returnValueProducer) {
+                            /* do nothing */
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.NoOp." + name();
+                        }
+                    }
+
+                    /**
+                     * A suppression handler that suppresses a given throwable type.
+                     */
+                    class Suppressing implements SuppressionHandler {
+
+                        /**
+                         * The suppressed throwable type.
+                         */
+                        private final TypeDescription throwableType;
+
+                        /**
+                         * A label indicating the start of the method.
+                         */
+                        private final Label startOfMethod;
+
+                        /**
+                         * A label indicating the exception handler.
+                         */
+                        private final Label handler;
+
+                        /**
+                         * Creates a new suppressing suppression handler.
+                         *
+                         * @param throwableType The suppressed throwable type.
+                         */
+                        protected Suppressing(TypeDescription throwableType) {
+                            this.throwableType = throwableType;
+                            startOfMethod = new Label();
+                            handler = new Label();
+                        }
+
+                        @Override
+                        public void onStart(MethodVisitor methodVisitor, Label endOfMethod) {
+                            methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, handler, throwableType.getInternalName());
+                            methodVisitor.visitLabel(startOfMethod);
+                        }
+
+                        @Override
+                        public void onEnd(MethodVisitor methodVisitor, ReturnValueProducer returnValueProducer) {
+                            Label endOfHandler = new Label();
+                            methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
+                            methodVisitor.visitLabel(handler);
+                            methodVisitor.visitInsn(Opcodes.POP);
+                            returnValueProducer.makeDefault(methodVisitor);
+                            methodVisitor.visitLabel(endOfHandler);
+                        }
+
+                        @Override
+                        public boolean equals(Object object) {
+                            if (this == object) return true;
+                            if (object == null || getClass() != object.getClass()) return false;
+                            Suppressing that = (Suppressing) object;
+                            return throwableType.equals(that.throwableType);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return throwableType.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing{" +
+                                    "throwableType=" + throwableType +
+                                    ", startOfMethod=" + startOfMethod +
+                                    ", handler=" + handler +
+                                    '}';
+                        }
+                    }
+                }
+
+                /**
                  * A code translation visitor that retains the return value of the represented advise method.
                  */
                 protected static class ReturnValueRetaining extends CodeTranslationVisitor {
@@ -1701,12 +1878,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod The instrumented method.
                      * @param adviseMethod       The advise method.
                      * @param offsetMappings     A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
+                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                      */
                     protected ReturnValueRetaining(MethodVisitor methodVisitor,
                                                    MethodDescription.InDefinedShape instrumentedMethod,
                                                    MethodDescription.InDefinedShape adviseMethod,
-                                                   Map<Integer, Resolved.OffsetMapping.Target> offsetMappings) {
-                        super(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings);
+                                                   Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
+                                                   TypeDescription throwableType) {
+                        super(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings, throwableType);
                     }
 
                     @Override
@@ -1742,6 +1921,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public void makeDefault(MethodVisitor methodVisitor) {
+                        if (adviseMethod.getReturnType().represents(boolean.class)
+                                || adviseMethod.getReturnType().represents(byte.class)
+                                || adviseMethod.getReturnType().represents(short.class)
+                                || adviseMethod.getReturnType().represents(char.class)
+                                || adviseMethod.getReturnType().represents(int.class)) {
+                            methodVisitor.visitInsn(Opcodes.ICONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
+                        } else if (adviseMethod.getReturnType().represents(long.class)) {
+                            methodVisitor.visitInsn(Opcodes.LCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
+                        } else if (adviseMethod.getReturnType().represents(float.class)) {
+                            methodVisitor.visitInsn(Opcodes.FCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
+                        } else if (adviseMethod.getReturnType().represents(double.class)) {
+                            methodVisitor.visitInsn(Opcodes.DCONST_0);
+                            methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
+                        } else if (!adviseMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                            methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                        }
+                    }
+
+                    @Override
                     public String toString() {
                         return "Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueRetaining{" +
                                 "instrumentedMethod=" + instrumentedMethod +
@@ -1756,6 +1959,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class ReturnValueDiscarding extends CodeTranslationVisitor {
 
                     /**
+                     * The size of the exception slot for the instrumented method's potential exception.
+                     */
+                    private static final int EXCEPTION_SIZE = 1;
+
+                    /**
                      * An additional size of the local variable array to consider when writing or reading values.
                      */
                     private final StackSize additionalVariableSize;
@@ -1767,14 +1975,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod     The instrumented method.
                      * @param adviseMethod           The advise method.
                      * @param offsetMappings         A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
+                     * @param throwableType          A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                      * @param additionalVariableSize An additional size of the local variable array to consider when writing or reading values.
                      */
                     protected ReturnValueDiscarding(MethodVisitor methodVisitor,
                                                     MethodDescription.InDefinedShape instrumentedMethod,
                                                     MethodDescription.InDefinedShape adviseMethod,
                                                     Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
+                                                    TypeDescription throwableType,
                                                     StackSize additionalVariableSize) {
-                        super(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings);
+                        super(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings, throwableType);
                         this.additionalVariableSize = additionalVariableSize;
                     }
 
@@ -1801,7 +2011,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected int adjust(int offset) {
-                        return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + additionalVariableSize.getSize() + 1;
+                        return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + additionalVariableSize.getSize() + EXCEPTION_SIZE;
+                    }
+
+                    @Override
+                    public void makeDefault(MethodVisitor methodVisitor) {
+                        /* do nothing */
                     }
 
                     @Override
@@ -1835,7 +2050,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.METHOD)
     public @interface OnMethodEnter {
-        /* empty */
+
+        /**
+         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
+         *
+         * @return The type of {@link Throwable} to suppress.
+         */
+        Class<? extends Throwable> suppress() default NoSuppression.class;
     }
 
     /**
@@ -1866,6 +2087,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if the advise method should be invoked when a method terminates exceptionally.
          */
         boolean onThrowable() default true;
+
+        /**
+         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
+         *
+         * @return The type of {@link Throwable} to suppress.
+         */
+        Class<? extends Throwable> suppress() default NoSuppression.class;
     }
 
     /**
@@ -1978,5 +2206,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.PARAMETER)
     public @interface Thrown {
         /* empty */
+    }
+
+    /**
+     * A marker class that indicates that an advice method does not suppress any {@link Throwable}.
+     */
+    private static class NoSuppression extends Throwable {
+
+        /**
+         * A private constructor as this class is not supposed to be invoked.
+         */
+        private NoSuppression() {
+            throw new UnsupportedOperationException("This marker class is not supposed to be instantiated");
+        }
     }
 }
