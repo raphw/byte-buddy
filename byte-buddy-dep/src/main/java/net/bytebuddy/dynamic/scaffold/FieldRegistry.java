@@ -209,8 +209,8 @@ public interface FieldRegistry {
             }
 
             @Override
-            public ElementMatcher<? super FieldDescription> resolve(TypeDescription instrumentedType) {
-                return matcher.resolve(instrumentedType);
+            public ElementMatcher<? super FieldDescription> resolve(TypeDescription typeDescription) {
+                return matcher.resolve(typeDescription);
             }
 
             @Override

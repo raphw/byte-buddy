@@ -642,8 +642,8 @@ public interface MethodRegistry {
             }
 
             @Override
-            public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-                return matcher.resolve(instrumentedType);
+            public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
+                return matcher.resolve(typeDescription);
             }
 
             @Override

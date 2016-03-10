@@ -26,7 +26,7 @@ public class LatentMatcherForMethodTokenTest {
     private MethodDescription.SignatureToken signatureToken, otherToken;
 
     @Mock
-    private TypeDescription instrumentedType;
+    private TypeDescription typeDescription;
 
     @Mock
     private MethodDescription methodDescription;
@@ -34,15 +34,15 @@ public class LatentMatcherForMethodTokenTest {
     @Test
     public void testMatch() throws Exception {
         when(methodDescription.asSignatureToken()).thenReturn(signatureToken);
-        when(token.asSignatureToken(instrumentedType)).thenReturn(signatureToken);
-        assertThat(new LatentMatcher.ForMethodToken(token).resolve(instrumentedType).matches(methodDescription), is(true));
+        when(token.asSignatureToken(typeDescription)).thenReturn(signatureToken);
+        assertThat(new LatentMatcher.ForMethodToken(token).resolve(typeDescription).matches(methodDescription), is(true));
     }
 
     @Test
     public void testNoMatch() throws Exception {
         when(methodDescription.asSignatureToken()).thenReturn(signatureToken);
-        when(token.asSignatureToken(instrumentedType)).thenReturn(otherToken);
-        assertThat(new LatentMatcher.ForMethodToken(token).resolve(instrumentedType).matches(methodDescription), is(false));
+        when(token.asSignatureToken(typeDescription)).thenReturn(otherToken);
+        assertThat(new LatentMatcher.ForMethodToken(token).resolve(typeDescription).matches(methodDescription), is(false));
     }
 
     @Test

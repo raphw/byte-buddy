@@ -26,19 +26,19 @@ public class LatentMatcherCompoundTest {
     private ElementMatcher<?> leftMatcher, rightMatcher;
 
     @Mock
-    private TypeDescription instrumentedType;
+    private TypeDescription typeDescription;
 
     @Before
     @SuppressWarnings("unchecked")
     public void setUp() throws Exception {
-        when(left.resolve(instrumentedType)).thenReturn((ElementMatcher) leftMatcher);
-        when(right.resolve(instrumentedType)).thenReturn((ElementMatcher) rightMatcher);
+        when(left.resolve(typeDescription)).thenReturn((ElementMatcher) leftMatcher);
+        when(right.resolve(typeDescription)).thenReturn((ElementMatcher) rightMatcher);
     }
 
     @Test
     @SuppressWarnings("unchecked")
     public void testManifestation() throws Exception {
-        assertThat(new LatentMatcher.Compound(left, right).resolve(instrumentedType),
+        assertThat(new LatentMatcher.Compound(left, right).resolve(typeDescription),
                 is((ElementMatcher) none().or((ElementMatcher) leftMatcher).or((ElementMatcher) rightMatcher)));
     }
 

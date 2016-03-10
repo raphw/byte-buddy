@@ -10,19 +10,19 @@ import java.util.List;
 import static net.bytebuddy.matcher.ElementMatchers.none;
 
 /**
- * A latent matcher that resolves an {@link ElementMatcher} after supplying the instrumented type.
+ * A latent matcher that resolves an {@link ElementMatcher} after supplying a type description.
  *
  * @param <T> The type of the matched element.
  */
 public interface LatentMatcher<T> {
 
     /**
-     * Resolves the element matcher this instance represents for the instrumented type.
+     * Resolves the element matcher this instance represents for the supplied type description.
      *
-     * @param instrumentedType The instrumented type.
+     * @param typeDescription The type description for which the represented matcher should be resolved.
      * @return An {@link ElementMatcher} that represents this matcher's resolved form.
      */
-    ElementMatcher<? super T> resolve(TypeDescription instrumentedType);
+    ElementMatcher<? super T> resolve(TypeDescription typeDescription);
 
     /**
      * A latent matcher representing an already resolved {@link ElementMatcher}.
@@ -46,7 +46,7 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public ElementMatcher<? super S> resolve(TypeDescription instrumentedType) {
+        public ElementMatcher<? super S> resolve(TypeDescription typeDescription) {
             return matcher;
         }
 
@@ -70,7 +70,7 @@ public interface LatentMatcher<T> {
     }
 
     /**
-     * A latent matcher where the field token is being attached to the instrumented type before matching.
+     * A latent matcher where the field token is being attached to the supplied type description before matching.
      */
     class ForFieldToken implements LatentMatcher<FieldDescription> {
 
@@ -89,8 +89,8 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public ElementMatcher<? super FieldDescription> resolve(TypeDescription instrumentedType) {
-            return new ResolvedMatcher(token.asSignatureToken(instrumentedType));
+        public ElementMatcher<? super FieldDescription> resolve(TypeDescription typeDescription) {
+            return new ResolvedMatcher(token.asSignatureToken(typeDescription));
         }
 
         @Override
@@ -156,7 +156,7 @@ public interface LatentMatcher<T> {
     }
 
     /**
-     * A latent matcher where the method token is being attached to the instrumented type before matching.
+     * A latent matcher where the method token is being attached to the supplied type description before matching.
      */
     class ForMethodToken implements LatentMatcher<MethodDescription> {
 
@@ -175,8 +175,8 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public ElementMatcher<? super MethodDescription> resolve(TypeDescription instrumentedType) {
-            return new ResolvedMatcher(token.asSignatureToken(instrumentedType));
+        public ElementMatcher<? super MethodDescription> resolve(TypeDescription typeDescription) {
+            return new ResolvedMatcher(token.asSignatureToken(typeDescription));
         }
 
         @Override
@@ -274,10 +274,10 @@ public interface LatentMatcher<T> {
         }
 
         @Override
-        public ElementMatcher<? super S> resolve(TypeDescription instrumentedType) {
+        public ElementMatcher<? super S> resolve(TypeDescription typeDescription) {
             ElementMatcher.Junction<S> matcher = none();
             for (LatentMatcher<? super S> latentMatcher : matchers) {
-                matcher = matcher.or(latentMatcher.resolve(instrumentedType));
+                matcher = matcher.or(latentMatcher.resolve(typeDescription));
             }
             return matcher;
         }
