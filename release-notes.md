@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 10. March 2016: version 1.3.2
+
+- Added possibility to suppress `Throwable` from advice methods when using the `Advice` instrumentation.
+ 
 ### 9. March 2016: version 1.3.1
 
 - Added possibility to use contravariant parameters within the `Advice` adapter for ASM.
