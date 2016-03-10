@@ -1055,6 +1055,16 @@ public interface TypePool {
         }
 
         /**
+         * Returns a type pool for the provided class loader.
+         *
+         * @param classLoader The class loader for which this class pool is representing types.
+         * @return An appropriate type pool.
+         */
+        public static TypePool of(ClassLoader classLoader) {
+            return of(ClassFileLocator.ForClassLoader.of(classLoader));
+        }
+
+        /**
          * Creates a default {@link net.bytebuddy.pool.TypePool} that looks up data by querying the supplied class
          * file locator. The returned instance is configured to use a fast reading mode and a simple cache.
          *
