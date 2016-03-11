@@ -332,6 +332,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
+        public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
+            /* do nothing */
+        }
+
+        @Override
         public void visitMaxs(int maxStack, int maxLocals) {
             onMethodEnd();
             super.visitMaxs(maxStack, maxLocals);
