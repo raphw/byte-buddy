@@ -35,7 +35,7 @@ public class ClassFileVersionTest {
 
     @Test
     public void testVersionPropertyAction() throws Exception {
-        assertThat(ClassFileVersion.VersionPropertyAction.INSTANCE.run(), is(System.getProperty("java.version")));
+        assertThat(ClassFileVersion.VersionLocator.ForLegacyVm.INSTANCE.run(), is(System.getProperty("java.version")));
     }
 
     @Test
@@ -49,6 +49,5 @@ public class ClassFileVersionTest {
                 return methods.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(ClassFileVersion.VersionPropertyAction.class).apply();
     }
 }
