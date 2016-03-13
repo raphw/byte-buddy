@@ -389,6 +389,7 @@ public class TypeWriterDefaultTest {
     @Test
     public void testTypeInLegacyConstantPoolRemapped() throws Exception {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .with(TypeValidation.DISABLED)
                 .subclass(Object.class)
                 .visit(TypeConstantAdjustment.INSTANCE)
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
@@ -402,6 +403,7 @@ public class TypeWriterDefaultTest {
     @Test
     public void testArrayTypeInLegacyConstantPoolRemapped() throws Exception {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .with(TypeValidation.DISABLED)
                 .subclass(Object.class)
                 .visit(TypeConstantAdjustment.INSTANCE)
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
@@ -415,6 +417,7 @@ public class TypeWriterDefaultTest {
     @Test
     public void testPrimitiveTypeInLegacyConstantPoolRemapped() throws Exception {
         Class<?> dynamicType = new ByteBuddy(ClassFileVersion.JAVA_V4)
+                .with(TypeValidation.DISABLED)
                 .subclass(Object.class)
                 .visit(TypeConstantAdjustment.INSTANCE)
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)

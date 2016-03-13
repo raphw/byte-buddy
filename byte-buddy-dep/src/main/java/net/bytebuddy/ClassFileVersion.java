@@ -74,7 +74,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     static {
         VersionLocator versionLocator;
         try {
-            Class<?> version = Class.forName("jdk.Version");
+            Class<?> version = Class.forName("java.lang.Runtime$Version");
             versionLocator = new VersionLocator.ForJava9CapableVm(version.getDeclaredMethod("current"), version.getDeclaredMethod("major"));
         } catch (Exception ignored) {
             versionLocator = VersionLocator.ForLegacyVm.INSTANCE;
@@ -149,7 +149,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return The currently running Java process's class file version.
      */
     public static ClassFileVersion forCurrentJavaVersion() {
-        return ClassFileVersion.ofJavaVersion(VERSION_LOCATOR.findMajorVersion());
+        return VERSION_LOCATOR.findCurrentVersion();
     }
 
     /**
@@ -241,7 +241,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
          *
          * @return The current VM's major version number.
          */
-        int findMajorVersion();
+        ClassFileVersion findCurrentVersion();
 
         /**
          * A version locator for a JVM of at least version 9.
@@ -254,20 +254,20 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             private static final Object STATIC_METHOD = null;
 
             /**
-             * The {@code jdk.Version#current()} method.
+             * The {@code java java.lang.Runtime.Version#current()} method.
              */
             private final Method current;
 
             /**
-             * The {@code jdk.Version#major()} method.
+             * The {@code java.lang.Runtime.Version#major()} method.
              */
             private final Method major;
 
             /**
              * Creates a new version locator for a Java 9 capable VM.
              *
-             * @param current The {@code jdk.Version#current()} method.
-             * @param major   The {@code jdk.Version#major()} method.
+             * @param current The {@code java.lang.Runtime.Version#current()} method.
+             * @param major   The {@code java.lang.Runtime.Version#major()} method.
              */
             protected ForJava9CapableVm(Method current, Method major) {
                 this.current = current;
@@ -275,9 +275,9 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             }
 
             @Override
-            public int findMajorVersion() {
+            public ClassFileVersion findCurrentVersion() {
                 try {
-                    return (Integer) major.invoke(current.invoke(STATIC_METHOD));
+                    return ClassFileVersion.ofJavaVersion((Integer) major.invoke(current.invoke(STATIC_METHOD)));
                 } catch (InvocationTargetException exception) {
                     throw new IllegalStateException("Could not look up VM version", exception.getCause());
                 } catch (IllegalAccessException exception) {
@@ -312,16 +312,25 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         /**
          * A version locator for a JVM that does not provide the {@code jdk.Version} class.
          */
-        enum ForLegacyVm implements VersionLocator {
+        enum ForLegacyVm implements VersionLocator, PrivilegedAction<String> {
 
             /**
              * The singleton instance.
              */
             INSTANCE;
 
+            /**
+             * The system property for this JVM's Java version.
+             */
+            private static final String JAVA_VERSION_PROPERTY = "java.version";
+
             @Override
-            public int findMajorVersion() {
-                String versionString = AccessController.doPrivileged(VersionPropertyAction.INSTANCE);
+            public ClassFileVersion findCurrentVersion() {
+                String versionString = AccessController.doPrivileged(this);
+                // To be removed once the implementation of Java 9 is finalized.
+                if (versionString.startsWith("9")) {
+                    return ClassFileVersion.JAVA_V9;
+                }
                 int[] versionIndex = {-1, 0, 0};
                 for (int i = 1; i < 3; i++) {
                     versionIndex[i] = versionString.indexOf('.', versionIndex[i - 1] + 1);
@@ -329,39 +338,18 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
                         throw new IllegalStateException("This JVM's version string does not seem to be valid: " + versionString);
                     }
                 }
-                return Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2]));
+                return ClassFileVersion.ofJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
+            }
+
+            @Override
+            public String run() {
+                return System.getProperty(JAVA_VERSION_PROPERTY);
             }
 
             @Override
             public String toString() {
                 return "ClassFileVersion.VersionLocator.ForLegacyVm." + name();
             }
-        }
-    }
-
-    /**
-     * A privileged action for reading the {@code java.version} property.
-     */
-    protected enum VersionPropertyAction implements PrivilegedAction<String> {
-
-        /**
-         * The singleton instance.
-         */
-        INSTANCE;
-
-        /**
-         * The system property for this JVM's Java version.
-         */
-        private static final String JAVA_VERSION_PROPERTY = "java.version";
-
-        @Override
-        public String run() {
-            return System.getProperty(JAVA_VERSION_PROPERTY);
-        }
-
-        @Override
-        public String toString() {
-            return "ClassFileVersion.VersionPropertyAction." + name();
         }
     }
 }
