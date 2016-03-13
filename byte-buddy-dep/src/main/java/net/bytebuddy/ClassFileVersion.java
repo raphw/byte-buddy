@@ -2,6 +2,8 @@ package net.bytebuddy;
 
 import org.objectweb.asm.Opcodes;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 
@@ -60,6 +62,25 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * The class file version of Java 9.
      */
     public static final ClassFileVersion JAVA_V9 = JAVA_V8;
+
+    /**
+     * A version locator for the executing JVM.
+     */
+    private static final VersionLocator VERSION_LOCATOR;
+
+    /*
+     * Creates a version locator of the executing JVM.
+     */
+    static {
+        VersionLocator versionLocator;
+        try {
+            Class<?> version = Class.forName("jdk.Version");
+            versionLocator = new VersionLocator.ForJava9CapableVm(version.getDeclaredMethod("current"), version.getDeclaredMethod("major"));
+        } catch (Exception ignored) {
+            versionLocator = VersionLocator.ForLegacyVm.INSTANCE;
+        }
+        VERSION_LOCATOR = versionLocator;
+    }
 
     /**
      * The version number that is represented by this class file version instance.
@@ -128,15 +149,7 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      * @return The currently running Java process's class file version.
      */
     public static ClassFileVersion forCurrentJavaVersion() {
-        String versionString = AccessController.doPrivileged(VersionPropertyAction.INSTANCE);
-        int[] versionIndex = {-1, 0, 0};
-        for (int i = 1; i < 3; i++) {
-            versionIndex[i] = versionString.indexOf('.', versionIndex[i - 1] + 1);
-            if (versionIndex[i] == -1) {
-                throw new IllegalStateException("This JVM's version string does not seem to be valid: " + versionString);
-            }
-        }
-        return ClassFileVersion.ofJavaVersion(Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2])));
+        return ClassFileVersion.ofJavaVersion(VERSION_LOCATOR.findMajorVersion());
     }
 
     /**
@@ -216,6 +229,114 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     @Override
     public String toString() {
         return "ClassFileVersion{versionNumber=" + versionNumber + '}';
+    }
+
+    /**
+     * A locator for the executing VM's Java version.
+     */
+    protected interface VersionLocator {
+
+        /**
+         * Locates the current VM's major version number.
+         *
+         * @return The current VM's major version number.
+         */
+        int findMajorVersion();
+
+        /**
+         * A version locator for a JVM of at least version 9.
+         */
+        class ForJava9CapableVm implements VersionLocator {
+
+            /**
+             * Indicates that a reflective method call invokes a static method.
+             */
+            private static final Object STATIC_METHOD = null;
+
+            /**
+             * The {@code jdk.Version#current()} method.
+             */
+            private final Method current;
+
+            /**
+             * The {@code jdk.Version#major()} method.
+             */
+            private final Method major;
+
+            /**
+             * Creates a new version locator for a Java 9 capable VM.
+             *
+             * @param current The {@code jdk.Version#current()} method.
+             * @param major   The {@code jdk.Version#major()} method.
+             */
+            protected ForJava9CapableVm(Method current, Method major) {
+                this.current = current;
+                this.major = major;
+            }
+
+            @Override
+            public int findMajorVersion() {
+                try {
+                    return (Integer) major.invoke(current.invoke(STATIC_METHOD));
+                } catch (InvocationTargetException exception) {
+                    throw new IllegalStateException("Could not look up VM version", exception.getCause());
+                } catch (IllegalAccessException exception) {
+                    throw new IllegalStateException("Could not access VM version lookup", exception);
+                }
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForJava9CapableVm that = (ForJava9CapableVm) object;
+                return current.equals(that.current) && major.equals(that.major);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = current.hashCode();
+                result = 31 * result + major.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "ClassFileVersion.VersionLocator.ForJava9CapableVm{" +
+                        "current=" + current +
+                        ", major=" + major +
+                        '}';
+            }
+        }
+
+        /**
+         * A version locator for a JVM that does not provide the {@code jdk.Version} class.
+         */
+        enum ForLegacyVm implements VersionLocator {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public int findMajorVersion() {
+                String versionString = AccessController.doPrivileged(VersionPropertyAction.INSTANCE);
+                int[] versionIndex = {-1, 0, 0};
+                for (int i = 1; i < 3; i++) {
+                    versionIndex[i] = versionString.indexOf('.', versionIndex[i - 1] + 1);
+                    if (versionIndex[i] == -1) {
+                        throw new IllegalStateException("This JVM's version string does not seem to be valid: " + versionString);
+                    }
+                }
+                return Integer.parseInt(versionString.substring(versionIndex[1] + 1, versionIndex[2]));
+            }
+
+            @Override
+            public String toString() {
+                return "ClassFileVersion.VersionLocator.ForLegacyVm." + name();
+            }
+        }
     }
 
     /**
