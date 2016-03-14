@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.objectweb.asm.ClassWriter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -44,7 +43,7 @@ public class AdviceSuppressionTest {
     public void testIllegalAssignment() throws Exception {
         Class<?> dynamicType = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(type)))
+                .visit(Advice.to(type).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

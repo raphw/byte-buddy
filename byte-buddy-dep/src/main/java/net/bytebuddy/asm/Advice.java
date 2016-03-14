@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -101,7 +102,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param type The type declaring the advice.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper to(Class<?> type) {
+    public static Advice to(Class<?> type) {
         return to(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
     }
 
@@ -112,7 +113,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper to(Class<?> type, ClassFileLocator classFileLocator) {
+    public static Advice to(Class<?> type, ClassFileLocator classFileLocator) {
         return to(new TypeDescription.ForLoadedType(type), classFileLocator);
     }
 
@@ -123,7 +124,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+    public static Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         try {
             Dispatcher methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
             for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()) {
@@ -159,6 +160,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         } else {
             return dispatcher;
         }
+    }
+
+    /**
+     * Returns an ASM visitor wrapper that matches the given matcher and applies this advice to the matched methods.
+     *
+     * @param matcher The matcher identifying methods to apply the advice to.
+     * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
+     */
+    public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
+        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(matcher, this);
     }
 
     @Override

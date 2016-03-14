@@ -4,7 +4,6 @@ import net.bytebuddy.ByteBuddy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.objectweb.asm.ClassWriter;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -45,7 +44,7 @@ public class AdviceWriteTest {
     public void testIllegalAssignment() throws Exception {
         new ByteBuddy()
                 .redefine(type)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(type)))
+                .visit(Advice.to(type).on(named(FOO)))
                 .make();
     }
 

@@ -5,7 +5,6 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
-import org.objectweb.asm.ClassWriter;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
@@ -54,7 +53,7 @@ public class AdviceTypeTest {
     public void testAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(FOO), Advice.to(advice)))
+                .visit(Advice.to(advice).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -67,7 +66,7 @@ public class AdviceTypeTest {
     public void testAdviceWithException() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
-                .visit(new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(named(BAR), Advice.to(advice)))
+                .visit(Advice.to(advice).on(named(BAR)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
