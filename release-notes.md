@@ -1,6 +1,10 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. March 2016: version 1.3.4
+
+- Added support for new Java 9 version scheme.
+
 ### 10. March 2016: version 1.3.3
 
 - Added hierarchical notation to default `TypePool`.

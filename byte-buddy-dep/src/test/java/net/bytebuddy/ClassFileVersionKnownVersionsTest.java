@@ -57,7 +57,7 @@ public class ClassFileVersionKnownVersionsTest {
                 {6, Opcodes.V1_6, 50, 0, true, false, false},
                 {7, Opcodes.V1_7, 51, 0, true, true, false},
                 {8, Opcodes.V1_8, 52, 0, true, true, true},
-//                {9, Opcodes.V1_8 + 1, 53, 0, true, true}
+//                {9, Opcodes.V1_8 + 1, 53, 0, true, true, true}
         });
     }
 
@@ -106,11 +106,15 @@ public class ClassFileVersionKnownVersionsTest {
         ClassFileVersion classFileVersion = ClassFileVersion.ofJavaVersion(javaVersion);
         if (ClassFileVersion.forCurrentJavaVersion().compareTo(classFileVersion) >= 0) {
             Class<?> type = new ByteBuddy(classFileVersion)
-                    .subclass(Object.class)
+                    .subclass(Foo.class)
                     .make()
                     .load(getClass().getClassLoader(), ClassLoadingStrategy.Default.WRAPPER)
                     .getLoaded();
             assertThat(type.newInstance(), notNullValue(Object.class));
         }
+    }
+
+    public static class Foo {
+        /* empty */
     }
 }
