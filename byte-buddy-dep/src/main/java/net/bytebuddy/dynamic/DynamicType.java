@@ -4177,7 +4177,7 @@ public interface DynamicType {
                 JarOutputStream jarOutputStream = new JarOutputStream(new BufferedOutputStream(new FileOutputStream(targetJar)), jarInputStream.getManifest());
                 try {
                     Map<TypeDescription, byte[]> rawAuxiliaryTypes = getAuxiliaryTypes();
-                    Map<String, byte[]> files = new HashMap<String, byte[]>(rawAuxiliaryTypes.size() + 1);
+                    Map<String, byte[]> files = new HashMap<String, byte[]>();
                     for (Map.Entry<TypeDescription, byte[]> entry : rawAuxiliaryTypes.entrySet()) {
                         files.put(entry.getKey().getInternalName() + CLASS_FILE_EXTENSION, entry.getValue());
                     }
