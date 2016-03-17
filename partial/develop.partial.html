@@ -243,15 +243,6 @@ mvn package
     </p>
 
     <dl>
-        <dt>Receiver types</dt>
-        <dd>
-            Receiver types can be annotated at runtime but it is currently not a widely used Java feature. The implementation
-            of receiver types in Byte Buddy would be straight forward. However, it seems currently unclear how receiver
-            types are going to be implemented in the Java programming language once value types are introduced where receivers
-            with specific generic arguments are considered to be supported. Currently, receiver types also display a number of
-            bugs in the Java programming language such that it makes sense to delay this feature until it is a little bit more
-            evolved.
-        </dd>
         <dt>Type inference</dt>
         <dd>
             Generic types can be inferred by the Java compiler. Byte Buddy does not currently offer such functionality. Support
