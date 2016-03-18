@@ -4,7 +4,7 @@ Byte Buddy release notes
 ### 18. Match 2016: version 1.3.5
 
 - Added `Advice.FieldValue` annotation for reading fields from advice.
-- 
+
 ### 13. March 2016: version 1.3.4
 
 - Added support for new Java 9 version scheme.
