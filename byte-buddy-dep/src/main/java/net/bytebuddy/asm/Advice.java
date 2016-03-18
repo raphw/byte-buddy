@@ -1288,13 +1288,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize additionalSize) {
-                            FieldDescription fieldDescription = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
-                            if (!fieldDescription.getType().asErasure().isAssignableTo(targetType)) {
-                                throw new IllegalStateException("Cannot assign type of field " + fieldDescription + " to " + targetType);
-                            } else if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
-                                throw new IllegalStateException("Cannot read non-static field " + fieldDescription + " from static method " + instrumentedMethod);
+                            FieldLocator.Resolution resolution = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
+                            if (!resolution.isResolved()) {
+                                throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedMethod);
+                            } else if (!resolution.getFieldDescription().getType().asErasure().isAssignableTo(targetType)) {
+                                throw new IllegalStateException("Cannot assign type of field " + resolution.getFieldDescription() + " to " + targetType);
+                            } else if (!resolution.getFieldDescription().isStatic() && instrumentedMethod.isStatic()) {
+                                throw new IllegalStateException("Cannot read non-static field " + resolution.getFieldDescription() + " from static method " + instrumentedMethod);
                             }
-                            return new Target.ForField(fieldDescription);
+                            return new Target.ForField(resolution.getFieldDescription());
                         }
 
                         /**
@@ -1303,7 +1305,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param instrumentedType The instrumented type.
                          * @return An appropriate field locator.
                          */
-                        protected abstract FieldLocator<?> fieldLocator(TypeDescription instrumentedType);
+                        protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
 
                         /**
                          * An offset mapping for a field with an implicit declaring type.
@@ -1321,7 +1323,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
-                            protected FieldLocator<?> fieldLocator(TypeDescription instrumentedType) {
+                            protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
                                 return new FieldLocator.ForClassHierarchy(instrumentedType);
                             }
 
@@ -1357,7 +1359,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
-                            protected FieldLocator<?> fieldLocator(TypeDescription instrumentedType) {
+                            protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
                                 if (!instrumentedType.isAssignableTo(explicitType)) {
                                     throw new IllegalStateException(explicitType + " is no super type of " + instrumentedType);
                                 }
