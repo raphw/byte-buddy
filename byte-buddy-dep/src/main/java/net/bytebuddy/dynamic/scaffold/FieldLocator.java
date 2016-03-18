@@ -76,10 +76,21 @@ public interface FieldLocator {
             }
         }
 
+        /**
+         * A simple implementation for a field resolution.
+         */
         class Simple implements Resolution {
 
+            /**
+             * A description of the located field.
+             */
             private final FieldDescription fieldDescription;
 
+            /**
+             * Creates a new simple resolution for a field.
+             *
+             * @param fieldDescription A description of the located field.
+             */
             protected Simple(FieldDescription fieldDescription) {
                 this.fieldDescription = fieldDescription;
             }

@@ -98,6 +98,8 @@ public class FieldLocatorTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldLocator.ForExactType.class).apply();
         ObjectPropertyAssertion.of(FieldLocator.ForClassHierarchy.class).apply();
+        ObjectPropertyAssertion.of(FieldLocator.Resolution.Illegal.class).apply();
+        ObjectPropertyAssertion.of(FieldLocator.Resolution.Simple.class).apply();
     }
 
     @SuppressWarnings("unused")
