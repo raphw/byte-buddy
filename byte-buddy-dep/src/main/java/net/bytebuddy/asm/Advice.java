@@ -2,11 +2,14 @@ package net.bytebuddy.asm;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
+import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import org.objectweb.asm.*;
@@ -834,24 +837,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     interface Target {
 
                         /**
-                         * Checks if this target supports a given opcode.
+                         * Applies this offset mapping for a {@link MethodVisitor#visitVarInsn(int, int)} instruction.
                          *
-                         * @param opcode The opcode to check for its legitimacy.
-                         * @return {@code true} if this target supports the given opcode.
+                         * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
+                         * @param opcode        The opcode of the original instruction.
                          */
-                        boolean supports(int opcode);
-
-                        /**
-                         * Returns the mapped offset.
-                         *
-                         * @return The mapped offset.
-                         */
-                        int getOffset();
+                        void apply(MethodVisitor methodVisitor, int opcode);
 
                         /**
                          * A read-write target mapping.
                          */
-                        class ReadWrite implements Target {
+                        class ForParameter implements Target {
 
                             /**
                              * The mapped offset.
@@ -863,26 +859,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                              *
                              * @param offset The mapped offset.
                              */
-                            protected ReadWrite(int offset) {
+                            protected ForParameter(int offset) {
                                 this.offset = offset;
                             }
 
                             @Override
-                            public boolean supports(int opcode) {
-                                return true;
-                            }
-
-                            @Override
-                            public int getOffset() {
-                                return offset;
+                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                                methodVisitor.visitVarInsn(opcode, offset);
                             }
 
                             @Override
                             public boolean equals(Object object) {
                                 if (this == object) return true;
                                 if (object == null || getClass() != object.getClass()) return false;
-                                ReadWrite readWrite = (ReadWrite) object;
-                                return offset == readWrite.offset;
+                                ForParameter forParameter = (ForParameter) object;
+                                return offset == forParameter.offset;
                             }
 
                             @Override
@@ -892,7 +883,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                             @Override
                             public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ReadWrite{" +
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForParameter{" +
                                         "offset=" + offset +
                                         '}';
                             }
@@ -901,7 +892,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * A read-only target mapping.
                          */
-                        class ReadOnly implements Target {
+                        class ForReadOnlyParameter implements Target {
 
                             /**
                              * The mapped offset.
@@ -913,35 +904,37 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                              *
                              * @param offset The mapped offset.
                              */
-                            protected ReadOnly(int offset) {
+                            protected ForReadOnlyParameter(int offset) {
                                 this.offset = offset;
                             }
 
                             @Override
-                            public boolean supports(int opcode) {
+                            public void apply(MethodVisitor methodVisitor, int opcode) {
                                 switch (opcode) {
                                     case Opcodes.ISTORE:
                                     case Opcodes.LSTORE:
                                     case Opcodes.FSTORE:
                                     case Opcodes.DSTORE:
                                     case Opcodes.ASTORE:
-                                        return false;
+                                        throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
+                                    case Opcodes.ILOAD:
+                                    case Opcodes.LLOAD:
+                                    case Opcodes.FLOAD:
+                                    case Opcodes.DLOAD:
+                                    case Opcodes.ALOAD:
+                                        methodVisitor.visitVarInsn(opcode, offset);
+                                        break;
                                     default:
-                                        return true;
+                                        throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                                 }
-                            }
-
-                            @Override
-                            public int getOffset() {
-                                return offset;
                             }
 
                             @Override
                             public boolean equals(Object object) {
                                 if (this == object) return true;
                                 if (object == null || getClass() != object.getClass()) return false;
-                                ReadOnly readOnly = (ReadOnly) object;
-                                return offset == readOnly.offset;
+                                ForReadOnlyParameter forReadOnlyParameter = (ForReadOnlyParameter) object;
+                                return offset == forReadOnlyParameter.offset;
                             }
 
                             @Override
@@ -951,8 +944,79 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                             @Override
                             public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ReadOnly{" +
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter{" +
                                         "offset=" + offset +
+                                        '}';
+                            }
+                        }
+
+                        /**
+                         * An offset mapping for a field.
+                         */
+                        class ForField implements Target {
+
+                            /**
+                             * The field being read.
+                             */
+                            private final FieldDescription fieldDescription;
+
+                            /**
+                             * Creates a new offset mapping for a field.
+                             *
+                             * @param fieldDescription The field being read.
+                             */
+                            protected ForField(FieldDescription fieldDescription) {
+                                this.fieldDescription = fieldDescription;
+                            }
+
+                            @Override
+                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                                switch (opcode) {
+                                    case Opcodes.ISTORE:
+                                    case Opcodes.ASTORE:
+                                    case Opcodes.FSTORE:
+                                    case Opcodes.LSTORE:
+                                    case Opcodes.DSTORE:
+                                        throw new IllegalStateException("Cannot write to field: " + fieldDescription);
+                                    case Opcodes.ILOAD:
+                                    case Opcodes.FLOAD:
+                                    case Opcodes.ALOAD:
+                                    case Opcodes.LLOAD:
+                                    case Opcodes.DLOAD:
+                                        int accessOpcode;
+                                        if (fieldDescription.isStatic()) {
+                                            accessOpcode = Opcodes.GETSTATIC;
+                                        } else {
+                                            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                            accessOpcode = Opcodes.GETFIELD;
+                                        }
+                                        methodVisitor.visitFieldInsn(accessOpcode,
+                                                fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                                fieldDescription.getInternalName(),
+                                                fieldDescription.getDescriptor());
+                                        break;
+                                    default:
+                                        throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                                }
+                            }
+
+                            @Override
+                            public boolean equals(Object object) {
+                                if (this == object) return true;
+                                if (object == null || getClass() != object.getClass()) return false;
+                                ForField forField = (ForField) object;
+                                return fieldDescription.equals(forField.fieldDescription);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                return fieldDescription.hashCode();
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField{" +
+                                        "fieldDescription=" + fieldDescription +
                                         '}';
                             }
                         }
@@ -1031,8 +1095,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException(targetType + " is not assignable to " + parameters.get(index));
                             }
                             return readOnly
-                                    ? new Target.ReadOnly(parameters.get(index).getOffset())
-                                    : new Target.ReadWrite(parameters.get(index).getOffset());
+                                    ? new Target.ForReadOnlyParameter(parameters.get(index).getOffset())
+                                    : new Target.ForParameter(parameters.get(index).getOffset());
                         }
 
                         @Override
@@ -1128,8 +1192,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not assignable to " + targetType);
                             }
                             return readOnly
-                                    ? new Target.ReadOnly(THIS_REFERENCE)
-                                    : new Target.ReadWrite(THIS_REFERENCE);
+                                    ? new Target.ForReadOnlyParameter(THIS_REFERENCE)
+                                    : new Target.ForParameter(THIS_REFERENCE);
                         }
 
                         @Override
@@ -1182,6 +1246,202 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     /**
+                     * An offset mapping for a field.
+                     */
+                    abstract class ForField implements OffsetMapping {
+
+                        /**
+                         * The name of the field.
+                         */
+                        protected final String name;
+
+                        /**
+                         * The expected type that the field can be assigned to.
+                         */
+                        protected final TypeDescription targetType;
+
+                        /**
+                         * Creates an offset mapping for a field.
+                         *
+                         * @param name       The name of the field.
+                         * @param targetType The expected type that the field can be assigned to.
+                         */
+                        protected ForField(String name, TypeDescription targetType) {
+                            this.name = name;
+                            this.targetType = targetType;
+                        }
+
+                        @Override
+                        public boolean equals(Object object) {
+                            if (this == object) return true;
+                            if (object == null || getClass() != object.getClass()) return false;
+                            ForField forField = (ForField) object;
+                            return name.equals(forField.name) && targetType.equals(forField.targetType);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            int result = name.hashCode();
+                            result = 31 * result + targetType.hashCode();
+                            return result;
+                        }
+
+                        @Override
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize additionalSize) {
+                            FieldDescription fieldDescription = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
+                            if (!fieldDescription.getType().asErasure().isAssignableTo(targetType)) {
+                                throw new IllegalStateException("Cannot assign type of field " + fieldDescription + " to " + targetType);
+                            } else if (!fieldDescription.isStatic() && instrumentedMethod.isStatic()) {
+                                throw new IllegalStateException("Cannot read non-static field " + fieldDescription + " from static method " + instrumentedMethod);
+                            }
+                            return new Target.ForField(fieldDescription);
+                        }
+
+                        /**
+                         * Returns a field locator for this instance.
+                         *
+                         * @param instrumentedType The instrumented type.
+                         * @return An appropriate field locator.
+                         */
+                        protected abstract FieldLocator<?> fieldLocator(TypeDescription instrumentedType);
+
+                        /**
+                         * An offset mapping for a field with an implicit declaring type.
+                         */
+                        protected static class WithImplicitType extends ForField {
+
+                            /**
+                             * Creates an offset mapping for a field with an implicit declaring type.
+                             *
+                             * @param name       The name of the field.
+                             * @param targetType The expected type that the field can be assigned to.
+                             */
+                            protected WithImplicitType(String name, TypeDescription targetType) {
+                                super(name, targetType);
+                            }
+
+                            @Override
+                            protected FieldLocator<?> fieldLocator(TypeDescription instrumentedType) {
+                                return new FieldLocator.ForClassHierarchy(instrumentedType);
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithImplicitType{" +
+                                        "name=" + name +
+                                        ", targetType=" + targetType +
+                                        '}';
+                            }
+                        }
+
+                        /**
+                         * An offset mapping for a field with an explicit declaring type.
+                         */
+                        protected static class WithExplicitType extends ForField {
+
+                            /**
+                             * The type declaring the field.
+                             */
+                            private final TypeDescription explicitType;
+
+                            /**
+                             * Creates an offset mapping for a field with an explicit declaring type.
+                             *
+                             * @param name        The name of the field.
+                             * @param targetType  The expected type that the field can be assigned to.
+                             * @param locatedType The type declaring the field.
+                             */
+                            protected WithExplicitType(String name, TypeDescription targetType, TypeDescription locatedType) {
+                                super(name, targetType);
+                                this.explicitType = locatedType;
+                            }
+
+                            @Override
+                            protected FieldLocator<?> fieldLocator(TypeDescription instrumentedType) {
+                                if (!instrumentedType.isAssignableTo(explicitType)) {
+                                    throw new IllegalStateException(explicitType + " is no super type of " + instrumentedType);
+                                }
+                                return new FieldLocator.ForExactType(explicitType);
+                            }
+
+                            @Override
+                            public boolean equals(Object object) {
+                                if (this == object) return true;
+                                if (object == null || getClass() != object.getClass()) return false;
+                                if (!super.equals(object)) return false;
+                                WithExplicitType that = (WithExplicitType) object;
+                                return explicitType.equals(that.explicitType);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                int result = super.hashCode();
+                                result = 31 * result + explicitType.hashCode();
+                                return result;
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithExplicitType{" +
+                                        "name=" + name +
+                                        ", targetType=" + targetType +
+                                        ", explicitType=" + explicitType +
+                                        '}';
+                            }
+                        }
+
+                        /**
+                         * A factory for a {@link ForField} offset mapping.
+                         */
+                        protected enum Factory implements OffsetMapping.Factory {
+
+                            /**
+                             * The singleton instance.
+                             */
+                            INSTANCE;
+
+                            /**
+                             * Creates a new factory for a {@link ForField} offset mapping.
+                             */
+                            Factory() {
+                                MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
+                                value = methods.filter(named("value")).getOnly();
+                                definingType = methods.filter(named("definingType")).getOnly();
+                            }
+
+                            /**
+                             * The {@link FieldValue#value()} method.
+                             */
+                            private final MethodDescription.InDefinedShape value;
+
+                            /**
+                             * The {@link FieldValue#definingType()}} method.
+                             */
+                            private final MethodDescription.InDefinedShape definingType;
+
+                            @Override
+                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                                AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(FieldValue.class);
+                                if (annotation == null) {
+                                    return UNDEFINED;
+                                } else {
+                                    TypeDescription definingType = annotation.getValue(this.definingType, TypeDescription.class);
+                                    String name = annotation.getValue(value, String.class);
+                                    TypeDescription targetType = parameterDescription.getType().asErasure();
+                                    return definingType.represents(void.class)
+                                            ? new WithImplicitType(name, targetType)
+                                            : new WithExplicitType(name, targetType, definingType);
+                                }
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.Factory." + name();
+                            }
+                        }
+                    }
+
+                    /**
                      * An offset mapping that provides access to the value that is returned by the enter advise.
                      */
                     enum ForEnterValue implements OffsetMapping {
@@ -1225,8 +1485,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize additionalSize) {
                             return readOnly
-                                    ? new Target.ReadOnly(instrumentedMethod.getStackSize())
-                                    : new Target.ReadWrite(instrumentedMethod.getStackSize());
+                                    ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize())
+                                    : new Target.ForParameter(instrumentedMethod.getStackSize());
                         }
 
                         @Override
@@ -1323,8 +1583,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
                             }
                             return readOnly
-                                    ? new Target.ReadOnly(instrumentedMethod.getStackSize() + additionalSize.getSize())
-                                    : new Target.ReadWrite(instrumentedMethod.getStackSize() + additionalSize.getSize());
+                                    ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + additionalSize.getSize())
+                                    : new Target.ForParameter(instrumentedMethod.getStackSize() + additionalSize.getSize());
                         }
 
                         @Override
@@ -1397,7 +1657,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize additionalSize) {
-                            return new Target.ReadWrite(instrumentedMethod.getStackSize() + additionalSize.getSize() + instrumentedMethod.getReturnType().getStackSize().getSize());
+                            return new Target.ForParameter(instrumentedMethod.getStackSize() + additionalSize.getSize() + instrumentedMethod.getReturnType().getStackSize().getSize());
                         }
 
                         @Override
@@ -1494,6 +1754,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         super(adviseMethod,
                                 OffsetMapping.ForParameter.Factory.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                OffsetMapping.ForField.Factory.INSTANCE,
                                 new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
                     }
 
@@ -1558,6 +1819,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         super(adviseMethod,
                                 OffsetMapping.ForParameter.Factory.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                OffsetMapping.ForField.Factory.INSTANCE,
                                 new OffsetMapping.ForEnterValue.Factory(enterType),
                                 OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                 adviseMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
@@ -1742,14 +2004,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        if (!target.supports(opcode)) {
-                            throw new IllegalStateException("Cannot write to read-only variable " + target);
-                        }
-                        offset = target.getOffset();
+                        target.apply(mv, opcode);
                     } else {
-                        offset = adjust(offset + instrumentedMethod.getStackSize() - adviseMethod.getStackSize());
+                        mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviseMethod.getStackSize()));
                     }
-                    super.visitVarInsn(opcode, offset);
                 }
 
                 /**
@@ -2162,6 +2420,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+    }
+
+    /**
+     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method. All
+     * field references are always <i>read-only</i>.
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface FieldValue {
+
+        /**
+         * Returns the name of the field.
+         *
+         * @return The name of the field.
+         */
+        String value();
+
+        /**
+         * Returns the type that declares the field that should be mapped to the annotated parameter. If this property
+         * is set to {@code void}, the field is looked up implicitly within the instrumented class's class hierarchy.
+         *
+         * @return The type that declares the field or {@code void} if this type should be determined implicitly.
+         */
+        Class<?> definingType() default void.class;
     }
 
     /**

@@ -444,6 +444,32 @@ public class AdviceTest {
                 .make();
     }
 
+    @Test
+    public void testFieldAdviceImplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceImplicit.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testFieldAdviceExplicit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceExplicit.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
@@ -576,6 +602,38 @@ public class AdviceTest {
         Advice.to(IllegalThrowableTypeAdvice.class);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testFieldIllegalExplicit() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceIllegalExplicit.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldNonExistent() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceNonExistent.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldNonAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceNonAssignable.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testFieldWrite() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceWrite.class).on(named(FOO)))
+                .make();
+    }
+
     @Test
     public void testCannotInstantiateSuppressionMarker() throws Exception {
         Class<?> type = Class.forName(Advice.class.getName() + "$NoSuppression");
@@ -596,8 +654,9 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ReadOnly.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ReadWrite.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField.class).apply();
         final int[] value = new int[1];
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
             @Override
@@ -608,6 +667,9 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithImplicitType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithExplicitType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThrowable.class).apply();
@@ -1062,6 +1124,91 @@ public class AdviceTest {
 
         public static String bar(String value) {
             return value;
+        }
+    }
+
+    public static class FieldSample {
+
+        public static int enter, exit;
+
+        private String foo = FOO;
+
+        public String foo() {
+            return foo;
+        }
+
+        public static String bar() {
+            return BAR;
+        }
+    }
+
+    public static class FieldAdviceImplicit {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldValue("foo") String foo) {
+            FieldSample.enter++;
+            if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.FieldValue("foo") String foo) {
+            FieldSample.exit++;
+            if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    public static class FieldAdviceExplicit {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldValue(value = "foo", definingType = FieldSample.class) String foo) {
+            FieldSample.enter++;
+            if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.FieldValue(value = "foo", definingType = FieldSample.class) String foo) {
+            FieldSample.exit++;
+            if (!foo.equals(FOO)) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    public static class FieldAdviceIllegalExplicit {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldValue(value = "bar", definingType = Void.class) String bar) {
+            throw new AssertionError();
+        }
+    }
+
+    public static class FieldAdviceNonExistent {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldValue("bar") String bar) {
+            throw new AssertionError();
+        }
+    }
+
+    public static class FieldAdviceNonAssignable {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldValue("foo") Void foo) {
+            throw new AssertionError();
+        }
+    }
+
+    public static class FieldAdviceWrite {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.FieldValue("foo") String foo) {
+            foo = BAR;
         }
     }
 
