@@ -8,43 +8,9 @@ import org.junit.Test;
 import static org.hamcrest.core.Is.is;
 import static org.junit.Assert.assertThat;
 
-public class FieldLocatorTest {
+public class FieldLocatorForClassHierarchyTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux";
-
-    @Test
-    public void testExactTypeFound() throws Exception {
-        FieldLocator.Resolution resolution = new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO);
-        assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
-    }
-
-    @Test
-    public void testExactTypeFoundWithType() throws Exception {
-        FieldLocator.Resolution resolution = new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Void.class));
-        assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
-    }
-
-    @Test
-    public void testExactTypeNotFoundInherited() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Bar.class)).locate(FOO).isResolved(), is(false));
-    }
-
-    @Test
-    public void testExactTypeNotFoundNotExistent() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(QUX).isResolved(), is(false));
-    }
-
-    @Test
-    public void testExactTypeNotFoundInvisible() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class), new TypeDescription.ForLoadedType(Object.class)).locate(QUX).isResolved(), is(false));
-    }
-
-    @Test
-    public void testExactTypeNotFoundWrongType() throws Exception {
-        assertThat(new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(QUX, new TypeDescription.ForLoadedType(Object.class)).isResolved(), is(false));
-    }
 
     @Test
     public void testClassHierarchyTypeFound() throws Exception {
@@ -86,20 +52,17 @@ public class FieldLocatorTest {
 
     @Test
     public void testClassHierarchyNotFoundInvisible() throws Exception {
-        assertThat(new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Foo.class), new TypeDescription.ForLoadedType(Object.class)).locate(QUX).isResolved(), is(false));
+        assertThat(new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Foo.class), new TypeDescription.ForLoadedType(Object.class)).locate(FOO).isResolved(), is(false));
     }
 
     @Test
     public void testClassHierarchyNotFoundWrongType() throws Exception {
-        assertThat(new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Foo.class)).locate(QUX, new TypeDescription.ForLoadedType(Object.class)).isResolved(), is(false));
+        assertThat(new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Object.class)).isResolved(), is(false));
     }
 
     @Test
     public void testObjectProperties() throws Exception {
-        ObjectPropertyAssertion.of(FieldLocator.ForExactType.class).apply();
         ObjectPropertyAssertion.of(FieldLocator.ForClassHierarchy.class).apply();
-        ObjectPropertyAssertion.of(FieldLocator.Resolution.Illegal.class).apply();
-        ObjectPropertyAssertion.of(FieldLocator.Resolution.Simple.class).apply();
     }
 
     @SuppressWarnings("unused")

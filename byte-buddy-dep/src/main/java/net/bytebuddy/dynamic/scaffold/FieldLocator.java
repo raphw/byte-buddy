@@ -128,6 +128,32 @@ public interface FieldLocator {
     }
 
     /**
+     * A field locator that never discovers a field.
+     */
+    enum NoOp implements FieldLocator {
+
+        /**
+         * The singleton instance.
+         */
+        INSTANCE;
+
+        @Override
+        public Resolution locate(String name) {
+            return Resolution.Illegal.INSTANCE;
+        }
+
+        @Override
+        public Resolution locate(String name, TypeDescription type) {
+            return Resolution.Illegal.INSTANCE;
+        }
+
+        @Override
+        public String toString() {
+            return "FieldLocator.NoOp." + name();
+        }
+    }
+
+    /**
      * An abstract base implementation of a field locator.
      */
     abstract class AbstractBase implements FieldLocator {
