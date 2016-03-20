@@ -3,6 +3,8 @@ package net.bytebuddy.implementation.bind.annotation;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.field.FieldList;
+import net.bytebuddy.description.method.ParameterDescription;
+import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -251,6 +253,69 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
                 implementationTarget,
                 assigner);
         assertThat(binding.isValid(), is(false));
+    }
+
+    @Test
+    public void testGetterNameDiscovery() throws Exception {
+        doReturn(void.class).when(annotation).declaringType();
+        when(annotation.value()).thenReturn(FieldValue.Binder.Delegate.BEAN_PROPERTY);
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
+        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(stackManipulation.isValid()).thenReturn(true);
+        when(source.getInternalName()).thenReturn("getFoo");
+        when(source.getSourceCodeName()).thenReturn("getFoo");
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.OBJECT);
+        when(source.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+        MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner);
+        assertThat(binding.isValid(), is(true));
+    }
+
+    @Test
+    public void testGetterNameDiscoveryBoolean() throws Exception {
+        doReturn(void.class).when(annotation).declaringType();
+        when(annotation.value()).thenReturn(FieldValue.Binder.Delegate.BEAN_PROPERTY);
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
+        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(stackManipulation.isValid()).thenReturn(true);
+        when(source.getInternalName()).thenReturn("isFoo");
+        when(source.getSourceCodeName()).thenReturn("isFoo");
+        when(source.getReturnType()).thenReturn(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(boolean.class));
+        when(source.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+        MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner);
+        assertThat(binding.isValid(), is(true));
+    }
+
+    @Test
+    public void testSetterNameDiscovery() throws Exception {
+        doReturn(void.class).when(annotation).declaringType();
+        when(annotation.value()).thenReturn(FieldValue.Binder.Delegate.BEAN_PROPERTY);
+        when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
+        when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
+        when(fieldDescription.isVisibleTo(instrumentedType)).thenReturn(true);
+        when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
+        when(stackManipulation.isValid()).thenReturn(true);
+        when(source.getInternalName()).thenReturn("setFoo");
+        when(source.getSourceCodeName()).thenReturn("setFoo");
+        when(source.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+        when(source.getParameters()).thenReturn(new ParameterList.Explicit.ForTypes(source, TypeDescription.Generic.OBJECT));
+        MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
+                source,
+                target,
+                implementationTarget,
+                assigner);
+        assertThat(binding.isValid(), is(true));
     }
 
     @Test

@@ -63,6 +63,7 @@ public class FieldProxyBinderTest extends AbstractAnnotationBinderTest<FieldProx
         return new FieldProxy.Binder(getterMethod, setterMethod);
     }
 
+
     @Test(expected = IllegalStateException.class)
     public void testFieldOfArrayThrowsException() throws Exception {
         doReturn(Object[].class).when(annotation).declaringType();

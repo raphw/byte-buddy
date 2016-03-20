@@ -18,10 +18,17 @@ import java.lang.annotation.*;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 /**
+ * <p>
  * Assigns the value of a field of the instrumented type to the annotated parameter. For a binding to be valid,
  * the instrumented type must be able to access a field of the given name. Also, the parameter's type must be
  * assignable to the given field. For attempting a type casting, the {@link RuntimeType} annotation can be
  * applied to the parameter.
+ * </p>
+ * <p>
+ * Setting {@link FieldValue#value()} is optional. If the value is not set, the field value attempts to bind a setter's
+ * or getter's field if the intercepted method is an accessor method. Otherwise, the binding renders the target method
+ * to be an illegal candidate for binding.
+ * </p>
  *
  * @see net.bytebuddy.implementation.MethodDelegation
  * @see net.bytebuddy.implementation.bind.annotation.TargetMethodAnnotationDrivenBinder

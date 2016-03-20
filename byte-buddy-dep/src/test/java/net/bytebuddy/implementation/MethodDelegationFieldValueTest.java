@@ -77,6 +77,18 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
         assertThat(instance.foo(), is((Object) BAR));
     }
 
+    @Test
+    public void testAccessor() throws Exception {
+        DynamicType.Loaded<SimpleFieldAccessor> loaded = implement(SimpleFieldAccessor.class, MethodDelegation.to(SimpleAccessorInterceptor.class));
+        SimpleFieldAccessor instance = loaded.getLoaded().newInstance();
+        instance.foo = FOO;
+        assertThat(instance.getFoo(), is((Object) FOO));
+        instance.foo = BAR;
+        instance.setFoo(FOO);
+        assertThat(instance.foo, is((Object) BAR));
+    }
+
+
     public static class SimpleField {
 
         public Object foo;
@@ -139,6 +151,26 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
     public static class ExplicitInterceptor {
 
         public static Object intercept(@FieldValue(value = FOO, declaringType = SimpleField.class) Object value) {
+            return value;
+        }
+    }
+
+    public static class SimpleFieldAccessor {
+
+        public Object foo;
+
+        public Object getFoo() {
+            return foo;
+        }
+
+        public void setFoo(Object foo) {
+            this.foo = foo;
+        }
+    }
+
+    public static class SimpleAccessorInterceptor {
+
+        public static Object intercept(@FieldValue Object value) {
             return value;
         }
     }
