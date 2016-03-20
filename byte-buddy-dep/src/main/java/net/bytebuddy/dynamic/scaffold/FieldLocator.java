@@ -128,14 +128,33 @@ public interface FieldLocator {
     }
 
     /**
+     * A factory for creating a {@link FieldLocator}.
+     */
+    interface Factory {
+
+        /**
+         * Creates a field locator for a given type.
+         *
+         * @param typeDescription The type for which to create a field locator.
+         * @return A suitable field locator.
+         */
+        FieldLocator make(TypeDescription typeDescription);
+    }
+
+    /**
      * A field locator that never discovers a field.
      */
-    enum NoOp implements FieldLocator {
+    enum NoOp implements FieldLocator, Factory {
 
         /**
          * The singleton instance.
          */
         INSTANCE;
+
+        @Override
+        public FieldLocator make(TypeDescription typeDescription) {
+            return this;
+        }
 
         @Override
         public Resolution locate(String name) {
@@ -268,6 +287,51 @@ public interface FieldLocator {
                     ", typeDescription=" + typeDescription +
                     '}';
         }
+
+        /**
+         * A factory for creating a {@link ForExactType}.
+         */
+        public static class Factory implements FieldLocator.Factory {
+
+            /**
+             * The type for which to locate a field.
+             */
+            private final TypeDescription typeDescription;
+
+            /**
+             * Creates a new factory for a field locator that locates a field for an exact type.
+             *
+             * @param typeDescription The type for which to locate a field.
+             */
+            public Factory(TypeDescription typeDescription) {
+                this.typeDescription = typeDescription;
+            }
+
+            @Override
+            public FieldLocator make(TypeDescription typeDescription) {
+                return new ForExactType(this.typeDescription, typeDescription);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Factory factory = (Factory) object;
+                return typeDescription.equals(factory.typeDescription);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeDescription.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "FieldLocator.ForExactType.Factory{" +
+                        "typeDescription=" + typeDescription +
+                        '}';
+            }
+        }
     }
 
     /**
@@ -333,6 +397,27 @@ public interface FieldLocator {
                     "accessingType=" + accessingType +
                     ", typeDescription=" + typeDescription +
                     '}';
+        }
+
+        /**
+         * A factory for creating a {@link ForClassHierarchy}.
+         */
+        public enum Factory implements FieldLocator.Factory {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            @Override
+            public FieldLocator make(TypeDescription typeDescription) {
+                return new ForClassHierarchy(typeDescription);
+            }
+
+            @Override
+            public String toString() {
+                return "FieldLocator.ForClassHierarchy.Factory." + name();
+            }
         }
     }
 }

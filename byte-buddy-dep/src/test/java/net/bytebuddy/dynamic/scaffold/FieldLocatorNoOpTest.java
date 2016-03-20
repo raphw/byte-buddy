@@ -22,6 +22,11 @@ public class FieldLocatorNoOpTest {
     }
 
     @Test
+    public void testFactory() throws Exception {
+        assertThat(FieldLocator.NoOp.INSTANCE.make(TypeDescription.OBJECT), is((FieldLocator) FieldLocator.NoOp.INSTANCE));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldLocator.NoOp.class).apply();
     }

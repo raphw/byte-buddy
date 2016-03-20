@@ -17,7 +17,7 @@ public class FieldAccessorExceptionTest extends AbstractImplementationTest {
         implement(Foo.class, FieldAccessor.ofBeanProperty());
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testFieldNoVisibleField() throws Exception {
         implement(Bar.class, FieldAccessor.ofBeanProperty());
     }
