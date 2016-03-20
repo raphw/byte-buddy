@@ -1164,7 +1164,7 @@ public class AdviceTest {
     public static class FieldAdviceExplicit {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.FieldValue(value = "foo", definingType = FieldSample.class) String foo) {
+        private static void enter(@Advice.FieldValue(value = "foo", declaringType = FieldSample.class) String foo) {
             FieldSample.enter++;
             if (!foo.equals(FOO)) {
                 throw new AssertionError();
@@ -1172,7 +1172,7 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.FieldValue(value = "foo", definingType = FieldSample.class) String foo) {
+        private static void exit(@Advice.FieldValue(value = "foo", declaringType = FieldSample.class) String foo) {
             FieldSample.exit++;
             if (!foo.equals(FOO)) {
                 throw new AssertionError();
@@ -1183,7 +1183,7 @@ public class AdviceTest {
     public static class FieldAdviceIllegalExplicit {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.FieldValue(value = "bar", definingType = Void.class) String bar) {
+        private static void enter(@Advice.FieldValue(value = "bar", declaringType = Void.class) String bar) {
             throw new AssertionError();
         }
     }

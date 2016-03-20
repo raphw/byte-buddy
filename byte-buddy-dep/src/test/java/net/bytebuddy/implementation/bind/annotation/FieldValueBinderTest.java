@@ -49,25 +49,19 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test(expected = IllegalStateException.class)
     public void testFieldOfArrayThrowsException() throws Exception {
-        doReturn(Object[].class).when(annotation).definingType();
+        doReturn(Object[].class).when(annotation).declaringType();
         FieldValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test(expected = IllegalStateException.class)
     public void testFieldOfPrimitiveThrowsException() throws Exception {
-        doReturn(int.class).when(annotation).definingType();
-        FieldValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
-    }
-
-    @Test(expected = IllegalStateException.class)
-    public void testFieldOfInterfaceThrowsException() throws Exception {
-        doReturn(Runnable.class).when(annotation).definingType();
+        doReturn(int.class).when(annotation).declaringType();
         FieldValue.Binder.INSTANCE.bind(annotationDescription, source, target, implementationTarget, assigner);
     }
 
     @Test
     public void testLegalAssignment() throws Exception {
-        doReturn(void.class).when(annotation).definingType();
+        doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -84,7 +78,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testIllegalAssignmentNonAssignable() throws Exception {
-        doReturn(void.class).when(annotation).definingType();
+        doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -101,7 +95,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testIllegalAssignmentStaticMethod() throws Exception {
-        doReturn(void.class).when(annotation).definingType();
+        doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -119,7 +113,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testLegalAssignmentStaticMethodStaticField() throws Exception {
-        doReturn(void.class).when(annotation).definingType();
+        doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Explicit<FieldDescription.InDefinedShape>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -138,7 +132,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testIllegalAssignmentNoField() throws Exception {
-        doReturn(void.class).when(annotation).definingType();
+        doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn(new FieldList.Empty<FieldDescription.InDefinedShape>());
         MethodDelegationBinder.ParameterBinding<?> binding = FieldValue.Binder.INSTANCE.bind(annotationDescription,
@@ -152,7 +146,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     @Test
     @SuppressWarnings("unchecked")
     public void testIllegalAssignmentNonVisible() throws Exception {
-        doReturn(void.class).when(annotation).definingType();
+        doReturn(void.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(instrumentedType.getDeclaredFields()).thenReturn((FieldList) new FieldList.Explicit<FieldDescription>(fieldDescription));
         when(fieldDescription.getSourceCodeName()).thenReturn(FOO);
@@ -169,7 +163,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testLegalAssignmentExplicitType() throws Exception {
-        doReturn(Foo.class).when(annotation).definingType();
+        doReturn(Foo.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -184,7 +178,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testIllegalAssignmentExplicitTypeNonAssignable() throws Exception {
-        doReturn(Foo.class).when(annotation).definingType();
+        doReturn(Foo.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -199,7 +193,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testIllegalAssignmentExplicitTypeNonAssignableFieldType() throws Exception {
-        doReturn(Foo.class).when(annotation).definingType();
+        doReturn(Foo.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -214,7 +208,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testIllegalAssignmentExplicitTypeStaticMethod() throws Exception {
-        doReturn(Foo.class).when(annotation).definingType();
+        doReturn(Foo.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(source.isStatic()).thenReturn(true);
@@ -230,7 +224,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testLegalAssignmentExplicitTypeStaticMethodStaticField() throws Exception {
-        doReturn(FooStatic.class).when(annotation).definingType();
+        doReturn(FooStatic.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(FOO);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(source.isStatic()).thenReturn(true);
@@ -246,7 +240,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
 
     @Test
     public void testIllegalAssignmentExplicitTypeNoField() throws Exception {
-        doReturn(Foo.class).when(annotation).definingType();
+        doReturn(Foo.class).when(annotation).declaringType();
         when(annotation.value()).thenReturn(BAR);
         when(target.getDeclaredAnnotations()).thenReturn(new AnnotationList.Empty());
         when(stackManipulation.isValid()).thenReturn(true);
@@ -262,11 +256,7 @@ public class FieldValueBinderTest extends AbstractAnnotationBinderTest<FieldValu
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(FieldValue.Binder.class).apply();
-        ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.ForFieldInHierarchy.class).apply();
-        ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.ForSpecificType.class).apply();
-        ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.Impossible.class).apply();
-        ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.Resolution.Resolved.class).apply();
-        ObjectPropertyAssertion.of(FieldValue.Binder.FieldLocator.Resolution.Unresolved.class).apply();
+        ObjectPropertyAssertion.of(FieldValue.Binder.Delegate.class).applyBasic();
     }
 
     public static class Foo {

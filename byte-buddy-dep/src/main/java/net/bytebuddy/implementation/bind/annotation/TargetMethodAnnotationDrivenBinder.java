@@ -2,9 +2,11 @@ package net.bytebuddy.implementation.bind.annotation;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.annotation.AnnotationDescription;
+import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.Implementation;
 import net.bytebuddy.implementation.bind.MethodDelegationBinder;
 import net.bytebuddy.implementation.bytecode.Removal;
@@ -14,6 +16,9 @@ import net.bytebuddy.implementation.bytecode.member.MethodReturn;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
+
+import static net.bytebuddy.matcher.ElementMatchers.isGetter;
+import static net.bytebuddy.matcher.ElementMatchers.isSetter;
 
 /**
  * This {@link net.bytebuddy.implementation.bind.MethodDelegationBinder} binds
@@ -178,6 +183,97 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                  ParameterDescription target,
                                  Implementation.Target implementationTarget,
                                  Assigner assigner);
+
+        /**
+         * A parameter binder that binds a field's value.
+         *
+         * @param <S> The {@link java.lang.annotation.Annotation#annotationType()} handled by this parameter binder.
+         */
+        abstract class FieldBinding<S extends Annotation> implements ParameterBinder<S> {
+
+            /**
+             * Indicates that a name should be extracted from an accessor method.
+             */
+            protected static final String BEAN_PROPERTY = "";
+
+            /**
+             * Resolves a field locator for a potential accessor method.
+             *
+             * @param fieldLocator      The field locator to use.
+             * @param methodDescription The method description that is the potential accessor.
+             * @return A resolution for a field locator.
+             */
+            private static FieldLocator.Resolution resolveAccessor(FieldLocator fieldLocator, MethodDescription methodDescription) {
+                String fieldName;
+                if (isSetter().matches(methodDescription)) {
+                    fieldName = methodDescription.getInternalName().substring(3);
+                } else if (isGetter().matches(methodDescription)) {
+                    fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
+                } else {
+                    return FieldLocator.Resolution.Illegal.INSTANCE;
+                }
+                return fieldLocator.locate(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
+            }
+
+            @Override
+            public ParameterBinding<?> bind(AnnotationDescription.Loadable<S> annotation,
+                                            MethodDescription source,
+                                            ParameterDescription target,
+                                            Implementation.Target implementationTarget,
+                                            Assigner assigner) {
+                if (!declaringType(annotation).represents(void.class)) {
+                    if (declaringType(annotation).isPrimitive() || declaringType(annotation).isArray()) {
+                        throw new IllegalStateException("A primitive type or array type cannot declare a field: " + source);
+                    } else if (!implementationTarget.getInstrumentedType().isAssignableTo(declaringType(annotation))) {
+                        return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+                    }
+                }
+                FieldLocator fieldLocator = declaringType(annotation).represents(void.class)
+                        ? new FieldLocator.ForClassHierarchy(implementationTarget.getInstrumentedType())
+                        : new FieldLocator.ForExactType(declaringType(annotation), implementationTarget.getInstrumentedType());
+                FieldLocator.Resolution resolution = fieldName(annotation).equals(BEAN_PROPERTY)
+                        ? resolveAccessor(fieldLocator, source)
+                        : fieldLocator.locate(fieldName(annotation));
+                return resolution.isResolved() && !(source.isStatic() && !resolution.getField().isStatic())
+                        ? bind(resolution.getField(), annotation, source, target, implementationTarget, assigner)
+                        : ParameterBinding.Illegal.INSTANCE;
+            }
+
+            /**
+             * Extracts the field name from an annotation.
+             *
+             * @param annotation The annotation from which to extract the field name.
+             * @return The field name defined by the handled annotation.
+             */
+            protected abstract String fieldName(AnnotationDescription.Loadable<S> annotation);
+
+            /**
+             * Extracts the declaring type from an annotation.
+             *
+             * @param annotation The annotation from which to extract the declaring type.
+             * @return The declaring type defined by the handled annotation.
+             */
+            protected abstract TypeDescription declaringType(AnnotationDescription.Loadable<S> annotation);
+
+            /**
+             * Creates a parameter binding for the given target parameter.
+             *
+             * @param fieldDescription     The field for which this binder binds a value.
+             * @param annotation           The annotation that was cause for the delegation to this argument binder.
+             * @param source               The intercepted source method.
+             * @param target               Tge target parameter that is subject to be bound to
+             *                             intercepting the {@code source} method.
+             * @param implementationTarget The target of the current implementation that is subject to this binding.
+             * @param assigner             An assigner that can be used for applying the binding.
+             * @return A parameter binding for the requested target method parameter.
+             */
+            protected abstract ParameterBinding<?> bind(FieldDescription fieldDescription,
+                                                        AnnotationDescription.Loadable<S> annotation,
+                                                        MethodDescription source,
+                                                        ParameterDescription target,
+                                                        Implementation.Target implementationTarget,
+                                                        Assigner assigner);
+        }
     }
 
     /**

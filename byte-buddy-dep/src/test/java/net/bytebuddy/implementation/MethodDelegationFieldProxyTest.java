@@ -228,8 +228,8 @@ public class MethodDelegationFieldProxyTest extends AbstractImplementationTest {
 
     public static class SwapInherited {
 
-        public static void swap(@FieldProxy(value = FOO, definingType = Explicit.class) Get<String> getter,
-                                @FieldProxy(value = FOO, definingType = Explicit.class) Set<String> setter) {
+        public static void swap(@FieldProxy(value = FOO, declaringType = Explicit.class) Get<String> getter,
+                                @FieldProxy(value = FOO, declaringType = Explicit.class) Set<String> setter) {
             assertThat(getter, not(instanceOf(Serializable.class)));
             assertThat(setter, not(instanceOf(Serializable.class)));
             setter.set(getter.get() + BAR);

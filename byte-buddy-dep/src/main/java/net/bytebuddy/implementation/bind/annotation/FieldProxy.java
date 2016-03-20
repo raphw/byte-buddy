@@ -9,7 +9,6 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
@@ -50,12 +49,6 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public @interface FieldProxy {
 
     /**
-     * A placeholder name to indicate that a field name should be inferred by the name of the intercepted
-     * method by the Java bean naming conventions.
-     */
-    String BEAN_PROPERTY = "";
-
-    /**
      * Determines if the proxy should be serializable.
      *
      * @return {@code true} if the proxy should be serializable.
@@ -68,7 +61,7 @@ public @interface FieldProxy {
      *
      * @return The name of the field to be accessed.
      */
-    String value() default "";
+    String value() default TargetMethodAnnotationDrivenBinder.ParameterBinder.FieldBinding.BEAN_PROPERTY;
 
     /**
      * Determines which type defines the field that is to be accessed. If this property is not set, the most field
@@ -76,12 +69,12 @@ public @interface FieldProxy {
      *
      * @return The type that defines the accessed field.
      */
-    Class<?> definingType() default void.class;
+    Class<?> declaringType() default void.class;
 
     /**
      * A binder for the {@link FieldProxy} annotation.
      */
-    class Binder implements TargetMethodAnnotationDrivenBinder.ParameterBinder<FieldProxy> {
+    class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.FieldBinding<FieldProxy> {
 
         /**
          * A reference to the method that declares the field annotation's defining type property.
@@ -103,7 +96,7 @@ public @interface FieldProxy {
          */
         static {
             MethodList<MethodDescription.InDefinedShape> methodList = new TypeDescription.ForLoadedType(FieldProxy.class).getDeclaredMethods();
-            DEFINING_TYPE = methodList.filter(named("definingType")).getOnly();
+            DEFINING_TYPE = methodList.filter(named("declaringType")).getOnly();
             FIELD_NAME = methodList.filter(named("value")).getOnly();
             SERIALIZABLE_PROXY = methodList.filter(named("serializableProxy")).getOnly();
         }
@@ -210,11 +203,22 @@ public @interface FieldProxy {
         }
 
         @Override
-        public MethodDelegationBinder.ParameterBinding<?> bind(AnnotationDescription.Loadable<FieldProxy> annotation,
-                                                               MethodDescription source,
-                                                               ParameterDescription target,
-                                                               Implementation.Target implementationTarget,
-                                                               Assigner assigner) {
+        protected String fieldName(AnnotationDescription.Loadable<FieldProxy> annotation) {
+            return annotation.getValue(FIELD_NAME, String.class);
+        }
+
+        @Override
+        protected TypeDescription declaringType(AnnotationDescription.Loadable<FieldProxy> annotation) {
+            return annotation.getValue(DEFINING_TYPE, TypeDescription.class);
+        }
+
+        @Override
+        protected MethodDelegationBinder.ParameterBinding<?> bind(FieldDescription fieldDescription,
+                                                                  AnnotationDescription.Loadable<FieldProxy> annotation,
+                                                                  MethodDescription source,
+                                                                  ParameterDescription target,
+                                                                  Implementation.Target implementationTarget,
+                                                                  Assigner assigner) {
             AccessType accessType;
             if (target.getType().asErasure().equals(getterMethod.getDeclaringType())) {
                 accessType = AccessType.GETTER;
@@ -223,48 +227,11 @@ public @interface FieldProxy {
             } else {
                 throw new IllegalStateException(target + " uses a @Field annotation on an non-installed type");
             }
-            TypeDescription definingType = annotation.getValue(DEFINING_TYPE, TypeDescription.class);
-            if (!definingType.represents(void.class)) {
-                if (definingType.isPrimitive()) {
-                    throw new IllegalStateException("A primitive type cannot declare a field: " + source);
-                } else if (!implementationTarget.getInstrumentedType().isAssignableTo(definingType)) {
-                    return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
-                }
-            }
-            FieldLocator fieldLocator = definingType.represents(void.class)
-                    ? new FieldLocator.ForClassHierarchy(implementationTarget.getInstrumentedType())
-                    : new FieldLocator.ForExactType(definingType, implementationTarget.getInstrumentedType());
-            String fieldName = annotation.getValue(FIELD_NAME, String.class);
-            FieldLocator.Resolution resolution = fieldName.equals(BEAN_PROPERTY)
-                    ? resolveAccessor(fieldLocator, source)
-                    : fieldLocator.locate(fieldName);
-            return resolution.isResolved() && !(source.isStatic() && !resolution.getField().isStatic())
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(
-                    resolution.getField(),
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(fieldDescription,
                     assigner,
                     implementationTarget.getInstrumentedType(),
                     accessType,
-                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
-                    : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
-        }
-
-        /**
-         * Resolves a field locator for a potential accessor method.
-         *
-         * @param fieldLocator      The field locator to use.
-         * @param methodDescription The method description that is the potential accessor.
-         * @return A resolution for a field locator.
-         */
-        private static FieldLocator.Resolution resolveAccessor(FieldLocator fieldLocator, MethodDescription methodDescription) {
-            String fieldName;
-            if (isSetter().matches(methodDescription)) {
-                fieldName = methodDescription.getInternalName().substring(3);
-            } else if (isGetter().matches(methodDescription)) {
-                fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
-            } else {
-                return FieldLocator.Resolution.Illegal.INSTANCE;
-            }
-            return fieldLocator.locate(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
+                    annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)));
         }
 
         @Override

@@ -1408,7 +1408,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Factory() {
                                 MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
                                 value = methods.filter(named("value")).getOnly();
-                                definingType = methods.filter(named("definingType")).getOnly();
+                                definingType = methods.filter(named("declaringType")).getOnly();
                             }
 
                             /**
@@ -1417,7 +1417,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             private final MethodDescription.InDefinedShape value;
 
                             /**
-                             * The {@link FieldValue#definingType()}} method.
+                             * The {@link FieldValue#declaringType()}} method.
                              */
                             private final MethodDescription.InDefinedShape definingType;
 
@@ -2450,7 +2450,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @return The type that declares the field or {@code void} if this type should be determined implicitly.
          */
-        Class<?> definingType() default void.class;
+        Class<?> declaringType() default void.class;
     }
 
     /**

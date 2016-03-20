@@ -138,7 +138,7 @@ public class MethodDelegationFieldValueTest extends AbstractImplementationTest {
 
     public static class ExplicitInterceptor {
 
-        public static Object intercept(@FieldValue(value = FOO, definingType = SimpleField.class) Object value) {
+        public static Object intercept(@FieldValue(value = FOO, declaringType = SimpleField.class) Object value) {
             return value;
         }
     }
