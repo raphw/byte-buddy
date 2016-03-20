@@ -26,7 +26,7 @@ public class FieldLocatorResolutionTest {
 
     @Test
     public void testSimpleResolutionFieldDescription() throws Exception {
-        assertThat(new FieldLocator.Resolution.Simple(fieldDescription).getFieldDescription(), is(fieldDescription));
+        assertThat(new FieldLocator.Resolution.Simple(fieldDescription).getField(), is(fieldDescription));
     }
 
     @Test
@@ -36,7 +36,7 @@ public class FieldLocatorResolutionTest {
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalResolutionFieldDescription() throws Exception {
-        FieldLocator.Resolution.Illegal.INSTANCE.getFieldDescription();
+        FieldLocator.Resolution.Illegal.INSTANCE.getField();
     }
 
     @Test

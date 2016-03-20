@@ -16,14 +16,14 @@ public class FieldLocatorExactTypeTest {
     public void testExactTypeFound() throws Exception {
         FieldLocator.Resolution resolution = new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO);
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
+        assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test
     public void testExactTypeFoundWithType() throws Exception {
         FieldLocator.Resolution resolution = new FieldLocator.ForExactType(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Void.class));
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
+        assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test

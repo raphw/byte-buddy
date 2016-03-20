@@ -48,7 +48,7 @@ public interface FieldLocator {
          *
          * @return The located field.
          */
-        FieldDescription getFieldDescription();
+        FieldDescription getField();
 
         /**
          * An illegal resolution.
@@ -66,7 +66,7 @@ public interface FieldLocator {
             }
 
             @Override
-            public FieldDescription getFieldDescription() {
+            public FieldDescription getField() {
                 throw new IllegalStateException("Could not locate field");
             }
 
@@ -101,7 +101,7 @@ public interface FieldLocator {
             }
 
             @Override
-            public FieldDescription getFieldDescription() {
+            public FieldDescription getField() {
                 return fieldDescription;
             }
 

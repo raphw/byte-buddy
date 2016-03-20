@@ -1291,12 +1291,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             FieldLocator.Resolution resolution = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
                             if (!resolution.isResolved()) {
                                 throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedMethod);
-                            } else if (!resolution.getFieldDescription().getType().asErasure().isAssignableTo(targetType)) {
-                                throw new IllegalStateException("Cannot assign type of field " + resolution.getFieldDescription() + " to " + targetType);
-                            } else if (!resolution.getFieldDescription().isStatic() && instrumentedMethod.isStatic()) {
-                                throw new IllegalStateException("Cannot read non-static field " + resolution.getFieldDescription() + " from static method " + instrumentedMethod);
+                            } else if (!resolution.getField().getType().asErasure().isAssignableTo(targetType)) {
+                                throw new IllegalStateException("Cannot assign type of field " + resolution.getField() + " to " + targetType);
+                            } else if (!resolution.getField().isStatic() && instrumentedMethod.isStatic()) {
+                                throw new IllegalStateException("Cannot read non-static field " + resolution.getField() + " from static method " + instrumentedMethod);
                             }
-                            return new Target.ForField(resolution.getFieldDescription());
+                            return new Target.ForField(resolution.getField());
                         }
 
                         /**

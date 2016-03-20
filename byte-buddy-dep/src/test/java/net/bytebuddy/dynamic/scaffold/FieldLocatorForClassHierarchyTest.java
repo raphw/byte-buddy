@@ -16,28 +16,28 @@ public class FieldLocatorForClassHierarchyTest {
     public void testClassHierarchyTypeFound() throws Exception {
         FieldLocator.Resolution resolution = new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO);
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
+        assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test
     public void testClassHierarchyFoundWithType() throws Exception {
         FieldLocator.Resolution resolution = new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Foo.class)).locate(FOO, new TypeDescription.ForLoadedType(Void.class));
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
+        assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(FOO))));
     }
 
     @Test
     public void testClassHierarchyFoundInherited() throws Exception {
         FieldLocator.Resolution resolution = new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Qux.class)).locate(BAR);
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(BAR))));
+        assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Foo.class.getDeclaredField(BAR))));
     }
 
     @Test
     public void testClassHierarchyFoundInheritedShadowed() throws Exception {
         FieldLocator.Resolution resolution = new FieldLocator.ForClassHierarchy(new TypeDescription.ForLoadedType(Bar.class)).locate(BAR);
         assertThat(resolution.isResolved(), is(true));
-        assertThat(resolution.getFieldDescription(), is((FieldDescription) new FieldDescription.ForLoadedField(Bar.class.getDeclaredField(BAR))));
+        assertThat(resolution.getField(), is((FieldDescription) new FieldDescription.ForLoadedField(Bar.class.getDeclaredField(BAR))));
     }
 
     @Test

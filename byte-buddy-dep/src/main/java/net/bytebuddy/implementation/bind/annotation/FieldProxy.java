@@ -4,14 +4,12 @@ import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
-import net.bytebuddy.description.field.FieldList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.DynamicType;
-import net.bytebuddy.dynamic.TargetType;
+import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.dynamic.scaffold.InstrumentedType;
 import net.bytebuddy.dynamic.scaffold.subclass.ConstructorStrategy;
 import net.bytebuddy.implementation.Implementation;
@@ -225,17 +223,48 @@ public @interface FieldProxy {
             } else {
                 throw new IllegalStateException(target + " uses a @Field annotation on an non-installed type");
             }
-            FieldLocator.Resolution resolution = FieldLocator.of(annotation.getValue(FIELD_NAME, String.class), source)
-                    .lookup(annotation.getValue(DEFINING_TYPE, TypeDescription.class), implementationTarget.getInstrumentedType())
-                    .resolve(implementationTarget.getInstrumentedType(), source.isStatic());
-            return resolution.isValid()
+            TypeDescription definingType = annotation.getValue(DEFINING_TYPE, TypeDescription.class);
+            if (!definingType.represents(void.class)) {
+                if (definingType.isPrimitive()) {
+                    throw new IllegalStateException("A primitive type cannot declare a field: " + source);
+                } else if (!implementationTarget.getInstrumentedType().isAssignableTo(definingType)) {
+                    return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+                }
+            }
+            FieldLocator fieldLocator = definingType.represents(void.class)
+                    ? new FieldLocator.ForClassHierarchy(implementationTarget.getInstrumentedType())
+                    : new FieldLocator.ForExactType(definingType, implementationTarget.getInstrumentedType());
+            String fieldName = annotation.getValue(FIELD_NAME, String.class);
+            FieldLocator.Resolution resolution = fieldName.equals(BEAN_PROPERTY)
+                    ? resolveAccessor(fieldLocator, source)
+                    : fieldLocator.locate(fieldName);
+            return resolution.isResolved() && !(source.isStatic() && !resolution.getField().isStatic())
                     ? new MethodDelegationBinder.ParameterBinding.Anonymous(new AccessorProxy(
-                    resolution.getFieldDescription(),
+                    resolution.getField(),
                     assigner,
                     implementationTarget.getInstrumentedType(),
                     accessType,
                     annotation.getValue(SERIALIZABLE_PROXY, Boolean.class)))
                     : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+        }
+
+        /**
+         * Resolves a field locator for a potential accessor method.
+         *
+         * @param fieldLocator      The field locator to use.
+         * @param methodDescription The method description that is the potential accessor.
+         * @return A resolution for a field locator.
+         */
+        private static FieldLocator.Resolution resolveAccessor(FieldLocator fieldLocator, MethodDescription methodDescription) {
+            String fieldName;
+            if (isSetter().matches(methodDescription)) {
+                fieldName = methodDescription.getInternalName().substring(3);
+            } else if (isGetter().matches(methodDescription)) {
+                fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
+            } else {
+                return FieldLocator.Resolution.Illegal.INSTANCE;
+            }
+            return fieldLocator.locate(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
         }
 
         @Override
@@ -757,380 +786,6 @@ public @interface FieldProxy {
                     return "FieldProxy.Binder.InstanceFieldConstructor.Appender{" +
                             "fieldDescription=" + fieldDescription +
                             '}';
-                }
-            }
-        }
-
-        /**
-         * A field locator is responsible for locating the type a field is defined in.
-         */
-        protected abstract static class FieldLocator {
-
-            /**
-             * Returns a field locator for a given field.
-             *
-             * @param fieldName         The field's name which might represent
-             *                          {@link FieldProxy#BEAN_PROPERTY}
-             *                          if the field's name should be derived from a method's name.
-             * @param methodDescription The intercepted method.
-             * @return An appropriate field locator.
-             */
-            protected static FieldLocator of(String fieldName, MethodDescription methodDescription) {
-                return BEAN_PROPERTY.equals(fieldName)
-                        ? Legal.consider(methodDescription)
-                        : new Legal(fieldName);
-            }
-
-            /**
-             * Locates a field of a given name on a specific type.
-             *
-             * @param typeDescription  The type which defines the field or a representation of {@code void} for
-             *                         looking up a type implicitly within the type hierarchy.
-             * @param instrumentedType The instrumented type from which a field is to be accessed.
-             * @return A corresponding lookup engine.
-             */
-            protected abstract LookupStrategy lookup(TypeDescription typeDescription, TypeDescription instrumentedType);
-
-            /**
-             * A resolution represents the result of a field location.
-             */
-            protected abstract static class Resolution {
-
-                /**
-                 * Determines if a field lookup was successful.
-                 *
-                 * @return {@code true} if a field lookup was successful.
-                 */
-                protected abstract boolean isValid();
-
-                /**
-                 * Returns a description of the located field. This method must only be called for valid
-                 * resolutions.
-                 *
-                 * @return The located field.
-                 */
-                protected abstract FieldDescription getFieldDescription();
-
-                /**
-                 * A resolution for a non-located field.
-                 */
-                protected static class Unresolved extends Resolution {
-
-                    @Override
-                    protected boolean isValid() {
-                        return false;
-                    }
-
-                    @Override
-                    protected FieldDescription getFieldDescription() {
-                        throw new IllegalStateException("Cannot resolve an unresolved field lookup");
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return 17;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return other == this || (other != null && other.getClass() == getClass());
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.Resolution.Unresolved{}";
-                    }
-                }
-
-                /**
-                 * A resolution for a successfully located field.
-                 */
-                protected static class Resolved extends Resolution {
-
-                    /**
-                     * The located field.
-                     */
-                    private final FieldDescription fieldDescription;
-
-                    /**
-                     * Creates a new successful resolution.
-                     *
-                     * @param fieldDescription The located field.
-                     */
-                    protected Resolved(FieldDescription fieldDescription) {
-                        this.fieldDescription = fieldDescription;
-                    }
-
-                    @Override
-                    protected boolean isValid() {
-                        return true;
-                    }
-
-                    @Override
-                    protected FieldDescription getFieldDescription() {
-                        return fieldDescription;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && fieldDescription.equals(((Resolved) other).fieldDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return fieldDescription.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.Resolution.Resolved{" +
-                                "fieldDescription=" + fieldDescription +
-                                '}';
-                    }
-                }
-            }
-
-            /**
-             * A lookup engine is responsible for finding a specific field in a type hierarchy.
-             */
-            protected abstract static class LookupStrategy {
-
-                /**
-                 * Locates a field if possible and returns a corresponding resolution.
-                 *
-                 * @param instrumentedType The instrumented type from which a field is to be accessed.
-                 * @param staticMethod     {@code true} if the intercepted method is static.
-                 * @return A resolution of the field name lookup.
-                 */
-                protected abstract Resolution resolve(TypeDescription instrumentedType, boolean staticMethod);
-
-                /**
-                 * Represents a lookup engine that can only produce illegal look-ups.
-                 */
-                protected static class Illegal extends LookupStrategy {
-
-                    @Override
-                    protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
-                        return new Resolution.Unresolved();
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return 17;
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return other == this || (other != null && other.getClass() == getClass());
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.LookupStrategy.Illegal{}";
-                    }
-                }
-
-                /**
-                 * Represents a lookup engine that tries to find the most specific field in a class hierarchy.
-                 */
-                protected static class ForHierarchy extends LookupStrategy {
-
-                    /**
-                     * The name of the field to be found.
-                     */
-                    private final String fieldName;
-
-                    /**
-                     * Creates a new lookup engine that looks up a field name within the class hierarchy of the
-                     * instrumented type.
-                     *
-                     * @param fieldName The name of the field to be found.
-                     */
-                    protected ForHierarchy(String fieldName) {
-                        this.fieldName = fieldName;
-                    }
-
-                    @Override
-                    protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
-                        for (TypeDefinition currentType : instrumentedType) {
-                            FieldList<?> fieldList = currentType.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
-                            if (fieldList.size() > 1) {
-                                throw new IllegalStateException("Ambiguous fields: " + fieldList);
-                            } else if (!fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())) {
-                                return new Resolution.Resolved(fieldList.getOnly());
-                            }
-                        }
-                        return new Resolution.Unresolved();
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && fieldName.equals(((ForHierarchy) other).fieldName);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return fieldName.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.LookupStrategy.ForHierarchy{" +
-                                "fieldName='" + fieldName + '\'' +
-                                '}';
-                    }
-                }
-
-                /**
-                 * Represents a lookup engine that tries to find a field for a given type.
-                 */
-                protected static class ForExplicitType extends LookupStrategy {
-
-                    /**
-                     * The name of the field.
-                     */
-                    private final String fieldName;
-
-                    /**
-                     * The type which is supposed to define a field with the given field name.
-                     */
-                    private final TypeDescription typeDescription;
-
-                    /**
-                     * Creates a new lookup engine for a given type.
-                     *
-                     * @param fieldName       The name of the field to be found.
-                     * @param typeDescription The type which is supposed to define a field with the given field name.
-                     */
-                    protected ForExplicitType(String fieldName, TypeDescription typeDescription) {
-                        this.fieldName = fieldName;
-                        this.typeDescription = typeDescription;
-                    }
-
-                    @Override
-                    protected Resolution resolve(TypeDescription instrumentedType, boolean staticMethod) {
-                        FieldList<?> fieldList = typeDescription.getDeclaredFields().filter(named(fieldName).and(isVisibleTo(instrumentedType)));
-                        if (fieldList.size() > 1) {
-                            throw new IllegalStateException("Ambiguous fields: " + fieldList);
-                        }
-                        return !fieldList.isEmpty() && (!staticMethod || fieldList.getOnly().isStatic())
-                                ? new Resolution.Resolved(fieldList.getOnly())
-                                : new Resolution.Unresolved();
-                    }
-
-                    @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && fieldName.equals(((ForExplicitType) other).fieldName)
-                                && typeDescription.equals(((ForExplicitType) other).typeDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        int result = fieldName.hashCode();
-                        result = 31 * result + typeDescription.hashCode();
-                        return result;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "FieldProxy.Binder.FieldLocator.LookupStrategy.ForExplicitType{" +
-                                "fieldName='" + fieldName + '\'' +
-                                ", typeDescription=" + typeDescription +
-                                '}';
-                    }
-                }
-            }
-
-            /**
-             * Represents a field locator for a field whose name could be located.
-             */
-            protected static class Legal extends FieldLocator {
-
-                /**
-                 * The name of the field.
-                 */
-                private final String fieldName;
-
-                /**
-                 * Creates a new field locator for a legal field name.
-                 *
-                 * @param fieldName The name of the field.
-                 */
-                protected Legal(String fieldName) {
-                    this.fieldName = fieldName;
-                }
-
-                /**
-                 * Considers a given method to expose a field name by following the Java bean naming conventions
-                 * for getter and setter methods.
-                 *
-                 * @param methodDescription The method to consider for such a field name identification.
-                 * @return A corresponding field name locator.
-                 */
-                protected static FieldLocator consider(MethodDescription methodDescription) {
-                    String fieldName;
-                    if (isSetter().matches(methodDescription)) {
-                        fieldName = methodDescription.getInternalName().substring(3);
-                    } else if (isGetter().matches(methodDescription)) {
-                        fieldName = methodDescription.getInternalName().substring(methodDescription.getInternalName().startsWith("is") ? 2 : 3);
-                    } else {
-                        return new Illegal();
-                    }
-                    return new Legal(Character.toLowerCase(fieldName.charAt(0)) + fieldName.substring(1));
-                }
-
-                @Override
-                protected LookupStrategy lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
-                    return typeDescription.represents(void.class)
-                            ? new LookupStrategy.ForHierarchy(fieldName)
-                            : new LookupStrategy.ForExplicitType(fieldName, TargetType.resolve(typeDescription, instrumentedType));
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return this == other || !(other == null || getClass() != other.getClass())
-                            && fieldName.equals(((Legal) other).fieldName);
-                }
-
-                @Override
-                public int hashCode() {
-                    return fieldName.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldLocator.Legal{" +
-                            "fieldName='" + fieldName + '\'' +
-                            '}';
-                }
-            }
-
-            /**
-             * Represents an illegal field locator which can impossible locate a field.
-             */
-            protected static class Illegal extends FieldLocator {
-
-                @Override
-                protected LookupStrategy lookup(TypeDescription typeDescription, TypeDescription instrumentedType) {
-                    return new LookupStrategy.Illegal();
-                }
-
-                @Override
-                public int hashCode() {
-                    return 31;
-                }
-
-                @Override
-                public boolean equals(Object other) {
-                    return other == this || (other != null && other.getClass() == getClass());
-                }
-
-                @Override
-                public String toString() {
-                    return "FieldProxy.Binder.FieldLocator.Illegal{}";
                 }
             }
         }
