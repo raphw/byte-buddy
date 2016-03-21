@@ -99,7 +99,7 @@ public @interface FieldValue {
 
         @Override
         public Class<FieldValue> getHandledType() {
-            return FieldValue.class;
+            return delegate.getHandledType();
         }
 
         @Override
