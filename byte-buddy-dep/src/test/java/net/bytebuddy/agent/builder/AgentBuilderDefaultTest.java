@@ -406,7 +406,7 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
-    public void testSkipRedefinitionWithIgnored() throws Exception {
+    public void testSkipRedefinitionWithIgnoredType() throws Exception {
         when(dynamicType.getBytes()).thenReturn(BAZ);
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         @SuppressWarnings("unchecked")
@@ -437,6 +437,43 @@ public class AgentBuilderDefaultTest {
         verifyZeroInteractions(initializationStrategy);
         verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
         verifyNoMoreInteractions(ignoredTypes);
+    }
+
+    @Test
+    public void testSkipRedefinitionWithIgnoredClassLoader() throws Exception {
+        when(dynamicType.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super ClassLoader> ignoredClassLoaders = mock(ElementMatcher.class);
+        when(ignoredClassLoaders.matches(REDEFINED.getClassLoader())).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(binaryLocator)
+                .with(typeStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .with(accessControlContext)
+                .ignore(ignoredTypes, ignoredClassLoaders)
+                .type(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
+        verify(listener).onComplete(REDEFINED.getName());
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verifyZeroInteractions(rawMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verify(ignoredClassLoaders).matches(REDEFINED.getClassLoader());
+        verifyNoMoreInteractions(ignoredClassLoaders);
+        verifyZeroInteractions(ignoredTypes);
     }
 
     @Test
@@ -793,6 +830,7 @@ public class AgentBuilderDefaultTest {
                 accessControlContext,
                 initializationStrategy,
                 mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
+                mock(ElementMatcher.class),
                 mock(ElementMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class))
                 .transform(null,
