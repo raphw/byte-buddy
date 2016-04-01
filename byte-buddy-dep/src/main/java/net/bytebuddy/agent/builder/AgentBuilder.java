@@ -267,8 +267,8 @@ public interface AgentBuilder {
      * <p>
      * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
      * as possible. Byte Buddy can determine a type's name without parsing its class file and can therefore discard such
-     * types prematurely. When a different property of a type - such as for example its modifiers or its annotations is
-     * accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
+     * types with minimal overhead. When a different property of a type - such as for example its modifiers or its annotations
+     * is accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
      * of a name should always be done as a first step and even if it does not influence the selection of what types are
      * matched. Without changing this property, the class file of every type is being parsed!
      * </p>
@@ -287,8 +287,8 @@ public interface AgentBuilder {
      * <p>
      * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
      * as possible. Byte Buddy can determine a type's name without parsing its class file and can therefore discard such
-     * types prematurely. When a different property of a type - such as for example its modifiers or its annotations is
-     * accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
+     * types with minimal overhead. When a different property of a type - such as for example its modifiers or its annotations
+     * is accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
      * of a name should always be done as a first step and even if it does not influence the selection of what types are
      * matched. Without changing this property, the class file of every type is being parsed!
      * </p>
