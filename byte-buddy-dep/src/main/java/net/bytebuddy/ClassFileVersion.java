@@ -1,5 +1,6 @@
 package net.bytebuddy;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import org.objectweb.asm.Opcodes;
 
 import java.lang.reflect.InvocationTargetException;
@@ -66,20 +67,21 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
     /**
      * A version locator for the executing JVM.
      */
-    private static final VersionLocator VERSION_LOCATOR;
+    private static final VersionLocator VERSION_LOCATOR = findVersionLocator();
 
-    /*
+    /**
      * Creates a version locator of the executing JVM.
+     *
+     * @return An appropriate version locator.
      */
-    static {
-        VersionLocator versionLocator;
+    @SuppressFBWarnings(value = "REC_CATCH_EXCEPTION", justification = "Exception not supposed to be rethrown")
+    private static VersionLocator findVersionLocator() {
         try {
             Class<?> version = Class.forName("java.lang.Runtime$Version");
-            versionLocator = new VersionLocator.ForJava9CapableVm(version.getDeclaredMethod("current"), version.getDeclaredMethod("major"));
+            return new VersionLocator.ForJava9CapableVm(version.getDeclaredMethod("current"), version.getDeclaredMethod("major"));
         } catch (Exception ignored) {
-            versionLocator = VersionLocator.ForLegacyVm.INSTANCE;
+            return VersionLocator.ForLegacyVm.INSTANCE;
         }
-        VERSION_LOCATOR = versionLocator;
     }
 
     /**

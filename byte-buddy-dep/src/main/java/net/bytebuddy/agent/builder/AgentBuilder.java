@@ -90,7 +90,7 @@ public interface AgentBuilder {
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code typeMatcher}
      * indicates a match.
      */
-    Identified type(ElementMatcher<? super TypeDescription> typeMatcher);
+    Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher);
 
     /**
      * <p>
@@ -115,7 +115,7 @@ public interface AgentBuilder {
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
      * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
      */
-    Identified type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
+    Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
     /**
      * <p>
@@ -136,7 +136,7 @@ public interface AgentBuilder {
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code matcher}
      * indicates a match.
      */
-    Identified type(RawMatcher matcher);
+    Identified.Narrowable type(RawMatcher matcher);
 
     /**
      * Defines the given {@link net.bytebuddy.ByteBuddy} instance to be used by the created agent.
@@ -261,7 +261,7 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Excludes any type that is matched by the provided matcher from instrumentation but matches types by all {@link ClassLoader}s.
+     * Excludes any type that is matched by the provided matcher from instrumentation and considers types by all {@link ClassLoader}s.
      * By default, Byte Buddy does not instrument synthetic types and accepts all class loaders.
      * </p>
      * <p>
@@ -277,12 +277,12 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder that ignores all types that are matched by the provided matcher.
      * All previous matchers for ignored types are discarded.
      */
-    AgentBuilder ignore(ElementMatcher<? super TypeDescription> typeMatcher);
+    Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher);
 
     /**
      * <p>
-     * Excludes any type that is matched by the provided matcher or is loaded by a class loader matching the second matcher from
-     * instrumentation. By default, Byte Buddy does not instrument synthetic types and accepts all class loaders.
+     * Excludes any type that is matched by the provided matcher and is loaded by a class loader matching the second matcher.
+     * By default, Byte Buddy does not instrument synthetic types and accepts all class loaders.
      * </p>
      * <p>
      * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
@@ -298,9 +298,27 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder that ignores all types that are matched by the provided matcher.
      * All previous matchers for ignored types are discarded.
      */
-    AgentBuilder ignore(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
+    Ignored ignore(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
-    AgentBuilder ignore(RawMatcher rawMatcher);
+    /**
+     * <p>
+     * Excludes any type that is matched by the raw matcher provided to this method. By default, Byte Buddy does not
+     * instrument synthetic types and accepts all class loaders.
+     * </p>
+     * <p>
+     * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
+     * as possible. Byte Buddy can determine a type's name without parsing its class file and can therefore discard such
+     * types with minimal overhead. When a different property of a type - such as for example its modifiers or its annotations
+     * is accessed - Byte Buddy parses the class file lazily in order to allow for such a matching. Therefore, any exclusion
+     * of a name should always be done as a first step and even if it does not influence the selection of what types are
+     * matched. Without changing this property, the class file of every type is being parsed!
+     * </p>
+     *
+     * @param rawMatcher A raw matcher that identifies types that should not be instrumented.
+     * @return A new instance of this agent builder that ignores all types that are matched by the provided matcher.
+     * All previous matchers for ignored types are discarded.
+     */
+    Ignored ignore(RawMatcher rawMatcher);
 
     /**
      * Creates a {@link java.lang.instrument.ClassFileTransformer} that implements the configuration of this
@@ -328,20 +346,70 @@ public interface AgentBuilder {
      */
     ClassFileTransformer installOnByteBuddyAgent();
 
+    /**
+     * An abstraction for extending a matcher.
+     *
+     * @param <T> The type that is produced by chaining a matcher.
+     */
     interface Matchable<T extends Matchable<T>> {
 
-        T and(ElementMatcher<? super  TypeDescription> typeMatcher);
+        /**
+         * Defines a matching that is positive if the previous matcher and the supplied matcher are matched. When matching a
+         * type, all class loaders are accepted.
+         *
+         * @param typeMatcher A matcher for the type being matched.
+         * @return A chained matcher.
+         */
+        T and(ElementMatcher<? super TypeDescription> typeMatcher);
 
-        T and(ElementMatcher<? super  TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
+        /**
+         * Defines a matching that is positive if the previous matcher and the supplied matcher are matched.
+         *
+         * @param typeMatcher        A matcher for the type being matched.
+         * @param classLoaderMatcher A matcher for the type's class loader.
+         * @return A chained matcher.
+         */
+        T and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+        /**
+         * Defines a matching that is positive if the previous matcher and the supplied matcher are matched.
+         *
+         * @param rawMatcher A raw matcher for the type being matched.
+         * @return A chained matcher.
+         */
         T and(RawMatcher rawMatcher);
 
-        T or(ElementMatcher<? super  TypeDescription> typeMatcher);
+        /**
+         * Defines a matching that is positive if the previous matcher or the supplied matcher are matched. When matching a
+         * type, all class loaders are accepted.
+         *
+         * @param typeMatcher A matcher for the type being matched.
+         * @return A chained matcher.
+         */
+        T or(ElementMatcher<? super TypeDescription> typeMatcher);
 
-        T or(ElementMatcher<? super  TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
+        /**
+         * Defines a matching that is positive if the previous matcher or the supplied matcher are matched.
+         *
+         * @param typeMatcher        A matcher for the type being matched.
+         * @param classLoaderMatcher A matcher for the type's class loader.
+         * @return A chained matcher.
+         */
+        T or(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
+        /**
+         * Defines a matching that is positive if the previous matcher or the supplied matcher are matched.
+         *
+         * @param rawMatcher A raw matcher for the type being matched.
+         * @return A chained matcher.
+         */
         T or(RawMatcher rawMatcher);
 
+        /**
+         * An abstract base implementation of a matchable.
+         *
+         * @param <S> The type that is produced by chaining a matcher.
+         */
         abstract class AbstractBase<S extends Matchable<S>> implements Matchable<S> {
 
             @Override
@@ -367,6 +435,13 @@ public interface AgentBuilder {
     }
 
     /**
+     * Allows to further specify ignored types.
+     */
+    interface Ignored extends Matchable<Ignored>, AgentBuilder {
+        /* this is merely a unionizing interface that does not declare methods */
+    }
+
+    /**
      * Describes an {@link net.bytebuddy.agent.builder.AgentBuilder} which was handed a matcher for identifying
      * types to instrumented in order to supply one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s.
@@ -381,6 +456,13 @@ public interface AgentBuilder {
          * identified a type for instrumentation which also allows for the registration of subsequent transformers.
          */
         Extendable transform(Transformer transformer);
+
+        /**
+         * Allows to specify a type matcher for a type to instrument.
+         */
+        interface Narrowable extends Matchable<Narrowable>, Identified {
+            /* this is merely a unionizing interface that does not declare methods */
+        }
 
         /**
          * This interface is used to allow for optionally providing several
@@ -416,6 +498,116 @@ public interface AgentBuilder {
                         ClassLoader classLoader,
                         Class<?> classBeingRedefined,
                         ProtectionDomain protectionDomain);
+
+        /**
+         * A conjunction of two raw matchers.
+         */
+        class Conjunction implements RawMatcher {
+
+            /**
+             * The left matcher which is applied first.
+             */
+            private final RawMatcher left;
+
+            /**
+             * The right matcher which is applied second.
+             */
+            private final RawMatcher right;
+
+            /**
+             * Creates a new conjunction of two raw matchers.
+             *
+             * @param left  The left matcher which is applied first.
+             * @param right The right matcher which is applied second.
+             */
+            protected Conjunction(RawMatcher left, RawMatcher right) {
+                this.left = left;
+                this.right = right;
+            }
+
+            @Override
+            public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+                return left.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain) && right.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Conjunction that = (Conjunction) object;
+                return left.equals(that.left) && right.equals(that.right);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = left.hashCode();
+                result = 31 * result + right.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.RawMatcher.Conjunction{" +
+                        "left=" + left +
+                        ", right=" + right +
+                        '}';
+            }
+        }
+
+        /**
+         * A disjunction of two raw matchers.
+         */
+        class Disjunction implements RawMatcher {
+
+            /**
+             * The left matcher which is applied first.
+             */
+            private final RawMatcher left;
+
+            /**
+             * The right matcher which is applied second.
+             */
+            private final RawMatcher right;
+
+            /**
+             * Creates a new disjunction of two raw matchers.
+             *
+             * @param left  The left matcher which is applied first.
+             * @param right The right matcher which is applied second.
+             */
+            protected Disjunction(RawMatcher left, RawMatcher right) {
+                this.left = left;
+                this.right = right;
+            }
+
+            @Override
+            public boolean matches(TypeDescription typeDescription, ClassLoader classLoader, Class<?> classBeingRedefined, ProtectionDomain protectionDomain) {
+                return left.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain) || right.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Disjunction that = (Disjunction) object;
+                return left.equals(that.left) && right.equals(that.right);
+            }
+
+            @Override
+            public int hashCode() {
+                int result = left.hashCode();
+                result = 31 * result + right.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.RawMatcher.Disjunction{" +
+                        "left=" + left +
+                        ", right=" + right +
+                        '}';
+            }
+        }
 
         /**
          * A raw matcher implementation that checks a {@link TypeDescription}
@@ -1786,7 +1978,8 @@ public interface AgentBuilder {
             /**
              * Considers a loaded class for modification.
              *
-             * @param type                The type that is to be considered.
+             * @param type               The type that is to be considered.
+             * @param ignoredTypeMatcher Identifies types that should not be instrumented.
              * @return {@code true} if the class is considered to be redefined.
              */
             boolean consider(Class<?> type, RawMatcher ignoredTypeMatcher);
@@ -3388,6 +3581,9 @@ public interface AgentBuilder {
          */
         private final LambdaInstrumentationStrategy lambdaInstrumentationStrategy;
 
+        /**
+         * Identifies types that should not be instrumented.
+         */
         private final RawMatcher ignoredTypeMatcher;
 
         /**
@@ -3437,6 +3633,7 @@ public interface AgentBuilder {
          * @param bootstrapInjectionStrategy    The injection strategy for injecting classes into the bootstrap class loader.
          * @param lambdaInstrumentationStrategy A strategy to determine of the {@code LambdaMetfactory} should be instrumented to allow for the
          *                                      instrumentation of classes that represent lambda expressions.
+         * @param ignoredTypeMatcher            Identifies types that should not be instrumented.
          * @param transformation                The transformation object for handling type transformations.
          */
         protected Default(ByteBuddy byteBuddy,
@@ -3466,17 +3663,17 @@ public interface AgentBuilder {
         }
 
         @Override
-        public Identified type(RawMatcher matcher) {
-            return new Matched(matcher, Transformer.NoOp.INSTANCE);
+        public Identified.Narrowable type(RawMatcher matcher) {
+            return new Transforming(matcher, Transformer.NoOp.INSTANCE);
         }
 
         @Override
-        public Identified type(ElementMatcher<? super TypeDescription> typeMatcher) {
+        public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
             return type(typeMatcher, any());
         }
 
         @Override
-        public Identified type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+        public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
             return type(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
         }
 
@@ -3657,29 +3854,18 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
-            return ignore(ignoredTypes, none());
+        public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
+            return ignore(ignoredTypes, any());
         }
 
         @Override
-        public AgentBuilder ignore(ElementMatcher<? super TypeDescription> ignoredTypes, ElementMatcher<? super ClassLoader> ignoredClassLoaders) {
+        public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes, ElementMatcher<? super ClassLoader> ignoredClassLoaders) {
             return ignore(new RawMatcher.ForElementMatcherPair(ignoredTypes, ignoredClassLoaders));
         }
 
         @Override
-        public AgentBuilder ignore(RawMatcher ignoredTypeMatcher) {
-            return new Default(byteBuddy,
-                    binaryLocator,
-                    typeStrategy,
-                    listener,
-                    nativeMethodStrategy,
-                    accessControlContext,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
+        public Ignored ignore(RawMatcher rawMatcher) {
+            return new Ignoring(rawMatcher);
         }
 
         @Override
@@ -4060,6 +4246,7 @@ public interface AgentBuilder {
              * @param classLoader         The class loader of the type being transformed.
              * @param classBeingRedefined In case of a type redefinition, the loaded type being transformed or {@code null} if that is not the case.
              * @param protectionDomain    The protection domain of the type being transformed.
+             * @param ignoredTypeMatcher  Identifies types that should not be instrumented.
              * @return A resolution for the given type.
              */
             Resolution resolve(TypeDescription typeDescription,
@@ -4541,6 +4728,9 @@ public interface AgentBuilder {
              */
             private final BootstrapInjectionStrategy bootstrapInjectionStrategy;
 
+            /**
+             * Identifies types that should not be instrumented.
+             */
             private final RawMatcher ignoredTypeMatcher;
 
             /**
@@ -4559,6 +4749,7 @@ public interface AgentBuilder {
              * @param accessControlContext       The access control context to use for loading classes.
              * @param initializationStrategy     The initialization strategy to use for transformed types.
              * @param bootstrapInjectionStrategy The injection strategy for injecting classes into the bootstrap class loader.
+             * @param ignoredTypeMatcher         Identifies types that should not be instrumented.
              * @param transformation             The transformation object for handling type transformations.
              */
             public ExecutingTransformer(ByteBuddy byteBuddy,
@@ -4669,50 +4860,31 @@ public interface AgentBuilder {
         }
 
         /**
-         * A helper class that describes a {@link net.bytebuddy.agent.builder.AgentBuilder.Default} after supplying
-         * a {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} such that one or several
-         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s can be supplied.
+         * An abstract implementation of an agent builder that delegates all invocation to another instance.
+         *
+         * @param <T> The type that is produced by chaining a matcher.
          */
-        protected class Matched extends Matchable.AbstractBase implements Identified.Extendable {
+        protected abstract class Delegator<T extends Matchable<T>> extends Matchable.AbstractBase<T> implements AgentBuilder {
 
             /**
-             * The supplied raw matcher.
-             */
-            private final RawMatcher rawMatcher;
-
-            /**
-             * The supplied transformer.
-             */
-            private final Transformer transformer;
-
-            /**
-             * Creates a new matched default agent builder.
+             * Materializes the currently described {@link net.bytebuddy.agent.builder.AgentBuilder}.
              *
-             * @param rawMatcher  The supplied raw matcher.
-             * @param transformer The supplied transformer.
+             * @return An agent builder that represents the currently described entry of this instance.
              */
-            protected Matched(RawMatcher rawMatcher, Transformer transformer) {
-                this.rawMatcher = rawMatcher;
-                this.transformer = transformer;
-            }
+            protected abstract AgentBuilder materialize();
 
             @Override
-            public Identified.Extendable transform(Transformer transformer) {
-                return new Matched(rawMatcher, new Transformer.Compound(this.transformer, transformer));
-            }
-
-            @Override
-            public Identified type(ElementMatcher<? super TypeDescription> typeMatcher) {
+            public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
                 return materialize().type(typeMatcher);
             }
 
             @Override
-            public Identified type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+            public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
                 return materialize().type(typeMatcher, classLoaderMatcher);
             }
 
             @Override
-            public Identified type(RawMatcher matcher) {
+            public Identified.Narrowable type(RawMatcher matcher) {
                 return materialize().type(matcher);
             }
 
@@ -4777,30 +4949,20 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
+            public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
                 return materialize().ignore(ignoredTypes);
             }
 
             @Override
-            public AgentBuilder ignore(ElementMatcher<? super TypeDescription> ignoredTypes, ElementMatcher<? super ClassLoader> ignoredClassLoaders) {
+            public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes, ElementMatcher<? super ClassLoader> ignoredClassLoaders) {
                 return materialize().ignore(ignoredTypes, ignoredClassLoaders);
             }
 
             @Override
-            public AgentBuilder ignore(RawMatcher rawMatcher) {
-                return null; // TODO
+            public Ignored ignore(RawMatcher rawMatcher) {
+                return materialize().ignore(rawMatcher);
             }
 
-//            @Override
-//            public Identified and(RawMatcher rawMatcher) {
-//                return null; // TODO
-//            }
-//
-//            @Override
-//            public Identified or(RawMatcher rawMatcher) {
-//                return null; // TODO
-//            }
-//
             @Override
             public ClassFileTransformer makeRaw() {
                 return materialize().makeRaw();
@@ -4815,12 +4977,114 @@ public interface AgentBuilder {
             public ClassFileTransformer installOnByteBuddyAgent() {
                 return materialize().installOnByteBuddyAgent();
             }
+        }
+
+        /**
+         * A delegator transformer for further precising what types to ignore.
+         */
+        protected class Ignoring extends Delegator<Ignored> implements Ignored {
 
             /**
-             * Materializes the currently described {@link net.bytebuddy.agent.builder.AgentBuilder.Default.Transformation}.
-             *
-             * @return An agent builder that represents the currently described entry of this instance.
+             * A matcher for identifying types that should not be instrumented.
              */
+            private final RawMatcher rawMatcher;
+
+            /**
+             * Creates a new agent builder for further specifying what types to ignore.
+             *
+             * @param rawMatcher A matcher for identifying types that should not be instrumented.
+             */
+            protected Ignoring(RawMatcher rawMatcher) {
+                this.rawMatcher = rawMatcher;
+            }
+
+            @Override
+            protected AgentBuilder materialize() {
+                return new Default(byteBuddy,
+                        binaryLocator,
+                        typeStrategy,
+                        listener,
+                        nativeMethodStrategy,
+                        accessControlContext,
+                        initializationStrategy,
+                        redefinitionStrategy,
+                        bootstrapInjectionStrategy,
+                        lambdaInstrumentationStrategy,
+                        rawMatcher,
+                        transformation);
+            }
+
+            @Override
+            public Ignored and(RawMatcher rawMatcher) {
+                return new Ignoring(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher));
+            }
+
+            @Override
+            public Ignored or(RawMatcher rawMatcher) {
+                return new Ignoring(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher));
+            }
+
+            /**
+             * Returns the outer instance.
+             *
+             * @return The outer instance.
+             */
+            private Default getOuter() {
+                return Default.this;
+            }
+
+            @Override
+            public boolean equals(Object other) {
+                return this == other || !(other == null || getClass() != other.getClass())
+                        && rawMatcher.equals(((Ignoring) other).rawMatcher)
+                        && Default.this.equals(((Ignoring) other).getOuter());
+            }
+
+            @Override
+            public int hashCode() {
+                int result = rawMatcher.hashCode();
+                result = 31 * result + Default.this.hashCode();
+                return result;
+            }
+
+            @Override
+            public String toString() {
+                return "AgentBuilder.Default.Ignoring{" +
+                        "rawMatcher=" + rawMatcher +
+                        ", agentBuilder=" + Default.this +
+                        '}';
+            }
+        }
+
+        /**
+         * A helper class that describes a {@link net.bytebuddy.agent.builder.AgentBuilder.Default} after supplying
+         * a {@link net.bytebuddy.agent.builder.AgentBuilder.RawMatcher} such that one or several
+         * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s can be supplied.
+         */
+        protected class Transforming extends Delegator<Identified.Narrowable> implements Identified.Extendable, Identified.Narrowable {
+
+            /**
+             * The supplied raw matcher.
+             */
+            private final RawMatcher rawMatcher;
+
+            /**
+             * The supplied transformer.
+             */
+            private final Transformer transformer;
+
+            /**
+             * Creates a new matched default agent builder.
+             *
+             * @param rawMatcher  The supplied raw matcher.
+             * @param transformer The supplied transformer.
+             */
+            protected Transforming(RawMatcher rawMatcher, Transformer transformer) {
+                this.rawMatcher = rawMatcher;
+                this.transformer = transformer;
+            }
+
+            @Override
             protected AgentBuilder materialize() {
                 return new Default(byteBuddy,
                         binaryLocator,
@@ -4836,6 +5100,21 @@ public interface AgentBuilder {
                         new Transformation.Compound(new Transformation.Simple(rawMatcher, transformer), transformation));
             }
 
+            @Override
+            public Identified.Extendable transform(Transformer transformer) {
+                return new Transforming(rawMatcher, new Transformer.Compound(this.transformer, transformer));
+            }
+
+            @Override
+            public Narrowable and(RawMatcher rawMatcher) {
+                return new Transforming(new RawMatcher.Conjunction(this.rawMatcher, rawMatcher), transformer);
+            }
+
+            @Override
+            public Narrowable or(RawMatcher rawMatcher) {
+                return new Transforming(new RawMatcher.Disjunction(this.rawMatcher, rawMatcher), transformer);
+            }
+
             /**
              * Returns the outer instance.
              *
@@ -4848,9 +5127,9 @@ public interface AgentBuilder {
             @Override
             public boolean equals(Object other) {
                 return this == other || !(other == null || getClass() != other.getClass())
-                        && rawMatcher.equals(((Matched) other).rawMatcher)
-                        && transformer.equals(((Matched) other).transformer)
-                        && Default.this.equals(((Matched) other).getOuter());
+                        && rawMatcher.equals(((Transforming) other).rawMatcher)
+                        && transformer.equals(((Transforming) other).transformer)
+                        && Default.this.equals(((Transforming) other).getOuter());
             }
 
             @Override
@@ -4863,7 +5142,7 @@ public interface AgentBuilder {
 
             @Override
             public String toString() {
-                return "AgentBuilder.Default.Matched{" +
+                return "AgentBuilder.Default.Transforming{" +
                         "rawMatcher=" + rawMatcher +
                         ", transformer=" + transformer +
                         ", agentBuilder=" + Default.this +

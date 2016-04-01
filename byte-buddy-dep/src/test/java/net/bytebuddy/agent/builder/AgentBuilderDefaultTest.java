@@ -8,6 +8,7 @@ import net.bytebuddy.dynamic.loading.ClassInjector;
 import net.bytebuddy.dynamic.scaffold.inline.MethodNameTransformer;
 import net.bytebuddy.implementation.LoadedTypeInitializer;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.matcher.ElementMatchers;
 import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.test.utility.MockitoRule;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
@@ -28,6 +29,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import static net.bytebuddy.matcher.ElementMatchers.none;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.any;
@@ -126,6 +128,74 @@ public class AgentBuilderDefaultTest {
                 .disableNativeMethodPrefix()
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName());
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verifyNoMoreInteractions(instrumentation);
+        verify(initializationStrategy).dispatcher();
+        verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(dynamicType,
+                REDEFINED.getClassLoader(),
+                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
+                        REDEFINED.getClassLoader(),
+                        REDEFINED.getProtectionDomain(),
+                        accessControlContext));
+        verifyNoMoreInteractions(dispatcher);
+    }
+
+    @Test
+    public void testSuccessfulWithoutExistingClassConjunction() throws Exception {
+        when(dynamicType.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), null, REDEFINED.getProtectionDomain()))
+                .thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(binaryLocator)
+                .with(typeStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .with(accessControlContext)
+                .type(ElementMatchers.any()).and(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName());
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verifyNoMoreInteractions(instrumentation);
+        verify(initializationStrategy).dispatcher();
+        verifyNoMoreInteractions(initializationStrategy);
+        verify(dispatcher).apply(builder);
+        verify(dispatcher).register(dynamicType,
+                REDEFINED.getClassLoader(),
+                new AgentBuilder.Default.Transformation.Simple.Resolution.BootstrapClassLoaderCapableInjectorFactory(
+                        AgentBuilder.Default.BootstrapInjectionStrategy.Disabled.INSTANCE,
+                        REDEFINED.getClassLoader(),
+                        REDEFINED.getProtectionDomain(),
+                        accessControlContext));
+        verifyNoMoreInteractions(dispatcher);
+    }
+
+    @Test
+    public void testSuccessfulWithoutExistingClassDisjunction() throws Exception {
+        when(dynamicType.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), null, REDEFINED.getProtectionDomain()))
+                .thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(binaryLocator)
+                .with(typeStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .with(accessControlContext)
+                .type(none()).or(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
         verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
@@ -445,6 +515,7 @@ public class AgentBuilderDefaultTest {
         when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
         @SuppressWarnings("unchecked")
         ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
+        when(ignoredTypes.matches(new TypeDescription.ForLoadedType(REDEFINED))).thenReturn(true);
         @SuppressWarnings("unchecked")
         ElementMatcher<? super ClassLoader> ignoredClassLoaders = mock(ElementMatcher.class);
         when(ignoredClassLoaders.matches(REDEFINED.getClassLoader())).thenReturn(true);
@@ -473,7 +544,76 @@ public class AgentBuilderDefaultTest {
         verifyZeroInteractions(initializationStrategy);
         verify(ignoredClassLoaders).matches(REDEFINED.getClassLoader());
         verifyNoMoreInteractions(ignoredClassLoaders);
-        verifyZeroInteractions(ignoredTypes);
+        verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
+        verifyNoMoreInteractions(ignoredTypes);
+    }
+
+    @Test
+    public void testSkipRedefinitionWithIgnoredTypeChainedConjunction() throws Exception {
+        when(dynamicType.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
+        when(ignoredTypes.matches(new TypeDescription.ForLoadedType(REDEFINED))).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(binaryLocator)
+                .with(typeStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .with(accessControlContext)
+                .ignore(ElementMatchers.any()).and(ignoredTypes)
+                .type(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
+        verify(listener).onComplete(REDEFINED.getName());
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verifyZeroInteractions(rawMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
+        verifyNoMoreInteractions(ignoredTypes);
+    }
+
+    @Test
+    public void testSkipRedefinitionWithIgnoredTypeChainedDijunction() throws Exception {
+        when(dynamicType.getBytes()).thenReturn(BAZ);
+        when(resolution.resolve()).thenReturn(new TypeDescription.ForLoadedType(REDEFINED));
+        @SuppressWarnings("unchecked")
+        ElementMatcher<? super TypeDescription> ignoredTypes = mock(ElementMatcher.class);
+        when(ignoredTypes.matches(new TypeDescription.ForLoadedType(REDEFINED))).thenReturn(true);
+        when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
+        when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
+        ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
+                .with(initializationStrategy)
+                .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
+                .with(binaryLocator)
+                .with(typeStrategy)
+                .with(listener)
+                .disableNativeMethodPrefix()
+                .with(accessControlContext)
+                .ignore(none()).or(ignoredTypes)
+                .type(rawMatcher).transform(transformer)
+                .installOn(instrumentation);
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
+        verify(listener).onComplete(REDEFINED.getName());
+        verifyNoMoreInteractions(listener);
+        verify(instrumentation).addTransformer(classFileTransformer, false);
+        verify(instrumentation).isModifiableClass(REDEFINED);
+        verify(instrumentation).getAllLoadedClasses();
+        verify(instrumentation).isRedefineClassesSupported();
+        verifyNoMoreInteractions(instrumentation);
+        verifyZeroInteractions(rawMatcher);
+        verifyZeroInteractions(initializationStrategy);
+        verify(ignoredTypes).matches(new TypeDescription.ForLoadedType(REDEFINED));
+        verifyNoMoreInteractions(ignoredTypes);
     }
 
     @Test
@@ -830,8 +970,7 @@ public class AgentBuilderDefaultTest {
                 accessControlContext,
                 initializationStrategy,
                 mock(AgentBuilder.Default.BootstrapInjectionStrategy.class),
-                mock(ElementMatcher.class),
-                mock(ElementMatcher.class),
+                mock(AgentBuilder.RawMatcher.class),
                 mock(AgentBuilder.Default.Transformation.class))
                 .transform(null,
                         null,
@@ -848,7 +987,8 @@ public class AgentBuilderDefaultTest {
                 return new AccessControlContext(new ProtectionDomain[]{mock(ProtectionDomain.class)});
             }
         }).apply();
-        ObjectPropertyAssertion.of(AgentBuilder.Default.Matched.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.Ignoring.class).apply();
+        ObjectPropertyAssertion.of(AgentBuilder.Default.Transforming.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Simple.Resolution.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Default.Transformation.Ignored.class).apply();
