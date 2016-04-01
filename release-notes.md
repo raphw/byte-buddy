@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 1. April 2016: version 1.3.6
+
+- Implemented universal `FieldLocator`.
+- Extended `AgentBuilder` API to allow for more flexible matching and ignoring types.
+
 ### 18. Match 2016: version 1.3.5
 
 - Added `Advice.FieldValue` annotation for reading fields from advice.
