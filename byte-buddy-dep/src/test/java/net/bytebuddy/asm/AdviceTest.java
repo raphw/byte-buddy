@@ -470,6 +470,32 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
+    @Test
+    public void testOriginAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testOriginCustomAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(OriginCustomAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
@@ -634,6 +660,21 @@ public class AdviceTest {
                 .make();
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalOriginType() throws Exception {
+        Advice.to(IllegalOriginType.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalOriginPattern() throws Exception {
+        Advice.to(IllegalOriginPattern.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalOriginPatternEnd() throws Exception {
+        Advice.to(IllegalOriginPatternEnd.class);
+    }
+
     @Test
     public void testCannotInstantiateSuppressionMarker() throws Exception {
         Class<?> type = Class.forName(Advice.class.getName() + "$NoSuppression");
@@ -657,6 +698,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForConstantPoolValue.class).apply();
         final int[] value = new int[1];
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
             @Override
@@ -670,6 +712,13 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithImplicitType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithExplicitType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForConstantValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForDescriptor.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForMethodName.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThrowable.class).apply();
@@ -1180,6 +1229,48 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
+    public static class OriginAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Origin String origin) throws Exception {
+            if (!origin.equals(Sample.class.getDeclaredMethod(FOO).toString())) {
+                throw new AssertionError();
+            }
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin String origin) throws Exception {
+            if (!origin.equals(Sample.class.getDeclaredMethod(FOO).toString())) {
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class OriginCustomAdvice {
+
+        @Advice.OnMethodEnter
+        private static void enter(@Advice.Origin("#t #m #d") String origin) throws Exception {
+            if (!origin.equals(Sample.class.getName() + " " + FOO + " ()L" + String.class.getName().replace('.', '/') + ";")) {
+            System.out.println(origin);
+                throw new AssertionError();
+            }
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin("\\#\\#\\\\#m") String origin) throws Exception {
+            if (!origin.equals("##\\" + FOO)) {
+            System.out.println(origin);
+                throw new AssertionError();
+            }
+            Sample.exit++;
+        }
+    }
+
     public static class FieldAdviceIllegalExplicit {
 
         @Advice.OnMethodEnter
@@ -1357,6 +1448,33 @@ public class AdviceTest {
 
         @Advice.OnMethodExit
         private static void exit(@Advice.Thrown Object value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalOriginType {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin Void value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalOriginPattern {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin("#x") String value) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalOriginPatternEnd {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin("#") String value) {
             throw new AssertionError();
         }
     }

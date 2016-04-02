@@ -16,10 +16,7 @@ import org.objectweb.asm.*;
 
 import java.io.IOException;
 import java.lang.annotation.*;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
@@ -1020,6 +1017,51 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         '}';
                             }
                         }
+
+                        /**
+                         * An offset mapping for a constant pool value.
+                         */
+                        class ForConstantPoolValue implements Target {
+
+                            /**
+                             * The constant pool value.
+                             */
+                            private final Object value;
+
+                            /**
+                             * Createsa mapping for a constant pool value.
+                             *
+                             * @param value The constant pool value.
+                             */
+                            protected ForConstantPoolValue(Object value) {
+                                this.value = value;
+                            }
+
+                            @Override
+                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                                methodVisitor.visitLdcInsn(value);
+                            }
+
+                            @Override
+                            public boolean equals(Object object) {
+                                if (this == object) return true;
+                                if (object == null || getClass() != object.getClass()) return false;
+                                ForConstantPoolValue that = (ForConstantPoolValue) object;
+                                return value.equals(that.value);
+                            }
+
+                            @Override
+                            public int hashCode() {
+                                return value.hashCode();
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForConstantPoolValue{" +
+                                        "value=" + value +
+                                        '}';
+                            }
+                        }
                     }
 
                     /**
@@ -1444,6 +1486,293 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     /**
+                     * An offset mapping for the {@link Advice.Origin} annotation.
+                     */
+                    class ForOrigin implements OffsetMapping {
+
+                        /**
+                         * The delimiter character.
+                         */
+                        private static final char DELIMITER = '#';
+
+                        /**
+                         * The escape character.
+                         */
+                        private static final char ESCAPE = '\\';
+
+                        /**
+                         * The method name symbol.
+                         */
+                        private static final char METHOD_NAME = 'm';
+
+                        /**
+                         * The type name symbol.
+                         */
+                        private static final char TYPE_NAME = 't';
+
+                        /**
+                         * The descriptor symbol.
+                         */
+                        private static final char DESCRIPTOR = 'd';
+
+                        /**
+                         * The renderers to apply.
+                         */
+                        private final List<Renderer> renderers;
+
+                        /**
+                         * Creates a new offset mapping for an origin value.
+                         *
+                         * @param renderers The renderers to apply.
+                         */
+                        protected ForOrigin(List<Renderer> renderers) {
+                            this.renderers = renderers;
+                        }
+
+                        /**
+                         * Parses a pattern of an origin annotation.
+                         *
+                         * @param pattern The supplied pattern.
+                         * @return An appropriate offset mapping.
+                         */
+                        protected static OffsetMapping parse(String pattern) {
+                            if (pattern.equals(Origin.DEFAULT)) {
+                                return new ForOrigin(Collections.<Renderer>singletonList(Renderer.ForStringRepresentation.INSTANCE));
+                            } else {
+                                List<Renderer> renderers = new ArrayList<Renderer>(pattern.length());
+                                int from = 0;
+                                for (int to = pattern.indexOf(DELIMITER); to != -1; to = pattern.indexOf(DELIMITER, from)) {
+                                    if (to != 0 && pattern.charAt(to - 1) == ESCAPE && (to == 1 || pattern.charAt(to - 2) != ESCAPE)) {
+                                        renderers.add(new Renderer.ForConstantValue(pattern.substring(from, Math.max(0, to - 1)) + DELIMITER));
+                                        from = to + 1;
+                                        continue;
+                                    } else if (pattern.length() == to + 1) {
+                                        throw new IllegalStateException("Missing sort descriptor for " + pattern + " at index " + to);
+                                    }
+                                    renderers.add(new Renderer.ForConstantValue(pattern.substring(from, to).replace("" + ESCAPE + ESCAPE, "" + ESCAPE)));
+                                    switch (pattern.charAt(to + 1)) {
+                                        case METHOD_NAME:
+                                            renderers.add(Renderer.ForMethodName.INSTANCE);
+                                            break;
+                                        case TYPE_NAME:
+                                            renderers.add(Renderer.ForTypeName.INSTANCE);
+                                            break;
+                                        case DESCRIPTOR:
+                                            renderers.add(Renderer.ForDescriptor.INSTANCE);
+                                            break;
+                                        default:
+                                            throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
+                                    }
+                                    from = to + 2;
+                                }
+                                renderers.add(new Renderer.ForConstantValue(pattern.substring(from)));
+                                return new ForOrigin(renderers);
+                            }
+                        }
+
+                        @Override
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize additionalSize) {
+                            StringBuilder stringBuilder = new StringBuilder();
+                            for (Renderer renderer : renderers) {
+                                stringBuilder.append(renderer.apply(instrumentedMethod));
+                            }
+                            return new Target.ForConstantPoolValue(stringBuilder.toString());
+                        }
+
+                        @Override
+                        public boolean equals(Object object) {
+                            if (this == object) return true;
+                            if (object == null || getClass() != object.getClass()) return false;
+                            ForOrigin forOrigin = (ForOrigin) object;
+                            return renderers.equals(forOrigin.renderers);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return renderers.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin{" +
+                                    "renderers=" + renderers +
+                                    '}';
+                        }
+
+                        /**
+                         * A renderer for an origin pattern element.
+                         */
+                        protected interface Renderer {
+
+                            /**
+                             * Returns a string representation for this renderer.
+                             *
+                             * @param instrumentedMethod The method being rendered.
+                             * @return The string representation.
+                             */
+                            String apply(MethodDescription.InDefinedShape instrumentedMethod);
+
+                            /**
+                             * A renderer for a method's internal name.
+                             */
+                            enum ForMethodName implements Renderer {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                @Override
+                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                                    return instrumentedMethod.getInternalName();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForMethodName." + name();
+                                }
+                            }
+
+                            /**
+                             * A renderer for a method declaring type's binary name.
+                             */
+                            enum ForTypeName implements Renderer {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                @Override
+                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                                    return instrumentedMethod.getDeclaringType().getName();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForTypeName." + name();
+                                }
+                            }
+
+                            /**
+                             * A renderer for a method descriptor.
+                             */
+                            enum ForDescriptor implements Renderer {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                @Override
+                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                                    return instrumentedMethod.getDescriptor();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForDescriptor." + name();
+                                }
+                            }
+
+                            /**
+                             * A renderer for a method's {@link Object#toString()} representation.
+                             */
+                            enum ForStringRepresentation implements Renderer {
+
+                                /**
+                                 * The singleton instance.
+                                 */
+                                INSTANCE;
+
+                                @Override
+                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                                    return instrumentedMethod.toString();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation." + name();
+                                }
+                            }
+
+                            /**
+                             * A renderer for a constant value.
+                             */
+                            class ForConstantValue implements Renderer {
+
+                                /**
+                                 * The constant value.
+                                 */
+                                private final String value;
+
+                                /**
+                                 * Creates a new renderer for a constant value.
+                                 *
+                                 * @param value The constant value.
+                                 */
+                                protected ForConstantValue(String value) {
+                                    this.value = value;
+                                }
+
+                                @Override
+                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                                    return value;
+                                }
+
+                                @Override
+                                public boolean equals(Object object) {
+                                    if (this == object) return true;
+                                    if (object == null || getClass() != object.getClass()) return false;
+                                    ForConstantValue that = (ForConstantValue) object;
+                                    return value.equals(that.value);
+                                }
+
+                                @Override
+                                public int hashCode() {
+                                    return value.hashCode();
+                                }
+
+                                @Override
+                                public String toString() {
+                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForConstantValue{" +
+                                            "value='" + value + '\'' +
+                                            '}';
+                                }
+                            }
+                        }
+
+                        /**
+                         * A factory for a method origin.
+                         */
+                        protected enum Factory implements OffsetMapping.Factory {
+
+                            /**
+                             * The singleton instance.
+                             */
+                            INSTANCE;
+
+                            @Override
+                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                                AnnotationDescription.Loadable<Origin> origin = parameterDescription.getDeclaredAnnotations().ofType(Origin.class);
+                                if (origin == null) {
+                                    return UNDEFINED;
+                                } else {
+                                    if (!parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
+                                        throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
+                                    }
+                                    return ForOrigin.parse(origin.loadSilent().value());
+                                }
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Factory." + name();
+                            }
+                        }
+                    }
+
+                    /**
                      * An offset mapping that provides access to the value that is returned by the enter advise.
                      */
                     enum ForEnterValue implements OffsetMapping {
@@ -1757,6 +2086,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 OffsetMapping.ForParameter.Factory.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForField.Factory.INSTANCE,
+                                OffsetMapping.ForOrigin.Factory.INSTANCE,
                                 new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
                     }
 
@@ -1822,6 +2152,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 OffsetMapping.ForParameter.Factory.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForField.Factory.INSTANCE,
+                                OffsetMapping.ForOrigin.Factory.INSTANCE,
                                 new OffsetMapping.ForEnterValue.Factory(enterType),
                                 OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                 adviseMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
@@ -2451,6 +2782,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The type that declares the field or {@code void} if this type should be determined implicitly.
          */
         Class<?> declaringType() default void.class;
+    }
+
+    /**
+     * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method.
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface Origin {
+
+        /**
+         * Indicates that the origin string should be indicated by the {@link Object#toString()} representation of the instrumented method.
+         */
+        String DEFAULT = "";
+
+        /**
+         * Returns the patter the annotated parameter should be assigned.
+         *
+         * @return The patter the annotated parameter should be assigned.
+         */
+        String value() default DEFAULT;
     }
 
     /**
