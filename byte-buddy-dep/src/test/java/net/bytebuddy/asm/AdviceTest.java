@@ -743,6 +743,8 @@ public class AdviceTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
+        ObjectPropertyAssertion.of(Advice.FrameTranslator.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.FrameTranslator.Bound.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();

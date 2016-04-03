@@ -210,21 +210,90 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 '}';
     }
 
+    /**
+     * A translator for frame found in parsed code.
+     */
     protected static class FrameTranslator {
 
+        /**
+         * Indicates that a value for visiting a frame is not defined.
+         */
         private static final int UNDEFINED = -1;
 
+        /**
+         * An empty array indicating an empty frame.
+         */
         private static final Object[] EMPTY = new Object[0];
 
+        /**
+         * The instrumented method.
+         */
         private final MethodDescription.InDefinedShape instrumentedMethod;
 
+        /**
+         * A list of intermediate types to be considered as part of the instrumented method's steady signature.
+         */
         private final TypeList intermediateTypes;
 
+        /**
+         * {@code true} if the translator requires a full stack map frame.
+         */
         private boolean requiresFull;
 
-        public FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes) {
+        /**
+         * Creates a new frame translator.
+         *
+         * @param instrumentedMethod The instrumented method.
+         * @param intermediateTypes  A list of intermediate types to be considered as part of the instrumented method's steady signature.
+         */
+        protected FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes) {
             this.instrumentedMethod = instrumentedMethod;
             this.intermediateTypes = intermediateTypes;
+        }
+
+        /**
+         * Translates a type into a representation of its form inside a stack map frame.
+         *
+         * @param typeDescription The type to translate.
+         * @return A stack entry representation of the supplied type.
+         */
+        private static Object toFrame(TypeDescription typeDescription) {
+            if (typeDescription.represents(boolean.class)
+                    || typeDescription.represents(byte.class)
+                    || typeDescription.represents(short.class)
+                    || typeDescription.represents(char.class)
+                    || typeDescription.represents(int.class)) {
+                return Opcodes.INTEGER;
+            } else if (typeDescription.represents(long.class)) {
+                return Opcodes.LONG;
+            } else if (typeDescription.represents(float.class)) {
+                return Opcodes.FLOAT;
+            } else if (typeDescription.represents(double.class)) {
+                return Opcodes.DOUBLE;
+            } else {
+                return typeDescription.getInternalName();
+            }
+        }
+
+        /**
+         * Binds this frame translator to an advice method.
+         *
+         * @param methodDescription The advice method.
+         * @return A bound version of this frame translator.
+         */
+        protected Bound bind(MethodDescription.InDefinedShape methodDescription) {
+            return bind(methodDescription, new TypeList.Empty());
+        }
+
+        /**
+         * Binds this frame translator to an advice method.
+         *
+         * @param methodDescription The advice method.
+         * @param intermediateTypes A list of intermediate types to be considered as part of the advice method's steady signature.
+         * @return A bound version of this frame translator.
+         */
+        protected Bound bind(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
+            return new Bound(methodDescription, intermediateTypes);
         }
 
         protected void injectFrame(MethodVisitor methodVisitor) {
@@ -240,15 +309,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
                         + (instrumentedMethod.isStatic() ? 0 : 1)
                         + intermediateTypes.size()];
-                int variableIndex = 0;
+                int index = 0;
                 if (!instrumentedMethod.isStatic()) {
-                    variableIndex += insertFrame(instrumentedMethod.getDeclaringType(), localVariable, variableIndex);
+                    localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
                 }
                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                    variableIndex += insertFrame(typeDescription, localVariable, variableIndex);
+                    localVariable[index++] = toFrame(typeDescription);
                 }
                 for (TypeDescription typeDescription : intermediateTypes) {
-                    variableIndex += insertFrame(typeDescription, localVariable, variableIndex);
+                    localVariable[index++] = toFrame(typeDescription);
                 }
                 methodVisitor.visitFrame(Opcodes.F_FULL,
                         localVariable.length,
@@ -266,14 +335,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
-        protected Bound bind(MethodDescription.InDefinedShape methodDescription) {
-            return bind(methodDescription, new TypeList.Empty());
-        }
-
-        protected Bound bind(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
-            return new Bound(methodDescription, intermediateTypes);
-        }
-
+        /**
+         * Translates an existing frame.
+         *
+         * @param methodVisitor       The method visitor to append the frame to.
+         * @param type                The type of method frame.
+         * @param localVariableLength The number of local variables of the original frame.
+         * @param localVariable       An array containing the local variable types.
+         * @param stackSize           The size of the current operand stack.
+         * @param stack               An array containing the types on the operand stack.
+         */
         protected void translateFrame(MethodVisitor methodVisitor,
                                       int type,
                                       int localVariableLength,
@@ -283,6 +354,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             translateFrame(methodVisitor, instrumentedMethod, intermediateTypes, type, localVariableLength, localVariable, stackSize, stack);
         }
 
+        /**
+         * Translates an existing frame.
+         *
+         * @param methodVisitor       The method visitor to append the frame to.
+         * @param methodDescription   The method for which this frame was originally written.
+         * @param intermediateTypes   The intermediate types to be considered as part of the instrumented method's signature.
+         * @param type                The type of method frame.
+         * @param localVariableLength The number of local variables of the original frame.
+         * @param localVariable       An array containing the local variable types.
+         * @param stackSize           The size of the current operand stack.
+         * @param stack               An array containing the types on the operand stack.
+         */
         private void translateFrame(MethodVisitor methodVisitor,
                                     MethodDescription.InDefinedShape methodDescription,
                                     TypeList intermediateTypes,
@@ -305,13 +388,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             + intermediateTypes.size()];
                     int index = 0;
                     if (!instrumentedMethod.isStatic()) {
-                        index += insertFrame(instrumentedMethod.getDeclaringType(), translated, index);
+                        localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
                     }
                     for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                        index += insertFrame(typeDescription, translated, index);
+                        localVariable[index++] = toFrame(typeDescription);
                     }
                     for (TypeDescription typeDescription : intermediateTypes) {
-                        index += insertFrame(typeDescription, translated, index);
+                        localVariable[index++] = toFrame(typeDescription);
                     }
                     System.arraycopy(localVariable,
                             methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
@@ -330,29 +413,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
         }
 
-        private static int insertFrame(TypeDescription typeDescription, Object[] translated, int index) {
-            if (typeDescription.represents(boolean.class)
-                    || typeDescription.represents(byte.class)
-                    || typeDescription.represents(short.class)
-                    || typeDescription.represents(char.class)
-                    || typeDescription.represents(int.class)) {
-                translated[index] = Opcodes.INTEGER;
-                return 1;
-            } else if (typeDescription.represents(long.class)) {
-                translated[index] = Opcodes.LONG;
-                return 1;
-            } else if (typeDescription.represents(float.class)) {
-                translated[index] = Opcodes.FLOAT;
-                return 1;
-            } else if (typeDescription.represents(double.class)) {
-                translated[index] = Opcodes.DOUBLE;
-                return 1;
-            } else {
-                translated[index] = typeDescription.getInternalName();
-                return 1;
-            }
-        }
-
         @Override
         public String toString() {
             return "Advice.FrameAdjustment{" +
@@ -361,17 +421,42 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     '}';
         }
 
+        /**
+         * A frame translator that is bound to an advice method.
+         */
         protected class Bound {
 
+            /**
+             * The method description for which frames are translated.
+             */
             private final MethodDescription.InDefinedShape methodDescription;
 
+            /**
+             * A list of intermediate types to be considered as part of the instrumented method's steady signature.
+             */
             private final TypeList intermediateTypes;
 
+            /**
+             * Creates a new bound frame translator.
+             *
+             * @param methodDescription The method description for which frames are translated.
+             * @param intermediateTypes A list of intermediate types to be considered as part of the instrumented method's steady signature.
+             */
             protected Bound(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
                 this.methodDescription = methodDescription;
                 this.intermediateTypes = intermediateTypes;
             }
 
+            /**
+             * Translates an existing frame.
+             *
+             * @param methodVisitor       The method visitor to append the frame to.
+             * @param type                The type of method frame.
+             * @param localVariableLength The number of local variables of the original frame.
+             * @param localVariable       An array containing the local variable types.
+             * @param stackSize           The size of the current operand stack.
+             * @param stack               An array containing the types on the operand stack.
+             */
             protected void translateFrame(MethodVisitor methodVisitor,
                                           int type,
                                           int localVariableLength,
