@@ -8,6 +8,7 @@ import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
@@ -207,6 +208,127 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 ", methodExit=" + methodExit +
                 ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                 '}';
+    }
+
+    protected static class FrameTranslator {
+
+        private static final int UNDEFINED = -1;
+
+        private static final Object[] EMPTY = new Object[0];
+
+        private final MethodDescription.InDefinedShape instrumentedMethod;
+
+        private boolean requiresFull;
+
+        public FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod) {
+            this.instrumentedMethod = instrumentedMethod;
+        }
+
+        protected void visitFrame(int type) {
+            switch (type) {
+                case Opcodes.F_SAME:
+                case Opcodes.F_SAME1:
+                    break;
+                case Opcodes.F_APPEND:
+                case Opcodes.F_CHOP:
+                case Opcodes.F_FULL:
+                case Opcodes.F_NEW:
+                    requiresFull = true;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected frame type: " + type);
+            }
+        }
+
+        protected void injectFrame(MethodVisitor methodVisitor, TypeList intermediateTypes) {
+            if (requiresFull) {
+                Object[] localVariable = new Object[instrumentedMethod.getParameters().asTypeList().getStackSize() + intermediateTypes.getStackSize()];
+                int index = 0;
+                for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                    index += asFrame(typeDescription, localVariable, index);
+                }
+                for (TypeDescription typeDescription : intermediateTypes) {
+                    index += asFrame(typeDescription, localVariable, index);
+                }
+                methodVisitor.visitFrame(Opcodes.F_FULL, localVariable.length, localVariable, 0, EMPTY);
+            } else {
+                methodVisitor.visitFrame(Opcodes.F_SAME, UNDEFINED, EMPTY, UNDEFINED, EMPTY);
+            }
+        }
+
+        protected void translateFrame(MethodVisitor methodVisitor,
+                                      MethodDescription.InDefinedShape methodDescription,
+                                      TypeList intermediateTypes,
+                                      int type,
+                                      int localVariableLength,
+                                      Object[] localVariable,
+                                      int stackSize,
+                                      Object[] stack) {
+            switch (type) {
+                case Opcodes.F_SAME:
+                case Opcodes.F_SAME1:
+                case Opcodes.F_APPEND:
+                case Opcodes.F_CHOP:
+                    break;
+                case Opcodes.F_FULL:
+                case Opcodes.F_NEW:
+                    Object[] translated = new Object[localVariableLength
+                            - methodDescription.getParameters().asTypeList().getStackSize()
+                            + instrumentedMethod.getParameters().asTypeList().getStackSize()
+                            + intermediateTypes.getStackSize()];
+                    int index = 0;
+                    for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                        index += asFrame(typeDescription, translated, index);
+                    }
+                    for (TypeDescription typeDescription : intermediateTypes) {
+                        index += asFrame(typeDescription, translated, index);
+                    }
+                    System.arraycopy(localVariable,
+                            stackSize - methodDescription.getParameters().asTypeList().getStackSize(),
+                            translated,
+                            index,
+                            translated.length - index);
+                    localVariableLength = translated.length;
+                    localVariable = translated;
+                    break;
+                default:
+                    throw new IllegalArgumentException("Unexpected frame type: " + type);
+            }
+            methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
+        }
+
+        private static int asFrame(TypeDescription typeDescription, Object[] translated, int index) {
+            if (typeDescription.represents(boolean.class)
+                    || typeDescription.represents(byte.class)
+                    || typeDescription.represents(short.class)
+                    || typeDescription.represents(char.class)
+                    || typeDescription.represents(int.class)) {
+                translated[index] = Opcodes.INTEGER;
+                return 1;
+            } else if (typeDescription.represents(long.class)) {
+                translated[index] = Opcodes.LONG;
+                translated[index + 1] = Opcodes.TOP;
+                return 2;
+            } else if (typeDescription.represents(float.class)) {
+                translated[index] = Opcodes.FLOAT;
+                return 1;
+            } else if (typeDescription.represents(long.class)) {
+                translated[index] = Opcodes.LONG;
+                translated[index + 1] = Opcodes.TOP;
+                return 2;
+            } else {
+                translated[index] = typeDescription.getInternalName();
+                return 1;
+            }
+        }
+
+        @Override
+        public String toString() {
+            return "Advice.FrameAdjustment{" +
+                    "instrumentedMethod=" + instrumentedMethod +
+                    ", requiresFull=" + requiresFull +
+                    '}';
+        }
     }
 
     /**
