@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 3. April 2016: version 1.3.7
+
+- Fixed bug when returning null from an `Advice` exit method and accessing `@Advice.Thrown`.
+- Added additional annotations for advice `@Advice.Ignored` and `@Advice.Origin`.
+- Implemented frame translator for `Advice` method to reuse existing frame information instead of recomputing it.
+
 ### 1. April 2016: version 1.3.6
 
 - Implemented universal `FieldLocator`.
