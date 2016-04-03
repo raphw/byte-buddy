@@ -237,8 +237,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         private void injectFrame(MethodVisitor methodVisitor, TypeList intermediateTypes, boolean throwableOnStack) {
             if (requiresFull) {
-                Object[] localVariable = new Object[instrumentedMethod.getParameters().size() + intermediateTypes.size()];
+                Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
+                        + (instrumentedMethod.isStatic() ? 0 : 1)
+                        + intermediateTypes.size()];
                 int variableIndex = 0;
+                if (!instrumentedMethod.isStatic()) {
+                    variableIndex += insertFrame(instrumentedMethod.getDeclaringType(), localVariable, variableIndex);
+                }
                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
                     variableIndex += insertFrame(typeDescription, localVariable, variableIndex);
                 }
@@ -294,9 +299,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 case Opcodes.F_NEW:
                     Object[] translated = new Object[localVariableLength
                             - methodDescription.getParameters().size()
+                            - (methodDescription.isStatic() ? 0 : 1)
                             + instrumentedMethod.getParameters().size()
+                            + (instrumentedMethod.isStatic() ? 0 : 1)
                             + intermediateTypes.size()];
                     int index = 0;
+                    if (!instrumentedMethod.isStatic()) {
+                        index += insertFrame(instrumentedMethod.getDeclaringType(), translated, index);
+                    }
                     for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
                         index += insertFrame(typeDescription, translated, index);
                     }
@@ -304,7 +314,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         index += insertFrame(typeDescription, translated, index);
                     }
                     System.arraycopy(localVariable,
-                            localVariableLength - methodDescription.getParameters().size(),
+                            localVariableLength - methodDescription.getParameters().size() - (methodDescription.isStatic() ? 0 : 1),
                             translated,
                             index,
                             translated.length - index);

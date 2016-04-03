@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static junit.framework.TestCase.fail;
+import static net.bytebuddy.matcher.ElementMatchers.definedField;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -494,6 +495,17 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testFrameAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1262,7 +1274,7 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         private static void enter(@Advice.Origin("#t #m #d") String origin) throws Exception {
             if (!origin.equals(Sample.class.getName() + " " + FOO + " ()L" + String.class.getName().replace('.', '/') + ";")) {
-            System.out.println(origin);
+                System.out.println(origin);
                 throw new AssertionError();
             }
             Sample.enter++;
@@ -1271,10 +1283,54 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Origin("\\#\\#\\\\#m") String origin) throws Exception {
             if (!origin.equals("##\\" + FOO)) {
-            System.out.println(origin);
+                System.out.println(origin);
                 throw new AssertionError();
             }
             Sample.exit++;
+        }
+    }
+
+    public static class FrameSample {
+
+        public String foo() {
+            int value = 0;
+            switch (value) {
+                case 0: {
+                    long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
+                }
+                default: {
+                    long a = 1L;
+                }
+            }
+            try {
+                long a = 1L;
+            } catch (Exception ignored) {
+                long a = 1L;
+            }
+            long a = 1L;
+            return FOO;
+        }
+    }
+
+    public static class FrameAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void enter(@Advice.Ignored int value) {
+            switch (value) {
+                case 0: {
+                    long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
+                }
+                default: {
+                    long a = 1L;
+                }
+            }
+            try {
+                long a = 1L;
+            } catch (Exception ignored) {
+                long a = 1L;
+            }
+            long a = 1L;
         }
     }
 
