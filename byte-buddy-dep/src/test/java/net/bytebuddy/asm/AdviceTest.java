@@ -12,6 +12,7 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
+import org.objectweb.asm.ClassReader;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -514,6 +515,30 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceExpanded() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceStaticMethodExpanded() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
