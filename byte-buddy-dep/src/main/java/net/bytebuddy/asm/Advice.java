@@ -170,7 +170,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_MAXS).readerFlags(ClassReader.EXPAND_FRAMES).method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_MAXS).method(matcher, this);
     }
 
     @Override
@@ -260,9 +260,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ? new Object[]{Type.getInternalName(Throwable.class)}
                                 : EMPTY);
             } else if (throwableOnStack) {
-                methodVisitor.visitFrame(Opcodes.F_SAME, UNDEFINED, EMPTY, UNDEFINED, EMPTY);
-            } else {
                 methodVisitor.visitFrame(Opcodes.F_SAME1, UNDEFINED, EMPTY, StackSize.SINGLE.getSize(), new Object[]{Type.getInternalName(Throwable.class)});
+            } else {
+                methodVisitor.visitFrame(Opcodes.F_SAME, UNDEFINED, EMPTY, UNDEFINED, EMPTY);
             }
         }
 
