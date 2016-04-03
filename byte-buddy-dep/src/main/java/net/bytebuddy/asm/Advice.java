@@ -62,8 +62,10 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * {@link IllegalAccessError} at the instrumented class's runtime.
  * </p>
  * <p>
- * <b>Important</b>: Currently, it is required to make ASM recompute stack sizes and stack map frames by setting the {@link ClassWriter#COMPUTE_FRAMES}
- * flag. This constraint will be relaxed in a future version.
+ * <b>Important</b>: Since Java 6, class files contain <i>stack map frames</i> embedded into a method's byte code. When advice methods are compiled
+ * with a class file version less then Java 6 but are used for a class file that was compiled to Java 6 or newer, these stack map frames must be
+ * computed by ASM by using the {@link ClassWriter#COMPUTE_FRAMES} option. If the advice methods do not contain any branching instructions, this is
+ * not required. No action is required if the advice methods are at least compiled with Java 6 but are used on classes older than Java 6.
  * </p>
  */
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
@@ -3211,7 +3213,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
+     * <p>
      * Indicates that the annotated parameter should be mapped to the {@code this} reference of the instrumented method.
+     * </p>
+     * <p>
+     * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
+     * {@link OnMethodEnter} where the {@code this} reference is not available.
+     * </p>
      *
      * @see Advice
      * @see OnMethodEnter
@@ -3235,6 +3243,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method. All
      * field references are always <i>read-only</i>.
+     * <p>
+     * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
+     * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
+     * </p>
      *
      * @see Advice
      * @see OnMethodEnter
