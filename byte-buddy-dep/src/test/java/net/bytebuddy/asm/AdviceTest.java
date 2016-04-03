@@ -505,7 +505,18 @@ public class AdviceTest {
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+    }
+
+    @Test
+    public void testFrameAdviceStatic() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1292,9 +1303,8 @@ public class AdviceTest {
 
     public static class FrameSample {
 
-        public String foo() {
-            int value = 0;
-            switch (value) {
+        public String foo(String value) {
+            switch (0) {
                 case 0: {
                     long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
                 }
@@ -1308,7 +1318,25 @@ public class AdviceTest {
                 long a = 1L;
             }
             long a = 1L;
-            return FOO;
+            return value;
+        }
+
+        public static String bar(String value) {
+            switch (0) {
+                case 0: {
+                    long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
+                }
+                default: {
+                    long a = 1L;
+                }
+            }
+            try {
+                long a = 1L;
+            } catch (Exception ignored) {
+                long a = 1L;
+            }
+            long a = 1L;
+            return value;
         }
     }
 
@@ -1316,7 +1344,7 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         @Advice.OnMethodExit
-        private static void enter(@Advice.Ignored int value) {
+        private static String enter(@Advice.Ignored int value, @Advice.Argument(0) String pseudo) {
             switch (value) {
                 case 0: {
                     long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
@@ -1331,6 +1359,7 @@ public class AdviceTest {
                 long a = 1L;
             }
             long a = 1L;
+            return pseudo;
         }
     }
 
