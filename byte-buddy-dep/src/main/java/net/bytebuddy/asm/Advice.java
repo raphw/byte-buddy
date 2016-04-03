@@ -527,6 +527,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         "frameTranslator=" + FrameTranslator.this +
                         ", methodDescription=" + methodDescription +
                         ", intermediateTypes=" + intermediateTypes +
+                        ", yieldedTypes=" + yieldedTypes +
                         '}';
             }
         }
