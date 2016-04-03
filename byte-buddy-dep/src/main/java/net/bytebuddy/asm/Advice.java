@@ -220,6 +220,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         private static final int NO_OFFSET = 0;
 
         /**
+         * Indicates that stack and variable array sizes need to be recomputed.
+         */
+        private static final int UNDEFINED = -1;
+
+        /**
          * A description of the instrumented method.
          */
         protected final MethodDescription.InDefinedShape instrumentedMethod;
@@ -350,7 +355,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
             onMethodEnd();
-            super.visitMaxs(maxStack, maxLocals);
+            super.visitMaxs(UNDEFINED, UNDEFINED);
         }
 
         /**
