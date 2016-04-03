@@ -170,7 +170,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_MAXS).method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
     }
 
     @Override
@@ -240,6 +240,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         private boolean requiresFull;
 
+        private int stackSize;
+
+        private int localVariableLength;
+
         /**
          * Creates a new frame translator.
          *
@@ -294,6 +298,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected Bound bind(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
             return new Bound(methodDescription, intermediateTypes);
+        }
+
+        protected int compoundStackSize(int stackSize) {
+            return Math.max(this.stackSize, stackSize);
+        }
+
+        protected int compoundLocalVariableSize(int localVariableSize) {
+            return Math.max(this.localVariableLength, localVariableSize + intermediateTypes.getStackSize());
         }
 
         protected void injectFrame(MethodVisitor methodVisitor) {
@@ -388,13 +400,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             + intermediateTypes.size()];
                     int index = 0;
                     if (!instrumentedMethod.isStatic()) {
-                        localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
+                        translated[index++] = toFrame(instrumentedMethod.getDeclaringType());
                     }
                     for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                        localVariable[index++] = toFrame(typeDescription);
+                        translated[index++] = toFrame(typeDescription);
                     }
                     for (TypeDescription typeDescription : intermediateTypes) {
-                        localVariable[index++] = toFrame(typeDescription);
+                        translated[index++] = toFrame(typeDescription);
                     }
                     System.arraycopy(localVariable,
                             methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
@@ -415,9 +427,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public String toString() {
-            return "Advice.FrameAdjustment{" +
+            return "Advice.FrameTranslator{" +
                     "instrumentedMethod=" + instrumentedMethod +
+                    ", intermediateTypes=" + intermediateTypes +
                     ", requiresFull=" + requiresFull +
+                    ", stackSize=" + stackSize +
+                    ", localVariableLength=" + localVariableLength +
                     '}';
         }
 
@@ -445,6 +460,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected Bound(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
                 this.methodDescription = methodDescription;
                 this.intermediateTypes = intermediateTypes;
+            }
+
+            protected void recordMaxima(int stackSize, int localVariableLength) {
+                FrameTranslator.this.stackSize = Math.max(FrameTranslator.this.stackSize, stackSize);
+                FrameTranslator.this.localVariableLength = Math.max(FrameTranslator.this.localVariableLength, localVariableLength
+                        + instrumentedMethod.getStackSize()
+                        + intermediateTypes.getStackSize()
+                        - methodDescription.getStackSize());
             }
 
             /**
@@ -483,7 +506,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public String toString() {
-                return "Bound{" +
+                return "Advice.FrameTranslator.Bound{" +
                         "frameTranslator=" + FrameTranslator.this +
                         ", methodDescription=" + methodDescription +
                         ", intermediateTypes=" + intermediateTypes +
@@ -649,7 +672,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
             onMethodEnd();
-            super.visitMaxs(UNDEFINED, UNDEFINED);
+            super.visitMaxs(frameTranslator.compoundStackSize(maxStack), frameTranslator.compoundLocalVariableSize(maxLocals));
         }
 
         /**
@@ -2732,7 +2755,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitMaxs(int maxStack, int maxLocals) {
-                    /* do nothing */
+                    frameTranslator.recordMaxima(maxStack, maxLocals);
                 }
 
                 @Override
