@@ -18,9 +18,13 @@ public class AdviceAnnotationTest {
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
                 {Advice.Argument.class, ElementType.PARAMETER},
+                {Advice.FieldValue.class, ElementType.PARAMETER},
                 {Advice.Enter.class, ElementType.PARAMETER},
+                {Advice.Ignored.class, ElementType.PARAMETER},
+                {Advice.Origin.class, ElementType.PARAMETER},
                 {Advice.Return.class, ElementType.PARAMETER},
                 {Advice.This.class, ElementType.PARAMETER},
+                {Advice.Thrown.class, ElementType.PARAMETER},
                 {Advice.OnMethodEnter.class, ElementType.METHOD},
                 {Advice.OnMethodExit.class, ElementType.METHOD}
         });

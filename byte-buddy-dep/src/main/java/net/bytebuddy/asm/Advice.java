@@ -842,6 +842,54 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         void apply(MethodVisitor methodVisitor, int opcode);
 
                         /**
+                         * Loads a default value onto the stack or pops the accessed value off it.
+                         */
+                        enum ForDefaultValue implements Target {
+
+                            /**
+                             * The singleton instance.
+                             */
+                            INSTANCE;
+
+                            @Override
+                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                                switch (opcode) {
+                                    case Opcodes.ALOAD:
+                                        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                                        break;
+                                    case Opcodes.ILOAD:
+                                        methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                        break;
+                                    case Opcodes.LLOAD:
+                                        methodVisitor.visitInsn(Opcodes.LCONST_0);
+                                        break;
+                                    case Opcodes.FLOAD:
+                                        methodVisitor.visitInsn(Opcodes.FCONST_0);
+                                        break;
+                                    case Opcodes.DLOAD:
+                                        methodVisitor.visitInsn(Opcodes.DCONST_0);
+                                        break;
+                                    case Opcodes.ISTORE:
+                                    case Opcodes.FSTORE:
+                                    case Opcodes.ASTORE:
+                                        methodVisitor.visitInsn(Opcodes.POP);
+                                        break;
+                                    case Opcodes.LSTORE:
+                                    case Opcodes.DSTORE:
+                                        methodVisitor.visitInsn(Opcodes.POP2);
+                                        break;
+                                    default:
+                                        throw new IllegalStateException("Unexpected opcode: " + opcode);
+                                }
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForDefaultValue." + name();
+                            }
+                        }
+
+                        /**
                          * A read-write target mapping.
                          */
                         class ForParameter implements Target {
@@ -1773,6 +1821,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     /**
+                     * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
+                     */
+                    enum ForIgnored implements OffsetMapping, Factory {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        @Override
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, StackSize additionalSize) {
+                            return Target.ForDefaultValue.INSTANCE;
+                        }
+
+                        @Override
+                        public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                            return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Ignored.class)
+                                    ? this
+                                    : UNDEFINED;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForIgnored." + name();
+                        }
+                    }
+
+                    /**
                      * An offset mapping that provides access to the value that is returned by the enter advise.
                      */
                     enum ForEnterValue implements OffsetMapping {
@@ -2087,6 +2163,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForField.Factory.INSTANCE,
                                 OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForIgnored.INSTANCE,
                                 new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
                     }
 
@@ -2153,6 +2230,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForField.Factory.INSTANCE,
                                 OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForIgnored.INSTANCE,
                                 new OffsetMapping.ForEnterValue.Factory(enterType),
                                 OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                 adviseMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
@@ -2802,11 +2880,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         String DEFAULT = "";
 
         /**
-         * Returns the patter the annotated parameter should be assigned.
+         * Returns the pattern the annotated parameter should be assigned. By default, the {@link Origin#toString()} representation
+         * of the method is assigned. Alternatively, a pattern can be assigned where {@code #t} inserts the method's declaring type,
+         * {@code #m} inserts the name of the method ({@code <init>} for constructors and {@code <clinit>} for static initializers)
+         * and {@code #d} for the method's descriptor. Any other {@code #} character must be escaped by {@code \} which can be
+         * escaped by itself.
          *
-         * @return The patter the annotated parameter should be assigned.
+         * @return The pattern the annotated parameter should be assigned.
          */
         String value() default DEFAULT;
+    }
+
+    /**
+     * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
+     * for {@code boolean} types and {@code null} for reference types).
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface Ignored {
+        /* empty */
     }
 
     /**

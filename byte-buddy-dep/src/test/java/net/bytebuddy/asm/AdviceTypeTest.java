@@ -25,6 +25,8 @@ public class AdviceTypeTest {
 
     private static final boolean BOOLEAN = true;
 
+    private static final byte NUMERIC_DEFAULT = 0;
+
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
@@ -97,7 +99,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static boolean enter() {
+        public static boolean enter(@Advice.Ignored boolean value) {
+            if (value) {
+                throw new AssertionError();
+            }
+            value = BOOLEAN;
+            if (value) {
+                throw new AssertionError();
+            }
             enter++;
             return BOOLEAN;
         }
@@ -130,7 +139,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static byte enter() {
+        public static byte enter(@Advice.Ignored byte value) {
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            value = VALUE;
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
             enter++;
             return VALUE * 2;
         }
@@ -163,7 +179,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static short enter() {
+        public static short enter(@Advice.Ignored short value) {
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            value = VALUE;
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
             enter++;
             return VALUE * 2;
         }
@@ -196,7 +219,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static char enter() {
+        public static char enter(@Advice.Ignored char value) {
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            value = VALUE;
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
             enter++;
             return VALUE * 2;
         }
@@ -229,7 +259,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static int enter() {
+        public static int enter(@Advice.Ignored int value) {
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            value = VALUE;
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
             enter++;
             return VALUE * 2;
         }
@@ -262,7 +299,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static long enter() {
+        public static long enter(@Advice.Ignored long value) {
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            value = VALUE;
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
             enter++;
             return VALUE * 2;
         }
@@ -295,7 +339,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static float enter() {
+        public static float enter(@Advice.Ignored float value) {
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            value = VALUE;
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
             enter++;
             return VALUE * 2;
         }
@@ -328,7 +379,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static double enter() {
+        public static double enter(@Advice.Ignored double value) {
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
+            value = VALUE;
+            if (value != NUMERIC_DEFAULT) {
+                throw new AssertionError();
+            }
             enter++;
             return VALUE * 2;
         }
@@ -361,7 +419,14 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static Object enter() {
+        public static Object enter(@Advice.Ignored Object value) {
+            if (value != null) {
+                throw new AssertionError();
+            }
+            value = null;
+            if (value != null) {
+                throw new AssertionError();
+            }
             enter++;
             return FOO + BAR;
         }
