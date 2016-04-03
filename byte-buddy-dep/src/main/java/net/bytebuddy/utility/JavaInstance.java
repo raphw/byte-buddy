@@ -703,7 +703,7 @@ public interface JavaInstance {
                 stringBuilder.append(parameterType.getDescriptor());
             }
             String descriptor = stringBuilder.append(")").append(getReturnType().getDescriptor()).toString();
-            return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), descriptor);
+            return new Handle(getHandleType().getIdentifier(), getOwnerType().getInternalName(), getName(), descriptor, getOwnerType().isInterface());
         }
 
         @Override
