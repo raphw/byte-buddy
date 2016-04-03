@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static junit.framework.TestCase.fail;
-import static net.bytebuddy.matcher.ElementMatchers.definedField;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -31,7 +30,7 @@ public class AdviceTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
-    private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable";
+    private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable", COUNT = "count";
 
     private static final int VALUE = 42;
 
@@ -506,17 +505,19 @@ public class AdviceTest {
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
     }
 
     @Test
     public void testFrameAdviceStatic() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
+                .visit(Advice.to(FrameAdvice.class).on(named(BAR)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1303,6 +1304,8 @@ public class AdviceTest {
 
     public static class FrameSample {
 
+        public static int count;
+
         public String foo(String value) {
             switch (0) {
                 case 0: {
@@ -1359,6 +1362,7 @@ public class AdviceTest {
                 long a = 1L;
             }
             long a = 1L;
+            FrameSample.count++;
             return pseudo;
         }
     }

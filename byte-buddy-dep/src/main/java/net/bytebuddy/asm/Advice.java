@@ -236,6 +236,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         private void injectFrame(MethodVisitor methodVisitor, TypeList intermediateTypes, boolean throwableOnStack) {
+            if (true) {
+                return;
+            }
             if (requiresFull) {
                 Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
                         + (instrumentedMethod.isStatic() ? 0 : 1)
@@ -291,6 +294,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     Object[] localVariable,
                                     int stackSize,
                                     Object[] stack) {
+            if (true) {
+                return;
+            }
             switch (type) {
                 case Opcodes.F_SAME:
                 case Opcodes.F_SAME1:
