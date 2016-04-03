@@ -48,7 +48,8 @@ public class MethodHandleConstant implements StackManipulation {
                 : new MethodHandleConstant(new Handle(tagFor(methodDescription),
                 methodDescription.getDeclaringType().asErasure().getInternalName(),
                 methodDescription.getInternalName(),
-                methodDescription.getDescriptor()));
+                methodDescription.getDescriptor(),
+                methodDescription.getDeclaringType().isInterface()));
     }
 
     /**
@@ -66,7 +67,8 @@ public class MethodHandleConstant implements StackManipulation {
         return new MethodHandleConstant(new Handle(methodHandle.getHandleType().getIdentifier(),
                 methodHandle.getOwnerType().getInternalName(),
                 methodHandle.getName(),
-                Type.getMethodDescriptor(Type.getType(methodHandle.getReturnType().getDescriptor()), parameterType)));
+                Type.getMethodDescriptor(Type.getType(methodHandle.getReturnType().getDescriptor()), parameterType),
+                methodHandle.getOwnerType().isInterface()));
     }
 
     /**
@@ -75,14 +77,14 @@ public class MethodHandleConstant implements StackManipulation {
      * @param methodDescription The method for which a method handle is to be put onto the operand stack.
      * @return The tag for the handle of this method.
      */
-    private static int tagFor(MethodDescription methodDescription) {
+    private static int tagFor(MethodDescription.InDefinedShape methodDescription) {
         if (methodDescription.isConstructor()) {
             return Opcodes.H_NEWINVOKESPECIAL;
         } else if (methodDescription.isStatic()) {
             return Opcodes.H_INVOKESTATIC;
         } else if (methodDescription.isPrivate() || methodDescription.isDefaultMethod()) {
             return Opcodes.H_INVOKESPECIAL;
-        } else if (methodDescription.isInterface()) {
+        } else if (methodDescription.getDeclaringType().isInterface()) {
             return Opcodes.H_INVOKEINTERFACE;
         } else {
             return Opcodes.H_INVOKEVIRTUAL;
@@ -95,7 +97,7 @@ public class MethodHandleConstant implements StackManipulation {
      * @param fieldDescription The field for which a get handle is to be put onto the operand stack.
      * @return A stack manipulation that represents the loading of the handle.
      */
-    public static StackManipulation ofGetter(FieldDescription fieldDescription) {
+    public static StackManipulation ofGetter(FieldDescription.InDefinedShape fieldDescription) {
         return of(fieldDescription, fieldDescription.isStatic() ? Opcodes.H_GETSTATIC : Opcodes.H_GETFIELD);
     }
 
@@ -105,7 +107,7 @@ public class MethodHandleConstant implements StackManipulation {
      * @param fieldDescription The field for which a put handle is to be put onto the operand stack.
      * @return A stack manipulation that represents the loading of the handle.
      */
-    public static StackManipulation ofPutter(FieldDescription fieldDescription) {
+    public static StackManipulation ofPutter(FieldDescription.InDefinedShape fieldDescription) {
         return of(fieldDescription, fieldDescription.isStatic() ? Opcodes.H_PUTSTATIC : Opcodes.H_PUTFIELD);
     }
 
@@ -116,11 +118,12 @@ public class MethodHandleConstant implements StackManipulation {
      * @param tag              The tag for this handle.
      * @return A stack manipulation that represents the loading of the handle.
      */
-    private static StackManipulation of(FieldDescription fieldDescription, int tag) {
+    private static StackManipulation of(FieldDescription.InDefinedShape fieldDescription, int tag) {
         return new MethodHandleConstant(new Handle(tag,
-                fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                fieldDescription.getDeclaringType().getInternalName(),
                 fieldDescription.getInternalName(),
-                fieldDescription.getDescriptor()));
+                fieldDescription.getDescriptor(),
+                fieldDescription.getDeclaringType().isInterface()));
     }
 
     @Override

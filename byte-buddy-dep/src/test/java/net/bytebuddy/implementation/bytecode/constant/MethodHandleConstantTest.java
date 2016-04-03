@@ -26,7 +26,7 @@ import static org.mockito.Mockito.*;
 
 public class MethodHandleConstantTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
+    private static final String FOO = "foo", BAR = "bar", QUX = "qux";
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -35,7 +35,7 @@ public class MethodHandleConstantTest {
     private MethodDescription.InDefinedShape methodDescription;
 
     @Mock
-    private FieldDescription fieldDescription;
+    private FieldDescription.InDefinedShape fieldDescription;
 
     @Mock
     private TypeDescription typeDescription;
@@ -67,66 +67,66 @@ public class MethodHandleConstantTest {
     @Test
     public void testMethodHandleForStaticMethod() throws Exception {
         when(methodDescription.isStatic()).thenReturn(true);
-        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKESTATIC);
+        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKESTATIC, false);
     }
 
     @Test
     public void testMethodHandleForVirtualMethod() throws Exception {
-        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKEVIRTUAL);
+        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKEVIRTUAL, false);
     }
 
     @Test
     public void testMethodHandleForPrivateMethod() throws Exception {
         when(methodDescription.isPrivate()).thenReturn(true);
-        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKESPECIAL);
+        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKESPECIAL, false);
     }
 
     @Test
     public void testMethodHandleForDefaultMethod() throws Exception {
         when(methodDescription.isDefaultMethod()).thenReturn(true);
-        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKESPECIAL);
+        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKESPECIAL, false);
     }
 
     @Test
     public void testMethodHandleForInterfaceMethod() throws Exception {
-        when(methodDescription.isInterface()).thenReturn(true);
-        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKEINTERFACE);
+        when(typeDescription.isInterface()).thenReturn(true);
+        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_INVOKEINTERFACE, true);
     }
 
     @Test
     public void testMethodHandleForConstructorMethod() throws Exception {
         when(methodDescription.isConstructor()).thenReturn(true);
-        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_NEWINVOKESPECIAL);
+        testMethodHandle(MethodHandleConstant.of(methodDescription), Opcodes.H_NEWINVOKESPECIAL, false);
     }
 
     @Test
     public void testMethodHandleForMemberFieldGetter() throws Exception {
-        testMethodHandle(MethodHandleConstant.ofGetter(fieldDescription), Opcodes.H_GETFIELD);
+        testMethodHandle(MethodHandleConstant.ofGetter(fieldDescription), Opcodes.H_GETFIELD, false);
     }
 
     @Test
     public void testMethodHandleForMemberFieldPutter() throws Exception {
-        testMethodHandle(MethodHandleConstant.ofPutter(fieldDescription), Opcodes.H_PUTFIELD);
+        testMethodHandle(MethodHandleConstant.ofPutter(fieldDescription), Opcodes.H_PUTFIELD, false);
     }
 
     @Test
     public void testMethodHandleForStaticFieldGetter() throws Exception {
         when(fieldDescription.isStatic()).thenReturn(true);
-        testMethodHandle(MethodHandleConstant.ofGetter(fieldDescription), Opcodes.H_GETSTATIC);
+        testMethodHandle(MethodHandleConstant.ofGetter(fieldDescription), Opcodes.H_GETSTATIC, false);
     }
 
     @Test
     public void testMethodHandleForStaticFieldPutter() throws Exception {
         when(fieldDescription.isStatic()).thenReturn(true);
-        testMethodHandle(MethodHandleConstant.ofPutter(fieldDescription), Opcodes.H_PUTSTATIC);
+        testMethodHandle(MethodHandleConstant.ofPutter(fieldDescription), Opcodes.H_PUTSTATIC, false);
     }
 
-    private void testMethodHandle(StackManipulation stackManipulation, int handleCode) throws Exception {
+    private void testMethodHandle(StackManipulation stackManipulation, int handleCode, boolean handleInterface) throws Exception {
         assertThat(stackManipulation.isValid(), is(true));
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(1));
         assertThat(size.getMaximalSize(), is(1));
-        verify(methodVisitor).visitLdcInsn(new Handle(handleCode, FOO, BAR, QUX));
+        verify(methodVisitor).visitLdcInsn(new Handle(handleCode, FOO, BAR, QUX, handleInterface));
         verifyNoMoreInteractions(methodVisitor);
     }
 
@@ -143,7 +143,7 @@ public class MethodHandleConstantTest {
         ObjectPropertyAssertion.of(MethodHandleConstant.class).create(new ObjectPropertyAssertion.Creator<Handle>() {
             @Override
             public Handle create() {
-                return new Handle(Opcodes.H_GETFIELD, FOO, BAR, iterator.next());
+                return new Handle(Opcodes.H_GETFIELD, FOO, BAR, iterator.next(), false);
             }
         }).apply();
     }

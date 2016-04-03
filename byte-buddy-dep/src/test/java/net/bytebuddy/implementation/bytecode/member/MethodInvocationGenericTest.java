@@ -50,6 +50,7 @@ public class MethodInvocationGenericTest {
         when(declaringType.asErasure()).thenReturn(declaringType);
         when(declaredMethod.asSignatureToken()).thenReturn(token);
         when(declaredMethod.isSpecializableFor(targetType)).thenReturn(true);
+        when(declaredMethod.asDefined()).thenReturn(declaredMethod);
     }
 
     @Test

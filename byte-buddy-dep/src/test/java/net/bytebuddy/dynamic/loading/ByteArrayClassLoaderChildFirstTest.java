@@ -13,7 +13,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.Mock;
 import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.commons.RemappingClassAdapter;
+import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.InputStream;
@@ -217,7 +217,7 @@ public class ByteArrayClassLoaderChildFirstTest {
 
         @Override
         public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
-            return new RemappingClassAdapter(classVisitor, new SimpleRemapper(oldName, newName));
+            return new ClassRemapper(classVisitor, new SimpleRemapper(oldName, newName));
         }
     }
 }

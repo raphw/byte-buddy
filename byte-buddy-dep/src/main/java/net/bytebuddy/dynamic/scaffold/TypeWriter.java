@@ -29,9 +29,7 @@ import net.bytebuddy.pool.TypePool;
 import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.RandomString;
 import org.objectweb.asm.*;
-import org.objectweb.asm.commons.Remapper;
-import org.objectweb.asm.commons.RemappingClassAdapter;
-import org.objectweb.asm.commons.RemappingMethodAdapter;
+import org.objectweb.asm.commons.ClassRemapper;
 import org.objectweb.asm.commons.SimpleRemapper;
 
 import java.io.IOException;
@@ -2735,9 +2733,9 @@ public interface TypeWriter<T> {
              * @return A class visitor which is capable of applying the changes.
              */
             private ClassVisitor writeTo(ClassVisitor classVisitor, Implementation.Context.ExtractableView implementationContext) {
-                return FramePreservingRemapper.of(originalType.getInternalName(),
-                        instrumentedType.getInternalName(),
-                        new RedefinitionClassVisitor(classVisitor, implementationContext));
+                return originalType.getName().equals(instrumentedType.getName())
+                        ? new RedefinitionClassVisitor(classVisitor, implementationContext)
+                        : new ClassRemapper(new RedefinitionClassVisitor(classVisitor, implementationContext), new SimpleRemapper(originalType.getInternalName(), instrumentedType.getInternalName()));
             }
 
             @Override
@@ -2860,110 +2858,6 @@ public interface TypeWriter<T> {
                 @Override
                 public String getInternalName() {
                     return String.format("%s$%s", TYPE_INITIALIZER_PROXY_PREFIX, suffix);
-                }
-            }
-
-            /**
-             * A remapper adapter that does not attempt to reorder method frames which is never the case for a renaming. This
-             * adaption might not longer be necessary in the future:
-             * <a href="http://forge.ow2.org/tracker/index.php?func=detail&aid=317576&group_id=23&atid=100023">ASM #317576</a>.
-             */
-            protected static class FramePreservingRemapper extends RemappingClassAdapter {
-
-                /**
-                 * Creates a new frame preserving class remapper.
-                 *
-                 * @param classVisitor The class visitor that is responsible for writing the class.
-                 * @param remapper     The remapper to use for renaming the instrumented type.
-                 */
-                protected FramePreservingRemapper(ClassVisitor classVisitor, Remapper remapper) {
-                    super(Opcodes.ASM5, classVisitor, remapper);
-                }
-
-                /**
-                 * Creates a class visitor that renames the instrumented type from the original name to the target name if those
-                 * names are not equal.
-                 *
-                 * @param originalName The instrumented type's original name.
-                 * @param targetName   The instrumented type's actual name.
-                 * @param classVisitor The class visitor that is responsible for creating the type.
-                 * @return An appropriate class visitor.
-                 */
-                public static ClassVisitor of(String originalName, String targetName, ClassVisitor classVisitor) {
-                    return originalName.equals(targetName)
-                            ? classVisitor
-                            : new FramePreservingRemapper(classVisitor, new SimpleRemapper(originalName, targetName));
-                }
-
-                @Override
-                protected MethodVisitor createRemappingMethodAdapter(int modifiers, String adaptedDescriptor, MethodVisitor methodVisitor) {
-                    return new FramePreservingMethodRemapper(modifiers, adaptedDescriptor, methodVisitor, remapper);
-                }
-
-                @Override
-                public String toString() {
-                    return "TypeWriter.Default.ForInlining.FramePreservingRemapper{" +
-                            "remapper=" + remapper +
-                            ", className=" + className +
-                            "}";
-                }
-
-                /**
-                 * A method remapper that does not delegate to its underlying variable sorting mechanism as this is never required for
-                 * renaming a type. This way, it is not required to hand expanded method frames to this visitor what is otherwise
-                 * required for more general remappings that sort local variables.
-                 */
-                protected static class FramePreservingMethodRemapper extends RemappingMethodAdapter {
-
-                    /**
-                     * Creates a new frame preserving method remapper.
-                     *
-                     * @param modifiers     The method's modifiers.
-                     * @param descriptor    The descriptor of the method.
-                     * @param methodVisitor The method visitor that is responsible for writing the method.
-                     * @param remapper      The remapper to use for renaming the instrumented type.
-                     */
-                    public FramePreservingMethodRemapper(int modifiers, String descriptor, MethodVisitor methodVisitor, Remapper remapper) {
-                        super(Opcodes.ASM5, modifiers, descriptor, methodVisitor, remapper);
-                    }
-
-                    @Override
-                    public void visitFrame(int type, int sizeLocal, Object[] local, int sizeStack, Object[] stack) {
-                        mv.visitFrame(type, sizeLocal, remapEntries(sizeLocal, local), sizeStack, remapEntries(sizeStack, stack));
-                    }
-
-                    /**
-                     * Remaps a stack map.
-                     *
-                     * @param size  The size of the stack map.
-                     * @param entry The stack map's entries.
-                     * @return The remapped entries.
-                     */
-                    private Object[] remapEntries(int size, Object[] entry) {
-                        for (int index = 0; index < size; index++) {
-                            if (entry[index] instanceof String) {
-                                Object[] newEntry = new Object[size];
-                                if (index > 0) {
-                                    System.arraycopy(entry, 0, newEntry, 0, index);
-                                }
-                                do {
-                                    Object frame = entry[index];
-                                    newEntry[index++] = frame instanceof String
-                                            ? remapper.mapType((String) frame)
-                                            : frame;
-                                } while (index < size);
-                                return newEntry;
-                            }
-                        }
-                        return entry;
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "TypeWriter.Default.ForInlining.FramePreservingRemapper.FramePreservingMethodRemapper{" +
-                                "remapper=" + remapper +
-                                "}";
-                    }
                 }
             }
 

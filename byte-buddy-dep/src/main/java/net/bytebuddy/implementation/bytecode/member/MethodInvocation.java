@@ -78,7 +78,7 @@ public enum MethodInvocation {
             return SPECIAL_CONSTRUCTOR.new Invocation(methodDescription); // Check this property second, constructors might be private
         } else if (methodDescription.isPrivate()) {
             return SPECIAL.new Invocation(methodDescription);
-        } else if (methodDescription.getDeclaringType().asErasure().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
+        } else if (methodDescription.getDeclaringType().isInterface()) { // Check this property last, default methods must be called by INVOKESPECIAL
             return INTERFACE.new Invocation(methodDescription);
         } else {
             return VIRTUAL.new Invocation(methodDescription);
@@ -349,7 +349,7 @@ public enum MethodInvocation {
                                          List<? extends TypeDescription> methodType,
                                          List<?> arguments) {
             return methodDescription.isBootstrap()
-                    ? new DynamicInvocation(methodName, returnType, new TypeList.Explicit(methodType), methodDescription, arguments)
+                    ? new DynamicInvocation(methodName, returnType, new TypeList.Explicit(methodType), methodDescription.asDefined(), arguments)
                     : Illegal.INSTANCE;
         }
 
@@ -412,7 +412,7 @@ public enum MethodInvocation {
         /**
          * The bootstrap method.
          */
-        private final MethodDescription bootstrapMethod;
+        private final MethodDescription.InDefinedShape bootstrapMethod;
 
         /**
          * The list of arguments to be handed over to the bootstrap method.
@@ -431,7 +431,7 @@ public enum MethodInvocation {
         public DynamicInvocation(String methodName,
                                  TypeDescription returnType,
                                  TypeList parameterTypes,
-                                 MethodDescription bootstrapMethod,
+                                 MethodDescription.InDefinedShape bootstrapMethod,
                                  List<?> arguments) {
             this.methodName = methodName;
             this.returnType = returnType;
@@ -455,9 +455,10 @@ public enum MethodInvocation {
             methodVisitor.visitInvokeDynamicInsn(methodName,
                     methodDescriptor,
                     new Handle(handle,
-                            bootstrapMethod.getDeclaringType().asErasure().getInternalName(),
+                            bootstrapMethod.getDeclaringType().getInternalName(),
                             bootstrapMethod.getInternalName(),
-                            bootstrapMethod.getDescriptor()),
+                            bootstrapMethod.getDescriptor(),
+                            bootstrapMethod.getDeclaringType().isInterface()),
                     arguments.toArray(new Object[arguments.size()]));
             int stackSize = returnType.getStackSize().getSize() - parameterTypes.getStackSize();
             return new Size(stackSize, Math.max(stackSize, 0));

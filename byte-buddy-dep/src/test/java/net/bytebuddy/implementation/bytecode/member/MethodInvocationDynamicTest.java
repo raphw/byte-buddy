@@ -48,7 +48,7 @@ public class MethodInvocationDynamicTest {
 
     @Before
     public void setUp() throws Exception {
-        when(declaringType.asErasure()).thenReturn(declaringType);
+        when(methodDescription.asDefined()).thenReturn(methodDescription);
         when(methodDescription.getDeclaringType()).thenReturn(declaringType);
         when(firstType.getStackSize()).thenReturn(StackSize.ZERO);
         when(firstType.getDescriptor()).thenReturn(FOO);
@@ -72,7 +72,7 @@ public class MethodInvocationDynamicTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getSizeImpact(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_INVOKESTATIC, BAR, QUX, BAZ), argument);
+        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_INVOKESTATIC, BAR, QUX, BAZ, false), argument);
     }
 
     @Test
@@ -85,7 +85,7 @@ public class MethodInvocationDynamicTest {
         StackManipulation.Size size = stackManipulation.apply(methodVisitor, implementationContext);
         assertThat(size.getSizeImpact(), is(0));
         assertThat(size.getSizeImpact(), is(0));
-        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_NEWINVOKESPECIAL, BAR, QUX, BAZ), argument);
+        verify(methodVisitor).visitInvokeDynamicInsn(FOO, "(" + FOO + BAR + ")" + QUX, new Handle(Opcodes.H_NEWINVOKESPECIAL, BAR, QUX, BAZ, false), argument);
     }
 
     @Test

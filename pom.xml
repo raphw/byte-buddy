@@ -45,7 +45,7 @@
         <code.level>1.6</code.level>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
-        <version.asm>5.0.4</version.asm>
+        <version.asm>5.1</version.asm>
         <version.junit>4.12</version.junit>
         <!-- Version 2.* uses Byte Buddy such that newer versions cannot be used as a dependency -->
         <version.mockito>1.10.19</version.mockito>
