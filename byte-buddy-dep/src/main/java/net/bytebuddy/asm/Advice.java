@@ -170,7 +170,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_MAXS).method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_MAXS).readerFlags(ClassReader.EXPAND_FRAMES).method(matcher, this);
     }
 
     @Override
@@ -236,9 +236,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         private void injectFrame(MethodVisitor methodVisitor, TypeList intermediateTypes, boolean throwableOnStack) {
-            if (true) {
-                return;
-            }
             if (requiresFull) {
                 Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
                         + (instrumentedMethod.isStatic() ? 0 : 1)
@@ -294,9 +291,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     Object[] localVariable,
                                     int stackSize,
                                     Object[] stack) {
-            if (true) {
-                return;
-            }
             switch (type) {
                 case Opcodes.F_SAME:
                 case Opcodes.F_SAME1:
@@ -400,6 +394,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             public void injectHandlerFrame(MethodVisitor methodVisitor) {
                 FrameTranslator.this.injectFrame(methodVisitor, intermediateTypes, true);
+            }
+
+            @Override
+            public String toString() {
+                return "Bound{" +
+                        "frameTranslator=" + FrameTranslator.this +
+                        ", methodDescription=" + methodDescription +
+                        ", intermediateTypes=" + intermediateTypes +
+                        '}';
             }
         }
     }

@@ -9,6 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 
@@ -501,6 +502,7 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
+                .visit(DebuggingWrapper.makeDefault())
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -509,7 +511,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testFrameAdviceStatic() throws Exception {
+    public void testFrameAdviceStaticMethod() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)))
@@ -1302,68 +1304,99 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("all")
     public static class FrameSample {
 
         public static int count;
 
         public String foo(String value) {
-            switch (0) {
-                case 0: {
-                    long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
+            int ignored = 0;
+            {
+                long v1 = 1L, v2 = 2L, v3 = 3L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 + v3 == 0L) {
+                        throw new AssertionError();
+                    }
                 }
-                default: {
-                    long a = 1L;
+            }
+            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v4 + v5 + v6 + v7 == 0L) {
+                    throw new AssertionError();
                 }
             }
             try {
-                long a = 1L;
-            } catch (Exception ignored) {
-                long a = 1L;
+                long v8 = 1L;
+            } catch (Exception exception) {
+                long v9 = 1L;
             }
-            long a = 1L;
             return value;
         }
 
         public static String bar(String value) {
-            switch (0) {
-                case 0: {
-                    long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
+            int ignored = 0;
+            {
+                long v1 = 1L, v2 = 2L, v3 = 3L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 + v3 == 0L) {
+                        throw new AssertionError();
+                    }
                 }
-                default: {
-                    long a = 1L;
+            }
+            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v4 + v5 + v6 + v7 == 0L) {
+                    throw new AssertionError();
                 }
             }
             try {
-                long a = 1L;
-            } catch (Exception ignored) {
-                long a = 1L;
+                long v8 = 1L;
+            } catch (Exception exception) {
+                long v9 = 1L;
             }
-            long a = 1L;
             return value;
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FrameAdvice {
 
-        @Advice.OnMethodEnter
-        @Advice.OnMethodExit
-        private static String enter(@Advice.Ignored int value, @Advice.Argument(0) String pseudo) {
-            switch (value) {
-                case 0: {
-                    long a = 1L, b = 1L, c = 1L, d = 1L, e = 1L, f = 1L;
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        @Advice.OnMethodExit(suppress = RuntimeException.class)
+        private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
+            {
+                long v1 = 1L, v2 = 2L, v3 = 3L;
+                if (ignored == 1) {
+                    throw new AssertionError();
+                } else if (ignored == 2) {
+                    if (v1 + v2 + v3 == 0L) {
+                        throw new AssertionError();
+                    }
                 }
-                default: {
-                    long a = 1L;
+            }
+            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            if (ignored == 3) {
+                throw new AssertionError();
+            } else if (ignored == 4) {
+                if (v4 + v5 + v6 + v7 == 0L) {
+                    throw new AssertionError();
                 }
             }
             try {
-                long a = 1L;
-            } catch (Exception ignored) {
-                long a = 1L;
+                long v8 = 1L;
+            } catch (Exception exception) {
+                long v9 = 1L;
             }
-            long a = 1L;
             FrameSample.count++;
-            return pseudo;
+            return value;
         }
     }
 
