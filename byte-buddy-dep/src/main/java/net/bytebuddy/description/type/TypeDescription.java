@@ -50,6 +50,8 @@ public interface TypeDescription extends TypeDefinition, TypeVariableSource {
      */
     TypeDescription CLASS = new ForLoadedType(Class.class);
 
+    TypeDescription THROWABLE = new ForLoadedType(Throwable.class);
+
     /**
      * A representation of the {@code void} non-type.
      */

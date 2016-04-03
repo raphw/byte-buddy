@@ -170,7 +170,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_MAXS).readerFlags(ClassReader.EXPAND_FRAMES).method(matcher, this);
     }
 
     @Override
@@ -218,78 +218,101 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         private final MethodDescription.InDefinedShape instrumentedMethod;
 
+        private final TypeList intermediateTypes;
+
         private boolean requiresFull;
 
-        public FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod) {
+        public FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes) {
             this.instrumentedMethod = instrumentedMethod;
+            this.intermediateTypes = intermediateTypes;
         }
 
-        protected void visitFrame(int type) {
-            switch (type) {
-                case Opcodes.F_SAME:
-                case Opcodes.F_SAME1:
-                    break;
-                case Opcodes.F_APPEND:
-                case Opcodes.F_CHOP:
-                case Opcodes.F_FULL:
-                case Opcodes.F_NEW:
-                    requiresFull = true;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unexpected frame type: " + type);
-            }
+        protected void injectFrame(MethodVisitor methodVisitor) {
+            injectFrame(methodVisitor, intermediateTypes, false);
         }
 
-        protected void injectFrame(MethodVisitor methodVisitor, TypeList intermediateTypes) {
+        protected void injectHandlerFrame(MethodVisitor methodVisitor) {
+            injectFrame(methodVisitor, intermediateTypes, true);
+        }
+
+        private void injectFrame(MethodVisitor methodVisitor, TypeList intermediateTypes, boolean throwableOnStack) {
             if (requiresFull) {
-                Object[] localVariable = new Object[instrumentedMethod.getParameters().asTypeList().getStackSize() + intermediateTypes.getStackSize()];
-                int index = 0;
+                Object[] localVariable = new Object[instrumentedMethod.getParameters().size() + intermediateTypes.size()];
+                int variableIndex = 0;
                 for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                    index += asFrame(typeDescription, localVariable, index);
+                    variableIndex += insertFrame(typeDescription, localVariable, variableIndex);
                 }
                 for (TypeDescription typeDescription : intermediateTypes) {
-                    index += asFrame(typeDescription, localVariable, index);
+                    variableIndex += insertFrame(typeDescription, localVariable, variableIndex);
                 }
-                methodVisitor.visitFrame(Opcodes.F_FULL, localVariable.length, localVariable, 0, EMPTY);
-            } else {
+                methodVisitor.visitFrame(Opcodes.F_FULL,
+                        localVariable.length,
+                        localVariable,
+                        throwableOnStack
+                                ? 1
+                                : 0,
+                        throwableOnStack
+                                ? new Object[]{Type.getInternalName(Throwable.class)}
+                                : EMPTY);
+            } else if (throwableOnStack) {
                 methodVisitor.visitFrame(Opcodes.F_SAME, UNDEFINED, EMPTY, UNDEFINED, EMPTY);
+            } else {
+                methodVisitor.visitFrame(Opcodes.F_SAME1, UNDEFINED, EMPTY, StackSize.SINGLE.getSize(), new Object[]{Type.getInternalName(Throwable.class)});
             }
+        }
+
+        protected Bound bind(MethodDescription.InDefinedShape methodDescription) {
+            return bind(methodDescription, new TypeList.Empty());
+        }
+
+        protected Bound bind(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
+            return new Bound(methodDescription, intermediateTypes);
         }
 
         protected void translateFrame(MethodVisitor methodVisitor,
-                                      MethodDescription.InDefinedShape methodDescription,
-                                      TypeList intermediateTypes,
                                       int type,
                                       int localVariableLength,
                                       Object[] localVariable,
                                       int stackSize,
                                       Object[] stack) {
+            translateFrame(methodVisitor, instrumentedMethod, intermediateTypes, type, localVariableLength, localVariable, stackSize, stack);
+        }
+
+        private void translateFrame(MethodVisitor methodVisitor,
+                                    MethodDescription.InDefinedShape methodDescription,
+                                    TypeList intermediateTypes,
+                                    int type,
+                                    int localVariableLength,
+                                    Object[] localVariable,
+                                    int stackSize,
+                                    Object[] stack) {
             switch (type) {
                 case Opcodes.F_SAME:
                 case Opcodes.F_SAME1:
-                case Opcodes.F_APPEND:
-                case Opcodes.F_CHOP:
                     break;
                 case Opcodes.F_FULL:
                 case Opcodes.F_NEW:
                     Object[] translated = new Object[localVariableLength
-                            - methodDescription.getParameters().asTypeList().getStackSize()
-                            + instrumentedMethod.getParameters().asTypeList().getStackSize()
-                            + intermediateTypes.getStackSize()];
+                            - methodDescription.getParameters().size()
+                            + instrumentedMethod.getParameters().size()
+                            + intermediateTypes.size()];
                     int index = 0;
                     for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                        index += asFrame(typeDescription, translated, index);
+                        index += insertFrame(typeDescription, translated, index);
                     }
                     for (TypeDescription typeDescription : intermediateTypes) {
-                        index += asFrame(typeDescription, translated, index);
+                        index += insertFrame(typeDescription, translated, index);
                     }
                     System.arraycopy(localVariable,
-                            stackSize - methodDescription.getParameters().asTypeList().getStackSize(),
+                            localVariableLength - methodDescription.getParameters().size(),
                             translated,
                             index,
                             translated.length - index);
                     localVariableLength = translated.length;
                     localVariable = translated;
+                case Opcodes.F_APPEND:
+                case Opcodes.F_CHOP:
+                    requiresFull = true;
                     break;
                 default:
                     throw new IllegalArgumentException("Unexpected frame type: " + type);
@@ -297,7 +320,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
         }
 
-        private static int asFrame(TypeDescription typeDescription, Object[] translated, int index) {
+        private static int insertFrame(TypeDescription typeDescription, Object[] translated, int index) {
             if (typeDescription.represents(boolean.class)
                     || typeDescription.represents(byte.class)
                     || typeDescription.represents(short.class)
@@ -307,15 +330,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 return 1;
             } else if (typeDescription.represents(long.class)) {
                 translated[index] = Opcodes.LONG;
-                translated[index + 1] = Opcodes.TOP;
-                return 2;
+                return 1;
             } else if (typeDescription.represents(float.class)) {
                 translated[index] = Opcodes.FLOAT;
                 return 1;
-            } else if (typeDescription.represents(long.class)) {
-                translated[index] = Opcodes.LONG;
-                translated[index + 1] = Opcodes.TOP;
-                return 2;
+            } else if (typeDescription.represents(double.class)) {
+                translated[index] = Opcodes.DOUBLE;
+                return 1;
             } else {
                 translated[index] = typeDescription.getInternalName();
                 return 1;
@@ -328,6 +349,42 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     "instrumentedMethod=" + instrumentedMethod +
                     ", requiresFull=" + requiresFull +
                     '}';
+        }
+
+        protected class Bound {
+
+            private final MethodDescription.InDefinedShape methodDescription;
+
+            private final TypeList intermediateTypes;
+
+            protected Bound(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
+                this.methodDescription = methodDescription;
+                this.intermediateTypes = intermediateTypes;
+            }
+
+            protected void translateFrame(MethodVisitor methodVisitor,
+                                          int type,
+                                          int localVariableLength,
+                                          Object[] localVariable,
+                                          int stackSize,
+                                          Object[] stack) {
+                FrameTranslator.this.translateFrame(methodVisitor,
+                        methodDescription,
+                        intermediateTypes,
+                        type,
+                        localVariableLength,
+                        localVariable,
+                        stackSize,
+                        stack);
+            }
+
+            protected void injectFrame(MethodVisitor methodVisitor) {
+                FrameTranslator.this.injectFrame(methodVisitor, intermediateTypes, false);
+            }
+
+            public void injectHandlerFrame(MethodVisitor methodVisitor) {
+                FrameTranslator.this.injectFrame(methodVisitor, intermediateTypes, true);
+            }
         }
     }
 
@@ -366,6 +423,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         private final ClassReader classReader;
 
+        protected final FrameTranslator frameTranslator;
+
         /**
          * Creates an advise visitor.
          *
@@ -384,13 +443,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             this.instrumentedMethod = instrumentedMethod;
             this.methodEnter = methodEnter;
             this.methodExit = methodExit;
-            this.classReader = new ClassReader(binaryRepresentation);
+            classReader = new ClassReader(binaryRepresentation);
+            frameTranslator = new FrameTranslator(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
+                    ? new TypeList.Empty()
+                    : new TypeList.Explicit(methodEnter.getEnterType()));
         }
 
         @Override
         public void visitCode() {
             super.visitCode();
             onMethodStart();
+            // TODO: frameTranslator.injectFrame(mv);
         }
 
         /**
@@ -471,7 +534,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
-            /* do nothing */
+            frameTranslator.translateFrame(mv,
+                    type,
+                    nLocal,
+                    local,
+                    nStack,
+                    stack);
         }
 
         @Override
@@ -530,7 +598,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                return dispatcher.apply(internalName, descriptor, mv, instrumentedMethod);
+                return dispatcher.apply(internalName, descriptor, mv, frameTranslator, instrumentedMethod);
             }
 
             @Override
@@ -603,11 +671,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected void onMethodEnd() {
                 mv.visitLabel(userEnd);
                 mv.visitLabel(handler);
+                // TODO: frameTranslator.injectHandlerFrame(mv);
                 variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                 storeDefaultReturn();
                 appendExit();
                 variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
                 mv.visitInsn(Opcodes.ATHROW);
+                // TODO: frameTranslator.injectFrame(mv);
             }
 
             /**
@@ -736,7 +806,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param instrumentedMethod A description of the instrumented method.
              * @return A method visitor for reading the discovered method or {@code null} if the discovered method is of no interest.
              */
-            MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod);
+            MethodVisitor apply(String internalName,
+                                String descriptor,
+                                MethodVisitor methodVisitor,
+                                FrameTranslator frameTranslator,
+                                MethodDescription.InDefinedShape instrumentedMethod);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -802,7 +876,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+            public MethodVisitor apply(String internalName,
+                                       String descriptor,
+                                       MethodVisitor methodVisitor,
+                                       FrameTranslator frameTranslator,
+                                       MethodDescription.InDefinedShape instrumentedMethod) {
                 return IGNORE_METHOD;
             }
 
@@ -911,9 +989,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public MethodVisitor apply(String internalName, String descriptor, MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                public MethodVisitor apply(String internalName,
+                                           String descriptor,
+                                           MethodVisitor methodVisitor,
+                                           FrameTranslator frameTranslator,
+                                           MethodDescription.InDefinedShape instrumentedMethod) {
                     return adviseMethod.getInternalName().equals(internalName) && adviseMethod.getDescriptor().equals(descriptor)
-                            ? apply(methodVisitor, instrumentedMethod)
+                            ? apply(methodVisitor, frameTranslator, instrumentedMethod)
                             : IGNORE_METHOD;
                 }
 
@@ -924,7 +1006,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod A description of the instrumented method.
                  * @return A method visitor for visiting the advise method's byte code.
                  */
-                protected abstract MethodVisitor apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod);
+                protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
+                                                       FrameTranslator frameTranslator,
+                                                       MethodDescription.InDefinedShape instrumentedMethod);
 
                 @Override
                 public boolean equals(Object other) {
@@ -1204,7 +1288,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             private final Object value;
 
                             /**
-                             * Createsa mapping for a constant pool value.
+                             * Creates a mapping for a constant pool value.
                              *
                              * @param value The constant pool value.
                              */
@@ -2300,12 +2384,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected MethodVisitor apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                    protected MethodVisitor apply(MethodVisitor methodVisitor,
+                                                  FrameTranslator frameTranslator,
+                                                  MethodDescription.InDefinedShape instrumentedMethod) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, StackSize.ZERO));
                         }
-                        return new CodeTranslationVisitor.ReturnValueRetaining(methodVisitor,
+                        return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
+                                frameTranslator,
                                 instrumentedMethod,
                                 adviseMethod,
                                 offsetMappings,
@@ -2341,7 +2428,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * The additional stack size to consider when accessing the local variable array.
                      */
-                    private final StackSize additionalSize;
+                    private final TypeDescription enterType;
 
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advise.
@@ -2363,7 +2450,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviseMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
                                         ? OffsetMapping.ForThrowable.INSTANCE
                                         : new OffsetMapping.Illegal(Thrown.class));
-                        additionalSize = enterType.getStackSize();
+                        this.enterType = enterType;
                     }
 
                     @Override
@@ -2372,30 +2459,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected MethodVisitor apply(MethodVisitor methodVisitor, MethodDescription.InDefinedShape instrumentedMethod) {
+                    protected MethodVisitor apply(MethodVisitor methodVisitor, FrameTranslator frameTranslator, MethodDescription.InDefinedShape instrumentedMethod) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, additionalSize));
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, enterType.getStackSize())); // TODO: Enter type
                         }
-                        return new CodeTranslationVisitor.ReturnValueDiscarding(methodVisitor,
+                        return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
+                                frameTranslator,
                                 instrumentedMethod,
                                 adviseMethod,
                                 offsetMappings,
                                 adviseMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class),
-                                additionalSize);
+                                enterType);
                     }
 
                     @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && super.equals(other)
-                                && additionalSize == ((Resolved.ForMethodExit) other).additionalSize;
+                                && enterType == ((Resolved.ForMethodExit) other).enterType;
                     }
 
                     @Override
                     public int hashCode() {
                         int result = super.hashCode();
-                        result = 31 * result + additionalSize.hashCode();
+                        result = 31 * result + enterType.hashCode();
                         return result;
                     }
 
@@ -2404,7 +2492,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return "Advice.Dispatcher.Active.Resolved.ForMethodExit{" +
                                 "adviseMethod=" + adviseMethod +
                                 ", offsetMappings=" + offsetMappings +
-                                ", additionalSize=" + additionalSize +
+                                ", enterType=" + enterType +
                                 '}';
                     }
                 }
@@ -2432,6 +2520,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * Indicates that an annotation should not be read.
                  */
                 private static final AnnotationVisitor IGNORE_ANNOTATION = null;
+
+                protected final FrameTranslator.Bound frameTranslator;
 
                 /**
                  * The instrumented method.
@@ -2468,11 +2558,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
+                                                 FrameTranslator.Bound frameTranslator,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviseMethod,
                                                  Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
                                                  TypeDescription throwableType) {
                     super(Opcodes.ASM5, methodVisitor);
+                    this.frameTranslator = frameTranslator;
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviseMethod = adviseMethod;
                     this.offsetMappings = offsetMappings;
@@ -2514,12 +2606,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitCode() {
-                    suppressionHandler.onStart(mv, endOfMethod);
+                    suppressionHandler.onStart(mv, frameTranslator, endOfMethod);
                 }
 
                 @Override
                 public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
-                    /* do nothing */
+                    frameTranslator.translateFrame(mv, type, nLocal, local, nStack, stack);
                 }
 
                 @Override
@@ -2530,7 +2622,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitEnd() {
                     mv.visitLabel(endOfMethod);
-                    suppressionHandler.onEnd(mv, this);
+                    // TODO: frameTranslator.injectFrame(mv);
+                    suppressionHandler.onEnd(mv, frameTranslator, this);
                 }
 
                 @Override
@@ -2571,7 +2664,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param methodVisitor The method visitor of the instrumented method.
                      * @param endOfMethod   A label indicating the end of the method.
                      */
-                    void onStart(MethodVisitor methodVisitor, Label endOfMethod);
+                    void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, Label endOfMethod);
 
                     /**
                      * Invoked at the end of a method.
@@ -2579,7 +2672,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param methodVisitor       The method visitor of the instrumented method.
                      * @param returnValueProducer A producer for defining a default return value of the advised method.
                      */
-                    void onEnd(MethodVisitor methodVisitor, ReturnValueProducer returnValueProducer);
+                    void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer);
 
                     /**
                      * A non-operational suppression handler that does not suppress any method.
@@ -2592,12 +2685,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         INSTANCE;
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, Label endOfMethod) {
+                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, Label endOfMethod) {
                             /* do nothing */
                         }
 
                         @Override
-                        public void onEnd(MethodVisitor methodVisitor, ReturnValueProducer returnValueProducer) {
+                        public void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer) {
                             /* do nothing */
                         }
 
@@ -2639,19 +2732,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, Label endOfMethod) {
+                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, Label endOfMethod) {
                             methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, handler, throwableType.getInternalName());
                             methodVisitor.visitLabel(startOfMethod);
                         }
 
                         @Override
-                        public void onEnd(MethodVisitor methodVisitor, ReturnValueProducer returnValueProducer) {
+                        public void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer) {
                             Label endOfHandler = new Label();
+                            // TODO: frameTranslator.injectFrame(methodVisitor);
                             methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                             methodVisitor.visitLabel(handler);
+                            // TODO: frameTranslator.injectHandlerFrame(methodVisitor);
                             methodVisitor.visitInsn(Opcodes.POP);
                             returnValueProducer.makeDefault(methodVisitor);
                             methodVisitor.visitLabel(endOfHandler);
+                            // TODO: frameTranslator.injectFrame(methodVisitor);
                         }
 
                         @Override
@@ -2681,7 +2777,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A code translation visitor that retains the return value of the represented advise method.
                  */
-                protected static class ReturnValueRetaining extends CodeTranslationVisitor {
+                protected static class ForMethodEnter extends CodeTranslationVisitor {
 
                     /**
                      * Creates a new code translation visitor that retains the return value of the enter advise.
@@ -2692,12 +2788,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param offsetMappings     A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
                      * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                      */
-                    protected ReturnValueRetaining(MethodVisitor methodVisitor,
-                                                   MethodDescription.InDefinedShape instrumentedMethod,
-                                                   MethodDescription.InDefinedShape adviseMethod,
-                                                   Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                                   TypeDescription throwableType) {
-                        super(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings, throwableType);
+                    protected ForMethodEnter(MethodVisitor methodVisitor,
+                                             FrameTranslator frameTranslator,
+                                             MethodDescription.InDefinedShape instrumentedMethod,
+                                             MethodDescription.InDefinedShape adviseMethod,
+                                             Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
+                                             TypeDescription throwableType) {
+                        super(methodVisitor, frameTranslator.bind(adviseMethod), instrumentedMethod, adviseMethod, offsetMappings, throwableType);
                     }
 
                     @Override
@@ -2724,6 +2821,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 mv.visitInsn(opcode);
                                 return;
                         }
+                        // TODO: frameTranslator.injectFrame(mv);
                         mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                     }
 
@@ -2758,7 +2856,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueRetaining{" +
+                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodEnter{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", adviseMethod=" + adviseMethod +
                                 '}';
@@ -2768,36 +2866,50 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A code translation visitor that discards the return value of the represented advise method.
                  */
-                protected static class ReturnValueDiscarding extends CodeTranslationVisitor {
+                protected static class ForMethodExit extends CodeTranslationVisitor {
 
                     /**
                      * The size of the exception slot for the instrumented method's potential exception.
                      */
                     private static final int EXCEPTION_SIZE = 1;
 
-                    /**
-                     * An additional size of the local variable array to consider when writing or reading values.
-                     */
-                    private final StackSize additionalVariableSize;
+                    private final TypeDescription enterType;
 
                     /**
                      * Creates a new code translation visitor that retains the return value of the enter advise.
                      *
-                     * @param methodVisitor          A method visitor for writing the instrumented method's byte code.
-                     * @param instrumentedMethod     The instrumented method.
-                     * @param adviseMethod           The advise method.
-                     * @param offsetMappings         A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
-                     * @param throwableType          A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
-                     * @param additionalVariableSize An additional size of the local variable array to consider when writing or reading values.
+                     * @param methodVisitor      A method visitor for writing the instrumented method's byte code.
+                     * @param instrumentedMethod The instrumented method.
+                     * @param adviseMethod       The advise method.
+                     * @param offsetMappings     A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
+                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                      */
-                    protected ReturnValueDiscarding(MethodVisitor methodVisitor,
-                                                    MethodDescription.InDefinedShape instrumentedMethod,
-                                                    MethodDescription.InDefinedShape adviseMethod,
-                                                    Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                                    TypeDescription throwableType,
-                                                    StackSize additionalVariableSize) {
-                        super(methodVisitor, instrumentedMethod, adviseMethod, offsetMappings, throwableType);
-                        this.additionalVariableSize = additionalVariableSize;
+                    protected ForMethodExit(MethodVisitor methodVisitor,
+                                            FrameTranslator frameTranslator,
+                                            MethodDescription.InDefinedShape instrumentedMethod,
+                                            MethodDescription.InDefinedShape adviseMethod,
+                                            Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
+                                            TypeDescription throwableType,
+                                            TypeDescription enterType) {
+                        super(methodVisitor,
+                                frameTranslator.bind(adviseMethod, intermediates(enterType, instrumentedMethod)),
+                                instrumentedMethod,
+                                adviseMethod,
+                                offsetMappings,
+                                throwableType);
+                        this.enterType = enterType;
+                    }
+
+                    private static TypeList intermediates(TypeDescription enterType, MethodDescription.InDefinedShape instrumentedMethod) {
+                        List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(3);
+                        if (!enterType.represents(void.class)) {
+                            typeDescriptions.add(enterType);
+                        }
+                        if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                            typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
+                        }
+                        typeDescriptions.add(TypeDescription.THROWABLE);
+                        return new TypeList.Explicit(typeDescriptions);
                     }
 
                     @Override
@@ -2818,12 +2930,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 mv.visitInsn(opcode);
                                 return;
                         }
+                        // TODO: frameTranslator.injectFrame(mv);
                         mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                     }
 
                     @Override
                     protected int adjust(int offset) {
-                        return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + additionalVariableSize.getSize() + EXCEPTION_SIZE;
+                        return offset + instrumentedMethod.getReturnType().getStackSize().getSize() + enterType.getStackSize().getSize() + EXCEPTION_SIZE;
                     }
 
                     @Override
@@ -2833,10 +2946,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueDiscarding{" +
+                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodExit{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", adviseMethod=" + adviseMethod +
-                                ", additionalVariableSize=" + additionalVariableSize +
+                                ", enterType=" + enterType +
                                 '}';
                     }
                 }

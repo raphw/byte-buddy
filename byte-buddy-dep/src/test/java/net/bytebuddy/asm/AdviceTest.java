@@ -758,8 +758,13 @@ public class AdviceTest {
         }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueDiscarding.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ReturnValueRetaining.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+            @Override
+            public void apply(MethodDescription.InDefinedShape mock) {
+                when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+            }
+        }).applyBasic();
     }
 
     @SuppressWarnings("unused")
