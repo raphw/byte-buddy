@@ -502,7 +502,6 @@ public class AdviceTest {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
-                .visit(DebuggingWrapper.makeDefault())
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();

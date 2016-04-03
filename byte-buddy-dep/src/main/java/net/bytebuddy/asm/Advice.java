@@ -314,7 +314,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         index += insertFrame(typeDescription, translated, index);
                     }
                     System.arraycopy(localVariable,
-                            localVariableLength - methodDescription.getParameters().size() - (methodDescription.isStatic() ? 0 : 1),
+                            methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
                             translated,
                             index,
                             translated.length - index);
