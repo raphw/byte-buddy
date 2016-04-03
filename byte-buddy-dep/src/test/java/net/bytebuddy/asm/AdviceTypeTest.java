@@ -30,6 +30,7 @@ public class AdviceTypeTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
+                {VoidAdvice.class, null},
                 {BooleanAdvice.class, BOOLEAN},
                 {ByteAdvice.class, VALUE},
                 {ShortAdvice.class, (short) VALUE},
@@ -81,6 +82,35 @@ public class AdviceTypeTest {
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @SuppressWarnings("unused")
+    public static class VoidAdvice {
+
+        public static int enter, exit;
+
+        public static boolean exception;
+
+        public void foo() {
+            /* empty */
+        }
+
+        public void bar() {
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodEnter
+        public static void enter() {
+            enter++;
+        }
+
+        @Advice.OnMethodExit
+        public static void exit(@Advice.Thrown Throwable throwable) {
+            if (!(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            exit++;
+        }
     }
 
     @SuppressWarnings("unused")

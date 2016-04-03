@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -544,6 +543,28 @@ public class AdviceTest {
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceFrameInjected() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testFrameAdviceFrameInjectedExpanded() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
     @Test(expected = IllegalArgumentException.class)
@@ -1395,8 +1416,8 @@ public class AdviceTest {
     @SuppressWarnings("unused")
     public static class FrameAdvice {
 
-        @Advice.OnMethodEnter(suppress = RuntimeException.class)
-        @Advice.OnMethodExit(suppress = RuntimeException.class)
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
@@ -1423,6 +1444,27 @@ public class AdviceTest {
             }
             FrameSample.count++;
             return value;
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class FrameExitAdvice {
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        @Advice.OnMethodExit(suppress = RuntimeException.class)
+        private static String advice() {
+            try {
+                int ignored = 0;
+                if (ignored != 0) {
+                    return BAR;
+                }
+            } catch (Exception e) {
+                int ignored = 0;
+                if (ignored != 0) {
+                    return QUX;
+                }
+            }
+            return FOO;
         }
     }
 

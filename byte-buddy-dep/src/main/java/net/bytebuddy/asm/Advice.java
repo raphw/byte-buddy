@@ -13,7 +13,6 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
-import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -290,14 +289,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return A bound version of this frame translator.
          */
         protected Bound bindExit(MethodDescription.InDefinedShape methodDescription, TypeDescription enterType) {
-                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(3);
-                if (!enterType.represents(void.class)) {
-                    typeDescriptions.add(enterType);
-                }
-                if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                    typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
-                }
-                typeDescriptions.add(TypeDescription.THROWABLE);
+            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(3);
+            if (!enterType.represents(void.class)) {
+                typeDescriptions.add(enterType);
+            }
+            if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
+            }
+            typeDescriptions.add(TypeDescription.THROWABLE);
             return new Bound(methodDescription, new TypeList.Explicit(typeDescriptions), Collections.<TypeDescription>emptyList());
         }
 
@@ -325,40 +324,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         protected void injectHandlerFrame(MethodVisitor methodVisitor) {
-            injectFrame(methodVisitor, intermediateTypes, true);
+            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
         }
 
         protected void injectCompletionFrame(MethodVisitor methodVisitor) {
-            injectFrame(methodVisitor,
-                    CompoundList.of(intermediateTypes, instrumentedMethod.getReturnType().represents(void.class)
-                            ? new TypeList.Empty()
-                            : new TypeList.Explicit(instrumentedMethod.getReturnType().asErasure())),
-                    false);
-        }
-
-        private void injectFrame(MethodVisitor methodVisitor, List<? extends TypeDescription> extensionTypes, boolean throwableOnStack) {
-            Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
-                    + (instrumentedMethod.isStatic() ? 0 : 1)
-                    + extensionTypes.size()];
-            int index = 0;
-            if (!instrumentedMethod.isStatic()) {
-                localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
-            }
-            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                localVariable[index++] = toFrame(typeDescription);
-            }
-            for (TypeDescription typeDescription : extensionTypes) {
-                localVariable[index++] = toFrame(typeDescription);
-            }
-            methodVisitor.visitFrame(Opcodes.F_FULL,
-                    localVariable.length,
-                    localVariable,
-                    throwableOnStack
-                            ? 1
-                            : 0,
-                    throwableOnStack
-                            ? new Object[]{Type.getInternalName(Throwable.class)}
-                            : EMPTY);
+            Object[] local = instrumentedMethod.getReturnType().represents(void.class)
+                    ? new Object[]{Type.getInternalName(Throwable.class)}
+                    : new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure()), Type.getInternalName(Throwable.class)};
+            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
         }
 
         /**
@@ -477,6 +450,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this.methodDescription = methodDescription;
                 this.intermediateTypes = intermediateTypes;
                 this.yieldedTypes = yieldedTypes;
+                if (yieldedTypes.size() > 3) {
+                    throw new UnsupportedOperationException("Did not implement support for more then three yielded types: " + yieldedTypes);
+                }
             }
 
             protected void recordMaxima(int stackSize, int localVariableLength) {
@@ -513,12 +489,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         stack);
             }
 
-            public void injectHandlerFrame(MethodVisitor methodVisitor) {
-                FrameTranslator.this.injectFrame(methodVisitor, intermediateTypes, true);
+            protected void injectHandlerFrame(MethodVisitor methodVisitor) {
+                FrameTranslator.this.injectHandlerFrame(methodVisitor);
             }
 
             protected void injectCompletionFrame(MethodVisitor methodVisitor) {
-                FrameTranslator.this.injectFrame(methodVisitor, CompoundList.of(intermediateTypes, yieldedTypes), false);
+                Object[] local = new Object[yieldedTypes.size()];
+                int index = 0;
+                for (TypeDescription typeDescription : yieldedTypes) {
+                    local[index++] = toFrame(typeDescription);
+                }
+                methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
             }
 
             @Override
@@ -612,6 +593,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
+                    mv.visitInsn(Opcodes.ACONST_NULL);
+                    variable(Opcodes.ASTORE);
+                    frameTranslator.injectCompletionFrame(mv);
                     onMethodExit();
                     break;
                 case Opcodes.IRETURN:
@@ -643,6 +627,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             variable(store);
             mv.visitInsn(Opcodes.ACONST_NULL);
             variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+            frameTranslator.injectCompletionFrame(mv);
             onMethodExit();
             variable(load);
         }
@@ -673,12 +658,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitFrame(int type, int nLocal, Object[] local, int nStack, Object[] stack) {
-            frameTranslator.translateFrame(mv,
-                    type,
-                    nLocal,
-                    local,
-                    nStack,
-                    stack);
+            frameTranslator.translateFrame(mv, type, nLocal, local, nStack, stack);
         }
 
         @Override
@@ -810,6 +790,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected void onMethodEnd() {
                 mv.visitLabel(userEnd);
                 mv.visitLabel(handler);
+                frameTranslator.injectHandlerFrame(mv);
                 variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                 storeDefaultReturn();
                 appendExit();
@@ -2759,6 +2740,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitEnd() {
                     mv.visitLabel(endOfMethod);
+                    frameTranslator.injectCompletionFrame(mv);
                     suppressionHandler.onEnd(mv, frameTranslator, this);
                 }
 
@@ -2878,9 +2860,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Label endOfHandler = new Label();
                             methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                             methodVisitor.visitLabel(handler);
+                            frameTranslator.injectHandlerFrame(methodVisitor);
                             methodVisitor.visitInsn(Opcodes.POP);
                             returnValueProducer.makeDefault(methodVisitor);
                             methodVisitor.visitLabel(endOfHandler);
+                            frameTranslator.injectCompletionFrame(methodVisitor);
                         }
 
                         @Override
