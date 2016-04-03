@@ -13,6 +13,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -243,6 +244,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes) {
             this.instrumentedMethod = instrumentedMethod;
             this.intermediateTypes = intermediateTypes;
+            stackSize = 1; // Minimum for pushing exceptions onto the stack.
         }
 
         /**
@@ -275,19 +277,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param methodDescription The advice method.
          * @return A bound version of this frame translator.
          */
-        protected Bound bind(MethodDescription.InDefinedShape methodDescription) {
-            return bind(methodDescription, new TypeList.Empty());
+        protected Bound bindEntry(MethodDescription.InDefinedShape methodDescription) {
+            return new Bound(methodDescription, new TypeList.Empty(), methodDescription.getReturnType().represents(void.class)
+                    ? new TypeList.Empty()
+                    : new TypeList.Explicit(methodDescription.getReturnType().asErasure()));
         }
 
         /**
          * Binds this frame translator to an advice method.
          *
          * @param methodDescription The advice method.
-         * @param intermediateTypes A list of intermediate types to be considered as part of the advice method's steady signature.
          * @return A bound version of this frame translator.
          */
-        protected Bound bind(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
-            return new Bound(methodDescription, intermediateTypes);
+        protected Bound bindExit(MethodDescription.InDefinedShape methodDescription, TypeDescription enterType) {
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(3);
+                if (!enterType.represents(void.class)) {
+                    typeDescriptions.add(enterType);
+                }
+                if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                    typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
+                }
+                typeDescriptions.add(TypeDescription.THROWABLE);
+            return new Bound(methodDescription, new TypeList.Explicit(typeDescriptions), Collections.<TypeDescription>emptyList());
         }
 
         /**
@@ -313,18 +324,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     + intermediateTypes.getStackSize());
         }
 
-        protected void injectFrame(MethodVisitor methodVisitor) {
-            injectFrame(methodVisitor, intermediateTypes, false);
-        }
-
         protected void injectHandlerFrame(MethodVisitor methodVisitor) {
             injectFrame(methodVisitor, intermediateTypes, true);
         }
 
-        private void injectFrame(MethodVisitor methodVisitor, TypeList intermediateTypes, boolean throwableOnStack) {
+        protected void injectCompletionFrame(MethodVisitor methodVisitor) {
+            injectFrame(methodVisitor,
+                    CompoundList.of(intermediateTypes, instrumentedMethod.getReturnType().represents(void.class)
+                            ? new TypeList.Empty()
+                            : new TypeList.Explicit(instrumentedMethod.getReturnType().asErasure())),
+                    false);
+        }
+
+        private void injectFrame(MethodVisitor methodVisitor, List<? extends TypeDescription> extensionTypes, boolean throwableOnStack) {
             Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
                     + (instrumentedMethod.isStatic() ? 0 : 1)
-                    + intermediateTypes.size()];
+                    + extensionTypes.size()];
             int index = 0;
             if (!instrumentedMethod.isStatic()) {
                 localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
@@ -332,7 +347,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
                 localVariable[index++] = toFrame(typeDescription);
             }
-            for (TypeDescription typeDescription : intermediateTypes) {
+            for (TypeDescription typeDescription : extensionTypes) {
                 localVariable[index++] = toFrame(typeDescription);
             }
             methodVisitor.visitFrame(Opcodes.F_FULL,
@@ -448,15 +463,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             private final TypeList intermediateTypes;
 
+            private final List<? extends TypeDescription> yieldedTypes;
+
             /**
              * Creates a new bound frame translator.
              *
              * @param methodDescription The method description for which frames are translated.
              * @param intermediateTypes A list of intermediate types to be considered as part of the instrumented method's steady signature.
              */
-            protected Bound(MethodDescription.InDefinedShape methodDescription, TypeList intermediateTypes) {
+            protected Bound(MethodDescription.InDefinedShape methodDescription,
+                            TypeList intermediateTypes,
+                            List<? extends TypeDescription> yieldedTypes) {
                 this.methodDescription = methodDescription;
                 this.intermediateTypes = intermediateTypes;
+                this.yieldedTypes = yieldedTypes;
             }
 
             protected void recordMaxima(int stackSize, int localVariableLength) {
@@ -493,13 +513,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         stack);
             }
 
-            protected void injectFrame(MethodVisitor methodVisitor) {
-                // TODO: Needs to include additional variable
-                FrameTranslator.this.injectFrame(methodVisitor, intermediateTypes, false);
-            }
-
             public void injectHandlerFrame(MethodVisitor methodVisitor) {
                 FrameTranslator.this.injectFrame(methodVisitor, intermediateTypes, true);
+            }
+
+            protected void injectCompletionFrame(MethodVisitor methodVisitor) {
+                FrameTranslator.this.injectFrame(methodVisitor, CompoundList.of(intermediateTypes, yieldedTypes), false);
             }
 
             @Override
@@ -2739,7 +2758,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitEnd() {
                     mv.visitLabel(endOfMethod);
-                    frameTranslator.injectFrame(mv);
                     suppressionHandler.onEnd(mv, frameTranslator, this);
                 }
 
@@ -2908,7 +2926,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              MethodDescription.InDefinedShape adviseMethod,
                                              Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
                                              TypeDescription throwableType) {
-                        super(methodVisitor, frameTranslator.bind(adviseMethod), instrumentedMethod, adviseMethod, offsetMappings, throwableType);
+                        super(methodVisitor, frameTranslator.bindEntry(adviseMethod), instrumentedMethod, adviseMethod, offsetMappings, throwableType);
                     }
 
                     @Override
@@ -3005,24 +3023,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             TypeDescription throwableType,
                                             TypeDescription enterType) {
                         super(methodVisitor,
-                                frameTranslator.bind(adviseMethod, intermediates(enterType, instrumentedMethod)),
+                                frameTranslator.bindExit(adviseMethod, enterType),
                                 instrumentedMethod,
                                 adviseMethod,
                                 offsetMappings,
                                 throwableType);
                         this.enterType = enterType;
-                    }
-
-                    private static TypeList intermediates(TypeDescription enterType, MethodDescription.InDefinedShape instrumentedMethod) {
-                        List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(3);
-                        if (!enterType.represents(void.class)) {
-                            typeDescriptions.add(enterType);
-                        }
-                        if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                            typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
-                        }
-                        typeDescriptions.add(TypeDescription.THROWABLE);
-                        return new TypeList.Explicit(typeDescriptions);
                     }
 
                     @Override
