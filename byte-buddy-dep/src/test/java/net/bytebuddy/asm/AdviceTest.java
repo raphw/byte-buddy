@@ -567,6 +567,28 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
+    @Test
+    public void testFrameAdviceSimpleShift() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testFrameAdviceSimpleShiftExpanded() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);
@@ -1419,6 +1441,7 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         @Advice.OnMethodExit
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
+            int v0 = 1;
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
                 if (ignored == 1) {
@@ -1465,6 +1488,26 @@ public class AdviceTest {
                 }
             }
             return FOO;
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class FrameShiftAdvice {
+
+        @Advice.OnMethodEnter
+        private static String enter() {
+            int v0 = 0;
+            if (v0 != 0) {
+                // do nothing
+            }
+            return BAR;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Enter String value) {
+            if (!value.equals(BAR)) {
+                throw new AssertionError();
+            }
         }
     }
 
