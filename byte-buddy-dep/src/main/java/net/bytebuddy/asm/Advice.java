@@ -251,7 +251,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes) {
             this.instrumentedMethod = instrumentedMethod;
             this.intermediateTypes = intermediateTypes;
-            stackSize = 1; // Minimum for pushing exceptions onto the stack.
+            stackSize = 2; // Minimum for pushing exceptions or default values. Could be more accurate.
         }
 
         /**
@@ -330,6 +330,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     + instrumentedMethod.getReturnType().getStackSize().getSize()
                     + StackSize.SINGLE.getSize()
                     + intermediateTypes.getStackSize());
+        }
+
+        protected void injectEntranceFrame(MethodVisitor methodVisitor) {
+            injectFrame(methodVisitor, intermediateTypes, false);
         }
 
         /**
@@ -645,6 +649,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public void visitCode() {
             super.visitCode();
             append(methodEnter);
+            // TODO: Optional for above "true"
+//            frameTranslator.injectEntranceFrame(mv);
             onUserStart();
         }
 
@@ -664,7 +670,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
-                    onMethodExit();
+                    mv.visitInsn(Opcodes.ACONST_NULL);
+                    variable(Opcodes.ASTORE);
+                    mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                     return;
                 case Opcodes.IRETURN:
                     onMethodExit(Opcodes.ISTORE);
@@ -695,12 +703,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             variable(store);
             mv.visitInsn(Opcodes.ACONST_NULL);
             variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-            mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-        }
-
-        private void onMethodExit() {
-            mv.visitInsn(Opcodes.ACONST_NULL);
-            variable(Opcodes.ASTORE);
             mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
         }
 
@@ -2912,9 +2914,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer) {
                             Label endOfHandler = new Label();
-                            methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
-                            frameTranslator.injectHandlerFrame(methodVisitor);
                             methodVisitor.visitLabel(handler);
+                            frameTranslator.injectHandlerFrame(methodVisitor);
                             methodVisitor.visitInsn(Opcodes.POP);
                             returnValueProducer.makeDefault(methodVisitor);
                             methodVisitor.visitLabel(endOfHandler);
