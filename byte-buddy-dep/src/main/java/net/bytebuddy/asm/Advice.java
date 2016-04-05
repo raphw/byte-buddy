@@ -172,7 +172,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(matcher, this);
     }
 
     @Override
@@ -637,7 +637,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 case Opcodes.RETURN:
                     mv.visitInsn(Opcodes.ACONST_NULL);
                     variable(Opcodes.ASTORE);
-                    frameTranslator.injectCompletionFrame(mv);
                     onMethodExit();
                     break;
                 case Opcodes.IRETURN:
@@ -669,7 +668,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             variable(store);
             mv.visitInsn(Opcodes.ACONST_NULL);
             variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-            frameTranslator.injectCompletionFrame(mv);
             onMethodExit();
             variable(load);
         }
@@ -832,7 +830,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected void onMethodEnd() {
                 mv.visitLabel(userEnd);
                 mv.visitLabel(handler);
-                frameTranslator.injectHandlerFrame(mv);
                 variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                 storeDefaultReturn();
                 appendExit();
@@ -2790,7 +2787,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitEnd() {
                     mv.visitLabel(endOfMethod);
-                    frameTranslator.injectCompletionFrame(mv);
                     suppressionHandler.onEnd(mv, frameTranslator, this);
                 }
 
@@ -2912,11 +2908,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             Label endOfHandler = new Label();
                             methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                             methodVisitor.visitLabel(handler);
-                            frameTranslator.injectHandlerFrame(methodVisitor);
                             methodVisitor.visitInsn(Opcodes.POP);
                             returnValueProducer.makeDefault(methodVisitor);
                             methodVisitor.visitLabel(endOfHandler);
-                            frameTranslator.injectCompletionFrame(methodVisitor);
                         }
 
                         @Override

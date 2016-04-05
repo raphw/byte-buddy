@@ -49,6 +49,17 @@ public class AdviceTest {
     }
 
     @Test
+    public void testEmptyAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
     public void testAdviceWithImplicitArgument() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -930,6 +941,22 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit() {
             Sample.exit++;
+        }
+    }
+
+    public static class EmptyMethod {
+
+        public void foo() {
+            /* empty */
+        }
+    }
+
+    public static class EmptyAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice() {
+            /* empty */
         }
     }
 
