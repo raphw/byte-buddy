@@ -9,6 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -49,10 +50,35 @@ public class AdviceTest {
     }
 
     @Test
-    public void testEmptyAdvice() throws Exception {
+    public void testEmptyAdviceEntryAndExit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)))
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceOnlyEntry() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(EmptyAdviceEntry.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceOnlyExit() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(EmptyAdviceExit.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -954,6 +980,23 @@ public class AdviceTest {
     public static class EmptyAdvice {
 
         @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    public static class EmptyAdviceEntry {
+
+        @Advice.OnMethodEnter
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+
+    public static class EmptyAdviceExit {
+
         @Advice.OnMethodExit
         private static void advice() {
             /* empty */

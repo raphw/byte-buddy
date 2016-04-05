@@ -172,7 +172,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @return A suitable ASM visitor wrapper with the <i>compute frames</i> option enabled.
      */
     public AsmVisitorWrapper.ForDeclaredMethods on(ElementMatcher<? super MethodDescription.InDefinedShape> matcher) {
-        return new AsmVisitorWrapper.ForDeclaredMethods().writerFlags(ClassWriter.COMPUTE_FRAMES).method(matcher, this);
+        return new AsmVisitorWrapper.ForDeclaredMethods().method(matcher, this);
     }
 
     @Override
@@ -664,7 +664,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Writes the advise for the instrumented method's end.
          *
          * @param store The return type's store instruction.
-         * @param load  The return type's load instruction.
          */
         private void onMethodExit(int store) {
             variable(store);
@@ -705,8 +704,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
-            onMethodEnd();
+            onUserEnd();
             mv.visitLabel(endOfMethod);
+            frameTranslator.injectCompletionFrame(mv);
             append(methodExit);
             variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
             Label exceptionalReturn = new Label();
@@ -719,6 +719,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 mv.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
             }
             mv.visitLabel(exceptionalReturn);
+            mv.visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
             variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
             mv.visitInsn(Opcodes.ATHROW);
             super.visitMaxs(frameTranslator.compoundStackSize(maxStack), frameTranslator.compoundLocalVariableSize(maxLocals));
@@ -727,7 +728,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Writes the advise for completing the instrumented method.
          */
-        protected abstract void onMethodEnd();
+        protected abstract void onUserEnd();
 
         /**
          * Appends the byte code of the supplied dispatcher.
@@ -812,8 +813,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            protected void onMethodEnd() {
+            protected void onUserEnd() {
                 mv.visitLabel(userEnd);
+                frameTranslator.injectHandlerFrame(mv);
                 variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                 storeDefaultReturn();
                 mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
@@ -881,7 +883,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            protected void onMethodEnd() {
+            protected void onUserEnd() {
                 /* empty */
             }
 
