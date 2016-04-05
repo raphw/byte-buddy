@@ -586,6 +586,7 @@ public class AdviceTest {
     public void testFrameAdviceFrameInjected() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)

@@ -2778,7 +2778,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitCode() {
-                    suppressionHandler.onStart(mv, frameTranslator, endOfMethod);
+                    suppressionHandler.onStart(mv, frameTranslator);
                 }
 
                 @Override
@@ -2793,8 +2793,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitEnd() {
-                    mv.visitLabel(endOfMethod);
                     suppressionHandler.onEnd(mv, frameTranslator, this);
+                    mv.visitLabel(endOfMethod);
                     frameTranslator.injectCompletionFrame(mv);
                 }
 
@@ -2835,9 +2835,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param methodVisitor   The method visitor of the instrumented method.
                      * @param frameTranslator The frame translator to use.
-                     * @param endOfMethod     A label indicating the end of the method.
                      */
-                    void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, Label endOfMethod);
+                    void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator);
 
                     /**
                      * Invoked at the end of a method.
@@ -2859,7 +2858,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         INSTANCE;
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, Label endOfMethod) {
+                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator) {
                             /* do nothing */
                         }
 
@@ -2889,10 +2888,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         private final Label startOfMethod;
 
-                        /**
-                         * A label indicating the exception handler.
-                         */
-                        private final Label handler;
+                        private final Label endOfMethod;
 
                         /**
                          * Creates a new suppressing suppression handler.
@@ -2902,19 +2898,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         protected Suppressing(TypeDescription throwableType) {
                             this.throwableType = throwableType;
                             startOfMethod = new Label();
-                            handler = new Label();
+                            endOfMethod = new Label();
                         }
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, Label endOfMethod) {
-                            methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, handler, throwableType.getInternalName());
+                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator) {
+                            methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
                             methodVisitor.visitLabel(startOfMethod);
                         }
 
                         @Override
                         public void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer) {
                             Label endOfHandler = new Label();
-                            methodVisitor.visitLabel(handler);
+                            methodVisitor.visitLabel(endOfMethod);
                             frameTranslator.injectHandlerFrame(methodVisitor);
                             methodVisitor.visitInsn(Opcodes.POP);
                             returnValueProducer.makeDefault(methodVisitor);
@@ -2939,7 +2935,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return "Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing{" +
                                     "throwableType=" + throwableType +
                                     ", startOfMethod=" + startOfMethod +
-                                    ", handler=" + handler +
                                     '}';
                         }
                     }
