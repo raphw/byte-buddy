@@ -786,8 +786,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             private final Label userEnd;
 
-            private final Label userHandler;
-
             /**
              * Creates a new advise visitor that captures exception by weaving try-catch blocks around user code.
              *
@@ -804,20 +802,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             byte[] binaryRepresentation) {
                 super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation);
                 userStart = new Label();
-                userHandler = new Label();
                 userEnd = new Label();
             }
 
             @Override
             protected void onUserStart() {
-                mv.visitTryCatchBlock(userStart, userEnd, userHandler, ANY_THROWABLE);
+                mv.visitTryCatchBlock(userStart, userEnd, userEnd, ANY_THROWABLE);
                 mv.visitLabel(userStart);
             }
 
             @Override
             protected void onMethodEnd() {
                 mv.visitLabel(userEnd);
-                mv.visitLabel(userHandler);
                 variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                 storeDefaultReturn();
                 mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
