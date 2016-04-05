@@ -1,6 +1,5 @@
 package net.bytebuddy.asm;
 
-import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -13,6 +12,7 @@ import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
+import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -338,7 +338,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param methodVisitor The method visitor to write the frame to.
          */
         protected void injectHandlerFrame(MethodVisitor methodVisitor) {
-            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
+//            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
+            injectFrame(methodVisitor, intermediateTypes, true);
         }
 
         /**
@@ -347,10 +348,33 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param methodVisitor The method visitor to write the frame to.
          */
         protected void injectCompletionFrame(MethodVisitor methodVisitor) {
-            Object[] local = instrumentedMethod.getReturnType().represents(void.class)
+//            Object[] local = instrumentedMethod.getReturnType().represents(void.class)
+//                    ? new Object[]{Type.getInternalName(Throwable.class)}
+//                    : new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure()), Type.getInternalName(Throwable.class)};
+//            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
+            injectFrame(methodVisitor, CompoundList.of(intermediateTypes, instrumentedMethod.getReturnType().represents(void.class)
+                    ? Collections.singletonList(TypeDescription.THROWABLE)
+                    : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE)), false);
+        }
+
+        private void injectFrame(MethodVisitor methodVisitor,
+                                 List<? extends TypeDescription> additionalTypes,
+                                 boolean exceptionOnStack) {
+            Object[] localVariable = new Object[instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1) + additionalTypes.size()];
+            int index = 0;
+            if (!instrumentedMethod.isStatic()) {
+                localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
+            }
+            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                localVariable[index++] = toFrame(typeDescription);
+            }
+            for (TypeDescription typeDescription : additionalTypes) {
+                localVariable[index++] = toFrame(typeDescription);
+            }
+            Object[] stackType = exceptionOnStack
                     ? new Object[]{Type.getInternalName(Throwable.class)}
-                    : new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure()), Type.getInternalName(Throwable.class)};
-            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
+                    : EMPTY;
+            methodVisitor.visitFrame(Opcodes.F_FULL, localVariable.length, localVariable, stackType.length, stackType);
         }
 
         /**
@@ -493,6 +517,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
+             * Injects a frame that describes the method when entering its surrounding exception handler.
+             *
+             * @param methodVisitor The method visitor to write the frame to.
+             */
+            protected void injectHandlerFrame(MethodVisitor methodVisitor) {
+                injectFrame(methodVisitor, intermediateTypes, true);
+//                FrameTranslator.this.injectHandlerFrame(methodVisitor);
+            }
+
+            /**
+             * Injects a frame that describes the method after completion.
+             *
+             * @param methodVisitor The method visitor to write the frame to.
+             */
+            protected void injectCompletionFrame(MethodVisitor methodVisitor) {
+                injectFrame(methodVisitor, CompoundList.of(intermediateTypes, yieldedTypes), false);
+//                Object[] local = new Object[yieldedTypes.size()];
+//                int index = 0;
+//                for (TypeDescription typeDescription : yieldedTypes) {
+//                    local[index++] = toFrame(typeDescription);
+//                }
+//                methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
+            }
+
+            /**
              * Translates an existing frame.
              *
              * @param methodVisitor       The method visitor to append the frame to.
@@ -516,29 +565,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         localVariable,
                         stackSize,
                         stack);
-            }
-
-            /**
-             * Injects a frame that describes the method when entering its surrounding exception handler.
-             *
-             * @param methodVisitor The method visitor to write the frame to.
-             */
-            protected void injectHandlerFrame(MethodVisitor methodVisitor) {
-                FrameTranslator.this.injectHandlerFrame(methodVisitor);
-            }
-
-            /**
-             * Injects a frame that describes the method after completion.
-             *
-             * @param methodVisitor The method visitor to write the frame to.
-             */
-            protected void injectCompletionFrame(MethodVisitor methodVisitor) {
-                Object[] local = new Object[yieldedTypes.size()];
-                int index = 0;
-                for (TypeDescription typeDescription : yieldedTypes) {
-                    local[index++] = toFrame(typeDescription);
-                }
-                methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
             }
 
             @Override
@@ -635,29 +661,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        @SuppressFBWarnings(value = "SF_SWITCH_NO_DEFAULT", justification = "Switch is supposed to fall through")
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
                     onMethodExit();
-                    break;
+                    return;
                 case Opcodes.IRETURN:
                     onMethodExit(Opcodes.ISTORE);
-                    break;
+                    return;
                 case Opcodes.FRETURN:
                     onMethodExit(Opcodes.FSTORE);
-                    break;
+                    return;
                 case Opcodes.DRETURN:
                     onMethodExit(Opcodes.DSTORE);
-                    break;
+                    return;
                 case Opcodes.LRETURN:
                     onMethodExit(Opcodes.LSTORE);
-                    break;
+                    return;
                 case Opcodes.ARETURN:
                     onMethodExit(Opcodes.ASTORE);
-                    break;
+                    return;
+                default:
+                    mv.visitInsn(opcode);
             }
-            mv.visitInsn(opcode);
         }
 
         /**
@@ -2767,6 +2793,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitEnd() {
                     mv.visitLabel(endOfMethod);
                     suppressionHandler.onEnd(mv, frameTranslator, this);
+                    frameTranslator.injectCompletionFrame(mv);
                 }
 
                 @Override
@@ -2886,6 +2913,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer) {
                             Label endOfHandler = new Label();
                             methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
+                            frameTranslator.injectHandlerFrame(methodVisitor);
                             methodVisitor.visitLabel(handler);
                             methodVisitor.visitInsn(Opcodes.POP);
                             returnValueProducer.makeDefault(methodVisitor);
