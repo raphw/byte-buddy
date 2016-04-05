@@ -588,6 +588,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final FrameTranslator frameTranslator;
 
+        protected final Label endOfMethod;
+
         /**
          * Creates an advise visitor.
          *
@@ -610,18 +612,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             frameTranslator = new FrameTranslator(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? new TypeList.Empty()
                     : new TypeList.Explicit(methodEnter.getEnterType()));
+            endOfMethod = new Label();
         }
 
         @Override
         public void visitCode() {
             super.visitCode();
-            onMethodStart();
+            append(methodEnter);
+            onUserStart();
         }
 
         /**
          * Writes the advise for entering the instrumented method.
          */
-        protected abstract void onMethodStart();
+        protected abstract void onUserStart();
 
         @Override
         public void visitVarInsn(int opcode, int offset) {
@@ -635,24 +639,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
-                    mv.visitInsn(Opcodes.ACONST_NULL);
-                    variable(Opcodes.ASTORE);
                     onMethodExit();
                     break;
                 case Opcodes.IRETURN:
-                    onMethodExit(Opcodes.ISTORE, Opcodes.ILOAD);
+                    onMethodExit(Opcodes.ISTORE);
                     break;
                 case Opcodes.FRETURN:
-                    onMethodExit(Opcodes.FSTORE, Opcodes.FLOAD);
+                    onMethodExit(Opcodes.FSTORE);
                     break;
                 case Opcodes.DRETURN:
-                    onMethodExit(Opcodes.DSTORE, Opcodes.DLOAD);
+                    onMethodExit(Opcodes.DSTORE);
                     break;
                 case Opcodes.LRETURN:
-                    onMethodExit(Opcodes.LSTORE, Opcodes.LLOAD);
+                    onMethodExit(Opcodes.LSTORE);
                     break;
                 case Opcodes.ARETURN:
-                    onMethodExit(Opcodes.ASTORE, Opcodes.ALOAD);
+                    onMethodExit(Opcodes.ASTORE);
                     break;
             }
             mv.visitInsn(opcode);
@@ -664,18 +666,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param store The return type's store instruction.
          * @param load  The return type's load instruction.
          */
-        private void onMethodExit(int store, int load) {
+        private void onMethodExit(int store) {
             variable(store);
             mv.visitInsn(Opcodes.ACONST_NULL);
             variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-            onMethodExit();
-            variable(load);
+            mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
         }
 
-        /**
-         * Writes the advise for exiting the instrumented method.
-         */
-        protected abstract void onMethodExit();
+        private void onMethodExit() {
+            mv.visitInsn(Opcodes.ACONST_NULL);
+            variable(Opcodes.ASTORE);
+            mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+        }
 
         /**
          * Access the first variable after the instrumented variables and return type are stored.
@@ -704,6 +706,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
             onMethodEnd();
+            mv.visitLabel(endOfMethod);
+            append(methodExit);
+            variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+            Label exceptionalReturn = new Label();
+            mv.visitJumpInsn(Opcodes.IFNONNULL, exceptionalReturn);
+            if (instrumentedMethod.getReturnType().represents(void.class)) {
+                mv.visitInsn(Opcodes.RETURN);
+            } else {
+                Type returnType = Type.getType(instrumentedMethod.getReturnType().asErasure().getDescriptor());
+                variable(returnType.getOpcode(Opcodes.ILOAD));
+                mv.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
+            }
+            mv.visitLabel(exceptionalReturn);
+            variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+            mv.visitInsn(Opcodes.ATHROW);
             super.visitMaxs(frameTranslator.compoundStackSize(maxStack), frameTranslator.compoundLocalVariableSize(maxLocals));
         }
 
@@ -711,20 +728,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Writes the advise for completing the instrumented method.
          */
         protected abstract void onMethodEnd();
-
-        /**
-         * Appends the enter advise's byte code.
-         */
-        protected void appendEnter() {
-            append(methodEnter);
-        }
-
-        /**
-         * Appends the exit advise's byte code.
-         */
-        protected void appendExit() {
-            append(methodExit);
-        }
 
         /**
          * Appends the byte code of the supplied dispatcher.
@@ -779,15 +782,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             private static final String ANY_THROWABLE = null;
 
-            /**
-             * The label indicating the start of the exception handler.
-             */
-            private final Label handler;
+            private final Label userStart;
 
-            /**
-             * The current label that indicates the next section that terminates user code.
-             */
-            private Label userEnd;
+            private final Label userEnd;
+
+            private final Label userHandler;
 
             /**
              * Creates a new advise visitor that captures exception by weaving try-catch blocks around user code.
@@ -804,37 +803,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             Dispatcher.Resolved.ForMethodExit methodExit,
                                             byte[] binaryRepresentation) {
                 super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation);
-                handler = new Label();
+                userStart = new Label();
+                userHandler = new Label();
+                userEnd = new Label();
             }
 
             @Override
-            protected void onMethodStart() {
-                appendEnter();
-                Label userStart = new Label();
-                userEnd = new Label();
-                mv.visitTryCatchBlock(userStart, userEnd, handler, null);
-                mv.visitLabel(userStart);
-            }
-
-            @Override
-            protected void onMethodExit() {
-                mv.visitLabel(userEnd);
-                appendExit();
-                Label userStart = new Label();
-                userEnd = new Label();
-                mv.visitTryCatchBlock(userStart, userEnd, handler, ANY_THROWABLE);
+            protected void onUserStart() {
+                mv.visitTryCatchBlock(userStart, userEnd, userHandler, ANY_THROWABLE);
                 mv.visitLabel(userStart);
             }
 
             @Override
             protected void onMethodEnd() {
                 mv.visitLabel(userEnd);
-                mv.visitLabel(handler);
+                mv.visitLabel(userHandler);
                 variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
                 storeDefaultReturn();
-                appendExit();
-                variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
-                mv.visitInsn(Opcodes.ATHROW);
+                mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
             }
 
             /**
@@ -894,18 +880,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            protected void onMethodStart() {
-                appendEnter();
-            }
-
-            @Override
-            protected void onMethodExit() {
-                appendExit();
+            protected void onUserStart() {
+                /* empty */
             }
 
             @Override
             protected void onMethodEnd() {
-                /* do nothing */
+                /* empty */
             }
 
             @Override
