@@ -51,7 +51,6 @@
         <dependency>
             <groupId>org.ow2.asm</groupId>
             <artifactId>asm-analysis</artifactId>
-            <version>5.1</version>
             <scope>test</scope>
         </dependency>
         <dependency>

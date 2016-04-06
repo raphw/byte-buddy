@@ -980,6 +980,12 @@ public class AgentBuilderDefaultTest {
     }
 
     @Test
+    public void testShortcutConfiguration() throws Exception {
+        assertThat(new AgentBuilder.Default().withoutClassFormatChanges(),
+                is(new AgentBuilder.Default().with(AgentBuilder.InitializationStrategy.NoOp.INSTANCE).with(AgentBuilder.TypeStrategy.Default.REDEFINE)));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Default.class).create(new ObjectPropertyAssertion.Creator<AccessControlContext>() {
             @Override
