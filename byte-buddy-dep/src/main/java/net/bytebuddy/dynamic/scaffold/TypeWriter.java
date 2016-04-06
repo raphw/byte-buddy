@@ -3189,8 +3189,8 @@ public interface TypeWriter<T> {
                     }
 
                     @Override
-                    public void visitMaxs(int maxStack, int maxLocals) {
-                        super.visitMaxs(maxStack, Math.max(maxLocals, resolution.getResolvedMethod().getStackSize()));
+                    public void visitMaxs(int stackSize, int localVariableLength) {
+                        super.visitMaxs(stackSize, Math.max(localVariableLength, resolution.getResolvedMethod().getStackSize()));
                     }
 
                     @Override
