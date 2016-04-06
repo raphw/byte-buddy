@@ -60,7 +60,84 @@ public class AdviceTest {
     }
 
     @Test
-    public void testEmptyAdviceOnlyEntry() throws Exception {
+    public void testEmptyAdviceEntryAndExitWithEntrySuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceEntryAndExitWithExitSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceEntryAndExitWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceEntryAndExitWithExceptionHandling() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceWithExceptionHandling.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceEntryAndExitWithExceptionHandlingAndEntrySuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceEntryAndExitWithExceptionHandlingAndExitSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndExitSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceEntryAndExitWithExceptionHandlingAndSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceEntry() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceEntry.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
@@ -71,10 +148,54 @@ public class AdviceTest {
     }
 
     @Test
-    public void testEmptyAdviceOnlyExit() throws Exception {
+    public void testEmptyAdviceEntryWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceEntryWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceExit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExit.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceExitAndSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceExitAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceExitWithExceptionHandling() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceExitWithExceptionHandling.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testEmptyAdviceExitWithExceptionHandlingAndSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyMethod.class)
+                .visit(Advice.to(EmptyAdviceExitWithExceptionHandlingAndSuppression.class).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -989,7 +1110,77 @@ public class AdviceTest {
     public static class EmptyAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(onThrowable = false) // TODO
+        @Advice.OnMethodExit(onThrowable = false)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithEntrySuppression {
+
+        @Advice.OnMethodEnter(suppress = Throwable.class)
+        @Advice.OnMethodExit(onThrowable = false)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithExitSuppression {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit(onThrowable = false, suppress = Throwable.class)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithSuppression {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit(onThrowable = false, suppress = Throwable.class)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithExceptionHandling {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithExceptionHandlingAndEntrySuppression {
+
+        @Advice.OnMethodEnter(suppress = Throwable.class)
+        @Advice.OnMethodExit
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithExceptionHandlingAndExitSuppression {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit(suppress = Throwable.class)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceWithExceptionHandlingAndSuppression {
+
+        @Advice.OnMethodEnter(suppress = Throwable.class)
+        @Advice.OnMethodExit(suppress = Throwable.class)
         private static void advice() {
             /* empty */
         }
@@ -1005,9 +1196,45 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class EmptyAdviceEntryWithSuppression {
+
+        @Advice.OnMethodEnter(suppress = Throwable.class)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class EmptyAdviceExit {
 
+        @Advice.OnMethodExit(onThrowable = false)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceExitAndSuppression {
+
+        @Advice.OnMethodExit(onThrowable = false, suppress = Throwable.class)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceExitWithExceptionHandling {
+
         @Advice.OnMethodExit
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceExitWithExceptionHandlingAndSuppression {
+
+        @Advice.OnMethodExit(suppress = Throwable.class)
         private static void advice() {
             /* empty */
         }
