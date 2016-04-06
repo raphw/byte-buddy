@@ -373,7 +373,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public ForAdvice bindEntry(MethodDescription.InDefinedShape methodDescription) {
                 return new ForAdvice(methodDescription, new TypeList.Empty(), methodDescription.getReturnType().represents(void.class)
                         ? new TypeList.Empty()
-                        : new TypeList.Explicit(methodDescription.getReturnType().asErasure()));
+                        : new TypeList.Explicit(methodDescription.getReturnType().asErasure()), TranslationMode.ENTRY);
             }
 
             @Override
@@ -386,7 +386,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
                 }
                 typeDescriptions.add(TypeDescription.THROWABLE);
-                return new ForAdvice(methodDescription, new TypeList.Explicit(typeDescriptions), Collections.<TypeDescription>emptyList());
+                return new ForAdvice(methodDescription, new TypeList.Explicit(typeDescriptions), Collections.<TypeDescription>emptyList(), TranslationMode.EXIT);
             }
 
             @Override
@@ -414,11 +414,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                        Object[] localVariable,
                                        int stackSize,
                                        Object[] stack) {
-                translateFrame(methodVisitor, instrumentedMethod, intermediateTypes, type, localVariableLength, localVariable, stackSize, stack);
+                translateFrame(methodVisitor,
+                        instrumentedMethod,
+                        TranslationMode.COPY,
+                        intermediateTypes,
+                        type,
+                        localVariableLength,
+                        localVariable,
+                        stackSize,
+                        stack);
             }
 
             protected void translateFrame(MethodVisitor methodVisitor,
                                           MethodDescription.InDefinedShape methodDescription,
+                                          TranslationMode translationMode,
                                           TypeList additionalTypes,
                                           int type,
                                           int localVariableLength,
@@ -443,13 +452,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 + instrumentedMethod.getParameters().size()
                                 + (instrumentedMethod.isStatic() ? 0 : 1)
                                 + additionalTypes.size()];
-                        int index = 0;
-                        if (!instrumentedMethod.isStatic()) {
-                            translated[index++] = toFrame(instrumentedMethod.getDeclaringType());
-                        }
-                        for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                            translated[index++] = toFrame(typeDescription);
-                        }
+                        int index = translationMode.copy(instrumentedMethod, methodDescription, localVariable, translated);
                         for (TypeDescription typeDescription : additionalTypes) {
                             translated[index++] = toFrame(typeDescription);
                         }
@@ -516,6 +519,58 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 currentFrameDivergence = 0;
             }
 
+            protected enum TranslationMode {
+                COPY {
+                    @Override
+                    protected int copy(MethodDescription.InDefinedShape instrumentedMethod,
+                                       MethodDescription.InDefinedShape methodDescription,
+                                       Object[] localVariable,
+                                       Object[] translated) {
+                        int length = instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1);
+                        System.arraycopy(localVariable, 0, translated, 0, length);
+                        return length;
+                    }
+                }, ENTRY {
+                    @Override
+                    protected int copy(MethodDescription.InDefinedShape instrumentedMethod,
+                                       MethodDescription.InDefinedShape methodDescription,
+                                       Object[] localVariable,
+                                       Object[] translated) {
+                        int index = 0;
+                        if (!instrumentedMethod.isStatic()) {
+                            translated[index++] = instrumentedMethod.isConstructor()
+                                    ? Opcodes.UNINITIALIZED_THIS
+                                    : toFrame(instrumentedMethod.getDeclaringType());
+                        }
+                        for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                            translated[index++] = toFrame(typeDescription);
+                        }
+                        return index;
+                    }
+                }, EXIT {
+                    @Override
+                    protected int copy(MethodDescription.InDefinedShape instrumentedMethod,
+                                       MethodDescription.InDefinedShape methodDescription,
+                                       Object[] localVariable,
+                                       Object[] translated) {
+                        int index = 0;
+                        if (!instrumentedMethod.isStatic()) {
+                            translated[index++] = toFrame(instrumentedMethod.getDeclaringType());
+                        }
+                        for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                            translated[index++] = toFrame(typeDescription);
+                        }
+                        return index;
+                    }
+                };
+
+                protected abstract int copy(MethodDescription.InDefinedShape instrumentedMethod,
+                                            MethodDescription.InDefinedShape methodDescription,
+                                            Object[] localVariable,
+                                            Object[] translated);
+
+            }
+
             /**
              * A frame translator that is bound to an advice method.
              */
@@ -536,6 +591,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final List<? extends TypeDescription> yieldedTypes;
 
+                private final TranslationMode translationMode;
+
                 /**
                  * Creates a new bound frame translator.
                  *
@@ -545,13 +602,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
                                     TypeList intermediateTypes,
-                                    List<? extends TypeDescription> yieldedTypes) {
+                                    List<? extends TypeDescription> yieldedTypes,
+                                    TranslationMode translationMode) {
                     this.methodDescription = methodDescription;
                     this.intermediateTypes = intermediateTypes;
                     this.yieldedTypes = yieldedTypes;
-                    if (yieldedTypes.size() > 3) {
-                        throw new UnsupportedOperationException("Did not implement support for more then three yielded types: " + yieldedTypes);
-                    }
+                    this.translationMode = translationMode;
                 }
 
                 @Override
@@ -572,6 +628,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                            Object[] stack) {
                     Default.this.translateFrame(methodVisitor,
                             methodDescription,
+                            translationMode,
                             intermediateTypes,
                             type,
                             localVariableLength,
