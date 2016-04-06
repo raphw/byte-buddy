@@ -1055,8 +1055,8 @@ public class AdviceTest {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
             }
         }).apply();
-        final Iterator<StackSize> iterator = Arrays.asList(StackSize.values()).iterator();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+        final Iterator<StackSize> iterator1 = Arrays.asList(StackSize.values()).iterator();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.WithExceptionHandler.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
             @Override
             public void apply(MethodDescription.InDefinedShape mock) {
                 when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
@@ -1069,7 +1069,24 @@ public class AdviceTest {
         }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
             @Override
             public void apply(TypeDescription mock) {
-                when(mock.getStackSize()).thenReturn(iterator.next());
+                when(mock.getStackSize()).thenReturn(iterator1.next());
+            }
+        }).apply();
+        final Iterator<StackSize> iterator2 = Arrays.asList(StackSize.values()).iterator();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.WithoutExceptionHandler.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+            @Override
+            public void apply(MethodDescription.InDefinedShape mock) {
+                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
+                try {
+                    when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
+                } catch (Exception exception) {
+                    throw new AssertionError(exception);
+                }
+            }
+        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
+            @Override
+            public void apply(TypeDescription mock) {
+                when(mock.getStackSize()).thenReturn(iterator2.next());
             }
         }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.NoOp.class).apply();
