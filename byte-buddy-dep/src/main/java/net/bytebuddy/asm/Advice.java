@@ -176,13 +176,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     @Override
-    public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
+    public MethodVisitor wrap(TypeDescription instrumentedType,
+                              MethodDescription.InDefinedShape methodDescription,
+                              MethodVisitor methodVisitor,
+                              int writerFlags,
+                              int readerFlags) {
         if (methodDescription.isAbstract() || methodDescription.isNative()) {
             throw new IllegalStateException("Cannot advice abstract or native method " + methodDescription);
         }
         return methodExit.isSkipThrowable()
-                ? new AdviceVisitor.WithoutExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation)
-                : new AdviceVisitor.WithExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation);
+                ? new AdviceVisitor.WithoutExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags)
+                : new AdviceVisitor.WithExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
     }
 
     @Override
@@ -212,330 +216,369 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 '}';
     }
 
-    /**
-     * A translator for frame found in parsed code.
-     */
-    protected static class FrameTranslator {
+    protected interface FrameTranslator {
 
-        /**
-         * An empty array indicating an empty frame.
-         */
-        private static final Object[] EMPTY = new Object[0];
+        void translateFrame(MethodVisitor methodVisitor, int frameType, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack);
 
-        /**
-         * The instrumented method.
-         */
-        private final MethodDescription.InDefinedShape instrumentedMethod;
+        void injectHandlerFrame(MethodVisitor methodVisitor);
 
-        /**
-         * A list of intermediate types to be considered as part of the instrumented method's steady signature.
-         */
-        private final TypeList intermediateTypes;
+        void injectCompletionFrame(MethodVisitor methodVisitor);
 
-        /**
-         * The maximum stack size required by a visited advice method.
-         */
-        private int stackSize;
+        interface ForInstrumentedMethod extends FrameTranslator {
 
-        /**
-         * The maximum length of the local variable array required by a visited advice method.
-         */
-        private int localVariableLength;
+            int compoundStackSize(int maxStack);
 
-        /**
-         * Creates a new frame translator.
-         *
-         * @param instrumentedMethod The instrumented method.
-         * @param intermediateTypes  A list of intermediate types to be considered as part of the instrumented method's steady signature.
-         */
-        protected FrameTranslator(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes) {
-            this.instrumentedMethod = instrumentedMethod;
-            this.intermediateTypes = intermediateTypes;
-            stackSize = 2; // Minimum for pushing exceptions or default values. Could be more accurate.
+            int compoundLocalVariableSize(int maxLocals);
+
+            ForAdvice bindEntry(MethodDescription.InDefinedShape adviseMethod);
+
+            ForAdvice bindExit(MethodDescription.InDefinedShape adviseMethod, TypeDescription enterType);
+
+            int getReaderHint();
         }
 
-        /**
-         * Translates a type into a representation of its form inside a stack map frame.
-         *
-         * @param typeDescription The type to translate.
-         * @return A stack entry representation of the supplied type.
-         */
-        private static Object toFrame(TypeDescription typeDescription) {
-            if (typeDescription.represents(boolean.class)
-                    || typeDescription.represents(byte.class)
-                    || typeDescription.represents(short.class)
-                    || typeDescription.represents(char.class)
-                    || typeDescription.represents(int.class)) {
-                return Opcodes.INTEGER;
-            } else if (typeDescription.represents(long.class)) {
-                return Opcodes.LONG;
-            } else if (typeDescription.represents(float.class)) {
-                return Opcodes.FLOAT;
-            } else if (typeDescription.represents(double.class)) {
-                return Opcodes.DOUBLE;
-            } else {
-                return typeDescription.getInternalName();
+        interface ForAdvice extends FrameTranslator {
+
+            void recordMaxima(int maxStack, int maxLocals);
+        }
+
+        enum NoOp implements ForInstrumentedMethod, ForAdvice {
+
+            INSTANCE;
+
+            @Override
+            public void recordMaxima(int maxStack, int maxLocals) {
+                /* do nothing */
             }
-        }
 
-        /**
-         * Binds this frame translator to an advice method.
-         *
-         * @param methodDescription The advice method.
-         * @return A bound version of this frame translator.
-         */
-        protected Bound bindEntry(MethodDescription.InDefinedShape methodDescription) {
-            return new Bound(methodDescription, new TypeList.Empty(), methodDescription.getReturnType().represents(void.class)
-                    ? new TypeList.Empty()
-                    : new TypeList.Explicit(methodDescription.getReturnType().asErasure()));
-        }
-
-        /**
-         * Binds this frame translator to an advice method.
-         *
-         * @param methodDescription The advice method.
-         * @param enterType         The type that is returned by the enter method, if any.
-         * @return A bound version of this frame translator.
-         */
-        protected Bound bindExit(MethodDescription.InDefinedShape methodDescription, TypeDescription enterType) {
-            List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(3);
-            if (!enterType.represents(void.class)) {
-                typeDescriptions.add(enterType);
+            @Override
+            public int compoundStackSize(int maxStack) {
+                return -1;
             }
-            if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
+
+            @Override
+            public int compoundLocalVariableSize(int maxLocals) {
+                return -1;
             }
-            typeDescriptions.add(TypeDescription.THROWABLE);
-            return new Bound(methodDescription, new TypeList.Explicit(typeDescriptions), Collections.<TypeDescription>emptyList());
-        }
 
-        /**
-         * Computes the compound stack size of the instrumented method.
-         *
-         * @param stackSize The stack size of the instrumented method without instrumentation.
-         * @return The stack size including the instrumented advice.
-         */
-        protected int compoundStackSize(int stackSize) {
-            return Math.max(this.stackSize, stackSize);
-        }
-
-        /**
-         * Computes the compound local variable length of the instrumented method.
-         *
-         * @param localVariableLength The local variable length of the instrumented method without instrumentation.
-         * @return The stack size including the instrumented advice.
-         */
-        protected int compoundLocalVariableSize(int localVariableLength) {
-            return Math.max(this.localVariableLength, localVariableLength
-                    + instrumentedMethod.getReturnType().getStackSize().getSize()
-                    + StackSize.SINGLE.getSize()
-                    + intermediateTypes.getStackSize());
-        }
-
-        protected void injectEntranceFrame(MethodVisitor methodVisitor) {
-                injectFrame(methodVisitor, intermediateTypes, false);
-        }
-
-        /**
-         * Injects a frame that describes the method when entering its surrounding exception handler.
-         *
-         * @param methodVisitor The method visitor to write the frame to.
-         */
-        protected void injectHandlerFrame(MethodVisitor methodVisitor) {
-//            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
-            injectFrame(methodVisitor, intermediateTypes, true);
-        }
-
-        /**
-         * Injects a frame that describes the method after completion.
-         *
-         * @param methodVisitor The method visitor to write the frame to.
-         */
-        protected void injectCompletionFrame(MethodVisitor methodVisitor) {
-//            Object[] local = instrumentedMethod.getReturnType().represents(void.class)
-//                    ? new Object[]{Type.getInternalName(Throwable.class)}
-//                    : new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure()), Type.getInternalName(Throwable.class)};
-//            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
-            injectFrame(methodVisitor, CompoundList.of(intermediateTypes, instrumentedMethod.getReturnType().represents(void.class)
-                    ? Collections.singletonList(TypeDescription.THROWABLE)
-                    : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE)), false);
-        }
-
-        private void injectFrame(MethodVisitor methodVisitor,
-                                 List<? extends TypeDescription> additionalTypes,
-                                 boolean exceptionOnStack) {
-            Object[] localVariable = new Object[instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1) + additionalTypes.size()];
-            int index = 0;
-            if (!instrumentedMethod.isStatic()) {
-                localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
+            @Override
+            public ForAdvice bindEntry(MethodDescription.InDefinedShape adviseMethod) {
+                return this;
             }
-            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                localVariable[index++] = toFrame(typeDescription);
+
+            @Override
+            public ForAdvice bindExit(MethodDescription.InDefinedShape adviseMethod, TypeDescription enterType) {
+                return this;
             }
-            for (TypeDescription typeDescription : additionalTypes) {
-                localVariable[index++] = toFrame(typeDescription);
+
+            @Override
+            public int getReaderHint() {
+                return ClassReader.SKIP_FRAMES;
             }
-            Object[] stackType = exceptionOnStack
-                    ? new Object[]{Type.getInternalName(Throwable.class)}
-                    : EMPTY;
-            methodVisitor.visitFrame(Opcodes.F_FULL, localVariable.length, localVariable, stackType.length, stackType);
-        }
 
-        /**
-         * Translates an existing frame.
-         *
-         * @param methodVisitor       The method visitor to append the frame to.
-         * @param type                The type of method frame.
-         * @param localVariableLength The number of local variables of the original frame.
-         * @param localVariable       An array containing the local variable types.
-         * @param stackSize           The size of the current operand stack.
-         * @param stack               An array containing the types on the operand stack.
-         */
-        protected void translateFrame(MethodVisitor methodVisitor,
-                                      int type,
-                                      int localVariableLength,
-                                      Object[] localVariable,
-                                      int stackSize,
-                                      Object[] stack) {
-            translateFrame(methodVisitor, instrumentedMethod, intermediateTypes, type, localVariableLength, localVariable, stackSize, stack);
-        }
-
-        /**
-         * Translates an existing frame.
-         *
-         * @param methodVisitor       The method visitor to append the frame to.
-         * @param methodDescription   The method for which this frame was originally written.
-         * @param intermediateTypes   The intermediate types to be considered as part of the instrumented method's signature.
-         * @param type                The type of method frame.
-         * @param localVariableLength The number of local variables of the original frame.
-         * @param localVariable       An array containing the local variable types.
-         * @param stackSize           The size of the current operand stack.
-         * @param stack               An array containing the types on the operand stack.
-         */
-        private void translateFrame(MethodVisitor methodVisitor,
-                                    MethodDescription.InDefinedShape methodDescription,
-                                    TypeList intermediateTypes,
-                                    int type,
-                                    int localVariableLength,
-                                    Object[] localVariable,
-                                    int stackSize,
-                                    Object[] stack) {
-            switch (type) {
-                case Opcodes.F_SAME:
-                case Opcodes.F_SAME1:
-                case Opcodes.F_APPEND:
-                case Opcodes.F_CHOP:
-                    break;
-                case Opcodes.F_FULL:
-                case Opcodes.F_NEW:
-                    Object[] translated = new Object[localVariableLength
-                            - methodDescription.getParameters().size()
-                            - (methodDescription.isStatic() ? 0 : 1)
-                            + instrumentedMethod.getParameters().size()
-                            + (instrumentedMethod.isStatic() ? 0 : 1)
-                            + intermediateTypes.size()];
-                    int index = 0;
-                    if (!instrumentedMethod.isStatic()) {
-                        translated[index++] = toFrame(instrumentedMethod.getDeclaringType());
-                    }
-                    for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
-                        translated[index++] = toFrame(typeDescription);
-                    }
-                    for (TypeDescription typeDescription : intermediateTypes) {
-                        translated[index++] = toFrame(typeDescription);
-                    }
-                    System.arraycopy(localVariable,
-                            methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
-                            translated,
-                            index,
-                            translated.length - index);
-                    localVariableLength = translated.length;
-                    localVariable = translated;
-                    break;
-                default:
-                    throw new IllegalArgumentException("Unexpected frame type: " + type);
+            @Override
+            public void translateFrame(MethodVisitor methodVisitor, int frameType, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
+                /* do nothing */
             }
-            methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
+
+            @Override
+            public void injectHandlerFrame(MethodVisitor methodVisitor) {
+                /* do nothing */
+            }
+
+            @Override
+            public void injectCompletionFrame(MethodVisitor methodVisitor) {
+                /* do nothing */
+            }
+
+
         }
 
-        @Override
-        public String toString() {
-            return "Advice.FrameTranslator{" +
-                    "instrumentedMethod=" + instrumentedMethod +
-                    ", intermediateTypes=" + intermediateTypes +
-                    ", stackSize=" + stackSize +
-                    ", localVariableLength=" + localVariableLength +
-                    '}';
-        }
-
-        /**
-         * A frame translator that is bound to an advice method.
-         */
-        protected class Bound {
+        class Default implements ForInstrumentedMethod {
 
             /**
-             * The method description for which frames are translated.
+             * An empty array indicating an empty frame.
              */
-            private final MethodDescription.InDefinedShape methodDescription;
+            private static final Object[] EMPTY = new Object[0];
+
+            /**
+             * The instrumented method.
+             */
+            private final MethodDescription.InDefinedShape instrumentedMethod;
 
             /**
              * A list of intermediate types to be considered as part of the instrumented method's steady signature.
              */
             private final TypeList intermediateTypes;
 
-            /**
-             * The types that this method yields as a result.
-             */
-            private final List<? extends TypeDescription> yieldedTypes;
+            private final boolean expandFrames;
+
+            @Override
+            public int getReaderHint() {
+                return expandFrames ? ClassReader.EXPAND_FRAMES : AsmVisitorWrapper.NO_FLAGS;
+            }
 
             /**
-             * Creates a new bound frame translator.
-             *
-             * @param methodDescription The method description for which frames are translated.
-             * @param intermediateTypes A list of intermediate types to be considered as part of the instrumented method's steady signature.
-             * @param yieldedTypes      The types that this method yields as a result.
+             * The maximum stack size required by a visited advice method.
              */
-            protected Bound(MethodDescription.InDefinedShape methodDescription,
-                            TypeList intermediateTypes,
-                            List<? extends TypeDescription> yieldedTypes) {
-                this.methodDescription = methodDescription;
+            private int stackSize;
+
+            /**
+             * The maximum length of the local variable array required by a visited advice method.
+             */
+            private int localVariableLength;
+
+            /**
+             * Creates a new frame translator.
+             *
+             * @param instrumentedMethod The instrumented method.
+             * @param intermediateTypes  A list of intermediate types to be considered as part of the instrumented method's steady signature.
+             */
+            protected Default(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes, boolean expandFrames) {
+                this.instrumentedMethod = instrumentedMethod;
                 this.intermediateTypes = intermediateTypes;
-                this.yieldedTypes = yieldedTypes;
-                if (yieldedTypes.size() > 3) {
-                    throw new UnsupportedOperationException("Did not implement support for more then three yielded types: " + yieldedTypes);
+                this.expandFrames = expandFrames;
+                stackSize = 2; // Minimum for pushing exceptions or default values. Could be more accurate.
+            }
+
+            protected static ForInstrumentedMethod of(MethodDescription.InDefinedShape instrumentedMethod, TypeList additionalTypes, int writerFlags, int readerFlags) {
+                return (writerFlags & ClassWriter.COMPUTE_FRAMES) != 0
+                        ? NoOp.INSTANCE
+                        : new Default(instrumentedMethod, additionalTypes, (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+            }
+
+            /**
+             * Translates a type into a representation of its form inside a stack map frame.
+             *
+             * @param typeDescription The type to translate.
+             * @return A stack entry representation of the supplied type.
+             */
+            protected static Object toFrame(TypeDescription typeDescription) {
+                if (typeDescription.represents(boolean.class)
+                        || typeDescription.represents(byte.class)
+                        || typeDescription.represents(short.class)
+                        || typeDescription.represents(char.class)
+                        || typeDescription.represents(int.class)) {
+                    return Opcodes.INTEGER;
+                } else if (typeDescription.represents(long.class)) {
+                    return Opcodes.LONG;
+                } else if (typeDescription.represents(float.class)) {
+                    return Opcodes.FLOAT;
+                } else if (typeDescription.represents(double.class)) {
+                    return Opcodes.DOUBLE;
+                } else {
+                    return typeDescription.getInternalName();
                 }
             }
 
-            /**
-             * Records the maximum stack size and the maximum length of a local variable array that were discovered in a class file.
-             *
-             * @param stackSize           The maximum discovered stack size.
-             * @param localVariableLength The maximum length of the local variable array.
-             */
-            protected void recordMaxima(int stackSize, int localVariableLength) {
-                FrameTranslator.this.stackSize = Math.max(FrameTranslator.this.stackSize, stackSize);
-                FrameTranslator.this.localVariableLength = Math.max(FrameTranslator.this.localVariableLength, localVariableLength
-                        - methodDescription.getStackSize()
-                        + instrumentedMethod.getStackSize()
+            @Override
+            public ForAdvice bindEntry(MethodDescription.InDefinedShape methodDescription) {
+                return new ForAdvice(methodDescription, new TypeList.Empty(), methodDescription.getReturnType().represents(void.class)
+                        ? new TypeList.Empty()
+                        : new TypeList.Explicit(methodDescription.getReturnType().asErasure()));
+            }
+
+            @Override
+            public ForAdvice bindExit(MethodDescription.InDefinedShape methodDescription, TypeDescription enterType) {
+                List<TypeDescription> typeDescriptions = new ArrayList<TypeDescription>(3);
+                if (!enterType.represents(void.class)) {
+                    typeDescriptions.add(enterType);
+                }
+                if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                    typeDescriptions.add(instrumentedMethod.getReturnType().asErasure());
+                }
+                typeDescriptions.add(TypeDescription.THROWABLE);
+                return new ForAdvice(methodDescription, new TypeList.Explicit(typeDescriptions), Collections.<TypeDescription>emptyList());
+            }
+
+            @Override
+            public int compoundStackSize(int stackSize) {
+                return Math.max(this.stackSize, stackSize);
+            }
+
+            @Override
+            public int compoundLocalVariableSize(int localVariableLength) {
+                return Math.max(this.localVariableLength, localVariableLength
+                        + instrumentedMethod.getReturnType().getStackSize().getSize()
+                        + StackSize.SINGLE.getSize()
                         + intermediateTypes.getStackSize());
             }
 
-            /**
-             * Injects a frame that describes the method when entering its surrounding exception handler.
-             *
-             * @param methodVisitor The method visitor to write the frame to.
-             */
-            protected void injectHandlerFrame(MethodVisitor methodVisitor) {
+            @Override
+            public void translateFrame(MethodVisitor methodVisitor,
+                                       int type,
+                                       int localVariableLength,
+                                       Object[] localVariable,
+                                       int stackSize,
+                                       Object[] stack) {
+                translateFrame(methodVisitor, instrumentedMethod, intermediateTypes, type, localVariableLength, localVariable, stackSize, stack);
+            }
+
+            protected void translateFrame(MethodVisitor methodVisitor,
+                                          MethodDescription.InDefinedShape methodDescription,
+                                          TypeList intermediateTypes,
+                                          int type,
+                                          int localVariableLength,
+                                          Object[] localVariable,
+                                          int stackSize,
+                                          Object[] stack) {
+                switch (type) {
+                    case Opcodes.F_SAME:
+                    case Opcodes.F_SAME1:
+                    case Opcodes.F_APPEND:
+                    case Opcodes.F_CHOP:
+                        break;
+                    case Opcodes.F_FULL:
+                    case Opcodes.F_NEW:
+                        Object[] translated = new Object[localVariableLength
+                                - methodDescription.getParameters().size()
+                                - (methodDescription.isStatic() ? 0 : 1)
+                                + instrumentedMethod.getParameters().size()
+                                + (instrumentedMethod.isStatic() ? 0 : 1)
+                                + intermediateTypes.size()];
+                        int index = 0;
+                        if (!instrumentedMethod.isStatic()) {
+                            translated[index++] = toFrame(instrumentedMethod.getDeclaringType());
+                        }
+                        for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                            translated[index++] = toFrame(typeDescription);
+                        }
+                        for (TypeDescription typeDescription : intermediateTypes) {
+                            translated[index++] = toFrame(typeDescription);
+                        }
+                        System.arraycopy(localVariable,
+                                methodDescription.getParameters().size() + (methodDescription.isStatic() ? 0 : 1),
+                                translated,
+                                index,
+                                translated.length - index);
+                        localVariableLength = translated.length;
+                        localVariable = translated;
+                        break;
+                    default:
+                        throw new IllegalArgumentException("Unexpected frame type: " + type);
+                }
+                methodVisitor.visitFrame(type, localVariableLength, localVariable, stackSize, stack);
+            }
+
+            @Override
+            public void injectHandlerFrame(MethodVisitor methodVisitor) {
+//            methodVisitor.visitFrame(Opcodes.F_SAME1, 0, EMPTY, 1, new Object[]{Type.getInternalName(Throwable.class)});
                 injectFrame(methodVisitor, intermediateTypes, true);
-//                FrameTranslator.this.injectHandlerFrame(methodVisitor);
+            }
+
+            @Override
+            public void injectCompletionFrame(MethodVisitor methodVisitor) {
+//            Object[] local = instrumentedMethod.getReturnType().represents(void.class)
+//                    ? new Object[]{Type.getInternalName(Throwable.class)}
+//                    : new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure()), Type.getInternalName(Throwable.class)};
+//            methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
+                injectFrame(methodVisitor, CompoundList.of(intermediateTypes, instrumentedMethod.getReturnType().represents(void.class)
+                        ? Collections.singletonList(TypeDescription.THROWABLE)
+                        : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE)), false);
+            }
+
+            protected void injectFrame(MethodVisitor methodVisitor,
+                                       List<? extends TypeDescription> additionalTypes,
+                                       boolean exceptionOnStack) {
+                Object[] localVariable = new Object[instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1) + additionalTypes.size()];
+                int index = 0;
+                if (!instrumentedMethod.isStatic()) {
+                    localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
+                }
+                for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                    localVariable[index++] = toFrame(typeDescription);
+                }
+                for (TypeDescription typeDescription : additionalTypes) {
+                    localVariable[index++] = toFrame(typeDescription);
+                }
+                Object[] stackType = exceptionOnStack
+                        ? new Object[]{Type.getInternalName(Throwable.class)}
+                        : EMPTY;
+                methodVisitor.visitFrame(expandFrames ? Opcodes.F_NEW : Opcodes.F_FULL, localVariable.length, localVariable, stackType.length, stackType);
+            }
+
+            @Override
+            public String toString() {
+                return "Advice.FrameTranslator{" +
+                        "instrumentedMethod=" + instrumentedMethod +
+                        ", intermediateTypes=" + intermediateTypes +
+                        ", stackSize=" + stackSize +
+                        ", localVariableLength=" + localVariableLength +
+                        '}';
             }
 
             /**
-             * Injects a frame that describes the method after completion.
-             *
-             * @param methodVisitor The method visitor to write the frame to.
+             * A frame translator that is bound to an advice method.
              */
-            protected void injectCompletionFrame(MethodVisitor methodVisitor) {
+            protected class ForAdvice implements FrameTranslator.ForAdvice {
+
+                /**
+                 * The method description for which frames are translated.
+                 */
+                private final MethodDescription.InDefinedShape methodDescription;
+
+                /**
+                 * A list of intermediate types to be considered as part of the instrumented method's steady signature.
+                 */
+                private final TypeList intermediateTypes;
+
+                /**
+                 * The types that this method yields as a result.
+                 */
+                private final List<? extends TypeDescription> yieldedTypes;
+
+                /**
+                 * Creates a new bound frame translator.
+                 *
+                 * @param methodDescription The method description for which frames are translated.
+                 * @param intermediateTypes A list of intermediate types to be considered as part of the instrumented method's steady signature.
+                 * @param yieldedTypes      The types that this method yields as a result.
+                 */
+                protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
+                                    TypeList intermediateTypes,
+                                    List<? extends TypeDescription> yieldedTypes) {
+                    this.methodDescription = methodDescription;
+                    this.intermediateTypes = intermediateTypes;
+                    this.yieldedTypes = yieldedTypes;
+                    if (yieldedTypes.size() > 3) {
+                        throw new UnsupportedOperationException("Did not implement support for more then three yielded types: " + yieldedTypes);
+                    }
+                }
+
+                @Override
+                public void recordMaxima(int stackSize, int localVariableLength) {
+                    Default.this.stackSize = Math.max(Default.this.stackSize, stackSize);
+                    Default.this.localVariableLength = Math.max(Default.this.localVariableLength, localVariableLength
+                            - methodDescription.getStackSize()
+                            + instrumentedMethod.getStackSize()
+                            + intermediateTypes.getStackSize());
+                }
+
+                @Override
+                public void translateFrame(MethodVisitor methodVisitor,
+                                           int type,
+                                           int localVariableLength,
+                                           Object[] localVariable,
+                                           int stackSize,
+                                           Object[] stack) {
+                    Default.this.translateFrame(methodVisitor,
+                            methodDescription,
+                            intermediateTypes,
+                            type,
+                            localVariableLength,
+                            localVariable,
+                            stackSize,
+                            stack);
+                }
+
+                @Override
+                public void injectHandlerFrame(MethodVisitor methodVisitor) {
+                    injectFrame(methodVisitor, intermediateTypes, true);
+//                FrameTranslator.this.injectHandlerFrame(methodVisitor);
+                }
+
+                @Override
+                public void injectCompletionFrame(MethodVisitor methodVisitor) {
                     injectFrame(methodVisitor, CompoundList.of(intermediateTypes, yieldedTypes), false);
 //                Object[] local = new Object[yieldedTypes.size()];
 //                int index = 0;
@@ -543,42 +586,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 //                    local[index++] = toFrame(typeDescription);
 //                }
 //                methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
-            }
+                }
 
-            /**
-             * Translates an existing frame.
-             *
-             * @param methodVisitor       The method visitor to append the frame to.
-             * @param type                The type of method frame.
-             * @param localVariableLength The number of local variables of the original frame.
-             * @param localVariable       An array containing the local variable types.
-             * @param stackSize           The size of the current operand stack.
-             * @param stack               An array containing the types on the operand stack.
-             */
-            protected void translateFrame(MethodVisitor methodVisitor,
-                                          int type,
-                                          int localVariableLength,
-                                          Object[] localVariable,
-                                          int stackSize,
-                                          Object[] stack) {
-                FrameTranslator.this.translateFrame(methodVisitor,
-                        methodDescription,
-                        intermediateTypes,
-                        type,
-                        localVariableLength,
-                        localVariable,
-                        stackSize,
-                        stack);
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.FrameTranslator.Bound{" +
-                        "frameTranslator=" + FrameTranslator.this +
-                        ", methodDescription=" + methodDescription +
-                        ", intermediateTypes=" + intermediateTypes +
-                        ", yieldedTypes=" + yieldedTypes +
-                        '}';
+                @Override
+                public String toString() {
+                    return "Advice.FrameTranslator.Bound{" +
+                            "frameTranslator=" + Default.this +
+                            ", methodDescription=" + methodDescription +
+                            ", intermediateTypes=" + intermediateTypes +
+                            ", yieldedTypes=" + yieldedTypes +
+                            '}';
+                }
             }
         }
     }
@@ -616,7 +634,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * The frame translator to use.
          */
-        protected final FrameTranslator frameTranslator;
+        protected final FrameTranslator.ForInstrumentedMethod frameTranslator;
 
         protected final Label endOfMethod;
 
@@ -633,15 +651,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 MethodDescription.InDefinedShape instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
                                 Dispatcher.Resolved.ForMethodExit methodExit,
-                                byte[] binaryRepresentation) {
+                                byte[] binaryRepresentation,
+                                int writerFlags,
+                                int readerFlags) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             this.methodEnter = methodEnter;
             this.methodExit = methodExit;
             classReader = new ClassReader(binaryRepresentation);
-            frameTranslator = new FrameTranslator(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
+            frameTranslator = FrameTranslator.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? new TypeList.Empty()
-                    : new TypeList.Explicit(methodEnter.getEnterType()));
+                    : new TypeList.Explicit(methodEnter.getEnterType()), writerFlags, readerFlags);
             endOfMethod = new Label();
         }
 
@@ -747,7 +767,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 mv.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
             }
             mv.visitLabel(exceptionalReturn);
-            mv.visitFrame(Opcodes.F_SAME, 0, new Object[0], 0, new Object[0]);
+            frameTranslator.injectCompletionFrame(mv);
             variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
             mv.visitInsn(Opcodes.ATHROW);
             super.visitMaxs(frameTranslator.compoundStackSize(maxStack), frameTranslator.compoundLocalVariableSize(maxLocals));
@@ -764,7 +784,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param dispatcher The dispatcher for which the byte code should be appended.
          */
         private void append(Dispatcher.Resolved dispatcher) {
-            classReader.accept(new CodeCopier(dispatcher), ClassReader.SKIP_DEBUG);
+            classReader.accept(new CodeCopier(dispatcher), ClassReader.SKIP_DEBUG | frameTranslator.getReaderHint());
         }
 
         /**
@@ -828,8 +848,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription.InDefinedShape instrumentedMethod,
                                             Dispatcher.Resolved.ForMethodEnter methodEnter,
                                             Dispatcher.Resolved.ForMethodExit methodExit,
-                                            byte[] binaryRepresentation) {
-                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation);
+                                            byte[] binaryRepresentation,
+                                            int writerFlags,
+                                            int readerFlags) {
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
                 userStart = new Label();
                 userEnd = new Label();
             }
@@ -901,8 +923,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                MethodDescription.InDefinedShape instrumentedMethod,
                                                Dispatcher.Resolved.ForMethodEnter methodEnter,
                                                Dispatcher.Resolved.ForMethodExit methodExit,
-                                               byte[] binaryRepresentation) {
-                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation);
+                                               byte[] binaryRepresentation,
+                                               int writerFlags,
+                                               int readerFlags) {
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
             }
 
             @Override
@@ -974,7 +998,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             MethodVisitor apply(String internalName,
                                 String descriptor,
                                 MethodVisitor methodVisitor,
-                                FrameTranslator frameTranslator,
+                                FrameTranslator.ForInstrumentedMethod frameTranslator,
                                 MethodDescription.InDefinedShape instrumentedMethod);
 
             /**
@@ -1044,7 +1068,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             public MethodVisitor apply(String internalName,
                                        String descriptor,
                                        MethodVisitor methodVisitor,
-                                       FrameTranslator frameTranslator,
+                                       FrameTranslator.ForInstrumentedMethod frameTranslator,
                                        MethodDescription.InDefinedShape instrumentedMethod) {
                 return IGNORE_METHOD;
             }
@@ -1157,7 +1181,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public MethodVisitor apply(String internalName,
                                            String descriptor,
                                            MethodVisitor methodVisitor,
-                                           FrameTranslator frameTranslator,
+                                           FrameTranslator.ForInstrumentedMethod frameTranslator,
                                            MethodDescription.InDefinedShape instrumentedMethod) {
                     return adviseMethod.getInternalName().equals(internalName) && adviseMethod.getDescriptor().equals(descriptor)
                             ? apply(methodVisitor, frameTranslator, instrumentedMethod)
@@ -1173,7 +1197,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @return A method visitor for visiting the advise method's byte code.
                  */
                 protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
-                                                       FrameTranslator frameTranslator,
+                                                       FrameTranslator.ForInstrumentedMethod frameTranslator,
                                                        MethodDescription.InDefinedShape instrumentedMethod);
 
                 @Override
@@ -2553,14 +2577,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
-                                                  FrameTranslator frameTranslator,
+                                                  FrameTranslator.ForInstrumentedMethod frameTranslator,
                                                   MethodDescription.InDefinedShape instrumentedMethod) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, TypeDescription.VOID));
                         }
                         return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
-                                frameTranslator,
+                                frameTranslator.bindEntry(adviseMethod),
                                 instrumentedMethod,
                                 adviseMethod,
                                 offsetMappings,
@@ -2627,13 +2651,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected MethodVisitor apply(MethodVisitor methodVisitor, FrameTranslator frameTranslator, MethodDescription.InDefinedShape instrumentedMethod) {
+                    protected MethodVisitor apply(MethodVisitor methodVisitor,
+                                                  FrameTranslator.ForInstrumentedMethod frameTranslator,
+                                                  MethodDescription.InDefinedShape instrumentedMethod) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, enterType));
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
-                                frameTranslator,
+                                frameTranslator.bindExit(adviseMethod, enterType),
                                 instrumentedMethod,
                                 adviseMethod,
                                 offsetMappings,
@@ -2692,7 +2718,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The frame translator to use.
                  */
-                protected final FrameTranslator.Bound frameTranslator;
+                protected final FrameTranslator.ForAdvice frameTranslator;
 
                 /**
                  * The instrumented method.
@@ -2730,7 +2756,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
-                                                 FrameTranslator.Bound frameTranslator,
+                                                 FrameTranslator.ForAdvice frameTranslator,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviseMethod,
                                                  Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
@@ -2836,7 +2862,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param methodVisitor   The method visitor of the instrumented method.
                      * @param frameTranslator The frame translator to use.
                      */
-                    void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator);
+                    void onStart(MethodVisitor methodVisitor, FrameTranslator.ForAdvice frameTranslator);
 
                     /**
                      * Invoked at the end of a method.
@@ -2845,7 +2871,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param frameTranslator     The frame translator to use.
                      * @param returnValueProducer A producer for defining a default return value of the advised method.
                      */
-                    void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer);
+                    void onEnd(MethodVisitor methodVisitor, FrameTranslator.ForAdvice frameTranslator, ReturnValueProducer returnValueProducer);
 
                     /**
                      * A non-operational suppression handler that does not suppress any method.
@@ -2858,12 +2884,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         INSTANCE;
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator) {
+                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.ForAdvice frameTranslator) {
                             /* do nothing */
                         }
 
                         @Override
-                        public void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer) {
+                        public void onEnd(MethodVisitor methodVisitor, FrameTranslator.ForAdvice frameTranslator, ReturnValueProducer returnValueProducer) {
                             /* do nothing */
                         }
 
@@ -2902,13 +2928,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator) {
+                        public void onStart(MethodVisitor methodVisitor, FrameTranslator.ForAdvice frameTranslator) {
                             methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
                             methodVisitor.visitLabel(startOfMethod);
                         }
 
                         @Override
-                        public void onEnd(MethodVisitor methodVisitor, FrameTranslator.Bound frameTranslator, ReturnValueProducer returnValueProducer) {
+                        public void onEnd(MethodVisitor methodVisitor, FrameTranslator.ForAdvice frameTranslator, ReturnValueProducer returnValueProducer) {
                             Label endOfHandler = new Label();
                             methodVisitor.visitLabel(endOfMethod);
                             frameTranslator.injectHandlerFrame(methodVisitor);
@@ -2945,23 +2971,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected static class ForMethodEnter extends CodeTranslationVisitor {
 
-                    /**
-                     * Creates a new code translation visitor that retains the return value of the enter advise.
-                     *
-                     * @param methodVisitor      A method visitor for writing the instrumented method's byte code.
-                     * @param frameTranslator    The frame translator to use.
-                     * @param instrumentedMethod The instrumented method.
-                     * @param adviseMethod       The advise method.
-                     * @param offsetMappings     A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
-                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
-                     */
                     protected ForMethodEnter(MethodVisitor methodVisitor,
-                                             FrameTranslator frameTranslator,
+                                             FrameTranslator.ForAdvice frameTranslator,
                                              MethodDescription.InDefinedShape instrumentedMethod,
                                              MethodDescription.InDefinedShape adviseMethod,
                                              Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
                                              TypeDescription throwableType) {
-                        super(methodVisitor, frameTranslator.bindEntry(adviseMethod), instrumentedMethod, adviseMethod, offsetMappings, throwableType);
+                        super(methodVisitor, frameTranslator, instrumentedMethod, adviseMethod, offsetMappings, throwableType);
                     }
 
                     @Override
@@ -3044,26 +3060,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDescription enterType;
 
-                    /**
-                     * Creates a new code translation visitor that retains the return value of the enter advise.
-                     *
-                     * @param methodVisitor      A method visitor for writing the instrumented method's byte code.
-                     * @param frameTranslator    The frame translator to use.
-                     * @param instrumentedMethod The instrumented method.
-                     * @param adviseMethod       The advise method.
-                     * @param offsetMappings     A mapping of offsets of the advise methods to their corresponding offsets in the instrumented method.
-                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
-                     * @param enterType          The type returned by the method method entry advice if any.
-                     */
                     protected ForMethodExit(MethodVisitor methodVisitor,
-                                            FrameTranslator frameTranslator,
+                                            FrameTranslator.ForAdvice frameTranslator,
                                             MethodDescription.InDefinedShape instrumentedMethod,
                                             MethodDescription.InDefinedShape adviseMethod,
                                             Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
                                             TypeDescription throwableType,
                                             TypeDescription enterType) {
                         super(methodVisitor,
-                                frameTranslator.bindExit(adviseMethod, enterType),
+                                frameTranslator,
                                 instrumentedMethod,
                                 adviseMethod,
                                 offsetMappings,

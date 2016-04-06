@@ -36,7 +36,7 @@ public enum TypeConstantAdjustment implements AsmVisitorWrapper {
     }
 
     @Override
-    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
+    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
         return new TypeConstantDissolvingClassVisitor(classVisitor);
     }
 

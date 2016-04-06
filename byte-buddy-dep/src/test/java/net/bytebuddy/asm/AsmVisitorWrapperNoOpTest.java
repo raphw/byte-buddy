@@ -12,12 +12,12 @@ import static org.mockito.Mockito.verifyZeroInteractions;
 
 public class AsmVisitorWrapperNoOpTest {
 
-    private static final int FOO = 42;
+    private static final int FOO = 42, IRRELEVANT = -1;
 
     @Test
     public void testWrapperChain() throws Exception {
         ClassVisitor classVisitor = mock(ClassVisitor.class);
-        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class), classVisitor), is(classVisitor));
+        assertThat(AsmVisitorWrapper.NoOp.INSTANCE.wrap(mock(TypeDescription.class), classVisitor, IRRELEVANT, IRRELEVANT), is(classVisitor));
         verifyZeroInteractions(classVisitor);
     }
 

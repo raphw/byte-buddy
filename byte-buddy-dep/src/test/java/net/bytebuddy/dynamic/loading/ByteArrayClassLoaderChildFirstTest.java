@@ -29,7 +29,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 @RunWith(Parameterized.class)
 public class ByteArrayClassLoaderChildFirstTest {
 
-    private static final String FOO = "foo", BAR = "bar", QUX = "qux", CLASS_FILE = ".class";
+    private static final String BAR = "bar", CLASS_FILE = ".class";
 
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
 
@@ -216,7 +216,7 @@ public class ByteArrayClassLoaderChildFirstTest {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
             return new ClassRemapper(classVisitor, new SimpleRemapper(oldName, newName));
         }
     }

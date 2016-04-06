@@ -16,7 +16,7 @@ import static org.mockito.Mockito.*;
 
 public class AsmVisitorWrapperCompoundTest {
 
-    private static final int FOO = 1, BAR = 2, QUX = 3, BAZ = 4;
+    private static final int FOO = 1, BAR = 2, QUX = 3, BAZ = 4, FLAGS = 42;
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);
@@ -32,9 +32,9 @@ public class AsmVisitorWrapperCompoundTest {
 
     @Before
     public void setUp() throws Exception {
-        when(prepend.wrap(instrumentedType, prependVisitor)).thenReturn(wrapperVisitor);
-        when(wrapper.wrap(instrumentedType, wrapperVisitor)).thenReturn(appendVisitor);
-        when(append.wrap(instrumentedType, appendVisitor)).thenReturn(resultVisitor);
+        when(prepend.wrap(instrumentedType, prependVisitor, FLAGS, FLAGS * 2)).thenReturn(wrapperVisitor);
+        when(wrapper.wrap(instrumentedType, wrapperVisitor, FLAGS, FLAGS * 2)).thenReturn(appendVisitor);
+        when(append.wrap(instrumentedType, appendVisitor, FLAGS, FLAGS * 2)).thenReturn(resultVisitor);
         when(prepend.mergeReader(FOO)).thenReturn(BAR);
         when(wrapper.mergeReader(BAR)).thenReturn(QUX);
         when(append.mergeReader(QUX)).thenReturn(BAZ);
@@ -46,12 +46,12 @@ public class AsmVisitorWrapperCompoundTest {
     @Test
     public void testWrapperChain() throws Exception {
         AsmVisitorWrapper.Compound compound = new AsmVisitorWrapper.Compound(prepend, wrapper, append);
-        assertThat(compound.wrap(instrumentedType, prependVisitor), is(resultVisitor));
-        verify(prepend).wrap(instrumentedType, prependVisitor);
+        assertThat(compound.wrap(instrumentedType, prependVisitor, FLAGS, FLAGS * 2), is(resultVisitor));
+        verify(prepend).wrap(instrumentedType, prependVisitor, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(prepend);
-        verify(wrapper).wrap(instrumentedType, wrapperVisitor);
+        verify(wrapper).wrap(instrumentedType, wrapperVisitor, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(wrapper);
-        verify(append).wrap(instrumentedType, appendVisitor);
+        verify(append).wrap(instrumentedType, appendVisitor, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(append);
     }
 

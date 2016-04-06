@@ -3079,7 +3079,11 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
+            public MethodVisitor wrap(TypeDescription instrumentedType,
+                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodVisitor methodVisitor,
+                                      int writerFlags,
+                                      int readerFlags) {
                 methodVisitor.visitCode();
                 methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, "sun/misc/Unsafe", "getUnsafe", "()Lsun/misc/Unsafe;", false);
                 methodVisitor.visitVarInsn(Opcodes.ASTORE, 6);
@@ -3284,7 +3288,11 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
+            public MethodVisitor wrap(TypeDescription instrumentedType,
+                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodVisitor methodVisitor,
+                                      int writerFlags,
+                                      int readerFlags) {
                 methodVisitor.visitCode();
                 methodVisitor.visitVarInsn(Opcodes.ALOAD, 3);
                 methodVisitor.visitInsn(Opcodes.ICONST_3);

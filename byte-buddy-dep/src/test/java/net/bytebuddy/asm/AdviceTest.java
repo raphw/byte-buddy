@@ -7,14 +7,18 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
+import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
+import org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -559,13 +563,47 @@ public class AdviceTest {
     }
 
     @Test
-    public void testFrameAdviceExpanded() throws Exception {
+    public void testAsm() throws Exception {
+
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
-                .visit(DebuggingWrapper.makeDefault())
-                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES | ClassReader.SKIP_DEBUG)) // TODO! Advice and expansion
+                .visit(new AsmVisitorWrapper() {
+                    @Override
+                    public int mergeWriter(int flags) {
+                        return 0;
+                    }
+
+                    @Override
+                    public int mergeReader(int flags) {
+                        return flags | ClassReader.EXPAND_FRAMES | ClassReader.SKIP_DEBUG;
+                    }
+
+                    @Override
+                    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+                        return new TraceClassVisitor(classVisitor, new PrintWriter(System.out));
+                    }
+                })
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+    }
+
+    @Test
+    public void testFrameAdviceExpanded() throws Exception {
+        DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(EmptyAdvice.class).on(named(FOO))
+//                        .writerFlags(ClassWriter.COMPUTE_FRAMES)
+                        .readerFlags(ClassReader.EXPAND_FRAMES | ClassReader.SKIP_DEBUG)) // TODO! Advice and expansion
+                .make();
+
+//        ClassReader classReader = new ClassReader(dynamicType.getBytes());
+//        classReader.accept(new TraceClassVisitor(new PrintWriter(System.out)), ClassReader.SKIP_DEBUG | ClassReader.EXPAND_FRAMES);
+
+
+        Class<?> type = dynamicType.load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -826,8 +864,9 @@ public class AdviceTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
-        ObjectPropertyAssertion.of(Advice.FrameTranslator.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.FrameTranslator.Bound.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.FrameTranslator.NoOp.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.FrameTranslator.Default.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.FrameTranslator.Default.ForAdvice.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
@@ -983,7 +1022,7 @@ public class AdviceTest {
     public static class EmptyAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit
+        @Advice.OnMethodExit(onThrowable = false) // TODO
         private static void advice() {
             /* empty */
         }
@@ -1456,19 +1495,19 @@ public class AdviceTest {
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
                 if (ignored == 1) {
-                    throw new AssertionError();
+                    throw new AssertionError("a");
                 } else if (ignored == 2) {
                     if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError();
+                        throw new AssertionError("b");
                     }
                 }
             }
             long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 7L;
             if (ignored == 3) {
-                throw new AssertionError();
+                throw new AssertionError("c");
             } else if (ignored == 4) {
                 if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError();
+                    throw new AssertionError("d");
                 }
             }
             try {
@@ -1484,19 +1523,19 @@ public class AdviceTest {
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
                 if (ignored == 1) {
-                    throw new AssertionError();
+                    throw new AssertionError("a");
                 } else if (ignored == 2) {
                     if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError();
+                        throw new AssertionError("b");
                     }
                 }
             }
             long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 4L;
             if (ignored == 3) {
-                throw new AssertionError();
+                throw new AssertionError("c");
             } else if (ignored == 4) {
                 if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError();
+                    throw new AssertionError("d");
                 }
             }
             try {

@@ -15,8 +15,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassFileExtraction {
 
-    private static final int ASM_MANUAL = 0;
-
     private static final int CA = 0xCA, FE = 0xFE, BA = 0xBA, BE = 0xBE;
 
     public static Map<String, byte[]> of(Class<?>... type) throws IOException {
@@ -29,8 +27,11 @@ public class ClassFileExtraction {
 
     public static byte[] extract(Class<?> type, AsmVisitorWrapper asmVisitorWrapper) throws IOException {
         ClassReader classReader = new ClassReader(type.getName());
-        ClassWriter classWriter = new ClassWriter(classReader, ASM_MANUAL);
-        classReader.accept(asmVisitorWrapper.wrap(new TypeDescription.ForLoadedType(type), classWriter), ASM_MANUAL);
+        ClassWriter classWriter = new ClassWriter(classReader, AsmVisitorWrapper.NO_FLAGS);
+        classReader.accept(asmVisitorWrapper.wrap(new TypeDescription.ForLoadedType(type),
+                classWriter,
+                AsmVisitorWrapper.NO_FLAGS,
+                AsmVisitorWrapper.NO_FLAGS), AsmVisitorWrapper.NO_FLAGS);
         return classWriter.toByteArray();
     }
 

@@ -56,7 +56,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
         when(bar.getInternalName()).thenReturn(BAR);
         when(bar.getDescriptor()).thenReturn(BAZ);
         when(classVisitor.visitMethod(eq(MODIFIERS), any(String.class), any(String.class), eq(BAZ), eq(new String[]{QUX + BAZ}))).thenReturn(methodVisitor);
-        when(methodVisitorWrapper.wrap(instrumentedType, foo, methodVisitor)).thenReturn(wrappedVisitor);
+        when(methodVisitorWrapper.wrap(instrumentedType, foo, methodVisitor, FLAGS, FLAGS * 2)).thenReturn(wrappedVisitor);
         when(matcher.matches(foo)).thenReturn(true);
     }
 
@@ -64,11 +64,11 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor)
+                .wrap(instrumentedType, classVisitor, FLAGS, FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO, QUX, BAZ, new String[]{QUX + BAZ}), is(wrappedVisitor));
         verify(matcher).matches(foo);
         verifyNoMoreInteractions(matcher);
-        verify(methodVisitorWrapper).wrap(instrumentedType, foo, methodVisitor);
+        verify(methodVisitorWrapper).wrap(instrumentedType, foo, methodVisitor, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(methodVisitorWrapper);
     }
 
@@ -76,7 +76,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testNotMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor)
+                .wrap(instrumentedType, classVisitor, FLAGS, FLAGS * 2)
                 .visitMethod(MODIFIERS, BAR, BAZ, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
         verify(matcher).matches(bar);
         verifyNoMoreInteractions(matcher);
@@ -87,7 +87,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     public void testUnknown() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredMethods()
                 .method(matcher, methodVisitorWrapper)
-                .wrap(instrumentedType, classVisitor)
+                .wrap(instrumentedType, classVisitor, FLAGS, FLAGS * 2)
                 .visitMethod(MODIFIERS, FOO + BAR, QUX, BAZ, new String[]{QUX + BAZ}), is(methodVisitor));
         verifyZeroInteractions(matcher);
         verifyZeroInteractions(methodVisitorWrapper);

@@ -1292,11 +1292,6 @@ public interface TypeWriter<T> {
     abstract class Default<S> implements TypeWriter<S> {
 
         /**
-         * Indicates to ASM that no values should be computed.
-         */
-        protected static final int ASM_MANUAL_FLAGS = 0;
-
-        /**
          * The instrumented type to be created.
          */
         protected final TypeDescription instrumentedType;
@@ -2718,10 +2713,13 @@ public interface TypeWriter<T> {
              * @return The byte array representing the created class.
              */
             private byte[] doCreate(Implementation.Context.ExtractableView implementationContext, byte[] binaryRepresentation) {
+                int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS), readerFlags = asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS);
                 ClassReader classReader = new ClassReader(binaryRepresentation);
-                ClassWriter classWriter = FrameComputingClassWriter.of(classReader, asmVisitorWrapper.mergeWriter(ASM_MANUAL_FLAGS), classFileLocator);
-                classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType, ValidatingClassVisitor.of(classWriter, typeValidation)), implementationContext),
-                        asmVisitorWrapper.mergeReader(ASM_MANUAL_FLAGS));
+                ClassWriter classWriter = FrameComputingClassWriter.of(classReader, writerFlags, classFileLocator);
+                classReader.accept(writeTo(asmVisitorWrapper.wrap(instrumentedType,
+                        ValidatingClassVisitor.of(classWriter, typeValidation),
+                        writerFlags,
+                        readerFlags), implementationContext), readerFlags);
                 return classWriter.toByteArray();
             }
 
@@ -3392,8 +3390,12 @@ public interface TypeWriter<T> {
 
             @Override
             public byte[] create(Implementation.Context.ExtractableView implementationContext) {
-                ClassWriter classWriter = new ClassWriter(asmVisitorWrapper.mergeWriter(ASM_MANUAL_FLAGS));
-                ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType, ValidatingClassVisitor.of(classWriter, typeValidation));
+                int writerFlags = asmVisitorWrapper.mergeWriter(AsmVisitorWrapper.NO_FLAGS);
+                ClassWriter classWriter = new ClassWriter(writerFlags);
+                ClassVisitor classVisitor = asmVisitorWrapper.wrap(instrumentedType,
+                        ValidatingClassVisitor.of(classWriter, typeValidation),
+                        writerFlags,
+                        asmVisitorWrapper.mergeReader(AsmVisitorWrapper.NO_FLAGS));
                 classVisitor.visit(classFileVersion.getMinorMajorVersion(),
                         instrumentedType.getActualModifiers(!instrumentedType.isInterface()),
                         instrumentedType.getInternalName(),

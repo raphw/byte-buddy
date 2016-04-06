@@ -49,6 +49,12 @@
             <scope>test</scope>
         </dependency>
         <dependency>
+            <groupId>org.ow2.asm</groupId>
+            <artifactId>asm-analysis</artifactId>
+            <version>5.1</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
             <groupId>${project.groupId}</groupId>
             <artifactId>byte-buddy-agent</artifactId>
             <version>${project.version}</version>

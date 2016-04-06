@@ -23,7 +23,7 @@ import static org.mockito.Mockito.*;
 
 public class AsmVisitorWrapperForDeclaredFieldsTest {
 
-    private static final int MODIFIERS = 42;
+    private static final int MODIFIERS = 42, IRRELEVANT = -1;
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
@@ -62,7 +62,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor)
+                .wrap(instrumentedType, classVisitor, IRRELEVANT, IRRELEVANT)
                 .visitField(MODIFIERS, FOO, QUX, BAZ, QUX + BAZ), is(wrappedVisitor));
         verify(matcher).matches(foo);
         verifyNoMoreInteractions(matcher);
@@ -74,7 +74,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testNotMatched() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor)
+                .wrap(instrumentedType, classVisitor, IRRELEVANT, IRRELEVANT)
                 .visitField(MODIFIERS, BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
         verify(matcher).matches(bar);
         verifyNoMoreInteractions(matcher);
@@ -85,7 +85,7 @@ public class AsmVisitorWrapperForDeclaredFieldsTest {
     public void testUnknown() throws Exception {
         assertThat(new AsmVisitorWrapper.ForDeclaredFields()
                 .field(matcher, fieldVisitorWrapper)
-                .wrap(instrumentedType, classVisitor)
+                .wrap(instrumentedType, classVisitor, IRRELEVANT, IRRELEVANT)
                 .visitField(MODIFIERS, FOO + BAR, QUX, BAZ, QUX + BAZ), is(fieldVisitor));
         verifyZeroInteractions(matcher);
         verifyZeroInteractions(fieldVisitorWrapper);

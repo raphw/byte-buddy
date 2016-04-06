@@ -1,6 +1,7 @@
 package net.bytebuddy.implementation.attribute;
 
 import net.bytebuddy.ClassFileVersion;
+import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -32,8 +33,6 @@ import static org.mockito.Mockito.*;
 public class AnnotationAppenderDefaultTest {
 
     private static final ProtectionDomain DEFAULT_PROTECTION_DOMAIN = null;
-
-    private static final int ASM_MANUAL = 0;
 
     private static final String BAR = "net.bytebuddy.test.Bar";
 
@@ -167,7 +166,7 @@ public class AnnotationAppenderDefaultTest {
 
     private Class<?> makeTypeWithAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
-        ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
+        ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
         classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),
@@ -192,7 +191,7 @@ public class AnnotationAppenderDefaultTest {
 
     private Class<?> makeTypeWithSuperClassAnnotation(Annotation annotation) throws Exception {
         when(valueFilter.isRelevant(any(AnnotationDescription.class), any(MethodDescription.InDefinedShape.class))).thenReturn(true);
-        ClassWriter classWriter = new ClassWriter(ASM_MANUAL);
+        ClassWriter classWriter = new ClassWriter(AsmVisitorWrapper.NO_FLAGS);
         classWriter.visit(ClassFileVersion.forCurrentJavaVersion().getMinorMajorVersion(),
                 Opcodes.ACC_PUBLIC,
                 BAR.replace('.', '/'),

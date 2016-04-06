@@ -52,7 +52,7 @@ public interface AsmVisitorWrapper {
      *                         {@link net.bytebuddy.dynamic.DynamicType} is written to.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
      */
-    ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor);
+    ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags);
 
     /**
      * A class visitor wrapper that does not apply any changes.
@@ -75,7 +75,7 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
             return classVisitor;
         }
 
@@ -140,7 +140,7 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
             return new DispatchingVisitor(classVisitor, instrumentedType);
         }
 
@@ -407,8 +407,8 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
-            return new DispatchingVisitor(classVisitor, instrumentedType);
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
+            return new DispatchingVisitor(classVisitor, instrumentedType, writerFlags, readerFlags);
         }
 
         @Override
@@ -449,7 +449,11 @@ public interface AsmVisitorWrapper {
              * @param methodVisitor     The original field visitor that defines the given method.
              * @return The wrapped method visitor.
              */
-            MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor);
+            MethodVisitor wrap(TypeDescription instrumentedType,
+                               MethodDescription.InDefinedShape methodDescription,
+                               MethodVisitor methodVisitor,
+                               int writerFlags,
+                               int readerFlags);
         }
 
         /**
@@ -484,8 +488,12 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            public MethodVisitor wrap(TypeDescription instrumentedType, MethodDescription.InDefinedShape methodDescription, MethodVisitor methodVisitor) {
-                return methodVisitorWrapper.wrap(instrumentedType, methodDescription, methodVisitor);
+            public MethodVisitor wrap(TypeDescription instrumentedType,
+                                      MethodDescription.InDefinedShape methodDescription,
+                                      MethodVisitor methodVisitor,
+                                      int writerFlags,
+                                      int readerFlags) {
+                return methodVisitorWrapper.wrap(instrumentedType, methodDescription, methodVisitor, writerFlags, readerFlags);
             }
 
             @Override
@@ -523,6 +531,10 @@ public interface AsmVisitorWrapper {
              */
             private final TypeDescription instrumentedType;
 
+            private final int writerFlags;
+
+            private final int readerFlags;
+
             /**
              * A mapping of fields by their name.
              */
@@ -534,9 +546,11 @@ public interface AsmVisitorWrapper {
              * @param classVisitor     The underlying class visitor.
              * @param instrumentedType The instrumented type.
              */
-            protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType) {
+            protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, int writerFlags, int readerFlags) {
                 super(Opcodes.ASM5, classVisitor);
                 this.instrumentedType = instrumentedType;
+                this.writerFlags = writerFlags;
+                this.readerFlags = readerFlags;
                 methodsByName = new HashMap<String, MethodDescription.InDefinedShape>();
                 for (MethodDescription.InDefinedShape methodDescription : instrumentedType.getDeclaredMethods()) {
                     methodsByName.put(methodDescription.getInternalName() + methodDescription.getDescriptor(), methodDescription);
@@ -549,7 +563,7 @@ public interface AsmVisitorWrapper {
                 MethodDescription.InDefinedShape methodDescription = methodsByName.get(internalName + descriptor);
                 for (Entry entry : entries) {
                     if (entry.matches(methodDescription)) {
-                        methodVisitor = entry.wrap(instrumentedType, methodDescription, methodVisitor);
+                        methodVisitor = entry.wrap(instrumentedType, methodDescription, methodVisitor, writerFlags, readerFlags);
                     }
                 }
                 return methodVisitor;
@@ -644,9 +658,9 @@ public interface AsmVisitorWrapper {
         }
 
         @Override
-        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor) {
+        public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
             for (AsmVisitorWrapper asmVisitorWrapper : asmVisitorWrappers) {
-                classVisitor = asmVisitorWrapper.wrap(instrumentedType, classVisitor);
+                classVisitor = asmVisitorWrapper.wrap(instrumentedType, classVisitor, writerFlags, readerFlags);
             }
             return classVisitor;
         }
