@@ -108,6 +108,17 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceWithIncrement() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(IncrementSample.class)
+                .visit(Advice.to(IncrementAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, int.class).invoke(type.newInstance(), 0), is((Object) 2));
+    }
+
+    @Test
     public void testAdviceWithThisReference() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -974,6 +985,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class EmptyAdvice {
 
         @Advice.OnMethodEnter
@@ -983,6 +995,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class EmptyAdviceEntry {
 
         @Advice.OnMethodEnter
@@ -991,7 +1004,7 @@ public class AdviceTest {
         }
     }
 
-
+    @SuppressWarnings("unused")
     public static class EmptyAdviceExit {
 
         @Advice.OnMethodExit
@@ -1073,6 +1086,47 @@ public class AdviceTest {
                 throw new AssertionError();
             }
             Sample.exit++;
+        }
+    }
+
+    public static class IncrementSample {
+
+        public int foo(int value) {
+            return ++value;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IncrementAdvice {
+
+        @Advice.OnMethodEnter
+        private static int enter(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.Ignored int ignored) {
+            if (++argument != 1) {
+                throw new AssertionError();
+            }
+            if (++ignored != 0) {
+                throw new AssertionError();
+            }
+            int value = 0;
+            if (++value != 1) {
+                throw new AssertionError();
+            }
+            return value;
+        }
+
+        @Advice.OnMethodExit
+        private static int exit(@Advice.Argument(value = 0, readOnly = false) int argument, @Advice.Ignored int ignored) {
+            if (++argument != 3) {
+                throw new AssertionError();
+            }
+            if (++ignored != 0) {
+                throw new AssertionError();
+            }
+            int value = 0;
+            if (++value != 1) {
+                throw new AssertionError();
+            }
+            return value;
         }
     }
 
@@ -1206,6 +1260,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class ThrowNotSuppressedOnEnter {
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -1215,6 +1270,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class ThrowNotSuppressedOnExit {
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -1360,6 +1416,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FieldAdviceImplicit {
 
         @Advice.OnMethodEnter
@@ -1379,6 +1436,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FieldAdviceExplicit {
 
         @Advice.OnMethodEnter
@@ -1450,19 +1508,19 @@ public class AdviceTest {
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
                 if (ignored == 1) {
-                    throw new AssertionError("a");
+                    throw new AssertionError();
                 } else if (ignored == 2) {
                     if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError("b");
+                        throw new AssertionError();
                     }
                 }
             }
             long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 7L;
             if (ignored == 3) {
-                throw new AssertionError("c");
+                throw new AssertionError();
             } else if (ignored == 4) {
                 if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError("d");
+                    throw new AssertionError();
                 }
             }
             try {
@@ -1478,19 +1536,19 @@ public class AdviceTest {
             {
                 long v1 = 1L, v2 = 2L, v3 = 3L;
                 if (ignored == 1) {
-                    throw new AssertionError("a");
+                    throw new AssertionError();
                 } else if (ignored == 2) {
                     if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError("b");
+                        throw new AssertionError();
                     }
                 }
             }
             long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 4L;
             if (ignored == 3) {
-                throw new AssertionError("c");
+                throw new AssertionError();
             } else if (ignored == 4) {
                 if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError("d");
+                    throw new AssertionError();
                 }
             }
             try {
@@ -1578,6 +1636,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FieldAdviceIllegalExplicit {
 
         @Advice.OnMethodEnter
@@ -1586,6 +1645,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FieldAdviceNonExistent {
 
         @Advice.OnMethodEnter
@@ -1594,6 +1654,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FieldAdviceNonAssignable {
 
         @Advice.OnMethodEnter
@@ -1602,6 +1663,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FieldAdviceWrite {
 
         @Advice.OnMethodEnter
@@ -1619,6 +1681,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class IllegalArgumentReadOnlyAdvice {
 
         @SuppressWarnings("unused")

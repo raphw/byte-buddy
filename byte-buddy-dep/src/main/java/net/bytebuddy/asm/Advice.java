@@ -694,6 +694,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
+        public void visitIincInsn(int offset, int increment) {
+            super.visitIincInsn(offset < instrumentedMethod.getStackSize()
+                    ? offset
+                    : offset + methodEnter.getEnterType().getStackSize().getSize(), increment);
+        }
+
+        @Override
         public void visitInsn(int opcode) {
             switch (opcode) {
                 case Opcodes.RETURN:
@@ -1245,7 +1252,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
                          * @param opcode        The opcode of the original instruction.
                          */
-                        void apply(MethodVisitor methodVisitor, int opcode);
+                        void resolveAccess(MethodVisitor methodVisitor, int opcode);
+
+                        void resolveIncrement(MethodVisitor methodVisitor, int increment);
 
                         /**
                          * Loads a default value onto the stack or pops the accessed value off it.
@@ -1258,7 +1267,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             INSTANCE;
 
                             @Override
-                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
                                 switch (opcode) {
                                     case Opcodes.ALOAD:
                                         methodVisitor.visitInsn(Opcodes.ACONST_NULL);
@@ -1290,6 +1299,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                /* do nothing */
+                            }
+
+                            @Override
                             public String toString() {
                                 return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForDefaultValue." + name();
                             }
@@ -1315,8 +1329,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
-                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
                                 methodVisitor.visitVarInsn(opcode, offset);
+                            }
+
+                            @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                methodVisitor.visitIincInsn(offset, increment);
                             }
 
                             @Override
@@ -1360,7 +1379,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
-                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
                                 switch (opcode) {
                                     case Opcodes.ISTORE:
                                     case Opcodes.LSTORE:
@@ -1378,6 +1397,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     default:
                                         throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                                 }
+                            }
+
+                            @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
                             }
 
                             @Override
@@ -1421,7 +1445,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
-                            public void apply(MethodVisitor methodVisitor, int opcode) {
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
                                 switch (opcode) {
                                     case Opcodes.ISTORE:
                                     case Opcodes.ASTORE:
@@ -1449,6 +1473,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     default:
                                         throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                                 }
+                            }
+
+                            @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                throw new IllegalStateException("Cannot write to field: " + fieldDescription);
                             }
 
                             @Override
@@ -1492,8 +1521,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
 
                             @Override
-                            public void apply(MethodVisitor methodVisitor, int opcode) {
-                                methodVisitor.visitLdcInsn(value);
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                                switch (opcode) {
+                                    case Opcodes.ISTORE:
+                                    case Opcodes.ASTORE:
+                                    case Opcodes.FSTORE:
+                                    case Opcodes.LSTORE:
+                                    case Opcodes.DSTORE:
+                                        throw new IllegalStateException("Cannot write to fixed value: " + value);
+                                    case Opcodes.ILOAD:
+                                    case Opcodes.FLOAD:
+                                    case Opcodes.ALOAD:
+                                    case Opcodes.LLOAD:
+                                    case Opcodes.DLOAD:
+                                        methodVisitor.visitLdcInsn(value);
+                                        break;
+                                    default:
+                                        throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                                } // TODO: test
+                            }
+
+                            @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                throw new IllegalStateException("Cannot write to fixed value: " + value);
                             }
 
                             @Override
@@ -2838,9 +2888,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        target.apply(mv, opcode);
+                        target.resolveAccess(mv, opcode);
                     } else {
                         mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviseMethod.getStackSize()));
+                    }
+                }
+
+                @Override
+                public void visitIincInsn(int offset, int increment) {
+                    Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
+                    if (target != null) {
+                        target.resolveIncrement(mv, increment);
+                    } else {
+                        mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviseMethod.getStackSize()), increment);
                     }
                 }
 
