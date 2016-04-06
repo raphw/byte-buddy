@@ -768,6 +768,30 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithThisReferenceOnConstructor() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ThisReferenceAdvice.class).on(isConstructor()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithFieldOnConstructor() throws Exception {
+        new ByteBuddy()
+                .redefine(FieldSample.class)
+                .visit(Advice.to(FieldAdviceExplicit.class).on(isConstructor()))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceWithExceptionCatchOnConstructor() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(EmptyAdviceExitWithExceptionHandling.class).on(isConstructor()))
+                .make();
+    }
+
     @Test(expected = IllegalArgumentException.class)
     public void testAdviceWithoutAnnotations() throws Exception {
         Advice.to(Object.class);

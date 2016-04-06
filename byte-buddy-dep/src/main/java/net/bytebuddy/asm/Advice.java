@@ -200,6 +200,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     binaryRepresentation,
                     writerFlags,
                     readerFlags);
+        } else if (methodDescription.isConstructor()) {
+            throw new IllegalStateException("Cannot catch exception during constructor call for " + methodDescription);
         } else {
             return new AdviceVisitor.WithExitAdvice.WithExceptionHandling(methodVisitor,
                     methodDescription,
@@ -1439,10 +1441,80 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves an offset mapping to a given target offset.
                      *
                      * @param instrumentedMethod The instrumented method for which the mapping is to be resolved.
-                     * @param enterType          The type returned by the enter advice or {@code void} if there is no enter type to consider.
                      * @return A suitable target mapping.
                      */
-                    Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType);
+                    Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context);
+
+                    interface Context {
+
+                        boolean isInitialized();
+
+                        int getPadding();
+
+                        enum ForMethodEntry implements Context {
+
+                            INITIALIZED(true),
+                            NON_INITIALIZED(false);
+
+                            protected static Context of(MethodDescription.InDefinedShape instrumentedMethod) {
+                                return instrumentedMethod.isConstructor()
+                                        ? NON_INITIALIZED
+                                        : INITIALIZED;
+                            }
+
+                            private final boolean initialized;
+
+                            ForMethodEntry(boolean initialized) {
+                                this.initialized = initialized;
+                            }
+
+                            @Override
+                            public boolean isInitialized() {
+                                return initialized;
+                            }
+
+                            @Override
+                            public int getPadding() {
+                                return StackSize.ZERO.getSize();
+                            }
+                        }
+
+                        enum ForMethodExit implements Context {
+
+                            ZERO(StackSize.ZERO),
+                            SINGLE(StackSize.SINGLE),
+                            DOUBLE(StackSize.DOUBLE);
+
+                            private final StackSize stackSize;
+
+                            ForMethodExit(StackSize stackSize) {
+                                this.stackSize = stackSize;
+                            }
+
+                            protected static Context of(TypeDescription typeDescription) {
+                                switch (typeDescription.getStackSize()) {
+                                    case ZERO:
+                                        return ZERO;
+                                    case SINGLE:
+                                        return SINGLE;
+                                    case DOUBLE:
+                                        return DOUBLE;
+                                    default:
+                                        throw new IllegalStateException("Unknown stack size: " + typeDescription);
+                                }
+                            }
+
+                            @Override
+                            public boolean isInitialized() {
+                                return true;
+                            }
+
+                            @Override
+                            public int getPadding() {
+                                return stackSize.getSize();
+                            }
+                        }
+                    }
 
                     /**
                      * A target offset of an offset mapping.
@@ -1834,7 +1906,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             ParameterList<?> parameters = instrumentedMethod.getParameters();
                             if (parameters.size() <= index) {
                                 throw new IllegalStateException(instrumentedMethod + " does not define an index " + index);
@@ -1932,13 +2004,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             if (instrumentedMethod.isStatic()) {
                                 throw new IllegalStateException("Cannot map this reference for static method " + instrumentedMethod);
                             } else if (!readOnly && !instrumentedMethod.getDeclaringType().equals(targetType)) {
                                 throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not equal to read-only " + targetType);
                             } else if (readOnly && !instrumentedMethod.getDeclaringType().isAssignableTo(targetType)) {
                                 throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not assignable to " + targetType);
+                            } else if (!context.isInitialized()) {
+                                throw new IllegalStateException("Cannot access this reference before calling constructor: " + instrumentedMethod);
                             }
                             return readOnly
                                     ? new Target.ForReadOnlyParameter(THIS_REFERENCE)
@@ -2036,7 +2110,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             FieldLocator.Resolution resolution = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
                             if (!resolution.isResolved()) {
                                 throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedMethod);
@@ -2044,6 +2118,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException("Cannot assign type of field " + resolution.getField() + " to " + targetType);
                             } else if (!resolution.getField().isStatic() && instrumentedMethod.isStatic()) {
                                 throw new IllegalStateException("Cannot read non-static field " + resolution.getField() + " from static method " + instrumentedMethod);
+                            } else if (!context.isInitialized() && !resolution.getField().isStatic()) {
+                                throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
                             }
                             return new Target.ForField(resolution.getField());
                         }
@@ -2278,7 +2354,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             StringBuilder stringBuilder = new StringBuilder();
                             for (Renderer renderer : renderers) {
                                 stringBuilder.append(renderer.apply(instrumentedMethod));
@@ -2490,7 +2566,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         INSTANCE;
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             return Target.ForDefaultValue.INSTANCE;
                         }
 
@@ -2549,7 +2625,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             return readOnly
                                     ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize())
                                     : new Target.ForParameter(instrumentedMethod.getStackSize());
@@ -2642,15 +2718,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             if (!readOnly && !instrumentedMethod.getReturnType().asErasure().equals(targetType)) {
                                 throw new IllegalStateException("read-only return type of " + instrumentedMethod + " is not equal to " + targetType);
                             } else if (readOnly && !instrumentedMethod.getReturnType().asErasure().isAssignableTo(targetType)) {
                                 throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
                             }
                             return readOnly
-                                    ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + enterType.getStackSize().getSize())
-                                    : new Target.ForParameter(instrumentedMethod.getStackSize() + enterType.getStackSize().getSize());
+                                    ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + context.getPadding())
+                                    : new Target.ForParameter(instrumentedMethod.getStackSize() + context.getPadding());
                         }
 
                         @Override
@@ -2722,9 +2798,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, TypeDescription enterType) {
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                             return new Target.ForParameter(instrumentedMethod.getStackSize()
-                                    + enterType.getStackSize().getSize()
+                                    + context.getPadding()
                                     + instrumentedMethod.getReturnType().getStackSize().getSize());
                         }
 
@@ -2844,7 +2920,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   MethodDescription.InDefinedShape instrumentedMethod) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, TypeDescription.VOID));
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodEntry.of(instrumentedMethod)));
                         }
                         return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
                                 metaDataHandler.bindEntry(adviseMethod),
@@ -2924,7 +3000,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                   MethodDescription.InDefinedShape instrumentedMethod) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, enterType));
+                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodExit.of(enterType)));
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
                                 metaDataHandler.bindExit(adviseMethod, enterType),
