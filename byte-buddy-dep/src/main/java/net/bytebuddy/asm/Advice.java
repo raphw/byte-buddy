@@ -129,10 +129,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     public static Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
         try {
-            Dispatcher methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
+            Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
             for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()) {
-                methodEnter = resolve(OnMethodEnter.class, methodEnter, methodDescription);
-                methodExit = resolve(OnMethodExit.class, methodExit, methodDescription);
+                methodEnter = locate(OnMethodEnter.class, methodEnter, methodDescription);
+                methodExit = locate(OnMethodExit.class, methodExit, methodDescription);
             }
             if (!methodEnter.isAlive() && !methodExit.isAlive()) {
                 throw new IllegalArgumentException("No advice defined by " + typeDescription);
@@ -152,7 +152,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodDescription A description of the method considered as advise.
      * @return A dispatcher for the given method or the supplied dispatcher if the given method is not intended to be used as advise.
      */
-    private static Dispatcher resolve(Class<? extends Annotation> annotation, Dispatcher dispatcher, MethodDescription.InDefinedShape methodDescription) {
+    private static Dispatcher.Unresolved locate(Class<? extends Annotation> annotation,
+                                                Dispatcher.Unresolved dispatcher,
+                                                MethodDescription.InDefinedShape methodDescription) {
         if (methodDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
             if (dispatcher.isAlive()) {
                 throw new IllegalStateException("Duplicate advice for " + dispatcher + " and " + methodDescription);
@@ -1097,27 +1099,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         boolean isAlive();
 
-        /**
-         * Resolves this dispatcher as a dispatcher for entering a method.
-         *
-         * @return This dispatcher as a dispatcher for entering a method.
-         */
-        Resolved.ForMethodEnter asMethodEnter();
+        interface Unresolved extends Dispatcher {
 
-        /**
-         * Resolves this dispatcher as a dispatcher for exiting a method.
-         *
-         * @param dispatcher The dispatcher for entering a method.
-         * @return This dispatcher as a dispatcher for exiting a method.
-         */
-        Resolved.ForMethodExit asMethodExitTo(Resolved.ForMethodEnter dispatcher);
+            /**
+             * Resolves this dispatcher as a dispatcher for entering a method.
+             *
+             * @return This dispatcher as a dispatcher for entering a method.
+             */
+            Resolved.ForMethodEnter asMethodEnter();
+
+            /**
+             * Resolves this dispatcher as a dispatcher for exiting a method.
+             *
+             * @param dispatcher The dispatcher for entering a method.
+             * @return This dispatcher as a dispatcher for exiting a method.
+             */
+            Resolved.ForMethodExit asMethodExitTo(Resolved.ForMethodEnter dispatcher);
+        }
 
         /**
          * Represents a resolved dispatcher.
          */
-        interface Resolved {
-
-            boolean isAlive();
+        interface Resolved extends Dispatcher {
 
             /**
              * Applies this dispatcher for a method that is discovered in the advice class's class file.
@@ -1165,7 +1168,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * An implementation for inactive devise that does not write any byte code.
          */
-        enum Inactive implements Dispatcher, Resolved.ForMethodEnter, Resolved.ForMethodExit {
+        enum Inactive implements Dispatcher.Unresolved, Resolved.ForMethodEnter, Resolved.ForMethodExit {
 
             /**
              * The singleton instance.
@@ -1215,7 +1218,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher for active advise.
          */
-        class Active implements Dispatcher {
+        class Active implements Unresolved {
 
             /**
              * The advise method.
@@ -1336,7 +1339,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
-                    Resolved resolved = (Resolved) other;
+                    Active.Resolved resolved = (Active.Resolved) other;
                     return adviseMethod.equals(resolved.adviseMethod) && offsetMappings.equals(resolved.offsetMappings);
                 }
 
@@ -2715,7 +2718,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method enter advise.
                  */
-                protected static class ForMethodEnter extends Resolved implements Dispatcher.Resolved.ForMethodEnter {
+                protected static class ForMethodEnter extends Active.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
                      * The {@code suppress} property of the {@link OnMethodEnter} type.
@@ -2783,7 +2786,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method exit advise.
                  */
-                protected static class ForMethodExit extends Resolved implements Dispatcher.Resolved.ForMethodExit {
+                protected static class ForMethodExit extends Active.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
                      * The {@code suppress} method of the {@link OnMethodExit} annotation.
@@ -2856,7 +2859,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && super.equals(other)
-                                && enterType == ((Resolved.ForMethodExit) other).enterType;
+                                && enterType == ((Active.Resolved.ForMethodExit) other).enterType;
                     }
 
                     @Override
