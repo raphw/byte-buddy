@@ -577,7 +577,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription.InDefinedShape methodDescription,
                                             Object[] localVariable,
                                             Object[] translated);
-
             }
 
             /**
@@ -600,7 +599,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final List<? extends TypeDescription> yieldedTypes;
 
-                private final TranslationMode translationMode;
+                protected final TranslationMode translationMode;
 
                 /**
                  * Creates a new bound frame translator.
@@ -670,7 +669,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The maximum stack size required by a visited advice method.
                  */
-                private int stackSize = 3; // TODO!
+                private int stackSize;
 
                 /**
                  * The maximum length of the local variable array required by a visited advice method.
@@ -678,7 +677,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private int localVariableLength;
 
                 protected WithStackSizeComputation(MethodDescription.InDefinedShape instrumentedMethod, TypeList intermediateTypes, boolean expandFrames) {
-                    super(instrumentedMethod, intermediateTypes, expandFrames); // TODO: Exceptions and return values?
+                    super(instrumentedMethod, intermediateTypes, expandFrames);
+                    stackSize = instrumentedMethod.getReturnType().getStackSize().getSize() + StackSize.SINGLE.getSize();
                 }
 
                 @Override
@@ -699,15 +699,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  TypeList intermediateTypes,
                                                  List<? extends TypeDescription> yieldedTypes,
                                                  TranslationMode translationMode) {
+                    if (translationMode == TranslationMode.ENTRY) {
+                        stackSize = Math.max(methodDescription.getReturnType().getStackSize().getSize(), stackSize);
+                    }
                     return new ForAdvice(methodDescription, intermediateTypes, yieldedTypes, translationMode);
                 }
 
                 protected class ForAdvice extends Default.ForAdvice {
 
                     protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
-                                     TypeList intermediateTypes,
-                                     List<? extends TypeDescription> yieldedTypes,
-                                     TranslationMode translationMode) {
+                                        TypeList intermediateTypes,
+                                        List<? extends TypeDescription> yieldedTypes,
+                                        TranslationMode translationMode) {
                         super(methodDescription, intermediateTypes, yieldedTypes, translationMode);
                     }
 
@@ -749,9 +752,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected class ForAdvice extends Default.ForAdvice {
 
                     protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
-                                     TypeList intermediateTypes,
-                                     List<? extends TypeDescription> yieldedTypes,
-                                     TranslationMode translationMode) {
+                                        TypeList intermediateTypes,
+                                        List<? extends TypeDescription> yieldedTypes,
+                                        TranslationMode translationMode) {
                         super(methodDescription, intermediateTypes, yieldedTypes, translationMode);
                     }
 
