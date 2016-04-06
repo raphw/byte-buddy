@@ -244,7 +244,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         void injectHandlerFrame(MethodVisitor methodVisitor);
 
-        void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondaryCompletion);
+        void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary);
 
         interface ForInstrumentedMethod extends MetaDataHandler {
 
@@ -311,7 +311,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondaryCompletion) {
+            public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
                 /* do nothing */
             }
         }
@@ -490,9 +490,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondaryCompletion) {
-                if (!expandFrames && currentFrameDivergence == 0) {
-                    if (secondaryCompletion) {
+            public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
+                if (!expandFrames && currentFrameDivergence == 0 && (secondary || !instrumentedMethod.isConstructor())) {
+                    if (secondary) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
                     } else {
                         Object[] local = instrumentedMethod.getReturnType().represents(void.class)
@@ -540,6 +540,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return length;
                     }
                 }, ENTRY {
+
                     @Override
                     protected int copy(MethodDescription.InDefinedShape instrumentedMethod,
                                        MethodDescription.InDefinedShape methodDescription,
@@ -555,6 +556,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             translated[index++] = toFrame(typeDescription);
                         }
                         return index;
+
                     }
                 }, EXIT {
                     @Override
@@ -646,9 +648,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondaryCompletion) {
-                    if (!expandFrames && currentFrameDivergence == 0 && yieldedTypes.size() < 4) {
-                        if (secondaryCompletion || yieldedTypes.isEmpty()) {
+                public void injectCompletionFrame(MethodVisitor methodVisitor, boolean secondary) {
+                    if ((!expandFrames && currentFrameDivergence == 0 && yieldedTypes.size() < 4)) {
+                        if (secondary || yieldedTypes.isEmpty()) {
                             methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
                         } else {
                             Object[] local = new Object[yieldedTypes.size()];
@@ -3446,7 +3448,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface OnMethodExit {
 
         /**
-         * Indicates that the advise method should also be called when a method terminates exceptionally.
+         * Indicates that the advise method should also be called when a method terminates exceptionally. This property must
+         * not be set to {@code true} when defining advice for a constructor.
          *
          * @return {@code true} if the advise method should be invoked when a method terminates exceptionally.
          */

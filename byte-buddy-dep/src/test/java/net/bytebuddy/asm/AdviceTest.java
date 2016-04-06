@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static junit.framework.TestCase.fail;
+import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 import static org.hamcrest.CoreMatchers.*;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -200,6 +201,19 @@ public class AdviceTest {
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testAdviceOnConstructor() throws Exception {
+        Class<?> type = new ByteBuddy() // TODO: Exception when constructor for certain types and throwable
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdviceSkipException.class).on(isConstructor()))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.newInstance(), notNullValue(Object.class));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
     @Test
