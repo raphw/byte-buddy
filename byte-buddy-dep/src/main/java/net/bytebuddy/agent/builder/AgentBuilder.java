@@ -71,74 +71,6 @@ import static net.bytebuddy.matcher.ElementMatchers.*;
 public interface AgentBuilder {
 
     /**
-     * <p>
-     * Matches a type being loaded in order to apply the supplied
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
-     * </p>
-     * <p>
-     * <b>Note</b>: When applying a matcher, regard the performance implications by
-     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
-     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to exclude
-     * class loaders such as for example the bootstrap class loader by using
-     * {@link AgentBuilder#type(ElementMatcher, ElementMatcher)} instead.
-     * </p>
-     *
-     * @param typeMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being loaded that
-     *                    decides if the entailed {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should
-     *                    be applied for that type.
-     * @return A definable that represents this agent builder which allows for the definition of one or several
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code typeMatcher}
-     * indicates a match.
-     */
-    Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher);
-
-    /**
-     * <p>
-     * Matches a type being loaded in order to apply the supplied
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
-     * </p>
-     * <p>
-     * <b>Note</b>: When applying a matcher, regard the performance implications by
-     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
-     * to ignore name spaces that are irrelevant to instrumentation.
-     * </p>
-     *
-     * @param typeMatcher        An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being
-     *                           loaded that decides if the entailed
-     *                           {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for
-     *                           that type.
-     * @param classLoaderMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied to the
-     *                           {@link java.lang.ClassLoader} that is loading the type being loaded. This matcher
-     *                           is always applied first where the type matcher is not applied in case that this
-     *                           matcher does not indicate a match.
-     * @return A definable that represents this agent builder which allows for the definition of one or several
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
-     * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
-     */
-    Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
-
-    /**
-     * <p>
-     * Matches a type being loaded in order to apply the supplied
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
-     * </p>
-     * <p>
-     * <b>Note</b>: When applying a matcher, regard the performance implications by
-     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
-     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to
-     * exclude class loaders such as for example the bootstrap class loader.
-     * </p>
-     *
-     * @param matcher A matcher that decides if the entailed
-     *                {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for a type that
-     *                is being loaded.
-     * @return A definable that represents this agent builder which allows for the definition of one or several
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code matcher}
-     * indicates a match.
-     */
-    Identified.Narrowable type(RawMatcher matcher);
-
-    /**
      * Defines the given {@link net.bytebuddy.ByteBuddy} instance to be used by the created agent.
      *
      * @param byteBuddy The Byte Buddy instance to be used.
@@ -258,6 +190,88 @@ public interface AgentBuilder {
      * @return A new instance of this agent builder which does not apply bootstrap class loader injection.
      */
     AgentBuilder disableBootstrapInjection();
+
+    /**
+     * <p>
+     * Disables all implicit changes on a class file that Byte Buddy would apply for certain instrumentations. When
+     * using this option, it is no longer possible to rebase a method, i.e. intercepted methods are fully replaced. Furthermore,
+     * it is no longer possible to implicitly apply loaded type initializers for explicitly initializing the generated type.
+     * </p>
+     * <p>
+     * This is equivalent to setting {@link InitializationStrategy.NoOp} and {@link TypeStrategy.Default#REDEFINE}.
+     * </p>
+     *
+     * @return A new instance of this agent builder that does not apply any implicit changes to the received class file.
+     */
+    AgentBuilder withoutClassFormatChanges();
+
+    /**
+     * <p>
+     * Matches a type being loaded in order to apply the supplied
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by
+     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
+     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to exclude
+     * class loaders such as for example the bootstrap class loader by using
+     * {@link AgentBuilder#type(ElementMatcher, ElementMatcher)} instead.
+     * </p>
+     *
+     * @param typeMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being loaded that
+     *                    decides if the entailed {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should
+     *                    be applied for that type.
+     * @return A definable that represents this agent builder which allows for the definition of one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code typeMatcher}
+     * indicates a match.
+     */
+    Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher);
+
+    /**
+     * <p>
+     * Matches a type being loaded in order to apply the supplied
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by
+     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
+     * to ignore name spaces that are irrelevant to instrumentation.
+     * </p>
+     *
+     * @param typeMatcher        An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being
+     *                           loaded that decides if the entailed
+     *                           {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for
+     *                           that type.
+     * @param classLoaderMatcher An {@link net.bytebuddy.matcher.ElementMatcher} that is applied to the
+     *                           {@link java.lang.ClassLoader} that is loading the type being loaded. This matcher
+     *                           is always applied first where the type matcher is not applied in case that this
+     *                           matcher does not indicate a match.
+     * @return A definable that represents this agent builder which allows for the definition of one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when both the given
+     * {@code typeMatcher} and {@code classLoaderMatcher} indicate a match.
+     */
+    Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
+
+    /**
+     * <p>
+     * Matches a type being loaded in order to apply the supplied
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by
+     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
+     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to
+     * exclude class loaders such as for example the bootstrap class loader.
+     * </p>
+     *
+     * @param matcher A matcher that decides if the entailed
+     *                {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for a type that
+     *                is being loaded.
+     * @return A definable that represents this agent builder which allows for the definition of one or several
+     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code matcher}
+     * indicates a match.
+     */
+    Identified.Narrowable type(RawMatcher matcher);
 
     /**
      * <p>
@@ -3663,21 +3677,6 @@ public interface AgentBuilder {
         }
 
         @Override
-        public Identified.Narrowable type(RawMatcher matcher) {
-            return new Transforming(matcher, Transformer.NoOp.INSTANCE);
-        }
-
-        @Override
-        public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
-            return type(typeMatcher, any());
-        }
-
-        @Override
-        public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-            return type(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
-        }
-
-        @Override
         public AgentBuilder with(ByteBuddy byteBuddy) {
             return new Default(byteBuddy,
                     binaryLocator,
@@ -3822,6 +3821,22 @@ public interface AgentBuilder {
         }
 
         @Override
+        public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
+            return new Default(byteBuddy,
+                    binaryLocator,
+                    typeStrategy,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    initializationStrategy,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
+        }
+
+        @Override
         public AgentBuilder enableBootstrapInjection(File folder, Instrumentation instrumentation) {
             return new Default(byteBuddy,
                     binaryLocator,
@@ -3854,6 +3869,21 @@ public interface AgentBuilder {
         }
 
         @Override
+        public Identified.Narrowable type(RawMatcher matcher) {
+            return new Transforming(matcher, Transformer.NoOp.INSTANCE);
+        }
+
+        @Override
+        public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
+            return type(typeMatcher, any());
+        }
+
+        @Override
+        public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+            return type(new RawMatcher.ForElementMatcherPair(typeMatcher, classLoaderMatcher));
+        }
+
+        @Override
         public Ignored ignore(ElementMatcher<? super TypeDescription> ignoredTypes) {
             return ignore(ignoredTypes, any());
         }
@@ -3869,19 +3899,8 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder with(LambdaInstrumentationStrategy lambdaInstrumentationStrategy) {
-            return new Default(byteBuddy,
-                    binaryLocator,
-                    typeStrategy,
-                    listener,
-                    nativeMethodStrategy,
-                    accessControlContext,
-                    initializationStrategy,
-                    redefinitionStrategy,
-                    bootstrapInjectionStrategy,
-                    lambdaInstrumentationStrategy,
-                    ignoredTypeMatcher,
-                    transformation);
+        public AgentBuilder withoutClassFormatChanges() {
+            return with(InitializationStrategy.NoOp.INSTANCE).with(TypeStrategy.Default.REDEFINE);
         }
 
         @Override
@@ -4874,21 +4893,6 @@ public interface AgentBuilder {
             protected abstract AgentBuilder materialize();
 
             @Override
-            public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
-                return materialize().type(typeMatcher);
-            }
-
-            @Override
-            public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
-                return materialize().type(typeMatcher, classLoaderMatcher);
-            }
-
-            @Override
-            public Identified.Narrowable type(RawMatcher matcher) {
-                return materialize().type(matcher);
-            }
-
-            @Override
             public AgentBuilder with(ByteBuddy byteBuddy) {
                 return materialize().with(byteBuddy);
             }
@@ -4946,6 +4950,26 @@ public interface AgentBuilder {
             @Override
             public AgentBuilder disableNativeMethodPrefix() {
                 return materialize().disableNativeMethodPrefix();
+            }
+
+            @Override
+            public AgentBuilder withoutClassFormatChanges() {
+                return materialize().withoutClassFormatChanges();
+            }
+
+            @Override
+            public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher) {
+                return materialize().type(typeMatcher);
+            }
+
+            @Override
+            public Identified.Narrowable type(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher) {
+                return materialize().type(typeMatcher, classLoaderMatcher);
+            }
+
+            @Override
+            public Identified.Narrowable type(RawMatcher matcher) {
+                return materialize().type(matcher);
             }
 
             @Override

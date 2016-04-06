@@ -333,7 +333,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         protected void injectEntranceFrame(MethodVisitor methodVisitor) {
-            injectFrame(methodVisitor, intermediateTypes, false);
+                injectFrame(methodVisitor, intermediateTypes, false);
         }
 
         /**
@@ -536,7 +536,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param methodVisitor The method visitor to write the frame to.
              */
             protected void injectCompletionFrame(MethodVisitor methodVisitor) {
-                injectFrame(methodVisitor, CompoundList.of(intermediateTypes, yieldedTypes), false);
+                    injectFrame(methodVisitor, CompoundList.of(intermediateTypes, yieldedTypes), false);
 //                Object[] local = new Object[yieldedTypes.size()];
 //                int index = 0;
 //                for (TypeDescription typeDescription : yieldedTypes) {

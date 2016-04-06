@@ -562,7 +562,8 @@ public class AdviceTest {
     public void testFrameAdviceExpanded() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES | ClassReader.SKIP_DEBUG)) // TODO! Advice and expansion
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -574,6 +575,7 @@ public class AdviceTest {
     public void testFrameAdviceStaticMethodExpanded() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -1461,7 +1463,7 @@ public class AdviceTest {
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 7L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
@@ -1470,9 +1472,9 @@ public class AdviceTest {
                 }
             }
             try {
-                long v8 = 1L;
+                long v8 = 8L;
             } catch (Exception exception) {
-                long v9 = 1L;
+                long v9 = 9L;
             }
             return value;
         }
@@ -1489,7 +1491,7 @@ public class AdviceTest {
                     }
                 }
             }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
+            long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 4L;
             if (ignored == 3) {
                 throw new AssertionError();
             } else if (ignored == 4) {
