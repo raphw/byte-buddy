@@ -50,6 +50,8 @@ public interface AsmVisitorWrapper {
      * @param instrumentedType The instrumented type.
      * @param classVisitor     A {@code ClassVisitor} to become the new primary class visitor to which the created
      *                         {@link net.bytebuddy.dynamic.DynamicType} is written to.
+     * @param writerFlags      The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
+     * @param readerFlags      The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
      * @return A new {@code ClassVisitor} that usually delegates to the {@code ClassVisitor} delivered in the argument.
      */
     ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags);
@@ -447,6 +449,8 @@ public interface AsmVisitorWrapper {
              * @param instrumentedType  The instrumented type.
              * @param methodDescription The method that is currently being defined.
              * @param methodVisitor     The original field visitor that defines the given method.
+             * @param writerFlags       The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
+             * @param readerFlags       The ASM {@link org.objectweb.asm.ClassReader} reader flags to consider.
              * @return The wrapped method visitor.
              */
             MethodVisitor wrap(TypeDescription instrumentedType,
@@ -531,8 +535,14 @@ public interface AsmVisitorWrapper {
              */
             private final TypeDescription instrumentedType;
 
+            /**
+             * The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
+             */
             private final int writerFlags;
 
+            /**
+             * The ASM {@link org.objectweb.asm.ClassReader} reader flags to consider.
+             */
             private final int readerFlags;
 
             /**
@@ -545,6 +555,8 @@ public interface AsmVisitorWrapper {
              *
              * @param classVisitor     The underlying class visitor.
              * @param instrumentedType The instrumented type.
+             * @param writerFlags      The ASM {@link org.objectweb.asm.ClassWriter} flags to consider.
+             * @param readerFlags      The ASM {@link org.objectweb.asm.ClassReader} flags to consider.
              */
             protected DispatchingVisitor(ClassVisitor classVisitor, TypeDescription instrumentedType, int writerFlags, int readerFlags) {
                 super(Opcodes.ASM5, classVisitor);

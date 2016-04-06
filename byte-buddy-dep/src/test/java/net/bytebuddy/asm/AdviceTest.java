@@ -986,14 +986,31 @@ public class AdviceTest {
         }
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testCannotWriteOrigin() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(IllegalOriginWriteAdvice.class).on(named(FOO)))
+                .make();
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.NoOp.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.ForAdvice.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.ForAdvice.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithStackSizeComputation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+            @Override
+            public void apply(MethodDescription.InDefinedShape mock) {
+                when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+            }
+        }).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithStackSizeComputation.ForAdvice.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Context.ForMethodEntry.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Context.ForMethodExit.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField.class).apply();
@@ -2111,6 +2128,15 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Origin("#") String value) {
             throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class IllegalOriginWriteAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Origin String value) {
+            value = null;
         }
     }
 }
