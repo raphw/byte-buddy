@@ -112,6 +112,6 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
             public void apply(TypeDescription mock) {
                 when(mock.getDeclaredMethods()).thenReturn(new MethodList.Explicit<MethodDescription.InDefinedShape>(Mockito.mock(MethodDescription.InDefinedShape.class)));
             }
-        }).apply();
+        }).applyBasic();
     }
 }

@@ -7,18 +7,13 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
-import net.bytebuddy.dynamic.DynamicType;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassVisitor;
-import org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -57,7 +52,6 @@ public class AdviceTest {
     public void testEmptyAdviceEntryAndExit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -69,7 +63,6 @@ public class AdviceTest {
     public void testEmptyAdviceOnlyEntry() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(EmptyAdviceEntry.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -81,7 +74,6 @@ public class AdviceTest {
     public void testEmptyAdviceOnlyExit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(EmptyAdviceExit.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -563,47 +555,12 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAsm() throws Exception {
-
+    public void testFrameAdviceExpanded() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
-                .visit(new AsmVisitorWrapper() {
-                    @Override
-                    public int mergeWriter(int flags) {
-                        return 0;
-                    }
-
-                    @Override
-                    public int mergeReader(int flags) {
-                        return flags | ClassReader.EXPAND_FRAMES | ClassReader.SKIP_DEBUG;
-                    }
-
-                    @Override
-                    public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
-                        return new TraceClassVisitor(classVisitor, new PrintWriter(System.out));
-                    }
-                })
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-    }
-
-    @Test
-    public void testFrameAdviceExpanded() throws Exception {
-        DynamicType.Unloaded<?> dynamicType = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(DebuggingWrapper.makeDefault())
-                .visit(Advice.to(EmptyAdvice.class).on(named(FOO))
-//                        .writerFlags(ClassWriter.COMPUTE_FRAMES)
-                        .readerFlags(ClassReader.EXPAND_FRAMES | ClassReader.SKIP_DEBUG)) // TODO! Advice and expansion
-                .make();
-
-//        ClassReader classReader = new ClassReader(dynamicType.getBytes());
-//        classReader.accept(new TraceClassVisitor(new PrintWriter(System.out)), ClassReader.SKIP_DEBUG | ClassReader.EXPAND_FRAMES);
-
-
-        Class<?> type = dynamicType.load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -613,7 +570,6 @@ public class AdviceTest {
     public void testFrameAdviceStaticMethodExpanded() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -626,7 +582,6 @@ public class AdviceTest {
     public void testFrameAdviceFrameInjected() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -864,9 +819,9 @@ public class AdviceTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
-        ObjectPropertyAssertion.of(Advice.FrameTranslator.NoOp.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.FrameTranslator.Default.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.FrameTranslator.Default.ForAdvice.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.NoOp.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.ForAdvice.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();

@@ -579,29 +579,13 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
-            public boolean equals(Object other) {
-                if (this == other) return true;
-                if (other == null || getClass() != other.getClass()) return false;
-                DispatchingVisitor that = ((DispatchingVisitor) other);
-                return instrumentedType.equals(that.instrumentedType)
-                        && getOuter().equals(that.getOuter())
-                        && cv.equals(that.cv);
-            }
-
-            @Override
-            public int hashCode() {
-                int result = getOuter().hashCode();
-                result = 31 * result + instrumentedType.hashCode();
-                result = 31 * result + cv.hashCode();
-                return result;
-            }
-
-            @Override
             public String toString() {
                 return "AsmVisitorWrapper.ForDeclaredMethods.DispatchingVisitor{" +
                         "outer=" + getOuter() +
                         ", instrumentedType=" + instrumentedType +
                         ", methodsByName=" + methodsByName +
+                        ", writerFlags=" + writerFlags +
+                        ", readerFlags=" + readerFlags +
                         '}';
             }
         }
