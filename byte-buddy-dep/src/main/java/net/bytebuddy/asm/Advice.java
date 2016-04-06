@@ -183,10 +183,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                               int readerFlags) {
         if (methodDescription.isAbstract() || methodDescription.isNative()) {
             throw new IllegalStateException("Cannot advice abstract or native method " + methodDescription);
+        } else if (!methodExit.isAlive()) {
+            return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
+                    methodDescription,
+                    methodEnter,
+                    binaryRepresentation,
+                    writerFlags,
+                    readerFlags);
+        } else if (methodExit.isSkipThrowable()) {
+            return new AdviceVisitor.WithExitAdvice.WithoutExceptionHandling(methodVisitor,
+                    methodDescription,
+                    methodEnter,
+                    methodExit,
+                    binaryRepresentation,
+                    writerFlags,
+                    readerFlags);
+        } else {
+            return new AdviceVisitor.WithExitAdvice.WithExceptionHandling(methodVisitor,
+                    methodDescription,
+                    methodEnter,
+                    methodExit,
+                    binaryRepresentation,
+                    writerFlags,
+                    readerFlags);
         }
-        return methodExit.isSkipThrowable()
-                ? new AdviceVisitor.WithoutExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags)
-                : new AdviceVisitor.WithExceptionHandling(methodVisitor, methodDescription, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
     }
 
     @Override
@@ -688,11 +708,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         private final Dispatcher.Resolved.ForMethodEnter methodEnter;
 
         /**
-         * The dispatcher to be used for method exit.
-         */
-        private final Dispatcher.Resolved.ForMethodExit methodExit;
-
-        /**
          * A reader for traversing the advise methods' class file.
          */
         private final ClassReader classReader;
@@ -702,33 +717,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
 
-        protected final Label endOfMethod;
-
-        /**
-         * Creates an advise visitor.
-         *
-         * @param methodVisitor        The method visitor for the instrumented method.
-         * @param instrumentedMethod   A description of the instrumented method.
-         * @param methodEnter          The dispatcher to be used for method entry.
-         * @param methodExit           The dispatcher to be used for method exit.
-         * @param binaryRepresentation The binary representation of the advise methods' class file.
-         */
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 MethodDescription.InDefinedShape instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
-                                Dispatcher.Resolved.ForMethodExit methodExit,
                                 byte[] binaryRepresentation,
                                 int writerFlags,
                                 int readerFlags) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             this.methodEnter = methodEnter;
-            this.methodExit = methodExit;
             classReader = new ClassReader(binaryRepresentation);
             metaDataHandler = MetaDataHandler.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? new TypeList.Empty()
                     : new TypeList.Explicit(methodEnter.getEnterType()), writerFlags, readerFlags);
-            endOfMethod = new Label();
         }
 
         @Override
@@ -755,46 +756,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             super.visitIincInsn(offset < instrumentedMethod.getStackSize()
                     ? offset
                     : offset + methodEnter.getEnterType().getStackSize().getSize(), increment);
-        }
-
-        @Override
-        public void visitInsn(int opcode) {
-            switch (opcode) {
-                case Opcodes.RETURN:
-                    mv.visitInsn(Opcodes.ACONST_NULL);
-                    variable(Opcodes.ASTORE);
-                    mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                    return;
-                case Opcodes.IRETURN:
-                    onMethodExit(Opcodes.ISTORE);
-                    return;
-                case Opcodes.FRETURN:
-                    onMethodExit(Opcodes.FSTORE);
-                    return;
-                case Opcodes.DRETURN:
-                    onMethodExit(Opcodes.DSTORE);
-                    return;
-                case Opcodes.LRETURN:
-                    onMethodExit(Opcodes.LSTORE);
-                    return;
-                case Opcodes.ARETURN:
-                    onMethodExit(Opcodes.ASTORE);
-                    return;
-                default:
-                    mv.visitInsn(opcode);
-            }
-        }
-
-        /**
-         * Writes the advise for the instrumented method's end.
-         *
-         * @param store The return type's store instruction.
-         */
-        private void onMethodExit(int store) {
-            variable(store);
-            mv.visitInsn(Opcodes.ACONST_NULL);
-            variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-            mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
         }
 
         /**
@@ -824,23 +785,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         public void visitMaxs(int maxStack, int maxLocals) {
             onUserEnd();
-            mv.visitLabel(endOfMethod);
-            metaDataHandler.injectCompletionFrame(mv, false);
-            append(methodExit);
-            variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
-            Label exceptionalReturn = new Label();
-            mv.visitJumpInsn(Opcodes.IFNONNULL, exceptionalReturn);
-            if (instrumentedMethod.getReturnType().represents(void.class)) {
-                mv.visitInsn(Opcodes.RETURN);
-            } else {
-                Type returnType = Type.getType(instrumentedMethod.getReturnType().asErasure().getDescriptor());
-                variable(returnType.getOpcode(Opcodes.ILOAD));
-                mv.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
-            }
-            mv.visitLabel(exceptionalReturn);
-            metaDataHandler.injectCompletionFrame(mv, true);
-            variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
-            mv.visitInsn(Opcodes.ATHROW);
             super.visitMaxs(metaDataHandler.compoundStackSize(maxStack), metaDataHandler.compoundLocalVariableSize(maxLocals));
         }
 
@@ -849,13 +793,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected abstract void onUserEnd();
 
-        /**
-         * Appends the byte code of the supplied dispatcher.
-         *
-         * @param dispatcher The dispatcher for which the byte code should be appended.
-         */
-        private void append(Dispatcher.Resolved dispatcher) {
-            classReader.accept(new CodeCopier(dispatcher), ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
+        protected void append(Dispatcher.Resolved dispatcher) {
+            if (dispatcher.isAlive()) {
+                classReader.accept(new CodeCopier(dispatcher), ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
+            }
         }
 
         /**
@@ -892,129 +833,249 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
-        /**
-         * An advise visitor that captures exceptions by weaving try-catch blocks around user code.
-         */
-        protected static class WithExceptionHandling extends AdviceVisitor {
+        protected static class WithoutExitAdvice extends AdviceVisitor {
 
-            /**
-             * Indicates that any throwable should be captured.
-             */
-            private static final String ANY_THROWABLE = null;
-
-            private final Label userStart;
-
-            private final Label userEnd;
-
-            /**
-             * Creates a new advise visitor that captures exception by weaving try-catch blocks around user code.
-             *
-             * @param methodVisitor        The method visitor for the instrumented method.
-             * @param instrumentedMethod   A description of the instrumented method.
-             * @param methodEnter          The dispatcher to be used for method entry.
-             * @param methodExit           The dispatcher to be used for method exit.
-             * @param binaryRepresentation The binary representation of the advise methods' class file.
-             */
-            protected WithExceptionHandling(MethodVisitor methodVisitor,
-                                            MethodDescription.InDefinedShape instrumentedMethod,
-                                            Dispatcher.Resolved.ForMethodEnter methodEnter,
-                                            Dispatcher.Resolved.ForMethodExit methodExit,
-                                            byte[] binaryRepresentation,
-                                            int writerFlags,
-                                            int readerFlags) {
-                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
-                userStart = new Label();
-                userEnd = new Label();
+            public WithoutExitAdvice(MethodVisitor methodVisitor,
+                                     MethodDescription.InDefinedShape instrumentedMethod,
+                                     Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                     byte[] binaryRepresentation,
+                                     int writerFlags,
+                                     int readerFlags) {
+                super(methodVisitor, instrumentedMethod, methodEnter, binaryRepresentation, writerFlags, readerFlags);
             }
 
             @Override
             protected void onUserStart() {
-                mv.visitTryCatchBlock(userStart, userEnd, userEnd, ANY_THROWABLE);
-                mv.visitLabel(userStart);
+                /* empty */
             }
 
             @Override
             protected void onUserEnd() {
-                mv.visitLabel(userEnd);
-                metaDataHandler.injectHandlerFrame(mv);
-                variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
-                storeDefaultReturn();
-                mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-            }
-
-            /**
-             * Stores a default return value in the designated slot of the local variable array.
-             */
-            private void storeDefaultReturn() {
-                if (instrumentedMethod.getReturnType().represents(boolean.class)
-                        || instrumentedMethod.getReturnType().represents(byte.class)
-                        || instrumentedMethod.getReturnType().represents(short.class)
-                        || instrumentedMethod.getReturnType().represents(char.class)
-                        || instrumentedMethod.getReturnType().represents(int.class)) {
-                    mv.visitInsn(Opcodes.ICONST_0);
-                    variable(Opcodes.ISTORE);
-                } else if (instrumentedMethod.getReturnType().represents(long.class)) {
-                    mv.visitInsn(Opcodes.LCONST_0);
-                    variable(Opcodes.LSTORE);
-                } else if (instrumentedMethod.getReturnType().represents(float.class)) {
-                    mv.visitInsn(Opcodes.FCONST_0);
-                    variable(Opcodes.FSTORE);
-                } else if (instrumentedMethod.getReturnType().represents(double.class)) {
-                    mv.visitInsn(Opcodes.DCONST_0);
-                    variable(Opcodes.DSTORE);
-                } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
-                    mv.visitInsn(Opcodes.ACONST_NULL);
-                    variable(Opcodes.ASTORE);
-                }
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.AdviceVisitor.WithExceptionHandling{" +
-                        "instrumentedMethod=" + instrumentedMethod +
-                        '}';
+                /* empty */
             }
         }
 
-        /**
-         * An advise visitor that does not capture exceptions.
-         */
-        protected static class WithoutExceptionHandling extends AdviceVisitor {
+        protected abstract static class WithExitAdvice extends AdviceVisitor {
 
             /**
-             * Creates a new advise visitor that does not capture exceptions.
-             *
-             * @param methodVisitor        The method visitor for the instrumented method.
-             * @param instrumentedMethod   A description of the instrumented method.
-             * @param methodEnter          The dispatcher to be used for method entry.
-             * @param methodExit           The dispatcher to be used for method exit.
-             * @param binaryRepresentation The binary representation of the advise methods' class file.
+             * The dispatcher to be used for method exit.
              */
-            protected WithoutExceptionHandling(MethodVisitor methodVisitor,
-                                               MethodDescription.InDefinedShape instrumentedMethod,
-                                               Dispatcher.Resolved.ForMethodEnter methodEnter,
-                                               Dispatcher.Resolved.ForMethodExit methodExit,
-                                               byte[] binaryRepresentation,
-                                               int writerFlags,
-                                               int readerFlags) {
-                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
+            private final Dispatcher.Resolved.ForMethodExit methodExit;
+
+            protected final Label endOfMethod;
+
+            public WithExitAdvice(MethodVisitor methodVisitor,
+                                  MethodDescription.InDefinedShape instrumentedMethod,
+                                  Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                  Dispatcher.Resolved.ForMethodExit methodExit,
+                                  byte[] binaryRepresentation,
+                                  int writerFlags,
+                                  int readerFlags) {
+                super(methodVisitor, instrumentedMethod, methodEnter, binaryRepresentation, writerFlags, readerFlags);
+                this.methodExit = methodExit;
+                endOfMethod = new Label();
             }
 
             @Override
-            protected void onUserStart() {
-                /* empty */
+            public void visitInsn(int opcode) {
+                switch (opcode) {
+                    case Opcodes.RETURN:
+                        mv.visitInsn(Opcodes.ACONST_NULL);
+                        variable(Opcodes.ASTORE);
+                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                        return;
+                    case Opcodes.IRETURN:
+                        onMethodExit(Opcodes.ISTORE);
+                        return;
+                    case Opcodes.FRETURN:
+                        onMethodExit(Opcodes.FSTORE);
+                        return;
+                    case Opcodes.DRETURN:
+                        onMethodExit(Opcodes.DSTORE);
+                        return;
+                    case Opcodes.LRETURN:
+                        onMethodExit(Opcodes.LSTORE);
+                        return;
+                    case Opcodes.ARETURN:
+                        onMethodExit(Opcodes.ASTORE);
+                        return;
+                    default:
+                        mv.visitInsn(opcode);
+                }
+            }
+
+            /**
+             * Writes the advise for the instrumented method's end.
+             *
+             * @param store The return type's store instruction.
+             */
+            private void onMethodExit(int store) {
+                variable(store);
+                mv.visitInsn(Opcodes.ACONST_NULL);
+                variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+                mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
             }
 
             @Override
             protected void onUserEnd() {
-                /* empty */
+                onUserExit();
+                mv.visitLabel(endOfMethod);
+                metaDataHandler.injectCompletionFrame(mv, false);
+                append(methodExit);
+                onAdviceExit();
+                if (instrumentedMethod.getReturnType().represents(void.class)) {
+                    mv.visitInsn(Opcodes.RETURN);
+                } else {
+                    Type returnType = Type.getType(instrumentedMethod.getReturnType().asErasure().getDescriptor());
+                    variable(returnType.getOpcode(Opcodes.ILOAD));
+                    mv.visitInsn(returnType.getOpcode(Opcodes.IRETURN));
+                }
+                onMethodExit();
             }
 
-            @Override
-            public String toString() {
-                return "Advice.AdviceVisitor.WithoutExceptionHandling{" +
-                        "instrumentedMethod=" + instrumentedMethod +
-                        '}';
+            protected abstract void onUserExit();
+
+            protected abstract void onAdviceExit();
+
+            protected abstract void onMethodExit();
+
+            /**
+             * An advise visitor that captures exceptions by weaving try-catch blocks around user code.
+             */
+            protected static class WithExceptionHandling extends WithExitAdvice {
+
+                /**
+                 * Indicates that any throwable should be captured.
+                 */
+                private static final String ANY_THROWABLE = null;
+
+                private final Label userStart;
+
+                private final Label userEnd;
+
+                private final Label exceptionalReturn;
+
+                /**
+                 * Creates a new advise visitor that captures exception by weaving try-catch blocks around user code.
+                 *
+                 * @param methodVisitor        The method visitor for the instrumented method.
+                 * @param instrumentedMethod   A description of the instrumented method.
+                 * @param methodEnter          The dispatcher to be used for method entry.
+                 * @param methodExit           The dispatcher to be used for method exit.
+                 * @param binaryRepresentation The binary representation of the advise methods' class file.
+                 */
+                protected WithExceptionHandling(MethodVisitor methodVisitor,
+                                                MethodDescription.InDefinedShape instrumentedMethod,
+                                                Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                                Dispatcher.Resolved.ForMethodExit methodExit,
+                                                byte[] binaryRepresentation,
+                                                int writerFlags,
+                                                int readerFlags) {
+                    super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
+                    userStart = new Label();
+                    userEnd = new Label();
+                    exceptionalReturn = new Label();
+                }
+
+                @Override
+                protected void onUserStart() {
+                    mv.visitTryCatchBlock(userStart, userEnd, userEnd, ANY_THROWABLE);
+                    mv.visitLabel(userStart);
+                }
+
+                @Override
+                protected void onUserExit() {
+                    mv.visitLabel(userEnd);
+                    metaDataHandler.injectHandlerFrame(mv);
+                    variable(Opcodes.ASTORE, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    storeDefaultReturn();
+                    mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
+                }
+
+                @Override
+                protected void onAdviceExit() {
+                    variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    mv.visitJumpInsn(Opcodes.IFNONNULL, exceptionalReturn);
+                }
+
+                @Override
+                protected void onMethodExit() {
+                    mv.visitLabel(exceptionalReturn);
+                    metaDataHandler.injectCompletionFrame(mv, true);
+                    variable(Opcodes.ALOAD, instrumentedMethod.getReturnType().getStackSize().getSize());
+                    mv.visitInsn(Opcodes.ATHROW);
+                }
+
+                /**
+                 * Stores a default return value in the designated slot of the local variable array.
+                 */
+                private void storeDefaultReturn() {
+                    if (instrumentedMethod.getReturnType().represents(boolean.class)
+                            || instrumentedMethod.getReturnType().represents(byte.class)
+                            || instrumentedMethod.getReturnType().represents(short.class)
+                            || instrumentedMethod.getReturnType().represents(char.class)
+                            || instrumentedMethod.getReturnType().represents(int.class)) {
+                        mv.visitInsn(Opcodes.ICONST_0);
+                        variable(Opcodes.ISTORE);
+                    } else if (instrumentedMethod.getReturnType().represents(long.class)) {
+                        mv.visitInsn(Opcodes.LCONST_0);
+                        variable(Opcodes.LSTORE);
+                    } else if (instrumentedMethod.getReturnType().represents(float.class)) {
+                        mv.visitInsn(Opcodes.FCONST_0);
+                        variable(Opcodes.FSTORE);
+                    } else if (instrumentedMethod.getReturnType().represents(double.class)) {
+                        mv.visitInsn(Opcodes.DCONST_0);
+                        variable(Opcodes.DSTORE);
+                    } else if (!instrumentedMethod.getReturnType().represents(void.class)) {
+                        mv.visitInsn(Opcodes.ACONST_NULL);
+                        variable(Opcodes.ASTORE);
+                    }
+                }
+            }
+
+            /**
+             * An advise visitor that does not capture exceptions.
+             */
+            protected static class WithoutExceptionHandling extends WithExitAdvice {
+
+                /**
+                 * Creates a new advise visitor that does not capture exceptions.
+                 *
+                 * @param methodVisitor        The method visitor for the instrumented method.
+                 * @param instrumentedMethod   A description of the instrumented method.
+                 * @param methodEnter          The dispatcher to be used for method entry.
+                 * @param methodExit           The dispatcher to be used for method exit.
+                 * @param binaryRepresentation The binary representation of the advise methods' class file.
+                 */
+                protected WithoutExceptionHandling(MethodVisitor methodVisitor,
+                                                   MethodDescription.InDefinedShape instrumentedMethod,
+                                                   Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                                   Dispatcher.Resolved.ForMethodExit methodExit,
+                                                   byte[] binaryRepresentation,
+                                                   int writerFlags,
+                                                   int readerFlags) {
+                    super(methodVisitor, instrumentedMethod, methodEnter, methodExit, binaryRepresentation, writerFlags, readerFlags);
+                }
+
+                @Override
+                protected void onUserStart() {
+                /* empty */
+                }
+
+                @Override
+                protected void onUserExit() {
+                /* empty */
+                }
+
+                @Override
+                protected void onAdviceExit() {
+                /* empty */
+                }
+
+                @Override
+                protected void onMethodExit() {
+                /* empty */
+                }
             }
         }
     }
@@ -1055,6 +1116,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Represents a resolved dispatcher.
          */
         interface Resolved {
+
+            boolean isAlive();
 
             /**
              * Applies this dispatcher for a method that is discovered in the advice class's class file.
@@ -2683,6 +2746,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public boolean isAlive() {
+                        return true;
+                    }
+
+                    @Override
                     public TypeDescription getEnterType() {
                         return adviseMethod.getReturnType().asErasure();
                     }
@@ -2755,6 +2823,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         ? OffsetMapping.ForThrowable.INSTANCE
                                         : new OffsetMapping.Illegal(Thrown.class));
                         this.enterType = enterType;
+                    }
+
+                    @Override
+                    public boolean isAlive() {
+                        return true;
                     }
 
                     @Override
