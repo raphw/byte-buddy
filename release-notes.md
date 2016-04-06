@@ -1,7 +1,7 @@
 Byte Buddy release notes
 ------------------------
 
-### 3. April 2016: version 1.3.8
+### 6. April 2016: version 1.3.8
 
 - Fixed frame computation for the `Advice`.
 - Optimized frame computation to emitt frames of the minimal, possible size when using `Advice`.
