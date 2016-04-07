@@ -55,6 +55,8 @@ making Byte Buddy the success it has become. We really appreciate it!
 
 ___
 
+Byte Buddy offers excellent performance and stability. It is stable and in use by distiguished frameworks and tools such as [Mockito](http://mockito.org), [Google's Bazle build system](http://bazel.io) and many others. Byte Buddy is also used by a great number of commercial products to great result. It is currently downloaded more than a million times a year.
+
 Hello World
 -----------
 
