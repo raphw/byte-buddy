@@ -159,14 +159,37 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         return VERSION_LOCATOR.findCurrentVersion();
     }
 
+    /**
+     * Extracts a class' class version. The class' byte code is located by querying the {@link ClassLoader} of the class.
+     *
+     * @param type The type for which to locate a class file version.
+     * @return The type's class file version.
+     * @throws IOException If an error occurs while reading the class file.
+     */
     public static ClassFileVersion of(Class<?> type) throws IOException {
         return of(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
     }
 
+    /**
+     * Extracts a class' class version.
+     *
+     * @param type             The type for which to locate a class file version.
+     * @param classFileLocator The class file locator to query for a class file.
+     * @return The type's class file version.
+     * @throws IOException If an error occurs while reading the class file.
+     */
     public static ClassFileVersion of(Class<?> type, ClassFileLocator classFileLocator) throws IOException {
         return of(new TypeDescription.ForLoadedType(type), classFileLocator);
     }
 
+    /**
+     * Extracts a class' class version.
+     *
+     * @param typeDescription  The type for which to locate a class file version.
+     * @param classFileLocator The class file locator to query for a class file.
+     * @return The type's class file version.
+     * @throws IOException If an error occurs while reading the class file.
+     */
     public static ClassFileVersion of(TypeDescription typeDescription, ClassFileLocator classFileLocator) throws IOException {
         ClassReader classReader = new ClassReader(classFileLocator.locate(typeDescription.getName()).resolve());
         VersionExtractor versionExtractor = new VersionExtractor();
@@ -375,10 +398,19 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
         }
     }
 
+    /**
+     * A simple visitor that extracts the class file version of a class file.
+     */
     protected static class VersionExtractor extends ClassVisitor {
 
+        /**
+         * The class file version extracted from a class.
+         */
         private int classFileVersionNumber;
 
+        /**
+         * Creates a new extractor.
+         */
         protected VersionExtractor() {
             super(Opcodes.ASM5);
         }
@@ -388,6 +420,11 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             this.classFileVersionNumber = classFileVersionNumber;
         }
 
+        /**
+         * Returns the class file version number found in a class file.
+         *
+         * @return The class file version number found in a class file.
+         */
         protected int getClassFileVersionNumber() {
             return classFileVersionNumber;
         }

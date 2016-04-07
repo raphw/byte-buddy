@@ -632,15 +632,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (secondary) {
                         methodVisitor.visitFrame(Opcodes.F_SAME, 0, EMPTY, 0, EMPTY);
                     } else {
-                        Object[] local = instrumentedMethod.getReturnType().represents(void.class)
-                                ? new Object[]{Type.getInternalName(Throwable.class)}
-                                : new Object[]{toFrame(instrumentedMethod.getReturnType().asErasure()), Type.getInternalName(Throwable.class)};
+                        Object[] local = new Object[yieldedTypes.size()];
+                        int index = 0;
+                        for (TypeDescription typeDescription : yieldedTypes) {
+                            local[index++] = toFrame(typeDescription);
+                        }
                         methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
                     }
                 } else {
-                    injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, instrumentedMethod.getReturnType().represents(void.class)
-                            ? Collections.singletonList(TypeDescription.THROWABLE)
-                            : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE)), false);
+                    injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), false);
                 }
             }
 
