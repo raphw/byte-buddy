@@ -1,11 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
     <artifactId>byte-buddy-parent</artifactId>
-    <version>1.3.10-SNAPSHOT</version>
+    <version>1.3.10</version>
     <packaging>pom</packaging>
 
     <inceptionYear>2014</inceptionYear>
@@ -111,7 +110,7 @@
         <connection>scm:git:git@github.com:raphw/byte-buddy.git</connection>
         <developerConnection>scm:git:git@github.com:raphw/byte-buddy.git</developerConnection>
         <url>git@github.com:raphw/byte-buddy.git</url>
-        <tag>HEAD</tag>
+        <tag>byte-buddy-1.3.10</tag>
     </scm>
 
     <dependencyManagement>
@@ -211,7 +210,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check/>
+                    <check />
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis. -->
