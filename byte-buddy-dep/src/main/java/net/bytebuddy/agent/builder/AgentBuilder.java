@@ -198,12 +198,13 @@ public interface AgentBuilder {
      * it is no longer possible to implicitly apply loaded type initializers for explicitly initializing the generated type.
      * </p>
      * <p>
-     * This is equivalent to setting {@link InitializationStrategy.NoOp} and {@link TypeStrategy.Default#REDEFINE}.
+     * This is equivalent to setting {@link InitializationStrategy.NoOp} and {@link TypeStrategy.Default#REDEFINE_DECLARED_ONLY}
+     * as well as configuring the underlying {@link ByteBuddy} instance to use a {@link net.bytebuddy.implementation.Implementation.Context.Disabled}.
      * </p>
      *
      * @return A new instance of this agent builder that does not apply any implicit changes to the received class file.
      */
-    AgentBuilder withoutClassFormatChanges();
+    AgentBuilder disableClassFormatChanges();
 
     /**
      * <p>
@@ -733,6 +734,9 @@ public interface AgentBuilder {
              * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
              * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
              * </p>
+             * <p>
+             * For prohibiting any changes on a class file, use {@link AgentBuilder#disableClassFormatChanges()}
+             * </p>
              */
             REDEFINE {
                 @Override
@@ -741,6 +745,29 @@ public interface AgentBuilder {
                                                       ClassFileLocator classFileLocator,
                                                       MethodNameTransformer methodNameTransformer) {
                     return byteBuddy.redefine(typeDescription, classFileLocator);
+                }
+            },
+
+            /**
+             * <p>
+             * A definition handler that performs a redefinition for all types and ignores all methods that were not declared by the instrumented type.
+             * </p>
+             * <p>
+             * Note that the default agent builder is configured to apply a self initialization where a static class initializer
+             * is added to the redefined class. This can be disabled by for example using a {@link InitializationStrategy.Minimal} or
+             * {@link InitializationStrategy.NoOp}. Also, consider the constraints implied by {@link ByteBuddy#redefine(TypeDescription, ClassFileLocator)}.
+             * </p>
+             * <p>
+             * For prohibiting any changes on a class file, use {@link AgentBuilder#disableClassFormatChanges()}
+             * </p>
+             */
+            REDEFINE_DECLARED_ONLY {
+                @Override
+                public DynamicType.Builder<?> builder(TypeDescription typeDescription,
+                                                      ByteBuddy byteBuddy,
+                                                      ClassFileLocator classFileLocator,
+                                                      MethodNameTransformer methodNameTransformer) {
+                    return byteBuddy.redefine(typeDescription, classFileLocator).ignoreAlso(not(isDeclaredBy(typeDescription)));
                 }
             };
 
@@ -3907,8 +3934,19 @@ public interface AgentBuilder {
         }
 
         @Override
-        public AgentBuilder withoutClassFormatChanges() {
-            return with(InitializationStrategy.NoOp.INSTANCE).with(TypeStrategy.Default.REDEFINE);
+        public AgentBuilder disableClassFormatChanges() {
+            return new Default(byteBuddy.with(Implementation.Context.Disabled.Factory.INSTANCE),
+                    binaryLocator,
+                    TypeStrategy.Default.REDEFINE_DECLARED_ONLY,
+                    listener,
+                    nativeMethodStrategy,
+                    accessControlContext,
+                    InitializationStrategy.NoOp.INSTANCE,
+                    redefinitionStrategy,
+                    bootstrapInjectionStrategy,
+                    lambdaInstrumentationStrategy,
+                    ignoredTypeMatcher,
+                    transformation);
         }
 
         @Override
@@ -4961,8 +4999,8 @@ public interface AgentBuilder {
             }
 
             @Override
-            public AgentBuilder withoutClassFormatChanges() {
-                return materialize().withoutClassFormatChanges();
+            public AgentBuilder disableClassFormatChanges() {
+                return materialize().disableClassFormatChanges();
             }
 
             @Override
