@@ -3424,13 +3424,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                            if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedReturn.class)) {
-                                if (!parameterDescription.getType().represents(Object.class)) {
-                                    throw new IllegalStateException(); // TODO
-                                }
-                                return this;
-                            } else {
+                            if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedReturn.class)) {
                                 return UNDEFINED;
+                            } else if (!parameterDescription.getType().represents(Object.class)) {
+                                throw new IllegalStateException(); // TODO
+                            } else {
+                                return this;
                             }
                         }
                     }
@@ -3446,13 +3445,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                            if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedArguments.class)) {
-                                if (!parameterDescription.getType().represents(Object[].class)) {
-                                    throw new IllegalStateException(); // TODO
-                                }
-                                return this;
-                            } else {
+                            if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedArguments.class)) {
                                 return UNDEFINED;
+                            } else if (!parameterDescription.getType().represents(Object[].class)) {
+                                throw new IllegalStateException(); // TODO
+                            } else {
+                                return this;
                             }
                         }
                     }
@@ -3468,13 +3466,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                            if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(OriginType.class)) {
-                                if (!parameterDescription.getType().represents(Class.class)) {
-                                    throw new IllegalStateException(); // TODO
-                                }
-                                return this;
-                            } else {
+                            if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(OriginType.class)) {
                                 return UNDEFINED;
+                            } else if (!parameterDescription.getType().represents(Class.class)) {
+                                throw new IllegalStateException(); // TODO
+                            } else {
+                                return this;
                             }
                         }
                     }
@@ -3511,6 +3508,44 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public String toString() {
                             return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThrowable." + name();
+                        }
+                    }
+
+                    class ForCustomValue implements OffsetMapping {
+
+                        private final String value;
+
+                        protected ForCustomValue(String value) {
+                            this.value = value;
+                        }
+
+                        @Override
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                            return new Target.ForConstantPoolValue(value);
+                        }
+
+                        protected static class Factory<T extends Annotation> implements OffsetMapping.Factory {
+
+                            private final Class<? extends T> type;
+
+                            private final ComputedValue<T> computedValue;
+
+                            protected Factory(Class<T> type, ComputedValue<T> computedValue) {
+                                this.type = type;
+                                this.computedValue = computedValue;
+                            }
+
+                            @Override
+                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                                AnnotationDescription.Loadable<? extends T> annotation = parameterDescription.getDeclaredAnnotations().ofType(type);
+                                if (annotation == null) {
+                                    return UNDEFINED;
+                                } else if (!parameterDescription.getType().represents(String.class)) {
+                                    throw new IllegalStateException(); // TODO
+                                } else {
+                                    return new ForCustomValue(computedValue.resolve(parameterDescription, annotation));
+                                }
+                            }
                         }
                     }
 
@@ -4545,6 +4580,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.PARAMETER)
     public @interface Thrown {
         /* empty */
+    }
+
+    public interface ComputedValue<T extends Annotation> {
+
+        String resolve(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<? extends T> annotation);
     }
 
     /**
