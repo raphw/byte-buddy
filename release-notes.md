@@ -1,9 +1,20 @@
 Byte Buddy release notes
 ------------------------
 
+### 6. April 2016: version 1.3.8
+
+- Fixed frame computation for the `Advice`.
+- Optimized frame computation to emitt frames of the minimal, possible size when using `Advice`.
+- Only add exit `Advice` once to reduce amound of added bytes to avoid size explosion when a method supplied several exits.
+- Optimized `Advice` injection to only add advice infrastucture if entry/exit advice is supplied.
+- Optimized exception handling infrastructure for exit `Advice` to only be applied when exceptions are catched.
+- Added mapping for the *IINC* instruction which was missing from before.
+- Added possibility to propagate AMS reader and writer flags for `AsmVisitorWrapper`.
+- Made `Advice` method parser respect ASM reader flags for expanding frames.
+
 ### 3. April 2016: version 1.3.7
 
-- Fixed bug when returning null from an `Advice` exit method and accessing `@Advice.Thrown`.
+- Fixed bug when returning from an `Advice` exit method without return value and accessing `@Advice.Thrown`.
 - Added additional annotations for advice `@Advice.Ignored` and `@Advice.Origin`.
 - Implemented frame translator for `Advice` method to reuse existing frame information instead of recomputing it.
 
