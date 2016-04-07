@@ -29,4 +29,4 @@ matrix:
 script: mvn verify $TARGET -Pintegration
 
 after_success:
-  - mvn cobertura:cobertura coveralls:report -Pintegration
+  - mvn clean cobertura:cobertura coveralls:report -Pintegration
