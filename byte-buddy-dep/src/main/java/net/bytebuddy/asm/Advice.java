@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -99,7 +100,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Implements advice where every matched method is adviced by the given type's advisory methods. The advices binary representation is
+     * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
      * accessed by querying the class loader of the supplied class for a class file.
      *
      * @param type The type declaring the advice.
@@ -110,7 +111,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Implements advice where every matched method is adviced by the given type's advisory methods.
+     * Implements advice where every matched method is advised by the given type's advisory methods.
      *
      * @param type             The type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
@@ -121,7 +122,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Implements advice where every matched method is adviced by the given type's advisory methods.
+     * Implements advice where every matched method is advised by the given type's advisory methods.
      *
      * @param typeDescription  A description of the type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
@@ -2306,6 +2307,144 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         '}';
                             }
                         }
+
+                        class ForBoxedParameter implements Target {
+
+                            private static final String VALUE_OF = "valueOf";
+
+                            private final int offset;
+
+                            private final BoxingDispatcher boxingDispatcher;
+
+                            protected ForBoxedParameter(int offset, BoxingDispatcher boxingDispatcher) {
+                                this.offset = offset;
+                                this.boxingDispatcher = boxingDispatcher;
+                            }
+
+                            protected static Target of(int offset, TypeDefinition type) {
+                                return new ForBoxedParameter(offset, BoxingDispatcher.of(type));
+                            }
+
+                            @Override
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                                switch (opcode) {
+                                    case Opcodes.ALOAD:
+                                        methodVisitor.visitVarInsn(boxingDispatcher.getOpcode(), offset);
+                                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
+                                                boxingDispatcher.getOwner(),
+                                                VALUE_OF,
+                                                boxingDispatcher.getDescriptor(),
+                                                false);
+                                        break;
+                                    case Opcodes.ILOAD:
+                                    case Opcodes.LLOAD:
+                                    case Opcodes.FLOAD:
+                                    case Opcodes.DLOAD:
+                                    case Opcodes.ISTORE:
+                                    case Opcodes.FSTORE:
+                                    case Opcodes.ASTORE:
+                                    case Opcodes.LSTORE:
+                                    case Opcodes.DSTORE:
+                                        throw new IllegalStateException(); // TODO
+                                    default:
+                                        throw new IllegalStateException("Unexpected opcode: " + opcode);
+                                }
+                            }
+
+                            @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                throw new IllegalStateException(); // TODO
+                            }
+
+                            protected enum BoxingDispatcher {
+
+                                BOOLEAN(Opcodes.ILOAD, Boolean.class, boolean.class),
+                                BYTE(Opcodes.ILOAD, Byte.class, byte.class),
+                                SHORT(Opcodes.ILOAD, Short.class, short.class),
+                                CHARACTER(Opcodes.ILOAD, Character.class, char.class),
+                                INTEGER(Opcodes.ILOAD, Integer.class, int.class),
+                                LONG(Opcodes.ILOAD, Long.class, long.class),
+                                FLOAT(Opcodes.ILOAD, Float.class, float.class),
+                                DOUBLE(Opcodes.ILOAD, Double.class, double.class);
+
+                                private final int opcode;
+
+                                private final String target;
+
+                                private final String descriptor;
+
+                                BoxingDispatcher(int opcode, Class<?> wrapperType, Class<?> primitiveType) {
+                                    this.opcode = opcode;
+                                    target = Type.getInternalName(wrapperType);
+                                    descriptor = Type.getMethodDescriptor(Type.getType(wrapperType), Type.getType(primitiveType));
+                                }
+
+                                protected static BoxingDispatcher of(TypeDefinition typeDefinition) {
+                                    if (typeDefinition.represents(boolean.class)) {
+                                        return BOOLEAN;
+                                    } else if (typeDefinition.represents(byte.class)) {
+                                        return BYTE;
+                                    } else if (typeDefinition.represents(short.class)) {
+                                        return SHORT;
+                                    } else if (typeDefinition.represents(char.class)) {
+                                        return CHARACTER;
+                                    } else if (typeDefinition.represents(int.class)) {
+                                        return INTEGER;
+                                    } else if (typeDefinition.represents(long.class)) {
+                                        return LONG;
+                                    } else if (typeDefinition.represents(float.class)) {
+                                        return FLOAT;
+                                    } else if (typeDefinition.represents(double.class)) {
+                                        return DOUBLE;
+                                    } else {
+                                        throw new IllegalArgumentException(); // TODO
+                                    }
+                                }
+
+                                protected int getOpcode() {
+                                    return opcode;
+                                }
+
+                                protected String getOwner() {
+                                    return target;
+                                }
+
+                                protected String getDescriptor() {
+                                    return descriptor;
+                                }
+                            }
+                        }
+
+                        enum ForNullConstant implements Target {
+
+                            INSTANCE;
+
+                            @Override
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                                switch (opcode) {
+                                    case Opcodes.ALOAD:
+                                        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                                        break;
+                                    case Opcodes.ILOAD:
+                                    case Opcodes.LLOAD:
+                                    case Opcodes.FLOAD:
+                                    case Opcodes.DLOAD:
+                                    case Opcodes.ISTORE:
+                                    case Opcodes.FSTORE:
+                                    case Opcodes.ASTORE:
+                                    case Opcodes.LSTORE:
+                                    case Opcodes.DSTORE:
+                                        throw new IllegalStateException(); // TODO
+                                    default:
+                                        throw new IllegalStateException("Unexpected opcode: " + opcode);
+                                }
+                            }
+
+                            @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                throw new IllegalStateException(); // TODO
+                            }
+                        }
                     }
 
                     /**
@@ -3240,6 +3379,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
+                    enum ForBoxedReturnValue implements OffsetMapping, Factory {
+
+                        INSTANCE;
+
+                        @Override
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                            if (instrumentedMethod.getReturnType().represents(void.class)) {
+                                return Target.ForNullConstant.INSTANCE;
+                            } else if (instrumentedMethod.getReturnType().isPrimitive()) {
+                                return new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + context.getPadding());
+                            } else {
+                                return Target.ForBoxedParameter.of(instrumentedMethod.getStackSize() + context.getPadding(), instrumentedMethod.getReturnType());
+                            }
+                        }
+
+                        @Override
+                        public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                            if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedReturn.class)) {
+                                if (!parameterDescription.getType().represents(Object.class)) {
+                                    throw new IllegalStateException(); // TODO
+                                }
+                                return this;
+                            } else {
+                                return UNDEFINED;
+                            }
+                        }
+                    }
+
                     /**
                      * An offset mapping for accessing a {@link Throwable} of the instrumented method.
                      */
@@ -3438,6 +3605,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 OffsetMapping.ForIgnored.INSTANCE,
                                 new OffsetMapping.ForEnterValue.Factory(enterType),
                                 OffsetMapping.ForReturnValue.Factory.INSTANCE,
+                                OffsetMapping.ForBoxedReturnValue.INSTANCE,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
                                         ? OffsetMapping.ForThrowable.INSTANCE
                                         : new OffsetMapping.Illegal(Thrown.class));
@@ -3573,7 +3741,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             interface ReturnValueProducer {
 
                 /**
-                 * Sets a default return value for an adviced method.
+                 * Sets a default return value for an advised method.
                  *
                  * @param methodVisitor The instrumented method's method visitor.
                  */
@@ -3754,7 +3922,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param methodVisitor       The method visitor of the instrumented method.
                      * @param metaDataHandler     The meta data handler to use for translating meta data.
-                     * @param returnValueProducer A producer for defining a default return value of the adviced method.
+                     * @param returnValueProducer A producer for defining a default return value of the advised method.
                      */
                     void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
 
@@ -4268,6 +4436,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return {@code true} if this parameter is read-only.
          */
         boolean readOnly() default true;
+    }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface BoxedReturn {
+
     }
 
     /**
