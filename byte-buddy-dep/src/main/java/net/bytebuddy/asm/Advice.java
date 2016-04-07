@@ -2310,8 +2310,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         class ForBoxedParameter implements Target {
 
-                            private static final String VALUE_OF = "valueOf";
-
                             private final int offset;
 
                             private final BoxingDispatcher boxingDispatcher;
@@ -2329,12 +2327,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
                                 switch (opcode) {
                                     case Opcodes.ALOAD:
-                                        methodVisitor.visitVarInsn(boxingDispatcher.getOpcode(), offset);
-                                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
-                                                boxingDispatcher.getOwner(),
-                                                VALUE_OF,
-                                                boxingDispatcher.getDescriptor(),
-                                                false);
+                                        boxingDispatcher.loadBoxed(methodVisitor, offset);
                                         break;
                                     case Opcodes.ILOAD:
                                     case Opcodes.LLOAD:
@@ -2367,15 +2360,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 FLOAT(Opcodes.ILOAD, Float.class, float.class),
                                 DOUBLE(Opcodes.ILOAD, Double.class, double.class);
 
+                                private static final String VALUE_OF = "valueOf";
+
                                 private final int opcode;
 
-                                private final String target;
+                                private final String owner;
 
                                 private final String descriptor;
 
                                 BoxingDispatcher(int opcode, Class<?> wrapperType, Class<?> primitiveType) {
                                     this.opcode = opcode;
-                                    target = Type.getInternalName(wrapperType);
+                                    owner = Type.getInternalName(wrapperType);
                                     descriptor = Type.getMethodDescriptor(Type.getType(wrapperType), Type.getType(primitiveType));
                                 }
 
@@ -2401,17 +2396,50 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     }
                                 }
 
-                                protected int getOpcode() {
-                                    return opcode;
+                                protected void loadBoxed(MethodVisitor methodVisitor, int offset) {
+                                    methodVisitor.visitVarInsn(opcode, offset);
+                                    methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, descriptor, false);
                                 }
+                            }
+                        }
 
-                                protected String getOwner() {
-                                    return target;
-                                }
+                        class ForBoxedArguments implements Target {
 
-                                protected String getDescriptor() {
-                                    return descriptor;
+                            private final List<ParameterDescription.InDefinedShape> parameters;
+
+                            protected ForBoxedArguments(List<ParameterDescription.InDefinedShape> parameters) {
+                                this.parameters = parameters;
+                            }
+
+                            @Override
+                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                                switch (opcode) {
+                                    case Opcodes.ALOAD:
+                                        methodVisitor.visitLdcInsn(parameters.size());
+                                        methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.OBJECT.getInternalName());
+                                        for (ParameterDescription parameter : parameters) {
+                                            ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
+                                            methodVisitor.visitInsn(Opcodes.AASTORE);
+                                        }
+                                        break;
+                                    case Opcodes.ILOAD:
+                                    case Opcodes.LLOAD:
+                                    case Opcodes.FLOAD:
+                                    case Opcodes.DLOAD:
+                                    case Opcodes.ISTORE:
+                                    case Opcodes.FSTORE:
+                                    case Opcodes.ASTORE:
+                                    case Opcodes.LSTORE:
+                                    case Opcodes.DSTORE:
+                                        throw new IllegalStateException(); // TODO
+                                    default:
+                                        throw new IllegalStateException("Unexpected opcode: " + opcode);
                                 }
+                            }
+
+                            @Override
+                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                                throw new IllegalStateException(); // TODO
                             }
                         }
 
@@ -3407,6 +3435,50 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
+                    enum ForBoxedArguments implements OffsetMapping, Factory {
+
+                        INSTANCE;
+
+                        @Override
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                            return new Target.ForBoxedArguments(instrumentedMethod.getParameters());
+                        }
+
+                        @Override
+                        public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                            if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedArguments.class)) {
+                                if (!parameterDescription.getType().represents(Object[].class)) {
+                                    throw new IllegalStateException(); // TODO
+                                }
+                                return this;
+                            } else {
+                                return UNDEFINED;
+                            }
+                        }
+                    }
+
+                    enum ForOriginType implements OffsetMapping, Factory {
+
+                        INSTANCE;
+
+                        @Override
+                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                            return new Target.ForConstantPoolValue(Type.getType(instrumentedMethod.getDeclaringType().getDescriptor()));
+                        }
+
+                        @Override
+                        public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                            if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(OriginType.class)) {
+                                if (!parameterDescription.getType().represents(Class.class)) {
+                                    throw new IllegalStateException(); // TODO
+                                }
+                                return this;
+                            } else {
+                                return UNDEFINED;
+                            }
+                        }
+                    }
+
                     /**
                      * An offset mapping for accessing a {@link Throwable} of the instrumented method.
                      */
@@ -3529,9 +3601,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod) {
                         super(adviceMethod,
                                 OffsetMapping.ForParameter.Factory.INSTANCE,
+                                OffsetMapping.ForBoxedArguments.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForField.Factory.INSTANCE,
                                 OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForOriginType.INSTANCE,
                                 OffsetMapping.ForIgnored.INSTANCE,
                                 new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
                     }
@@ -3599,9 +3673,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod, TypeDescription enterType) {
                         super(adviceMethod,
                                 OffsetMapping.ForParameter.Factory.INSTANCE,
+                                OffsetMapping.ForBoxedArguments.INSTANCE,
                                 OffsetMapping.ForThisReference.Factory.INSTANCE,
                                 OffsetMapping.ForField.Factory.INSTANCE,
                                 OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                OffsetMapping.ForOriginType.INSTANCE,
                                 OffsetMapping.ForIgnored.INSTANCE,
                                 new OffsetMapping.ForEnterValue.Factory(enterType),
                                 OffsetMapping.ForReturnValue.Factory.INSTANCE,
@@ -4378,6 +4454,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         String value() default DEFAULT;
     }
 
+    public @interface OriginType {
+
+    }
+
     /**
      * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
      * for {@code boolean} types and {@code null} for reference types).
@@ -4442,6 +4522,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface BoxedReturn {
+
+    }
+
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface BoxedArguments {
 
     }
 
