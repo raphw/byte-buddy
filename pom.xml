@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>net.bytebuddy</groupId>
@@ -23,6 +24,10 @@
       - checks: Applies style checks to the source files. (activated by default, activated on release)
       - integration: Runs additional unit tests and executes static code analysis (activated on Travis CI)
       - android: Builds an Android test application. An Android SDK is required for doing so. (excluded from release)
+
+      It is also possible to build Byte Buddy against a specific byte code level. By default, Byte Buddy is Java 6 compatible:
+      - java7: Sets the target level to Java 7.
+      - java8: Sets the target level to Java 8.
 
       Additionally, the following reports are available via Maven:
       - cobertura:cobertura - Computes line coverage for test suite (all modules)
@@ -206,7 +211,7 @@
                         <format>html</format>
                         <format>xml</format>
                     </formats>
-                    <check />
+                    <check/>
                 </configuration>
             </plugin>
             <!-- Generate coveralls reports from Travis. -->
@@ -317,6 +322,26 @@
                 <version.plugin.findbugs>2.5.5</version.plugin.findbugs>
                 <version.annotations.findbugs>2.0.3</version.annotations.findbugs>
                 <version.plugin.checkstyle>2.15</version.plugin.checkstyle>
+            </properties>
+        </profile>
+        <!-- Runs the build with a target version for Java 7 -->
+        <profile>
+            <id>java7</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <code.level>1.7</code.level>
+            </properties>
+        </profile>
+        <!-- Runs the build with a target version for Java 8 -->
+        <profile>
+            <id>java8</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <properties>
+                <code.level>1.8</code.level>
             </properties>
         </profile>
         <!-- Creates additional artifacts that are required for deployment. -->
