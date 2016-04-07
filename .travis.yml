@@ -19,5 +19,14 @@ jdk:
   - openjdk7
   - openjdk6
 
+matrix:
+  include:
+    - jdk: oraclejdk8
+      env: TARGET=-Pjava8
+    - jdk: oraclejdk7
+      env: TARGET=-Pjava7
+
+script: mvn package TARGET
+
 after_success:
   - mvn clean cobertura:cobertura coveralls:report -Pintegration
