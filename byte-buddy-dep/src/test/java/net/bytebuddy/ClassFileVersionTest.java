@@ -39,8 +39,14 @@ public class ClassFileVersionTest {
     }
 
     @Test
+    public void testVersionOfClass() throws Exception {
+        assertThat(ClassFileVersion.of(Foo.class), is(ClassFileVersion.forCurrentJavaVersion()));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(ClassFileVersion.class).apply();
+        ObjectPropertyAssertion.of(ClassFileVersion.VersionExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(ClassFileVersion.VersionLocator.ForLegacyVm.class).apply();
         final Iterator<Method> methods = Arrays.asList(Object.class.getDeclaredMethods()).iterator();
         ObjectPropertyAssertion.of(ClassFileVersion.VersionLocator.ForJava9CapableVm.class).create(new ObjectPropertyAssertion.Creator<Method>() {
@@ -49,5 +55,9 @@ public class ClassFileVersionTest {
                 return methods.next();
             }
         }).apply();
+    }
+
+    private static class Foo {
+        /* empty */
     }
 }

@@ -1,8 +1,13 @@
 package net.bytebuddy;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
+import net.bytebuddy.description.type.TypeDescription;
+import net.bytebuddy.dynamic.ClassFileLocator;
+import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassVisitor;
 import org.objectweb.asm.Opcodes;
 
+import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.AccessController;
@@ -152,6 +157,21 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
      */
     public static ClassFileVersion forCurrentJavaVersion() {
         return VERSION_LOCATOR.findCurrentVersion();
+    }
+
+    public static ClassFileVersion of(Class<?> type) throws IOException {
+        return of(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+    }
+
+    public static ClassFileVersion of(Class<?> type, ClassFileLocator classFileLocator) throws IOException {
+        return of(new TypeDescription.ForLoadedType(type), classFileLocator);
+    }
+
+    public static ClassFileVersion of(TypeDescription typeDescription, ClassFileLocator classFileLocator) throws IOException {
+        ClassReader classReader = new ClassReader(classFileLocator.locate(typeDescription.getName()).resolve());
+        VersionExtractor versionExtractor = new VersionExtractor();
+        classReader.accept(versionExtractor, ClassReader.SKIP_CODE);
+        return ClassFileVersion.ofMinorMajor(versionExtractor.getClassFileVersionNumber());
     }
 
     /**
@@ -352,6 +372,31 @@ public class ClassFileVersion implements Comparable<ClassFileVersion> {
             public String toString() {
                 return "ClassFileVersion.VersionLocator.ForLegacyVm." + name();
             }
+        }
+    }
+
+    protected static class VersionExtractor extends ClassVisitor {
+
+        private int classFileVersionNumber;
+
+        protected VersionExtractor() {
+            super(Opcodes.ASM5);
+        }
+
+        @Override
+        public void visit(int classFileVersionNumber, int modifier, String internalName, String signature, String superTypeName, String[] interfaceName) {
+            this.classFileVersionNumber = classFileVersionNumber;
+        }
+
+        protected int getClassFileVersionNumber() {
+            return classFileVersionNumber;
+        }
+
+        @Override
+        public String toString() {
+            return "ClassFileVersion.VersionExtractor{" +
+                    "classFileVersionNumber=" + classFileVersionNumber +
+                    '}';
         }
     }
 }

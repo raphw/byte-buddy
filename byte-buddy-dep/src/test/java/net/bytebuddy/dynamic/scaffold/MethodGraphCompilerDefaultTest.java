@@ -376,10 +376,10 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().getOnly().asSignatureToken();
+        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
         MethodGraph.Node methodNode = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getInterfaces().getOnly()
-                .getDeclaredMethods().getOnly().asDefined().asSignatureToken();
+                .getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getInterfaces().getOnly().getInterfaces().getOnly()
                 .getDeclaredMethods().getOnly().asDefined().asSignatureToken();
         assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
@@ -396,7 +396,7 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().getOnly().asSignatureToken();
+        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
         MethodGraph.Node methodNode = methodGraph.locate(token);
         MethodDescription.SignatureToken bridgeToken = typeDescription.getInterfaces().getOnly().getDeclaredMethods().getOnly().asSignatureToken();
         assertThat(methodNode, is(methodGraph.locate(bridgeToken)));
@@ -411,10 +411,10 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(ReturnTypeInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().getOnly().asSignatureToken();
+        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
         MethodGraph.Node methodNode = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getInterfaces().getOnly()
-                .getDeclaredMethods().getOnly().asSignatureToken();
+                .getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getInterfaces().getOnly().getInterfaces().getOnly()
                 .getDeclaredMethods().getOnly().asSignatureToken();
         assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
@@ -481,10 +481,10 @@ public class MethodGraphCompilerDefaultTest {
         TypeDescription typeDescription = new TypeDescription.ForLoadedType(GenericWithReturnTypeInterfaceBase.Intermediate.Inner.class);
         MethodGraph.Linked methodGraph = MethodGraph.Compiler.Default.forJavaHierarchy().compile(typeDescription);
         assertThat(methodGraph.listNodes().size(), is(1));
-        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().getOnly().asSignatureToken();
+        MethodDescription.SignatureToken token = typeDescription.getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asSignatureToken();
         MethodGraph.Node methodNode = methodGraph.locate(token);
         MethodDescription.SignatureToken firstBridgeToken = typeDescription.getInterfaces().getOnly()
-                .getDeclaredMethods().getOnly().asDefined().asSignatureToken();
+                .getDeclaredMethods().filter(ElementMatchers.not(isBridge())).getOnly().asDefined().asSignatureToken();
         MethodDescription.SignatureToken secondBridgeToken = typeDescription.getInterfaces().getOnly().getInterfaces().getOnly()
                 .getDeclaredMethods().getOnly().asDefined().asSignatureToken();
         assertThat(methodNode, is(methodGraph.locate(firstBridgeToken)));
