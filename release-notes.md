@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 8. April 2016: version 1.3.10
+
+- Fixed another bug during frame translation of the `Advice` component when suppression were not catched for an exit advice.
+- Improved unit tests to automatically build Byte Buddy with Java 7 and Java 8 byte code targets in integration.
+
 ### 7. April 2016: version 1.3.9
 
 - Optimized method size for `Advice` when exception is not catched.
