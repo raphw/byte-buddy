@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 7. April 2016: version 1.3.9
+
+- Optimized method size for `Advice` when exception is not catched.
+- Improved convenience method `disableClassFormatChanges` for `AgentBuilder`.
+
 ### 6. April 2016: version 1.3.8
 
 - Fixed frame computation for the `Advice`.
