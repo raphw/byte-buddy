@@ -1986,7 +1986,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        int padding;
                         switch (opcode) {
                             case Opcodes.ISTORE:
                             case Opcodes.ASTORE:
@@ -1996,7 +1995,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             fieldDescription.getDeclaringType().asErasure().getInternalName(),
                                             fieldDescription.getInternalName(),
                                             fieldDescription.getDescriptor());
-                                    padding = NO_PADDING;
+                                    return NO_PADDING;
                                 } else {
                                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                                     methodVisitor.visitInsn(Opcodes.DUP_X1);
@@ -2005,9 +2004,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             fieldDescription.getInternalName(),
                                             fieldDescription.getDescriptor());
                                     methodVisitor.visitInsn(Opcodes.POP);
-                                    padding = 2;
+                                    return 2;
                                 }
-                                break;
                             case Opcodes.LSTORE:
                             case Opcodes.DSTORE:
                                 if (fieldDescription.isStatic()) {
@@ -2015,18 +2013,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             fieldDescription.getDeclaringType().asErasure().getInternalName(),
                                             fieldDescription.getInternalName(),
                                             fieldDescription.getDescriptor());
-                                    padding = NO_PADDING;
+                                    return NO_PADDING;
                                 } else {
                                     methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                                     methodVisitor.visitInsn(Opcodes.DUP_X2);
-                                    methodVisitor.visitInsn(Opcodes.POP2);
                                     methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
                                             fieldDescription.getDeclaringType().asErasure().getInternalName(),
                                             fieldDescription.getInternalName(),
                                             fieldDescription.getDescriptor());
-                                    padding = 3;
+                                    methodVisitor.visitInsn(Opcodes.POP2);
+                                    return 3;
                                 }
-                                break;
                             case Opcodes.ILOAD:
                             case Opcodes.FLOAD:
                             case Opcodes.ALOAD:
@@ -2043,17 +2040,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         fieldDescription.getDeclaringType().asErasure().getInternalName(),
                                         fieldDescription.getInternalName(),
                                         fieldDescription.getDescriptor());
-                                padding = NO_PADDING;
-                                break;
+                                return NO_PADDING;
                             default:
                                 throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                         }
-                        return padding;
                     }
 
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot write to field: " + fieldDescription); // TODO
+                        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                        methodVisitor.visitInsn(Opcodes.DUP_X1);
+                        methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
+                                fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                fieldDescription.getInternalName(),
+                                fieldDescription.getDescriptor());
+                        methodVisitor.visitInsn(Opcodes.POP);
+                        return 2;
                     }
 
                     @Override
