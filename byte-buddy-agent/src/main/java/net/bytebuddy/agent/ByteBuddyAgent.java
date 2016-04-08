@@ -15,13 +15,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.logging.Logger;
 
 /**
  * <p>
@@ -270,17 +271,12 @@ public class ByteBuddyAgent {
             Object virtualMachineInstance = attachmentAccessor.getVirtualMachineType()
                     .getDeclaredMethod(ATTACH_METHOD_NAME, String.class)
                     .invoke(STATIC_MEMBER, processId);
-            AgentProvider.Agent agent = agentProvider.provide();
             try {
-                try {
-                    attachmentAccessor.getVirtualMachineType()
-                            .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                            .invoke(virtualMachineInstance, agent.getAbsolutePath(), WITHOUT_ARGUMENTS);
-                } finally {
-                    attachmentAccessor.getVirtualMachineType().getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
-                }
+                attachmentAccessor.getVirtualMachineType()
+                        .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
+                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), WITHOUT_ARGUMENTS);
             } finally {
-                agent.release();
+                attachmentAccessor.getVirtualMachineType().getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
             }
         } catch (Exception exception) {
             throw new IllegalStateException("Error during attachment using: " + attachmentProvider, exception);
@@ -842,87 +838,17 @@ public class ByteBuddyAgent {
     protected interface AgentProvider {
 
         /**
-         * Provides an agent for attachment.
+         * Provides an agent jar file for attachment.
          *
          * @return The provided agent.
          * @throws IOException If the agent cannot be written to disk.
          */
-        Agent provide() throws IOException;
-
-        /**
-         * An agent as provided by an {@link AgentProvider}.
-         */
-        interface Agent {
-
-            /**
-             * Returns the agent's absolute path.
-             *
-             * @return The agent's absolute path.
-             */
-            String getAbsolutePath();
-
-            /**
-             * Releases the agent.
-             */
-            void release();
-
-            /**
-             * An agent that is deleted when it is released.
-             */
-            class ForTemporaryAgent implements Agent {
-
-                /**
-                 * The agent.
-                 */
-                private final File agent;
-
-                /**
-                 * Creates an agent that is deleted when it is released.
-                 *
-                 * @param agent The agent.
-                 */
-                protected ForTemporaryAgent(File agent) {
-                    this.agent = agent;
-                }
-
-                @Override
-                public String getAbsolutePath() {
-                    return agent.getAbsolutePath();
-                }
-
-                @Override
-                public void release() {
-                    if (!agent.delete()) {
-                        Logger.getAnonymousLogger().info("Cannot delete agent: " + agent);
-                    }
-                }
-
-                @Override
-                public boolean equals(Object object) {
-                    if (this == object) return true;
-                    if (object == null || getClass() != object.getClass()) return false;
-                    ForTemporaryAgent that = (ForTemporaryAgent) object;
-                    return agent.equals(that.agent);
-                }
-
-                @Override
-                public int hashCode() {
-                    return agent.hashCode();
-                }
-
-                @Override
-                public String toString() {
-                    return "ByteBuddyAgent.AgentProvider.Agent.ForTemporaryAgent{" +
-                            "agent=" + agent +
-                            '}';
-                }
-            }
-        }
+        File resolve() throws IOException;
 
         /**
          * An agent provider for a temporary Byte Buddy agent.
          */
-        enum ForByteBuddyAgent implements AgentProvider {
+        enum ForByteBuddyAgent implements AgentProvider, PrivilegedExceptionAction<File> {
 
             /**
              * The singleton instance.
@@ -940,35 +866,50 @@ public class ByteBuddyAgent {
             private static final String JAR_FILE_EXTENSION = ".jar";
 
             @Override
-            public Agent provide() throws IOException {
-                File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
+            public File resolve() throws IOException {
                 InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 if (inputStream == null) {
                     throw new IllegalStateException("Cannot locate class file for Byte Buddy installer");
                 }
                 try {
-                    Manifest manifest = new Manifest();
-                    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
-                    manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
-                    manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
-                    manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
-                    manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
-                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
+                    File agentJar = AccessController.doPrivileged(this);
                     try {
-                        jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
-                        byte[] buffer = new byte[BUFFER_SIZE];
-                        int index;
-                        while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                            jarOutputStream.write(buffer, START_INDEX, index);
+                        Manifest manifest = new Manifest();
+                        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
+                        manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
+                        manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
+                        manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
+                        manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
+                        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
+                        try {
+                            jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
+                            byte[] buffer = new byte[BUFFER_SIZE];
+                            int index;
+                            while ((index = inputStream.read(buffer)) != END_OF_FILE) {
+                                jarOutputStream.write(buffer, START_INDEX, index);
+                            }
+                            jarOutputStream.closeEntry();
+                        } finally {
+                            jarOutputStream.close();
                         }
-                        jarOutputStream.closeEntry();
                     } finally {
-                        jarOutputStream.close();
+                        inputStream.close();
                     }
-                } finally {
-                    inputStream.close();
+                    return agentJar;
+                } catch (PrivilegedActionException exception) {
+                    if (exception.getCause() instanceof IOException) {
+                        throw (IOException) exception.getCause();
+                    } else {
+                        throw (RuntimeException) exception.getCause();
+                    }
                 }
-                return new Agent.ForTemporaryAgent(agentJar);
+            }
+
+            @Override
+            public File run() throws IOException {
+                File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
+                agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
+                return agentJar;
             }
 
             @Override
@@ -980,7 +921,7 @@ public class ByteBuddyAgent {
         /**
          * An agent provider that supplies an existing agent that is not deleted after attachment.
          */
-        class ForExistingAgent implements AgentProvider, Agent {
+        class ForExistingAgent implements AgentProvider {
 
             /**
              * The supplied agent.
@@ -997,18 +938,8 @@ public class ByteBuddyAgent {
             }
 
             @Override
-            public Agent provide() {
-                return this;
-            }
-
-            @Override
-            public String getAbsolutePath() {
-                return agent.getAbsolutePath();
-            }
-
-            @Override
-            public void release() {
-                /* do nothing */
+            public File resolve() {
+                return agent;
             }
 
             @Override
