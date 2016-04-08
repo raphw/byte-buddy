@@ -997,6 +997,7 @@ public class AdviceTest {
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
+        ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.ForAdvice.class).applyBasic();
@@ -1037,6 +1038,8 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForIgnored.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForUserValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForUserValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThrowable.class).apply();

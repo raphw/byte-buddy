@@ -2188,9 +2188,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                methodVisitor.visitLdcInsn(parameters.size());
+                                loadNonNegativeInteger(methodVisitor, parameters.size());
                                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.OBJECT.getInternalName());
                                 for (ParameterDescription parameter : parameters) {
+                                    methodVisitor.visitInsn(Opcodes.DUP);
+                                    loadNonNegativeInteger(methodVisitor, parameter.getIndex());
                                     ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
                                     methodVisitor.visitInsn(Opcodes.AASTORE);
                                 }
@@ -2207,6 +2209,37 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException(); // TODO
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                    }
+
+                    private static void loadNonNegativeInteger(MethodVisitor methodVisitor, int value) {
+                        switch (value) {
+                            case 0:
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                break;
+                            case 1:
+                                methodVisitor.visitInsn(Opcodes.ICONST_1);
+                                break;
+                            case 2:
+                                methodVisitor.visitInsn(Opcodes.ICONST_2);
+                                break;
+                            case 3:
+                                methodVisitor.visitInsn(Opcodes.ICONST_3);
+                                break;
+                            case 4:
+                                methodVisitor.visitInsn(Opcodes.ICONST_4);
+                                break;
+                            case 5:
+                                methodVisitor.visitInsn(Opcodes.ICONST_5);
+                                break;
+                            default:
+                                if (value < Byte.MAX_VALUE) {
+                                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
+                                } else if (value < Short.MAX_VALUE) {
+                                    methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
+                                } else {
+                                    methodVisitor.visitLdcInsn(value);
+                                }
                         }
                     }
 
@@ -3290,17 +3323,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 private final AnnotationDescription userAnnotation;
 
-                private final TypeDescription annotationType;
-
                 private final DynamicValue<?> dynamicValue;
 
                 protected ForUserValue(ParameterDescription.InDefinedShape mappedParameter,
                                        AnnotationDescription userAnnotation,
-                                       TypeDescription annotationType,
                                        DynamicValue<?> dynamicValue) {
                     this.mappedParameter = mappedParameter;
                     this.userAnnotation = userAnnotation;
-                    this.annotationType = annotationType;
                     this.dynamicValue = dynamicValue;
                 }
 
@@ -3319,6 +3348,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return new Target.ForConstantPoolValue(userValue);
                 }
 
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForUserValue that = (ForUserValue) object;
+                    if (!mappedParameter.equals(that.mappedParameter)) return false;
+                    return userAnnotation.equals(that.userAnnotation) && dynamicValue.equals(that.dynamicValue);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = mappedParameter.hashCode();
+                    result = 31 * result + userAnnotation.hashCode();
+                    result = 31 * result + dynamicValue.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForUserValue{" +
+                            "mappedParameter=" + mappedParameter +
+                            ", userAnnotation=" + userAnnotation +
+                            ", dynamicValue=" + dynamicValue +
+                            '}';
+                }
+
                 protected static class Factory implements OffsetMapping.Factory {
 
                     private final TypeDescription annotationType;
@@ -3335,7 +3390,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(annotationType);
                         return annotation == null
                                 ? UNDEFINED
-                                : new ForUserValue(parameterDescription, annotation, annotationType, dynamicValue);
+                                : new ForUserValue(parameterDescription, annotation, dynamicValue);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        Factory factory = (Factory) object;
+                        return annotationType.equals(factory.annotationType) && dynamicValue.equals(factory.dynamicValue);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = annotationType.hashCode();
+                        result = 31 * result + dynamicValue.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForUserValue.Factory{" +
+                                "annotationType=" + annotationType +
+                                ", dynamicValue=" + dynamicValue +
+                                '}';
                     }
                 }
             }
@@ -4684,6 +4762,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 userFactories.add(new Dispatcher.OffsetMapping.ForUserValue.Factory(entry.getKey(), entry.getValue()));
             }
             return Advice.to(typeDescription, classFileLocator, userFactories);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            WithCustomMapping that = (WithCustomMapping) object;
+            return dynamicValues.equals(that.dynamicValues);
+        }
+
+        @Override
+        public int hashCode() {
+            return dynamicValues.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Advice.WithCustomMapping{" +
+                    "dynamicValues=" + dynamicValues +
+                    '}';
         }
     }
 
