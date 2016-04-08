@@ -1014,7 +1014,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Context.ForMethodExit.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForParameter.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForConstantPoolValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForDefaultValue.class).apply();
         final int[] value = new int[1];

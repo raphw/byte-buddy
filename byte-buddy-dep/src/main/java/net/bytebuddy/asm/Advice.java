@@ -1754,21 +1754,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             interface Target {
 
+                int NO_PADDING = 0;
+
                 /**
                  * Applies this offset mapping for a {@link MethodVisitor#visitVarInsn(int, int)} instruction.
-                 *
-                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
+                 *  @param methodVisitor The method visitor onto which this offset mapping is to be applied.
                  * @param opcode        The opcode of the original instruction.
                  */
-                void resolveAccess(MethodVisitor methodVisitor, int opcode);
+                int resolveAccess(MethodVisitor methodVisitor, int opcode);
 
                 /**
                  * Applies this offset mapping for a {@link MethodVisitor#visitIincInsn(int, int)} instruction.
-                 *
-                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
+                 *  @param methodVisitor The method visitor onto which this offset mapping is to be applied.
                  * @param increment     The value with which to increment the targeted value.
                  */
-                void resolveIncrement(MethodVisitor methodVisitor, int increment);
+                int resolveIncrement(MethodVisitor methodVisitor, int increment);
 
                 /**
                  * Loads a default value onto the stack or pops the accessed value off it.
@@ -1781,7 +1781,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
@@ -1810,11 +1810,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
+                        return NO_PADDING;
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                                /* do nothing */
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        return NO_PADDING;
                     }
 
                     @Override
@@ -1843,13 +1844,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         methodVisitor.visitVarInsn(opcode, offset);
+                        return NO_PADDING;
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         methodVisitor.visitIincInsn(offset, increment);
+                        return NO_PADDING;
                     }
 
                     @Override
@@ -1893,7 +1896,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ISTORE:
                             case Opcodes.LSTORE:
@@ -1911,10 +1914,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                         }
+                        return NO_PADDING;
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
                     }
 
@@ -1942,7 +1946,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An offset mapping for a field.
                  */
-                class ForField implements Target {
+                class ForReadOnlyField implements Target {
 
                     /**
                      * The field being read.
@@ -1954,12 +1958,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param fieldDescription The field being read.
                      */
-                    protected ForField(FieldDescription fieldDescription) {
+                    protected ForReadOnlyField(FieldDescription fieldDescription) {
                         this.fieldDescription = fieldDescription;
                     }
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ISTORE:
                             case Opcodes.ASTORE:
@@ -1987,10 +1991,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                         }
+                        return NO_PADDING;
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException("Cannot write to field: " + fieldDescription);
                     }
 
@@ -1998,8 +2003,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public boolean equals(Object object) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
-                        ForField forField = (ForField) object;
-                        return fieldDescription.equals(forField.fieldDescription);
+                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
+                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
                     }
 
                     @Override
@@ -2035,7 +2040,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ISTORE:
                             case Opcodes.ASTORE:
@@ -2053,10 +2058,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                         }
+                        return NO_PADDING;
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException("Cannot write to fixed value: " + value);
                     }
 
@@ -2097,7 +2103,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
                                 boxingDispatcher.loadBoxed(methodVisitor, offset);
@@ -2115,10 +2121,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
+                        return boxingDispatcher.getStackSize().getSize() - 1;
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException(); // TODO
                     }
 
@@ -2141,10 +2148,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         private final String descriptor;
 
+                        private final StackSize stackSize;
+
                         BoxingDispatcher(int opcode, Class<?> wrapperType, Class<?> primitiveType) {
                             this.opcode = opcode;
                             owner = Type.getInternalName(wrapperType);
                             descriptor = Type.getMethodDescriptor(Type.getType(wrapperType), Type.getType(primitiveType));
+                            stackSize = StackSize.of(primitiveType);
                         }
 
                         protected static BoxingDispatcher of(TypeDefinition typeDefinition) {
@@ -2173,6 +2183,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitVarInsn(opcode, offset);
                             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, descriptor, false);
                         }
+
+                        protected StackSize getStackSize() {
+                            return stackSize;
+                        }
                     }
                 }
 
@@ -2185,18 +2199,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
-                                loadNonNegativeInteger(methodVisitor, parameters.size());
+                                loadInteger(methodVisitor, parameters.size());
                                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.OBJECT.getInternalName());
+                                StackSize stackSize= StackSize.ZERO;
                                 for (ParameterDescription parameter : parameters) {
                                     methodVisitor.visitInsn(Opcodes.DUP);
-                                    loadNonNegativeInteger(methodVisitor, parameter.getIndex());
+                                    loadInteger(methodVisitor, parameter.getIndex());
                                     ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
                                     methodVisitor.visitInsn(Opcodes.AASTORE);
+                                    stackSize = stackSize.maximum(parameter.getType().getStackSize());
                                 }
-                                break;
+                                return stackSize.getSize() + 2;
                             case Opcodes.ILOAD:
                             case Opcodes.LLOAD:
                             case Opcodes.FLOAD:
@@ -2212,7 +2228,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
-                    private static void loadNonNegativeInteger(MethodVisitor methodVisitor, int value) {
+                    private static void loadInteger(MethodVisitor methodVisitor, int value) {
                         switch (value) {
                             case 0:
                                 methodVisitor.visitInsn(Opcodes.ICONST_0);
@@ -2244,7 +2260,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException(); // TODO
                     }
                 }
@@ -2254,7 +2270,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     @Override
-                    public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
                         switch (opcode) {
                             case Opcodes.ALOAD:
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
@@ -2272,10 +2288,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
+                        return NO_PADDING;
                     }
 
                     @Override
-                    public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException(); // TODO
                     }
                 }
@@ -2559,7 +2576,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else if (!context.isInitialized() && !resolution.getField().isStatic()) {
                         throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
                     }
-                    return new Target.ForField(resolution.getField());
+                    return new Target.ForReadOnlyField(resolution.getField());
                 }
 
                 /**
@@ -3353,8 +3370,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     ForUserValue that = (ForUserValue) object;
-                    if (!mappedParameter.equals(that.mappedParameter)) return false;
-                    return userAnnotation.equals(that.userAnnotation) && dynamicValue.equals(that.dynamicValue);
+                    return mappedParameter.equals(that.mappedParameter)
+                            && userAnnotation.equals(that.userAnnotation)
+                            && dynamicValue.equals(that.dynamicValue);
                 }
 
                 @Override
