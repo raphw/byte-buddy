@@ -1968,6 +1968,118 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An offset mapping for a field.
                  */
+                class ForField implements Target {
+
+                    /**
+                     * The field being read.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * Creates a new offset mapping for a field.
+                     *
+                     * @param fieldDescription The field being read.
+                     */
+                    protected ForField(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        int padding;
+                        switch (opcode) {
+                            case Opcodes.ISTORE:
+                            case Opcodes.ASTORE:
+                            case Opcodes.FSTORE:
+                                if (fieldDescription.isStatic()) {
+                                    methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
+                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                            fieldDescription.getInternalName(),
+                                            fieldDescription.getDescriptor());
+                                    padding = NO_PADDING;
+                                } else {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    methodVisitor.visitInsn(Opcodes.DUP_X1);
+                                    methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
+                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                            fieldDescription.getInternalName(),
+                                            fieldDescription.getDescriptor());
+                                    methodVisitor.visitInsn(Opcodes.POP);
+                                    padding = 2;
+                                }
+                                break;
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                if (fieldDescription.isStatic()) {
+                                    methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC,
+                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                            fieldDescription.getInternalName(),
+                                            fieldDescription.getDescriptor());
+                                    padding = NO_PADDING;
+                                } else {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    methodVisitor.visitInsn(Opcodes.DUP_X2);
+                                    methodVisitor.visitInsn(Opcodes.POP2);
+                                    methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
+                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                            fieldDescription.getInternalName(),
+                                            fieldDescription.getDescriptor());
+                                    padding = 3;
+                                }
+                                break;
+                            case Opcodes.ILOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.ALOAD:
+                            case Opcodes.LLOAD:
+                            case Opcodes.DLOAD:
+                                int accessOpcode;
+                                if (fieldDescription.isStatic()) {
+                                    accessOpcode = Opcodes.GETSTATIC;
+                                } else {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    accessOpcode = Opcodes.GETFIELD;
+                                }
+                                methodVisitor.visitFieldInsn(accessOpcode,
+                                        fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                        fieldDescription.getInternalName(),
+                                        fieldDescription.getDescriptor());
+                                padding = NO_PADDING;
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                        }
+                        return padding;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot write to field: " + fieldDescription); // TODO
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
+                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyField{" +
+                                "fieldDescription=" + fieldDescription +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An offset mapping for a field.
+                 */
                 class ForReadOnlyField implements Target {
 
                     /**
@@ -2036,7 +2148,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField{" +
+                        return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyField{" +
                                 "fieldDescription=" + fieldDescription +
                                 '}';
                     }
@@ -2564,7 +2676,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 /**
                  * Creates an offset mapping for a field.
-                 *  @param name       The name of the field.
+                 *
+                 * @param name       The name of the field.
                  * @param targetType The expected type that the field can be assigned to.
                  * @param readOnly
                  */
@@ -2594,14 +2707,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     FieldLocator.Resolution resolution = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
                     if (!resolution.isResolved()) {
                         throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedMethod);
-                    } else if (!resolution.getField().getType().asErasure().isAssignableTo(targetType)) {
-                        throw new IllegalStateException("Cannot assign type of field " + resolution.getField() + " to " + targetType);
+                    } else if (readOnly && !resolution.getField().getType().asErasure().isAssignableTo(targetType)) {
+                        throw new IllegalStateException("Cannot assign type of read-only field " + resolution.getField() + " to " + targetType);
+                    } else if (!readOnly && !resolution.getField().getType().asErasure().equals(targetType)) {
+                        throw new IllegalStateException("Type of field " + resolution.getField() + " is not equal to " + targetType);
                     } else if (!resolution.getField().isStatic() && instrumentedMethod.isStatic()) {
                         throw new IllegalStateException("Cannot read non-static field " + resolution.getField() + " from static method " + instrumentedMethod);
                     } else if (!context.isInitialized() && !resolution.getField().isStatic()) {
                         throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
                     }
-                    return new Target.ForReadOnlyField(resolution.getField());
+                    return readOnly
+                            ? new Target.ForReadOnlyField(resolution.getField())
+                            : new Target.ForField(resolution.getField());
                 }
 
                 /**
