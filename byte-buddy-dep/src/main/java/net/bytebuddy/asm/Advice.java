@@ -349,6 +349,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param localVariableLength The minimum required length of the local variable array.
              */
             void recordMaxima(int stackSize, int localVariableLength);
+
+            void recordStackPadding(int padding);
         }
 
         /**
@@ -363,6 +365,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public void recordMaxima(int maxStack, int maxLocals) {
+                /* do nothing */
+            }
+
+            @Override
+            public void recordStackPadding(int padding) {
                 /* do nothing */
             }
 
@@ -921,6 +928,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected class ForAdvice extends Default.ForAdvice {
 
+                    private int padding;
+
                     /**
                      * Creates a new meta data handler for an advice method.
                      *
@@ -946,10 +955,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public void recordStackPadding(int padding) {
+                        this.padding = Math.max(this.padding, padding);
+                    }
+
+                    @Override
                     public String toString() {
                         return "Advice.MetaDataHandler.Default.WithStackSizeComputation.ForAdvice{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", methodDescription=" + methodDescription +
+                                ", padding=" + padding +
                                 "}";
                     }
                 }
@@ -1022,6 +1037,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void recordMaxima(int maxStack, int maxLocals) {
+                        /* do nothing */
+                    }
+
+                    @Override
+                    public void recordStackPadding(int padding) {
                         /* do nothing */
                     }
 
@@ -1758,14 +1778,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 /**
                  * Applies this offset mapping for a {@link MethodVisitor#visitVarInsn(int, int)} instruction.
-                 *  @param methodVisitor The method visitor onto which this offset mapping is to be applied.
+                 *
+                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
                  * @param opcode        The opcode of the original instruction.
                  */
                 int resolveAccess(MethodVisitor methodVisitor, int opcode);
 
                 /**
                  * Applies this offset mapping for a {@link MethodVisitor#visitIincInsn(int, int)} instruction.
-                 *  @param methodVisitor The method visitor onto which this offset mapping is to be applied.
+                 *
+                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
                  * @param increment     The value with which to increment the targeted value.
                  */
                 int resolveIncrement(MethodVisitor methodVisitor, int increment);
@@ -2204,7 +2226,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             case Opcodes.ALOAD:
                                 loadInteger(methodVisitor, parameters.size());
                                 methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.OBJECT.getInternalName());
-                                StackSize stackSize= StackSize.ZERO;
+                                StackSize stackSize = StackSize.ZERO;
                                 for (ParameterDescription parameter : parameters) {
                                     methodVisitor.visitInsn(Opcodes.DUP);
                                     loadInteger(methodVisitor, parameter.getIndex());
@@ -2538,15 +2560,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final TypeDescription targetType;
 
+                protected final boolean readOnly;
+
                 /**
                  * Creates an offset mapping for a field.
-                 *
-                 * @param name       The name of the field.
+                 *  @param name       The name of the field.
                  * @param targetType The expected type that the field can be assigned to.
+                 * @param readOnly
                  */
-                protected ForField(String name, TypeDescription targetType) {
+                protected ForField(String name, TypeDescription targetType, boolean readOnly) {
                     this.name = name;
                     this.targetType = targetType;
+                    this.readOnly = readOnly;
                 }
 
                 @Override
@@ -2598,8 +2623,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param name       The name of the field.
                      * @param targetType The expected type that the field can be assigned to.
                      */
-                    protected WithImplicitType(String name, TypeDescription targetType) {
-                        super(name, targetType);
+                    protected WithImplicitType(String name, TypeDescription targetType, boolean readOnly) {
+                        super(name, targetType, readOnly);
                     }
 
                     @Override
@@ -2633,8 +2658,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param targetType  The expected type that the field can be assigned to.
                      * @param locatedType The type declaring the field.
                      */
-                    protected WithExplicitType(String name, TypeDescription targetType, TypeDescription locatedType) {
-                        super(name, targetType);
+                    protected WithExplicitType(String name, TypeDescription targetType, TypeDescription locatedType, boolean readOnly) {
+                        super(name, targetType, readOnly);
                         this.explicitType = locatedType;
                     }
 
@@ -2683,15 +2708,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     INSTANCE;
 
                     /**
-                     * Creates a new factory for a {@link ForField} offset mapping.
-                     */
-                    Factory() {
-                        MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
-                        value = methods.filter(named("value")).getOnly();
-                        definingType = methods.filter(named("declaringType")).getOnly();
-                    }
-
-                    /**
                      * The {@link FieldValue#value()} method.
                      */
                     private final MethodDescription.InDefinedShape value;
@@ -2700,6 +2716,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * The {@link FieldValue#declaringType()}} method.
                      */
                     private final MethodDescription.InDefinedShape definingType;
+
+                    private final MethodDescription.InDefinedShape readOnly;
+
+                    /**
+                     * Creates a new factory for a {@link ForField} offset mapping.
+                     */
+                    Factory() {
+                        MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
+                        value = methods.filter(named("value")).getOnly();
+                        definingType = methods.filter(named("declaringType")).getOnly();
+                        readOnly = methods.filter(named("readOnly")).getOnly();
+                    }
 
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
@@ -2711,8 +2739,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             String name = annotation.getValue(value, String.class);
                             TypeDescription targetType = parameterDescription.getType().asErasure();
                             return definingType.represents(void.class)
-                                    ? new WithImplicitType(name, targetType)
-                                    : new WithExplicitType(name, targetType, definingType);
+                                    ? new WithImplicitType(name, targetType, annotation.getValue(readOnly, Boolean.class))
+                                    : new WithExplicitType(name, targetType, definingType, annotation.getValue(readOnly, Boolean.class));
                         }
                     }
 
@@ -4122,7 +4150,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        target.resolveAccess(mv, opcode);
+                        metaDataHandler.recordStackPadding(target.resolveAccess(mv, opcode));
                     } else {
                         mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()));
                     }
@@ -4132,7 +4160,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitIincInsn(int offset, int increment) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        target.resolveIncrement(mv, increment);
+                        metaDataHandler.recordStackPadding(target.resolveIncrement(mv, increment));
                     } else {
                         mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()), increment);
                     }
@@ -4593,6 +4621,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The type that declares the field or {@code void} if this type should be determined implicitly.
          */
         Class<?> declaringType() default void.class;
+
+        boolean readOnly() default true;
     }
 
     /**
