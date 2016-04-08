@@ -42,6 +42,8 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      */
     <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType);
 
+    AnnotationDescription ofType(TypeDescription typeDescription);
+
     /**
      * Returns only annotations that are marked as {@link java.lang.annotation.Inherited} as long as they are not
      * contained by the set of ignored annotation types.
@@ -92,13 +94,24 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().represents(annotationType)) {
                     return annotation.prepare(annotationType);
                 }
             }
-            return null;
+            return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
+        }
+
+        @Override
+        public AnnotationDescription ofType(TypeDescription typeDescription) {
+            for (AnnotationDescription annotation : this) {
+                if (annotation.getAnnotationType().equals(typeDescription)) {
+                    return annotation;
+                }
+            }
+            return AnnotationDescription.UNDEFINED;
         }
 
         @Override
@@ -274,8 +287,14 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
-            return null;
+            return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
+        }
+
+        @Override
+        public AnnotationDescription ofType(TypeDescription typeDescription) {
+            return AnnotationDescription.UNDEFINED;
         }
 
         @Override

@@ -17,6 +17,7 @@ import net.bytebuddy.utility.CompoundList;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.lang.annotation.*;
 import java.util.*;
 
@@ -123,11 +124,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return to(new TypeDescription.ForLoadedType(type), classFileLocator);
     }
 
-
-    public static Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
-        return to(typeDescription, classFileLocator, Collections.<DynamicValue<?>>emptyList());
-    }
-
     /**
      * Implements advice where every matched method is advised by the given type's advisory methods.
      *
@@ -135,7 +131,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @return A method visitor wrapper representing the supplied advice.
      */
-    public static Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator, List<DynamicValue<?>> dynamicValues) {
+    public static Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        return to(typeDescription, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
+    }
+
+    protected static Advice to(TypeDescription typeDescription,
+                               ClassFileLocator classFileLocator,
+                               List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
         try {
             Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
             for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()) {
@@ -145,8 +147,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             if (!methodEnter.isAlive() && !methodExit.isAlive()) {
                 throw new IllegalArgumentException("No advice defined by " + typeDescription);
             }
-            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(dynamicValues);
-            return new Advice(resolved, methodExit.asMethodExitTo(dynamicValues, resolved), classFileLocator.locate(typeDescription.getName()).resolve());
+            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories);
+            return new Advice(resolved, methodExit.asMethodExitTo(userFactories, resolved), classFileLocator.locate(typeDescription.getName()).resolve());
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + typeDescription, exception);
         }
@@ -173,6 +175,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         } else {
             return dispatcher;
         }
+    }
+
+    public static WithCustomMapping withCustomMapping() {
+        return new WithCustomMapping();
     }
 
     /**
@@ -3278,40 +3284,58 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
-            class ForCustomValue implements OffsetMapping {
+            class ForUserValue implements OffsetMapping {
 
-                private final String value;
+                private final ParameterDescription.InDefinedShape mappedParameter;
 
-                protected ForCustomValue(String value) {
-                    this.value = value;
+                private final AnnotationDescription userAnnotation;
+
+                private final TypeDescription annotationType;
+
+                private final DynamicValue<?> dynamicValue;
+
+                protected ForUserValue(ParameterDescription.InDefinedShape mappedParameter,
+                                       AnnotationDescription userAnnotation,
+                                       TypeDescription annotationType,
+                                       DynamicValue<?> dynamicValue) {
+                    this.mappedParameter = mappedParameter;
+                    this.userAnnotation = userAnnotation;
+                    this.annotationType = annotationType;
+                    this.dynamicValue = dynamicValue;
                 }
 
                 @Override
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                    return new Target.ForConstantPoolValue(value);
+                    Object userValue = dynamicValue.resolve(instrumentedMethod, mappedParameter, userAnnotation, context.isInitialized());
+                    if ((instrumentedMethod.getReturnType().represents(String.class) && !(userValue instanceof String))
+                            || (instrumentedMethod.getReturnType().represents(Class.class) && !(userValue instanceof TypeDescription || userValue instanceof Class))
+                            || (instrumentedMethod.getReturnType().isPrimitive() && !instrumentedMethod.getReturnType().asErasure().isInstanceOrWrapper(userValue))) {
+                        throw new IllegalStateException("Cannot map " + userValue + " as constant value of " + instrumentedMethod.getReturnType());
+                    } else if (userValue instanceof TypeDescription) {
+                        userValue = Type.getType(((TypeDescription) userValue).getDescriptor());
+                    } else if (userValue instanceof Class) {
+                        userValue = Type.getType((Class<?>) userValue);
+                    }
+                    return new Target.ForConstantPoolValue(userValue);
                 }
 
-                protected static class Factory<T extends Annotation> implements OffsetMapping.Factory {
+                protected static class Factory implements OffsetMapping.Factory {
 
-                    private final Class<? extends T> type;
+                    private final TypeDescription annotationType;
 
-                    private final DynamicValue<T> dynamicValue;
+                    private final DynamicValue<?> dynamicValue;
 
-                    protected Factory(Class<T> type, DynamicValue<T> dynamicValue) {
-                        this.type = type;
+                    protected Factory(TypeDescription annotationType, DynamicValue<?> dynamicValue) {
+                        this.annotationType = annotationType;
                         this.dynamicValue = dynamicValue;
                     }
 
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription.Loadable<? extends T> annotation = parameterDescription.getDeclaredAnnotations().ofType(type);
-                        if (annotation == null) {
-                            return UNDEFINED;
-                        } else if (!parameterDescription.getType().represents(String.class)) {
-                            throw new IllegalStateException(); // TODO
-                        } else {
-                            return new ForCustomValue(dynamicValue.resolve(parameterDescription, annotation));
-                        }
+                        AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(annotationType);
+                        return annotation == null
+                                ? UNDEFINED
+                                : new ForUserValue(parameterDescription, annotation, annotationType, dynamicValue);
                     }
                 }
             }
@@ -4597,9 +4621,70 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /* empty */
     }
 
+    @SuppressWarnings("unused")
     public interface DynamicValue<T extends Annotation> {
 
-        String resolve(ParameterDescription.InDefinedShape parameterDescription, AnnotationDescription.Loadable<? extends T> annotation);
+        Serializable resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                             ParameterDescription.InDefinedShape mappedParameter,
+                             AnnotationDescription annotation,
+                             boolean initialized);
+    }
+
+    public static class WithCustomMapping {
+
+        private final Map<TypeDescription, DynamicValue<?>> dynamicValues;
+
+        protected WithCustomMapping() {
+            this(Collections.<TypeDescription, DynamicValue<?>>emptyMap());
+        }
+
+        protected WithCustomMapping(Map<TypeDescription, DynamicValue<?>> dynamicValues) {
+            this.dynamicValues = dynamicValues;
+        }
+
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, DynamicValue<T> dynamicValue) {
+            return bind(new TypeDescription.ForLoadedType(type), dynamicValue);
+        }
+
+        public WithCustomMapping bind(TypeDescription type, DynamicValue<?> dynamicValue) {
+            Map<TypeDescription, DynamicValue<?>> dynamicValues = new HashMap<TypeDescription, Advice.DynamicValue<?>>(this.dynamicValues);
+            if (!type.isAnnotation()) {
+                throw new IllegalArgumentException("Not an annotation type: " + type);
+            } else if (dynamicValues.put(type, dynamicValue) != null) {
+                throw new IllegalArgumentException("Annotation-type already mapped: " + type);
+            }
+            return new WithCustomMapping(dynamicValues);
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
+         * accessed by querying the class loader of the supplied class for a class file.
+         *
+         * @param type The type declaring the advice.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(Class<?> type) {
+            return to(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods.
+         *
+         * @param type             The type declaring the advice.
+         * @param classFileLocator The class file locator for locating the advisory class's class file.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(Class<?> type, ClassFileLocator classFileLocator) {
+            return to(new TypeDescription.ForLoadedType(type), classFileLocator);
+        }
+
+        public Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
+            for (Map.Entry<TypeDescription, DynamicValue<?>> entry : dynamicValues.entrySet()) {
+                userFactories.add(new Dispatcher.OffsetMapping.ForUserValue.Factory(entry.getKey(), entry.getValue()));
+            }
+            return Advice.to(typeDescription, classFileLocator, userFactories);
+        }
     }
 
     /**
