@@ -3432,7 +3432,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(OriginType.class)) {
+                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Origin.Type.class)) {
                         return UNDEFINED;
                     } else if (!parameterDescription.getType().represents(Class.class)) {
                         throw new IllegalStateException(); // TODO
@@ -4772,6 +4772,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The pattern the annotated parameter should be assigned.
          */
         String value() default DEFAULT;
+
+        @Documented
+        @Retention(RetentionPolicy.RUNTIME)
+        @Target(ElementType.PARAMETER)
+        public @interface Type {
+            /* empty */
+        }
     }
 
     /**
@@ -4838,14 +4845,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface BoxedReturn {
-
+        /* boxed */
     }
 
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
     public @interface BoxedArguments {
-
+        /* boxed */
     }
 
     /**
