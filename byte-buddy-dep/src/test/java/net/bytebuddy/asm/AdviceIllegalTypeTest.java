@@ -11,9 +11,9 @@ import java.util.Collection;
 import static net.bytebuddy.matcher.ElementMatchers.named;
 
 @RunWith(Parameterized.class)
-public class AdviceParameterWriteTest {
+public class AdviceIllegalTypeTest {
 
-    private static final String FOO = "foo", BAR = "bar", ENTER = "enter", EXIT = "exit", exception = "exception";
+    private static final String FOO = "foo";
 
     private static final byte VALUE = 42;
 
@@ -36,7 +36,7 @@ public class AdviceParameterWriteTest {
 
     private final Class<?> type;
 
-    public AdviceParameterWriteTest(Class<?> type) {
+    public AdviceIllegalTypeTest(Class<?> type) {
         this.type = type;
     }
 

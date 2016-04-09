@@ -4774,13 +4774,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         String value() default DEFAULT;
     }
 
-    @Documented
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.PARAMETER)
-    public @interface OriginType {
-        // TODO!
-    }
-
     /**
      * Indicates that the annotated parameter should always return a default value (i.e. {@code 0} for numeric values, {@code false}
      * for {@code boolean} types and {@code null} for reference types).
