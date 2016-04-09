@@ -3382,9 +3382,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (instrumentedMethod.getReturnType().represents(void.class)) {
                         return Target.ForNullConstant.INSTANCE;
                     } else if (instrumentedMethod.getReturnType().isPrimitive()) {
-                        return new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + context.getPadding());
-                    } else {
                         return Target.ForBoxedParameter.of(instrumentedMethod.getStackSize() + context.getPadding(), instrumentedMethod.getReturnType());
+                    } else {
+                        return new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + context.getPadding());
                     }
                 }
 
@@ -3912,7 +3912,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForOriginType.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
-                                        new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class)), userFactories));
+                                        new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories));
                     }
 
                     @Override
@@ -4769,8 +4769,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         String value() default DEFAULT;
     }
 
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
     public @interface OriginType {
-
+        // TODO!
     }
 
     /**
@@ -4869,6 +4872,23 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                              ParameterDescription.InDefinedShape mappedParameter,
                              AnnotationDescription annotation,
                              boolean initialized);
+
+        class ForFixedValue<S extends Annotation> implements DynamicValue<S> {
+
+            private final Serializable value;
+
+            public ForFixedValue(Serializable value) {
+                this.value = value;
+            }
+
+            @Override
+            public Serializable resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                        ParameterDescription.InDefinedShape mappedParameter,
+                                        AnnotationDescription annotation,
+                                        boolean initialized) {
+                return value;
+            }
+        }
     }
 
     public static class WithCustomMapping {

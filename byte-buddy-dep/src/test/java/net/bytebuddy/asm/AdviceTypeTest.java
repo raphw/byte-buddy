@@ -6,6 +6,11 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
+import java.io.Serializable;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -61,7 +66,10 @@ public class AdviceTypeTest {
     public void testAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
-                .visit(Advice.to(advice).on(named(FOO)))
+                .visit(Advice.withCustomMapping()
+                        .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue<CustomAnnotation>((Serializable) value))
+                        .to(advice)
+                        .on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -74,7 +82,10 @@ public class AdviceTypeTest {
     public void testAdviceWithException() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
-                .visit(Advice.to(advice).on(named(BAR)))
+                .visit(Advice.withCustomMapping()
+                        .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue<CustomAnnotation>((Serializable) value))
+                        .to(advice)
+                        .on(named(BAR)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -114,8 +125,12 @@ public class AdviceTypeTest {
 
         @Advice.OnMethodExit
         public static void exit(@Advice.Thrown Throwable throwable,
+                                @Advice.BoxedReturn Object boxedReturn,
                                 @Advice.BoxedArguments Object[] boxed) {
             if (!(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (boxedReturn != null) {
                 throw new AssertionError();
             }
             if (boxed.length != 2 || boxed[0] != null || boxed[1] != null) {
@@ -182,6 +197,7 @@ public class AdviceTypeTest {
         public static boolean exit(@Advice.Return boolean result,
                                    @Advice.Enter boolean enter,
                                    @Advice.Thrown Throwable throwable,
+                                   @Advice.BoxedReturn Object boxedReturn,
                                    @Advice.Argument(0) boolean argument,
                                    @Advice.BoxedArguments Object[] boxed,
                                    @Advice.Argument(value = 1, readOnly = false) boolean mutableArgument,
@@ -192,6 +208,9 @@ public class AdviceTypeTest {
             if (result == exception
                     || !enter
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (boxedReturn.equals(exception)) {
                 throw new AssertionError();
             }
             if (!argument || mutableArgument) {
@@ -253,7 +272,7 @@ public class AdviceTypeTest {
             if (boxed.length != 2 || !boxed[0].equals(VALUE) || !boxed[1].equals((byte) (VALUE * 2))) {
                 throw new AssertionError();
             }
-            if (field != VALUE || mutated != VALUE || staticField != VALUE  || mutatedStatic != VALUE) {
+            if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
@@ -265,6 +284,7 @@ public class AdviceTypeTest {
         public static byte exit(@Advice.Return byte result,
                                 @Advice.Enter byte enter,
                                 @Advice.Thrown Throwable throwable,
+                                @Advice.BoxedReturn Object boxedReturn,
                                 @Advice.Argument(0) byte argument,
                                 @Advice.Argument(value = 1, readOnly = false) byte mutableArgument,
                                 @Advice.BoxedArguments Object[] boxed,
@@ -275,6 +295,9 @@ public class AdviceTypeTest {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (!boxedReturn.equals(exception ? NUMERIC_DEFAULT : VALUE)) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
@@ -348,6 +371,7 @@ public class AdviceTypeTest {
         public static short exit(@Advice.Return short result,
                                  @Advice.Enter short enter,
                                  @Advice.Thrown Throwable throwable,
+                                 @Advice.BoxedReturn Object boxedReturn,
                                  @Advice.Argument(0) short argument,
                                  @Advice.Argument(value = 1, readOnly = false) short mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -360,8 +384,11 @@ public class AdviceTypeTest {
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
                 throw new AssertionError();
             }
+            if (!boxedReturn.equals((short) (exception ? NUMERIC_DEFAULT : VALUE))) {
+                throw new AssertionError();
+            }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
-               throw new AssertionError();
+                throw new AssertionError();
             }
             if (boxed.length != 2 || !boxed[0].equals((short) VALUE) || !boxed[1].equals((short) (VALUE * 2))) {
                 throw new AssertionError();
@@ -431,6 +458,7 @@ public class AdviceTypeTest {
         public static char exit(@Advice.Return char result,
                                 @Advice.Enter char enter,
                                 @Advice.Thrown Throwable throwable,
+                                @Advice.BoxedReturn Object boxedReturn,
                                 @Advice.Argument(0) char argument,
                                 @Advice.Argument(value = 1, readOnly = false) char mutableArgument,
                                 @Advice.BoxedArguments Object[] boxed,
@@ -441,6 +469,9 @@ public class AdviceTypeTest {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (!boxedReturn.equals((char) (exception ? NUMERIC_DEFAULT : VALUE))) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
@@ -514,6 +545,7 @@ public class AdviceTypeTest {
         public static int exit(@Advice.Return int result,
                                @Advice.Enter int enter,
                                @Advice.Thrown Throwable throwable,
+                               @Advice.BoxedReturn Object boxedReturn,
                                @Advice.Argument(0) int argument,
                                @Advice.Argument(value = 1, readOnly = false) int mutableArgument,
                                @Advice.BoxedArguments Object[] boxed,
@@ -524,6 +556,9 @@ public class AdviceTypeTest {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (!boxedReturn.equals((int) (exception ? NUMERIC_DEFAULT : VALUE))) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
@@ -597,6 +632,7 @@ public class AdviceTypeTest {
         public static long exit(@Advice.Return long result,
                                 @Advice.Enter long enter,
                                 @Advice.Thrown Throwable throwable,
+                                @Advice.BoxedReturn Object boxedReturn,
                                 @Advice.Argument(0) long argument,
                                 @Advice.Argument(value = 1, readOnly = false) long mutableArgument,
                                 @Advice.BoxedArguments Object[] boxed,
@@ -607,6 +643,9 @@ public class AdviceTypeTest {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (!boxedReturn.equals((long) (exception ? NUMERIC_DEFAULT : VALUE))) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
@@ -680,6 +719,7 @@ public class AdviceTypeTest {
         public static float exit(@Advice.Return float result,
                                  @Advice.Enter float enter,
                                  @Advice.Thrown Throwable throwable,
+                                 @Advice.BoxedReturn Object boxedReturn,
                                  @Advice.Argument(0) float argument,
                                  @Advice.Argument(value = 1, readOnly = false) float mutableArgument,
                                  @Advice.BoxedArguments Object[] boxed,
@@ -690,6 +730,9 @@ public class AdviceTypeTest {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (!boxedReturn.equals((float) (exception ? NUMERIC_DEFAULT : VALUE))) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
@@ -763,6 +806,7 @@ public class AdviceTypeTest {
         public static double exit(@Advice.Return double result,
                                   @Advice.Enter double enter,
                                   @Advice.Thrown Throwable throwable,
+                                  @Advice.BoxedReturn Object boxedReturn,
                                   @Advice.Argument(0) double argument,
                                   @Advice.Argument(value = 1, readOnly = false) double mutableArgument,
                                   @Advice.BoxedArguments Object[] boxed,
@@ -773,6 +817,9 @@ public class AdviceTypeTest {
             if (result != (exception ? 0 : VALUE)
                     || enter != VALUE * 2
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (!boxedReturn.equals((double) (exception ? NUMERIC_DEFAULT : VALUE))) {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
@@ -816,7 +863,8 @@ public class AdviceTypeTest {
                                    @Advice.FieldValue(FIELD) Object field,
                                    @Advice.FieldValue(STATIC_FIELD) Object staticField,
                                    @Advice.FieldValue(value = MUTATED, readOnly = false) Object mutated,
-                                   @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) Object mutatedStatic) {
+                                   @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) Object mutatedStatic,
+                                   @CustomAnnotation String custom) {
             if (value != null) {
                 throw new AssertionError();
             }
@@ -838,6 +886,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = BAR;
+            if (!custom.equals(FOO)) {
+                throw new AssertionError();
+            }
             enter++;
             return FOO + BAR;
         }
@@ -846,16 +897,21 @@ public class AdviceTypeTest {
         public static Object exit(@Advice.Return Object result,
                                   @Advice.Enter Object enter,
                                   @Advice.Thrown Throwable throwable,
+                                  @Advice.BoxedReturn Object boxedReturn,
                                   @Advice.Argument(0) Object argument,
                                   @Advice.Argument(value = 1, readOnly = false) Object mutableArgument,
                                   @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) Object field,
                                   @Advice.FieldValue(STATIC_FIELD) Object staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) Object mutated,
-                                  @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) Object mutatedStatic) {
+                                  @Advice.FieldValue(value = MUTATED_STATIC_FIELD, readOnly = false) Object mutatedStatic,
+                                  @CustomAnnotation String custom) {
             if ((exception ? result != null : !result.equals(FOO))
                     || !enter.equals(FOO + BAR)
                     || !(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (exception ? boxedReturn != null : !boxedReturn.equals(FOO)) {
                 throw new AssertionError();
             }
             if (!argument.equals(FOO) || !mutableArgument.equals(BAR)) {
@@ -867,8 +923,17 @@ public class AdviceTypeTest {
             if (!field.equals(FOO) || !mutated.equals(BAR) || !staticField.equals(FOO) || !mutatedStatic.equals(BAR)) {
                 throw new AssertionError();
             }
+            if (!custom.equals(FOO)) {
+                throw new AssertionError();
+            }
             exit++;
             return FOO;
         }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    private @interface CustomAnnotation {
+        /* empty */
     }
 }
