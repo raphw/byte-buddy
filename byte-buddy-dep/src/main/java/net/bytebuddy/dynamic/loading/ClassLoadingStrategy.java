@@ -14,6 +14,8 @@ import java.util.Map;
  */
 public interface ClassLoadingStrategy {
 
+    ClassLoader BOOTSTRAP_LOADER = null;
+
     /**
      * Loads a given collection of classes given their binary representation.
      *
