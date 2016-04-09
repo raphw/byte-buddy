@@ -1968,120 +1968,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An offset mapping for a field.
                  */
-                class ForField implements Target {
-
-                    /**
-                     * The field being read.
-                     */
-                    private final FieldDescription fieldDescription;
-
-                    /**
-                     * Creates a new offset mapping for a field.
-                     *
-                     * @param fieldDescription The field being read.
-                     */
-                    protected ForField(FieldDescription fieldDescription) {
-                        this.fieldDescription = fieldDescription;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ISTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.FSTORE:
-                                if (fieldDescription.isStatic()) {
-                                    methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
-                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                            fieldDescription.getInternalName(),
-                                            fieldDescription.getDescriptor());
-                                    return NO_PADDING;
-                                } else {
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                    methodVisitor.visitInsn(Opcodes.DUP_X1);
-                                    methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
-                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                            fieldDescription.getInternalName(),
-                                            fieldDescription.getDescriptor());
-                                    methodVisitor.visitInsn(Opcodes.POP);
-                                    return 2;
-                                }
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                if (fieldDescription.isStatic()) {
-                                    methodVisitor.visitFieldInsn(Opcodes.PUTSTATIC,
-                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                            fieldDescription.getInternalName(),
-                                            fieldDescription.getDescriptor());
-                                    return NO_PADDING;
-                                } else {
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                    methodVisitor.visitInsn(Opcodes.DUP_X2);
-                                    methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
-                                            fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                            fieldDescription.getInternalName(),
-                                            fieldDescription.getDescriptor());
-                                    methodVisitor.visitInsn(Opcodes.POP2);
-                                    return 3;
-                                }
-                            case Opcodes.ILOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.ALOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.DLOAD:
-                                int accessOpcode;
-                                if (fieldDescription.isStatic()) {
-                                    accessOpcode = Opcodes.GETSTATIC;
-                                } else {
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                    accessOpcode = Opcodes.GETFIELD;
-                                }
-                                methodVisitor.visitFieldInsn(accessOpcode,
-                                        fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                        fieldDescription.getInternalName(),
-                                        fieldDescription.getDescriptor());
-                                return NO_PADDING;
-                            default:
-                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                        }
-                    }
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                        methodVisitor.visitInsn(Opcodes.DUP_X1);
-                        methodVisitor.visitFieldInsn(Opcodes.PUTFIELD,
-                                fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                fieldDescription.getInternalName(),
-                                fieldDescription.getDescriptor());
-                        methodVisitor.visitInsn(Opcodes.POP);
-                        return 2;
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
-                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return fieldDescription.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyField{" +
-                                "fieldDescription=" + fieldDescription +
-                                '}';
-                    }
-                }
-
-                /**
-                 * An offset mapping for a field.
-                 */
                 class ForReadOnlyField implements Target {
 
                     /**
@@ -2133,6 +2019,111 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException("Cannot write to field: " + fieldDescription);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
+                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyField{" +
+                                "fieldDescription=" + fieldDescription +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An offset mapping for a field.
+                 */
+                class ForField implements Target {
+
+                    /**
+                     * The field being read.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * Creates a new offset mapping for a field.
+                     *
+                     * @param fieldDescription The field being read.
+                     */
+                    protected ForField(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ISTORE:
+                            case Opcodes.ASTORE:
+                            case Opcodes.FSTORE:
+                                if (!fieldDescription.isStatic()) {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    methodVisitor.visitInsn(Opcodes.DUP_X1);
+                                    methodVisitor.visitInsn(Opcodes.POP);
+                                    accessField(methodVisitor, Opcodes.PUTFIELD);
+                                    return 2;
+                                }
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                if (!fieldDescription.isStatic()) {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    methodVisitor.visitInsn(Opcodes.DUP_X2);
+                                    methodVisitor.visitInsn(Opcodes.POP);
+                                    accessField(methodVisitor, Opcodes.PUTFIELD);
+                                    return 2;
+                                }
+                                accessField(methodVisitor, Opcodes.PUTSTATIC);
+                                return NO_PADDING;
+                            case Opcodes.ILOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.ALOAD:
+                            case Opcodes.LLOAD:
+                            case Opcodes.DLOAD:
+                                if (fieldDescription.isStatic()) {
+                                    accessField(methodVisitor, Opcodes.GETSTATIC);
+                                } else {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    accessField(methodVisitor, Opcodes.GETFIELD);
+                                }
+                                return NO_PADDING;
+                            default:
+                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                        }
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        if (fieldDescription.isStatic()) {
+                            accessField(methodVisitor, Opcodes.GETFIELD);
+                            methodVisitor.visitInsn(Opcodes.IINC);
+                            accessField(methodVisitor, Opcodes.PUTFIELD);
+                            return NO_PADDING;
+                        } else {
+                            methodVisitor.visitIntInsn(Opcodes.ALOAD, 0);
+                            methodVisitor.visitInsn(Opcodes.DUP);
+                            accessField(methodVisitor, Opcodes.GETSTATIC);
+                            methodVisitor.visitInsn(Opcodes.IINC);
+                            accessField(methodVisitor, Opcodes.PUTSTATIC);
+                            return 2;
+                        }
+                    }
+
+                    private void accessField(MethodVisitor methodVisitor, int opcode) {
+                        methodVisitor.visitFieldInsn(opcode,
+                                fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                fieldDescription.getInternalName(),
+                                fieldDescription.getDescriptor());
                     }
 
                     @Override
