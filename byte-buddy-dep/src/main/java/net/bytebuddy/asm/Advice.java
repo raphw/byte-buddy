@@ -3496,10 +3496,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                     Object userValue = dynamicValue.resolve(instrumentedMethod, mappedParameter, userAnnotation, context.isInitialized());
-                    if ((instrumentedMethod.getReturnType().represents(String.class) && !(userValue instanceof String))
-                            || (instrumentedMethod.getReturnType().represents(Class.class) && !(userValue instanceof TypeDescription || userValue instanceof Class))
-                            || (instrumentedMethod.getReturnType().isPrimitive() && !instrumentedMethod.getReturnType().asErasure().isInstanceOrWrapper(userValue))) {
-                        throw new IllegalStateException("Cannot map " + userValue + " as constant value of " + instrumentedMethod.getReturnType());
+                    if (userValue == null) {
+                        if (mappedParameter.getType().isPrimitive()) {
+                            throw new IllegalStateException("Cannot map null to primitive type of " + mappedParameter);
+                        }
+                        return Target.ForNullConstant.INSTANCE;
+                    } else if ((mappedParameter.getType().represents(String.class) && !(userValue instanceof String))
+                            || (mappedParameter.getType().represents(Class.class) && !(userValue instanceof TypeDescription || userValue instanceof Class))
+                            || (mappedParameter.getType().isPrimitive() && !mappedParameter.getType().asErasure().isInstanceOrWrapper(userValue))) {
+                        throw new IllegalStateException("Cannot map " + userValue + " as constant value of " + mappedParameter.getType());
                     } else if (userValue instanceof TypeDescription) {
                         userValue = Type.getType(((TypeDescription) userValue).getDescriptor());
                     } else if (userValue instanceof Class) {
