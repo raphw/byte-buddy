@@ -105,13 +105,20 @@ public class AdviceTypeTest {
         }
 
         @Advice.OnMethodEnter
-        public static void enter() {
+        public static void enter(@Advice.BoxedArguments Object[] boxed) {
+            if (boxed.length != 2 || boxed[0] != null || boxed[1] != null) {
+                throw new AssertionError();
+            }
             enter++;
         }
 
         @Advice.OnMethodExit
-        public static void exit(@Advice.Thrown Throwable throwable) {
+        public static void exit(@Advice.Thrown Throwable throwable,
+                                @Advice.BoxedArguments Object[] boxed) {
             if (!(exception ? throwable instanceof RuntimeException : throwable == null)) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || boxed[0] != null || boxed[1] != null) {
                 throw new AssertionError();
             }
             exit++;
@@ -141,6 +148,7 @@ public class AdviceTypeTest {
         public static boolean enter(@Advice.Ignored boolean value,
                                     @Advice.Argument(0) boolean argument,
                                     @Advice.Argument(value = 1, readOnly = false) boolean mutableArgument,
+                                    @Advice.BoxedArguments Object[] boxed,
                                     @Advice.FieldValue(FIELD) boolean field,
                                     @Advice.FieldValue(STATIC_FIELD) boolean staticField,
                                     @Advice.FieldValue(value = MUTATED, readOnly = false) boolean mutated,
@@ -155,7 +163,13 @@ public class AdviceTypeTest {
             if (!argument || !mutableArgument) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals(BOOLEAN) || !boxed[1].equals(BOOLEAN)) {
+                throw new AssertionError();
+            }
             mutableArgument = false;
+            if (boxed.length != 2 || !boxed[0].equals(BOOLEAN) || !boxed[1].equals(false)) {
+                throw new AssertionError();
+            }
             if (!field || !mutated || !staticField || !mutatedStatic) {
                 throw new AssertionError();
             }
@@ -169,6 +183,7 @@ public class AdviceTypeTest {
                                    @Advice.Enter boolean enter,
                                    @Advice.Thrown Throwable throwable,
                                    @Advice.Argument(0) boolean argument,
+                                   @Advice.BoxedArguments Object[] boxed,
                                    @Advice.Argument(value = 1, readOnly = false) boolean mutableArgument,
                                    @Advice.FieldValue(FIELD) boolean field,
                                    @Advice.FieldValue(STATIC_FIELD) boolean staticField,
@@ -180,6 +195,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (!argument || mutableArgument) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals(BOOLEAN) || !boxed[1].equals(false)) {
                 throw new AssertionError();
             }
             if (!field || mutated || !staticField || mutatedStatic) {
@@ -213,6 +231,7 @@ public class AdviceTypeTest {
         public static byte enter(@Advice.Ignored byte value,
                                  @Advice.Argument(0) byte argument,
                                  @Advice.Argument(value = 1, readOnly = false) byte mutableArgument,
+                                 @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) byte field,
                                  @Advice.FieldValue(STATIC_FIELD) byte staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) byte mutated,
@@ -227,7 +246,13 @@ public class AdviceTypeTest {
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals(VALUE) || !boxed[1].equals(VALUE)) {
+                throw new AssertionError();
+            }
             mutableArgument = VALUE * 2;
+            if (boxed.length != 2 || !boxed[0].equals(VALUE) || !boxed[1].equals((byte) (VALUE * 2))) {
+                throw new AssertionError();
+            }
             if (field != VALUE || mutated != VALUE || staticField != VALUE  || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
@@ -242,6 +267,7 @@ public class AdviceTypeTest {
                                 @Advice.Thrown Throwable throwable,
                                 @Advice.Argument(0) byte argument,
                                 @Advice.Argument(value = 1, readOnly = false) byte mutableArgument,
+                                @Advice.BoxedArguments Object[] boxed,
                                 @Advice.FieldValue(FIELD) byte field,
                                 @Advice.FieldValue(STATIC_FIELD) byte staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) byte mutated,
@@ -252,6 +278,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals(VALUE) || !boxed[1].equals((byte) (VALUE * 2))) {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
@@ -285,6 +314,7 @@ public class AdviceTypeTest {
         public static short enter(@Advice.Ignored short value,
                                   @Advice.Argument(0) short argument,
                                   @Advice.Argument(value = 1, readOnly = false) short mutableArgument,
+                                  @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) short field,
                                   @Advice.FieldValue(STATIC_FIELD) short staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) short mutated,
@@ -299,7 +329,13 @@ public class AdviceTypeTest {
             if (argument != VALUE || mutableArgument != VALUE) {
                 //throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals((short) VALUE) || !boxed[1].equals((short) VALUE)) {
+                throw new AssertionError();
+            }
             mutableArgument = VALUE * 2;
+            if (boxed.length != 2 || !boxed[0].equals((short) VALUE) || !boxed[1].equals((short) (VALUE * 2))) {
+                throw new AssertionError();
+            }
             if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
@@ -314,6 +350,7 @@ public class AdviceTypeTest {
                                  @Advice.Thrown Throwable throwable,
                                  @Advice.Argument(0) short argument,
                                  @Advice.Argument(value = 1, readOnly = false) short mutableArgument,
+                                 @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) short field,
                                  @Advice.FieldValue(STATIC_FIELD) short staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) short mutated,
@@ -324,7 +361,10 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
-               // throw new AssertionError();
+               throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals((short) VALUE) || !boxed[1].equals((short) (VALUE * 2))) {
+                throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
                 throw new AssertionError();
@@ -357,6 +397,7 @@ public class AdviceTypeTest {
         public static char enter(@Advice.Ignored char value,
                                  @Advice.Argument(0) char argument,
                                  @Advice.Argument(value = 1, readOnly = false) char mutableArgument,
+                                 @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) char field,
                                  @Advice.FieldValue(STATIC_FIELD) char staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) char mutated,
@@ -371,7 +412,13 @@ public class AdviceTypeTest {
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals((char) VALUE) || !boxed[1].equals((char) VALUE)) {
+                throw new AssertionError();
+            }
             mutableArgument = VALUE * 2;
+            if (boxed.length != 2 || !boxed[0].equals((char) VALUE) || !boxed[1].equals((char) (VALUE * 2))) {
+                throw new AssertionError();
+            }
             if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
@@ -386,6 +433,7 @@ public class AdviceTypeTest {
                                 @Advice.Thrown Throwable throwable,
                                 @Advice.Argument(0) char argument,
                                 @Advice.Argument(value = 1, readOnly = false) char mutableArgument,
+                                @Advice.BoxedArguments Object[] boxed,
                                 @Advice.FieldValue(FIELD) char field,
                                 @Advice.FieldValue(STATIC_FIELD) char staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) char mutated,
@@ -396,6 +444,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals((char) VALUE) || !boxed[1].equals((char) (VALUE * 2))) {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
@@ -429,6 +480,7 @@ public class AdviceTypeTest {
         public static int enter(@Advice.Ignored int value,
                                 @Advice.Argument(0) int argument,
                                 @Advice.Argument(value = 1, readOnly = false) int mutableArgument,
+                                @Advice.BoxedArguments Object[] boxed,
                                 @Advice.FieldValue(FIELD) int field,
                                 @Advice.FieldValue(STATIC_FIELD) int staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) int mutated,
@@ -443,7 +495,13 @@ public class AdviceTypeTest {
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals((int) VALUE) || !boxed[1].equals((int) (VALUE))) {
+                throw new AssertionError();
+            }
             mutableArgument = VALUE * 2;
+            if (boxed.length != 2 || !boxed[0].equals((int) VALUE) || !boxed[1].equals(VALUE * 2)) {
+                throw new AssertionError();
+            }
             if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
@@ -458,6 +516,7 @@ public class AdviceTypeTest {
                                @Advice.Thrown Throwable throwable,
                                @Advice.Argument(0) int argument,
                                @Advice.Argument(value = 1, readOnly = false) int mutableArgument,
+                               @Advice.BoxedArguments Object[] boxed,
                                @Advice.FieldValue(FIELD) int field,
                                @Advice.FieldValue(STATIC_FIELD) int staticField,
                                @Advice.FieldValue(value = MUTATED, readOnly = false) int mutated,
@@ -468,6 +527,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals((int) VALUE) || !boxed[1].equals(VALUE * 2)) {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
@@ -501,6 +563,7 @@ public class AdviceTypeTest {
         public static long enter(@Advice.Ignored long value,
                                  @Advice.Argument(0) long argument,
                                  @Advice.Argument(value = 1, readOnly = false) long mutableArgument,
+                                 @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) long field,
                                  @Advice.FieldValue(STATIC_FIELD) long staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) long mutated,
@@ -515,7 +578,13 @@ public class AdviceTypeTest {
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals((long) VALUE) || !boxed[1].equals((long) (VALUE))) {
+                throw new AssertionError();
+            }
             mutableArgument = VALUE * 2;
+            if (boxed.length != 2 || !boxed[0].equals((long) VALUE) || !boxed[1].equals((long) (VALUE * 2))) {
+                throw new AssertionError();
+            }
             if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
@@ -530,6 +599,7 @@ public class AdviceTypeTest {
                                 @Advice.Thrown Throwable throwable,
                                 @Advice.Argument(0) long argument,
                                 @Advice.Argument(value = 1, readOnly = false) long mutableArgument,
+                                @Advice.BoxedArguments Object[] boxed,
                                 @Advice.FieldValue(FIELD) long field,
                                 @Advice.FieldValue(STATIC_FIELD) long staticField,
                                 @Advice.FieldValue(value = MUTATED, readOnly = false) long mutated,
@@ -540,6 +610,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals((long) VALUE) || !boxed[1].equals((long) (VALUE * 2))) {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
@@ -573,6 +646,7 @@ public class AdviceTypeTest {
         public static float enter(@Advice.Ignored float value,
                                   @Advice.Argument(0) float argument,
                                   @Advice.Argument(value = 1, readOnly = false) float mutableArgument,
+                                  @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) float field,
                                   @Advice.FieldValue(STATIC_FIELD) float staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) float mutated,
@@ -587,7 +661,13 @@ public class AdviceTypeTest {
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals((float) VALUE) || !boxed[1].equals((float) (VALUE))) {
+                throw new AssertionError();
+            }
             mutableArgument = VALUE * 2;
+            if (boxed.length != 2 || !boxed[0].equals((float) VALUE) || !boxed[1].equals((float) (VALUE * 2))) {
+                throw new AssertionError();
+            }
             if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
@@ -599,9 +679,10 @@ public class AdviceTypeTest {
         @Advice.OnMethodExit
         public static float exit(@Advice.Return float result,
                                  @Advice.Enter float enter,
+                                 @Advice.Thrown Throwable throwable,
                                  @Advice.Argument(0) float argument,
                                  @Advice.Argument(value = 1, readOnly = false) float mutableArgument,
-                                 @Advice.Thrown Throwable throwable,
+                                 @Advice.BoxedArguments Object[] boxed,
                                  @Advice.FieldValue(FIELD) float field,
                                  @Advice.FieldValue(STATIC_FIELD) float staticField,
                                  @Advice.FieldValue(value = MUTATED, readOnly = false) float mutated,
@@ -612,6 +693,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals((float) VALUE) || !boxed[1].equals((float) (VALUE * 2))) {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
@@ -645,6 +729,7 @@ public class AdviceTypeTest {
         public static double enter(@Advice.Ignored double value,
                                    @Advice.Argument(0) double argument,
                                    @Advice.Argument(value = 1, readOnly = false) double mutableArgument,
+                                   @Advice.BoxedArguments Object[] boxed,
                                    @Advice.FieldValue(FIELD) double field,
                                    @Advice.FieldValue(STATIC_FIELD) double staticField,
                                    @Advice.FieldValue(value = MUTATED, readOnly = false) double mutated,
@@ -659,7 +744,13 @@ public class AdviceTypeTest {
             if (argument != VALUE || mutableArgument != VALUE) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals((double) VALUE) || !boxed[1].equals((double) (VALUE))) {
+                throw new AssertionError();
+            }
             mutableArgument = VALUE * 2;
+            if (boxed.length != 2 || !boxed[0].equals((double) VALUE) || !boxed[1].equals((double) (VALUE * 2))) {
+                throw new AssertionError();
+            }
             if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
@@ -674,6 +765,7 @@ public class AdviceTypeTest {
                                   @Advice.Thrown Throwable throwable,
                                   @Advice.Argument(0) double argument,
                                   @Advice.Argument(value = 1, readOnly = false) double mutableArgument,
+                                  @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) double field,
                                   @Advice.FieldValue(STATIC_FIELD) double staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) double mutated,
@@ -684,6 +776,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (argument != VALUE || mutableArgument != VALUE * 2) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals((double) VALUE) || !boxed[1].equals((double) (VALUE * 2))) {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
@@ -717,6 +812,7 @@ public class AdviceTypeTest {
         public static Object enter(@Advice.Ignored Object value,
                                    @Advice.Argument(0) Object argument,
                                    @Advice.Argument(value = 1, readOnly = false) Object mutableArgument,
+                                   @Advice.BoxedArguments Object[] boxed,
                                    @Advice.FieldValue(FIELD) Object field,
                                    @Advice.FieldValue(STATIC_FIELD) Object staticField,
                                    @Advice.FieldValue(value = MUTATED, readOnly = false) Object mutated,
@@ -731,7 +827,13 @@ public class AdviceTypeTest {
             if (!argument.equals(FOO) || !mutableArgument.equals(FOO)) {
                 throw new AssertionError();
             }
+            if (boxed.length != 2 || !boxed[0].equals(FOO) || !boxed[1].equals(FOO)) {
+                throw new AssertionError();
+            }
             mutableArgument = BAR;
+            if (boxed.length != 2 || !boxed[0].equals(FOO) || !boxed[1].equals(BAR)) {
+                throw new AssertionError();
+            }
             if (!field.equals(FOO) || !mutated.equals(FOO) || !staticField.equals(FOO) || !mutatedStatic.equals(FOO)) {
                 throw new AssertionError();
             }
@@ -746,6 +848,7 @@ public class AdviceTypeTest {
                                   @Advice.Thrown Throwable throwable,
                                   @Advice.Argument(0) Object argument,
                                   @Advice.Argument(value = 1, readOnly = false) Object mutableArgument,
+                                  @Advice.BoxedArguments Object[] boxed,
                                   @Advice.FieldValue(FIELD) Object field,
                                   @Advice.FieldValue(STATIC_FIELD) Object staticField,
                                   @Advice.FieldValue(value = MUTATED, readOnly = false) Object mutated,
@@ -756,6 +859,9 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             if (!argument.equals(FOO) || !mutableArgument.equals(BAR)) {
+                throw new AssertionError();
+            }
+            if (boxed.length != 2 || !boxed[0].equals(FOO) || !boxed[1].equals(BAR)) {
                 throw new AssertionError();
             }
             if (!field.equals(FOO) || !mutated.equals(BAR) || !staticField.equals(FOO) || !mutatedStatic.equals(BAR)) {

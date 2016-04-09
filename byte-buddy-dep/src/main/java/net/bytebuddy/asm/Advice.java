@@ -2263,9 +2263,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         SHORT(Opcodes.ILOAD, Short.class, short.class),
                         CHARACTER(Opcodes.ILOAD, Character.class, char.class),
                         INTEGER(Opcodes.ILOAD, Integer.class, int.class),
-                        LONG(Opcodes.ILOAD, Long.class, long.class),
-                        FLOAT(Opcodes.ILOAD, Float.class, float.class),
-                        DOUBLE(Opcodes.ILOAD, Double.class, double.class);
+                        LONG(Opcodes.LLOAD, Long.class, long.class),
+                        FLOAT(Opcodes.FLOAD, Float.class, float.class),
+                        DOUBLE(Opcodes.DLOAD, Double.class, double.class);
 
                         private static final String VALUE_OF = "valueOf";
 
@@ -2335,7 +2335,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 for (ParameterDescription parameter : parameters) {
                                     methodVisitor.visitInsn(Opcodes.DUP);
                                     loadInteger(methodVisitor, parameter.getIndex());
-                                    ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
+                                    if (parameter.getType().isPrimitive()) {
+                                        ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
+                                    } else {
+                                        methodVisitor.visitIntInsn(Opcodes.ALOAD, parameter.getOffset());
+                                    }
                                     methodVisitor.visitInsn(Opcodes.AASTORE);
                                     stackSize = stackSize.maximum(parameter.getType().getStackSize());
                                 }
