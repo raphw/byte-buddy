@@ -2654,6 +2654,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            enum ForInstrumentedType implements OffsetMapping {
+
+                INSTANCE;
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return new Target.ForConstantPoolValue(Type.getType(instrumentedMethod.getDeclaringType().getDescriptor()));
+                }
+            }
+
             /**
              * An offset mapping for a field.
              */
@@ -3138,10 +3148,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         AnnotationDescription.Loadable<Origin> origin = parameterDescription.getDeclaredAnnotations().ofType(Origin.class);
                         if (origin == null) {
                             return UNDEFINED;
+                        } else if (parameterDescription.getType().represents(Class.class)) {
+                            return OffsetMapping.ForInstrumentedType.INSTANCE;
+                        } else if (!parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
+                            throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
                         } else {
-                            if (!parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
-                                throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
-                            }
                             return ForOrigin.parse(origin.loadSilent().value());
                         }
                     }
@@ -3414,27 +3425,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedArguments.class)) {
                         return UNDEFINED;
                     } else if (!parameterDescription.getType().represents(Object[].class)) {
-                        throw new IllegalStateException(); // TODO
-                    } else {
-                        return this;
-                    }
-                }
-            }
-
-            enum ForOriginType implements OffsetMapping, Factory {
-
-                INSTANCE;
-
-                @Override
-                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                    return new Target.ForConstantPoolValue(Type.getType(instrumentedMethod.getDeclaringType().getDescriptor()));
-                }
-
-                @Override
-                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Origin.Type.class)) {
-                        return UNDEFINED;
-                    } else if (!parameterDescription.getType().represents(Class.class)) {
                         throw new IllegalStateException(); // TODO
                     } else {
                         return this;
@@ -3915,7 +3905,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForOriginType.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories));
                     }
@@ -3989,7 +3978,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForThisReference.Factory.INSTANCE,
                                         OffsetMapping.ForField.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                        OffsetMapping.ForOriginType.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
                                         new OffsetMapping.ForEnterValue.Factory(enterType),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
@@ -4772,13 +4760,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The pattern the annotated parameter should be assigned.
          */
         String value() default DEFAULT;
-
-        @Documented
-        @Retention(RetentionPolicy.RUNTIME)
-        @Target(ElementType.PARAMETER)
-        public @interface Type {
-            /* empty */
-        }
     }
 
     /**
