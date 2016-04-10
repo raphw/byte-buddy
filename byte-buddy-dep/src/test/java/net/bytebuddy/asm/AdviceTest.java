@@ -9,6 +9,7 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -35,19 +36,6 @@ public class AdviceTest {
     private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable", COUNT = "count";
 
     private static final int VALUE = 42;
-
-    @Test
-    public void testTrivialAdvice() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
-                .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-    }
 
     @Test
     public void testEmptyAdviceEntryAndExit() throws Exception {
@@ -204,6 +192,33 @@ public class AdviceTest {
     }
 
     @Test
+    public void testTrivialAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testTrivialAdviceDuplicate() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
     public void testAdviceOnConstructor() throws Exception {
         Class<?> type = new ByteBuddy() // TODO: Exception when constructor for certain types and throwable
                 .redefine(Sample.class)
@@ -308,6 +323,26 @@ public class AdviceTest {
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceNotSkipExceptionImplicitDuplicate() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
     }
 
     @Test
