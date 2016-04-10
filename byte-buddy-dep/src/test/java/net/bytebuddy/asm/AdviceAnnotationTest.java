@@ -24,7 +24,6 @@ public class AdviceAnnotationTest {
                 {Advice.Enter.class, ElementType.PARAMETER},
                 {Advice.Ignored.class, ElementType.PARAMETER},
                 {Advice.Origin.class, ElementType.PARAMETER},
-                {Advice.Origin.Type.class, ElementType.PARAMETER},
                 {Advice.Return.class, ElementType.PARAMETER},
                 {Advice.This.class, ElementType.PARAMETER},
                 {Advice.Thrown.class, ElementType.PARAMETER},
