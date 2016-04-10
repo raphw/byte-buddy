@@ -4921,21 +4921,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @SuppressWarnings("unused")
     public interface DynamicValue<T extends Annotation> {
 
-        Serializable resolve(MethodDescription.InDefinedShape instrumentedMethod,
+        Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
                              ParameterDescription.InDefinedShape target,
                              AnnotationDescription.Loadable<T> annotation,
                              boolean initialized);
 
         class ForFixedValue<S extends Annotation> implements DynamicValue<S> {
 
-            private final Serializable value;
+            private final Object value;
 
-            public ForFixedValue(Serializable value) {
+            public ForFixedValue(Object value) {
                 this.value = value;
             }
 
             @Override
-            public Serializable resolve(MethodDescription.InDefinedShape instrumentedMethod,
+            public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
                                         ParameterDescription.InDefinedShape target,
                                         AnnotationDescription.Loadable<S> annotation,
                                         boolean initialized) {
