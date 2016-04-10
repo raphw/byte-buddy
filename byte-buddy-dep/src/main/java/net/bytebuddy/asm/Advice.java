@@ -3529,40 +3529,40 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
-            class ForUserValue implements OffsetMapping {
+            class ForUserValue<T extends Annotation> implements OffsetMapping {
 
-                private final ParameterDescription.InDefinedShape mappedParameter;
+                private final ParameterDescription.InDefinedShape target;
 
-                private final AnnotationDescription userAnnotation;
+                private final AnnotationDescription.Loadable<T> annotation;
 
-                private final DynamicValue<?> dynamicValue;
+                private final DynamicValue<T> dynamicValue;
 
-                protected ForUserValue(ParameterDescription.InDefinedShape mappedParameter,
-                                       AnnotationDescription userAnnotation,
-                                       DynamicValue<?> dynamicValue) {
-                    this.mappedParameter = mappedParameter;
-                    this.userAnnotation = userAnnotation;
+                protected ForUserValue(ParameterDescription.InDefinedShape target,
+                                       AnnotationDescription.Loadable<T> annotation,
+                                       DynamicValue<T> dynamicValue) {
+                    this.target = target;
+                    this.annotation = annotation;
                     this.dynamicValue = dynamicValue;
                 }
 
                 @Override
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                    Object userValue = dynamicValue.resolve(instrumentedMethod, mappedParameter, userAnnotation, context.isInitialized());
-                    if (userValue == null) {
-                        if (mappedParameter.getType().isPrimitive()) {
-                            throw new IllegalStateException("Cannot map null to primitive type of " + mappedParameter);
+                    Object value = dynamicValue.resolve(instrumentedMethod, target, annotation, context.isInitialized());
+                    if (value == null) {
+                        if (target.getType().isPrimitive()) {
+                            throw new IllegalStateException("Cannot map null to primitive type of " + target);
                         }
                         return Target.ForNullConstant.INSTANCE;
-                    } else if ((mappedParameter.getType().represents(String.class) && !(userValue instanceof String))
-                            || (mappedParameter.getType().represents(Class.class) && !(userValue instanceof TypeDescription || userValue instanceof Class))
-                            || (mappedParameter.getType().isPrimitive() && !mappedParameter.getType().asErasure().isInstanceOrWrapper(userValue))) { // TODO: method handles, method types
-                        throw new IllegalStateException("Cannot map " + userValue + " as constant value of " + mappedParameter.getType());
-                    } else if (userValue instanceof TypeDescription) {
-                        userValue = Type.getType(((TypeDescription) userValue).getDescriptor());
-                    } else if (userValue instanceof Class) {
-                        userValue = Type.getType((Class<?>) userValue);
+                    } else if ((target.getType().represents(String.class) && !(value instanceof String))
+                            || (target.getType().represents(Class.class) && !(value instanceof TypeDescription || value instanceof Class))
+                            || (target.getType().isPrimitive() && !target.getType().asErasure().isInstanceOrWrapper(value))) { // TODO: method handles, method types
+                        throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
+                    } else if (value instanceof TypeDescription) {
+                        value = Type.getType(((TypeDescription) value).getDescriptor());
+                    } else if (value instanceof Class) {
+                        value = Type.getType((Class<?>) value);
                     }
-                    return new Target.ForConstantPoolValue(userValue);
+                    return new Target.ForConstantPoolValue(value);
                 }
 
                 @Override
@@ -3570,15 +3570,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     ForUserValue that = (ForUserValue) object;
-                    return mappedParameter.equals(that.mappedParameter)
-                            && userAnnotation.equals(that.userAnnotation)
+                    return target.equals(that.target)
+                            && annotation.equals(that.annotation)
                             && dynamicValue.equals(that.dynamicValue);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = mappedParameter.hashCode();
-                    result = 31 * result + userAnnotation.hashCode();
+                    int result = target.hashCode();
+                    result = 31 * result + annotation.hashCode();
                     result = 31 * result + dynamicValue.hashCode();
                     return result;
                 }
@@ -3586,29 +3586,34 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public String toString() {
                     return "Advice.Dispatcher.OffsetMapping.ForUserValue{" +
-                            "mappedParameter=" + mappedParameter +
-                            ", userAnnotation=" + userAnnotation +
+                            "target=" + target +
+                            ", annotation=" + annotation +
                             ", dynamicValue=" + dynamicValue +
                             '}';
                 }
 
-                protected static class Factory implements OffsetMapping.Factory {
+                protected static class Factory<S extends Annotation> implements OffsetMapping.Factory {
 
-                    private final TypeDescription annotationType;
+                    private final Class<S> type;
 
-                    private final DynamicValue<?> dynamicValue;
+                    private final DynamicValue<S> dynamicValue;
 
-                    protected Factory(TypeDescription annotationType, DynamicValue<?> dynamicValue) {
-                        this.annotationType = annotationType;
+                    protected Factory(Class<S> type, DynamicValue<S> dynamicValue) {
+                        this.type = type;
                         this.dynamicValue = dynamicValue;
+                    }
+
+                    @SuppressWarnings("unchecked")
+                    protected static OffsetMapping.Factory of(Class<? extends Annotation> type, DynamicValue<?> dynamicValue) {
+                        return new Factory(type, dynamicValue);
                     }
 
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                        AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(annotationType);
+                        AnnotationDescription.Loadable<S> annotation = parameterDescription.getDeclaredAnnotations().ofType(type);
                         return annotation == null
                                 ? UNDEFINED
-                                : new ForUserValue(parameterDescription, annotation, dynamicValue);
+                                : new ForUserValue<S>(parameterDescription, annotation, dynamicValue);
                     }
 
                     @Override
@@ -3616,12 +3621,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         Factory factory = (Factory) object;
-                        return annotationType.equals(factory.annotationType) && dynamicValue.equals(factory.dynamicValue);
+                        return type.equals(factory.type) && dynamicValue.equals(factory.dynamicValue);
                     }
 
                     @Override
                     public int hashCode() {
-                        int result = annotationType.hashCode();
+                        int result = type.hashCode();
                         result = 31 * result + dynamicValue.hashCode();
                         return result;
                     }
@@ -3629,7 +3634,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public String toString() {
                         return "Advice.Dispatcher.OffsetMapping.ForUserValue.Factory{" +
-                                "annotationType=" + annotationType +
+                                "type=" + type +
                                 ", dynamicValue=" + dynamicValue +
                                 '}';
                     }
@@ -4917,8 +4922,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public interface DynamicValue<T extends Annotation> {
 
         Serializable resolve(MethodDescription.InDefinedShape instrumentedMethod,
-                             ParameterDescription.InDefinedShape mappedParameter,
-                             AnnotationDescription annotation,
+                             ParameterDescription.InDefinedShape target,
+                             AnnotationDescription.Loadable<T> annotation,
                              boolean initialized);
 
         class ForFixedValue<S extends Annotation> implements DynamicValue<S> {
@@ -4931,8 +4936,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public Serializable resolve(MethodDescription.InDefinedShape instrumentedMethod,
-                                        ParameterDescription.InDefinedShape mappedParameter,
-                                        AnnotationDescription annotation,
+                                        ParameterDescription.InDefinedShape target,
+                                        AnnotationDescription.Loadable<S> annotation,
                                         boolean initialized) {
                 return value;
             }
@@ -4941,22 +4946,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     public static class WithCustomMapping {
 
-        private final Map<TypeDescription, DynamicValue<?>> dynamicValues;
+        private final Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues;
 
         protected WithCustomMapping() {
-            this(Collections.<TypeDescription, DynamicValue<?>>emptyMap());
+            this(Collections.<Class<? extends Annotation>, DynamicValue<?>>emptyMap());
         }
 
-        protected WithCustomMapping(Map<TypeDescription, DynamicValue<?>> dynamicValues) {
+        protected WithCustomMapping(Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues) {
             this.dynamicValues = dynamicValues;
         }
 
         public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, DynamicValue<T> dynamicValue) {
-            return bind(new TypeDescription.ForLoadedType(type), dynamicValue);
-        }
-
-        public WithCustomMapping bind(TypeDescription type, DynamicValue<?> dynamicValue) {
-            Map<TypeDescription, DynamicValue<?>> dynamicValues = new HashMap<TypeDescription, Advice.DynamicValue<?>>(this.dynamicValues);
+            Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues = new HashMap<Class<? extends Annotation>, Advice.DynamicValue<?>>(this.dynamicValues);
             if (!type.isAnnotation()) {
                 throw new IllegalArgumentException("Not an annotation type: " + type);
             } else if (dynamicValues.put(type, dynamicValue) != null) {
@@ -4989,8 +4990,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         public Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
-            for (Map.Entry<TypeDescription, DynamicValue<?>> entry : dynamicValues.entrySet()) {
-                userFactories.add(new Dispatcher.OffsetMapping.ForUserValue.Factory(entry.getKey(), entry.getValue()));
+            for (Map.Entry<Class<? extends Annotation>, DynamicValue<?>> entry : dynamicValues.entrySet()) {
+                userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
             }
             return Advice.to(typeDescription, classFileLocator, userFactories);
         }
