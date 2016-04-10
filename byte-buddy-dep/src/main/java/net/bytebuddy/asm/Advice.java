@@ -2892,21 +2892,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 private static final char ESCAPE = '\\';
 
                 /**
-                 * The method name symbol.
-                 */
-                private static final char METHOD_NAME = 'm';
-
-                /**
-                 * The type name symbol.
-                 */
-                private static final char TYPE_NAME = 't';
-
-                /**
-                 * The descriptor symbol.
-                 */
-                private static final char DESCRIPTOR = 'd';
-
-                /**
                  * The renderers to apply.
                  */
                 private final List<Renderer> renderers;
@@ -2942,14 +2927,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             }
                             renderers.add(new Renderer.ForConstantValue(pattern.substring(from, to).replace("" + ESCAPE + ESCAPE, "" + ESCAPE)));
                             switch (pattern.charAt(to + 1)) {
-                                case METHOD_NAME:
+                                case Renderer.ForMethodName.SYMBOL:
                                     renderers.add(Renderer.ForMethodName.INSTANCE);
                                     break;
-                                case TYPE_NAME:
+                                case Renderer.ForTypeName.SYMBOL:
                                     renderers.add(Renderer.ForTypeName.INSTANCE);
                                     break;
-                                case DESCRIPTOR:
+                                case Renderer.ForDescriptor.SYMBOL:
                                     renderers.add(Renderer.ForDescriptor.INSTANCE);
+                                    break;
+                                case Renderer.ForReturnTypeName.SYMBOL:
+                                    renderers.add(Renderer.ForReturnTypeName.INSTANCE);
+                                    break;
+                                case Renderer.ForSignature.SYMBOL:
+                                    renderers.add(Renderer.ForSignature.INSTANCE);
                                     break;
                                 default:
                                     throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
@@ -3013,6 +3004,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         INSTANCE;
 
+                        /**
+                         * The method name symbol.
+                         */
+                        protected static final char SYMBOL = 'm';
+
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
                             return instrumentedMethod.getInternalName();
@@ -3033,6 +3029,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * The singleton instance.
                          */
                         INSTANCE;
+
+                        /**
+                         * The type name symbol.
+                         */
+                        protected static final char SYMBOL = 't';
 
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
@@ -3055,6 +3056,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         INSTANCE;
 
+                        /**
+                         * The descriptor symbol.
+                         */
+                        protected static final char SYMBOL = 'd';
+
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
                             return instrumentedMethod.getDescriptor();
@@ -3063,6 +3069,62 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public String toString() {
                             return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForDescriptor." + name();
+                        }
+                    }
+
+                    enum ForSignature implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * The signature symbol.
+                         */
+                        protected static final char SYMBOL = 's';
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            StringBuilder stringBuilder = new StringBuilder("(");
+                            boolean comma = false;
+                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                if (comma) {
+                                    stringBuilder.append(',');
+                                } else {
+                                    comma = true;
+                                }
+                                stringBuilder.append(typeDescription.getName());
+                            }
+                            return stringBuilder.append(')').toString();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForSignature." + name();
+                        }
+                    }
+
+                    enum ForReturnTypeName implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * The return type symbol.
+                         */
+                        protected static final char SYMBOL = 'r';
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            return instrumentedMethod.getReturnType().asErasure().getName();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnType." + name();
                         }
                     }
 
