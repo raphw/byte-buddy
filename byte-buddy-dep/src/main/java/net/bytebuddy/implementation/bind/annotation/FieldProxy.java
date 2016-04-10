@@ -61,7 +61,7 @@ public @interface FieldProxy {
      *
      * @return The name of the field to be accessed.
      */
-    String value() default TargetMethodAnnotationDrivenBinder.ParameterBinder.FieldBinding.BEAN_PROPERTY;
+    String value() default TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding.BEAN_PROPERTY;
 
     /**
      * Determines which type defines the field that is to be accessed. If this property is not set, the most field
@@ -74,7 +74,7 @@ public @interface FieldProxy {
     /**
      * A binder for the {@link FieldProxy} annotation.
      */
-    class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.FieldBinding<FieldProxy> {
+    class Binder extends TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding<FieldProxy> {
 
         /**
          * A reference to the method that declares the field annotation's defining type property.

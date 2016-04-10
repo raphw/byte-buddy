@@ -44,7 +44,7 @@ public @interface FieldValue {
      *
      * @return The name of the field.
      */
-    String value() default TargetMethodAnnotationDrivenBinder.ParameterBinder.FieldBinding.BEAN_PROPERTY;
+    String value() default TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFieldBinding.BEAN_PROPERTY;
 
     /**
      * Defines the type on which the field is declared. If this value is not set, the most specific type's field is read,
@@ -119,7 +119,7 @@ public @interface FieldValue {
         /**
          * A delegate implementation for the {@link FieldValue.Binder}.
          */
-        protected static class Delegate extends TargetMethodAnnotationDrivenBinder.ParameterBinder.FieldBinding<FieldValue> {
+        protected static class Delegate extends ForFieldBinding<FieldValue> {
 
             @Override
             public Class<FieldValue> getHandledType() {

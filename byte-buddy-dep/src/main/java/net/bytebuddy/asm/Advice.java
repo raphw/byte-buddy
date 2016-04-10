@@ -3555,7 +3555,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return Target.ForNullConstant.INSTANCE;
                     } else if ((mappedParameter.getType().represents(String.class) && !(userValue instanceof String))
                             || (mappedParameter.getType().represents(Class.class) && !(userValue instanceof TypeDescription || userValue instanceof Class))
-                            || (mappedParameter.getType().isPrimitive() && !mappedParameter.getType().asErasure().isInstanceOrWrapper(userValue))) {
+                            || (mappedParameter.getType().isPrimitive() && !mappedParameter.getType().asErasure().isInstanceOrWrapper(userValue))) { // TODO: method handles, method types
                         throw new IllegalStateException("Cannot map " + userValue + " as constant value of " + mappedParameter.getType());
                     } else if (userValue instanceof TypeDescription) {
                         userValue = Type.getType(((TypeDescription) userValue).getDescriptor());
