@@ -364,7 +364,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             void recordMaxima(int stackSize, int localVariableLength);
 
-            void recordStackPadding(int padding);
+            /**
+             * Records a minimum padding additionally to the computed stack size that is required for implementing this advice method.
+             *
+             * @param padding The minimum required padding.
+             */
+            void recordPadding(int padding);
         }
 
         /**
@@ -383,7 +388,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void recordStackPadding(int padding) {
+            public void recordPadding(int padding) {
                 /* do nothing */
             }
 
@@ -942,6 +947,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected class ForAdvice extends Default.ForAdvice {
 
+                    /**
+                     * The padding that this advice method requires additionally to its computed size.
+                     */
                     private int padding;
 
                     /**
@@ -969,7 +977,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void recordStackPadding(int padding) {
+                    public void recordPadding(int padding) {
                         this.padding = Math.max(this.padding, padding);
                     }
 
@@ -1055,7 +1063,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void recordStackPadding(int padding) {
+                    public void recordPadding(int padding) {
                         /* do nothing */
                     }
 
@@ -1086,6 +1094,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final MethodDescription.InDefinedShape instrumentedMethod;
 
+        /**
+         * The required padding before using local variables after the instrumented method's arguments.
+         */
         private final int padding;
 
         /**
@@ -1093,6 +1104,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         private final Dispatcher.Bound methodEnter;
 
+        /**
+         * The dispatcher to be used for method exit.
+         */
         protected final Dispatcher.Bound methodExit;
 
         /**
@@ -1106,6 +1120,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param methodVisitor        The method visitor to which all instructions are written.
          * @param instrumentedMethod   The instrumented method.
          * @param methodEnter          The method enter advice.
+         * @param methodExit           The method exit advice.
          * @param yieldedTypes         The types that are expected to be added after the instrumented method returns.
          * @param binaryRepresentation The binary representation of the advice class.
          * @param writerFlags          The ASM writer flags that were set.
@@ -1139,6 +1154,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             onUserStart();
         }
 
+        /**
+         * Invoked when the user method's exception handler (if any) is supposed to be prepared.
+         */
         protected abstract void onUserPrepare();
 
         /**
@@ -1579,6 +1597,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Resolves this dispatcher as a dispatcher for entering a method.
              *
+             * @param userFactories A list of custom factories for binding parameters of an advice method.
              * @return This dispatcher as a dispatcher for entering a method.
              */
             Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories);
@@ -1586,7 +1605,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Resolves this dispatcher as a dispatcher for exiting a method.
              *
-             * @param dispatcher The dispatcher for entering a method.
+             * @param userFactories A list of custom factories for binding parameters of an advice method.
+             * @param dispatcher    The dispatcher for entering a method.
              * @return This dispatcher as a dispatcher for exiting a method.
              */
             Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories, Resolved.ForMethodEnter dispatcher);
@@ -1758,6 +1778,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             interface Target {
 
+                /**
+                 * Indicates that applying this target does not require any additional padding.
+                 */
                 int NO_PADDING = 0;
 
                 /**
@@ -1765,6 +1788,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
                  * @param opcode        The opcode of the original instruction.
+                 * @return The required padding to the advice's total stack size.
                  */
                 int resolveAccess(MethodVisitor methodVisitor, int opcode);
 
@@ -1773,6 +1797,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
                  * @param increment     The value with which to increment the targeted value.
+                 * @return The required padding to the advice's total stack size.
                  */
                 int resolveIncrement(MethodVisitor methodVisitor, int increment);
 
@@ -2103,6 +2128,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
+                    /**
+                     * Accesses a field.
+                     *
+                     * @param methodVisitor The method visitor for which to access the field.
+                     * @param opcode        The opcode for accessing the field.
+                     */
                     private void accessField(MethodVisitor methodVisitor, int opcode) {
                         methodVisitor.visitFieldInsn(opcode,
                                 fieldDescription.getDeclaringType().asErasure().getInternalName(),
@@ -2198,17 +2229,39 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
                 }
 
+                /**
+                 * A target for an offset mapping that boxes a primitive parameter value.
+                 */
                 class ForBoxedParameter implements Target {
 
+                    /**
+                     * The parameters offset.
+                     */
                     private final int offset;
 
+                    /**
+                     * A dispatcher for boxing the primitive value.
+                     */
                     private final BoxingDispatcher boxingDispatcher;
 
+                    /**
+                     * Creates a new offset mapping for boxing a primitive parameter value.
+                     *
+                     * @param offset           The parameters offset.
+                     * @param boxingDispatcher A dispatcher for boxing the primitive value.
+                     */
                     protected ForBoxedParameter(int offset, BoxingDispatcher boxingDispatcher) {
                         this.offset = offset;
                         this.boxingDispatcher = boxingDispatcher;
                     }
 
+                    /**
+                     * Resolves a target representing an assignment of a boxed, primitive parameter value.
+                     *
+                     * @param offset The parameter's offset.
+                     * @param type   The primitive type of the parameter being boxed.
+                     * @return An appropriate target.
+                     */
                     protected static Target of(int offset, TypeDefinition type) {
                         return new ForBoxedParameter(offset, BoxingDispatcher.of(type));
                     }
@@ -2219,16 +2272,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             case Opcodes.ALOAD:
                                 boxingDispatcher.loadBoxed(methodVisitor, offset);
                                 break;
-                            case Opcodes.ILOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.DLOAD:
-                            case Opcodes.ISTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                throw new IllegalStateException(); // TODO
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
@@ -2238,6 +2281,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException(); // TODO
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter{" +
+                                "offset=" + offset +
+                                ", boxingDispatcher=" + boxingDispatcher +
+                                '}';
                     }
 
                     /**
@@ -2324,6 +2375,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             stackSize = StackSize.of(primitiveType);
                         }
 
+                        /**
+                         * Resolves a boxing dispatcher for the supplied primitive type.
+                         *
+                         * @param typeDefinition A description of a primitive type.
+                         * @return An appropriate boxing dispatcher.
+                         */
                         protected static BoxingDispatcher of(TypeDefinition typeDefinition) {
                             if (typeDefinition.represents(boolean.class)) {
                                 return BOOLEAN;
@@ -2342,25 +2399,52 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             } else if (typeDefinition.represents(double.class)) {
                                 return DOUBLE;
                             } else {
-                                throw new IllegalArgumentException(); // TODO
+                                throw new IllegalArgumentException("Cannot box: " + typeDefinition);
                             }
                         }
 
+                        /**
+                         * Loads the value as a boxed version onto the stack.
+                         *
+                         * @param methodVisitor the method visitor for which to load the value.
+                         * @param offset        The offset of the primitive value.
+                         */
                         protected void loadBoxed(MethodVisitor methodVisitor, int offset) {
                             methodVisitor.visitVarInsn(opcode, offset);
                             methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, descriptor, false);
                         }
 
+                        /**
+                         * Returns the stack size of the primitive value.
+                         *
+                         * @return The stack size of the primitive value.
+                         */
                         protected StackSize getStackSize() {
                             return stackSize;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher." + name();
                         }
                     }
                 }
 
+                /**
+                 * A target for an offset mapping of an array containing all (boxed) arguments of the instrumented method.
+                 */
                 class ForBoxedArguments implements Target {
 
+                    /**
+                     * The parameters of the instrumented method.
+                     */
                     private final List<ParameterDescription.InDefinedShape> parameters;
 
+                    /**
+                     * Creates a mapping for a boxed array containing all arguments of the instrumented method.
+                     *
+                     * @param parameters The parameters of the instrumented method.
+                     */
                     protected ForBoxedArguments(List<ParameterDescription.InDefinedShape> parameters) {
                         this.parameters = parameters;
                     }
@@ -2384,21 +2468,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     stackSize = stackSize.maximum(parameter.getType().getStackSize());
                                 }
                                 return stackSize.getSize() + 2;
-                            case Opcodes.ILOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.DLOAD:
-                            case Opcodes.ISTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                throw new IllegalStateException(); // TODO
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
                     }
 
+                    /**
+                     * Londs an integer onto the operand stack.
+                     *
+                     * @param methodVisitor The method visitor for which the integer is loaded.
+                     * @param value         The integer value to load onto the stack.
+                     */
                     private static void loadInteger(MethodVisitor methodVisitor, int value) {
                         switch (value) {
                             case 0:
@@ -2434,10 +2514,36 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         throw new IllegalStateException(); // TODO
                     }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForBoxedArguments that = (ForBoxedArguments) object;
+                        return parameters.equals(that.parameters);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return parameters.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments{" +
+                                "parameters=" + parameters +
+                                '}';
+                    }
                 }
 
+                /**
+                 * Binds a null constant to the target parameter.
+                 */
                 enum ForNullConstant implements Target {
 
+                    /**
+                     * The singleton instance.
+                     */
                     INSTANCE;
 
                     @Override
@@ -2446,16 +2552,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             case Opcodes.ALOAD:
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
                                 break;
-                            case Opcodes.ILOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.DLOAD:
-                            case Opcodes.ISTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                throw new IllegalStateException(); // TODO
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
@@ -2464,7 +2560,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException(); // TODO
+                        throw new IllegalStateException("Cannot increment a null constant");
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForNullConstant." + name();
                     }
                 }
             }
@@ -2801,6 +2902,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param name       The name of the field.
                      * @param targetType The expected type that the field can be assigned to.
+                     * @param readOnly   {@code true} if the field is read-only.
                      */
                     protected WithImplicitType(String name, TypeDescription targetType, boolean readOnly) {
                         super(name, targetType, readOnly);
@@ -2836,6 +2938,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param name        The name of the field.
                      * @param targetType  The expected type that the field can be assigned to.
                      * @param locatedType The type declaring the field.
+                     * @param readOnly    {@code true} if the field is read-only.
                      */
                     protected WithExplicitType(String name, TypeDescription targetType, TypeDescription locatedType, boolean readOnly) {
                         super(name, targetType, readOnly);
@@ -4034,7 +4137,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod The represented advice method.
+                 * @param adviceMethod  The represented advice method.
+                 * @param factories     A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType The type to handle by a suppession handler or {@link NoSuppression} to not handle any exceptions.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
@@ -4729,7 +4834,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        metaDataHandler.recordStackPadding(target.resolveAccess(mv, opcode));
+                        metaDataHandler.recordPadding(target.resolveAccess(mv, opcode));
                     } else {
                         mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()));
                     }
@@ -4739,7 +4844,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitIincInsn(int offset, int increment) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        metaDataHandler.recordStackPadding(target.resolveIncrement(mv, increment));
+                        metaDataHandler.recordPadding(target.resolveIncrement(mv, increment));
                     } else {
                         mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()), increment);
                     }
