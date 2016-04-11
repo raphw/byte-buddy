@@ -311,7 +311,6 @@ public class AdviceTest {
     public void testAdviceWithExceptionHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -343,6 +342,7 @@ public class AdviceTest {
     public void testAdviceNotSkipExceptionImplicitDuplicate() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .make()

@@ -10,6 +10,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     protected ExceptionTableSensitiveMethodVisitor(int api, MethodVisitor methodVisitor) {
         super(api, methodVisitor);
+        trigger = true;
     }
 
     private void considerEndExceptionTable() {

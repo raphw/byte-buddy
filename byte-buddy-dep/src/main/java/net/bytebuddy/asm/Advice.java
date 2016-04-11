@@ -14,10 +14,10 @@ import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.ExceptionTableSensitiveMethodVisitor;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.lang.annotation.*;
 import java.util.*;
 
@@ -1060,7 +1060,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A method visitor that weaves the advice methods' byte codes.
      */
-    protected abstract static class AdviceVisitor extends MethodVisitor {
+    protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor {
 
         /**
          * Indicates a zero offset.
@@ -1116,10 +1116,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         public void visitCode() {
-            super.visitCode();
+            mv.visitCode();
             if (methodEnter.isAlive()) {
                 append(methodEnter);
             }
+        }
+
+        @Override
+        protected void onMethodStart() {
             onUserStart();
         }
 
@@ -1129,15 +1133,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected abstract void onUserStart();
 
         @Override
-        public void visitVarInsn(int opcode, int offset) {
-            super.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
+        protected void onVisitVarInsn(int opcode, int offset) {
+            mv.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
                     ? offset
                     : offset + methodEnter.getEnterType().getStackSize().getSize());
         }
 
         @Override
-        public void visitIincInsn(int offset, int increment) {
-            super.visitIincInsn(offset < instrumentedMethod.getStackSize()
+        protected void onVisitIincInsn(int offset, int increment) {
+            mv.visitIincInsn(offset < instrumentedMethod.getStackSize()
                     ? offset
                     : offset + methodEnter.getEnterType().getStackSize().getSize(), increment);
         }
@@ -1169,7 +1173,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         public void visitMaxs(int stackSize, int localVariableLength) {
             onUserEnd();
-            super.visitMaxs(metaDataHandler.compoundStackSize(stackSize), metaDataHandler.compoundLocalVariableLength(localVariableLength));
+            mv.visitMaxs(metaDataHandler.compoundStackSize(stackSize), metaDataHandler.compoundLocalVariableLength(localVariableLength));
         }
 
         /**
@@ -1309,7 +1313,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void visitInsn(int opcode) {
+            protected void onVisitInsn(int opcode) {
                 switch (opcode) {
                     case Opcodes.RETURN:
                         break;
@@ -4200,7 +4204,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A visitor for translating an advice method's byte code for inlining into the instrumented method.
              */
-            protected abstract static class CodeTranslationVisitor extends MethodVisitor implements ReturnValueProducer {
+            protected abstract static class CodeTranslationVisitor extends ExceptionTableSensitiveMethodVisitor implements ReturnValueProducer {
 
                 /**
                  * Indicates that an annotation should not be read.
@@ -4296,6 +4300,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitCode() {
+                    /* do nothing */
+                }
+
+                @Override
+                protected void onMethodStart() {
                     suppressionHandler.onStart(mv, metaDataHandler);
                 }
 
@@ -4322,7 +4331,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitVarInsn(int opcode, int offset) {
+                protected void onVisitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
                         metaDataHandler.recordStackPadding(target.resolveAccess(mv, opcode));
@@ -4332,7 +4341,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitIincInsn(int offset, int increment) {
+                protected void onVisitIincInsn(int offset, int increment) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
                         metaDataHandler.recordStackPadding(target.resolveIncrement(mv, increment));
@@ -4351,7 +4360,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract int adjust(int offset);
 
                 @Override
-                public abstract void visitInsn(int opcode);
+                protected abstract void onVisitInsn(int opcode);
 
                 /**
                  * A suppression handler for optionally suppressing exceptions.
@@ -4497,7 +4506,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void visitInsn(int opcode) {
+                    protected void onVisitInsn(int opcode) {
                         switch (opcode) {
                             case Opcodes.RETURN:
                                 break;
@@ -4599,7 +4608,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void visitInsn(int opcode) {
+                    protected void onVisitInsn(int opcode) {
                         switch (opcode) {
                             case Opcodes.RETURN:
                                 break;
@@ -4922,9 +4931,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public interface DynamicValue<T extends Annotation> {
 
         Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
-                             ParameterDescription.InDefinedShape target,
-                             AnnotationDescription.Loadable<T> annotation,
-                             boolean initialized);
+                       ParameterDescription.InDefinedShape target,
+                       AnnotationDescription.Loadable<T> annotation,
+                       boolean initialized);
 
         class ForFixedValue<S extends Annotation> implements DynamicValue<S> {
 
@@ -4936,9 +4945,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
-                                        ParameterDescription.InDefinedShape target,
-                                        AnnotationDescription.Loadable<S> annotation,
-                                        boolean initialized) {
+                                  ParameterDescription.InDefinedShape target,
+                                  AnnotationDescription.Loadable<S> annotation,
+                                  boolean initialized) {
                 return value;
             }
         }
