@@ -49,7 +49,7 @@ public enum JavaType {
      *
      * @param typeName   The binary name of this type.
      * @param modifiers  The modifiers of this type when creating a stub.
-     * @param superClass  The super class of this type when creating a stub.
+     * @param superClass The super class of this type when creating a stub.
      * @param interfaces The interfaces of this type when creating a stub.
      */
     JavaType(String typeName, int modifiers, Class<?> superClass, Class<?>... interfaces) {
@@ -81,8 +81,12 @@ public enum JavaType {
      * @return A loaded type of this Java type.
      * @throws ClassNotFoundException If the represented type cannot be loaded.
      */
-    public Class<?> load() throws ClassNotFoundException {
-        return Class.forName(typeDescription.getName());
+    public Class<?> load() {
+        try {
+            return Class.forName(typeDescription.getName());
+        } catch (ClassNotFoundException exception) {
+            throw new IllegalStateException("Cannot load: " + typeDescription, exception);
+        }
     }
 
     @Override

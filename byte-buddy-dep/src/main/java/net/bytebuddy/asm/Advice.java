@@ -4417,11 +4417,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitLineNumber(int line, Label start) {
-                    /* do nothing */
-                }
-
-                @Override
                 public void visitEnd() {
                     suppressionHandler.onEnd(mv, metaDataHandler, this);
                     mv.visitLabel(endOfMethod);

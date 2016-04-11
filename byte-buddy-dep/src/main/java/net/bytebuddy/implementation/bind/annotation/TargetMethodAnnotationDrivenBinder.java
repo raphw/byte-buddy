@@ -14,6 +14,8 @@ import net.bytebuddy.implementation.bytecode.StackManipulation;
 import net.bytebuddy.implementation.bytecode.assign.Assigner;
 import net.bytebuddy.implementation.bytecode.constant.*;
 import net.bytebuddy.implementation.bytecode.member.MethodReturn;
+import net.bytebuddy.utility.JavaInstance;
+import net.bytebuddy.utility.JavaType;
 
 import java.lang.annotation.Annotation;
 import java.util.*;
@@ -185,6 +187,19 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                                  Implementation.Target implementationTarget,
                                  Assigner assigner);
 
+        /**
+         * <p>
+         * Implements a parameter binder that binds a fixed value to a parameter with a given annotation.
+         * </p>
+         * <p>
+         * This binder is only capable to store values that can either be expressed as Java byte code or as a constant pool value. This
+         * includes primitive types, {@link String} values, {@link Class} values which can also be expressed as {@link TypeDescription}
+         * instances or method handles and method types for classes of a version at least of Java 7. The latter instances can also be
+         * expressed as unloaded {@link JavaInstance} representations.
+         * </p>
+         *
+         * @param <S> The bound annotation's type.
+         */
         abstract class ForFixedValue<S extends Annotation> implements ParameterBinder<S> {
 
             @Override
@@ -198,48 +213,115 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                     return new ParameterBinding.Anonymous(DefaultValue.of(target.getType()));
                 }
                 StackManipulation stackManipulation;
+                TypeDescription suppliedType;
                 if (value instanceof Boolean) {
                     stackManipulation = IntegerConstant.forValue((Boolean) value);
+                    suppliedType = new TypeDescription.ForLoadedType(boolean.class);
                 } else if (value instanceof Byte) {
                     stackManipulation = IntegerConstant.forValue((Byte) value);
+                    suppliedType = new TypeDescription.ForLoadedType(byte.class);
                 } else if (value instanceof Short) {
                     stackManipulation = IntegerConstant.forValue((Short) value);
+                    suppliedType = new TypeDescription.ForLoadedType(short.class);
                 } else if (value instanceof Character) {
                     stackManipulation = IntegerConstant.forValue((Character) value);
+                    suppliedType = new TypeDescription.ForLoadedType(char.class);
                 } else if (value instanceof Integer) {
                     stackManipulation = IntegerConstant.forValue((Integer) value);
+                    suppliedType = new TypeDescription.ForLoadedType(int.class);
                 } else if (value instanceof Long) {
                     stackManipulation = LongConstant.forValue((Long) value);
-                }else if (value instanceof Float) {
+                    suppliedType = new TypeDescription.ForLoadedType(long.class);
+                } else if (value instanceof Float) {
                     stackManipulation = FloatConstant.forValue((Float) value);
-                }else if (value instanceof Double) {
+                    suppliedType = new TypeDescription.ForLoadedType(float.class);
+                } else if (value instanceof Double) {
                     stackManipulation = DoubleConstant.forValue((Double) value);
+                    suppliedType = new TypeDescription.ForLoadedType(double.class);
                 } else if (value instanceof String) {
                     stackManipulation = new TextConstant((String) value);
+                    suppliedType = TypeDescription.STRING;
+                } else if (value instanceof Class) {
+                    stackManipulation = ClassConstant.of(new TypeDescription.ForLoadedType((Class<?>) value));
+                    suppliedType = TypeDescription.CLASS;
+                } else if (value instanceof TypeDescription) {
+                    stackManipulation = ClassConstant.of((TypeDescription) value);
+                    suppliedType = TypeDescription.CLASS;
+                } else if (JavaType.METHOD_HANDLE.getTypeStub().isInstance(value)) {
+                    stackManipulation = MethodHandleConstant.of(JavaInstance.MethodHandle.ofLoaded(value));
+                    suppliedType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
+                } else if (value instanceof JavaInstance.MethodHandle) {
+                    stackManipulation = MethodHandleConstant.of((JavaInstance.MethodHandle) value);
+                    suppliedType = new TypeDescription.ForLoadedType(JavaType.METHOD_HANDLE.load());
+                } else if (JavaType.METHOD_TYPE.getTypeStub().isInstance(value)) {
+                    stackManipulation = MethodTypeConstant.of(JavaInstance.MethodType.ofLoaded(value));
+                    suppliedType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
+                } else if (value instanceof JavaInstance.MethodType) {
+                    stackManipulation = MethodTypeConstant.of((JavaInstance.MethodType) value);
+                    suppliedType = new TypeDescription.ForLoadedType(JavaType.METHOD_TYPE.load());
                 } else {
-                    throw new IllegalStateException(); // TODO
+                    throw new IllegalStateException("Not able to save in class's constant pool: " + value);
                 }
                 return new ParameterBinding.Anonymous(new StackManipulation.Compound(
                         stackManipulation,
-                        assigner.assign(new TypeDescription.Generic.OfNonGenericType.ForLoadedType(value.getClass()), target.getType(), Assigner.Typing.STATIC)
+                        assigner.assign(suppliedType.asGenericType(), target.getType(), Assigner.Typing.STATIC)
                 ));
             }
 
-            protected abstract Object bind(AnnotationDescription.Loadable<S> annotation,
-                                           MethodDescription source,
-                                           ParameterDescription target);
+            /**
+             * Resolves a value for the given annotation on a parameter that is processed by a {@link net.bytebuddy.implementation.MethodDelegation}.
+             *
+             * @param annotation The annotation that triggered this binding.
+             * @param source     The method for which a delegation is currently bound.
+             * @param target     The parameter for which a value is bound.
+             * @return The constant pool value that is bound to this parameter or {@code null} for binding this value.
+             */
+            protected abstract Object bind(AnnotationDescription.Loadable<S> annotation, MethodDescription source, ParameterDescription target);
 
+            /**
+             * <p>
+             * A parameter binder that binds a fixed value to a parameter annotation when using a {@link net.bytebuddy.implementation.MethodDelegation}.
+             * </p>
+             * <p>
+             * This binder is only capable to store
+             * values that can either be expressed as Java byte code or as a constant pool value. This includes primitive types, {@link String} values,
+             * {@link Class} values which can also be expressed as {@link TypeDescription} instances or method handles and method types for classes of
+             * a version at least of Java 7. The latter instances can also be expressed as unloaded {@link JavaInstance} representations.
+             * </p>
+             *
+             * @param <U> The bound annotation's type.
+             */
             public static class OfConstant<U extends Annotation> extends ForFixedValue<U> {
 
+                /**
+                 * The type of the annotation that is bound by this binder.
+                 */
                 private final Class<U> type;
 
+                /**
+                 * The value that is assigned to any annotated parameter.
+                 */
                 private final Object value;
 
+                /**
+                 * Creates a binder for binding a fixed value to a parameter annotated with the given annotation.
+                 *
+                 * @param type  The type of the annotation that is bound by this binder.
+                 * @param value The value that is assigned to any annotated parameter.
+                 */
                 protected OfConstant(Class<U> type, Object value) {
                     this.type = type;
                     this.value = value;
                 }
 
+                /**
+                 * Creates a binder for binding a fixed value to a given annotation.
+                 *
+                 * @param type  The type of the annotation that is bound by this binder.
+                 * @param value The value that is assigned to any annotated parameter.
+                 * @param <V>   The bound annotation's type.
+                 * @return A parameter binder that binds the given annotation to the supplied value.
+                 */
                 public static <V extends Annotation> ParameterBinder<V> of(Class<V> type, Object value) {
                     return new OfConstant<V>(type, value);
                 }
@@ -252,6 +334,30 @@ public class TargetMethodAnnotationDrivenBinder implements MethodDelegationBinde
                 @Override
                 protected Object bind(AnnotationDescription.Loadable<U> annotation, MethodDescription source, ParameterDescription target) {
                     return value;
+                }
+
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    OfConstant<?> that = (OfConstant<?>) object;
+                    return type.equals(that.type) && (value != null ? value.equals(that.value) : that.value == null);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = type.hashCode();
+                    result = 31 * result + (value != null ? value.hashCode() : 0);
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "TargetMethodAnnotationDrivenBinder.ParameterBinder.ForFixedValue.OfConstant{" +
+                            "type=" + type +
+                            ", value=" + value +
+                            '}';
                 }
             }
         }
