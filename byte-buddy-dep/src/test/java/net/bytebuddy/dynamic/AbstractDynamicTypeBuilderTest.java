@@ -371,7 +371,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .visit(asmVisitorWrapper)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         verify(asmVisitorWrapper).mergeWriter(0);
@@ -393,7 +393,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
                         ).apply(methodVisitor, implementationContext).getMaximalSize(), instrumentedMethod.getStackSize());
                     }
                 }).make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getDeclaredField(FOO)
                 .get(null), is((Object) FOO));
@@ -404,7 +404,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         Class<?> type = createPlain()
                 .serialVersionUid(42L)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         Field field = type.getDeclaredField("serialVersionUID");
         field.setAccessible(true);
@@ -483,7 +483,7 @@ public abstract class AbstractDynamicTypeBuilderTest {
         createPlainWithoutValidation()
                 .defineField(FOO, void.class)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER);
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER);
     }
 
     @Test

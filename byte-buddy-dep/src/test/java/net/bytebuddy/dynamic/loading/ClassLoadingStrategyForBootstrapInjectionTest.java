@@ -45,7 +45,7 @@ public class ClassLoadingStrategyForBootstrapInjectionTest {
         ClassLoadingStrategy bootstrapStrategy = new ClassLoadingStrategy.ForBootstrapInjection(ByteBuddyAgent.install(), file);
         String name = FOO + RandomString.make();
         DynamicType dynamicType = new ByteBuddy().subclass(Object.class).name(name).make();
-        Map<TypeDescription, Class<?>> loaded = bootstrapStrategy.load(null, Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()));
+        Map<TypeDescription, Class<?>> loaded = bootstrapStrategy.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, Collections.singletonMap(dynamicType.getTypeDescription(), dynamicType.getBytes()));
         assertThat(loaded.size(), is(1));
         assertThat(loaded.get(dynamicType.getTypeDescription()).getName(), is(name));
         assertThat(loaded.get(dynamicType.getTypeDescription()).getClassLoader(), nullValue(ClassLoader.class));

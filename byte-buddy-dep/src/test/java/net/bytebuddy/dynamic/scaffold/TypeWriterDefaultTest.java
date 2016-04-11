@@ -395,7 +395,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(Object.class))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) Object.class));
     }
@@ -409,7 +409,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(Object[].class))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) Object[].class));
     }
@@ -423,7 +423,7 @@ public class TypeWriterDefaultTest {
                 .defineMethod(FOO, Object.class, Visibility.PUBLIC)
                 .intercept(FixedValue.value(int.class))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) int.class));
     }
@@ -452,7 +452,7 @@ public class TypeWriterDefaultTest {
                 .redefine(Bar.class)
                 .modifiers(Visibility.PUBLIC)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded()
                 .getModifiers(), is(Modifier.PUBLIC));
     }

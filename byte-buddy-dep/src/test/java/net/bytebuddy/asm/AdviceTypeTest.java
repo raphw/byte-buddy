@@ -71,7 +71,7 @@ public class AdviceTypeTest {
                         .to(advice)
                         .on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, this.type, this.type).invoke(type.newInstance(), value, value), is(value));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -87,7 +87,7 @@ public class AdviceTypeTest {
                         .to(advice)
                         .on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         type.getDeclaredField(exception).set(null, true);
         try {

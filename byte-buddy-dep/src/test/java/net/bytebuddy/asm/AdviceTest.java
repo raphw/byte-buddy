@@ -44,7 +44,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -55,7 +55,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -66,7 +66,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -77,7 +77,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -88,7 +88,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandling.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -99,7 +99,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -110,7 +110,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndExitSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -121,7 +121,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -132,7 +132,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceEntry.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -143,7 +143,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceEntryWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -154,7 +154,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExit.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -165,7 +165,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExitAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -176,7 +176,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExitWithExceptionHandling.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -187,7 +187,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExitWithExceptionHandlingAndSuppression.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -199,7 +199,7 @@ public class AdviceTest {
                 .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -213,7 +213,7 @@ public class AdviceTest {
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
@@ -226,7 +226,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO + BAZ).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -239,7 +239,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(isConstructor()))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.newInstance(), notNullValue(Object.class));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -252,7 +252,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ArgumentAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), BAR), is((Object) BAR));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -265,7 +265,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ArgumentAdviceExplicit.class).on(named(QUX)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(QUX, String.class, String.class).invoke(type.newInstance(), FOO, BAR), is((Object) (FOO + BAR)));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -278,7 +278,7 @@ public class AdviceTest {
                 .redefine(IncrementSample.class)
                 .visit(Advice.to(IncrementAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, int.class).invoke(type.newInstance(), 0), is((Object) 2));
     }
@@ -289,7 +289,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ThisReferenceAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -302,7 +302,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(EntranceValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -315,7 +315,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ReturnValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 0));
@@ -329,7 +329,7 @@ public class AdviceTest {
                 .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -344,7 +344,7 @@ public class AdviceTest {
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
@@ -357,7 +357,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
@@ -376,7 +376,7 @@ public class AdviceTest {
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
@@ -394,7 +394,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(named(FOO + BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
@@ -412,7 +412,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
@@ -431,7 +431,7 @@ public class AdviceTest {
                 .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
                 .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
@@ -449,7 +449,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(named(BAR + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
@@ -467,7 +467,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -480,7 +480,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ObsoleteReturnValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -493,7 +493,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(UnusedReturnValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -506,7 +506,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(AdviceWithVariableValues.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), FOO + BAR + QUX + BAZ), is((Object) (FOO + BAR + QUX + BAZ)));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -519,7 +519,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(AdviceWithVariableValues.class).on(named(QUX + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(QUX + BAZ).invoke(type.newInstance()), is((Object) (FOO + BAR + QUX + BAZ)));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -532,7 +532,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ThrowableAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO)));
         assertThat(type.getDeclaredField(THROWABLE).get(null), nullValue(Object.class));
@@ -544,7 +544,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ThrowableAdvice.class).on(named(FOO + BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
@@ -561,7 +561,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowOnEnter.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -580,7 +580,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowOnExit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -599,7 +599,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowSuppressed.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         type.getDeclaredMethod(FOO).invoke(type.newInstance());
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -613,7 +613,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowNotSuppressedOnEnter.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -632,7 +632,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowNotSuppressedOnExit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -651,7 +651,7 @@ public class AdviceTest {
                 .redefine(Box.class)
                 .visit(Advice.to(ThisSubstitutionAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) BAR));
     }
@@ -670,7 +670,7 @@ public class AdviceTest {
                 .redefine(Box.class)
                 .visit(Advice.to(ParameterSubstitutionAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) BAR));
     }
@@ -689,7 +689,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ReturnSubstitutionAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), FOO), is((Object) BAR));
     }
@@ -708,7 +708,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(EnterSubstitutionAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -727,7 +727,7 @@ public class AdviceTest {
                 .redefine(FieldSample.class)
                 .visit(Advice.to(FieldAdviceImplicit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -740,7 +740,7 @@ public class AdviceTest {
                 .redefine(FieldSample.class)
                 .visit(Advice.to(FieldAdviceExplicit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -753,7 +753,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(OriginAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -766,7 +766,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(OriginCustomAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -780,7 +780,7 @@ public class AdviceTest {
                 .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -792,7 +792,7 @@ public class AdviceTest {
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -804,7 +804,7 @@ public class AdviceTest {
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -816,7 +816,7 @@ public class AdviceTest {
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -828,7 +828,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -839,7 +839,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -850,7 +850,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -861,7 +861,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
