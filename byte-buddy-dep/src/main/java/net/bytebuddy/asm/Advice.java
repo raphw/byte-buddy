@@ -1115,7 +1115,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        protected void onMethodStart() {
+        protected void onFirstCodeInstruction() {
             onAdviceStart();
             if (methodEnter.isAlive()) {
                 append(methodEnter);
@@ -4316,7 +4316,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected void onMethodStart() {
+                protected void onFirstCodeInstruction() {
                     suppressionHandler.onStart(mv, metaDataHandler);
                 }
 
