@@ -395,6 +395,25 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceNotSkipExceptionExplicitDuplicate() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
+                .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
     public void testAdviceSkipExceptionExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
