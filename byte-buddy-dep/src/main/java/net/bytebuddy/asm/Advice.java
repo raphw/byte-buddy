@@ -1117,9 +1117,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         protected void onFirstCodeInstruction() {
             onAdviceStart();
-            if (methodEnter.isAlive()) {
-                append(methodEnter);
-            }
+            append(methodEnter);
             onUserStart();
         }
 
@@ -1185,41 +1183,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param dispatcher The dispatcher to apply.
          */
         protected void append(Dispatcher.Resolved dispatcher) {
-            classReader.accept(new CodeCopier(dispatcher), ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
-        }
-
-        /**
-         * A visitor for copying an advice method's byte code.
-         */
-        protected class CodeCopier extends ClassVisitor {
-
-            /**
-             * The dispatcher to use.
-             */
-            private final Dispatcher.Resolved dispatcher;
-
-            /**
-             * Creates a new code copier.
-             *
-             * @param dispatcher The dispatcher to use.
-             */
-            protected CodeCopier(Dispatcher.Resolved dispatcher) {
-                super(Opcodes.ASM5);
-                this.dispatcher = dispatcher;
-            }
-
-            @Override
-            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                return dispatcher.apply(internalName, descriptor, mv, metaDataHandler, instrumentedMethod);
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.AdviceVisitor.CodeCopier{" +
-                        "outer=" + AdviceVisitor.this +
-                        ", dispatcher=" + dispatcher +
-                        '}';
-            }
+            dispatcher.apply(instrumentedMethod, mv, metaDataHandler, classReader);
         }
 
         /**
@@ -3723,21 +3687,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface Resolved extends Dispatcher {
 
-            /**
-             * Applies this dispatcher for a method that is discovered in the advice class's class file.
-             *
-             * @param internalName       The discovered method's internal name.
-             * @param descriptor         The discovered method's descriptor.
-             * @param methodVisitor      The method visitor for writing the instrumented method.
-             * @param metaDataHandler    A handler for translating meta data that is embedded into the instrumented method's byte code.
-             * @param instrumentedMethod A description of the instrumented method.
-             * @return A method visitor for reading the discovered method or {@code null} if the discovered method is of no interest.
-             */
-            MethodVisitor apply(String internalName,
-                                String descriptor,
-                                MethodVisitor methodVisitor,
-                                MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                MethodDescription.InDefinedShape instrumentedMethod);
+            void apply(MethodDescription.InDefinedShape instrumentedMethod,
+                       MethodVisitor methodVisitor,
+                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                       ClassReader classReader);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -3803,13 +3756,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public MethodVisitor apply(String internalName,
-                                       String descriptor,
-                                       MethodVisitor methodVisitor,
-                                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                       MethodDescription.InDefinedShape instrumentedMethod) {
-                return IGNORE_METHOD;
+            public void apply(MethodDescription.InDefinedShape instrumentedMethod,
+                              MethodVisitor methodVisitor,
+                              MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                              ClassReader classReader) {
+                /* do nothing */
             }
+
 
             @Override
             public String toString() {
@@ -3921,14 +3874,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public MethodVisitor apply(String internalName,
-                                           String descriptor,
-                                           MethodVisitor methodVisitor,
-                                           MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                           MethodDescription.InDefinedShape instrumentedMethod) {
-                    return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                            ? apply(methodVisitor, metaDataHandler, instrumentedMethod)
-                            : IGNORE_METHOD;
+                public void apply(MethodDescription.InDefinedShape instrumentedMethod,
+                                  MethodVisitor methodVisitor,
+                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                                  ClassReader classReader) {
+                    classReader.accept(new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler), ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
                 }
 
                 /**
@@ -3956,6 +3906,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     int result = adviceMethod.hashCode();
                     result = 31 * result + offsetMappings.hashCode();
                     return result;
+                }
+
+                protected class CodeCopier extends ClassVisitor {
+
+                    private final MethodDescription.InDefinedShape instrumentedMethod;
+
+                    private final MethodVisitor methodVisitor;
+
+                    private final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
+
+                    protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
+                                         MethodVisitor methodVisitor,
+                                         MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                        super(Opcodes.ASM5);
+                        this.instrumentedMethod = instrumentedMethod;
+                        this.methodVisitor = methodVisitor;
+                        this.metaDataHandler = metaDataHandler;
+                    }
+
+                    @Override
+                    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+                        return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
+                                ? apply(methodVisitor, metaDataHandler, instrumentedMethod)
+                                : IGNORE_METHOD;
+                    }
                 }
 
                 /**
