@@ -11,6 +11,7 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
 
@@ -195,6 +196,7 @@ public class AdviceTest {
     public void testTrivialAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -338,6 +340,7 @@ public class AdviceTest {
     public void testAdviceWithExceptionHandlerNested() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .make()
@@ -774,6 +777,7 @@ public class AdviceTest {
     public void testFrameAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
                 .make()
                 .load(null, ClassLoadingStrategy.Default.WRAPPER)
@@ -1089,6 +1093,7 @@ public class AdviceTest {
     }
 
     @Test
+    @Ignore
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();

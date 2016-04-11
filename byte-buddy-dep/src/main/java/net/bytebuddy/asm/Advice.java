@@ -1119,13 +1119,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         protected void onFirstCodeInstruction() {
             methodEnter.prepare();
+            onUserPrepare();
             methodExit.prepare();
-            onAdviceStart();
             methodEnter.apply();
             onUserStart();
         }
 
-        protected abstract void onAdviceStart();
+        protected abstract void onUserPrepare();
 
         /**
          * Writes the advice for entering the instrumented method.
@@ -1213,7 +1213,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            protected void onAdviceStart() {
+            protected void onUserPrepare() {
 
             }
 
@@ -1393,7 +1393,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected void onAdviceStart() {
+                protected void onUserPrepare() {
                     mv.visitTryCatchBlock(userStart, userEnd, userEnd, ANY_THROWABLE);
                 }
 
@@ -1501,7 +1501,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected void onAdviceStart() {
+                protected void onUserPrepare() {
                     /* empty */
                 }
 
@@ -3927,6 +3927,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     private final ClassReader classReader;
 
+                    private List<Label> labels;
+
                     protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
                                          MethodVisitor methodVisitor,
                                          MetaDataHandler.ForInstrumentedMethod metaDataHandler,
@@ -3936,10 +3938,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.methodVisitor = methodVisitor;
                         this.metaDataHandler = metaDataHandler;
                         this.classReader = classReader;
+                        labels = new ArrayList<Label>();
                     }
 
                     @Override
                     public void prepare() {
+                        classReader.accept(new LabelCollector(), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
                         suppressionHandler.onPrepare(methodVisitor);
                     }
 
@@ -3951,8 +3955,103 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod)
+                                ? new LabelSubstitutor(Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod))
                                 : IGNORE_METHOD;
+                    }
+
+                    protected class LabelCollector extends ClassVisitor {
+
+                        protected LabelCollector() {
+                            super(Opcodes.ASM5);
+                        }
+
+                        @Override
+                        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+                            return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
+                                    ? new ExceptionTableCollector(methodVisitor)
+                                    : IGNORE_METHOD;
+                        }
+                    }
+
+                    protected class ExceptionTableCollector extends MethodVisitor {
+
+                        private final MethodVisitor methodVisitor;
+
+                        protected ExceptionTableCollector(MethodVisitor methodVisitor) {
+                            super(Opcodes.ASM5);
+                            this.methodVisitor = methodVisitor;
+                        }
+
+                        @Override
+                        public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+                            methodVisitor.visitTryCatchBlock(start, end, handler, type);
+                            labels.addAll(Arrays.asList(start, end, handler));
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
+                            return methodVisitor.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible);
+                        }
+                    }
+
+                    protected class LabelSubstitutor extends MethodVisitor {
+
+                        private final Map<Label, Label> substitutions;
+
+                        private int index;
+
+                        protected LabelSubstitutor(MethodVisitor methodVisitor) {
+                            super(Opcodes.ASM5, methodVisitor);
+                            substitutions = new IdentityHashMap<Label, Label>();
+                        }
+
+                        @Override
+                        public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+                            substitutions.put(start, labels.get(index++));
+                            substitutions.put(end, labels.get(index++));
+                            substitutions.put(handler, labels.get(index++));
+                        }
+
+                        @Override
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+                            return null; // TODO
+                        }
+
+                        @Override
+                        public void visitLabel(Label label) {
+                            super.visitLabel(resolve(label));
+                        }
+
+                        @Override
+                        public void visitJumpInsn(int opcode, Label label) {
+                            super.visitJumpInsn(opcode, resolve(label));
+                        }
+
+                        @Override
+                        public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
+                            super.visitTableSwitchInsn(min, max, dflt, resolve(labels));
+                        }
+
+                        @Override
+                        public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+                            super.visitLookupSwitchInsn(resolve(dflt), keys, resolve(labels));
+                        }
+
+                        private Label[] resolve(Label[] label) {
+                            Label[] resolved = new Label[label.length];
+                            int index = 0;
+                            for (Label aLabel : label) {
+                                resolved[index++] = resolve(aLabel);
+                            }
+                            return resolved;
+                        }
+
+                        private Label resolve(Label label) {
+                            Label substitution = substitutions.get(label);
+                            return substitution == null
+                                    ? label
+                                    : substitution;
+                        }
                     }
                 }
 
@@ -4310,11 +4409,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public void visitCode() {
                     suppressionHandler.onStart(mv, metaDataHandler);
-                }
-
-                @Override
-                public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-                    throw new IllegalStateException("It is not allowed to define exception handlers within an advice method");
                 }
 
                 @Override

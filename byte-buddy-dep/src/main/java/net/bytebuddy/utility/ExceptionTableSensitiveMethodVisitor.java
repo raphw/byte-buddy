@@ -23,6 +23,16 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     protected abstract void onFirstCodeInstruction();
 
     @Override
+    public final void visitLabel(Label label) {
+        considerEndOfExceptionTable();
+        onVisitLabel(label);
+    }
+
+    protected void onVisitLabel(Label label) {
+        super.visitLabel(label);
+    }
+
+    @Override
     public final void visitIntInsn(int opcode, int operand) {
         considerEndOfExceptionTable();
         onVisitIntInsn(opcode, operand);
