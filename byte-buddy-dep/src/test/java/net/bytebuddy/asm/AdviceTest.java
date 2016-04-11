@@ -11,9 +11,9 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -823,6 +823,54 @@ public class AdviceTest {
     }
 
     @Test
+    public void testFrameAdviceComputedMaxima() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_MAXS))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceStaticMethodComputedMaxima() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_MAXS))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceComputedFrames() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_FRAMES))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceStaticMethodComputedFrames() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_FRAMES))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
     public void testFrameAdviceFrameInjected() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -897,7 +945,7 @@ public class AdviceTest {
 
     @Test(expected = IllegalArgumentException.class)
     public void testDuplicateAdvice() throws Exception {
-        Advice.to(IllegalStateException.class);
+        Advice.to(DuplicateAdvice.class);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -1004,6 +1052,14 @@ public class AdviceTest {
         new ByteBuddy()
                 .redefine(AbstractMethod.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceNativeMethod() throws Exception {
+        new ByteBuddy()
+                .redefine(Object.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named("getClass")))
                 .make();
     }
 
