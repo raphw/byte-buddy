@@ -1093,7 +1093,6 @@ public class AdviceTest {
     }
 
     @Test
-    @Ignore
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();
@@ -1137,7 +1136,13 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForIgnored.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.Factory.class).apply();
+        final Iterator<Class<?>> annotationTypes = Arrays.asList(Object.class, String.class, int.class, float.class).iterator();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.Factory.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return annotationTypes.next();
+            }
+        }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThrowable.class).apply();

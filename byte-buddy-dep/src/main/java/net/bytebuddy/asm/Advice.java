@@ -135,6 +135,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return to(typeDescription, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
     }
 
+    /**
+     * Creates a new advice.
+     *
+     * @param typeDescription  A description of the type declaring the advice.
+     * @param classFileLocator The class file locator for locating the advisory class's class file.
+     * @param userFactories    A list of custom factories for user generated offset mappings.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
     protected static Advice to(TypeDescription typeDescription,
                                ClassFileLocator classFileLocator,
                                List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
@@ -177,6 +185,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
     }
 
+    /**
+     * Allows for the configuration of custom annotations that are then bound to a dynamically computed, constant value.
+     *
+     * @return A builder for an {@link Advice} instrumentation with custom values.
+     * @see DynamicValue
+     */
     public static WithCustomMapping withCustomMapping() {
         return new WithCustomMapping();
     }
@@ -4014,7 +4028,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-                            return null; // TODO
+                            return IGNORE_ANNOTATION; // TODO
                         }
 
                         @Override
@@ -4037,6 +4051,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             super.visitLookupSwitchInsn(resolve(dflt), keys, resolve(labels));
                         }
 
+                        /**
+                         * Resolves an array of labels.
+                         *
+                         * @param label The labels to resolved.
+                         * @return An array containing the resolved arrays.
+                         */
                         private Label[] resolve(Label[] label) {
                             Label[] resolved = new Label[label.length];
                             int index = 0;
@@ -4046,6 +4066,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return resolved;
                         }
 
+                        /**
+                         * Resolves a single label if mapped or returns the original label.
+                         *
+                         * @param label The label to resolve.
+                         * @return The resolved label.
+                         */
                         private Label resolve(Label label) {
                             Label substitution = substitutions.get(label);
                             return substitution == null
@@ -4075,7 +4101,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
-                     * @param adviceMethod The represented advice method.
+                     * @param adviceMethod  The represented advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory> userFactories) {
@@ -4145,13 +4172,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
-                     * @param adviceMethod The represented advice method.
-                     * @param enterType    The type of the value supplied by the enter advice method or
-                     *                     a description of {@code void} if no such value exists.
+                     * @param adviceMethod  The represented advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param enterType     The type of the value supplied by the enter advice method or
+                     *                      a description of {@code void} if no such value exists.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                            List<? extends OffsetMapping.Factory> userFactories,
+                                            +List<? extends OffsetMapping.Factory> userFactories,
                                             TypeDescription enterType) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.INSTANCE,
@@ -4173,9 +4201,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
-                     * @param adviceMethod The advice method.
-                     * @param enterType    The type of the value supplied by the enter advice method or
-                     *                     a description of {@code void} if no such value exists.
+                     * @param adviceMethod  The advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param enterType     The type of the value supplied by the enter advice method or
+                     *                      a description of {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
@@ -4232,9 +4261,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
-                         * @param adviceMethod The represented advice method.
-                         * @param enterType    The type of the value supplied by the enter advice method or
-                         *                     a description of {@code void} if no such value exists.
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param enterType     The type of the value supplied by the enter advice method or
+                         *                      a description of {@code void} if no such value exists.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        List<? extends OffsetMapping.Factory> userFactories,
@@ -4269,8 +4299,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
-                         * @param adviceMethod The represented advice method.
-                         * @param enterType    The type of the value supplied by the enter advice method or a description of {@code void} if no such value exists.
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param enterType     The type of the value supplied by the enter advice method or
+                         *                      a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                           List<? extends OffsetMapping.Factory> userFactories,
@@ -4360,6 +4392,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod The instrumented method.
                  * @param adviceMethod       The advice method.
                  * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
+                 * @param suppressionHandler The suppression handler to use.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  MetaDataHandler.ForAdvice metaDataHandler,
@@ -4465,6 +4498,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected interface SuppressionHandler {
 
+                    /**
+                     * Invoked to prepare the suppression handler, i.e. to write an exception handler entry if appropriate.
+                     *
+                     * @param methodVisitor The method visitor to apply the preparation to.
+                     */
                     void onPrepare(MethodVisitor methodVisitor);
 
                     /**
@@ -4483,7 +4521,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param returnValueProducer A producer for defining a default return value of the advised method.
                      */
                     void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
-
 
                     /**
                      * A non-operational suppression handler that does not suppress any method.
@@ -4604,6 +4641,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
                      * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
+                     * @param suppressionHandler The suppression handler to use.
                      */
                     protected ForMethodEnter(MethodVisitor methodVisitor,
                                              MetaDataHandler.ForAdvice metaDataHandler,
@@ -4697,6 +4735,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
                      * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
+                     * @param suppressionHandler The suppression handler to use.
                      * @param padding            The padding after the instrumented method's arguments in the local variable array.
                      */
                     protected ForMethodExit(MethodVisitor methodVisitor,
@@ -4874,8 +4913,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the parameter of the instrumented method. If this property is set to {@code true}, the
-         * annotated parameter can be any super type of the instrumented methods parameter.
+         * type must be equal to the type declaring the instrumented method. If this property is set to {@code true}, the
+         * annotated parameter can be any super type of the instrumented method's declaring type.
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -4883,8 +4922,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method. All
-     * field references are always <i>read-only</i>.
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method.
+     * </p>
      * <p>
      * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
@@ -4914,6 +4954,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         Class<?> declaringType() default void.class;
 
+        /**
+         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
+         * type must be equal to the mapped field type. If this property is set to {@code true}, the  annotated parameter
+         * can be any super type of the field type.
+         *
+         * @return {@code true} if this parameter is read-only.
+         */
         boolean readOnly() default true;
     }
 
@@ -5006,6 +5053,29 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         boolean readOnly() default true;
     }
 
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a the return value where primitive types are boxed. For this
+     * to be possible, the annotated parameter must be of type {@link Object}.
+     * </p>
+     * <p>
+     * Note that accessing this parameter is merely virtual. A new array is created on every access. As a result, changes to the
+     * array have no effect other than for the local copy and when accessing the array twice, the equality relation does not hold.
+     * For example, for {@code @Advoce.BoxedReturn Object foo}, the relation {@code foo == foo} does not necessarily hold for primitive
+     * types. For avoiding additional allocations, the array needs to be stored in a separate local variable. The variable itself is
+     * always read only.
+     * </p>
+     * <p>
+     * <b>Note</b>: As the mapping is virtual, Byte Buddy might be required to reserve more space on the operand stack than the
+     * optimal value when accessing this parameter. This does not normally matter as the additional space requirement is minimal.
+     * However, if the runtime performance of class creation is secondary, one can require ASM to recompute the optimal frames by
+     * setting {@link ClassWriter#COMPUTE_MAXS}.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
@@ -5013,6 +5083,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /* boxed */
     }
 
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to an array containing a (boxed) version of all arguments of the
+     * method being instrumented. It is required that the annotated parameter is an array of type {@link Object}.
+     * </p>
+     * <p>
+     * Note that accessing this parameter is merely virtual. A new array is created on every access. As a result, changes to the
+     * array have no effect other than for the local copy and when accessing the array twice, the equality relation does not hold.
+     * For example, for {@code @Advoce.BoxedArguments Object[] foo}, the relation {@code foo == foo} does not hold. For avoiding
+     * new allocations, the array needs to be stored in a separate local variable. The variable itself is always read only.
+     * </p>
+     * <p>
+     * <b>Note</b>: As the mapping is virtual, Byte Buddy might be required to reserve more space on the operand stack than the
+     * optimal value when accessing this parameter. This does not normally matter as the additional space requirement is minimal.
+     * However, if the runtime performance of class creation is secondary, one can require ASM to recompute the optimal frames by
+     * setting {@link ClassWriter#COMPUTE_MAXS}.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
     @Documented
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.PARAMETER)
@@ -5035,18 +5127,51 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /* empty */
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * <p>
+     * A dynamic value allows to bind parameters of an {@link Advice} method to a custom, constant value.
+     * </p>
+     * <p>The mapped value must be a constant value that can be embedded into a Java class file. This holds for all primitive types,
+     * instances of {@link String}, method handles and method types (for Java 7 and newer) as well as their unloaded
+     * {@link net.bytebuddy.utility.JavaInstance} equivalents and for {@link Class} instances as well as their unloaded
+     * {@link TypeDescription} representations.
+     * </p>
+     *
+     * @param <T> The type of the annotation this dynamic value requires to provide a mapping.
+     * @see WithCustomMapping
+     */
     public interface DynamicValue<T extends Annotation> {
 
+        /**
+         * Resolves a constant value that is mapped to a parameter that is annotated with a custom bound annotation.
+         *
+         * @param instrumentedMethod The instrumented method onto which this advice is applied.
+         * @param target             The target parameter that is bound.
+         * @param annotation         The annotation that triggered this binding.
+         * @param initialized        {@code true} if the method is initialized when the value is bound, i.e. that the value is not
+         *                           supplied to a constructor before the super constructor was invoked.
+         * @return The constant pool value that is bound to the supplied parameter or {@code null} to assign this value.
+         */
         Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
                        ParameterDescription.InDefinedShape target,
                        AnnotationDescription.Loadable<T> annotation,
                        boolean initialized);
 
-        class ForFixedValue<S extends Annotation> implements DynamicValue<S> {
+        /**
+         * A {@link DynamicValue} implementation that always binds a fixed value.
+         */
+        class ForFixedValue implements DynamicValue<Annotation> {
 
+            /**
+             * The fixed value to bind to the corresponding annotation.
+             */
             private final Object value;
 
+            /**
+             * Creates a dynamic value for a fixed value.
+             *
+             * @param value The fixed value to bind to the corresponding annotation.
+             */
             public ForFixedValue(Object value) {
                 this.value = value;
             }
@@ -5054,25 +5179,68 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
                                   ParameterDescription.InDefinedShape target,
-                                  AnnotationDescription.Loadable<S> annotation,
+                                  AnnotationDescription.Loadable<Annotation> annotation,
                                   boolean initialized) {
                 return value;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForFixedValue that = (ForFixedValue) object;
+                return value != null ? value.equals(that.value) : that.value == null;
+            }
+
+            @Override
+            public int hashCode() {
+                return value != null ? value.hashCode() : 0;
+            }
+
+            @Override
+            public String toString() {
+                return "Advice.DynamicValue.ForFixedValue{" +
+                        "value=" + value +
+                        '}';
             }
         }
     }
 
+    /**
+     * A builder step for creating an {@link Advice} that uses custom mappings of annotations to constant pool values.
+     */
     public static class WithCustomMapping {
 
+        /**
+         * A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
+         */
         private final Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues;
 
+        /**
+         * Creates a new custom mapping builder step without including any custom mappings.
+         */
         protected WithCustomMapping() {
             this(Collections.<Class<? extends Annotation>, DynamicValue<?>>emptyMap());
         }
 
+        /**
+         * Creates a new custom mapping builder step with the given custom mappings.
+         *
+         * @param dynamicValues A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
+         */
         protected WithCustomMapping(Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues) {
             this.dynamicValues = dynamicValues;
         }
 
+        /**
+         * Binds an annotation type to dynamically computed value. Whenever the {@link Advice} component discovers the given annotation on
+         * a parameter of an advice method, the dynamic value is asked to provide a value that is then assigned to the parameter in question.
+         *
+         * @param type         The annotation type that triggers the mapping.
+         * @param dynamicValue The dynamic value that is computed for binding the parameter to a value.
+         * @param <T>          The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         */
         public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, DynamicValue<T> dynamicValue) {
             Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues = new HashMap<Class<? extends Annotation>, Advice.DynamicValue<?>>(this.dynamicValues);
             if (!type.isAnnotation()) {
@@ -5105,6 +5273,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return to(new TypeDescription.ForLoadedType(type), classFileLocator);
         }
 
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods.
+         *
+         * @param typeDescription  A description of the type declaring the advice.
+         * @param classFileLocator The class file locator for locating the advisory class's class file.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
         public Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
             List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
             for (Map.Entry<Class<? extends Annotation>, DynamicValue<?>> entry : dynamicValues.entrySet()) {
