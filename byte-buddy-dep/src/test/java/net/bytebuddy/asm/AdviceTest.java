@@ -308,6 +308,20 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceWithExceptionHandler() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault())
+                .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testAdviceNotSkipExceptionImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -329,7 +343,6 @@ public class AdviceTest {
     public void testAdviceNotSkipExceptionImplicitDuplicate() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .make()
@@ -1514,6 +1527,27 @@ public class AdviceTest {
                 throw new AssertionError();
             }
             Sample.exit++;
+        }
+    }
+
+    public static class ExceptionHandlerAdvice {
+
+        @Advice.OnMethodEnter(suppress = Throwable.class)
+        private static void enter() {
+            try {
+                throw new Exception();
+            } catch (Exception ignored) {
+                Sample.enter++;
+            }
+        }
+
+        @Advice.OnMethodExit(suppress = Throwable.class)
+        private static void exit() {
+            try {
+                throw new Exception();
+            } catch (Exception ignored) {
+                Sample.exit++;
+            }
         }
     }
 
