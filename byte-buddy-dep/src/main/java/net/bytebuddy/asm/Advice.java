@@ -1115,17 +1115,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         @Override
-        public void visitCode() {
-            mv.visitCode();
+        protected void onMethodStart() {
+            onAdviceStart();
             if (methodEnter.isAlive()) {
                 append(methodEnter);
             }
-        }
-
-        @Override
-        protected void onMethodStart() {
             onUserStart();
         }
+
+        protected abstract void onAdviceStart();
 
         /**
          * Writes the advice for entering the instrumented method.
@@ -1252,6 +1250,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         binaryRepresentation,
                         writerFlags,
                         readerFlags);
+            }
+
+            @Override
+            protected void onAdviceStart() {
+
             }
 
             @Override
@@ -1436,8 +1439,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected void onUserStart() {
+                protected void onAdviceStart() {
                     mv.visitTryCatchBlock(userStart, userEnd, userEnd, ANY_THROWABLE);
+                }
+
+                @Override
+                protected void onUserStart() {
                     mv.visitLabel(userStart);
                 }
 
@@ -1537,6 +1544,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             binaryRepresentation,
                             writerFlags,
                             readerFlags);
+                }
+
+                @Override
+                protected void onAdviceStart() {
+                    /* empty */
                 }
 
                 @Override
