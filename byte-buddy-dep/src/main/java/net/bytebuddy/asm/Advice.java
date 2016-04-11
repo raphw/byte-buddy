@@ -1123,6 +1123,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         @Override
         protected void onFirstCodeInstruction() {
+            methodEnter.prepare();
+            methodExit.prepare();
             onAdviceStart();
             methodEnter.apply(classReader);
             onUserStart();
@@ -2659,7 +2661,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param name       The name of the field.
                  * @param targetType The expected type that the field can be assigned to.
-                 * @param readOnly
                  */
                 protected ForField(String name, TypeDescription targetType, boolean readOnly) {
                     this.name = name;
@@ -3712,6 +3713,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         interface Bound {
 
+            void prepare();
+
             void apply(ClassReader classReader);
         }
 
@@ -3748,6 +3751,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories, ForMethodEnter dispatcher) {
                 return this;
+            }
+
+            @Override
+            public void prepare() {
+                /* do nothing */
             }
 
             @Override
@@ -3840,12 +3848,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final Map<Integer, OffsetMapping> offsetMappings;
 
+                protected final CodeTranslationVisitor.SuppressionHandler suppressionHandler;
+
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
                  * @param adviceMethod The represented advice method.
                  */
-                protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories) {
+                protected Resolved(MethodDescription.InDefinedShape adviceMethod,
+                                   List<OffsetMapping.Factory> factories,
+                                   TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
                     offsetMappings = new HashMap<Integer, OffsetMapping>();
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
@@ -3864,6 +3876,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ? new OffsetMapping.ForParameter(parameterDescription.getIndex(), READ_ONLY, parameterDescription.getType().asErasure())
                                 : offsetMapping);
                     }
+                    suppressionHandler = throwableType.represents(NoSuppression.class)
+                            ? CodeTranslationVisitor.SuppressionHandler.NoOp.INSTANCE
+                            : new CodeTranslationVisitor.SuppressionHandler.Suppressing(throwableType);
                 }
 
                 @Override
@@ -3923,6 +3938,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public void prepare() {
+                        suppressionHandler.onPrepare(methodVisitor);
+                    }
+
+                    @Override
                     public void apply(ClassReader classReader) {
                         classReader.accept(this, ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
                     }
@@ -3966,7 +3986,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForField.Factory.INSTANCE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
-                                        new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories));
+                                        new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS, TypeDescription.class));
                     }
 
                     @Override
@@ -3987,7 +4008,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS, TypeDescription.class));
+                                suppressionHandler);
                     }
 
                     @Override
@@ -4044,7 +4065,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
                                         adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
                                                 ? OffsetMapping.ForThrowable.INSTANCE
-                                                : new OffsetMapping.Illegal(Thrown.class)), userFactories));
+                                                : new OffsetMapping.Illegal(Thrown.class)), userFactories),
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class));
                         this.enterType = enterType;
                     }
 
@@ -4077,7 +4099,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class),
+                                suppressionHandler,
                                 enterType.getStackSize().getSize() + getPadding().getSize());
                     }
 
@@ -4238,22 +4260,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod The instrumented method.
                  * @param adviceMethod       The advice method.
                  * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                 * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  MetaDataHandler.ForAdvice metaDataHandler,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviceMethod,
                                                  Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                                 TypeDescription throwableType) {
+                                                 SuppressionHandler suppressionHandler) {
                     super(Opcodes.ASM5, methodVisitor);
                     this.metaDataHandler = metaDataHandler;
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.offsetMappings = offsetMappings;
-                    suppressionHandler = throwableType.represents(NoSuppression.class)
-                            ? SuppressionHandler.NoOp.INSTANCE
-                            : new SuppressionHandler.Suppressing(throwableType);
+                    this.suppressionHandler = suppressionHandler;
                     endOfMethod = new Label();
                 }
 
@@ -4356,6 +4375,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected interface SuppressionHandler {
 
+                    void onPrepare(MethodVisitor methodVisitor);
+
                     /**
                      * Invoked at the start of a method.
                      *
@@ -4373,6 +4394,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
 
+
                     /**
                      * A non-operational suppression handler that does not suppress any method.
                      */
@@ -4382,6 +4404,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * The singleton instance.
                          */
                         INSTANCE;
+
+                        @Override
+                        public void onPrepare(MethodVisitor methodVisitor) {
+                            /* do nothing */
+                        }
 
                         @Override
                         public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
@@ -4431,8 +4458,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
+                        public void onPrepare(MethodVisitor methodVisitor) {
                             methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
+                        }
+
+                        @Override
+                        public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
                             methodVisitor.visitLabel(startOfMethod);
                         }
 
@@ -4483,15 +4514,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
                      * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                      */
                     protected ForMethodEnter(MethodVisitor methodVisitor,
                                              MetaDataHandler.ForAdvice metaDataHandler,
                                              MethodDescription.InDefinedShape instrumentedMethod,
                                              MethodDescription.InDefinedShape adviceMethod,
                                              Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                             TypeDescription throwableType) {
-                        super(methodVisitor, metaDataHandler, instrumentedMethod, adviceMethod, offsetMappings, throwableType);
+                                             SuppressionHandler suppressionHandler) {
+                        super(methodVisitor, metaDataHandler, instrumentedMethod, adviceMethod, offsetMappings, suppressionHandler);
                     }
 
                     @Override
@@ -4577,7 +4607,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
                      * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
                      * @param padding            The padding after the instrumented method's arguments in the local variable array.
                      */
                     protected ForMethodExit(MethodVisitor methodVisitor,
@@ -4585,14 +4614,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription.InDefinedShape instrumentedMethod,
                                             MethodDescription.InDefinedShape adviceMethod,
                                             Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                            TypeDescription throwableType,
+                                            SuppressionHandler suppressionHandler,
                                             int padding) {
                         super(methodVisitor,
                                 metaDataHandler,
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
-                                throwableType);
+                                suppressionHandler);
                         this.padding = padding;
                     }
 
