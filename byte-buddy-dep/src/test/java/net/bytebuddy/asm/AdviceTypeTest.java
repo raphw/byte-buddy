@@ -6,7 +6,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 
-import java.io.Serializable;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -67,7 +66,7 @@ public class AdviceTypeTest {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
                 .visit(Advice.withCustomMapping()
-                        .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue<CustomAnnotation>((Serializable) value))
+                        .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue(value))
                         .to(advice)
                         .on(named(FOO)))
                 .make()
@@ -83,7 +82,7 @@ public class AdviceTypeTest {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
                 .visit(Advice.withCustomMapping()
-                        .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue<CustomAnnotation>((Serializable) value))
+                        .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue(value))
                         .to(advice)
                         .on(named(BAR)))
                 .make()
