@@ -1072,15 +1072,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         protected final MethodDescription.InDefinedShape instrumentedMethod;
 
+        private final int padding;
+
         /**
          * The dispatcher to be used for method entry.
          */
-        private final Dispatcher.Resolved.ForMethodEnter methodEnter;
+        private final Dispatcher.Bound methodEnter;
+
+        protected final Dispatcher.Bound methodExit;
 
         /**
          * A reader for traversing the advice methods' class file.
          */
-        private final ClassReader classReader;
+        protected final ClassReader classReader;
 
         /**
          * A handler to use for translating meta embedded in the byte code.
@@ -1101,23 +1105,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 MethodDescription.InDefinedShape instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                Dispatcher.Resolved.ForMethodExit methodExit,
                                 List<? extends TypeDescription> yieldedTypes,
                                 byte[] binaryRepresentation,
                                 int writerFlags,
                                 int readerFlags) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
-            this.methodEnter = methodEnter;
+            padding = methodEnter.getEnterType().getStackSize().getSize();
             classReader = new ClassReader(binaryRepresentation);
             metaDataHandler = MetaDataHandler.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType()), yieldedTypes, writerFlags, readerFlags);
+            this.methodEnter = methodEnter.bind(instrumentedMethod, methodVisitor, metaDataHandler);
+            this.methodExit = methodExit.bind(instrumentedMethod, methodVisitor, metaDataHandler);
         }
 
         @Override
         protected void onFirstCodeInstruction() {
             onAdviceStart();
-            append(methodEnter);
+            methodEnter.apply(classReader);
             onUserStart();
         }
 
@@ -1132,14 +1139,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected void onVisitVarInsn(int opcode, int offset) {
             mv.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
                     ? offset
-                    : offset + methodEnter.getEnterType().getStackSize().getSize());
+                    : padding + offset);
         }
 
         @Override
         protected void onVisitIincInsn(int offset, int increment) {
             mv.visitIincInsn(offset < instrumentedMethod.getStackSize()
                     ? offset
-                    : offset + methodEnter.getEnterType().getStackSize().getSize(), increment);
+                    : padding + offset, increment);
         }
 
         /**
@@ -1158,7 +1165,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param offset The additional offset of the variable.
          */
         protected void variable(int opcode, int offset) {
-            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize() + offset);
+            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + padding + offset);
         }
 
         @Override
@@ -1176,15 +1183,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * Writes the advice for completing the instrumented method.
          */
         protected abstract void onUserEnd();
-
-        /**
-         * Applies the supplied advice dispatcher onto the target method visitor.
-         *
-         * @param dispatcher The dispatcher to apply.
-         */
-        protected void append(Dispatcher.Resolved dispatcher) {
-            dispatcher.apply(instrumentedMethod, mv, metaDataHandler, classReader);
-        }
 
         /**
          * An advice visitor that does not apply exit advice.
@@ -1210,6 +1208,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 super(methodVisitor,
                         instrumentedMethod,
                         methodEnter,
+                        Dispatcher.Inactive.INSTANCE,
                         Collections.<TypeDescription>emptyList(),
                         binaryRepresentation,
                         writerFlags,
@@ -1245,11 +1244,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected abstract static class WithExitAdvice extends AdviceVisitor {
 
             /**
-             * The dispatcher to be used for method exit.
-             */
-            private final Dispatcher.Resolved.ForMethodExit methodExit;
-
-            /**
              * A label that indicates the end of the method.
              */
             protected final Label endOfMethod;
@@ -1274,8 +1268,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   byte[] binaryRepresentation,
                                   int writerFlags,
                                   int readerFlags) {
-                super(methodVisitor, instrumentedMethod, methodEnter, yieldedTypes, binaryRepresentation, writerFlags, readerFlags);
-                this.methodExit = methodExit;
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, yieldedTypes, binaryRepresentation, writerFlags, readerFlags);
                 endOfMethod = new Label();
             }
 
@@ -1312,7 +1305,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 onUserExit();
                 mv.visitLabel(endOfMethod);
                 metaDataHandler.injectCompletionFrame(mv, false);
-                append(methodExit);
+                methodExit.apply(classReader);
                 onAdviceExit();
                 if (instrumentedMethod.getReturnType().represents(void.class)) {
                     mv.visitInsn(Opcodes.RETURN);
@@ -3687,10 +3680,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface Resolved extends Dispatcher {
 
-            void apply(MethodDescription.InDefinedShape instrumentedMethod,
-                       MethodVisitor methodVisitor,
-                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                       ClassReader classReader);
+            Bound bind(MethodDescription.InDefinedShape instrumentedMethod, MethodVisitor methodVisitor, MetaDataHandler.ForInstrumentedMethod metaDataHandler);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -3720,10 +3710,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        interface Bound {
+
+            void apply(ClassReader classReader);
+        }
+
         /**
          * An implementation for inactive devise that does not write any byte code.
          */
-        enum Inactive implements Dispatcher.Unresolved, Resolved.ForMethodEnter, Resolved.ForMethodExit {
+        enum Inactive implements Dispatcher.Unresolved, Resolved.ForMethodEnter, Resolved.ForMethodExit, Bound {
 
             /**
              * The singleton instance.
@@ -3756,13 +3751,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void apply(MethodDescription.InDefinedShape instrumentedMethod,
-                              MethodVisitor methodVisitor,
-                              MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                              ClassReader classReader) {
+            public void apply(ClassReader classReader) {
                 /* do nothing */
             }
 
+            @Override
+            public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
+                              MethodVisitor methodVisitor,
+                              MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                return this;
+            }
 
             @Override
             public String toString() {
@@ -3874,11 +3872,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void apply(MethodDescription.InDefinedShape instrumentedMethod,
+                public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                                   MethodVisitor methodVisitor,
-                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                  ClassReader classReader) {
-                    classReader.accept(new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler), ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
+                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler);
                 }
 
                 /**
@@ -3908,7 +3905,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return result;
                 }
 
-                protected class CodeCopier extends ClassVisitor {
+                protected class CodeCopier extends ClassVisitor implements Bound {
 
                     private final MethodDescription.InDefinedShape instrumentedMethod;
 
@@ -3926,9 +3923,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public void apply(ClassReader classReader) {
+                        classReader.accept(this, ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
+                    }
+
+                    @Override
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? apply(methodVisitor, metaDataHandler, instrumentedMethod)
+                                ? Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod)
                                 : IGNORE_METHOD;
                     }
                 }
