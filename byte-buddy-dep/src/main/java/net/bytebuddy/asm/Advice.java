@@ -2240,27 +2240,83 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         throw new IllegalStateException(); // TODO
                     }
 
+                    /**
+                     * A dispatcher for boxing a primitive value.
+                     */
                     protected enum BoxingDispatcher {
 
+                        /**
+                         * A boxing dispatcher for the {@code boolean} type.
+                         */
                         BOOLEAN(Opcodes.ILOAD, Boolean.class, boolean.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code byte} type.
+                         */
                         BYTE(Opcodes.ILOAD, Byte.class, byte.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code short} type.
+                         */
                         SHORT(Opcodes.ILOAD, Short.class, short.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code char} type.
+                         */
                         CHARACTER(Opcodes.ILOAD, Character.class, char.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code int} type.
+                         */
                         INTEGER(Opcodes.ILOAD, Integer.class, int.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code long} type.
+                         */
                         LONG(Opcodes.LLOAD, Long.class, long.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code float} type.
+                         */
                         FLOAT(Opcodes.FLOAD, Float.class, float.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code double} type.
+                         */
                         DOUBLE(Opcodes.DLOAD, Double.class, double.class);
 
+                        /**
+                         * The name of the boxing method of a wrapper type.
+                         */
                         private static final String VALUE_OF = "valueOf";
 
+                        /**
+                         * The opcode to use for loading a value of this type.
+                         */
                         private final int opcode;
 
+                        /**
+                         * The name of the wrapper type.
+                         */
                         private final String owner;
 
+                        /**
+                         * The descriptor of the boxing method.
+                         */
                         private final String descriptor;
 
+                        /**
+                         * The required stack size of the unboxed value.
+                         */
                         private final StackSize stackSize;
 
+                        /**
+                         * Creates a new boxing dispatcher.
+                         *
+                         * @param opcode        The opcode to use for loading a value of this type.
+                         * @param wrapperType   The represented wrapper type.
+                         * @param primitiveType The represented primitive type.
+                         */
                         BoxingDispatcher(int opcode, Class<?> wrapperType, Class<?> primitiveType) {
                             this.opcode = opcode;
                             owner = Type.getInternalName(wrapperType);
@@ -2638,13 +2694,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * Maps the declaring type of the instrumented method.
+             */
             enum ForInstrumentedType implements OffsetMapping {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                     return new Target.ForConstantPoolValue(Type.getType(instrumentedMethod.getDeclaringType().getDescriptor()));
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForInstrumentedType." + name();
                 }
             }
 
@@ -2663,6 +2730,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final TypeDescription targetType;
 
+                /**
+                 * {@code true} if this mapping is read-only.
+                 */
                 protected final boolean readOnly;
 
                 /**
@@ -2670,6 +2740,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param name       The name of the field.
                  * @param targetType The expected type that the field can be assigned to.
+                 * @param readOnly   {@code true} if this mapping is read-only.
                  */
                 protected ForField(String name, TypeDescription targetType, boolean readOnly) {
                     this.name = name;
@@ -2825,6 +2896,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final MethodDescription.InDefinedShape definingType;
 
+                    /**
+                     * The {@link FieldValue#readOnly()}} method.
+                     */
                     private final MethodDescription.InDefinedShape readOnly;
 
                     /**
@@ -2922,8 +2996,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 case Renderer.ForReturnTypeName.SYMBOL:
                                     renderers.add(Renderer.ForReturnTypeName.INSTANCE);
                                     break;
-                                case Renderer.ForSignature.SYMBOL:
-                                    renderers.add(Renderer.ForSignature.INSTANCE);
+                                case Renderer.ForJavaSignature.SYMBOL:
+                                    renderers.add(Renderer.ForJavaSignature.INSTANCE);
                                     break;
                                 default:
                                     throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
@@ -3055,7 +3129,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
                     }
 
-                    enum ForSignature implements Renderer {
+                    /**
+                     * A renderer for a method's Java signature in binary form.
+                     */
+                    enum ForJavaSignature implements Renderer {
 
                         /**
                          * The singleton instance.
@@ -3084,10 +3161,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForSignature." + name();
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature." + name();
                         }
                     }
 
+                    /**
+                     * A renderer for a method's return type in binary form.
+                     */
                     enum ForReturnTypeName implements Renderer {
 
                         /**
@@ -3429,8 +3509,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * An offset mapping for the method's (boxed) return value.
+             */
             enum ForBoxedReturnValue implements OffsetMapping, Factory {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -3454,10 +3540,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return this;
                     }
                 }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue." + name();
+                }
             }
 
+            /**
+             * An offset mapping for an array containing the (boxed) method arguments.
+             */
             enum ForBoxedArguments implements OffsetMapping, Factory {
 
+                /**
+                 * The singleton instance.
+                 */
                 INSTANCE;
 
                 @Override
@@ -3474,6 +3571,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     } else {
                         return this;
                     }
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForBoxedArguments." + name();
                 }
             }
 
@@ -3512,14 +3614,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
             }
 
+            /**
+             * Represents an offset mapping for a user-defined value.
+             *
+             * @param <T> The mapped annotation type.
+             */
             class ForUserValue<T extends Annotation> implements OffsetMapping {
 
+                /**
+                 * The target parameter that is bound.
+                 */
                 private final ParameterDescription.InDefinedShape target;
 
+                /**
+                 * The annotation value that triggered the binding.
+                 */
                 private final AnnotationDescription.Loadable<T> annotation;
 
+                /**
+                 * The dynamic value that is bound.
+                 */
                 private final DynamicValue<T> dynamicValue;
 
+                /**
+                 * Creates a new offset mapping for a user-defined value.
+                 *
+                 * @param target       The target parameter that is bound.
+                 * @param annotation   The annotation value that triggered the binding.
+                 * @param dynamicValue The dynamic value that is bound.
+                 */
                 protected ForUserValue(ParameterDescription.InDefinedShape target,
                                        AnnotationDescription.Loadable<T> annotation,
                                        DynamicValue<T> dynamicValue) {
@@ -3575,17 +3698,41 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             '}';
                 }
 
+                /**
+                 * A factory for mapping a user-defined dynamic value.
+                 *
+                 * @param <S> The mapped annotation type.
+                 */
                 protected static class Factory<S extends Annotation> implements OffsetMapping.Factory {
 
+                    /**
+                     * The mapped annotation type.
+                     */
                     private final Class<S> type;
 
+                    /**
+                     * The dynamic value instance used for resolving a binding.
+                     */
                     private final DynamicValue<S> dynamicValue;
 
+                    /**
+                     * Creates a new factory for a user-defined dynamic value.
+                     *
+                     * @param type         The mapped annotation type.
+                     * @param dynamicValue The dynamic value instance used for resolving a binding.
+                     */
                     protected Factory(Class<S> type, DynamicValue<S> dynamicValue) {
                         this.type = type;
                         this.dynamicValue = dynamicValue;
                     }
 
+                    /**
+                     * Creates a new factory for mapping a user value.
+                     *
+                     * @param type         The mapped annotation type.
+                     * @param dynamicValue The dynamic value instance used for resolving a binding.
+                     * @return An appropriate factory for such a offset mapping.
+                     */
                     @SuppressWarnings("unchecked")
                     protected static OffsetMapping.Factory of(Class<? extends Annotation> type, DynamicValue<?> dynamicValue) {
                         return new Factory(type, dynamicValue);
@@ -3690,7 +3837,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface Resolved extends Dispatcher {
 
-            Bound bind(MethodDescription.InDefinedShape instrumentedMethod, MethodVisitor methodVisitor, MetaDataHandler.ForInstrumentedMethod metaDataHandler, ClassReader classReader);
+            /**
+             * Binds this dispatcher for resolution to a specific method.
+             *
+             * @param instrumentedMethod The instrumented method.
+             * @param methodVisitor      The method visitor for writing the instrumented method.
+             * @param metaDataHandler    A meta data handler for writing to the instrumented method.
+             * @param classReader        A class reader for parsing the class file containing the represented advice method.
+             * @return A dispatcher that is bound to the instrumented method.
+             */
+            Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
+                       MethodVisitor methodVisitor,
+                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                       ClassReader classReader);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -3720,10 +3879,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * A bound resolution of an advice method.
+         */
         interface Bound {
 
+            /**
+             * Prepares the advice method's exception handlers.
+             */
             void prepare();
 
+            /**
+             * Writes the advice method's code.
+             */
             void apply();
         }
 
@@ -3858,6 +4026,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final Map<Integer, OffsetMapping> offsetMappings;
 
+                /**
+                 * The suppression handler to use.
+                 */
                 protected final CodeTranslationVisitor.SuppressionHandler suppressionHandler;
 
                 /**
@@ -3865,9 +4036,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param adviceMethod The represented advice method.
                  */
-                protected Resolved(MethodDescription.InDefinedShape adviceMethod,
-                                   List<OffsetMapping.Factory> factories,
-                                   TypeDescription throwableType) {
+                protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
                     offsetMappings = new HashMap<Integer, OffsetMapping>();
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
@@ -3931,18 +4100,45 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return result;
                 }
 
+                /**
+                 * A bound advice method that copies the code by first extracting the exception table and later appending the
+                 * code of the method without copying any meta data.
+                 */
                 protected class CodeCopier extends ClassVisitor implements Bound {
 
+                    /**
+                     * The instrumented method.
+                     */
                     private final MethodDescription.InDefinedShape instrumentedMethod;
 
+                    /**
+                     * The method visitor for writing the instrumented method.
+                     */
                     private final MethodVisitor methodVisitor;
 
+                    /**
+                     * A meta data handler for writing to the instrumented method.
+                     */
                     private final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
 
+                    /**
+                     * A class reader for parsing the class file containing the represented advice method.
+                     */
                     private final ClassReader classReader;
 
+                    /**
+                     * The labels that were found during parsing the method's exception handler in the order of their discovery.
+                     */
                     private List<Label> labels;
 
+                    /**
+                     * Creates a new code copier.
+                     *
+                     * @param instrumentedMethod The instrumented method.
+                     * @param methodVisitor      The method visitor for writing the instrumented method.
+                     * @param metaDataHandler    A meta data handler for writing to the instrumented method.
+                     * @param classReader        A class reader for parsing the class file containing the represented advice method.
+                     */
                     protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
                                          MethodVisitor methodVisitor,
                                          MetaDataHandler.ForInstrumentedMethod metaDataHandler,
@@ -3957,7 +4153,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void prepare() {
-                        classReader.accept(new LabelCollector(), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+                        classReader.accept(new ExceptionTableExtractor(), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
                         suppressionHandler.onPrepare(methodVisitor);
                     }
 
@@ -3969,13 +4165,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? new LabelSubstitutor(Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod))
+                                ? new ExceptionTabelSubstitutor(Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod))
                                 : IGNORE_METHOD;
                     }
 
-                    protected class LabelCollector extends ClassVisitor {
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.Resolved.CodeCopier{" +
+                                "instrumentedMethod=" + instrumentedMethod +
+                                ", methodVisitor=" + methodVisitor +
+                                ", metaDataHandler=" + metaDataHandler +
+                                ", classReader=" + classReader +
+                                ", labels=" + labels +
+                                '}';
+                    }
 
-                        protected LabelCollector() {
+                    /**
+                     * A class visitor that extracts the exception tables of the advice method.
+                     */
+                    protected class ExceptionTableExtractor extends ClassVisitor {
+
+                        /**
+                         * Creates a new exception table extractor.
+                         */
+                        protected ExceptionTableExtractor() {
                             super(Opcodes.ASM5);
                         }
 
@@ -3985,12 +4198,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     ? new ExceptionTableCollector(methodVisitor)
                                     : IGNORE_METHOD;
                         }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableExtractor{" +
+                                    "methodVisitor=" + methodVisitor +
+                                    '}';
+                        }
                     }
 
+                    /**
+                     * A visitor that only writes try-catch-finally blocks to the supplied method visitor. All labels of these tables are collected
+                     * for substitution when revisiting the reminder of the method.
+                     */
                     protected class ExceptionTableCollector extends MethodVisitor {
 
+                        /**
+                         * The method visitor for which the try-catch-finally blocks should be written.
+                         */
                         private final MethodVisitor methodVisitor;
 
+                        /**
+                         * Creates a new exception table collector.
+                         *
+                         * @param methodVisitor The method visitor for which the try-catch-finally blocks should be written.
+                         */
                         protected ExceptionTableCollector(MethodVisitor methodVisitor) {
                             super(Opcodes.ASM5);
                             this.methodVisitor = methodVisitor;
@@ -4006,15 +4238,38 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
                             return methodVisitor.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible);
                         }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableCollector{" +
+                                    "methodVisitor=" + methodVisitor +
+                                    '}';
+                        }
                     }
 
-                    protected class LabelSubstitutor extends MethodVisitor {
+                    /**
+                     * A label substitutor allows to visit an advice method a second time after the exception handlers were already written.
+                     * Doing so, this visitor substitutes all labels that were already created during the first visit to keep the mapping
+                     * consistent.
+                     */
+                    protected class ExceptionTabelSubstitutor extends MethodVisitor {
 
+                        /**
+                         * A map containing resolved substitutions.
+                         */
                         private final Map<Label, Label> substitutions;
 
+                        /**
+                         * The current index of the visited labels that are used for try-catch-finally blocks.
+                         */
                         private int index;
 
-                        protected LabelSubstitutor(MethodVisitor methodVisitor) {
+                        /**
+                         * Creates a label substitor.
+                         *
+                         * @param methodVisitor The method visitor for which to substitute labels.
+                         */
+                        protected ExceptionTabelSubstitutor(MethodVisitor methodVisitor) {
                             super(Opcodes.ASM5, methodVisitor);
                             substitutions = new IdentityHashMap<Label, Label>();
                         }
@@ -4028,7 +4283,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-                            return IGNORE_ANNOTATION; // TODO
+                            return null; // TODO
                         }
 
                         @Override
@@ -4077,6 +4332,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             return substitution == null
                                     ? label
                                     : substitution;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTabelSubstitutor{" +
+                                    "methodVisitor=" + methodVisitor +
+                                    ", substitutions=" + substitutions +
+                                    ", index=" + index +
+                                    '}';
                         }
                     }
                 }
@@ -4179,7 +4443,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                            +List<? extends OffsetMapping.Factory> userFactories,
+                                            List<? extends OffsetMapping.Factory> userFactories,
                                             TypeDescription enterType) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.INSTANCE,
@@ -4928,6 +5192,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * <p>
      * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
+     * </p>
+     * <p>
+     * <b>Note</b>: As the mapping is virtual, Byte Buddy might be required to reserve more space on the operand stack than the
+     * optimal value when accessing this parameter. This does not normally matter as the additional space requirement is minimal.
+     * However, if the runtime performance of class creation is secondary, one can require ASM to recompute the optimal frames by
+     * setting {@link ClassWriter#COMPUTE_MAXS}. This is however only relevant when writing to a non-static field.
      * </p>
      *
      * @see Advice
