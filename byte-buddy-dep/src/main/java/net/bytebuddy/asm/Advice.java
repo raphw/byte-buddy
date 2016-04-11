@@ -3764,7 +3764,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return Target.ForNullConstant.INSTANCE;
                     } else if ((target.getType().represents(String.class) && !(value instanceof String))
                             || (target.getType().represents(Class.class) && !(value instanceof TypeDescription || value instanceof Class))
-                            || (target.getType().isPrimitive() && !target.getType().asErasure().isInstanceOrWrapper(value))) { // TODO: method handles, method types
+                            || (target.getType().isPrimitive() && !target.getType().asErasure().isInstanceOrWrapper(value))) {
                         throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
                     } else if (value instanceof TypeDescription) {
                         value = Type.getType(((TypeDescription) value).getDescriptor());
@@ -5507,9 +5507,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * A dynamic value allows to bind parameters of an {@link Advice} method to a custom, constant value.
      * </p>
      * <p>The mapped value must be a constant value that can be embedded into a Java class file. This holds for all primitive types,
-     * instances of {@link String}, method handles and method types (for Java 7 and newer) as well as their unloaded
-     * {@link net.bytebuddy.utility.JavaInstance} equivalents and for {@link Class} instances as well as their unloaded
-     * {@link TypeDescription} representations.
+     * instances of {@link String} and for {@link Class} instances as well as their unloaded {@link TypeDescription} representations.
      * </p>
      *
      * @param <T> The type of the annotation this dynamic value requires to provide a mapping.
@@ -5533,7 +5531,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                        boolean initialized);
 
         /**
+         * <p>
          * A {@link DynamicValue} implementation that always binds a fixed value.
+         * </p>
+         * <p>
+         * The mapped value must be a constant value that can be embedded into a Java class file. This holds for all primitive types,
+         * instances of {@link String} and for {@link Class} instances as well as their unloaded {@link TypeDescription} representations.
+         * </p>
          */
         class ForFixedValue implements DynamicValue<Annotation> {
 
