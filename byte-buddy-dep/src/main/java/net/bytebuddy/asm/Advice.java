@@ -1082,11 +1082,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected final Dispatcher.Bound methodExit;
 
         /**
-         * A reader for traversing the advice methods' class file.
-         */
-        protected final ClassReader classReader;
-
-        /**
          * A handler to use for translating meta embedded in the byte code.
          */
         protected final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
@@ -1113,12 +1108,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
             padding = methodEnter.getEnterType().getStackSize().getSize();
-            classReader = new ClassReader(binaryRepresentation);
             metaDataHandler = MetaDataHandler.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType()), yieldedTypes, writerFlags, readerFlags);
-            this.methodEnter = methodEnter.bind(instrumentedMethod, methodVisitor, metaDataHandler);
-            this.methodExit = methodExit.bind(instrumentedMethod, methodVisitor, metaDataHandler);
+            ClassReader classReader = new ClassReader(binaryRepresentation);
+            this.methodEnter = methodEnter.bind(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
+            this.methodExit = methodExit.bind(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
         }
 
         @Override
@@ -1126,7 +1121,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             methodEnter.prepare();
             methodExit.prepare();
             onAdviceStart();
-            methodEnter.apply(classReader);
+            methodEnter.apply();
             onUserStart();
         }
 
@@ -1307,7 +1302,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 onUserExit();
                 mv.visitLabel(endOfMethod);
                 metaDataHandler.injectCompletionFrame(mv, false);
-                methodExit.apply(classReader);
+                methodExit.apply();
                 onAdviceExit();
                 if (instrumentedMethod.getReturnType().represents(void.class)) {
                     mv.visitInsn(Opcodes.RETURN);
@@ -3681,7 +3676,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface Resolved extends Dispatcher {
 
-            Bound bind(MethodDescription.InDefinedShape instrumentedMethod, MethodVisitor methodVisitor, MetaDataHandler.ForInstrumentedMethod metaDataHandler);
+            Bound bind(MethodDescription.InDefinedShape instrumentedMethod, MethodVisitor methodVisitor, MetaDataHandler.ForInstrumentedMethod metaDataHandler, ClassReader classReader);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -3715,7 +3710,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             void prepare();
 
-            void apply(ClassReader classReader);
+            void apply();
         }
 
         /**
@@ -3759,14 +3754,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public void apply(ClassReader classReader) {
+            public void apply() {
                 /* do nothing */
             }
 
             @Override
             public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                               MethodVisitor methodVisitor,
-                              MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                              MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                              ClassReader classReader) {
                 return this;
             }
 
@@ -3889,8 +3885,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                                   MethodVisitor methodVisitor,
-                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
-                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler);
+                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                                  ClassReader classReader) {
+                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
                 }
 
                 /**
@@ -3928,13 +3925,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     private final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
 
+                    private final ClassReader classReader;
+
                     protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
                                          MethodVisitor methodVisitor,
-                                         MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                                         MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                                         ClassReader classReader) {
                         super(Opcodes.ASM5);
                         this.instrumentedMethod = instrumentedMethod;
                         this.methodVisitor = methodVisitor;
                         this.metaDataHandler = metaDataHandler;
+                        this.classReader = classReader;
                     }
 
                     @Override
@@ -3943,7 +3944,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void apply(ClassReader classReader) {
+                    public void apply() {
                         classReader.accept(this, ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
                     }
 
@@ -4215,7 +4216,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * A visitor for translating an advice method's byte code for inlining into the instrumented method.
              */
-            protected abstract static class CodeTranslationVisitor extends ExceptionTableSensitiveMethodVisitor implements ReturnValueProducer {
+            protected abstract static class CodeTranslationVisitor extends MethodVisitor implements ReturnValueProducer {
 
                 /**
                  * Indicates that an annotation should not be read.
@@ -4308,12 +4309,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void visitCode() {
-                    /* do nothing */
+                    suppressionHandler.onStart(mv, metaDataHandler);
                 }
 
                 @Override
-                protected void onFirstCodeInstruction() {
-                    suppressionHandler.onStart(mv, metaDataHandler);
+                public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+                    throw new IllegalStateException("It is not allowed to define exception handlers within an advice method");
                 }
 
                 @Override
@@ -4339,7 +4340,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected void onVisitVarInsn(int opcode, int offset) {
+                public void visitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
                         metaDataHandler.recordStackPadding(target.resolveAccess(mv, opcode));
@@ -4349,7 +4350,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected void onVisitIincInsn(int offset, int increment) {
+                public void visitIincInsn(int offset, int increment) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
                         metaDataHandler.recordStackPadding(target.resolveIncrement(mv, increment));
@@ -4368,7 +4369,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract int adjust(int offset);
 
                 @Override
-                protected abstract void onVisitInsn(int opcode);
+                public abstract void visitInsn(int opcode);
 
                 /**
                  * A suppression handler for optionally suppressing exceptions.
@@ -4525,7 +4526,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected void onVisitInsn(int opcode) {
+                    public void visitInsn(int opcode) {
                         switch (opcode) {
                             case Opcodes.RETURN:
                                 break;
@@ -4626,7 +4627,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected void onVisitInsn(int opcode) {
+                    public void visitInsn(int opcode) {
                         switch (opcode) {
                             case Opcodes.RETURN:
                                 break;
