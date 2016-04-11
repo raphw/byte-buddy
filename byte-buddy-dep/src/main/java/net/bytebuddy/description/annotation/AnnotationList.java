@@ -38,11 +38,17 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      *
      * @param annotationType The type to be found in the list.
      * @param <T>            The annotation type.
-     * @return The annotation value or {@code null} if no such annotation was found.
+     * @return The annotation description or {@code null} if no such annotation was found.
      */
     <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType);
 
-    AnnotationDescription ofType(TypeDescription typeDescription);
+    /**
+     * Finds the first annotation of the given type and returns it.
+     *
+     * @param annotationType The type to be found in the list.
+     * @return The annotation description or {@code null} if no such annotation was found.
+     */
+    AnnotationDescription ofType(TypeDescription annotationType);
 
     /**
      * Returns only annotations that are marked as {@link java.lang.annotation.Inherited} as long as they are not
@@ -105,9 +111,9 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         @Override
-        public AnnotationDescription ofType(TypeDescription typeDescription) {
+        public AnnotationDescription ofType(TypeDescription annotationType) {
             for (AnnotationDescription annotation : this) {
-                if (annotation.getAnnotationType().equals(typeDescription)) {
+                if (annotation.getAnnotationType().equals(annotationType)) {
                     return annotation;
                 }
             }
@@ -293,7 +299,7 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         @Override
-        public AnnotationDescription ofType(TypeDescription typeDescription) {
+        public AnnotationDescription ofType(TypeDescription annotationType) {
             return AnnotationDescription.UNDEFINED;
         }
 

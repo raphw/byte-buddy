@@ -31,6 +31,9 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  */
 public interface AnnotationDescription {
 
+    /**
+     * Indicates an inexistent annotation in a type-safe manner.
+     */
     AnnotationDescription.Loadable<?> UNDEFINED = null;
 
     /**

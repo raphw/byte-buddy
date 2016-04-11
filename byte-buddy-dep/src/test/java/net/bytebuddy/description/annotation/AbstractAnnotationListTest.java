@@ -50,6 +50,17 @@ public abstract class AbstractAnnotationListTest<U> extends AbstractFilterableLi
     }
 
     @Test
+    public void testAnnotationOfTypeDescription() throws Exception {
+        assertThat(asList(getFirst()).ofType(new TypeDescription.ForLoadedType(Foo.class)),
+                is((AnnotationDescription) AnnotationDescription.ForLoadedAnnotation.of(Holder.class.getAnnotation(Foo.class))));
+    }
+
+    @Test
+    public void testAnnotationWrongTypeOfTypeDescription() throws Exception {
+        assertThat(asList(getFirst()).ofType(new TypeDescription.ForLoadedType(Annotation.class)), nullValue(AnnotationDescription.class));
+    }
+
+    @Test
     public void testInherited() throws Exception {
         assertThat(asList(getFirst()).inherited(Collections.<TypeDescription>emptySet()), is(asList(getFirst())));
     }
