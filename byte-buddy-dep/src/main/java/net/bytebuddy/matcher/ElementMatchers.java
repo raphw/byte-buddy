@@ -1689,8 +1689,8 @@ public final class ElementMatchers {
      * @param <T>  The type of the matched object.
      * @return A matcher that matches the annotation's type for being equal to the given type.
      */
-    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> annotationType(TypeDescription typeDescription) {
-        return annotationType(is(typeDescription));
+    public static <T extends AnnotationDescription> ElementMatcher.Junction<T> annotationType(TypeDescription type) {
+        return annotationType(is(type));
     }
 
     /**
