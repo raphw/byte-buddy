@@ -13,18 +13,18 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
         trigger = true;
     }
 
-    private void considerEndExceptionTable() {
+    private void considerEndOfExceptionTable() {
         if (trigger) {
             trigger = false;
-            onMethodStart();
+            onFirstCodeInstruction();
         }
     }
 
-    protected abstract void onMethodStart();
+    protected abstract void onFirstCodeInstruction();
 
     @Override
     public final void visitIntInsn(int opcode, int operand) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitIntInsn(opcode, operand);
     }
 
@@ -34,7 +34,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitVarInsn(int opcode, int var) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitVarInsn(opcode, var);
     }
 
@@ -44,7 +44,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitTypeInsn(int opcode, String type) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitTypeInsn(opcode, type);
     }
 
@@ -54,7 +54,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitFieldInsn(int opcode, String owner, String name, String desc) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitFieldInsn(opcode, owner, name, desc);
     }
 
@@ -65,20 +65,20 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
     @Override
     @SuppressWarnings("deprecation")
     public final void visitMethodInsn(int opcode, String owner, String name, String desc) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitMethodInsn(opcode, owner, name, desc);
     }
 
     @Deprecated
     @SuppressWarnings("deprecation")
     protected void onVisitMethodInsn(int opcode, String owner, String name, String desc) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         super.visitMethodInsn(opcode, owner, name, desc);
     }
 
     @Override
     public final void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitMethodInsn(opcode, owner, name, desc, itf);
     }
 
@@ -88,7 +88,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitInvokeDynamicInsn(String name, String desc, Handle bsm, Object... bsmArgs) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitInvokeDynamicInsn(name, desc, bsm, bsmArgs);
     }
 
@@ -98,7 +98,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitJumpInsn(int opcode, Label label) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitJumpInsn(opcode, label);
     }
 
@@ -108,7 +108,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitLdcInsn(Object cst) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitLdcInsn(cst);
     }
 
@@ -118,7 +118,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitIincInsn(int var, int increment) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitIincInsn(var, increment);
     }
 
@@ -128,7 +128,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitTableSwitchInsn(min, max, dflt, labels);
     }
 
@@ -138,7 +138,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitLookupSwitchInsn(dflt, keys, labels);
     }
 
@@ -148,7 +148,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitMultiANewArrayInsn(String desc, int dims) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitMultiANewArrayInsn(desc, dims);
     }
 
@@ -158,7 +158,7 @@ public abstract class ExceptionTableSensitiveMethodVisitor extends MethodVisitor
 
     @Override
     public final void visitInsn(int opcode) {
-        considerEndExceptionTable();
+        considerEndOfExceptionTable();
         onVisitInsn(opcode);
     }
 

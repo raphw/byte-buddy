@@ -204,7 +204,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testTrivialAdviceDuplicate() throws Exception {
+    public void testTrivialAdviceNested() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
@@ -333,6 +333,20 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceWithExceptionHandlerNested() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
+                .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
     public void testAdviceNotSkipExceptionImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -351,7 +365,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceNotSkipExceptionImplicitDuplicate() throws Exception {
+    public void testAdviceNotSkipExceptionImplicitNested() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
@@ -406,7 +420,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testAdviceNotSkipExceptionExplicitDuplicate() throws Exception {
+    public void testAdviceNotSkipExceptionExplicitNested() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
