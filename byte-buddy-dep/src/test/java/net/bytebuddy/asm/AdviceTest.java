@@ -217,6 +217,18 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
     }
+    @Test
+    public void testTrivialAdviceWithHandler() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAZ)))
+                .make()
+                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO + BAZ).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
 
     @Test
     public void testAdviceOnConstructor() throws Exception {
@@ -1210,6 +1222,14 @@ public class AdviceTest {
 
         public void barbaz() {
             object.getClass(); // implicit null pointer
+        }
+
+        public String foobaz() {
+            try {
+                throw new Exception();
+            } catch (Exception ignored) {
+                return FOO;
+            }
         }
     }
 
