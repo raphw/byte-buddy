@@ -250,6 +250,16 @@ public class ElementMatchersTest {
     }
 
     @Test
+    public void testAnnotationType() throws Exception {
+        AnnotationDescription annotationDescription = new TypeDescription.ForLoadedType(IsAnnotatedWith.class)
+                .getDeclaredAnnotations().ofType(IsAnnotatedWithAnnotation.class);
+        assertThat(ElementMatchers.annotationType(IsAnnotatedWithAnnotation.class).matches(annotationDescription), is(true));
+        assertThat(ElementMatchers.annotationType(OtherAnnotation.class).matches(annotationDescription), is(false));
+        assertThat(ElementMatchers.annotationType(IsAnnotatedWithAnnotation.class)
+                .matches(AnnotationDescription.ForLoadedAnnotation.of(Other.class.getAnnotation(OtherAnnotation.class))), is(false));
+    }
+
+    @Test
     public void testNone() throws Exception {
         assertThat(ElementMatchers.none().matches(new Object()), is(false));
     }

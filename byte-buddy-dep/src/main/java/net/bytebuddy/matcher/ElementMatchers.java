@@ -1671,14 +1671,35 @@ public final class ElementMatchers {
         return genericFieldType(rawType(matcher));
     }
 
+    /**
+     * Matches if an annotation is of a given type.
+     *
+     * @param type The expected annotation type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches the annotation's type for being equal to the given type.
+     */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> annotationType(Class<? extends Annotation> type) {
         return annotationType(new TypeDescription.ForLoadedType(type));
     }
 
+    /**
+     * Matches if an annotation is of a given type.
+     *
+     * @param type The expected annotation type.
+     * @param <T>  The type of the matched object.
+     * @return A matcher that matches the annotation's type for being equal to the given type.
+     */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> annotationType(TypeDescription typeDescription) {
         return annotationType(is(typeDescription));
     }
 
+    /**
+     * Matches if an annotation's type matches the supplied matcher.
+     *
+     * @param matcher The matcher to match the annotation's type against.
+     * @param <T>     The type of the matched object.
+     * @return A matcher that matches the annotation's type.
+     */
     public static <T extends AnnotationDescription> ElementMatcher.Junction<T> annotationType(ElementMatcher<? super TypeDescription> matcher) {
         return new AnnotationTypeMatcher<T>(matcher);
     }
