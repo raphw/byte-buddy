@@ -1,6 +1,8 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -15,6 +17,9 @@ import org.objectweb.asm.ClassReader;
 import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -909,6 +914,77 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
+    @Test
+    public void testUserTypeValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return Object.class;
+                    }
+                }).to(CustomAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testUserUnloadedTypeValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return TypeDescription.OBJECT;
+                    }
+                }).to(CustomAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalUserValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return new Object();
+                    }
+                }).to(CustomAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalPrimitiveNullUserValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return null;
+                    }
+                }).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testAdviceWithThisReferenceOnConstructor() throws Exception {
         new ByteBuddy()
@@ -938,7 +1014,7 @@ public class AdviceTest {
         Advice.to(Object.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testDuplicateAdvice() throws Exception {
         Advice.to(DuplicateAdvice.class);
     }
@@ -1143,6 +1219,24 @@ public class AdviceTest {
                 .make();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDuplicateRegistration() throws Exception {
+        Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Annotation>() {
+            @Override
+            public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                  ParameterDescription.InDefinedShape target,
+                                  AnnotationDescription.Loadable<Annotation> annotation,
+                                  boolean initialized) {
+                return null;
+            }
+        }).bind(Custom.class, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNotAnnotationType() throws Exception {
+        Advice.withCustomMapping().bind(Annotation.class, null);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
@@ -1162,9 +1256,14 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
         final int[] value = new int[1];
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
             @Override
@@ -1178,6 +1277,8 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedArguments.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForConstantValue.class).apply();
@@ -1185,15 +1286,18 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForMethodName.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForIgnored.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.class).apply();
-        final Iterator<Class<?>> annotationTypes = Arrays.asList(Object.class, String.class, int.class, float.class).iterator();
+        final Iterator<Class<?>> annotationTypes = Arrays.<Class<?>>asList(Object.class, String.class, int.class, float.class).iterator();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.Factory.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return annotationTypes.next();
             }
         }).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForInstrumentedType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThrowable.class).apply();
@@ -1206,46 +1310,11 @@ public class AdviceTest {
                 return types.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodEnter.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
-            }
-        });//.apply(); TODO
-        final Iterator<StackSize> iterator1 = Arrays.asList(StackSize.values()).iterator();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.WithExceptionHandler.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
-                try {
-                    when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
-                } catch (Exception exception) {
-                    throw new AssertionError(exception);
-                }
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getStackSize()).thenReturn(iterator1.next());
-            }
-        });//.apply(); TODO
-        final Iterator<StackSize> iterator2 = Arrays.asList(StackSize.values()).iterator();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.WithoutExceptionHandler.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
-                try {
-                    when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
-                } catch (Exception exception) {
-                    throw new AssertionError(exception);
-                }
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getStackSize()).thenReturn(iterator2.next());
-            }
-        });//.apply(); TODO
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTabelSubstitutor.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableCollector.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
@@ -1255,6 +1324,7 @@ public class AdviceTest {
                 when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
             }
         }).applyBasic();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.class).apply();
     }
 
     @SuppressWarnings("unused")
@@ -1336,6 +1406,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class EmptyMethod {
 
         public void foo() {
@@ -1644,6 +1715,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class ExceptionHandlerAdvice {
 
         @Advice.OnMethodEnter(suppress = Throwable.class)
@@ -1965,18 +2037,27 @@ public class AdviceTest {
     public static class OriginCustomAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.Origin("#t #m #d") String origin) throws Exception {
-            if (!origin.equals(Sample.class.getName() + " " + FOO + " ()L" + String.class.getName().replace('.', '/') + ";")) {
-                System.out.println(origin);
+        private static void enter(@Advice.Origin("#t #m #d #r #s") String origin, @Advice.Origin Class<?> type) throws Exception {
+            if (!origin.equals(Sample.class.getName() + " "
+                    + FOO
+                    + " ()L" + String.class.getName().replace('.', '/') + "; "
+                    + String.class.getName()
+                    + " ()")) {
+                throw new AssertionError();
+            }
+            if (type != Sample.class) {
                 throw new AssertionError();
             }
             Sample.enter++;
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.Origin("\\#\\#\\\\#m") String origin) throws Exception {
+        private static void exit(@Advice.Origin("\\#\\#\\\\#m") String origin, @Advice.Origin Class<?> type) throws Exception {
             if (!origin.equals("##\\" + FOO)) {
                 System.out.println(origin);
+                throw new AssertionError();
+            }
+            if (type != Sample.class) {
                 throw new AssertionError();
             }
             Sample.exit++;
@@ -2340,6 +2421,35 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Origin String value) {
             value = null;
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Custom {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public static class CustomAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice(@Custom Object value) {
+            if (value != Object.class) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CustomPrimitiveAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice(@Custom int value) {
+            if (value == 0) {
+                throw new AssertionError();
+            }
         }
     }
 }

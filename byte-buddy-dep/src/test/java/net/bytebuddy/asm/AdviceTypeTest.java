@@ -570,13 +570,16 @@ public class AdviceTypeTest {
                 throw new AssertionError();
             }
             mutableArgument = VALUE * 2;
-            if (boxed.length != 2 || !boxed[0].equals((int) VALUE) || !boxed[1].equals(VALUE * 2)) {
+            mutableArgument++;
+            if (boxed.length != 2 || !boxed[0].equals((int) VALUE) || !boxed[1].equals(VALUE * 2 + 1)) {
                 throw new AssertionError();
             }
             if (field != VALUE || mutated != VALUE || staticField != VALUE || mutatedStatic != VALUE) {
                 throw new AssertionError();
             }
             mutated = mutatedStatic = VALUE * 2;
+            mutated++;
+            mutatedStatic++;
             if (custom != VALUE) {
                 throw new AssertionError();
             }
@@ -605,13 +608,13 @@ public class AdviceTypeTest {
             if (!boxedReturn.equals((int) (exception ? NUMERIC_DEFAULT : VALUE))) {
                 throw new AssertionError();
             }
-            if (argument != VALUE || mutableArgument != VALUE * 2) {
+            if (argument != VALUE || mutableArgument != VALUE * 2 + 1) {
                 throw new AssertionError();
             }
-            if (boxed.length != 2 || !boxed[0].equals((int) VALUE) || !boxed[1].equals(VALUE * 2)) {
+            if (boxed.length != 2 || !boxed[0].equals((int) VALUE) || !boxed[1].equals(VALUE * 2 + 1)) {
                 throw new AssertionError();
             }
-            if (field != VALUE || mutated != VALUE * 2 || staticField != VALUE || mutatedStatic != VALUE * 2) {
+            if (field != VALUE || mutated != VALUE * 2 + 1 || staticField != VALUE || mutatedStatic != VALUE * 2 + 1) {
                 throw new AssertionError();
             }
             if (custom != VALUE) {

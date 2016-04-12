@@ -1583,6 +1583,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         MethodVisitor IGNORE_METHOD = null;
 
         /**
+         * Expresses that an annotation should not be visited.
+         */
+        AnnotationVisitor IGNORE_ANNOTATION = null;
+
+        /**
          * Returns {@code true} if this dispatcher is alive.
          *
          * @return {@code true} if this dispatcher is alive.
@@ -2114,16 +2119,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
                         if (fieldDescription.isStatic()) {
-                            accessField(methodVisitor, Opcodes.GETFIELD);
-                            methodVisitor.visitInsn(Opcodes.IINC);
-                            accessField(methodVisitor, Opcodes.PUTFIELD);
+                            accessField(methodVisitor, Opcodes.GETSTATIC);
+                            methodVisitor.visitInsn(Opcodes.ICONST_1);
+                            methodVisitor.visitInsn(Opcodes.IADD);
+                            accessField(methodVisitor, Opcodes.PUTSTATIC);
                             return NO_PADDING;
                         } else {
                             methodVisitor.visitIntInsn(Opcodes.ALOAD, 0);
                             methodVisitor.visitInsn(Opcodes.DUP);
-                            accessField(methodVisitor, Opcodes.GETSTATIC);
-                            methodVisitor.visitInsn(Opcodes.IINC);
-                            accessField(methodVisitor, Opcodes.PUTSTATIC);
+                            accessField(methodVisitor, Opcodes.GETFIELD);
+                            methodVisitor.visitInsn(Opcodes.ICONST_1);
+                            methodVisitor.visitInsn(Opcodes.IADD);
+                            accessField(methodVisitor, Opcodes.PUTFIELD);
                             return 2;
                         }
                     }
@@ -2145,8 +2152,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public boolean equals(Object object) {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
-                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
-                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
+                        ForField forField = (ForField) object;
+                        return fieldDescription.equals(forField.fieldDescription);
                     }
 
                     @Override
@@ -2156,7 +2163,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField{" +
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForField{" +
                                 "fieldDescription=" + fieldDescription +
                                 '}';
                     }
@@ -2280,7 +2287,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException(); // TODO
+                        throw new IllegalStateException("Cannot increment a boxed parameter");
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForBoxedParameter that = (ForBoxedParameter) object;
+                        return offset == that.offset && boxingDispatcher == that.boxingDispatcher;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = offset;
+                        result = 31 * result + boxingDispatcher.hashCode();
+                        return result;
                     }
 
                     @Override
@@ -2512,7 +2534,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException(); // TODO
+                        throw new IllegalStateException("Cannot incremement a boxed argument");
                     }
 
                     @Override
@@ -3290,7 +3312,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnType." + name();
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName." + name();
                         }
                     }
 
@@ -3376,12 +3398,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         AnnotationDescription.Loadable<Origin> origin = parameterDescription.getDeclaredAnnotations().ofType(Origin.class);
                         if (origin == null) {
                             return UNDEFINED;
-                        } else if (parameterDescription.getType().represents(Class.class)) {
+                        } else if (parameterDescription.getType().asErasure().represents(Class.class)) {
                             return OffsetMapping.ForInstrumentedType.INSTANCE;
-                        } else if (!parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
-                            throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
-                        } else {
+                        } else if (parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
                             return ForOrigin.parse(origin.loadSilent().value());
+                        } else {
+                            throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
                         }
                     }
 
@@ -3637,10 +3659,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
                     if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedReturn.class)) {
                         return UNDEFINED;
-                    } else if (!parameterDescription.getType().represents(Object.class)) {
-                        throw new IllegalStateException(); // TODO
-                    } else {
+                    } else if (parameterDescription.getType().represents(Object.class)) {
                         return this;
+                    } else {
+                        throw new IllegalStateException("Can only assign a boxed return value to an Object type");
                     }
                 }
 
@@ -3669,10 +3691,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
                     if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedArguments.class)) {
                         return UNDEFINED;
-                    } else if (!parameterDescription.getType().represents(Object[].class)) {
-                        throw new IllegalStateException(); // TODO
-                    } else {
+                    } else if (parameterDescription.getType().represents(Object[].class)) {
                         return this;
+                    } else {
+                        throw new IllegalStateException("Can only assign an array of boxed arguments to an Object[] array");
                     }
                 }
 
@@ -3762,16 +3784,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             throw new IllegalStateException("Cannot map null to primitive type of " + target);
                         }
                         return Target.ForNullConstant.INSTANCE;
-                    } else if ((target.getType().represents(String.class) && !(value instanceof String))
-                            || (target.getType().represents(Class.class) && !(value instanceof TypeDescription || value instanceof Class))
-                            || (target.getType().isPrimitive() && !target.getType().asErasure().isInstanceOrWrapper(value))) {
+                    } else if ((target.getType().asErasure().isAssignableFrom(String.class) && value instanceof String)
+                            || (target.getType().isPrimitive() && target.getType().asErasure().isInstanceOrWrapper(value))) {
+                        return new Target.ForConstantPoolValue(value);
+                    } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof Class) {
+                        return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
+                    } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof TypeDescription) {
+                        return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
+                    } else {
                         throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
-                    } else if (value instanceof TypeDescription) {
-                        value = Type.getType(((TypeDescription) value).getDescriptor());
-                    } else if (value instanceof Class) {
-                        value = Type.getType((Class<?>) value);
                     }
-                    return new Target.ForConstantPoolValue(value);
                 }
 
                 @Override
@@ -4340,8 +4362,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String descriptor, boolean visible) {
-                            return methodVisitor.visitTryCatchAnnotation(typeRef, typePath, descriptor, visible);
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                            return methodVisitor.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
                         }
 
                         @Override
@@ -4388,7 +4410,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-                            return null; // TODO
+                            return IGNORE_ANNOTATION;
                         }
 
                         @Override
@@ -4717,11 +4739,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * A visitor for translating an advice method's byte code for inlining into the instrumented method.
              */
             protected abstract static class CodeTranslationVisitor extends MethodVisitor implements ReturnValueProducer {
-
-                /**
-                 * Indicates that an annotation should not be read.
-                 */
-                private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
                 /**
                  * A handler for translating meta data found in the byte code.
@@ -5340,7 +5357,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method.
+     * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method or
+     * to a constant representing the {@link Class} declaring the method.
      *
      * @see Advice
      * @see OnMethodEnter
