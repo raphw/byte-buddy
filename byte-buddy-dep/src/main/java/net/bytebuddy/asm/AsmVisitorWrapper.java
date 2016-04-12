@@ -611,6 +611,7 @@ public interface AsmVisitorWrapper {
                         "outer=" + getOuter() +
                         ", instrumentedType=" + instrumentedType +
                         ", methodsByName=" + methodsByName +
+                        ", classFileVersion=" + classFileVersion +
                         ", writerFlags=" + writerFlags +
                         ", readerFlags=" + readerFlags +
                         '}';
