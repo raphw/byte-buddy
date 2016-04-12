@@ -1,16 +1,12 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
-import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
 import net.bytebuddy.description.annotation.AnnotationDescription;
-import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
-import net.bytebuddy.description.method.ParameterList;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
-import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -27,9 +23,9 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import static junit.framework.TestCase.fail;
-import static net.bytebuddy.matcher.ElementMatchers.isConstructor;
-import static net.bytebuddy.matcher.ElementMatchers.named;
+import static net.bytebuddy.matcher.ElementMatchers.*;
 import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -210,10 +206,39 @@ public class AdviceTest {
     }
 
     @Test
+    public void testTrivialAdviceWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdviceWithSuppression.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testTrivialAdviceMultipleMethods() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO).or(named(BAZ))))
+                .visit(Advice.to(TrivialAdvice.class).on(isMethod()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+        assertThat(type.getDeclaredMethod(BAZ).invoke(null), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
+    public void testTrivialAdviceMultipleMethodsWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdviceWithSuppression.class).on(isMethod()))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
@@ -240,6 +265,20 @@ public class AdviceTest {
     }
 
     @Test
+    public void testTrivialAdviceNestedWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdviceWithSuppression.class).on(named(FOO)))
+                .visit(Advice.to(TrivialAdviceWithSuppression.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
     public void testTrivialAdviceWithHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -253,8 +292,21 @@ public class AdviceTest {
     }
 
     @Test
+    public void testTrivialAdviceWithHandlerAndSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdviceWithSuppression.class).on(named(FOO + BAZ)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO + BAZ).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testAdviceOnConstructor() throws Exception {
-        Class<?> type = new ByteBuddy() // TODO: Exception when constructor for certain types and throwable
+        Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(isConstructor()))
                 .make()
@@ -263,6 +315,27 @@ public class AdviceTest {
         assertThat(type.newInstance(), notNullValue(Object.class));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceOnConstructorExitAdviceWithSuppression() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdviceSkipExceptionWithSuppression.class).on(isConstructor()))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.newInstance(), notNullValue(Object.class));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testAdviceOnConstructorWithSuppressionNotLegal() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(isConstructor()))
+                .make();
     }
 
     @Test
@@ -1519,6 +1592,20 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class TrivialAdviceWithSuppression {
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static void enter() {
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit(suppress = Exception.class)
+        private static void exit() {
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class EmptyMethod {
 
         public void foo() {
@@ -1689,6 +1776,20 @@ public class AdviceTest {
         }
 
         @Advice.OnMethodExit(onThrowable = false)
+        private static void exit() {
+            Sample.exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class TrivialAdviceSkipExceptionWithSuppression {
+
+        @Advice.OnMethodEnter(suppress = Exception.class)
+        private static void enter() {
+            Sample.enter++;
+        }
+
+        @Advice.OnMethodExit(onThrowable = false, suppress = Exception.class)
         private static void exit() {
             Sample.exit++;
         }
