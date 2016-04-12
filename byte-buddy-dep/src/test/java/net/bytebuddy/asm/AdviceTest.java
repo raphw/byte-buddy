@@ -1500,8 +1500,9 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTabelSubstitutor.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableCollector.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableExtractor.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.NoOp.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.SuppressionHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.SuppressionHandler.Suppressing.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.SuppressionHandler.Suppressing.Bound.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
             @Override
