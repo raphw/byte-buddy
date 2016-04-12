@@ -1246,17 +1246,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             protected void onUserPrepare() {
-
+                /* do nothing */
             }
 
             @Override
             protected void onUserStart() {
-                /* empty */
+                /* do nothing */
             }
 
             @Override
             protected void onUserEnd() {
-                /* empty */
+                /* do nothing */
             }
 
             @Override
@@ -4197,7 +4197,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   MethodVisitor methodVisitor,
                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
                                   ClassReader classReader) {
-                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
+                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler, suppressionHandler.bind(), classReader);
                 }
 
                 /**
@@ -4210,7 +4210,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
                                                        MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                                       MethodDescription.InDefinedShape instrumentedMethod);
+                                                       MethodDescription.InDefinedShape instrumentedMethod,
+                                                       CodeTranslationVisitor.SuppressionHandler.Bound suppressionHandler);
 
                 @Override
                 public boolean equals(Object other) {
@@ -4248,6 +4249,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
 
+                    private final CodeTranslationVisitor.SuppressionHandler.Bound suppressionHandler;
+
                     /**
                      * A class reader for parsing the class file containing the represented advice method.
                      */
@@ -4269,11 +4272,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
                                          MethodVisitor methodVisitor,
                                          MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                                         CodeTranslationVisitor.SuppressionHandler.Bound suppressionHandler,
                                          ClassReader classReader) {
                         super(Opcodes.ASM5);
                         this.instrumentedMethod = instrumentedMethod;
                         this.methodVisitor = methodVisitor;
                         this.metaDataHandler = metaDataHandler;
+                        this.suppressionHandler = suppressionHandler;
                         this.classReader = classReader;
                         labels = new ArrayList<Label>();
                     }
@@ -4292,7 +4297,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? new ExceptionTabelSubstitutor(Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod))
+                                ? new ExceptionTabelSubstitutor(Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod, suppressionHandler))
                                 : IGNORE_METHOD;
                     }
 
@@ -4516,7 +4521,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
                                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                                  MethodDescription.InDefinedShape instrumentedMethod) {
+                                                  MethodDescription.InDefinedShape instrumentedMethod,
+                                                  CodeTranslationVisitor.SuppressionHandler.Bound suppressionHandler) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodEntry.of(instrumentedMethod)));
@@ -4609,7 +4615,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     protected MethodVisitor apply(MethodVisitor methodVisitor,
                                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                                  MethodDescription.InDefinedShape instrumentedMethod) {
+                                                  MethodDescription.InDefinedShape instrumentedMethod,
+                                                  CodeTranslationVisitor.SuppressionHandler.Bound suppressionHandler) {
                         Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
                         for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodExit.of(enterType)));
@@ -4763,7 +4770,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A handler for optionally suppressing exceptions.
                  */
-                private final SuppressionHandler suppressionHandler;
+                private final SuppressionHandler.Bound suppressionHandler;
 
                 /**
                  * A label indicating the end of the advice byte code.
@@ -4785,7 +4792,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviceMethod,
                                                  Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                                 SuppressionHandler suppressionHandler) {
+                                                 SuppressionHandler.Bound suppressionHandler) {
                     super(Opcodes.ASM5, methodVisitor);
                     this.metaDataHandler = metaDataHandler;
                     this.instrumentedMethod = instrumentedMethod;
@@ -4885,38 +4892,56 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected interface SuppressionHandler {
 
                     /**
-                     * Invoked to prepare the suppression handler, i.e. to write an exception handler entry if appropriate.
+                     * Binds the supression handler for instrumenting a specific method.
                      *
-                     * @param methodVisitor The method visitor to apply the preparation to.
+                     * @return A bound version of the suppression handler.
                      */
-                    void onPrepare(MethodVisitor methodVisitor);
+                    Bound bind();
 
                     /**
-                     * Invoked at the start of a method.
-                     *
-                     * @param methodVisitor   The method visitor of the instrumented method.
-                     * @param metaDataHandler The meta data handler to use for translating meta data.
+                     * A bound version of a suppression handler that must not be reused.
                      */
-                    void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler);
+                    interface Bound {
 
-                    /**
-                     * Invoked at the end of a method.
-                     *
-                     * @param methodVisitor       The method visitor of the instrumented method.
-                     * @param metaDataHandler     The meta data handler to use for translating meta data.
-                     * @param returnValueProducer A producer for defining a default return value of the advised method.
-                     */
-                    void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
+                        /**
+                         * Invoked to prepare the suppression handler, i.e. to write an exception handler entry if appropriate.
+                         *
+                         * @param methodVisitor The method visitor to apply the preparation to.
+                         */
+                        void onPrepare(MethodVisitor methodVisitor);
+
+                        /**
+                         * Invoked at the start of a method.
+                         *
+                         * @param methodVisitor   The method visitor of the instrumented method.
+                         * @param metaDataHandler The meta data handler to use for translating meta data.
+                         */
+                        void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler);
+
+                        /**
+                         * Invoked at the end of a method.
+                         *
+                         * @param methodVisitor       The method visitor of the instrumented method.
+                         * @param metaDataHandler     The meta data handler to use for translating meta data.
+                         * @param returnValueProducer A producer for defining a default return value of the advised method.
+                         */
+                        void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
+                    }
 
                     /**
                      * A non-operational suppression handler that does not suppress any method.
                      */
-                    enum NoOp implements SuppressionHandler {
+                    enum NoOp implements SuppressionHandler, Bound {
 
                         /**
                          * The singleton instance.
                          */
                         INSTANCE;
+
+                        @Override
+                        public Bound bind() {
+                            return this;
+                        }
 
                         @Override
                         public void onPrepare(MethodVisitor methodVisitor) {
@@ -4950,44 +4975,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         private final TypeDescription throwableType;
 
                         /**
-                         * A label indicating the start of the method.
-                         */
-                        private final Label startOfMethod;
-
-                        /**
-                         * A label indicating the end of the method.
-                         */
-                        private final Label endOfMethod;
-
-                        /**
                          * Creates a new suppressing suppression handler.
                          *
                          * @param throwableType The suppressed throwable type.
                          */
                         protected Suppressing(TypeDescription throwableType) {
                             this.throwableType = throwableType;
-                            startOfMethod = new Label();
-                            endOfMethod = new Label();
                         }
 
                         @Override
-                        public void onPrepare(MethodVisitor methodVisitor) {
-                            methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
-                        }
-
-                        @Override
-                        public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
-                            methodVisitor.visitLabel(startOfMethod);
-                        }
-
-                        @Override
-                        public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                            Label endOfHandler = new Label();
-                            methodVisitor.visitLabel(endOfMethod);
-                            metaDataHandler.injectHandlerFrame(methodVisitor);
-                            methodVisitor.visitInsn(Opcodes.POP);
-                            returnValueProducer.makeDefault(methodVisitor);
-                            methodVisitor.visitLabel(endOfHandler);
+                        public SuppressionHandler.Bound bind() {
+                            return new Bound(throwableType);
                         }
 
                         @Override
@@ -5007,9 +5005,69 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         public String toString() {
                             return "Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing{" +
                                     "throwableType=" + throwableType +
-                                    ", startOfMethod=" + startOfMethod +
-                                    ", endOfMethod=" + endOfMethod +
                                     '}';
+                        }
+
+                        /**
+                         * An active, bound suppression handler.
+                         */
+                        protected static class Bound implements SuppressionHandler.Bound {
+
+                            /**
+                             * The suppressed throwable type.
+                             */
+                            private final TypeDescription throwableType;
+
+                            /**
+                             * A label indicating the start of the method.
+                             */
+                            private final Label startOfMethod;
+
+                            /**
+                             * A label indicating the end of the method.
+                             */
+                            private final Label endOfMethod;
+
+                            /**
+                             * Creates a new active, bound suppression handler.
+                             *
+                             * @param throwableType The suppressed throwable type.
+                             */
+                            protected Bound(TypeDescription throwableType) {
+                                this.throwableType = throwableType;
+                                startOfMethod = new Label();
+                                endOfMethod = new Label();
+                            }
+
+                            @Override
+                            public void onPrepare(MethodVisitor methodVisitor) {
+                                methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
+                            }
+
+                            @Override
+                            public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
+                                methodVisitor.visitLabel(startOfMethod);
+                            }
+
+                            @Override
+                            public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
+                                Label endOfHandler = new Label();
+                                methodVisitor.visitLabel(endOfMethod);
+                                metaDataHandler.injectHandlerFrame(methodVisitor);
+                                methodVisitor.visitInsn(Opcodes.POP);
+                                returnValueProducer.makeDefault(methodVisitor);
+                                methodVisitor.visitLabel(endOfHandler);
+                            }
+
+                            @Override
+                            public String toString() {
+                                return "Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing.Bound{" +
+                                        "throwableType=" + throwableType +
+                                        ", startOfMethod=" + startOfMethod +
+                                        ", endOfMethod=" + endOfMethod +
+                                        '}';
+                            }
+
                         }
                     }
                 }
@@ -5034,7 +5092,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                              MethodDescription.InDefinedShape instrumentedMethod,
                                              MethodDescription.InDefinedShape adviceMethod,
                                              Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                             SuppressionHandler suppressionHandler) {
+                                             SuppressionHandler.Bound suppressionHandler) {
                         super(methodVisitor, metaDataHandler, instrumentedMethod, adviceMethod, offsetMappings, suppressionHandler);
                     }
 
@@ -5129,7 +5187,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription.InDefinedShape instrumentedMethod,
                                             MethodDescription.InDefinedShape adviceMethod,
                                             Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                            SuppressionHandler suppressionHandler,
+                                            SuppressionHandler.Bound suppressionHandler,
                                             int padding) {
                         super(methodVisitor,
                                 metaDataHandler,
@@ -5454,7 +5512,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * <p>
      * Note that accessing this parameter is merely virtual. A new array is created on every access. As a result, changes to the
      * array have no effect other than for the local copy and when accessing the array twice, the equality relation does not hold.
-     * For example, for {@code @Advoce.BoxedReturn Object foo}, the relation {@code foo == foo} does not necessarily hold for primitive
+     * For example, for {@code @Advice.BoxedReturn Object foo}, the relation {@code foo == foo} does not necessarily hold for primitive
      * types. For avoiding additional allocations, the array needs to be stored in a separate local variable. The variable itself is
      * always read only.
      * </p>
@@ -5484,7 +5542,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * <p>
      * Note that accessing this parameter is merely virtual. A new array is created on every access. As a result, changes to the
      * array have no effect other than for the local copy and when accessing the array twice, the equality relation does not hold.
-     * For example, for {@code @Advoce.BoxedArguments Object[] foo}, the relation {@code foo == foo} does not hold. For avoiding
+     * For example, for {@code @Advice.BoxedArguments Object[] foo}, the relation {@code foo == foo} does not hold. For avoiding
      * new allocations, the array needs to be stored in a separate local variable. The variable itself is always read only.
      * </p>
      * <p>
