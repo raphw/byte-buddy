@@ -1,6 +1,13 @@
 Byte Buddy release notes
 ------------------------
 
+### 12. April 2016: version 1.3.11
+
+- Byte Buddy `Advice` now appends handlers to an existing exception handler instead of prepending them. Before, existing exception handlers were shadowed when applying suppression or exit advice on an exception.
+- Added additional annotations for `Advice` such as `@Advice.BoxedReturn` and `@Advice.BoxedArguments` for more generic advice. Added possibility to write to fields from advice.
+- Added mechanism for adding custom annotations to `Advice` that map compile-time constants.
+- Implemented a canonical binder for adding custom compile-time constants to a `MethodDelegation` mapping.
+
 ### 8. April 2016: version 1.3.10
 
 - Fixed another bug during frame translation of the `Advice` component when suppression were not catched for an exit advice.
