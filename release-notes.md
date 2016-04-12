@@ -1,6 +1,11 @@
 Byte Buddy release notes
 ------------------------
 
+### 13. April 2016: version 1.3.12
+
+- Fixed error during computation of frames for the `Advice` computation.
+- Avoid reusing labels during the computations of exception tables of the `Advice` component.
+
 ### 12. April 2016: version 1.3.11
 
 - Byte Buddy `Advice` now appends handlers to an existing exception handler instead of prepending them. Before, existing exception handlers were shadowed when applying suppression or exit advice on an exception.
