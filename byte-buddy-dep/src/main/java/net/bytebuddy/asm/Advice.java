@@ -560,10 +560,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Binds the given advice method to an appropriate meta data handler.
              *
-             * @param adviceMethod The advice method.
-             * @param requiredTypes     The expected types that the advice method requires additionally to the instrumented method's parameters.
-             * @param yieldedTypes      The types this advice method yields as additional parameters.
-             * @param translationMode   The translation mode to apply for this advice.
+             * @param adviceMethod    The advice method.
+             * @param requiredTypes   The expected types that the advice method requires additionally to the instrumented method's parameters.
+             * @param yieldedTypes    The types this advice method yields as additional parameters.
+             * @param translationMode The translation mode to apply for this advice.
              * @return An appropriate meta data handler.
              */
             protected abstract ForAdvice bind(MethodDescription.InDefinedShape adviceMethod,
@@ -5438,10 +5438,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * Returns the pattern the annotated parameter should be assigned. By default, the {@link Origin#toString()} representation
-         * of the method is assigned. Alternatively, a pattern can be assigned where {@code #t} inserts the method's declaring type,
-         * {@code #m} inserts the name of the method ({@code <init>} for constructors and {@code <clinit>} for static initializers)
-         * and {@code #d} for the method's descriptor. Any other {@code #} character must be escaped by {@code \} which can be
-         * escaped by itself.
+         * of the method is assigned. Alternatively, a pattern can be assigned where:
+         * <ul>
+         * <li>{@code #t} inserts the method's declaring type.</li>
+         * <li>{@code #m} inserts the name of the method ({@code <init>} for constructors and {@code <clinit>} for static initializers).</li>
+         * <li>{@code #d} for the method's descriptor.</li>
+         * <li>{@code #s} for the method's signature.</li>
+         * <li>{@code #r} for the method's return type.</li>
+         * </ul>
+         * Any other {@code #} character must be escaped by {@code \} which can be escaped by itself. This property is ignored if the annotated
+         * parameter is of type {@link Class}.
          *
          * @return The pattern the annotated parameter should be assigned.
          */
