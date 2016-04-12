@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -209,6 +210,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public MethodVisitor wrap(TypeDescription instrumentedType,
                               MethodDescription.InDefinedShape methodDescription,
                               MethodVisitor methodVisitor,
+                              ClassFileVersion classFileVersion,
                               int writerFlags,
                               int readerFlags) {
         if (methodDescription.isAbstract() || methodDescription.isNative()) {

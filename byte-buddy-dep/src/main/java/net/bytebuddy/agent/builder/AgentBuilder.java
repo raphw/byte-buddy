@@ -2,6 +2,7 @@ package net.bytebuddy.agent.builder;
 
 import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.asm.AsmVisitorWrapper;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
@@ -3109,6 +3110,7 @@ public interface AgentBuilder {
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription.InDefinedShape methodDescription,
                                       MethodVisitor methodVisitor,
+                                      ClassFileVersion classFileVersion,
                                       int writerFlags,
                                       int readerFlags) {
                 methodVisitor.visitCode();
@@ -3318,6 +3320,7 @@ public interface AgentBuilder {
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription.InDefinedShape methodDescription,
                                       MethodVisitor methodVisitor,
+                                      ClassFileVersion classFileVersion,
                                       int writerFlags,
                                       int readerFlags) {
                 methodVisitor.visitCode();

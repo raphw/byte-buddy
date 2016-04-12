@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.type.TypeDescription;
@@ -40,6 +41,9 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
     private TypeDescription instrumentedType;
 
     @Mock
+    private ClassFileVersion classFileVersion;
+
+    @Mock
     private MethodDescription.InDefinedShape foo, bar;
 
     @Mock
@@ -56,7 +60,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
         when(bar.getInternalName()).thenReturn(BAR);
         when(bar.getDescriptor()).thenReturn(BAZ);
         when(classVisitor.visitMethod(eq(MODIFIERS), any(String.class), any(String.class), eq(BAZ), eq(new String[]{QUX + BAZ}))).thenReturn(methodVisitor);
-        when(methodVisitorWrapper.wrap(instrumentedType, foo, methodVisitor, FLAGS, FLAGS * 2)).thenReturn(wrappedVisitor);
+        when(methodVisitorWrapper.wrap(instrumentedType, foo, methodVisitor, classFileVersion, FLAGS, FLAGS * 2)).thenReturn(wrappedVisitor);
         when(matcher.matches(foo)).thenReturn(true);
     }
 
@@ -68,7 +72,7 @@ public class AsmVisitorWrapperForDeclaredMethodsTest {
                 .visitMethod(MODIFIERS, FOO, QUX, BAZ, new String[]{QUX + BAZ}), is(wrappedVisitor));
         verify(matcher).matches(foo);
         verifyNoMoreInteractions(matcher);
-        verify(methodVisitorWrapper).wrap(instrumentedType, foo, methodVisitor, FLAGS, FLAGS * 2);
+        verify(methodVisitorWrapper).wrap(instrumentedType, foo, methodVisitor, classFileVersion, FLAGS, FLAGS * 2);
         verifyNoMoreInteractions(methodVisitorWrapper);
     }
 

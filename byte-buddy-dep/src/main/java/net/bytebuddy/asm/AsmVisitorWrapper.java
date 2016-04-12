@@ -1,5 +1,6 @@
 package net.bytebuddy.asm;
 
+import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.field.FieldDescription;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.type.TypeDescription;
@@ -449,6 +450,7 @@ public interface AsmVisitorWrapper {
              * @param instrumentedType  The instrumented type.
              * @param methodDescription The method that is currently being defined.
              * @param methodVisitor     The original field visitor that defines the given method.
+             * @param classFileVersion  The class file version of the visited class.
              * @param writerFlags       The ASM {@link org.objectweb.asm.ClassWriter} reader flags to consider.
              * @param readerFlags       The ASM {@link org.objectweb.asm.ClassReader} reader flags to consider.
              * @return The wrapped method visitor.
@@ -456,6 +458,7 @@ public interface AsmVisitorWrapper {
             MethodVisitor wrap(TypeDescription instrumentedType,
                                MethodDescription.InDefinedShape methodDescription,
                                MethodVisitor methodVisitor,
+                               ClassFileVersion classFileVersion,
                                int writerFlags,
                                int readerFlags);
         }
@@ -495,9 +498,10 @@ public interface AsmVisitorWrapper {
             public MethodVisitor wrap(TypeDescription instrumentedType,
                                       MethodDescription.InDefinedShape methodDescription,
                                       MethodVisitor methodVisitor,
+                                      ClassFileVersion classFileVersion,
                                       int writerFlags,
                                       int readerFlags) {
-                return methodVisitorWrapper.wrap(instrumentedType, methodDescription, methodVisitor, writerFlags, readerFlags);
+                return methodVisitorWrapper.wrap(instrumentedType, methodDescription, methodVisitor, classFileVersion, writerFlags, readerFlags);
             }
 
             @Override
@@ -551,6 +555,11 @@ public interface AsmVisitorWrapper {
             private final Map<String, MethodDescription.InDefinedShape> methodsByName;
 
             /**
+             * The class file version of the visited class.
+             */
+            private ClassFileVersion classFileVersion;
+
+            /**
              * Creates a new dispatching visitor.
              *
              * @param classVisitor     The underlying class visitor.
@@ -570,12 +579,18 @@ public interface AsmVisitorWrapper {
             }
 
             @Override
+            public void visit(int version, int modifiers, String name, String signature, String superTypeName, String[] interfaceName) {
+                classFileVersion = ClassFileVersion.ofMinorMajor(version);
+                super.visit(version, modifiers, name, signature, superTypeName, interfaceName);
+            }
+
+            @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exceptions) {
                 MethodVisitor methodVisitor = super.visitMethod(modifiers, internalName, descriptor, signature, exceptions);
                 MethodDescription.InDefinedShape methodDescription = methodsByName.get(internalName + descriptor);
                 for (Entry entry : entries) {
                     if (entry.matches(methodDescription)) {
-                        methodVisitor = entry.wrap(instrumentedType, methodDescription, methodVisitor, writerFlags, readerFlags);
+                        methodVisitor = entry.wrap(instrumentedType, methodDescription, methodVisitor, classFileVersion, writerFlags, readerFlags);
                     }
                 }
                 return methodVisitor;
