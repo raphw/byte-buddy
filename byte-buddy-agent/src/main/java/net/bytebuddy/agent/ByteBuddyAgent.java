@@ -278,6 +278,8 @@ public class ByteBuddyAgent {
             } finally {
                 attachmentAccessor.getVirtualMachineType().getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
             }
+        } catch (RuntimeException exception) {
+            throw exception;
         } catch (Exception exception) {
             throw new IllegalStateException("Error during attachment using: " + attachmentProvider, exception);
         }
@@ -866,6 +868,9 @@ public class ByteBuddyAgent {
             private static final String JAR_FILE_EXTENSION = ".jar";
 
             @Override
+            @SuppressFBWarnings(
+                    value = {"BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", " OS_OPEN_STREAM_EXCEPTION_PATH"},
+                    justification = "Cast from privileged action cannot yield different exceptions; Stream is not closed on null value what is unproblematic")
             public File resolve() throws IOException {
                 InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 if (inputStream == null) {
