@@ -15,8 +15,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
-import java.security.PrivilegedActionException;
-import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.Attributes;
@@ -850,7 +848,7 @@ public class ByteBuddyAgent {
         /**
          * An agent provider for a temporary Byte Buddy agent.
          */
-        enum ForByteBuddyAgent implements AgentProvider, PrivilegedExceptionAction<File> {
+        enum ForByteBuddyAgent implements AgentProvider, PrivilegedAction<File> {
 
             /**
              * The singleton instance.
@@ -868,53 +866,47 @@ public class ByteBuddyAgent {
             private static final String JAR_FILE_EXTENSION = ".jar";
 
             @Override
-            @SuppressFBWarnings(
-                    value = {"BC_UNCONFIRMED_CAST_OF_RETURN_VALUE", " OS_OPEN_STREAM_EXCEPTION_PATH"},
-                    justification = "Cast from privileged action cannot yield different exceptions; Stream is not closed on null value what is unproblematic")
             public File resolve() throws IOException {
+                File agentJar;
                 InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
                 if (inputStream == null) {
                     throw new IllegalStateException("Cannot locate class file for Byte Buddy installer");
                 }
                 try {
-                    File agentJar = AccessController.doPrivileged(this);
+                    agentJar = AccessController.doPrivileged(this);
+                    Manifest manifest = new Manifest();
+                    manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
+                    manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
+                    manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
+                    manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
+                    manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
+                    JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
                     try {
-                        Manifest manifest = new Manifest();
-                        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
-                        manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
-                        manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
-                        manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
-                        manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
-                        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
-                        try {
-                            jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
-                            byte[] buffer = new byte[BUFFER_SIZE];
-                            int index;
-                            while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                                jarOutputStream.write(buffer, START_INDEX, index);
-                            }
-                            jarOutputStream.closeEntry();
-                        } finally {
-                            jarOutputStream.close();
+                        jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
+                        byte[] buffer = new byte[BUFFER_SIZE];
+                        int index;
+                        while ((index = inputStream.read(buffer)) != END_OF_FILE) {
+                            jarOutputStream.write(buffer, START_INDEX, index);
                         }
+                        jarOutputStream.closeEntry();
                     } finally {
-                        inputStream.close();
+                        jarOutputStream.close();
                     }
-                    return agentJar;
-                } catch (PrivilegedActionException exception) {
-                    if (exception.getCause() instanceof IOException) {
-                        throw (IOException) exception.getCause();
-                    } else {
-                        throw (RuntimeException) exception.getCause();
-                    }
+                } finally {
+                    inputStream.close();
                 }
+                return agentJar;
             }
 
             @Override
-            public File run() throws IOException {
-                File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
-                agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
-                return agentJar;
+            public File run() {
+                try {
+                    File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
+                    agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
+                    return agentJar;
+                } catch (IOException exception) {
+                    throw new IllegalStateException("Cannot create temporary file for local agent", exception);
+                }
             }
 
             @Override

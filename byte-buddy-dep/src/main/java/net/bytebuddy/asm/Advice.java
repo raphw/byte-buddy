@@ -3189,7 +3189,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * The method name symbol.
                          */
-                        protected static final char SYMBOL = 'm';
+                        public static final char SYMBOL = 'm';
 
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
@@ -3215,7 +3215,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * The type name symbol.
                          */
-                        protected static final char SYMBOL = 't';
+                        public static final char SYMBOL = 't';
 
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
@@ -3241,7 +3241,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * The descriptor symbol.
                          */
-                        protected static final char SYMBOL = 'd';
+                        public static final char SYMBOL = 'd';
 
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
@@ -3267,7 +3267,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * The signature symbol.
                          */
-                        protected static final char SYMBOL = 's';
+                        public static final char SYMBOL = 's';
 
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
@@ -3303,7 +3303,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * The return type symbol.
                          */
-                        protected static final char SYMBOL = 'r';
+                        public static final char SYMBOL = 'r';
 
                         @Override
                         public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
