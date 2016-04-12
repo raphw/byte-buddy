@@ -1132,7 +1132,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 int readerFlags) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
-            padding = methodEnter.getEnterType().getStackSize().getSize(); // TODO: doubled enter?
+            padding = methodEnter.getEnterType().getStackSize().getSize();
             metaDataHandler = MetaDataHandler.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType()), yieldedTypes, writerFlags, readerFlags);
