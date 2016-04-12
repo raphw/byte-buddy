@@ -45,7 +45,7 @@ public class AdviceSuppressionTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(type).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) FOO));
     }

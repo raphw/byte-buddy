@@ -6,6 +6,7 @@ import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.MethodList;
 import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.method.ParameterList;
+import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.description.type.TypeList;
 import net.bytebuddy.dynamic.ClassFileLocator;
@@ -13,6 +14,7 @@ import net.bytebuddy.dynamic.scaffold.FieldLocator;
 import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.matcher.ElementMatcher;
 import net.bytebuddy.utility.CompoundList;
+import net.bytebuddy.utility.ExceptionTableSensitiveMethodVisitor;
 import org.objectweb.asm.*;
 
 import java.io.IOException;
@@ -92,14 +94,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      * @param methodExit           The dispatcher for instrumenting the instrumented method upon exiting.
      * @param binaryRepresentation The binary representation of the class containing the advice methods.
      */
-    protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit, byte[] binaryRepresentation) {
+    protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter,
+                     Dispatcher.Resolved.ForMethodExit methodExit,
+                     byte[] binaryRepresentation) {
         this.methodEnter = methodEnter;
         this.methodExit = methodExit;
         this.binaryRepresentation = binaryRepresentation;
     }
 
     /**
-     * Implements advice where every matched method is adviced by the given type's advisory methods. The advices binary representation is
+     * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
      * accessed by querying the class loader of the supplied class for a class file.
      *
      * @param type The type declaring the advice.
@@ -110,7 +114,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Implements advice where every matched method is adviced by the given type's advisory methods.
+     * Implements advice where every matched method is advised by the given type's advisory methods.
      *
      * @param type             The type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
@@ -121,13 +125,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Implements advice where every matched method is adviced by the given type's advisory methods.
+     * Implements advice where every matched method is advised by the given type's advisory methods.
      *
      * @param typeDescription  A description of the type declaring the advice.
      * @param classFileLocator The class file locator for locating the advisory class's class file.
      * @return A method visitor wrapper representing the supplied advice.
      */
     public static Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+        return to(typeDescription, classFileLocator, Collections.<Dispatcher.OffsetMapping.Factory>emptyList());
+    }
+
+    /**
+     * Creates a new advice.
+     *
+     * @param typeDescription  A description of the type declaring the advice.
+     * @param classFileLocator The class file locator for locating the advisory class's class file.
+     * @param userFactories    A list of custom factories for user generated offset mappings.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
+    protected static Advice to(TypeDescription typeDescription,
+                               ClassFileLocator classFileLocator,
+                               List<? extends Dispatcher.OffsetMapping.Factory> userFactories) {
         try {
             Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
             for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()) {
@@ -137,8 +155,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             if (!methodEnter.isAlive() && !methodExit.isAlive()) {
                 throw new IllegalArgumentException("No advice defined by " + typeDescription);
             }
-            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter();
-            return new Advice(methodEnter.asMethodEnter(), methodExit.asMethodExitTo(resolved), classFileLocator.locate(typeDescription.getName()).resolve());
+            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories);
+            return new Advice(resolved, methodExit.asMethodExitTo(userFactories, resolved), classFileLocator.locate(typeDescription.getName()).resolve());
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + typeDescription, exception);
         }
@@ -165,6 +183,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         } else {
             return dispatcher;
         }
+    }
+
+    /**
+     * Allows for the configuration of custom annotations that are then bound to a dynamically computed, constant value.
+     *
+     * @return A builder for an {@link Advice} instrumentation with custom values.
+     * @see DynamicValue
+     */
+    public static WithCustomMapping withCustomMapping() {
+        return new WithCustomMapping();
     }
 
     /**
@@ -335,6 +363,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param localVariableLength The minimum required length of the local variable array.
              */
             void recordMaxima(int stackSize, int localVariableLength);
+
+            /**
+             * Records a minimum padding additionally to the computed stack size that is required for implementing this advice method.
+             *
+             * @param padding The minimum required padding.
+             */
+            void recordPadding(int padding);
         }
 
         /**
@@ -349,6 +384,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public void recordMaxima(int maxStack, int maxLocals) {
+                /* do nothing */
+            }
+
+            @Override
+            public void recordPadding(int padding) {
                 /* do nothing */
             }
 
@@ -908,6 +948,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected class ForAdvice extends Default.ForAdvice {
 
                     /**
+                     * The padding that this advice method requires additionally to its computed size.
+                     */
+                    private int padding;
+
+                    /**
                      * Creates a new meta data handler for an advice method.
                      *
                      * @param methodDescription The advice method.
@@ -924,7 +969,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void recordMaxima(int stackSize, int localVariableLength) {
-                        WithStackSizeComputation.this.stackSize = Math.max(WithStackSizeComputation.this.stackSize, stackSize);
+                        WithStackSizeComputation.this.stackSize = Math.max(WithStackSizeComputation.this.stackSize, stackSize) + padding;
                         WithStackSizeComputation.this.localVariableLength = Math.max(WithStackSizeComputation.this.localVariableLength, localVariableLength
                                 - methodDescription.getStackSize()
                                 + instrumentedMethod.getStackSize()
@@ -932,10 +977,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public void recordPadding(int padding) {
+                        this.padding = Math.max(this.padding, padding);
+                    }
+
+                    @Override
                     public String toString() {
                         return "Advice.MetaDataHandler.Default.WithStackSizeComputation.ForAdvice{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", methodDescription=" + methodDescription +
+                                ", padding=" + padding +
                                 "}";
                     }
                 }
@@ -1012,6 +1063,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
+                    public void recordPadding(int padding) {
+                        /* do nothing */
+                    }
+
+                    @Override
                     public String toString() {
                         return "Advice.MetaDataHandler.Default.WithoutStackSizeComputation.ForAdvice{" +
                                 "instrumentedMethod=" + instrumentedMethod +
@@ -1026,7 +1082,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     /**
      * A method visitor that weaves the advice methods' byte codes.
      */
-    protected abstract static class AdviceVisitor extends MethodVisitor {
+    protected abstract static class AdviceVisitor extends ExceptionTableSensitiveMethodVisitor {
 
         /**
          * Indicates a zero offset.
@@ -1039,14 +1095,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected final MethodDescription.InDefinedShape instrumentedMethod;
 
         /**
-         * The dispatcher to be used for method entry.
+         * The required padding before using local variables after the instrumented method's arguments.
          */
-        private final Dispatcher.Resolved.ForMethodEnter methodEnter;
+        private final int padding;
 
         /**
-         * A reader for traversing the advice methods' class file.
+         * The dispatcher to be used for method entry.
          */
-        private final ClassReader classReader;
+        private final Dispatcher.Bound methodEnter;
+
+        /**
+         * The dispatcher to be used for method exit.
+         */
+        protected final Dispatcher.Bound methodExit;
 
         /**
          * A handler to use for translating meta embedded in the byte code.
@@ -1059,6 +1120,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param methodVisitor        The method visitor to which all instructions are written.
          * @param instrumentedMethod   The instrumented method.
          * @param methodEnter          The method enter advice.
+         * @param methodExit           The method exit advice.
          * @param yieldedTypes         The types that are expected to be added after the instrumented method returns.
          * @param binaryRepresentation The binary representation of the advice class.
          * @param writerFlags          The ASM writer flags that were set.
@@ -1067,27 +1129,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 MethodDescription.InDefinedShape instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                Dispatcher.Resolved.ForMethodExit methodExit,
                                 List<? extends TypeDescription> yieldedTypes,
                                 byte[] binaryRepresentation,
                                 int writerFlags,
                                 int readerFlags) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
-            this.methodEnter = methodEnter;
-            classReader = new ClassReader(binaryRepresentation);
+            padding = methodEnter.getEnterType().getStackSize().getSize();
             metaDataHandler = MetaDataHandler.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType()), yieldedTypes, writerFlags, readerFlags);
+            ClassReader classReader = new ClassReader(binaryRepresentation);
+            this.methodEnter = methodEnter.bind(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
+            this.methodExit = methodExit.bind(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
         }
 
         @Override
-        public void visitCode() {
-            super.visitCode();
-            if (methodEnter.isAlive()) {
-                append(methodEnter);
-            }
+        protected void onAfterExceptionTable() {
+            methodEnter.prepare();
+            onUserPrepare();
+            methodExit.prepare();
+            methodEnter.apply();
             onUserStart();
         }
+
+        /**
+         * Invoked when the user method's exception handler (if any) is supposed to be prepared.
+         */
+        protected abstract void onUserPrepare();
 
         /**
          * Writes the advice for entering the instrumented method.
@@ -1095,17 +1165,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected abstract void onUserStart();
 
         @Override
-        public void visitVarInsn(int opcode, int offset) {
-            super.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
+        protected void onVisitVarInsn(int opcode, int offset) {
+            mv.visitVarInsn(opcode, offset < instrumentedMethod.getStackSize()
                     ? offset
-                    : offset + methodEnter.getEnterType().getStackSize().getSize());
+                    : padding + offset);
         }
 
         @Override
-        public void visitIincInsn(int offset, int increment) {
-            super.visitIincInsn(offset < instrumentedMethod.getStackSize()
+        protected void onVisitIincInsn(int offset, int increment) {
+            mv.visitIincInsn(offset < instrumentedMethod.getStackSize()
                     ? offset
-                    : offset + methodEnter.getEnterType().getStackSize().getSize(), increment);
+                    : padding + offset, increment);
         }
 
         /**
@@ -1124,7 +1194,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @param offset The additional offset of the variable.
          */
         protected void variable(int opcode, int offset) {
-            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + methodEnter.getEnterType().getStackSize().getSize() + offset);
+            mv.visitVarInsn(opcode, instrumentedMethod.getStackSize() + padding + offset);
         }
 
         @Override
@@ -1135,56 +1205,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         @Override
         public void visitMaxs(int stackSize, int localVariableLength) {
             onUserEnd();
-            super.visitMaxs(metaDataHandler.compoundStackSize(stackSize), metaDataHandler.compoundLocalVariableLength(localVariableLength));
+            mv.visitMaxs(metaDataHandler.compoundStackSize(stackSize), metaDataHandler.compoundLocalVariableLength(localVariableLength));
         }
 
         /**
          * Writes the advice for completing the instrumented method.
          */
         protected abstract void onUserEnd();
-
-        /**
-         * Applies the supplied advice dispatcher onto the target method visitor.
-         *
-         * @param dispatcher The dispatcher to apply.
-         */
-        protected void append(Dispatcher.Resolved dispatcher) {
-            classReader.accept(new CodeCopier(dispatcher), ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
-        }
-
-        /**
-         * A visitor for copying an advice method's byte code.
-         */
-        protected class CodeCopier extends ClassVisitor {
-
-            /**
-             * The dispatcher to use.
-             */
-            private final Dispatcher.Resolved dispatcher;
-
-            /**
-             * Creates a new code copier.
-             *
-             * @param dispatcher The dispatcher to use.
-             */
-            protected CodeCopier(Dispatcher.Resolved dispatcher) {
-                super(Opcodes.ASM5);
-                this.dispatcher = dispatcher;
-            }
-
-            @Override
-            public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                return dispatcher.apply(internalName, descriptor, mv, metaDataHandler, instrumentedMethod);
-            }
-
-            @Override
-            public String toString() {
-                return "Advice.AdviceVisitor.CodeCopier{" +
-                        "outer=" + AdviceVisitor.this +
-                        ", dispatcher=" + dispatcher +
-                        '}';
-            }
-        }
 
         /**
          * An advice visitor that does not apply exit advice.
@@ -1210,10 +1237,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 super(methodVisitor,
                         instrumentedMethod,
                         methodEnter,
+                        Dispatcher.Inactive.INSTANCE,
                         Collections.<TypeDescription>emptyList(),
                         binaryRepresentation,
                         writerFlags,
                         readerFlags);
+            }
+
+            @Override
+            protected void onUserPrepare() {
+
             }
 
             @Override
@@ -1240,11 +1273,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         protected abstract static class WithExitAdvice extends AdviceVisitor {
 
             /**
-             * The dispatcher to be used for method exit.
-             */
-            private final Dispatcher.Resolved.ForMethodExit methodExit;
-
-            /**
              * A label that indicates the end of the method.
              */
             protected final Label endOfMethod;
@@ -1269,13 +1297,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   byte[] binaryRepresentation,
                                   int writerFlags,
                                   int readerFlags) {
-                super(methodVisitor, instrumentedMethod, methodEnter, yieldedTypes, binaryRepresentation, writerFlags, readerFlags);
-                this.methodExit = methodExit;
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, yieldedTypes, binaryRepresentation, writerFlags, readerFlags);
                 endOfMethod = new Label();
             }
 
             @Override
-            public void visitInsn(int opcode) {
+            protected void onVisitInsn(int opcode) {
                 switch (opcode) {
                     case Opcodes.RETURN:
                         break;
@@ -1307,7 +1334,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 onUserExit();
                 mv.visitLabel(endOfMethod);
                 metaDataHandler.injectCompletionFrame(mv, false);
-                append(methodExit);
+                methodExit.apply();
                 onAdviceExit();
                 if (instrumentedMethod.getReturnType().represents(void.class)) {
                     mv.visitInsn(Opcodes.RETURN);
@@ -1398,8 +1425,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected void onUserStart() {
+                protected void onUserPrepare() {
                     mv.visitTryCatchBlock(userStart, userEnd, userEnd, ANY_THROWABLE);
+                }
+
+                @Override
+                protected void onUserStart() {
                     mv.visitLabel(userStart);
                 }
 
@@ -1502,6 +1533,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
+                protected void onUserPrepare() {
+                    /* empty */
+                }
+
+                @Override
                 protected void onUserStart() {
                     /* empty */
                 }
@@ -1547,6 +1583,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         MethodVisitor IGNORE_METHOD = null;
 
         /**
+         * Expresses that an annotation should not be visited.
+         */
+        AnnotationVisitor IGNORE_ANNOTATION = null;
+
+        /**
          * Returns {@code true} if this dispatcher is alive.
          *
          * @return {@code true} if this dispatcher is alive.
@@ -1561,17 +1602,2359 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Resolves this dispatcher as a dispatcher for entering a method.
              *
+             * @param userFactories A list of custom factories for binding parameters of an advice method.
              * @return This dispatcher as a dispatcher for entering a method.
              */
-            Resolved.ForMethodEnter asMethodEnter();
+            Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories);
 
             /**
              * Resolves this dispatcher as a dispatcher for exiting a method.
              *
-             * @param dispatcher The dispatcher for entering a method.
+             * @param userFactories A list of custom factories for binding parameters of an advice method.
+             * @param dispatcher    The dispatcher for entering a method.
              * @return This dispatcher as a dispatcher for exiting a method.
              */
-            Resolved.ForMethodExit asMethodExitTo(Resolved.ForMethodEnter dispatcher);
+            Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories, Resolved.ForMethodEnter dispatcher);
+        }
+
+        /**
+         * Represents an offset mapping for an advice method to an alternative offset.
+         */
+        interface OffsetMapping {
+
+            /**
+             * Resolves an offset mapping to a given target offset.
+             *
+             * @param instrumentedMethod The instrumented method for which the mapping is to be resolved.
+             * @param context            The context in which the offset mapping is applied.
+             * @return A suitable target mapping.
+             */
+            Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context);
+
+            /**
+             * A context for applying an {@link OffsetMapping}.
+             */
+            interface Context {
+
+                /**
+                 * Returns {@code true} if the advice is applied on a fully initialized instance, i.e. describes if the {@code this}
+                 * instance is available or still uninitialized during calling the advice.
+                 *
+                 * @return {@code true} if the advice is applied onto a fully initialized method.
+                 */
+                boolean isInitialized();
+
+                /**
+                 * Returns the padding before writing additional values that this context applies.
+                 *
+                 * @return The required padding for this context.
+                 */
+                int getPadding();
+
+                /**
+                 * A context for an offset mapping describing a method entry.
+                 */
+                enum ForMethodEntry implements Context {
+
+                    /**
+                     * Describes a context for a method entry that is not a constructor.
+                     */
+                    INITIALIZED(true),
+
+                    /**
+                     * Describes a context for a method entry that is a constructor.
+                     */
+                    NON_INITIALIZED(false);
+
+                    /**
+                     * Resolves an appropriate method entry context for the supplied instrumented method.
+                     *
+                     * @param instrumentedMethod The instrumented method.
+                     * @return An appropriate context.
+                     */
+                    protected static Context of(MethodDescription.InDefinedShape instrumentedMethod) {
+                        return instrumentedMethod.isConstructor()
+                                ? NON_INITIALIZED
+                                : INITIALIZED;
+                    }
+
+                    /**
+                     * {@code true} if the method is no constructor, i.e. is invoked for an initialized instance upon entry.
+                     */
+                    private final boolean initialized;
+
+                    /**
+                     * Creates a new context for a method entry.
+                     *
+                     * @param initialized {@code true} if the method is no constructor, i.e. is invoked for an initialized instance upon entry.
+                     */
+                    ForMethodEntry(boolean initialized) {
+                        this.initialized = initialized;
+                    }
+
+                    @Override
+                    public boolean isInitialized() {
+                        return initialized;
+                    }
+
+                    @Override
+                    public int getPadding() {
+                        return StackSize.ZERO.getSize();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry." + name();
+                    }
+                }
+
+                /**
+                 * A context for an offset mapping describing a method exit.
+                 */
+                enum ForMethodExit implements Context {
+
+                    /**
+                     * A method exit with a zero sized padding.
+                     */
+                    ZERO(StackSize.ZERO),
+
+                    /**
+                     * A method exit with a single slot padding.
+                     */
+                    SINGLE(StackSize.SINGLE),
+
+                    /**
+                     * A method exit with a double slot padding.
+                     */
+                    DOUBLE(StackSize.DOUBLE);
+
+                    /**
+                     * The padding implied by this method exit.
+                     */
+                    private final StackSize stackSize;
+
+                    /**
+                     * Creates a new context for a method exit.
+                     *
+                     * @param stackSize The padding implied by this method exit.
+                     */
+                    ForMethodExit(StackSize stackSize) {
+                        this.stackSize = stackSize;
+                    }
+
+                    /**
+                     * Resolves an appropriate method exit context for the supplied entry method type.
+                     *
+                     * @param typeDescription The type that is returned by the enter method.
+                     * @return An appropriate context for the supplied entry method type.
+                     */
+                    protected static Context of(TypeDescription typeDescription) {
+                        switch (typeDescription.getStackSize()) {
+                            case ZERO:
+                                return ZERO;
+                            case SINGLE:
+                                return SINGLE;
+                            case DOUBLE:
+                                return DOUBLE;
+                            default:
+                                throw new IllegalStateException("Unknown stack size: " + typeDescription);
+                        }
+                    }
+
+                    @Override
+                    public boolean isInitialized() {
+                        return true;
+                    }
+
+                    @Override
+                    public int getPadding() {
+                        return stackSize.getSize();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Context.ForMethodExit." + name();
+                    }
+                }
+            }
+
+            /**
+             * A target offset of an offset mapping.
+             */
+            interface Target {
+
+                /**
+                 * Indicates that applying this target does not require any additional padding.
+                 */
+                int NO_PADDING = 0;
+
+                /**
+                 * Applies this offset mapping for a {@link MethodVisitor#visitVarInsn(int, int)} instruction.
+                 *
+                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
+                 * @param opcode        The opcode of the original instruction.
+                 * @return The required padding to the advice's total stack size.
+                 */
+                int resolveAccess(MethodVisitor methodVisitor, int opcode);
+
+                /**
+                 * Applies this offset mapping for a {@link MethodVisitor#visitIincInsn(int, int)} instruction.
+                 *
+                 * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
+                 * @param increment     The value with which to increment the targeted value.
+                 * @return The required padding to the advice's total stack size.
+                 */
+                int resolveIncrement(MethodVisitor methodVisitor, int increment);
+
+                /**
+                 * Loads a default value onto the stack or pops the accessed value off it.
+                 */
+                enum ForDefaultValue implements Target {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                                break;
+                            case Opcodes.ILOAD:
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                break;
+                            case Opcodes.LLOAD:
+                                methodVisitor.visitInsn(Opcodes.LCONST_0);
+                                break;
+                            case Opcodes.FLOAD:
+                                methodVisitor.visitInsn(Opcodes.FCONST_0);
+                                break;
+                            case Opcodes.DLOAD:
+                                methodVisitor.visitInsn(Opcodes.DCONST_0);
+                                break;
+                            case Opcodes.ISTORE:
+                            case Opcodes.FSTORE:
+                            case Opcodes.ASTORE:
+                                methodVisitor.visitInsn(Opcodes.POP);
+                                break;
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                methodVisitor.visitInsn(Opcodes.POP2);
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue." + name();
+                    }
+                }
+
+                /**
+                 * A read-write target mapping.
+                 */
+                class ForParameter implements Target {
+
+                    /**
+                     * The mapped offset.
+                     */
+                    private final int offset;
+
+                    /**
+                     * Creates a new read-write target mapping.
+                     *
+                     * @param offset The mapped offset.
+                     */
+                    protected ForParameter(int offset) {
+                        this.offset = offset;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        methodVisitor.visitVarInsn(opcode, offset);
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        methodVisitor.visitIincInsn(offset, increment);
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForParameter forParameter = (ForParameter) object;
+                        return offset == forParameter.offset;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return offset;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForParameter{" +
+                                "offset=" + offset +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A read-only target mapping.
+                 */
+                class ForReadOnlyParameter implements Target {
+
+                    /**
+                     * The mapped offset.
+                     */
+                    private final int offset;
+
+                    /**
+                     * Creates a new read-only target mapping.
+                     *
+                     * @param offset The mapped offset.
+                     */
+                    protected ForReadOnlyParameter(int offset) {
+                        this.offset = offset;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ISTORE:
+                            case Opcodes.LSTORE:
+                            case Opcodes.FSTORE:
+                            case Opcodes.DSTORE:
+                            case Opcodes.ASTORE:
+                                throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
+                            case Opcodes.ILOAD:
+                            case Opcodes.LLOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.DLOAD:
+                            case Opcodes.ALOAD:
+                                methodVisitor.visitVarInsn(opcode, offset);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                        }
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForReadOnlyParameter forReadOnlyParameter = (ForReadOnlyParameter) object;
+                        return offset == forReadOnlyParameter.offset;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return offset;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyParameter{" +
+                                "offset=" + offset +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An offset mapping for a field.
+                 */
+                class ForReadOnlyField implements Target {
+
+                    /**
+                     * The field being read.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * Creates a new offset mapping for a field.
+                     *
+                     * @param fieldDescription The field being read.
+                     */
+                    protected ForReadOnlyField(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ISTORE:
+                            case Opcodes.ASTORE:
+                            case Opcodes.FSTORE:
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                throw new IllegalStateException("Cannot write to field: " + fieldDescription);
+                            case Opcodes.ILOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.ALOAD:
+                            case Opcodes.LLOAD:
+                            case Opcodes.DLOAD:
+                                int accessOpcode;
+                                if (fieldDescription.isStatic()) {
+                                    accessOpcode = Opcodes.GETSTATIC;
+                                } else {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    accessOpcode = Opcodes.GETFIELD;
+                                }
+                                methodVisitor.visitFieldInsn(accessOpcode,
+                                        fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                        fieldDescription.getInternalName(),
+                                        fieldDescription.getDescriptor());
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                        }
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot write to field: " + fieldDescription);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
+                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField{" +
+                                "fieldDescription=" + fieldDescription +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An offset mapping for a field.
+                 */
+                class ForField implements Target {
+
+                    /**
+                     * The field being read.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * Creates a new offset mapping for a field.
+                     *
+                     * @param fieldDescription The field being read.
+                     */
+                    protected ForField(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ISTORE:
+                            case Opcodes.ASTORE:
+                            case Opcodes.FSTORE:
+                                if (!fieldDescription.isStatic()) {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    methodVisitor.visitInsn(Opcodes.DUP_X1);
+                                    methodVisitor.visitInsn(Opcodes.POP);
+                                    accessField(methodVisitor, Opcodes.PUTFIELD);
+                                    return 2;
+                                }
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                if (!fieldDescription.isStatic()) {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    methodVisitor.visitInsn(Opcodes.DUP_X2);
+                                    methodVisitor.visitInsn(Opcodes.POP);
+                                    accessField(methodVisitor, Opcodes.PUTFIELD);
+                                    return 2;
+                                }
+                                accessField(methodVisitor, Opcodes.PUTSTATIC);
+                                return NO_PADDING;
+                            case Opcodes.ILOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.ALOAD:
+                            case Opcodes.LLOAD:
+                            case Opcodes.DLOAD:
+                                if (fieldDescription.isStatic()) {
+                                    accessField(methodVisitor, Opcodes.GETSTATIC);
+                                } else {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    accessField(methodVisitor, Opcodes.GETFIELD);
+                                }
+                                return NO_PADDING;
+                            default:
+                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                        }
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        if (fieldDescription.isStatic()) {
+                            accessField(methodVisitor, Opcodes.GETSTATIC);
+                            methodVisitor.visitInsn(Opcodes.ICONST_1);
+                            methodVisitor.visitInsn(Opcodes.IADD);
+                            accessField(methodVisitor, Opcodes.PUTSTATIC);
+                            return NO_PADDING;
+                        } else {
+                            methodVisitor.visitIntInsn(Opcodes.ALOAD, 0);
+                            methodVisitor.visitInsn(Opcodes.DUP);
+                            accessField(methodVisitor, Opcodes.GETFIELD);
+                            methodVisitor.visitInsn(Opcodes.ICONST_1);
+                            methodVisitor.visitInsn(Opcodes.IADD);
+                            accessField(methodVisitor, Opcodes.PUTFIELD);
+                            return 2;
+                        }
+                    }
+
+                    /**
+                     * Accesses a field.
+                     *
+                     * @param methodVisitor The method visitor for which to access the field.
+                     * @param opcode        The opcode for accessing the field.
+                     */
+                    private void accessField(MethodVisitor methodVisitor, int opcode) {
+                        methodVisitor.visitFieldInsn(opcode,
+                                fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                fieldDescription.getInternalName(),
+                                fieldDescription.getDescriptor());
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForField forField = (ForField) object;
+                        return fieldDescription.equals(forField.fieldDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForField{" +
+                                "fieldDescription=" + fieldDescription +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An offset mapping for a constant pool value.
+                 */
+                class ForConstantPoolValue implements Target {
+
+                    /**
+                     * The constant pool value.
+                     */
+                    private final Object value;
+
+                    /**
+                     * Creates a mapping for a constant pool value.
+                     *
+                     * @param value The constant pool value.
+                     */
+                    protected ForConstantPoolValue(Object value) {
+                        this.value = value;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ISTORE:
+                            case Opcodes.ASTORE:
+                            case Opcodes.FSTORE:
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                throw new IllegalStateException("Cannot write to fixed value: " + value);
+                            case Opcodes.ILOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.ALOAD:
+                            case Opcodes.LLOAD:
+                            case Opcodes.DLOAD:
+                                methodVisitor.visitLdcInsn(value);
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                        }
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot write to fixed value: " + value);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForConstantPoolValue that = (ForConstantPoolValue) object;
+                        return value.equals(that.value);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return value.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue{" +
+                                "value=" + value +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A target for an offset mapping that boxes a primitive parameter value.
+                 */
+                class ForBoxedParameter implements Target {
+
+                    /**
+                     * The parameters offset.
+                     */
+                    private final int offset;
+
+                    /**
+                     * A dispatcher for boxing the primitive value.
+                     */
+                    private final BoxingDispatcher boxingDispatcher;
+
+                    /**
+                     * Creates a new offset mapping for boxing a primitive parameter value.
+                     *
+                     * @param offset           The parameters offset.
+                     * @param boxingDispatcher A dispatcher for boxing the primitive value.
+                     */
+                    protected ForBoxedParameter(int offset, BoxingDispatcher boxingDispatcher) {
+                        this.offset = offset;
+                        this.boxingDispatcher = boxingDispatcher;
+                    }
+
+                    /**
+                     * Resolves a target representing an assignment of a boxed, primitive parameter value.
+                     *
+                     * @param offset The parameter's offset.
+                     * @param type   The primitive type of the parameter being boxed.
+                     * @return An appropriate target.
+                     */
+                    protected static Target of(int offset, TypeDefinition type) {
+                        return new ForBoxedParameter(offset, BoxingDispatcher.of(type));
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                boxingDispatcher.loadBoxed(methodVisitor, offset);
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                        return boxingDispatcher.getStackSize().getSize() - 1;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot increment a boxed parameter");
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForBoxedParameter that = (ForBoxedParameter) object;
+                        return offset == that.offset && boxingDispatcher == that.boxingDispatcher;
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = offset;
+                        result = 31 * result + boxingDispatcher.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter{" +
+                                "offset=" + offset +
+                                ", boxingDispatcher=" + boxingDispatcher +
+                                '}';
+                    }
+
+                    /**
+                     * A dispatcher for boxing a primitive value.
+                     */
+                    protected enum BoxingDispatcher {
+
+                        /**
+                         * A boxing dispatcher for the {@code boolean} type.
+                         */
+                        BOOLEAN(Opcodes.ILOAD, Boolean.class, boolean.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code byte} type.
+                         */
+                        BYTE(Opcodes.ILOAD, Byte.class, byte.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code short} type.
+                         */
+                        SHORT(Opcodes.ILOAD, Short.class, short.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code char} type.
+                         */
+                        CHARACTER(Opcodes.ILOAD, Character.class, char.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code int} type.
+                         */
+                        INTEGER(Opcodes.ILOAD, Integer.class, int.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code long} type.
+                         */
+                        LONG(Opcodes.LLOAD, Long.class, long.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code float} type.
+                         */
+                        FLOAT(Opcodes.FLOAD, Float.class, float.class),
+
+                        /**
+                         * A boxing dispatcher for the {@code double} type.
+                         */
+                        DOUBLE(Opcodes.DLOAD, Double.class, double.class);
+
+                        /**
+                         * The name of the boxing method of a wrapper type.
+                         */
+                        private static final String VALUE_OF = "valueOf";
+
+                        /**
+                         * The opcode to use for loading a value of this type.
+                         */
+                        private final int opcode;
+
+                        /**
+                         * The name of the wrapper type.
+                         */
+                        private final String owner;
+
+                        /**
+                         * The descriptor of the boxing method.
+                         */
+                        private final String descriptor;
+
+                        /**
+                         * The required stack size of the unboxed value.
+                         */
+                        private final StackSize stackSize;
+
+                        /**
+                         * Creates a new boxing dispatcher.
+                         *
+                         * @param opcode        The opcode to use for loading a value of this type.
+                         * @param wrapperType   The represented wrapper type.
+                         * @param primitiveType The represented primitive type.
+                         */
+                        BoxingDispatcher(int opcode, Class<?> wrapperType, Class<?> primitiveType) {
+                            this.opcode = opcode;
+                            owner = Type.getInternalName(wrapperType);
+                            descriptor = Type.getMethodDescriptor(Type.getType(wrapperType), Type.getType(primitiveType));
+                            stackSize = StackSize.of(primitiveType);
+                        }
+
+                        /**
+                         * Resolves a boxing dispatcher for the supplied primitive type.
+                         *
+                         * @param typeDefinition A description of a primitive type.
+                         * @return An appropriate boxing dispatcher.
+                         */
+                        protected static BoxingDispatcher of(TypeDefinition typeDefinition) {
+                            if (typeDefinition.represents(boolean.class)) {
+                                return BOOLEAN;
+                            } else if (typeDefinition.represents(byte.class)) {
+                                return BYTE;
+                            } else if (typeDefinition.represents(short.class)) {
+                                return SHORT;
+                            } else if (typeDefinition.represents(char.class)) {
+                                return CHARACTER;
+                            } else if (typeDefinition.represents(int.class)) {
+                                return INTEGER;
+                            } else if (typeDefinition.represents(long.class)) {
+                                return LONG;
+                            } else if (typeDefinition.represents(float.class)) {
+                                return FLOAT;
+                            } else if (typeDefinition.represents(double.class)) {
+                                return DOUBLE;
+                            } else {
+                                throw new IllegalArgumentException("Cannot box: " + typeDefinition);
+                            }
+                        }
+
+                        /**
+                         * Loads the value as a boxed version onto the stack.
+                         *
+                         * @param methodVisitor the method visitor for which to load the value.
+                         * @param offset        The offset of the primitive value.
+                         */
+                        protected void loadBoxed(MethodVisitor methodVisitor, int offset) {
+                            methodVisitor.visitVarInsn(opcode, offset);
+                            methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC, owner, VALUE_OF, descriptor, false);
+                        }
+
+                        /**
+                         * Returns the stack size of the primitive value.
+                         *
+                         * @return The stack size of the primitive value.
+                         */
+                        protected StackSize getStackSize() {
+                            return stackSize;
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher." + name();
+                        }
+                    }
+                }
+
+                /**
+                 * A target for an offset mapping of an array containing all (boxed) arguments of the instrumented method.
+                 */
+                class ForBoxedArguments implements Target {
+
+                    /**
+                     * The parameters of the instrumented method.
+                     */
+                    private final List<ParameterDescription.InDefinedShape> parameters;
+
+                    /**
+                     * Creates a mapping for a boxed array containing all arguments of the instrumented method.
+                     *
+                     * @param parameters The parameters of the instrumented method.
+                     */
+                    protected ForBoxedArguments(List<ParameterDescription.InDefinedShape> parameters) {
+                        this.parameters = parameters;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                loadInteger(methodVisitor, parameters.size());
+                                methodVisitor.visitTypeInsn(Opcodes.ANEWARRAY, TypeDescription.OBJECT.getInternalName());
+                                StackSize stackSize = StackSize.ZERO;
+                                for (ParameterDescription parameter : parameters) {
+                                    methodVisitor.visitInsn(Opcodes.DUP);
+                                    loadInteger(methodVisitor, parameter.getIndex());
+                                    if (parameter.getType().isPrimitive()) {
+                                        ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
+                                    } else {
+                                        methodVisitor.visitIntInsn(Opcodes.ALOAD, parameter.getOffset());
+                                    }
+                                    methodVisitor.visitInsn(Opcodes.AASTORE);
+                                    stackSize = stackSize.maximum(parameter.getType().getStackSize());
+                                }
+                                return stackSize.getSize() + 2;
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                    }
+
+                    /**
+                     * Londs an integer onto the operand stack.
+                     *
+                     * @param methodVisitor The method visitor for which the integer is loaded.
+                     * @param value         The integer value to load onto the stack.
+                     */
+                    private static void loadInteger(MethodVisitor methodVisitor, int value) {
+                        switch (value) {
+                            case 0:
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                break;
+                            case 1:
+                                methodVisitor.visitInsn(Opcodes.ICONST_1);
+                                break;
+                            case 2:
+                                methodVisitor.visitInsn(Opcodes.ICONST_2);
+                                break;
+                            case 3:
+                                methodVisitor.visitInsn(Opcodes.ICONST_3);
+                                break;
+                            case 4:
+                                methodVisitor.visitInsn(Opcodes.ICONST_4);
+                                break;
+                            case 5:
+                                methodVisitor.visitInsn(Opcodes.ICONST_5);
+                                break;
+                            default:
+                                if (value < Byte.MAX_VALUE) {
+                                    methodVisitor.visitIntInsn(Opcodes.BIPUSH, value);
+                                } else if (value < Short.MAX_VALUE) {
+                                    methodVisitor.visitIntInsn(Opcodes.SIPUSH, value);
+                                } else {
+                                    methodVisitor.visitLdcInsn(value);
+                                }
+                        }
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot incremement a boxed argument");
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForBoxedArguments that = (ForBoxedArguments) object;
+                        return parameters.equals(that.parameters);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return parameters.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments{" +
+                                "parameters=" + parameters +
+                                '}';
+                    }
+                }
+
+                /**
+                 * Binds a null constant to the target parameter.
+                 */
+                enum ForNullConstant implements Target {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                                break;
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot increment a null constant");
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForNullConstant." + name();
+                    }
+                }
+            }
+
+            /**
+             * Represents a factory for creating a {@link OffsetMapping} for a given parameter.
+             */
+            interface Factory {
+
+                /**
+                 * Indicates that an offset mapping is undefined.
+                 */
+                OffsetMapping UNDEFINED = null;
+
+                /**
+                 * Creates a new offset mapping for the supplied parameter if possible.
+                 *
+                 * @param parameterDescription The parameter description for which to resolve an offset mapping.
+                 * @return A resolved offset mapping or {@code null} if no mapping can be resolved for this parameter.
+                 */
+                OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription);
+            }
+
+            /**
+             * An offset mapping for a given parameter of the instrumented method.
+             */
+            class ForParameter implements OffsetMapping {
+
+                /**
+                 * The index of the parameter.
+                 */
+                private final int index;
+
+                /**
+                 * Determines if the parameter is to be treated as read-only.
+                 */
+                private final boolean readOnly;
+
+                /**
+                 * The type expected by the advice method.
+                 */
+                private final TypeDescription targetType;
+
+                /**
+                 * Creates a new offset mapping for a parameter.
+                 *
+                 * @param argument   The annotation for which the mapping is to be created.
+                 * @param targetType Determines if the parameter is to be treated as read-only.
+                 */
+                protected ForParameter(Argument argument, TypeDescription targetType) {
+                    this(argument.value(), argument.readOnly(), targetType);
+                }
+
+                /**
+                 * Creates a new offset mapping for a parameter of the instrumented method.
+                 *
+                 * @param index      The index of the parameter.
+                 * @param readOnly   Determines if the parameter is to be treated as read-only.
+                 * @param targetType The type expected by the advice method.
+                 */
+                protected ForParameter(int index, boolean readOnly, TypeDescription targetType) {
+                    this.index = index;
+                    this.readOnly = readOnly;
+                    this.targetType = targetType;
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    ParameterList<?> parameters = instrumentedMethod.getParameters();
+                    if (parameters.size() <= index) {
+                        throw new IllegalStateException(instrumentedMethod + " does not define an index " + index);
+                    } else if (!readOnly && !parameters.get(index).getType().asErasure().equals(targetType)) {
+                        throw new IllegalStateException("read-only " + targetType + " is not equal to type of " + parameters.get(index));
+                    } else if (readOnly && !parameters.get(index).getType().asErasure().isAssignableTo(targetType)) {
+                        throw new IllegalStateException(targetType + " is not assignable to " + parameters.get(index));
+                    }
+                    return readOnly
+                            ? new Target.ForReadOnlyParameter(parameters.get(index).getOffset())
+                            : new Target.ForParameter(parameters.get(index).getOffset());
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForParameter that = (ForParameter) object;
+                    return index == that.index
+                            && readOnly == that.readOnly
+                            && targetType.equals(that.targetType);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = index;
+                    result = 31 * result + (readOnly ? 1 : 0);
+                    result = 31 * result + targetType.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForParameter{" +
+                            "index=" + index +
+                            ", readOnly=" + readOnly +
+                            ", targetType=" + targetType +
+                            '}';
+                }
+
+                /**
+                 * A factory for creating a {@link ForParameter} offset mapping.
+                 */
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<Argument> annotation = parameterDescription.getDeclaredAnnotations().ofType(Argument.class);
+                        return annotation == null
+                                ? UNDEFINED
+                                : new ForParameter(annotation.loadSilent(), parameterDescription.getType().asErasure());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForParameter.Factory." + name();
+                    }
+                }
+            }
+
+            /**
+             * An offset mapping that provides access to the {@code this} reference of the instrumented method.
+             */
+            class ForThisReference implements OffsetMapping {
+
+                /**
+                 * The offset of the this reference in a Java method.
+                 */
+                private static final int THIS_REFERENCE = 0;
+
+                /**
+                 * Determines if the parameter is to be treated as read-only.
+                 */
+                private final boolean readOnly;
+
+                /**
+                 * The type that the advice method expects for the {@code this} reference.
+                 */
+                private final TypeDescription targetType;
+
+                /**
+                 * Creates a new offset mapping for a {@code this} reference.
+                 *
+                 * @param readOnly   Determines if the parameter is to be treated as read-only.
+                 * @param targetType The type that the advice method expects for the {@code this} reference.
+                 */
+                protected ForThisReference(boolean readOnly, TypeDescription targetType) {
+                    this.readOnly = readOnly;
+                    this.targetType = targetType;
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    if (instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException("Cannot map this reference for static method " + instrumentedMethod);
+                    } else if (!readOnly && !instrumentedMethod.getDeclaringType().equals(targetType)) {
+                        throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not equal to read-only " + targetType);
+                    } else if (readOnly && !instrumentedMethod.getDeclaringType().isAssignableTo(targetType)) {
+                        throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not assignable to " + targetType);
+                    } else if (!context.isInitialized()) {
+                        throw new IllegalStateException("Cannot access this reference before calling constructor: " + instrumentedMethod);
+                    }
+                    return readOnly
+                            ? new Target.ForReadOnlyParameter(THIS_REFERENCE)
+                            : new Target.ForParameter(THIS_REFERENCE);
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForThisReference that = (ForThisReference) object;
+                    return readOnly == that.readOnly
+                            && targetType.equals(that.targetType);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = (readOnly ? 1 : 0);
+                    result = 31 * result + targetType.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForThisReference{" +
+                            "readOnly=" + readOnly +
+                            ", targetType=" + targetType +
+                            '}';
+                }
+
+                /**
+                 * A factory for creating a {@link ForThisReference} offset mapping.
+                 */
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<This> annotation = parameterDescription.getDeclaredAnnotations().ofType(This.class);
+                        return annotation == null
+                                ? UNDEFINED
+                                : new ForThisReference(annotation.loadSilent().readOnly(), parameterDescription.getType().asErasure());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForThisReference.Factory." + name();
+                    }
+                }
+            }
+
+            /**
+             * Maps the declaring type of the instrumented method.
+             */
+            enum ForInstrumentedType implements OffsetMapping {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return new Target.ForConstantPoolValue(Type.getType(instrumentedMethod.getDeclaringType().getDescriptor()));
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForInstrumentedType." + name();
+                }
+            }
+
+            /**
+             * An offset mapping for a field.
+             */
+            abstract class ForField implements OffsetMapping {
+
+                /**
+                 * The name of the field.
+                 */
+                protected final String name;
+
+                /**
+                 * The expected type that the field can be assigned to.
+                 */
+                protected final TypeDescription targetType;
+
+                /**
+                 * {@code true} if this mapping is read-only.
+                 */
+                protected final boolean readOnly;
+
+                /**
+                 * Creates an offset mapping for a field.
+                 *
+                 * @param name       The name of the field.
+                 * @param targetType The expected type that the field can be assigned to.
+                 * @param readOnly   {@code true} if this mapping is read-only.
+                 */
+                protected ForField(String name, TypeDescription targetType, boolean readOnly) {
+                    this.name = name;
+                    this.targetType = targetType;
+                    this.readOnly = readOnly;
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    FieldLocator.Resolution resolution = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
+                    if (!resolution.isResolved()) {
+                        throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedMethod);
+                    } else if (readOnly && !resolution.getField().getType().asErasure().isAssignableTo(targetType)) {
+                        throw new IllegalStateException("Cannot assign type of read-only field " + resolution.getField() + " to " + targetType);
+                    } else if (!readOnly && !resolution.getField().getType().asErasure().equals(targetType)) {
+                        throw new IllegalStateException("Type of field " + resolution.getField() + " is not equal to " + targetType);
+                    } else if (!resolution.getField().isStatic() && instrumentedMethod.isStatic()) {
+                        throw new IllegalStateException("Cannot read non-static field " + resolution.getField() + " from static method " + instrumentedMethod);
+                    } else if (!context.isInitialized() && !resolution.getField().isStatic()) {
+                        throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
+                    }
+                    return readOnly
+                            ? new Target.ForReadOnlyField(resolution.getField())
+                            : new Target.ForField(resolution.getField());
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForField forField = (ForField) object;
+                    return name.equals(forField.name) && targetType.equals(forField.targetType) && readOnly == forField.readOnly;
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = name.hashCode();
+                    result = 31 * result + targetType.hashCode();
+                    result = 31 * result + (readOnly ? 1 : 0);
+                    return result;
+                }
+
+                /**
+                 * Returns a field locator for this instance.
+                 *
+                 * @param instrumentedType The instrumented type.
+                 * @return An appropriate field locator.
+                 */
+                protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
+
+                /**
+                 * An offset mapping for a field with an implicit declaring type.
+                 */
+                protected static class WithImplicitType extends ForField {
+
+                    /**
+                     * Creates an offset mapping for a field with an implicit declaring type.
+                     *
+                     * @param name       The name of the field.
+                     * @param targetType The expected type that the field can be assigned to.
+                     * @param readOnly   {@code true} if the field is read-only.
+                     */
+                    protected WithImplicitType(String name, TypeDescription targetType, boolean readOnly) {
+                        super(name, targetType, readOnly);
+                    }
+
+                    @Override
+                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                        return new FieldLocator.ForClassHierarchy(instrumentedType);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType{" +
+                                "name=" + name +
+                                ", targetType=" + targetType +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An offset mapping for a field with an explicit declaring type.
+                 */
+                protected static class WithExplicitType extends ForField {
+
+                    /**
+                     * The type declaring the field.
+                     */
+                    private final TypeDescription explicitType;
+
+                    /**
+                     * Creates an offset mapping for a field with an explicit declaring type.
+                     *
+                     * @param name        The name of the field.
+                     * @param targetType  The expected type that the field can be assigned to.
+                     * @param locatedType The type declaring the field.
+                     * @param readOnly    {@code true} if the field is read-only.
+                     */
+                    protected WithExplicitType(String name, TypeDescription targetType, TypeDescription locatedType, boolean readOnly) {
+                        super(name, targetType, readOnly);
+                        this.explicitType = locatedType;
+                    }
+
+                    @Override
+                    protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
+                        if (!instrumentedType.isAssignableTo(explicitType)) {
+                            throw new IllegalStateException(explicitType + " is no super type of " + instrumentedType);
+                        }
+                        return new FieldLocator.ForExactType(explicitType);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        if (!super.equals(object)) return false;
+                        WithExplicitType that = (WithExplicitType) object;
+                        return explicitType.equals(that.explicitType);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = super.hashCode();
+                        result = 31 * result + explicitType.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType{" +
+                                "name=" + name +
+                                ", targetType=" + targetType +
+                                ", explicitType=" + explicitType +
+                                '}';
+                    }
+                }
+
+                /**
+                 * A factory for a {@link ForField} offset mapping.
+                 */
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    /**
+                     * The {@link FieldValue#value()} method.
+                     */
+                    private final MethodDescription.InDefinedShape value;
+
+                    /**
+                     * The {@link FieldValue#declaringType()}} method.
+                     */
+                    private final MethodDescription.InDefinedShape definingType;
+
+                    /**
+                     * The {@link FieldValue#readOnly()}} method.
+                     */
+                    private final MethodDescription.InDefinedShape readOnly;
+
+                    /**
+                     * Creates a new factory for a {@link ForField} offset mapping.
+                     */
+                    Factory() {
+                        MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
+                        value = methods.filter(named("value")).getOnly();
+                        definingType = methods.filter(named("declaringType")).getOnly();
+                        readOnly = methods.filter(named("readOnly")).getOnly();
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(FieldValue.class);
+                        if (annotation == null) {
+                            return UNDEFINED;
+                        } else {
+                            TypeDescription definingType = annotation.getValue(this.definingType, TypeDescription.class);
+                            String name = annotation.getValue(value, String.class);
+                            TypeDescription targetType = parameterDescription.getType().asErasure();
+                            return definingType.represents(void.class)
+                                    ? new WithImplicitType(name, targetType, annotation.getValue(readOnly, Boolean.class))
+                                    : new WithExplicitType(name, targetType, definingType, annotation.getValue(readOnly, Boolean.class));
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForField.Factory." + name();
+                    }
+                }
+            }
+
+            /**
+             * An offset mapping for the {@link Advice.Origin} annotation.
+             */
+            class ForOrigin implements OffsetMapping {
+
+                /**
+                 * The delimiter character.
+                 */
+                private static final char DELIMITER = '#';
+
+                /**
+                 * The escape character.
+                 */
+                private static final char ESCAPE = '\\';
+
+                /**
+                 * The renderers to apply.
+                 */
+                private final List<Renderer> renderers;
+
+                /**
+                 * Creates a new offset mapping for an origin value.
+                 *
+                 * @param renderers The renderers to apply.
+                 */
+                protected ForOrigin(List<Renderer> renderers) {
+                    this.renderers = renderers;
+                }
+
+                /**
+                 * Parses a pattern of an origin annotation.
+                 *
+                 * @param pattern The supplied pattern.
+                 * @return An appropriate offset mapping.
+                 */
+                protected static OffsetMapping parse(String pattern) {
+                    if (pattern.equals(Origin.DEFAULT)) {
+                        return new ForOrigin(Collections.<Renderer>singletonList(Renderer.ForStringRepresentation.INSTANCE));
+                    } else {
+                        List<Renderer> renderers = new ArrayList<Renderer>(pattern.length());
+                        int from = 0;
+                        for (int to = pattern.indexOf(DELIMITER); to != -1; to = pattern.indexOf(DELIMITER, from)) {
+                            if (to != 0 && pattern.charAt(to - 1) == ESCAPE && (to == 1 || pattern.charAt(to - 2) != ESCAPE)) {
+                                renderers.add(new Renderer.ForConstantValue(pattern.substring(from, Math.max(0, to - 1)) + DELIMITER));
+                                from = to + 1;
+                                continue;
+                            } else if (pattern.length() == to + 1) {
+                                throw new IllegalStateException("Missing sort descriptor for " + pattern + " at index " + to);
+                            }
+                            renderers.add(new Renderer.ForConstantValue(pattern.substring(from, to).replace("" + ESCAPE + ESCAPE, "" + ESCAPE)));
+                            switch (pattern.charAt(to + 1)) {
+                                case Renderer.ForMethodName.SYMBOL:
+                                    renderers.add(Renderer.ForMethodName.INSTANCE);
+                                    break;
+                                case Renderer.ForTypeName.SYMBOL:
+                                    renderers.add(Renderer.ForTypeName.INSTANCE);
+                                    break;
+                                case Renderer.ForDescriptor.SYMBOL:
+                                    renderers.add(Renderer.ForDescriptor.INSTANCE);
+                                    break;
+                                case Renderer.ForReturnTypeName.SYMBOL:
+                                    renderers.add(Renderer.ForReturnTypeName.INSTANCE);
+                                    break;
+                                case Renderer.ForJavaSignature.SYMBOL:
+                                    renderers.add(Renderer.ForJavaSignature.INSTANCE);
+                                    break;
+                                default:
+                                    throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
+                            }
+                            from = to + 2;
+                        }
+                        renderers.add(new Renderer.ForConstantValue(pattern.substring(from)));
+                        return new ForOrigin(renderers);
+                    }
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    StringBuilder stringBuilder = new StringBuilder();
+                    for (Renderer renderer : renderers) {
+                        stringBuilder.append(renderer.apply(instrumentedMethod));
+                    }
+                    return new Target.ForConstantPoolValue(stringBuilder.toString());
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForOrigin forOrigin = (ForOrigin) object;
+                    return renderers.equals(forOrigin.renderers);
+                }
+
+                @Override
+                public int hashCode() {
+                    return renderers.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForOrigin{" +
+                            "renderers=" + renderers +
+                            '}';
+                }
+
+                /**
+                 * A renderer for an origin pattern element.
+                 */
+                protected interface Renderer {
+
+                    /**
+                     * Returns a string representation for this renderer.
+                     *
+                     * @param instrumentedMethod The method being rendered.
+                     * @return The string representation.
+                     */
+                    String apply(MethodDescription.InDefinedShape instrumentedMethod);
+
+                    /**
+                     * A renderer for a method's internal name.
+                     */
+                    enum ForMethodName implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * The method name symbol.
+                         */
+                        protected static final char SYMBOL = 'm';
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            return instrumentedMethod.getInternalName();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForMethodName." + name();
+                        }
+                    }
+
+                    /**
+                     * A renderer for a method declaring type's binary name.
+                     */
+                    enum ForTypeName implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * The type name symbol.
+                         */
+                        protected static final char SYMBOL = 't';
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            return instrumentedMethod.getDeclaringType().getName();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName." + name();
+                        }
+                    }
+
+                    /**
+                     * A renderer for a method descriptor.
+                     */
+                    enum ForDescriptor implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * The descriptor symbol.
+                         */
+                        protected static final char SYMBOL = 'd';
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            return instrumentedMethod.getDescriptor();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForDescriptor." + name();
+                        }
+                    }
+
+                    /**
+                     * A renderer for a method's Java signature in binary form.
+                     */
+                    enum ForJavaSignature implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * The signature symbol.
+                         */
+                        protected static final char SYMBOL = 's';
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            StringBuilder stringBuilder = new StringBuilder("(");
+                            boolean comma = false;
+                            for (TypeDescription typeDescription : instrumentedMethod.getParameters().asTypeList().asErasures()) {
+                                if (comma) {
+                                    stringBuilder.append(',');
+                                } else {
+                                    comma = true;
+                                }
+                                stringBuilder.append(typeDescription.getName());
+                            }
+                            return stringBuilder.append(')').toString();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature." + name();
+                        }
+                    }
+
+                    /**
+                     * A renderer for a method's return type in binary form.
+                     */
+                    enum ForReturnTypeName implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        /**
+                         * The return type symbol.
+                         */
+                        protected static final char SYMBOL = 'r';
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            return instrumentedMethod.getReturnType().asErasure().getName();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName." + name();
+                        }
+                    }
+
+                    /**
+                     * A renderer for a method's {@link Object#toString()} representation.
+                     */
+                    enum ForStringRepresentation implements Renderer {
+
+                        /**
+                         * The singleton instance.
+                         */
+                        INSTANCE;
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            return instrumentedMethod.toString();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation." + name();
+                        }
+                    }
+
+                    /**
+                     * A renderer for a constant value.
+                     */
+                    class ForConstantValue implements Renderer {
+
+                        /**
+                         * The constant value.
+                         */
+                        private final String value;
+
+                        /**
+                         * Creates a new renderer for a constant value.
+                         *
+                         * @param value The constant value.
+                         */
+                        protected ForConstantValue(String value) {
+                            this.value = value;
+                        }
+
+                        @Override
+                        public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
+                            return value;
+                        }
+
+                        @Override
+                        public boolean equals(Object object) {
+                            if (this == object) return true;
+                            if (object == null || getClass() != object.getClass()) return false;
+                            ForConstantValue that = (ForConstantValue) object;
+                            return value.equals(that.value);
+                        }
+
+                        @Override
+                        public int hashCode() {
+                            return value.hashCode();
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForConstantValue{" +
+                                    "value='" + value + '\'' +
+                                    '}';
+                        }
+                    }
+                }
+
+                /**
+                 * A factory for a method origin.
+                 */
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<Origin> origin = parameterDescription.getDeclaredAnnotations().ofType(Origin.class);
+                        if (origin == null) {
+                            return UNDEFINED;
+                        } else if (parameterDescription.getType().asErasure().represents(Class.class)) {
+                            return OffsetMapping.ForInstrumentedType.INSTANCE;
+                        } else if (parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
+                            return ForOrigin.parse(origin.loadSilent().value());
+                        } else {
+                            throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
+                        }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForOrigin.Factory." + name();
+                    }
+                }
+            }
+
+            /**
+             * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
+             */
+            enum ForIgnored implements OffsetMapping, Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return Target.ForDefaultValue.INSTANCE;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                    return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Ignored.class)
+                            ? this
+                            : UNDEFINED;
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForIgnored." + name();
+                }
+            }
+
+            /**
+             * An offset mapping that provides access to the value that is returned by the enter advice.
+             */
+            enum ForEnterValue implements OffsetMapping {
+
+                /**
+                 * Enables writing to the mapped offset.
+                 */
+                WRITABLE(false),
+
+                /**
+                 * Only allows for reading the mapped offset.
+                 */
+                READ_ONLY(true);
+
+                /**
+                 * Determines if the parameter is to be treated as read-only.
+                 */
+                private final boolean readOnly;
+
+                /**
+                 * Creates a new offset mapping for an enter value.
+                 *
+                 * @param readOnly Determines if the parameter is to be treated as read-only.
+                 */
+                ForEnterValue(boolean readOnly) {
+                    this.readOnly = readOnly;
+                }
+
+                /**
+                 * Resolves an offset mapping for an enter value.
+                 *
+                 * @param readOnly {@code true} if the value is to be treated as read-only.
+                 * @return An appropriate offset mapping.
+                 */
+                public static OffsetMapping of(boolean readOnly) {
+                    return readOnly
+                            ? READ_ONLY
+                            : WRITABLE;
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return readOnly
+                            ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize())
+                            : new Target.ForParameter(instrumentedMethod.getStackSize());
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForEnterValue." + name();
+                }
+
+                /**
+                 * A factory for creating a {@link ForEnterValue} offset mapping.
+                 */
+                protected static class Factory implements OffsetMapping.Factory {
+
+                    /**
+                     * The supplied type of the enter method.
+                     */
+                    private final TypeDescription enterType;
+
+                    /**
+                     * Creates a new factory for creating a {@link ForEnterValue} offset mapping.
+                     *
+                     * @param enterType The supplied type of the enter method.
+                     */
+                    protected Factory(TypeDescription enterType) {
+                        this.enterType = enterType;
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<Enter> annotation = parameterDescription.getDeclaredAnnotations().ofType(Enter.class);
+                        if (annotation != null) {
+                            boolean readOnly = annotation.loadSilent().readOnly();
+                            if (!readOnly && !enterType.equals(parameterDescription.getType().asErasure())) {
+                                throw new IllegalStateException("read-only type of " + parameterDescription + " does not equal " + enterType);
+                            } else if (readOnly && !enterType.isAssignableTo(parameterDescription.getType().asErasure())) {
+                                throw new IllegalStateException("Cannot assign the type of " + parameterDescription + " to supplied type " + enterType);
+                            }
+                            return ForEnterValue.of(readOnly);
+                        } else {
+                            return UNDEFINED;
+                        }
+                    }
+
+                    @Override
+                    public boolean equals(Object other) {
+                        return this == other || !(other == null || getClass() != other.getClass())
+                                && enterType.equals(((Factory) other).enterType);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return enterType.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForEnterValue.Factory{" +
+                                "enterType=" + enterType +
+                                '}';
+                    }
+                }
+            }
+
+            /**
+             * An offset mapping that provides access to the value that is returned by the instrumented method.
+             */
+            class ForReturnValue implements OffsetMapping {
+
+                /**
+                 * Determines if the parameter is to be treated as read-only.
+                 */
+                private final boolean readOnly;
+
+                /**
+                 * The type that the advice method expects for the {@code this} reference.
+                 */
+                private final TypeDescription targetType;
+
+                /**
+                 * Creates an offset mapping for accessing the return type of the instrumented method.
+                 *
+                 * @param readOnly   Determines if the parameter is to be treated as read-only.
+                 * @param targetType The expected target type of the return type.
+                 */
+                protected ForReturnValue(boolean readOnly, TypeDescription targetType) {
+                    this.readOnly = readOnly;
+                    this.targetType = targetType;
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    if (!readOnly && !instrumentedMethod.getReturnType().asErasure().equals(targetType)) {
+                        throw new IllegalStateException("read-only return type of " + instrumentedMethod + " is not equal to " + targetType);
+                    } else if (readOnly && !instrumentedMethod.getReturnType().asErasure().isAssignableTo(targetType)) {
+                        throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
+                    }
+                    return readOnly
+                            ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + context.getPadding())
+                            : new Target.ForParameter(instrumentedMethod.getStackSize() + context.getPadding());
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForReturnValue that = (ForReturnValue) other;
+                    return readOnly == that.readOnly && targetType.equals(that.targetType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return (readOnly ? 1 : 0) + 31 * targetType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForReturnValue{" +
+                            "readOnly=" + readOnly +
+                            ", targetType=" + targetType +
+                            '}';
+                }
+
+                /**
+                 * A factory for creating a {@link ForReturnValue} offset mapping.
+                 */
+                protected enum Factory implements OffsetMapping.Factory {
+
+                    /**
+                     * The singleton instance.
+                     */
+                    INSTANCE;
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<Return> annotation = parameterDescription.getDeclaredAnnotations().ofType(Return.class);
+                        return annotation == null
+                                ? UNDEFINED
+                                : new ForReturnValue(annotation.loadSilent().readOnly(), parameterDescription.getType().asErasure());
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForReturnValue.Factory." + name();
+                    }
+                }
+            }
+
+            /**
+             * An offset mapping for the method's (boxed) return value.
+             */
+            enum ForBoxedReturnValue implements OffsetMapping, Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    if (instrumentedMethod.getReturnType().represents(void.class)) {
+                        return Target.ForNullConstant.INSTANCE;
+                    } else if (instrumentedMethod.getReturnType().isPrimitive()) {
+                        return Target.ForBoxedParameter.of(instrumentedMethod.getStackSize() + context.getPadding(), instrumentedMethod.getReturnType());
+                    } else {
+                        return new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + context.getPadding());
+                    }
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedReturn.class)) {
+                        return UNDEFINED;
+                    } else if (parameterDescription.getType().represents(Object.class)) {
+                        return this;
+                    } else {
+                        throw new IllegalStateException("Can only assign a boxed return value to an Object type");
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue." + name();
+                }
+            }
+
+            /**
+             * An offset mapping for an array containing the (boxed) method arguments.
+             */
+            enum ForBoxedArguments implements OffsetMapping, Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return new Target.ForBoxedArguments(instrumentedMethod.getParameters());
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                    if (!parameterDescription.getDeclaredAnnotations().isAnnotationPresent(BoxedArguments.class)) {
+                        return UNDEFINED;
+                    } else if (parameterDescription.getType().represents(Object[].class)) {
+                        return this;
+                    } else {
+                        throw new IllegalStateException("Can only assign an array of boxed arguments to an Object[] array");
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForBoxedArguments." + name();
+                }
+            }
+
+            /**
+             * An offset mapping for accessing a {@link Throwable} of the instrumented method.
+             */
+            enum ForThrowable implements OffsetMapping, Factory {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                    if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Thrown.class)) {
+                        if (!parameterDescription.getType().represents(Throwable.class)) {
+                            throw new IllegalStateException("Parameter must be of type Throwable for " + parameterDescription);
+                        }
+                        return this;
+                    } else {
+                        return UNDEFINED;
+                    }
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    return new Target.ForParameter(instrumentedMethod.getStackSize()
+                            + context.getPadding()
+                            + instrumentedMethod.getReturnType().getStackSize().getSize());
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForThrowable." + name();
+                }
+            }
+
+            /**
+             * Represents an offset mapping for a user-defined value.
+             *
+             * @param <T> The mapped annotation type.
+             */
+            class ForUserValue<T extends Annotation> implements OffsetMapping {
+
+                /**
+                 * The target parameter that is bound.
+                 */
+                private final ParameterDescription.InDefinedShape target;
+
+                /**
+                 * The annotation value that triggered the binding.
+                 */
+                private final AnnotationDescription.Loadable<T> annotation;
+
+                /**
+                 * The dynamic value that is bound.
+                 */
+                private final DynamicValue<T> dynamicValue;
+
+                /**
+                 * Creates a new offset mapping for a user-defined value.
+                 *
+                 * @param target       The target parameter that is bound.
+                 * @param annotation   The annotation value that triggered the binding.
+                 * @param dynamicValue The dynamic value that is bound.
+                 */
+                protected ForUserValue(ParameterDescription.InDefinedShape target,
+                                       AnnotationDescription.Loadable<T> annotation,
+                                       DynamicValue<T> dynamicValue) {
+                    this.target = target;
+                    this.annotation = annotation;
+                    this.dynamicValue = dynamicValue;
+                }
+
+                @Override
+                public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
+                    Object value = dynamicValue.resolve(instrumentedMethod, target, annotation, context.isInitialized());
+                    if (value == null) {
+                        if (target.getType().isPrimitive()) {
+                            throw new IllegalStateException("Cannot map null to primitive type of " + target);
+                        }
+                        return Target.ForNullConstant.INSTANCE;
+                    } else if ((target.getType().asErasure().isAssignableFrom(String.class) && value instanceof String)
+                            || (target.getType().isPrimitive() && target.getType().asErasure().isInstanceOrWrapper(value))) {
+                        return new Target.ForConstantPoolValue(value);
+                    } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof Class) {
+                        return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
+                    } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof TypeDescription) {
+                        return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
+                    } else {
+                        throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
+                    }
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForUserValue that = (ForUserValue) object;
+                    return target.equals(that.target)
+                            && annotation.equals(that.annotation)
+                            && dynamicValue.equals(that.dynamicValue);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = target.hashCode();
+                    result = 31 * result + annotation.hashCode();
+                    result = 31 * result + dynamicValue.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForUserValue{" +
+                            "target=" + target +
+                            ", annotation=" + annotation +
+                            ", dynamicValue=" + dynamicValue +
+                            '}';
+                }
+
+                /**
+                 * A factory for mapping a user-defined dynamic value.
+                 *
+                 * @param <S> The mapped annotation type.
+                 */
+                protected static class Factory<S extends Annotation> implements OffsetMapping.Factory {
+
+                    /**
+                     * The mapped annotation type.
+                     */
+                    private final Class<S> type;
+
+                    /**
+                     * The dynamic value instance used for resolving a binding.
+                     */
+                    private final DynamicValue<S> dynamicValue;
+
+                    /**
+                     * Creates a new factory for a user-defined dynamic value.
+                     *
+                     * @param type         The mapped annotation type.
+                     * @param dynamicValue The dynamic value instance used for resolving a binding.
+                     */
+                    protected Factory(Class<S> type, DynamicValue<S> dynamicValue) {
+                        this.type = type;
+                        this.dynamicValue = dynamicValue;
+                    }
+
+                    /**
+                     * Creates a new factory for mapping a user value.
+                     *
+                     * @param type         The mapped annotation type.
+                     * @param dynamicValue The dynamic value instance used for resolving a binding.
+                     * @return An appropriate factory for such a offset mapping.
+                     */
+                    @SuppressWarnings("unchecked")
+                    protected static OffsetMapping.Factory of(Class<? extends Annotation> type, DynamicValue<?> dynamicValue) {
+                        return new Factory(type, dynamicValue);
+                    }
+
+                    @Override
+                    public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                        AnnotationDescription.Loadable<S> annotation = parameterDescription.getDeclaredAnnotations().ofType(type);
+                        return annotation == null
+                                ? UNDEFINED
+                                : new ForUserValue<S>(parameterDescription, annotation, dynamicValue);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        Factory factory = (Factory) object;
+                        return type.equals(factory.type) && dynamicValue.equals(factory.dynamicValue);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = type.hashCode();
+                        result = 31 * result + dynamicValue.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForUserValue.Factory{" +
+                                "type=" + type +
+                                ", dynamicValue=" + dynamicValue +
+                                '}';
+                    }
+                }
+            }
+
+            /**
+             * Represents a factory that throws an exception for a given set of illegal parameter annotations.
+             */
+            class Illegal implements Factory {
+
+                /**
+                 * The set of illegal annotations.
+                 */
+                private final List<? extends Class<? extends Annotation>> annotations;
+
+                /**
+                 * Creates a new factory for restricting the use of illegal annotation types.
+                 *
+                 * @param annotation The set of illegal annotations.
+                 */
+                //@SafeVarargs
+                protected Illegal(Class<? extends Annotation>... annotation) {
+                    this(Arrays.asList(annotation));
+                }
+
+                /**
+                 * Creates a new factory for restricting the use of illegal annotation types.
+                 *
+                 * @param annotations The set of illegal annotations.
+                 */
+                protected Illegal(List<? extends Class<? extends Annotation>> annotations) {
+                    this.annotations = annotations;
+                }
+
+                @Override
+                public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
+                    for (Class<? extends Annotation> annotation : annotations) {
+                        if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
+                            throw new IllegalStateException("Illegal annotation " + annotation + " for " + parameterDescription);
+                        }
+                    }
+                    return UNDEFINED;
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    Illegal illegal = (Illegal) other;
+                    return annotations.equals(illegal.annotations);
+                }
+
+                @Override
+                public int hashCode() {
+                    return annotations.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.Illegal{" +
+                            "annotations=" + annotations +
+                            '}';
+                }
+            }
         }
 
         /**
@@ -1580,20 +3963,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         interface Resolved extends Dispatcher {
 
             /**
-             * Applies this dispatcher for a method that is discovered in the advice class's class file.
+             * Binds this dispatcher for resolution to a specific method.
              *
-             * @param internalName       The discovered method's internal name.
-             * @param descriptor         The discovered method's descriptor.
+             * @param instrumentedMethod The instrumented method.
              * @param methodVisitor      The method visitor for writing the instrumented method.
-             * @param metaDataHandler    A handler for translating meta data that is embedded into the instrumented method's byte code.
-             * @param instrumentedMethod A description of the instrumented method.
-             * @return A method visitor for reading the discovered method or {@code null} if the discovered method is of no interest.
+             * @param metaDataHandler    A meta data handler for writing to the instrumented method.
+             * @param classReader        A class reader for parsing the class file containing the represented advice method.
+             * @return A dispatcher that is bound to the instrumented method.
              */
-            MethodVisitor apply(String internalName,
-                                String descriptor,
-                                MethodVisitor methodVisitor,
-                                MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                MethodDescription.InDefinedShape instrumentedMethod);
+            Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
+                       MethodVisitor methodVisitor,
+                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                       ClassReader classReader);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -1624,9 +4005,25 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * A bound resolution of an advice method.
+         */
+        interface Bound {
+
+            /**
+             * Prepares the advice method's exception handlers.
+             */
+            void prepare();
+
+            /**
+             * Writes the advice method's code.
+             */
+            void apply();
+        }
+
+        /**
          * An implementation for inactive devise that does not write any byte code.
          */
-        enum Inactive implements Dispatcher.Unresolved, Resolved.ForMethodEnter, Resolved.ForMethodExit {
+        enum Inactive implements Dispatcher.Unresolved, Resolved.ForMethodEnter, Resolved.ForMethodExit, Bound {
 
             /**
              * The singleton instance.
@@ -1649,22 +4046,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Resolved.ForMethodEnter asMethodEnter() {
+            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories) {
                 return this;
             }
 
             @Override
-            public Resolved.ForMethodExit asMethodExitTo(Resolved.ForMethodEnter dispatcher) {
+            public Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories, ForMethodEnter dispatcher) {
                 return this;
             }
 
             @Override
-            public MethodVisitor apply(String internalName,
-                                       String descriptor,
-                                       MethodVisitor methodVisitor,
-                                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                       MethodDescription.InDefinedShape instrumentedMethod) {
-                return IGNORE_METHOD;
+            public void prepare() {
+                /* do nothing */
+            }
+
+            @Override
+            public void apply() {
+                /* do nothing */
+            }
+
+            @Override
+            public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
+                              MethodVisitor methodVisitor,
+                              MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                              ClassReader classReader) {
+                return this;
             }
 
             @Override
@@ -1698,13 +4104,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter() {
-                return new Resolved.ForMethodEnter(adviceMethod);
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories) {
+                return new Resolved.ForMethodEnter(adviceMethod, userFactories);
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(Dispatcher.Resolved.ForMethodEnter dispatcher) {
-                return Resolved.ForMethodExit.of(adviceMethod, dispatcher.getEnterType());
+            public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+                                                                    Dispatcher.Resolved.ForMethodEnter dispatcher) {
+                return Resolved.ForMethodExit.of(adviceMethod, userFactories, dispatcher.getEnterType());
             }
 
             @Override
@@ -1745,18 +4152,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected final Map<Integer, OffsetMapping> offsetMappings;
 
                 /**
+                 * The suppression handler to use.
+                 */
+                protected final CodeTranslationVisitor.SuppressionHandler suppressionHandler;
+
+                /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod The represented advice method.
-                 * @param factory      An unresolved mapping of offsets of the advice method based on the annotations discovered on each method parameter.
+                 * @param adviceMethod  The represented advice method.
+                 * @param factories     A list of factories to resolve for the parameters of the advice method.
+                 * @param throwableType The type to handle by a suppession handler or {@link NoSuppression} to not handle any exceptions.
                  */
-                protected Resolved(MethodDescription.InDefinedShape adviceMethod, OffsetMapping.Factory... factory) {
+                protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
                     offsetMappings = new HashMap<Integer, OffsetMapping>();
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
                         OffsetMapping offsetMapping = OffsetMapping.Factory.UNDEFINED;
-                        for (OffsetMapping.Factory aFactory : factory) {
-                            OffsetMapping possible = aFactory.make(parameterDescription);
+                        for (OffsetMapping.Factory factory : factories) {
+                            OffsetMapping possible = factory.make(parameterDescription);
                             if (possible != null) {
                                 if (offsetMapping == null) {
                                     offsetMapping = possible;
@@ -1769,6 +4182,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ? new OffsetMapping.ForParameter(parameterDescription.getIndex(), READ_ONLY, parameterDescription.getType().asErasure())
                                 : offsetMapping);
                     }
+                    suppressionHandler = throwableType.represents(NoSuppression.class)
+                            ? CodeTranslationVisitor.SuppressionHandler.NoOp.INSTANCE
+                            : new CodeTranslationVisitor.SuppressionHandler.Suppressing(throwableType);
                 }
 
                 @Override
@@ -1777,14 +4193,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public MethodVisitor apply(String internalName,
-                                           String descriptor,
-                                           MethodVisitor methodVisitor,
-                                           MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                           MethodDescription.InDefinedShape instrumentedMethod) {
-                    return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                            ? apply(methodVisitor, metaDataHandler, instrumentedMethod)
-                            : IGNORE_METHOD;
+                public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
+                                  MethodVisitor methodVisitor,
+                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                                  ClassReader classReader) {
+                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
                 }
 
                 /**
@@ -1815,1522 +4228,245 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 /**
-                 * Represents an offset mapping for an advice method to an alternative offset.
+                 * A bound advice method that copies the code by first extracting the exception table and later appending the
+                 * code of the method without copying any meta data.
                  */
-                interface OffsetMapping {
+                protected class CodeCopier extends ClassVisitor implements Bound {
 
                     /**
-                     * Resolves an offset mapping to a given target offset.
+                     * The instrumented method.
+                     */
+                    private final MethodDescription.InDefinedShape instrumentedMethod;
+
+                    /**
+                     * The method visitor for writing the instrumented method.
+                     */
+                    private final MethodVisitor methodVisitor;
+
+                    /**
+                     * A meta data handler for writing to the instrumented method.
+                     */
+                    private final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
+
+                    /**
+                     * A class reader for parsing the class file containing the represented advice method.
+                     */
+                    private final ClassReader classReader;
+
+                    /**
+                     * The labels that were found during parsing the method's exception handler in the order of their discovery.
+                     */
+                    private List<Label> labels;
+
+                    /**
+                     * Creates a new code copier.
                      *
-                     * @param instrumentedMethod The instrumented method for which the mapping is to be resolved.
-                     * @param context            The context in which the offset mapping is applied.
-                     * @return A suitable target mapping.
+                     * @param instrumentedMethod The instrumented method.
+                     * @param methodVisitor      The method visitor for writing the instrumented method.
+                     * @param metaDataHandler    A meta data handler for writing to the instrumented method.
+                     * @param classReader        A class reader for parsing the class file containing the represented advice method.
                      */
-                    Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context);
+                    protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
+                                         MethodVisitor methodVisitor,
+                                         MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                                         ClassReader classReader) {
+                        super(Opcodes.ASM5);
+                        this.instrumentedMethod = instrumentedMethod;
+                        this.methodVisitor = methodVisitor;
+                        this.metaDataHandler = metaDataHandler;
+                        this.classReader = classReader;
+                        labels = new ArrayList<Label>();
+                    }
 
-                    /**
-                     * A context for applying an {@link OffsetMapping}.
-                     */
-                    interface Context {
+                    @Override
+                    public void prepare() {
+                        classReader.accept(new ExceptionTableExtractor(), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+                        suppressionHandler.onPrepare(methodVisitor);
+                    }
 
-                        /**
-                         * Returns {@code true} if the advice is applied on a fully initialized instance, i.e. describes if the {@code this}
-                         * instance is available or still uninitialized during calling the advice.
-                         *
-                         * @return {@code true} if the advice is applied onto a fully initialized method.
-                         */
-                        boolean isInitialized();
+                    @Override
+                    public void apply() {
+                        classReader.accept(this, ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
+                    }
 
-                        /**
-                         * Returns the padding before writing additional values that this context applies.
-                         *
-                         * @return The required padding for this context.
-                         */
-                        int getPadding();
+                    @Override
+                    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+                        return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
+                                ? new ExceptionTabelSubstitutor(Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod))
+                                : IGNORE_METHOD;
+                    }
 
-                        /**
-                         * A context for an offset mapping describing a method entry.
-                         */
-                        enum ForMethodEntry implements Context {
-
-                            /**
-                             * Describes a context for a method entry that is not a constructor.
-                             */
-                            INITIALIZED(true),
-
-                            /**
-                             * Describes a context for a method entry that is a constructor.
-                             */
-                            NON_INITIALIZED(false);
-
-                            /**
-                             * Resolves an appropriate method entry context for the supplied instrumented method.
-                             *
-                             * @param instrumentedMethod The instrumented method.
-                             * @return An appropriate context.
-                             */
-                            protected static Context of(MethodDescription.InDefinedShape instrumentedMethod) {
-                                return instrumentedMethod.isConstructor()
-                                        ? NON_INITIALIZED
-                                        : INITIALIZED;
-                            }
-
-                            /**
-                             * {@code true} if the method is no constructor, i.e. is invoked for an initialized instance upon entry.
-                             */
-                            private final boolean initialized;
-
-                            /**
-                             * Creates a new context for a method entry.
-                             *
-                             * @param initialized {@code true} if the method is no constructor, i.e. is invoked for an initialized instance upon entry.
-                             */
-                            ForMethodEntry(boolean initialized) {
-                                this.initialized = initialized;
-                            }
-
-                            @Override
-                            public boolean isInitialized() {
-                                return initialized;
-                            }
-
-                            @Override
-                            public int getPadding() {
-                                return StackSize.ZERO.getSize();
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Context.ForMethodEntry." + name();
-                            }
-                        }
-
-                        /**
-                         * A context for an offset mapping describing a method exit.
-                         */
-                        enum ForMethodExit implements Context {
-
-                            /**
-                             * A method exit with a zero sized padding.
-                             */
-                            ZERO(StackSize.ZERO),
-
-                            /**
-                             * A method exit with a single slot padding.
-                             */
-                            SINGLE(StackSize.SINGLE),
-
-                            /**
-                             * A method exit with a double slot padding.
-                             */
-                            DOUBLE(StackSize.DOUBLE);
-
-                            /**
-                             * The padding implied by this method exit.
-                             */
-                            private final StackSize stackSize;
-
-                            /**
-                             * Creates a new context for a method exit.
-                             *
-                             * @param stackSize The padding implied by this method exit.
-                             */
-                            ForMethodExit(StackSize stackSize) {
-                                this.stackSize = stackSize;
-                            }
-
-                            /**
-                             * Resolves an appropriate method exit context for the supplied entry method type.
-                             *
-                             * @param typeDescription The type that is returned by the enter method.
-                             * @return An appropriate context for the supplied entry method type.
-                             */
-                            protected static Context of(TypeDescription typeDescription) {
-                                switch (typeDescription.getStackSize()) {
-                                    case ZERO:
-                                        return ZERO;
-                                    case SINGLE:
-                                        return SINGLE;
-                                    case DOUBLE:
-                                        return DOUBLE;
-                                    default:
-                                        throw new IllegalStateException("Unknown stack size: " + typeDescription);
-                                }
-                            }
-
-                            @Override
-                            public boolean isInitialized() {
-                                return true;
-                            }
-
-                            @Override
-                            public int getPadding() {
-                                return stackSize.getSize();
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Context.ForMethodExit." + name();
-                            }
-                        }
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.Active.Resolved.CodeCopier{" +
+                                "instrumentedMethod=" + instrumentedMethod +
+                                ", methodVisitor=" + methodVisitor +
+                                ", metaDataHandler=" + metaDataHandler +
+                                ", classReader=" + classReader +
+                                ", labels=" + labels +
+                                '}';
                     }
 
                     /**
-                     * A target offset of an offset mapping.
+                     * A class visitor that extracts the exception tables of the advice method.
                      */
-                    interface Target {
+                    protected class ExceptionTableExtractor extends ClassVisitor {
 
                         /**
-                         * Applies this offset mapping for a {@link MethodVisitor#visitVarInsn(int, int)} instruction.
-                         *
-                         * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
-                         * @param opcode        The opcode of the original instruction.
+                         * Creates a new exception table extractor.
                          */
-                        void resolveAccess(MethodVisitor methodVisitor, int opcode);
-
-                        /**
-                         * Applies this offset mapping for a {@link MethodVisitor#visitIincInsn(int, int)} instruction.
-                         *
-                         * @param methodVisitor The method visitor onto which this offset mapping is to be applied.
-                         * @param increment     The value with which to increment the targeted value.
-                         */
-                        void resolveIncrement(MethodVisitor methodVisitor, int increment);
-
-                        /**
-                         * Loads a default value onto the stack or pops the accessed value off it.
-                         */
-                        enum ForDefaultValue implements Target {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                                switch (opcode) {
-                                    case Opcodes.ALOAD:
-                                        methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                                        break;
-                                    case Opcodes.ILOAD:
-                                        methodVisitor.visitInsn(Opcodes.ICONST_0);
-                                        break;
-                                    case Opcodes.LLOAD:
-                                        methodVisitor.visitInsn(Opcodes.LCONST_0);
-                                        break;
-                                    case Opcodes.FLOAD:
-                                        methodVisitor.visitInsn(Opcodes.FCONST_0);
-                                        break;
-                                    case Opcodes.DLOAD:
-                                        methodVisitor.visitInsn(Opcodes.DCONST_0);
-                                        break;
-                                    case Opcodes.ISTORE:
-                                    case Opcodes.FSTORE:
-                                    case Opcodes.ASTORE:
-                                        methodVisitor.visitInsn(Opcodes.POP);
-                                        break;
-                                    case Opcodes.LSTORE:
-                                    case Opcodes.DSTORE:
-                                        methodVisitor.visitInsn(Opcodes.POP2);
-                                        break;
-                                    default:
-                                        throw new IllegalStateException("Unexpected opcode: " + opcode);
-                                }
-                            }
-
-                            @Override
-                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                                /* do nothing */
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForDefaultValue." + name();
-                            }
-                        }
-
-                        /**
-                         * A read-write target mapping.
-                         */
-                        class ForParameter implements Target {
-
-                            /**
-                             * The mapped offset.
-                             */
-                            private final int offset;
-
-                            /**
-                             * Creates a new read-write target mapping.
-                             *
-                             * @param offset The mapped offset.
-                             */
-                            protected ForParameter(int offset) {
-                                this.offset = offset;
-                            }
-
-                            @Override
-                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                                methodVisitor.visitVarInsn(opcode, offset);
-                            }
-
-                            @Override
-                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                                methodVisitor.visitIincInsn(offset, increment);
-                            }
-
-                            @Override
-                            public boolean equals(Object object) {
-                                if (this == object) return true;
-                                if (object == null || getClass() != object.getClass()) return false;
-                                ForParameter forParameter = (ForParameter) object;
-                                return offset == forParameter.offset;
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                return offset;
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForParameter{" +
-                                        "offset=" + offset +
-                                        '}';
-                            }
-                        }
-
-                        /**
-                         * A read-only target mapping.
-                         */
-                        class ForReadOnlyParameter implements Target {
-
-                            /**
-                             * The mapped offset.
-                             */
-                            private final int offset;
-
-                            /**
-                             * Creates a new read-only target mapping.
-                             *
-                             * @param offset The mapped offset.
-                             */
-                            protected ForReadOnlyParameter(int offset) {
-                                this.offset = offset;
-                            }
-
-                            @Override
-                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                                switch (opcode) {
-                                    case Opcodes.ISTORE:
-                                    case Opcodes.LSTORE:
-                                    case Opcodes.FSTORE:
-                                    case Opcodes.DSTORE:
-                                    case Opcodes.ASTORE:
-                                        throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
-                                    case Opcodes.ILOAD:
-                                    case Opcodes.LLOAD:
-                                    case Opcodes.FLOAD:
-                                    case Opcodes.DLOAD:
-                                    case Opcodes.ALOAD:
-                                        methodVisitor.visitVarInsn(opcode, offset);
-                                        break;
-                                    default:
-                                        throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                                }
-                            }
-
-                            @Override
-                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                                throw new IllegalStateException("Cannot write to read-only parameter at offset " + offset);
-                            }
-
-                            @Override
-                            public boolean equals(Object object) {
-                                if (this == object) return true;
-                                if (object == null || getClass() != object.getClass()) return false;
-                                ForReadOnlyParameter forReadOnlyParameter = (ForReadOnlyParameter) object;
-                                return offset == forReadOnlyParameter.offset;
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                return offset;
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter{" +
-                                        "offset=" + offset +
-                                        '}';
-                            }
-                        }
-
-                        /**
-                         * An offset mapping for a field.
-                         */
-                        class ForField implements Target {
-
-                            /**
-                             * The field being read.
-                             */
-                            private final FieldDescription fieldDescription;
-
-                            /**
-                             * Creates a new offset mapping for a field.
-                             *
-                             * @param fieldDescription The field being read.
-                             */
-                            protected ForField(FieldDescription fieldDescription) {
-                                this.fieldDescription = fieldDescription;
-                            }
-
-                            @Override
-                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                                switch (opcode) {
-                                    case Opcodes.ISTORE:
-                                    case Opcodes.ASTORE:
-                                    case Opcodes.FSTORE:
-                                    case Opcodes.LSTORE:
-                                    case Opcodes.DSTORE:
-                                        throw new IllegalStateException("Cannot write to field: " + fieldDescription);
-                                    case Opcodes.ILOAD:
-                                    case Opcodes.FLOAD:
-                                    case Opcodes.ALOAD:
-                                    case Opcodes.LLOAD:
-                                    case Opcodes.DLOAD:
-                                        int accessOpcode;
-                                        if (fieldDescription.isStatic()) {
-                                            accessOpcode = Opcodes.GETSTATIC;
-                                        } else {
-                                            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                            accessOpcode = Opcodes.GETFIELD;
-                                        }
-                                        methodVisitor.visitFieldInsn(accessOpcode,
-                                                fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                                fieldDescription.getInternalName(),
-                                                fieldDescription.getDescriptor());
-                                        break;
-                                    default:
-                                        throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                                }
-                            }
-
-                            @Override
-                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                                throw new IllegalStateException("Cannot write to field: " + fieldDescription);
-                            }
-
-                            @Override
-                            public boolean equals(Object object) {
-                                if (this == object) return true;
-                                if (object == null || getClass() != object.getClass()) return false;
-                                ForField forField = (ForField) object;
-                                return fieldDescription.equals(forField.fieldDescription);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                return fieldDescription.hashCode();
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField{" +
-                                        "fieldDescription=" + fieldDescription +
-                                        '}';
-                            }
-                        }
-
-                        /**
-                         * An offset mapping for a constant pool value.
-                         */
-                        class ForConstantPoolValue implements Target {
-
-                            /**
-                             * The constant pool value.
-                             */
-                            private final Object value;
-
-                            /**
-                             * Creates a mapping for a constant pool value.
-                             *
-                             * @param value The constant pool value.
-                             */
-                            protected ForConstantPoolValue(Object value) {
-                                this.value = value;
-                            }
-
-                            @Override
-                            public void resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                                switch (opcode) {
-                                    case Opcodes.ISTORE:
-                                    case Opcodes.ASTORE:
-                                    case Opcodes.FSTORE:
-                                    case Opcodes.LSTORE:
-                                    case Opcodes.DSTORE:
-                                        throw new IllegalStateException("Cannot write to fixed value: " + value);
-                                    case Opcodes.ILOAD:
-                                    case Opcodes.FLOAD:
-                                    case Opcodes.ALOAD:
-                                    case Opcodes.LLOAD:
-                                    case Opcodes.DLOAD:
-                                        methodVisitor.visitLdcInsn(value);
-                                        break;
-                                    default:
-                                        throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                                }
-                            }
-
-                            @Override
-                            public void resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                                throw new IllegalStateException("Cannot write to fixed value: " + value);
-                            }
-
-                            @Override
-                            public boolean equals(Object object) {
-                                if (this == object) return true;
-                                if (object == null || getClass() != object.getClass()) return false;
-                                ForConstantPoolValue that = (ForConstantPoolValue) object;
-                                return value.equals(that.value);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                return value.hashCode();
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForConstantPoolValue{" +
-                                        "value=" + value +
-                                        '}';
-                            }
-                        }
-                    }
-
-                    /**
-                     * Represents a factory for creating a {@link OffsetMapping} for a given parameter.
-                     */
-                    interface Factory {
-
-                        /**
-                         * Indicates that an offset mapping is undefined.
-                         */
-                        OffsetMapping UNDEFINED = null;
-
-                        /**
-                         * Creates a new offset mapping for the supplied parameter if possible.
-                         *
-                         * @param parameterDescription The parameter description for which to resolve an offset mapping.
-                         * @return A resolved offset mapping or {@code null} if no mapping can be resolved for this parameter.
-                         */
-                        OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription);
-                    }
-
-                    /**
-                     * An offset mapping for a given parameter of the instrumented method.
-                     */
-                    class ForParameter implements OffsetMapping {
-
-                        /**
-                         * The index of the parameter.
-                         */
-                        private final int index;
-
-                        /**
-                         * Determines if the parameter is to be treated as read-only.
-                         */
-                        private final boolean readOnly;
-
-                        /**
-                         * The type expected by the advice method.
-                         */
-                        private final TypeDescription targetType;
-
-                        /**
-                         * Creates a new offset mapping for a parameter.
-                         *
-                         * @param argument   The annotation for which the mapping is to be created.
-                         * @param targetType Determines if the parameter is to be treated as read-only.
-                         */
-                        protected ForParameter(Argument argument, TypeDescription targetType) {
-                            this(argument.value(), argument.readOnly(), targetType);
-                        }
-
-                        /**
-                         * Creates a new offset mapping for a parameter of the instrumented method.
-                         *
-                         * @param index      The index of the parameter.
-                         * @param readOnly   Determines if the parameter is to be treated as read-only.
-                         * @param targetType The type expected by the advice method.
-                         */
-                        protected ForParameter(int index, boolean readOnly, TypeDescription targetType) {
-                            this.index = index;
-                            this.readOnly = readOnly;
-                            this.targetType = targetType;
+                        protected ExceptionTableExtractor() {
+                            super(Opcodes.ASM5);
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            ParameterList<?> parameters = instrumentedMethod.getParameters();
-                            if (parameters.size() <= index) {
-                                throw new IllegalStateException(instrumentedMethod + " does not define an index " + index);
-                            } else if (!readOnly && !parameters.get(index).getType().asErasure().equals(targetType)) {
-                                throw new IllegalStateException("read-only " + targetType + " is not equal to type of " + parameters.get(index));
-                            } else if (readOnly && !parameters.get(index).getType().asErasure().isAssignableTo(targetType)) {
-                                throw new IllegalStateException(targetType + " is not assignable to " + parameters.get(index));
-                            }
-                            return readOnly
-                                    ? new Target.ForReadOnlyParameter(parameters.get(index).getOffset())
-                                    : new Target.ForParameter(parameters.get(index).getOffset());
-                        }
-
-                        @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            ForParameter that = (ForParameter) object;
-                            return index == that.index
-                                    && readOnly == that.readOnly
-                                    && targetType.equals(that.targetType);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = index;
-                            result = 31 * result + (readOnly ? 1 : 0);
-                            result = 31 * result + targetType.hashCode();
-                            return result;
+                        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
+                            return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
+                                    ? new ExceptionTableCollector(methodVisitor)
+                                    : IGNORE_METHOD;
                         }
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter{" +
-                                    "index=" + index +
-                                    ", readOnly=" + readOnly +
-                                    ", targetType=" + targetType +
+                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableExtractor{" +
+                                    "methodVisitor=" + methodVisitor +
                                     '}';
                         }
-
-                        /**
-                         * A factory for creating a {@link ForParameter} offset mapping.
-                         */
-                        protected enum Factory implements OffsetMapping.Factory {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                                AnnotationDescription.Loadable<Argument> annotation = parameterDescription.getDeclaredAnnotations().ofType(Argument.class);
-                                return annotation == null
-                                        ? UNDEFINED
-                                        : new ForParameter(annotation.loadSilent(), parameterDescription.getType().asErasure());
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.Factory." + name();
-                            }
-                        }
                     }
 
                     /**
-                     * An offset mapping that provides access to the {@code this} reference of the instrumented method.
+                     * A visitor that only writes try-catch-finally blocks to the supplied method visitor. All labels of these tables are collected
+                     * for substitution when revisiting the reminder of the method.
                      */
-                    class ForThisReference implements OffsetMapping {
+                    protected class ExceptionTableCollector extends MethodVisitor {
 
                         /**
-                         * The offset of the this reference in a Java method.
+                         * The method visitor for which the try-catch-finally blocks should be written.
                          */
-                        private static final int THIS_REFERENCE = 0;
+                        private final MethodVisitor methodVisitor;
 
                         /**
-                         * Determines if the parameter is to be treated as read-only.
-                         */
-                        private final boolean readOnly;
-
-                        /**
-                         * The type that the advice method expects for the {@code this} reference.
-                         */
-                        private final TypeDescription targetType;
-
-                        /**
-                         * Creates a new offset mapping for a {@code this} reference.
+                         * Creates a new exception table collector.
                          *
-                         * @param readOnly   Determines if the parameter is to be treated as read-only.
-                         * @param targetType The type that the advice method expects for the {@code this} reference.
+                         * @param methodVisitor The method visitor for which the try-catch-finally blocks should be written.
                          */
-                        protected ForThisReference(boolean readOnly, TypeDescription targetType) {
-                            this.readOnly = readOnly;
-                            this.targetType = targetType;
+                        protected ExceptionTableCollector(MethodVisitor methodVisitor) {
+                            super(Opcodes.ASM5);
+                            this.methodVisitor = methodVisitor;
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            if (instrumentedMethod.isStatic()) {
-                                throw new IllegalStateException("Cannot map this reference for static method " + instrumentedMethod);
-                            } else if (!readOnly && !instrumentedMethod.getDeclaringType().equals(targetType)) {
-                                throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not equal to read-only " + targetType);
-                            } else if (readOnly && !instrumentedMethod.getDeclaringType().isAssignableTo(targetType)) {
-                                throw new IllegalStateException("Declaring type of " + instrumentedMethod + " is not assignable to " + targetType);
-                            } else if (!context.isInitialized()) {
-                                throw new IllegalStateException("Cannot access this reference before calling constructor: " + instrumentedMethod);
-                            }
-                            return readOnly
-                                    ? new Target.ForReadOnlyParameter(THIS_REFERENCE)
-                                    : new Target.ForParameter(THIS_REFERENCE);
+                        public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+                            methodVisitor.visitTryCatchBlock(start, end, handler, type);
+                            labels.addAll(Arrays.asList(start, end, handler));
                         }
 
                         @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            ForThisReference that = (ForThisReference) object;
-                            return readOnly == that.readOnly
-                                    && targetType.equals(that.targetType);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = (readOnly ? 1 : 0);
-                            result = 31 * result + targetType.hashCode();
-                            return result;
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
+                            return methodVisitor.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
                         }
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference{" +
-                                    "readOnly=" + readOnly +
-                                    ", targetType=" + targetType +
+                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableCollector{" +
+                                    "methodVisitor=" + methodVisitor +
                                     '}';
                         }
-
-                        /**
-                         * A factory for creating a {@link ForThisReference} offset mapping.
-                         */
-                        protected enum Factory implements OffsetMapping.Factory {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                                AnnotationDescription.Loadable<This> annotation = parameterDescription.getDeclaredAnnotations().ofType(This.class);
-                                return annotation == null
-                                        ? UNDEFINED
-                                        : new ForThisReference(annotation.loadSilent().readOnly(), parameterDescription.getType().asErasure());
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.Factory." + name();
-                            }
-                        }
                     }
 
                     /**
-                     * An offset mapping for a field.
+                     * A label substitutor allows to visit an advice method a second time after the exception handlers were already written.
+                     * Doing so, this visitor substitutes all labels that were already created during the first visit to keep the mapping
+                     * consistent.
                      */
-                    abstract class ForField implements OffsetMapping {
+                    protected class ExceptionTabelSubstitutor extends MethodVisitor {
 
                         /**
-                         * The name of the field.
+                         * A map containing resolved substitutions.
                          */
-                        protected final String name;
+                        private final Map<Label, Label> substitutions;
 
                         /**
-                         * The expected type that the field can be assigned to.
+                         * The current index of the visited labels that are used for try-catch-finally blocks.
                          */
-                        protected final TypeDescription targetType;
+                        private int index;
 
                         /**
-                         * Creates an offset mapping for a field.
+                         * Creates a label substitor.
                          *
-                         * @param name       The name of the field.
-                         * @param targetType The expected type that the field can be assigned to.
+                         * @param methodVisitor The method visitor for which to substitute labels.
                          */
-                        protected ForField(String name, TypeDescription targetType) {
-                            this.name = name;
-                            this.targetType = targetType;
+                        protected ExceptionTabelSubstitutor(MethodVisitor methodVisitor) {
+                            super(Opcodes.ASM5, methodVisitor);
+                            substitutions = new IdentityHashMap<Label, Label>();
                         }
 
                         @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            ForField forField = (ForField) object;
-                            return name.equals(forField.name) && targetType.equals(forField.targetType);
+                        public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
+                            substitutions.put(start, labels.get(index++));
+                            substitutions.put(end, labels.get(index++));
+                            substitutions.put(handler, labels.get(index++));
                         }
 
                         @Override
-                        public int hashCode() {
-                            int result = name.hashCode();
-                            result = 31 * result + targetType.hashCode();
-                            return result;
+                        public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
+                            return IGNORE_ANNOTATION;
                         }
 
                         @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            FieldLocator.Resolution resolution = fieldLocator(instrumentedMethod.getDeclaringType()).locate(name);
-                            if (!resolution.isResolved()) {
-                                throw new IllegalStateException("Cannot locate field named " + name + " for " + instrumentedMethod);
-                            } else if (!resolution.getField().getType().asErasure().isAssignableTo(targetType)) {
-                                throw new IllegalStateException("Cannot assign type of field " + resolution.getField() + " to " + targetType);
-                            } else if (!resolution.getField().isStatic() && instrumentedMethod.isStatic()) {
-                                throw new IllegalStateException("Cannot read non-static field " + resolution.getField() + " from static method " + instrumentedMethod);
-                            } else if (!context.isInitialized() && !resolution.getField().isStatic()) {
-                                throw new IllegalStateException("Cannot access non-static field before calling constructor: " + instrumentedMethod);
-                            }
-                            return new Target.ForField(resolution.getField());
+                        public void visitLabel(Label label) {
+                            super.visitLabel(resolve(label));
+                        }
+
+                        @Override
+                        public void visitJumpInsn(int opcode, Label label) {
+                            super.visitJumpInsn(opcode, resolve(label));
+                        }
+
+                        @Override
+                        public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
+                            super.visitTableSwitchInsn(min, max, dflt, resolve(labels));
+                        }
+
+                        @Override
+                        public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
+                            super.visitLookupSwitchInsn(resolve(dflt), keys, resolve(labels));
                         }
 
                         /**
-                         * Returns a field locator for this instance.
+                         * Resolves an array of labels.
                          *
-                         * @param instrumentedType The instrumented type.
-                         * @return An appropriate field locator.
+                         * @param label The labels to resolved.
+                         * @return An array containing the resolved arrays.
                          */
-                        protected abstract FieldLocator fieldLocator(TypeDescription instrumentedType);
-
-                        /**
-                         * An offset mapping for a field with an implicit declaring type.
-                         */
-                        protected static class WithImplicitType extends ForField {
-
-                            /**
-                             * Creates an offset mapping for a field with an implicit declaring type.
-                             *
-                             * @param name       The name of the field.
-                             * @param targetType The expected type that the field can be assigned to.
-                             */
-                            protected WithImplicitType(String name, TypeDescription targetType) {
-                                super(name, targetType);
+                        private Label[] resolve(Label[] label) {
+                            Label[] resolved = new Label[label.length];
+                            int index = 0;
+                            for (Label aLabel : label) {
+                                resolved[index++] = resolve(aLabel);
                             }
-
-                            @Override
-                            protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
-                                return new FieldLocator.ForClassHierarchy(instrumentedType);
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithImplicitType{" +
-                                        "name=" + name +
-                                        ", targetType=" + targetType +
-                                        '}';
-                            }
+                            return resolved;
                         }
 
                         /**
-                         * An offset mapping for a field with an explicit declaring type.
-                         */
-                        protected static class WithExplicitType extends ForField {
-
-                            /**
-                             * The type declaring the field.
-                             */
-                            private final TypeDescription explicitType;
-
-                            /**
-                             * Creates an offset mapping for a field with an explicit declaring type.
-                             *
-                             * @param name        The name of the field.
-                             * @param targetType  The expected type that the field can be assigned to.
-                             * @param locatedType The type declaring the field.
-                             */
-                            protected WithExplicitType(String name, TypeDescription targetType, TypeDescription locatedType) {
-                                super(name, targetType);
-                                this.explicitType = locatedType;
-                            }
-
-                            @Override
-                            protected FieldLocator fieldLocator(TypeDescription instrumentedType) {
-                                if (!instrumentedType.isAssignableTo(explicitType)) {
-                                    throw new IllegalStateException(explicitType + " is no super type of " + instrumentedType);
-                                }
-                                return new FieldLocator.ForExactType(explicitType);
-                            }
-
-                            @Override
-                            public boolean equals(Object object) {
-                                if (this == object) return true;
-                                if (object == null || getClass() != object.getClass()) return false;
-                                if (!super.equals(object)) return false;
-                                WithExplicitType that = (WithExplicitType) object;
-                                return explicitType.equals(that.explicitType);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                int result = super.hashCode();
-                                result = 31 * result + explicitType.hashCode();
-                                return result;
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithExplicitType{" +
-                                        "name=" + name +
-                                        ", targetType=" + targetType +
-                                        ", explicitType=" + explicitType +
-                                        '}';
-                            }
-                        }
-
-                        /**
-                         * A factory for a {@link ForField} offset mapping.
-                         */
-                        protected enum Factory implements OffsetMapping.Factory {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            /**
-                             * Creates a new factory for a {@link ForField} offset mapping.
-                             */
-                            Factory() {
-                                MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
-                                value = methods.filter(named("value")).getOnly();
-                                definingType = methods.filter(named("declaringType")).getOnly();
-                            }
-
-                            /**
-                             * The {@link FieldValue#value()} method.
-                             */
-                            private final MethodDescription.InDefinedShape value;
-
-                            /**
-                             * The {@link FieldValue#declaringType()}} method.
-                             */
-                            private final MethodDescription.InDefinedShape definingType;
-
-                            @Override
-                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                                AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(FieldValue.class);
-                                if (annotation == null) {
-                                    return UNDEFINED;
-                                } else {
-                                    TypeDescription definingType = annotation.getValue(this.definingType, TypeDescription.class);
-                                    String name = annotation.getValue(value, String.class);
-                                    TypeDescription targetType = parameterDescription.getType().asErasure();
-                                    return definingType.represents(void.class)
-                                            ? new WithImplicitType(name, targetType)
-                                            : new WithExplicitType(name, targetType, definingType);
-                                }
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.Factory." + name();
-                            }
-                        }
-                    }
-
-                    /**
-                     * An offset mapping for the {@link Advice.Origin} annotation.
-                     */
-                    class ForOrigin implements OffsetMapping {
-
-                        /**
-                         * The delimiter character.
-                         */
-                        private static final char DELIMITER = '#';
-
-                        /**
-                         * The escape character.
-                         */
-                        private static final char ESCAPE = '\\';
-
-                        /**
-                         * The method name symbol.
-                         */
-                        private static final char METHOD_NAME = 'm';
-
-                        /**
-                         * The type name symbol.
-                         */
-                        private static final char TYPE_NAME = 't';
-
-                        /**
-                         * The descriptor symbol.
-                         */
-                        private static final char DESCRIPTOR = 'd';
-
-                        /**
-                         * The renderers to apply.
-                         */
-                        private final List<Renderer> renderers;
-
-                        /**
-                         * Creates a new offset mapping for an origin value.
+                         * Resolves a single label if mapped or returns the original label.
                          *
-                         * @param renderers The renderers to apply.
+                         * @param label The label to resolve.
+                         * @return The resolved label.
                          */
-                        protected ForOrigin(List<Renderer> renderers) {
-                            this.renderers = renderers;
-                        }
-
-                        /**
-                         * Parses a pattern of an origin annotation.
-                         *
-                         * @param pattern The supplied pattern.
-                         * @return An appropriate offset mapping.
-                         */
-                        protected static OffsetMapping parse(String pattern) {
-                            if (pattern.equals(Origin.DEFAULT)) {
-                                return new ForOrigin(Collections.<Renderer>singletonList(Renderer.ForStringRepresentation.INSTANCE));
-                            } else {
-                                List<Renderer> renderers = new ArrayList<Renderer>(pattern.length());
-                                int from = 0;
-                                for (int to = pattern.indexOf(DELIMITER); to != -1; to = pattern.indexOf(DELIMITER, from)) {
-                                    if (to != 0 && pattern.charAt(to - 1) == ESCAPE && (to == 1 || pattern.charAt(to - 2) != ESCAPE)) {
-                                        renderers.add(new Renderer.ForConstantValue(pattern.substring(from, Math.max(0, to - 1)) + DELIMITER));
-                                        from = to + 1;
-                                        continue;
-                                    } else if (pattern.length() == to + 1) {
-                                        throw new IllegalStateException("Missing sort descriptor for " + pattern + " at index " + to);
-                                    }
-                                    renderers.add(new Renderer.ForConstantValue(pattern.substring(from, to).replace("" + ESCAPE + ESCAPE, "" + ESCAPE)));
-                                    switch (pattern.charAt(to + 1)) {
-                                        case METHOD_NAME:
-                                            renderers.add(Renderer.ForMethodName.INSTANCE);
-                                            break;
-                                        case TYPE_NAME:
-                                            renderers.add(Renderer.ForTypeName.INSTANCE);
-                                            break;
-                                        case DESCRIPTOR:
-                                            renderers.add(Renderer.ForDescriptor.INSTANCE);
-                                            break;
-                                        default:
-                                            throw new IllegalStateException("Illegal sort descriptor " + pattern.charAt(to + 1) + " for " + pattern);
-                                    }
-                                    from = to + 2;
-                                }
-                                renderers.add(new Renderer.ForConstantValue(pattern.substring(from)));
-                                return new ForOrigin(renderers);
-                            }
-                        }
-
-                        @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            StringBuilder stringBuilder = new StringBuilder();
-                            for (Renderer renderer : renderers) {
-                                stringBuilder.append(renderer.apply(instrumentedMethod));
-                            }
-                            return new Target.ForConstantPoolValue(stringBuilder.toString());
-                        }
-
-                        @Override
-                        public boolean equals(Object object) {
-                            if (this == object) return true;
-                            if (object == null || getClass() != object.getClass()) return false;
-                            ForOrigin forOrigin = (ForOrigin) object;
-                            return renderers.equals(forOrigin.renderers);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return renderers.hashCode();
+                        private Label resolve(Label label) {
+                            Label substitution = substitutions.get(label);
+                            return substitution == null
+                                    ? label
+                                    : substitution;
                         }
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin{" +
-                                    "renderers=" + renderers +
-                                    '}';
-                        }
-
-                        /**
-                         * A renderer for an origin pattern element.
-                         */
-                        protected interface Renderer {
-
-                            /**
-                             * Returns a string representation for this renderer.
-                             *
-                             * @param instrumentedMethod The method being rendered.
-                             * @return The string representation.
-                             */
-                            String apply(MethodDescription.InDefinedShape instrumentedMethod);
-
-                            /**
-                             * A renderer for a method's internal name.
-                             */
-                            enum ForMethodName implements Renderer {
-
-                                /**
-                                 * The singleton instance.
-                                 */
-                                INSTANCE;
-
-                                @Override
-                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
-                                    return instrumentedMethod.getInternalName();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForMethodName." + name();
-                                }
-                            }
-
-                            /**
-                             * A renderer for a method declaring type's binary name.
-                             */
-                            enum ForTypeName implements Renderer {
-
-                                /**
-                                 * The singleton instance.
-                                 */
-                                INSTANCE;
-
-                                @Override
-                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
-                                    return instrumentedMethod.getDeclaringType().getName();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForTypeName." + name();
-                                }
-                            }
-
-                            /**
-                             * A renderer for a method descriptor.
-                             */
-                            enum ForDescriptor implements Renderer {
-
-                                /**
-                                 * The singleton instance.
-                                 */
-                                INSTANCE;
-
-                                @Override
-                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
-                                    return instrumentedMethod.getDescriptor();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForDescriptor." + name();
-                                }
-                            }
-
-                            /**
-                             * A renderer for a method's {@link Object#toString()} representation.
-                             */
-                            enum ForStringRepresentation implements Renderer {
-
-                                /**
-                                 * The singleton instance.
-                                 */
-                                INSTANCE;
-
-                                @Override
-                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
-                                    return instrumentedMethod.toString();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation." + name();
-                                }
-                            }
-
-                            /**
-                             * A renderer for a constant value.
-                             */
-                            class ForConstantValue implements Renderer {
-
-                                /**
-                                 * The constant value.
-                                 */
-                                private final String value;
-
-                                /**
-                                 * Creates a new renderer for a constant value.
-                                 *
-                                 * @param value The constant value.
-                                 */
-                                protected ForConstantValue(String value) {
-                                    this.value = value;
-                                }
-
-                                @Override
-                                public String apply(MethodDescription.InDefinedShape instrumentedMethod) {
-                                    return value;
-                                }
-
-                                @Override
-                                public boolean equals(Object object) {
-                                    if (this == object) return true;
-                                    if (object == null || getClass() != object.getClass()) return false;
-                                    ForConstantValue that = (ForConstantValue) object;
-                                    return value.equals(that.value);
-                                }
-
-                                @Override
-                                public int hashCode() {
-                                    return value.hashCode();
-                                }
-
-                                @Override
-                                public String toString() {
-                                    return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForConstantValue{" +
-                                            "value='" + value + '\'' +
-                                            '}';
-                                }
-                            }
-                        }
-
-                        /**
-                         * A factory for a method origin.
-                         */
-                        protected enum Factory implements OffsetMapping.Factory {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                                AnnotationDescription.Loadable<Origin> origin = parameterDescription.getDeclaredAnnotations().ofType(Origin.class);
-                                if (origin == null) {
-                                    return UNDEFINED;
-                                } else {
-                                    if (!parameterDescription.getType().asErasure().isAssignableFrom(String.class)) {
-                                        throw new IllegalStateException("Non-String type " + parameterDescription + " for origin annotation");
-                                    }
-                                    return ForOrigin.parse(origin.loadSilent().value());
-                                }
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Factory." + name();
-                            }
-                        }
-                    }
-
-                    /**
-                     * An offset mapping for a parameter where assignments are fully ignored and that always return the parameter type's default value.
-                     */
-                    enum ForIgnored implements OffsetMapping, Factory {
-
-                        /**
-                         * The singleton instance.
-                         */
-                        INSTANCE;
-
-                        @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            return Target.ForDefaultValue.INSTANCE;
-                        }
-
-                        @Override
-                        public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                            return parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Ignored.class)
-                                    ? this
-                                    : UNDEFINED;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForIgnored." + name();
-                        }
-                    }
-
-                    /**
-                     * An offset mapping that provides access to the value that is returned by the enter advice.
-                     */
-                    enum ForEnterValue implements OffsetMapping {
-
-                        /**
-                         * Enables writing to the mapped offset.
-                         */
-                        WRITABLE(false),
-
-                        /**
-                         * Only allows for reading the mapped offset.
-                         */
-                        READ_ONLY(true);
-
-                        /**
-                         * Determines if the parameter is to be treated as read-only.
-                         */
-                        private final boolean readOnly;
-
-                        /**
-                         * Creates a new offset mapping for an enter value.
-                         *
-                         * @param readOnly Determines if the parameter is to be treated as read-only.
-                         */
-                        ForEnterValue(boolean readOnly) {
-                            this.readOnly = readOnly;
-                        }
-
-                        /**
-                         * Resolves an offset mapping for an enter value.
-                         *
-                         * @param readOnly {@code true} if the value is to be treated as read-only.
-                         * @return An appropriate offset mapping.
-                         */
-                        public static OffsetMapping of(boolean readOnly) {
-                            return readOnly
-                                    ? READ_ONLY
-                                    : WRITABLE;
-                        }
-
-                        @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            return readOnly
-                                    ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize())
-                                    : new Target.ForParameter(instrumentedMethod.getStackSize());
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForEnterValue." + name();
-                        }
-
-                        /**
-                         * A factory for creating a {@link ForEnterValue} offset mapping.
-                         */
-                        protected static class Factory implements OffsetMapping.Factory {
-
-                            /**
-                             * The supplied type of the enter method.
-                             */
-                            private final TypeDescription enterType;
-
-                            /**
-                             * Creates a new factory for creating a {@link ForEnterValue} offset mapping.
-                             *
-                             * @param enterType The supplied type of the enter method.
-                             */
-                            protected Factory(TypeDescription enterType) {
-                                this.enterType = enterType;
-                            }
-
-                            @Override
-                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                                AnnotationDescription.Loadable<Enter> annotation = parameterDescription.getDeclaredAnnotations().ofType(Enter.class);
-                                if (annotation != null) {
-                                    boolean readOnly = annotation.loadSilent().readOnly();
-                                    if (!readOnly && !enterType.equals(parameterDescription.getType().asErasure())) {
-                                        throw new IllegalStateException("read-only type of " + parameterDescription + " does not equal " + enterType);
-                                    } else if (readOnly && !enterType.isAssignableTo(parameterDescription.getType().asErasure())) {
-                                        throw new IllegalStateException("Cannot assign the type of " + parameterDescription + " to supplied type " + enterType);
-                                    }
-                                    return ForEnterValue.of(readOnly);
-                                } else {
-                                    return UNDEFINED;
-                                }
-                            }
-
-                            @Override
-                            public boolean equals(Object other) {
-                                return this == other || !(other == null || getClass() != other.getClass())
-                                        && enterType.equals(((Factory) other).enterType);
-                            }
-
-                            @Override
-                            public int hashCode() {
-                                return enterType.hashCode();
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForEnterValue.Factory{" +
-                                        "enterType=" + enterType +
-                                        '}';
-                            }
-                        }
-                    }
-
-                    /**
-                     * An offset mapping that provides access to the value that is returned by the instrumented method.
-                     */
-                    class ForReturnValue implements OffsetMapping {
-
-                        /**
-                         * Determines if the parameter is to be treated as read-only.
-                         */
-                        private final boolean readOnly;
-
-                        /**
-                         * The type that the advice method expects for the {@code this} reference.
-                         */
-                        private final TypeDescription targetType;
-
-                        /**
-                         * Creates an offset mapping for accessing the return type of the instrumented method.
-                         *
-                         * @param readOnly   Determines if the parameter is to be treated as read-only.
-                         * @param targetType The expected target type of the return type.
-                         */
-                        protected ForReturnValue(boolean readOnly, TypeDescription targetType) {
-                            this.readOnly = readOnly;
-                            this.targetType = targetType;
-                        }
-
-                        @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            if (!readOnly && !instrumentedMethod.getReturnType().asErasure().equals(targetType)) {
-                                throw new IllegalStateException("read-only return type of " + instrumentedMethod + " is not equal to " + targetType);
-                            } else if (readOnly && !instrumentedMethod.getReturnType().asErasure().isAssignableTo(targetType)) {
-                                throw new IllegalStateException("Cannot assign return type of " + instrumentedMethod + " to " + targetType);
-                            }
-                            return readOnly
-                                    ? new Target.ForReadOnlyParameter(instrumentedMethod.getStackSize() + context.getPadding())
-                                    : new Target.ForParameter(instrumentedMethod.getStackSize() + context.getPadding());
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            ForReturnValue that = (ForReturnValue) other;
-                            return readOnly == that.readOnly && targetType.equals(that.targetType);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return (readOnly ? 1 : 0) + 31 * targetType.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue{" +
-                                    "readOnly=" + readOnly +
-                                    ", targetType=" + targetType +
-                                    '}';
-                        }
-
-                        /**
-                         * A factory for creating a {@link ForReturnValue} offset mapping.
-                         */
-                        protected enum Factory implements OffsetMapping.Factory {
-
-                            /**
-                             * The singleton instance.
-                             */
-                            INSTANCE;
-
-                            @Override
-                            public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                                AnnotationDescription.Loadable<Return> annotation = parameterDescription.getDeclaredAnnotations().ofType(Return.class);
-                                return annotation == null
-                                        ? UNDEFINED
-                                        : new ForReturnValue(annotation.loadSilent().readOnly(), parameterDescription.getType().asErasure());
-                            }
-
-                            @Override
-                            public String toString() {
-                                return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.Factory." + name();
-                            }
-                        }
-                    }
-
-                    /**
-                     * An offset mapping for accessing a {@link Throwable} of the instrumented method.
-                     */
-                    enum ForThrowable implements OffsetMapping, Factory {
-
-                        /**
-                         * The singleton instance.
-                         */
-                        INSTANCE;
-
-                        @Override
-                        public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                            if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(Thrown.class)) {
-                                if (!parameterDescription.getType().represents(Throwable.class)) {
-                                    throw new IllegalStateException("Parameter must be of type Throwable for " + parameterDescription);
-                                }
-                                return this;
-                            } else {
-                                return UNDEFINED;
-                            }
-                        }
-
-                        @Override
-                        public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
-                            return new Target.ForParameter(instrumentedMethod.getStackSize()
-                                    + context.getPadding()
-                                    + instrumentedMethod.getReturnType().getStackSize().getSize());
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThrowable." + name();
-                        }
-                    }
-
-                    /**
-                     * Represents a factory that throws an exception for a given set of illegal parameter annotations.
-                     */
-                    class Illegal implements Factory {
-
-                        /**
-                         * The set of illegal annotations.
-                         */
-                        private final List<? extends Class<? extends Annotation>> annotations;
-
-                        /**
-                         * Creates a new factory for restricting the use of illegal annotation types.
-                         *
-                         * @param annotation The set of illegal annotations.
-                         */
-                        //@SafeVarargs
-                        protected Illegal(Class<? extends Annotation>... annotation) {
-                            this(Arrays.asList(annotation));
-                        }
-
-                        /**
-                         * Creates a new factory for restricting the use of illegal annotation types.
-                         *
-                         * @param annotations The set of illegal annotations.
-                         */
-                        protected Illegal(List<? extends Class<? extends Annotation>> annotations) {
-                            this.annotations = annotations;
-                        }
-
-                        @Override
-                        public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
-                            for (Class<? extends Annotation> annotation : annotations) {
-                                if (parameterDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
-                                    throw new IllegalStateException("Illegal annotation " + annotation + " for " + parameterDescription);
-                                }
-                            }
-                            return UNDEFINED;
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            Illegal illegal = (Illegal) other;
-                            return annotations.equals(illegal.annotations);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            return annotations.hashCode();
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.OffsetMapping.Illegal{" +
-                                    "annotations=" + annotations +
+                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTabelSubstitutor{" +
+                                    "methodVisitor=" + methodVisitor +
+                                    ", substitutions=" + substitutions +
+                                    ", index=" + index +
                                     '}';
                         }
                     }
@@ -3356,17 +4492,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
-                     * @param adviceMethod The represented advice method.
+                     * @param adviceMethod  The represented advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
-                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod) {
+                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory> userFactories) {
                         super(adviceMethod,
-                                OffsetMapping.ForParameter.Factory.INSTANCE,
-                                OffsetMapping.ForThisReference.Factory.INSTANCE,
-                                OffsetMapping.ForField.Factory.INSTANCE,
-                                OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                OffsetMapping.ForIgnored.INSTANCE,
-                                new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class));
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.INSTANCE,
+                                        OffsetMapping.ForBoxedArguments.INSTANCE,
+                                        OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                        OffsetMapping.ForField.Factory.INSTANCE,
+                                        OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForIgnored.INSTANCE,
+                                        new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS, TypeDescription.class));
                     }
 
                     @Override
@@ -3387,7 +4526,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS, TypeDescription.class));
+                                suppressionHandler);
                     }
 
                     @Override
@@ -3424,38 +4563,47 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
-                     * @param adviceMethod The represented advice method.
-                     * @param enterType    The type of the value supplied by the enter advice method or
-                     *                     a description of {@code void} if no such value exists.
+                     * @param adviceMethod  The represented advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param enterType     The type of the value supplied by the enter advice method or
+                     *                      a description of {@code void} if no such value exists.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
-                    protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod, TypeDescription enterType) {
+                    protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
+                                            List<? extends OffsetMapping.Factory> userFactories,
+                                            TypeDescription enterType) {
                         super(adviceMethod,
-                                OffsetMapping.ForParameter.Factory.INSTANCE,
-                                OffsetMapping.ForThisReference.Factory.INSTANCE,
-                                OffsetMapping.ForField.Factory.INSTANCE,
-                                OffsetMapping.ForOrigin.Factory.INSTANCE,
-                                OffsetMapping.ForIgnored.INSTANCE,
-                                new OffsetMapping.ForEnterValue.Factory(enterType),
-                                OffsetMapping.ForReturnValue.Factory.INSTANCE,
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
-                                        ? OffsetMapping.ForThrowable.INSTANCE
-                                        : new OffsetMapping.Illegal(Thrown.class));
+                                CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.INSTANCE,
+                                        OffsetMapping.ForBoxedArguments.INSTANCE,
+                                        OffsetMapping.ForThisReference.Factory.INSTANCE,
+                                        OffsetMapping.ForField.Factory.INSTANCE,
+                                        OffsetMapping.ForOrigin.Factory.INSTANCE,
+                                        OffsetMapping.ForIgnored.INSTANCE,
+                                        new OffsetMapping.ForEnterValue.Factory(enterType),
+                                        OffsetMapping.ForReturnValue.Factory.INSTANCE,
+                                        OffsetMapping.ForBoxedReturnValue.INSTANCE,
+                                        adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
+                                                ? OffsetMapping.ForThrowable.INSTANCE
+                                                : new OffsetMapping.Illegal(Thrown.class)), userFactories),
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class));
                         this.enterType = enterType;
                     }
 
                     /**
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
-                     * @param adviceMethod The advice method.
-                     * @param enterType    The type of the value supplied by the enter advice method or
-                     *                     a description of {@code void} if no such value exists.
+                     * @param adviceMethod  The advice method.
+                     * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param enterType     The type of the value supplied by the enter advice method or
+                     *                      a description of {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
-                    protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod, TypeDescription enterType) {
+                    protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
+                                                               List<? extends OffsetMapping.Factory> userFactories,
+                                                               TypeDescription enterType) {
                         return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
-                                ? new WithExceptionHandler(adviceMethod, enterType)
-                                : new WithoutExceptionHandler(adviceMethod, enterType);
+                                ? new WithExceptionHandler(adviceMethod, userFactories, enterType)
+                                : new WithoutExceptionHandler(adviceMethod, userFactories, enterType);
                     }
 
                     @Override
@@ -3471,8 +4619,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class),
-                                enterType.getStackSize().getSize() + getAdditionalPadding().getSize());
+                                suppressionHandler,
+                                enterType.getStackSize().getSize() + getPadding().getSize());
                     }
 
                     /**
@@ -3480,7 +4628,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @return The additional padding this exit advice implies.
                      */
-                    protected abstract StackSize getAdditionalPadding();
+                    protected abstract StackSize getPadding();
 
                     @Override
                     public boolean equals(Object other) {
@@ -3504,16 +4652,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
-                         * @param adviceMethod The represented advice method.
-                         * @param enterType    The type of the value supplied by the enter advice method or
-                         *                     a description of {@code void} if no such value exists.
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param enterType     The type of the value supplied by the enter advice method or
+                         *                      a description of {@code void} if no such value exists.
                          */
-                        protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod, TypeDescription enterType) {
-                            super(adviceMethod, enterType);
+                        protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
+                                                       List<? extends OffsetMapping.Factory> userFactories,
+                                                       TypeDescription enterType) {
+                            super(adviceMethod, userFactories, enterType);
                         }
 
                         @Override
-                        protected StackSize getAdditionalPadding() {
+                        protected StackSize getPadding() {
                             return StackSize.SINGLE;
                         }
 
@@ -3539,15 +4690,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
-                         * @param adviceMethod The represented advice method.
-                         * @param enterType    The type of the value supplied by the enter advice method or a description of {@code void} if no such value exists.
+                         * @param adviceMethod  The represented advice method.
+                         * @param userFactories A list of user-defined factories for offset mappings.
+                         * @param enterType     The type of the value supplied by the enter advice method or
+                         *                      a description of {@code void} if no such value exists.
                          */
-                        protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod, TypeDescription enterType) {
-                            super(adviceMethod, enterType);
+                        protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
+                                                          List<? extends OffsetMapping.Factory> userFactories,
+                                                          TypeDescription enterType) {
+                            super(adviceMethod, userFactories, enterType);
                         }
 
                         @Override
-                        protected StackSize getAdditionalPadding() {
+                        protected StackSize getPadding() {
                             return StackSize.SINGLE;
                         }
 
@@ -3573,7 +4728,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             interface ReturnValueProducer {
 
                 /**
-                 * Sets a default return value for an adviced method.
+                 * Sets a default return value for an advised method.
                  *
                  * @param methodVisitor The instrumented method's method visitor.
                  */
@@ -3584,11 +4739,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * A visitor for translating an advice method's byte code for inlining into the instrumented method.
              */
             protected abstract static class CodeTranslationVisitor extends MethodVisitor implements ReturnValueProducer {
-
-                /**
-                 * Indicates that an annotation should not be read.
-                 */
-                private static final AnnotationVisitor IGNORE_ANNOTATION = null;
 
                 /**
                  * A handler for translating meta data found in the byte code.
@@ -3628,22 +4778,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param instrumentedMethod The instrumented method.
                  * @param adviceMethod       The advice method.
                  * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                 * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
+                 * @param suppressionHandler The suppression handler to use.
                  */
                 protected CodeTranslationVisitor(MethodVisitor methodVisitor,
                                                  MetaDataHandler.ForAdvice metaDataHandler,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodDescription.InDefinedShape adviceMethod,
                                                  Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                                 TypeDescription throwableType) {
+                                                 SuppressionHandler suppressionHandler) {
                     super(Opcodes.ASM5, methodVisitor);
                     this.metaDataHandler = metaDataHandler;
                     this.instrumentedMethod = instrumentedMethod;
                     this.adviceMethod = adviceMethod;
                     this.offsetMappings = offsetMappings;
-                    suppressionHandler = throwableType.represents(NoSuppression.class)
-                            ? SuppressionHandler.NoOp.INSTANCE
-                            : new SuppressionHandler.Suppressing(throwableType);
+                    this.suppressionHandler = suppressionHandler;
                     endOfMethod = new Label();
                 }
 
@@ -3688,11 +4836,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                public void visitLineNumber(int line, Label start) {
-                    /* do nothing */
-                }
-
-                @Override
                 public void visitEnd() {
                     suppressionHandler.onEnd(mv, metaDataHandler, this);
                     mv.visitLabel(endOfMethod);
@@ -3708,7 +4851,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitVarInsn(int opcode, int offset) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        target.resolveAccess(mv, opcode);
+                        metaDataHandler.recordPadding(target.resolveAccess(mv, opcode));
                     } else {
                         mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()));
                     }
@@ -3718,7 +4861,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public void visitIincInsn(int offset, int increment) {
                     Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
                     if (target != null) {
-                        target.resolveIncrement(mv, increment);
+                        metaDataHandler.recordPadding(target.resolveIncrement(mv, increment));
                     } else {
                         mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()), increment);
                     }
@@ -3742,6 +4885,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected interface SuppressionHandler {
 
                     /**
+                     * Invoked to prepare the suppression handler, i.e. to write an exception handler entry if appropriate.
+                     *
+                     * @param methodVisitor The method visitor to apply the preparation to.
+                     */
+                    void onPrepare(MethodVisitor methodVisitor);
+
+                    /**
                      * Invoked at the start of a method.
                      *
                      * @param methodVisitor   The method visitor of the instrumented method.
@@ -3754,7 +4904,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      *
                      * @param methodVisitor       The method visitor of the instrumented method.
                      * @param metaDataHandler     The meta data handler to use for translating meta data.
-                     * @param returnValueProducer A producer for defining a default return value of the adviced method.
+                     * @param returnValueProducer A producer for defining a default return value of the advised method.
                      */
                     void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
 
@@ -3767,6 +4917,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          * The singleton instance.
                          */
                         INSTANCE;
+
+                        @Override
+                        public void onPrepare(MethodVisitor methodVisitor) {
+                            /* do nothing */
+                        }
 
                         @Override
                         public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
@@ -3816,8 +4971,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
+                        public void onPrepare(MethodVisitor methodVisitor) {
                             methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
+                        }
+
+                        @Override
+                        public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
                             methodVisitor.visitLabel(startOfMethod);
                         }
 
@@ -3868,15 +5027,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
                      * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
+                     * @param suppressionHandler The suppression handler to use.
                      */
                     protected ForMethodEnter(MethodVisitor methodVisitor,
                                              MetaDataHandler.ForAdvice metaDataHandler,
                                              MethodDescription.InDefinedShape instrumentedMethod,
                                              MethodDescription.InDefinedShape adviceMethod,
                                              Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                             TypeDescription throwableType) {
-                        super(methodVisitor, metaDataHandler, instrumentedMethod, adviceMethod, offsetMappings, throwableType);
+                                             SuppressionHandler suppressionHandler) {
+                        super(methodVisitor, metaDataHandler, instrumentedMethod, adviceMethod, offsetMappings, suppressionHandler);
                     }
 
                     @Override
@@ -3962,7 +5121,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param instrumentedMethod The instrumented method.
                      * @param adviceMethod       The advice method.
                      * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param throwableType      A throwable type to be suppressed or {@link NoSuppression} if no suppression should be applied.
+                     * @param suppressionHandler The suppression handler to use.
                      * @param padding            The padding after the instrumented method's arguments in the local variable array.
                      */
                     protected ForMethodExit(MethodVisitor methodVisitor,
@@ -3970,14 +5129,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                             MethodDescription.InDefinedShape instrumentedMethod,
                                             MethodDescription.InDefinedShape adviceMethod,
                                             Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                            TypeDescription throwableType,
+                                            SuppressionHandler suppressionHandler,
                                             int padding) {
                         super(methodVisitor,
                                 metaDataHandler,
                                 instrumentedMethod,
                                 adviceMethod,
                                 offsetMappings,
-                                throwableType);
+                                suppressionHandler);
                         this.padding = padding;
                     }
 
@@ -4140,8 +5299,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         /**
          * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
-         * type must be equal to the parameter of the instrumented method. If this property is set to {@code true}, the
-         * annotated parameter can be any super type of the instrumented methods parameter.
+         * type must be equal to the type declaring the instrumented method. If this property is set to {@code true}, the
+         * annotated parameter can be any super type of the instrumented method's declaring type.
          *
          * @return {@code true} if this parameter is read-only.
          */
@@ -4149,11 +5308,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
-     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method. All
-     * field references are always <i>read-only</i>.
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a field in the scope of the instrumented method.
+     * </p>
      * <p>
      * <b>Important</b>: Parameters with this option must not be used when from a constructor in combination with
      * {@link OnMethodEnter} and a non-static field where the {@code this} reference is not available.
+     * </p>
+     * <p>
+     * <b>Note</b>: As the mapping is virtual, Byte Buddy might be required to reserve more space on the operand stack than the
+     * optimal value when accessing this parameter. This does not normally matter as the additional space requirement is minimal.
+     * However, if the runtime performance of class creation is secondary, one can require ASM to recompute the optimal frames by
+     * setting {@link ClassWriter#COMPUTE_MAXS}. This is however only relevant when writing to a non-static field.
      * </p>
      *
      * @see Advice
@@ -4179,10 +5345,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The type that declares the field or {@code void} if this type should be determined implicitly.
          */
         Class<?> declaringType() default void.class;
+
+        /**
+         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, the annotated
+         * type must be equal to the mapped field type. If this property is set to {@code true}, the  annotated parameter
+         * can be any super type of the field type.
+         *
+         * @return {@code true} if this parameter is read-only.
+         */
+        boolean readOnly() default true;
     }
 
     /**
-     * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method.
+     * Indicates that the annotated parameter should be mapped to a string representation of the instrumented method or
+     * to a constant representing the {@link Class} declaring the method.
      *
      * @see Advice
      * @see OnMethodEnter
@@ -4271,6 +5447,65 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     }
 
     /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to a the return value where primitive types are boxed. For this
+     * to be possible, the annotated parameter must be of type {@link Object}.
+     * </p>
+     * <p>
+     * Note that accessing this parameter is merely virtual. A new array is created on every access. As a result, changes to the
+     * array have no effect other than for the local copy and when accessing the array twice, the equality relation does not hold.
+     * For example, for {@code @Advoce.BoxedReturn Object foo}, the relation {@code foo == foo} does not necessarily hold for primitive
+     * types. For avoiding additional allocations, the array needs to be stored in a separate local variable. The variable itself is
+     * always read only.
+     * </p>
+     * <p>
+     * <b>Note</b>: As the mapping is virtual, Byte Buddy might be required to reserve more space on the operand stack than the
+     * optimal value when accessing this parameter. This does not normally matter as the additional space requirement is minimal.
+     * However, if the runtime performance of class creation is secondary, one can require ASM to recompute the optimal frames by
+     * setting {@link ClassWriter#COMPUTE_MAXS}.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface BoxedReturn {
+        /* boxed */
+    }
+
+    /**
+     * <p>
+     * Indicates that the annotated parameter should be mapped to an array containing a (boxed) version of all arguments of the
+     * method being instrumented. It is required that the annotated parameter is an array of type {@link Object}.
+     * </p>
+     * <p>
+     * Note that accessing this parameter is merely virtual. A new array is created on every access. As a result, changes to the
+     * array have no effect other than for the local copy and when accessing the array twice, the equality relation does not hold.
+     * For example, for {@code @Advoce.BoxedArguments Object[] foo}, the relation {@code foo == foo} does not hold. For avoiding
+     * new allocations, the array needs to be stored in a separate local variable. The variable itself is always read only.
+     * </p>
+     * <p>
+     * <b>Note</b>: As the mapping is virtual, Byte Buddy might be required to reserve more space on the operand stack than the
+     * optimal value when accessing this parameter. This does not normally matter as the additional space requirement is minimal.
+     * However, if the runtime performance of class creation is secondary, one can require ASM to recompute the optimal frames by
+     * setting {@link ClassWriter#COMPUTE_MAXS}.
+     * </p>
+     *
+     * @see Advice
+     * @see OnMethodEnter
+     * @see OnMethodExit
+     */
+    @Documented
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.PARAMETER)
+    public @interface BoxedArguments {
+        /* boxed */
+    }
+
+    /**
      * Indicates that the annotated parameter should be mapped to the return value of the instrumented method. For this to be valid,
      * the parameter must be of type {@link Throwable}. If the instrumented method terminates regularly, {@code null} is assigned to
      * the annotated parameter.
@@ -4283,6 +5518,192 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.PARAMETER)
     public @interface Thrown {
         /* empty */
+    }
+
+    /**
+     * <p>
+     * A dynamic value allows to bind parameters of an {@link Advice} method to a custom, constant value.
+     * </p>
+     * <p>The mapped value must be a constant value that can be embedded into a Java class file. This holds for all primitive types,
+     * instances of {@link String} and for {@link Class} instances as well as their unloaded {@link TypeDescription} representations.
+     * </p>
+     *
+     * @param <T> The type of the annotation this dynamic value requires to provide a mapping.
+     * @see WithCustomMapping
+     */
+    public interface DynamicValue<T extends Annotation> {
+
+        /**
+         * Resolves a constant value that is mapped to a parameter that is annotated with a custom bound annotation.
+         *
+         * @param instrumentedMethod The instrumented method onto which this advice is applied.
+         * @param target             The target parameter that is bound.
+         * @param annotation         The annotation that triggered this binding.
+         * @param initialized        {@code true} if the method is initialized when the value is bound, i.e. that the value is not
+         *                           supplied to a constructor before the super constructor was invoked.
+         * @return The constant pool value that is bound to the supplied parameter or {@code null} to assign this value.
+         */
+        Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                       ParameterDescription.InDefinedShape target,
+                       AnnotationDescription.Loadable<T> annotation,
+                       boolean initialized);
+
+        /**
+         * <p>
+         * A {@link DynamicValue} implementation that always binds a fixed value.
+         * </p>
+         * <p>
+         * The mapped value must be a constant value that can be embedded into a Java class file. This holds for all primitive types,
+         * instances of {@link String} and for {@link Class} instances as well as their unloaded {@link TypeDescription} representations.
+         * </p>
+         */
+        class ForFixedValue implements DynamicValue<Annotation> {
+
+            /**
+             * The fixed value to bind to the corresponding annotation.
+             */
+            private final Object value;
+
+            /**
+             * Creates a dynamic value for a fixed value.
+             *
+             * @param value The fixed value to bind to the corresponding annotation.
+             */
+            public ForFixedValue(Object value) {
+                this.value = value;
+            }
+
+            @Override
+            public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                  ParameterDescription.InDefinedShape target,
+                                  AnnotationDescription.Loadable<Annotation> annotation,
+                                  boolean initialized) {
+                return value;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForFixedValue that = (ForFixedValue) object;
+                return value != null ? value.equals(that.value) : that.value == null;
+            }
+
+            @Override
+            public int hashCode() {
+                return value != null ? value.hashCode() : 0;
+            }
+
+            @Override
+            public String toString() {
+                return "Advice.DynamicValue.ForFixedValue{" +
+                        "value=" + value +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * A builder step for creating an {@link Advice} that uses custom mappings of annotations to constant pool values.
+     */
+    public static class WithCustomMapping {
+
+        /**
+         * A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
+         */
+        private final Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues;
+
+        /**
+         * Creates a new custom mapping builder step without including any custom mappings.
+         */
+        protected WithCustomMapping() {
+            this(Collections.<Class<? extends Annotation>, DynamicValue<?>>emptyMap());
+        }
+
+        /**
+         * Creates a new custom mapping builder step with the given custom mappings.
+         *
+         * @param dynamicValues A map containing dynamically computed constant pool values that are mapped by their triggering annotation type.
+         */
+        protected WithCustomMapping(Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues) {
+            this.dynamicValues = dynamicValues;
+        }
+
+        /**
+         * Binds an annotation type to dynamically computed value. Whenever the {@link Advice} component discovers the given annotation on
+         * a parameter of an advice method, the dynamic value is asked to provide a value that is then assigned to the parameter in question.
+         *
+         * @param type         The annotation type that triggers the mapping.
+         * @param dynamicValue The dynamic value that is computed for binding the parameter to a value.
+         * @param <T>          The annotation type.
+         * @return A new builder for an advice that considers the supplied annotation type during binding.
+         */
+        public <T extends Annotation> WithCustomMapping bind(Class<? extends T> type, DynamicValue<T> dynamicValue) {
+            Map<Class<? extends Annotation>, DynamicValue<?>> dynamicValues = new HashMap<Class<? extends Annotation>, Advice.DynamicValue<?>>(this.dynamicValues);
+            if (!type.isAnnotation()) {
+                throw new IllegalArgumentException("Not an annotation type: " + type);
+            } else if (dynamicValues.put(type, dynamicValue) != null) {
+                throw new IllegalArgumentException("Annotation-type already mapped: " + type);
+            }
+            return new WithCustomMapping(dynamicValues);
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods. The advices binary representation is
+         * accessed by querying the class loader of the supplied class for a class file.
+         *
+         * @param type The type declaring the advice.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(Class<?> type) {
+            return to(type, ClassFileLocator.ForClassLoader.of(type.getClassLoader()));
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods.
+         *
+         * @param type             The type declaring the advice.
+         * @param classFileLocator The class file locator for locating the advisory class's class file.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(Class<?> type, ClassFileLocator classFileLocator) {
+            return to(new TypeDescription.ForLoadedType(type), classFileLocator);
+        }
+
+        /**
+         * Implements advice where every matched method is advised by the given type's advisory methods.
+         *
+         * @param typeDescription  A description of the type declaring the advice.
+         * @param classFileLocator The class file locator for locating the advisory class's class file.
+         * @return A method visitor wrapper representing the supplied advice.
+         */
+        public Advice to(TypeDescription typeDescription, ClassFileLocator classFileLocator) {
+            List<Dispatcher.OffsetMapping.Factory> userFactories = new ArrayList<Dispatcher.OffsetMapping.Factory>(dynamicValues.size());
+            for (Map.Entry<Class<? extends Annotation>, DynamicValue<?>> entry : dynamicValues.entrySet()) {
+                userFactories.add(Dispatcher.OffsetMapping.ForUserValue.Factory.of(entry.getKey(), entry.getValue()));
+            }
+            return Advice.to(typeDescription, classFileLocator, userFactories);
+        }
+
+        @Override
+        public boolean equals(Object object) {
+            if (this == object) return true;
+            if (object == null || getClass() != object.getClass()) return false;
+            WithCustomMapping that = (WithCustomMapping) object;
+            return dynamicValues.equals(that.dynamicValues);
+        }
+
+        @Override
+        public int hashCode() {
+            return dynamicValues.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return "Advice.WithCustomMapping{" +
+                    "dynamicValues=" + dynamicValues +
+                    '}';
+        }
     }
 
     /**

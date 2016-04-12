@@ -397,7 +397,7 @@ public abstract class AbstractDynamicTypeBuilderForInliningTest extends Abstract
         Class<?> type = create(StackMapFrames.class)
                 .visit(asmVisitorWrapper)
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
         verify(asmVisitorWrapper).mergeWriter(0);

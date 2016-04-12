@@ -32,6 +32,11 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
 public interface AnnotationDescription {
 
     /**
+     * Indicates an inexistent annotation in a type-safe manner.
+     */
+    AnnotationDescription.Loadable<?> UNDEFINED = null;
+
+    /**
      * Returns the value of the given method for this annotation value. Note that all return values are wrapped as
      * described by {@link AnnotationDescription}.
      *

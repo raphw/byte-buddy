@@ -38,9 +38,17 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
      *
      * @param annotationType The type to be found in the list.
      * @param <T>            The annotation type.
-     * @return The annotation value or {@code null} if no such annotation was found.
+     * @return The annotation description or {@code null} if no such annotation was found.
      */
     <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType);
+
+    /**
+     * Finds the first annotation of the given type and returns it.
+     *
+     * @param annotationType The type to be found in the list.
+     * @return The annotation description or {@code null} if no such annotation was found.
+     */
+    AnnotationDescription ofType(TypeDescription annotationType);
 
     /**
      * Returns only annotations that are marked as {@link java.lang.annotation.Inherited} as long as they are not
@@ -92,13 +100,24 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
             for (AnnotationDescription annotation : this) {
                 if (annotation.getAnnotationType().represents(annotationType)) {
                     return annotation.prepare(annotationType);
                 }
             }
-            return null;
+            return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
+        }
+
+        @Override
+        public AnnotationDescription ofType(TypeDescription annotationType) {
+            for (AnnotationDescription annotation : this) {
+                if (annotation.getAnnotationType().equals(annotationType)) {
+                    return annotation;
+                }
+            }
+            return AnnotationDescription.UNDEFINED;
         }
 
         @Override
@@ -274,8 +293,14 @@ public interface AnnotationList extends FilterableList<AnnotationDescription, An
         }
 
         @Override
+        @SuppressWarnings("unchecked")
         public <T extends Annotation> AnnotationDescription.Loadable<T> ofType(Class<T> annotationType) {
-            return null;
+            return (AnnotationDescription.Loadable<T>) AnnotationDescription.UNDEFINED;
+        }
+
+        @Override
+        public AnnotationDescription ofType(TypeDescription annotationType) {
+            return AnnotationDescription.UNDEFINED;
         }
 
         @Override

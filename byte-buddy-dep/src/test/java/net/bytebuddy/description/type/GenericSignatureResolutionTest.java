@@ -24,7 +24,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(GenericType.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(GenericType.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -37,7 +37,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(GenericField.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         FieldDescription createdField = new FieldDescription.ForLoadedField(type.getDeclaredField(FOO));
         FieldDescription originalField = new FieldDescription.ForLoadedField(GenericField.class.getDeclaredField(FOO));
         assertThat(createdField.getType(), is(originalField.getType()));
@@ -50,7 +50,7 @@ public class GenericSignatureResolutionTest {
                 .method(named(FOO))
                 .intercept(FixedValue.nullValue())
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         MethodDescription createdMethod = new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(FOO, Exception.class));
         MethodDescription originalMethod = new MethodDescription.ForLoadedMethod(GenericMethod.class.getDeclaredMethod(FOO, Exception.class));
         assertThat(createdMethod.getTypeVariables(), is(originalMethod.getTypeVariables()));
@@ -66,7 +66,7 @@ public class GenericSignatureResolutionTest {
                 .method(named(BAR))
                 .intercept(FixedValue.nullValue())
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         MethodDescription createdMethod = new MethodDescription.ForLoadedMethod(type.getDeclaredMethod(BAR, Object.class));
         MethodDescription originalMethod = new MethodDescription.ForLoadedMethod(GenericMethod.class.getDeclaredMethod(BAR, Object.class));
         assertThat(createdMethod.getTypeVariables(), is(originalMethod.getTypeVariables()));
@@ -85,7 +85,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableClassBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -98,7 +98,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableInterfaceBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -111,7 +111,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableClassAndInterfaceBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableClassAndInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -124,7 +124,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableWildcardNoBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardNoBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -137,7 +137,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableWildcardUpperClassBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -150,7 +150,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableWildcardUpperInterfaceBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardUpperInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -163,7 +163,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableWildcardLowerClassBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerClassBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -176,7 +176,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(TypeVariableWildcardLowerInterfaceBound.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(TypeVariableWildcardLowerInterfaceBound.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));
@@ -189,7 +189,7 @@ public class GenericSignatureResolutionTest {
         DynamicType.Unloaded<?> unloaded = new ByteBuddy()
                 .redefine(InterfaceType.class)
                 .make();
-        Class<?> type = unloaded.load(null, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
+        Class<?> type = unloaded.load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER).getLoaded();
         TypeDescription createdType = new TypeDescription.ForLoadedType(type);
         TypeDescription originalType = new TypeDescription.ForLoadedType(InterfaceType.class);
         assertThat(createdType.getTypeVariables(), is(originalType.getTypeVariables()));

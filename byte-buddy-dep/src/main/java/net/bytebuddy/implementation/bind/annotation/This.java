@@ -69,13 +69,10 @@ public @interface This {
             } else if (source.isStatic() && !annotation.loadSilent().optional()) {
                 return MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
             }
-            StackManipulation assignment = source.isStatic()
+            return new MethodDelegationBinder.ParameterBinding.Anonymous(source.isStatic()
                     ? NullConstant.INSTANCE
                     : new StackManipulation.Compound(MethodVariableAccess.REFERENCE.loadOffset(THIS_REFERENCE_INDEX),
-                    assigner.assign(implementationTarget.getInstrumentedType().asGenericType(), target.getType(), RuntimeType.Verifier.check(target)));
-            return assignment.isValid()
-                    ? new MethodDelegationBinder.ParameterBinding.Anonymous(assignment)
-                    : MethodDelegationBinder.ParameterBinding.Illegal.INSTANCE;
+                    assigner.assign(implementationTarget.getInstrumentedType().asGenericType(), target.getType(), RuntimeType.Verifier.check(target))));
         }
 
         @Override

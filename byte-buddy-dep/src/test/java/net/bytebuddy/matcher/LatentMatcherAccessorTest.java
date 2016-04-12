@@ -12,7 +12,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.verifyZeroInteractions;
 
-public class LatentMatcherResolvedTest {
+public class LatentMatcherAccessorTest {
 
     @Rule
     public TestRule mockitoRule = new MockitoRule(this);

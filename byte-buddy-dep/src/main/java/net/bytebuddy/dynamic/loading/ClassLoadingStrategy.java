@@ -15,6 +15,11 @@ import java.util.Map;
 public interface ClassLoadingStrategy {
 
     /**
+     * A type-safe constant representing the bootstrap class loader which is represented by {@code null} within Java.
+     */
+    ClassLoader BOOTSTRAP_LOADER = null;
+
+    /**
      * Loads a given collection of classes given their binary representation.
      *
      * @param classLoader The class loader to used for loading the classes.

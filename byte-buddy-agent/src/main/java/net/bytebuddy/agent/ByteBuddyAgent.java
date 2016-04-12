@@ -4,6 +4,7 @@ import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.lang.instrument.Instrumentation;
 import java.lang.management.ManagementFactory;
@@ -14,13 +15,14 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
+import java.security.PrivilegedActionException;
+import java.security.PrivilegedExceptionAction;
 import java.util.Arrays;
 import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.JarEntry;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
-import java.util.logging.Logger;
 
 /**
  * <p>
@@ -95,16 +97,6 @@ public class ByteBuddyAgent {
     private static final String WITHOUT_ARGUMENTS = "";
 
     /**
-     * The default prefix of the Byte Buddy agent jar file.
-     */
-    private static final String AGENT_FILE_NAME = "byteBuddyAgent";
-
-    /**
-     * The jar file extension.
-     */
-    private static final String JAR_FILE_EXTENSION = ".jar";
-
-    /**
      * The class file extension.
      */
     private static final String CLASS_FILE_EXTENSION = ".class";
@@ -143,125 +135,6 @@ public class ByteBuddyAgent {
 
     /**
      * <p>
-     * Installs an agent on the currently running Java virtual machine. Unfortunately, this does
-     * not always work. The runtime installation of a Java agent is supported for:
-     * </p>
-     * <ul>
-     * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was merged
-     * into a Jigsaw module and the runtime installation is always possible.</li>
-     * <li><b>OpenJDK / Oracle JDK / IBM J9 versions 8-</b>: The installation for HotSpot is only
-     * possible when bundled with a JDK up until Java version 8. It is not possible for runtime-only
-     * installations of HotSpot or J9 for these versions.</li>
-     * </ul>
-     * <p>
-     * If an agent cannot be installed, a {@link IllegalStateException} is thrown.
-     * </p>
-     * <p>
-     * <b>Important</b>: This is a rather computation-heavy operation. Therefore, this operation is
-     * not repeated after an agent was successfully installed for the first time. Instead, the previous
-     * instrumentation instance is returned. However, invoking this method requires synchronization
-     * such that subsequently to an installation, {@link ByteBuddyAgent#getInstrumentation()} should
-     * be invoked instead.
-     * </p>
-     *
-     * @return An instrumentation instance representing the currently running JVM.
-     */
-    public static Instrumentation install() {
-        return install(AttachmentProvider.DEFAULT);
-    }
-
-    /**
-     * Installs a Java agent using the Java attach API. This API is available under different
-     * access routes for different JVMs and JVM versions or it might not be available at all.
-     * If a Java agent cannot be installed by using the supplied attachment provider, a
-     * {@link IllegalStateException} is thrown.
-     *
-     * @param attachmentProvider The attachment provider to use for the installation.
-     * @return An instrumentation instance representing the currently running JVM.
-     */
-    public static synchronized Instrumentation install(AttachmentProvider attachmentProvider) {
-        Instrumentation instrumentation = doGetInstrumentation();
-        if (instrumentation != null) {
-            return instrumentation;
-        }
-        AttachmentProvider.Accessor accessor = attachmentProvider.attempt();
-        if (accessor.isAvailable()) {
-            try {
-                doInstall(accessor);
-            } catch (Exception exception) {
-                throw new IllegalStateException("Error during attachment using: " + attachmentProvider, exception);
-            }
-            return getInstrumentation();
-        } else {
-            throw new IllegalStateException("This JVM does not support attachment using: " + attachmentProvider);
-        }
-    }
-
-    /**
-     * Performs the actual installation of the Byte Buddy agent.
-     *
-     * @param accessor An available accessor for accessing the Java attachment API.
-     * @throws Exception If the installation is not possible.
-     */
-    private static void doInstall(AttachmentProvider.Accessor accessor) throws Exception {
-        Class<?> virtualMachine = accessor.getVirtualMachineType();
-        Object virtualMachineInstance = virtualMachine
-                .getDeclaredMethod(ATTACH_METHOD_NAME, String.class)
-                .invoke(STATIC_MEMBER, accessor.getProcessId());
-        File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
-        try {
-            saveAgentJar(agentJar);
-            virtualMachine
-                    .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
-                    .invoke(virtualMachineInstance, agentJar.getAbsolutePath(), WITHOUT_ARGUMENTS);
-        } finally {
-            try {
-                virtualMachine.getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
-            } finally {
-                if (!agentJar.delete()) {
-                    Logger.getAnonymousLogger().info("Cannot delete temporary file: " + agentJar);
-                }
-            }
-        }
-    }
-
-    /**
-     * Saves all necessary classes for the Byte Buddy agent jar to the given file.
-     *
-     * @param agentFile The target file to which all required classes are to be written.
-     * @throws Exception If the writing to the file is not possible.
-     */
-    private static void saveAgentJar(File agentFile) throws Exception {
-        InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
-        if (inputStream == null) {
-            throw new IllegalStateException("Cannot locate class file for Byte Buddy installer");
-        }
-        try {
-            Manifest manifest = new Manifest();
-            manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
-            manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
-            manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
-            manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
-            manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
-            JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentFile), manifest);
-            try {
-                jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
-                byte[] buffer = new byte[BUFFER_SIZE];
-                int index;
-                while ((index = inputStream.read(buffer)) != END_OF_FILE) {
-                    jarOutputStream.write(buffer, START_INDEX, index);
-                }
-                jarOutputStream.closeEntry();
-            } finally {
-                jarOutputStream.close();
-            }
-        } finally {
-            inputStream.close();
-        }
-    }
-
-    /**
-     * <p>
      * Looks up the {@link java.lang.instrument.Instrumentation} instance of an installed Byte Buddy agent. Note that
      * this method implies reflective lookup and reflective invocation such that the returned value should be cached
      * rather than calling this method several times.
@@ -280,6 +153,134 @@ public class ByteBuddyAgent {
             throw new IllegalStateException("The Byte Buddy agent is not initialized");
         }
         return instrumentation;
+    }
+
+    /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. The default attachment provider
+     * is used for applying the attachment. This operation blocks until the attachment is complete. If the current VM does not supply
+     * any known form of attachment to a remote VM, an {@link IllegalStateException} is thrown.
+     *
+     * @param agentJar  The agent jar file.
+     * @param processId The target process id.
+     */
+    public static void attach(File agentJar, String processId) {
+        attach(agentJar, processId, AttachmentProvider.DEFAULT);
+    }
+
+    /**
+     * Attaches the given agent Jar on the target process which must be a virtual machine process. This operation blocks until the
+     * attachment is complete.
+     *
+     * @param agentJar           The agent jar file.
+     * @param processId          The target process id.
+     * @param attachmentProvider The attachment provider to use.
+     */
+    public static void attach(File agentJar, String processId, AttachmentProvider attachmentProvider) {
+        install(attachmentProvider, processId, new AgentProvider.ForExistingAgent(agentJar));
+    }
+
+    /**
+     * <p>
+     * Installs an agent on the currently running Java virtual machine. Unfortunately, this does
+     * not always work. The runtime installation of a Java agent is supported for:
+     * </p>
+     * <ul>
+     * <li><b>JVM version 9+</b>: For Java VM of at least version 9, the attachment API was merged
+     * into a Jigsaw module and the runtime installation is always possible.</li>
+     * <li><b>OpenJDK / Oracle JDK / IBM J9 versions 8-</b>: The installation for HotSpot is only
+     * possible when bundled with a JDK up until Java version 8. It is not possible for runtime-only
+     * installations of HotSpot or J9 for these versions.</li>
+     * </ul>
+     * <p>
+     * If an agent cannot be installed, an {@link IllegalStateException} is thrown.
+     * </p>
+     * <p>
+     * <b>Important</b>: This is a rather computation-heavy operation. Therefore, this operation is
+     * not repeated after an agent was successfully installed for the first time. Instead, the previous
+     * instrumentation instance is returned. However, invoking this method requires synchronization
+     * such that subsequently to an installation, {@link ByteBuddyAgent#getInstrumentation()} should
+     * be invoked instead.
+     * </p>
+     *
+     * @return An instrumentation instance representing the currently running JVM.
+     */
+    public static Instrumentation install() {
+        return install(AttachmentProvider.DEFAULT);
+    }
+
+    /**
+     * Installs a Java agent using the Java attach API. This API is available under different
+     * access routes for different JVMs and JVM versions or it might not be available at all.
+     * If a Java agent cannot be installed by using the supplied attachment provider, an
+     * {@link IllegalStateException} is thrown. The same happens if the default process provider
+     * cannot resolve a process id for the current VM.
+     *
+     * @param attachmentProvider The attachment provider to use for the installation.
+     * @return An instrumentation instance representing the currently running JVM.
+     */
+    public static Instrumentation install(AttachmentProvider attachmentProvider) {
+        return install(attachmentProvider, ProcessProvider.ForCurrentVm.INSTANCE);
+    }
+
+    /**
+     * Installs a Java agent using the Java attach API. This API is available under different
+     * access routes for different JVMs and JVM versions or it might not be available at all.
+     * If a Java agent cannot be installed by using the supplied process provider, an
+     * {@link IllegalStateException} is thrown. The same happens if the default attachment
+     * provider cannot be used.
+     *
+     * @param processProvider The provider for the current JVM's process id.
+     * @return An instrumentation instance representing the currently running JVM.
+     */
+    public static Instrumentation install(ProcessProvider processProvider) {
+        return install(AttachmentProvider.DEFAULT, processProvider);
+    }
+
+    /**
+     * Installs a Java agent using the Java attach API. This API is available under different
+     * access routes for different JVMs and JVM versions or it might not be available at all.
+     * If a Java agent cannot be installed by using the supplied attachment provider and process
+     * provider, an {@link IllegalStateException} is thrown.
+     *
+     * @param attachmentProvider The attachment provider to use for the installation.
+     * @param processProvider    The provider for the current JVM's process id.
+     * @return An instrumentation instance representing the currently running JVM.
+     */
+    public static synchronized Instrumentation install(AttachmentProvider attachmentProvider, ProcessProvider processProvider) {
+        Instrumentation instrumentation = doGetInstrumentation();
+        if (instrumentation != null) {
+            return instrumentation;
+        }
+        install(attachmentProvider, processProvider.resolve(), AgentProvider.ForByteBuddyAgent.INSTANCE);
+        return doGetInstrumentation();
+    }
+
+    /**
+     * Installs a Java agent on a target VM.
+     *
+     * @param attachmentProvider The attachment provider to use.
+     * @param processId          The process id of the target JVM process.
+     * @param agentProvider      The agent provider for the agent jar.
+     */
+    private static void install(AttachmentProvider attachmentProvider, String processId, AgentProvider agentProvider) {
+        AttachmentProvider.Accessor attachmentAccessor = attachmentProvider.attempt();
+        if (!attachmentAccessor.isAvailable()) {
+            throw new IllegalStateException();
+        }
+        try {
+            Object virtualMachineInstance = attachmentAccessor.getVirtualMachineType()
+                    .getDeclaredMethod(ATTACH_METHOD_NAME, String.class)
+                    .invoke(STATIC_MEMBER, processId);
+            try {
+                attachmentAccessor.getVirtualMachineType()
+                        .getDeclaredMethod(LOAD_AGENT_METHOD_NAME, String.class, String.class)
+                        .invoke(virtualMachineInstance, agentProvider.resolve().getAbsolutePath(), WITHOUT_ARGUMENTS);
+            } finally {
+                attachmentAccessor.getVirtualMachineType().getDeclaredMethod(DETACH_METHOD_NAME).invoke(virtualMachineInstance);
+            }
+        } catch (Exception exception) {
+            throw new IllegalStateException("Error during attachment using: " + attachmentProvider, exception);
+        }
     }
 
     /**
@@ -353,14 +354,6 @@ public class ByteBuddyAgent {
             Class<?> getVirtualMachineType();
 
             /**
-             * Returns the current JVM instance's process id. This method must only be called
-             * for available accessors.
-             *
-             * @return The current JVM instance's process id.
-             */
-            String getProcessId();
-
-            /**
              * A canonical implementation of an unavailable accessor.
              */
             enum Unavailable implements Accessor {
@@ -381,11 +374,6 @@ public class ByteBuddyAgent {
                 }
 
                 @Override
-                public String getProcessId() {
-                    throw new IllegalStateException("Cannot read process ID for an unavailable accessor");
-                }
-
-                @Override
                 public String toString() {
                     return "ByteBuddyAgent.AttachmentProvider.Accessor.Unavailable." + name();
                 }
@@ -397,29 +385,17 @@ public class ByteBuddyAgent {
             class Simple implements Accessor {
 
                 /**
-                 * A dispatcher for reading the current process's process id.
-                 */
-                private static final Dispatcher DISPATCHER = Dispatcher.ForJava9CapableVm.make();
-
-                /**
                  * The {@code com.sun.tools.attach.VirtualMachine} class.
                  */
                 private final Class<?> virtualMachineType;
 
                 /**
-                 * The current JVM instance's process id.
-                 */
-                private final String processId;
-
-                /**
                  * Creates a new simple accessor.
                  *
                  * @param virtualMachineType The {@code com.sun.tools.attach.VirtualMachine} class.
-                 * @param processId          The current JVM instance's process id.
                  */
-                protected Simple(Class<?> virtualMachineType, String processId) {
+                protected Simple(Class<?> virtualMachineType) {
                     this.virtualMachineType = virtualMachineType;
-                    this.processId = processId;
                 }
 
                 /**
@@ -436,7 +412,7 @@ public class ByteBuddyAgent {
                  */
                 public static Accessor of(ClassLoader classLoader) {
                     try {
-                        return of(classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME));
+                        return new Simple(classLoader.loadClass(VIRTUAL_MACHINE_TYPE_NAME));
                     } catch (ClassNotFoundException ignored) {
                         return Unavailable.INSTANCE;
                     }
@@ -455,20 +431,10 @@ public class ByteBuddyAgent {
                  */
                 public static Accessor ofJ9() {
                     try {
-                        return of(ClassLoader.getSystemClassLoader().loadClass(VIRTUAL_MACHINE_TYPE_NAME_J9));
+                        return new Simple(ClassLoader.getSystemClassLoader().loadClass(VIRTUAL_MACHINE_TYPE_NAME_J9));
                     } catch (ClassNotFoundException ignored) {
                         return Unavailable.INSTANCE;
                     }
-                }
-
-                /**
-                 * Creates an accessor by reading the process id from the JMX runtime bean.
-                 *
-                 * @param virtualMachineType The virtual machine type.
-                 * @return An appropriate accessor.
-                 */
-                protected static Accessor of(Class<?> virtualMachineType) {
-                    return DISPATCHER.resolve(virtualMachineType);
                 }
 
                 @Override
@@ -482,149 +448,23 @@ public class ByteBuddyAgent {
                 }
 
                 @Override
-                public String getProcessId() {
-                    return processId;
-                }
-
-                @Override
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
                     Simple simple = (Simple) other;
-                    return virtualMachineType.equals(simple.virtualMachineType)
-                            && processId.equals(simple.processId);
+                    return virtualMachineType.equals(simple.virtualMachineType);
                 }
 
                 @Override
                 public int hashCode() {
-                    int result = virtualMachineType.hashCode();
-                    result = 31 * result + processId.hashCode();
-                    return result;
+                    return virtualMachineType.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "ByteBuddyAgent.AttachmentProvider.Accessor.Simple{" +
                             "virtualMachineType=" + virtualMachineType +
-                            ", processId='" + processId + '\'' +
                             '}';
-                }
-
-                /**
-                 * A dispatcher for reading a process id of the current process.
-                 */
-                protected interface Dispatcher {
-
-                    /**
-                     * Resolves an accessor for the supplied virtual machine type.
-                     *
-                     * @param virtualMachineType The virtual machine type to attach to.
-                     * @return A suitable accessor.
-                     */
-                    Accessor resolve(Class<?> virtualMachineType);
-
-                    /**
-                     * A dispatcher for a legacy VM that cannot read the current process's id via a process handle.
-                     */
-                    enum ForLegacyVm implements Dispatcher {
-
-                        /**
-                         * The singleton instance.
-                         */
-                        INSTANCE;
-
-                        @Override
-                        public Accessor resolve(Class<?> virtualMachineType) {
-                            String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
-                            int processIdIndex = runtimeName.indexOf('@');
-                            return processIdIndex == -1
-                                    ? Unavailable.INSTANCE
-                                    : new Simple(virtualMachineType, runtimeName.substring(0, processIdIndex));
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "ByteBuddyAgent.AttachmentProvider.Accessor.Simple.Dispatcher.ForLegacyVm." + name();
-                        }
-                    }
-
-                    /**
-                     * A dispatcher for reading a process id of the current process via a process handle.
-                     */
-                    class ForJava9CapableVm implements Dispatcher {
-
-                        /**
-                         * The {@code java.lang.ProcessHandle#current()} method.
-                         */
-                        private final Method current;
-
-                        /**
-                         * The {@code java.lang.ProcessHandle#getPid()} method.
-                         */
-                        private final Method getPid;
-
-                        /**
-                         * Creates a new Java 9 capable dispatcher for reading the current process's id.
-                         *
-                         * @param current The {@code java.lang.ProcessHandle#current()} method.
-                         * @param getPid  The {@code java.lang.ProcessHandle#getPid()} method.
-                         */
-                        protected ForJava9CapableVm(Method current, Method getPid) {
-                            this.current = current;
-                            this.getPid = getPid;
-                        }
-
-                        /**
-                         * Attempts to create a dispatcher for a Java 9 VM and falls back to a legacy dispatcher
-                         * if this is not possible.
-                         *
-                         * @return A dispatcher for the current VM.
-                         */
-                        public static Dispatcher make() {
-                            try {
-                                return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getDeclaredMethod("current"),
-                                        Class.forName("java.lang.ProcessHandle").getDeclaredMethod("getPid"));
-                            } catch (RuntimeException exception) {
-                                throw exception;
-                            } catch (Exception ignored) {
-                                return ForLegacyVm.INSTANCE;
-                            }
-                        }
-
-                        @Override
-                        public Accessor resolve(Class<?> virtualMachineType) {
-                            try {
-                                return new Simple(virtualMachineType, getPid.invoke(current.invoke(STATIC_MEMBER)).toString());
-                            } catch (IllegalAccessException exception) {
-                                throw new UnsupportedOperationException("Not yet implemented");
-                            } catch (InvocationTargetException exception) {
-                                throw new UnsupportedOperationException("Not yet implemented");
-                            }
-                        }
-
-                        @Override
-                        public boolean equals(Object other) {
-                            if (this == other) return true;
-                            if (other == null || getClass() != other.getClass()) return false;
-                            ForJava9CapableVm that = (ForJava9CapableVm) other;
-                            return current.equals(that.current) && getPid.equals(that.getPid);
-                        }
-
-                        @Override
-                        public int hashCode() {
-                            int result = current.hashCode();
-                            result = 31 * result + getPid.hashCode();
-                            return result;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "ByteBuddyAgent.AttachmentProvider.Accessor.Simple.Dispatcher.ForJava9CapableVm{" +
-                                    "current=" + current +
-                                    ", getPid=" + getPid +
-                                    '}';
-                        }
-                    }
                 }
             }
         }
@@ -836,6 +676,289 @@ public class ByteBuddyAgent {
             public String toString() {
                 return "ByteBuddyAgent.AttachmentProvider.Compound{" +
                         "attachmentProviders=" + attachmentProviders +
+                        '}';
+            }
+        }
+    }
+
+    /**
+     * A process provider is responsible for providing the process id of the current VM.
+     */
+    public interface ProcessProvider {
+
+        /**
+         * Resolves a process id for the current JVM.
+         *
+         * @return The resolved process id.
+         */
+        String resolve();
+
+        /**
+         * Supplies the current VM's process id.
+         */
+        enum ForCurrentVm implements ProcessProvider {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * The best process provider for the current VM.
+             */
+            private final ProcessProvider dispatcher;
+
+            /**
+             * Creates a process provider that supplies the current VM's process id.
+             */
+            ForCurrentVm() {
+                dispatcher = ForJava9CapableVm.make();
+            }
+
+            @Override
+            public String resolve() {
+                return dispatcher.resolve();
+            }
+
+            @Override
+            public String toString() {
+                return "ByteBuddyAgent.ProcessProvider.ForCurrentVm." + name();
+            }
+
+            /**
+             * A process provider for a legacy VM that reads the process id from its JMX properties.
+             */
+            protected enum ForLegacyVm implements ProcessProvider {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public String resolve() {
+                    String runtimeName = ManagementFactory.getRuntimeMXBean().getName();
+                    int processIdIndex = runtimeName.indexOf('@');
+                    if (processIdIndex == -1) {
+                        throw new IllegalStateException("Cannot extract process id from runtime management bean");
+                    } else {
+                        return runtimeName.substring(0, processIdIndex);
+                    }
+                }
+
+                @Override
+                public String toString() {
+                    return "ByteBuddyAgent.ProcessProvider.ForCurrentVm.ForLegacyVm." + name();
+                }
+            }
+
+            /**
+             * A process provider for a Java 9 capable VM with access to the introduced process API.
+             */
+            protected static class ForJava9CapableVm implements ProcessProvider {
+
+                /**
+                 * The {@code java.lang.ProcessHandle#current()} method.
+                 */
+                private final Method current;
+
+                /**
+                 * The {@code java.lang.ProcessHandle#getPid()} method.
+                 */
+                private final Method getPid;
+
+                /**
+                 * Creates a new Java 9 capable dispatcher for reading the current process's id.
+                 *
+                 * @param current The {@code java.lang.ProcessHandle#current()} method.
+                 * @param getPid  The {@code java.lang.ProcessHandle#getPid()} method.
+                 */
+                protected ForJava9CapableVm(Method current, Method getPid) {
+                    this.current = current;
+                    this.getPid = getPid;
+                }
+
+                /**
+                 * Attempts to create a dispatcher for a Java 9 VM and falls back to a legacy dispatcher
+                 * if this is not possible.
+                 *
+                 * @return A dispatcher for the current VM.
+                 */
+                public static ProcessProvider make() {
+                    try {
+                        return new ForJava9CapableVm(Class.forName("java.lang.ProcessHandle").getDeclaredMethod("current"),
+                                Class.forName("java.lang.ProcessHandle").getDeclaredMethod("getPid"));
+                    } catch (RuntimeException exception) {
+                        throw exception;
+                    } catch (Exception ignored) {
+                        return ForLegacyVm.INSTANCE;
+                    }
+                }
+
+                @Override
+                public String resolve() {
+                    try {
+                        return getPid.invoke(current.invoke(STATIC_MEMBER)).toString();
+                    } catch (IllegalAccessException exception) {
+                        throw new IllegalStateException("Cannot access Java 9 process API", exception);
+                    } catch (InvocationTargetException exception) {
+                        throw new IllegalStateException("Error when accessing Java 9 process API", exception.getCause());
+                    }
+                }
+
+                @Override
+                public boolean equals(Object other) {
+                    if (this == other) return true;
+                    if (other == null || getClass() != other.getClass()) return false;
+                    ForJava9CapableVm that = (ForJava9CapableVm) other;
+                    return current.equals(that.current) && getPid.equals(that.getPid);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = current.hashCode();
+                    result = 31 * result + getPid.hashCode();
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "ByteBuddyAgent.ProcessProvider.ForCurrentVm.ForJava9CapableVm{" +
+                            "current=" + current +
+                            ", getPid=" + getPid +
+                            '}';
+                }
+            }
+        }
+    }
+
+    /**
+     * An agent provider is responsible for handling and providing the jar file of an agent that is being attached.
+     */
+    protected interface AgentProvider {
+
+        /**
+         * Provides an agent jar file for attachment.
+         *
+         * @return The provided agent.
+         * @throws IOException If the agent cannot be written to disk.
+         */
+        File resolve() throws IOException;
+
+        /**
+         * An agent provider for a temporary Byte Buddy agent.
+         */
+        enum ForByteBuddyAgent implements AgentProvider, PrivilegedExceptionAction<File> {
+
+            /**
+             * The singleton instance.
+             */
+            INSTANCE;
+
+            /**
+             * The default prefix of the Byte Buddy agent jar file.
+             */
+            private static final String AGENT_FILE_NAME = "byteBuddyAgent";
+
+            /**
+             * The jar file extension.
+             */
+            private static final String JAR_FILE_EXTENSION = ".jar";
+
+            @Override
+            public File resolve() throws IOException {
+                InputStream inputStream = Installer.class.getResourceAsStream('/' + Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION);
+                if (inputStream == null) {
+                    throw new IllegalStateException("Cannot locate class file for Byte Buddy installer");
+                }
+                try {
+                    File agentJar = AccessController.doPrivileged(this);
+                    try {
+                        Manifest manifest = new Manifest();
+                        manifest.getMainAttributes().put(Attributes.Name.MANIFEST_VERSION, MANIFEST_VERSION_VALUE);
+                        manifest.getMainAttributes().put(new Attributes.Name(AGENT_CLASS_PROPERTY), Installer.class.getName());
+                        manifest.getMainAttributes().put(new Attributes.Name(CAN_REDEFINE_CLASSES_PROPERTY), Boolean.TRUE.toString());
+                        manifest.getMainAttributes().put(new Attributes.Name(CAN_RETRANSFORM_CLASSES_PROPERTY), Boolean.TRUE.toString());
+                        manifest.getMainAttributes().put(new Attributes.Name(CAN_SET_NATIVE_METHOD_PREFIX), Boolean.TRUE.toString());
+                        JarOutputStream jarOutputStream = new JarOutputStream(new FileOutputStream(agentJar), manifest);
+                        try {
+                            jarOutputStream.putNextEntry(new JarEntry(Installer.class.getName().replace('.', '/') + CLASS_FILE_EXTENSION));
+                            byte[] buffer = new byte[BUFFER_SIZE];
+                            int index;
+                            while ((index = inputStream.read(buffer)) != END_OF_FILE) {
+                                jarOutputStream.write(buffer, START_INDEX, index);
+                            }
+                            jarOutputStream.closeEntry();
+                        } finally {
+                            jarOutputStream.close();
+                        }
+                    } finally {
+                        inputStream.close();
+                    }
+                    return agentJar;
+                } catch (PrivilegedActionException exception) {
+                    if (exception.getCause() instanceof IOException) {
+                        throw (IOException) exception.getCause();
+                    } else {
+                        throw (RuntimeException) exception.getCause();
+                    }
+                }
+            }
+
+            @Override
+            public File run() throws IOException {
+                File agentJar = File.createTempFile(AGENT_FILE_NAME, JAR_FILE_EXTENSION);
+                agentJar.deleteOnExit(); // Agent jar is required until VM shutdown due to lazy class loading.
+                return agentJar;
+            }
+
+            @Override
+            public String toString() {
+                return "ByteBuddyAgent.AgentProvider.ForByteBuddyAgent." + name();
+            }
+        }
+
+        /**
+         * An agent provider that supplies an existing agent that is not deleted after attachment.
+         */
+        class ForExistingAgent implements AgentProvider {
+
+            /**
+             * The supplied agent.
+             */
+            private File agent;
+
+            /**
+             * Creates an agent provider for an existing agent.
+             *
+             * @param agent The supplied agent.
+             */
+            protected ForExistingAgent(File agent) {
+                this.agent = agent;
+            }
+
+            @Override
+            public File resolve() {
+                return agent;
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                ForExistingAgent that = (ForExistingAgent) object;
+                return agent.equals(that.agent);
+            }
+
+            @Override
+            public int hashCode() {
+                return agent.hashCode();
+            }
+
+            @Override
+            public String toString() {
+                return "ByteBuddyAgent.AgentProvider.ForExistingAgent{" +
+                        "agent='" + agent + '\'' +
                         '}';
             }
         }

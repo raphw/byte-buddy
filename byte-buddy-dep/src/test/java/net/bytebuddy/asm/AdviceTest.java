@@ -1,6 +1,8 @@
 package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
+import net.bytebuddy.description.annotation.AbstractAnnotationDescriptionTest;
+import net.bytebuddy.description.annotation.AnnotationDescription;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.method.MethodDescription;
 import net.bytebuddy.description.method.ParameterDescription;
@@ -12,8 +14,12 @@ import net.bytebuddy.implementation.bytecode.StackSize;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
+import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
@@ -37,25 +43,12 @@ public class AdviceTest {
     private static final int VALUE = 42;
 
     @Test
-    public void testTrivialAdvice() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
-                .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
-        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
-    }
-
-    @Test
     public void testEmptyAdviceEntryAndExit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdvice.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -66,7 +59,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -77,7 +70,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -88,7 +81,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -99,7 +92,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandling.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -110,7 +103,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndEntrySuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -121,7 +114,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndExitSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -132,7 +125,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceWithExceptionHandlingAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -143,7 +136,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceEntry.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -154,7 +147,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceEntryWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -165,7 +158,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExit.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -176,7 +169,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExitAndSuppression.class).on(named(FOO)).readerFlags(ClassReader.SKIP_DEBUG))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -187,7 +180,7 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExitWithExceptionHandling.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
     }
@@ -198,9 +191,49 @@ public class AdviceTest {
                 .redefine(EmptyMethod.class)
                 .visit(Advice.to(EmptyAdviceExitWithExceptionHandlingAndSuppression.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
+    public void testTrivialAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testTrivialAdviceNested() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
+    public void testTrivialAdviceWithHandler() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAZ)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO + BAZ).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
 
     @Test
@@ -209,7 +242,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(isConstructor()))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.newInstance(), notNullValue(Object.class));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -222,7 +255,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ArgumentAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), BAR), is((Object) BAR));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -235,7 +268,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ArgumentAdviceExplicit.class).on(named(QUX)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(QUX, String.class, String.class).invoke(type.newInstance(), FOO, BAR), is((Object) (FOO + BAR)));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -248,7 +281,7 @@ public class AdviceTest {
                 .redefine(IncrementSample.class)
                 .visit(Advice.to(IncrementAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, int.class).invoke(type.newInstance(), 0), is((Object) 2));
     }
@@ -259,7 +292,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ThisReferenceAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -272,7 +305,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(EntranceValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -285,11 +318,38 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ReturnValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 0));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceWithExceptionHandler() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testAdviceWithExceptionHandlerNested() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
+                .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
     }
 
     @Test
@@ -298,7 +358,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
@@ -311,12 +371,31 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceNotSkipExceptionImplicitNested() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
+                .visit(Advice.to(TrivialAdvice.class).on(named(FOO + BAR)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
     public void testAdviceSkipExceptionImplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(named(FOO + BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
@@ -334,7 +413,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
@@ -347,12 +426,31 @@ public class AdviceTest {
     }
 
     @Test
+    public void testAdviceNotSkipExceptionExplicitNested() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
+                .visit(Advice.to(TrivialAdvice.class).on(named(BAR + BAZ)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(NullPointerException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 2));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 2));
+    }
+
+    @Test
     public void testAdviceSkipExceptionExplicit() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(named(BAR + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(BAR + BAZ).invoke(type.newInstance());
@@ -370,7 +468,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(TrivialAdviceSkipException.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -383,7 +481,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ObsoleteReturnValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -396,7 +494,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(UnusedReturnValueAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -409,7 +507,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(AdviceWithVariableValues.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), FOO + BAR + QUX + BAZ), is((Object) (FOO + BAR + QUX + BAZ)));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -422,7 +520,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(AdviceWithVariableValues.class).on(named(QUX + BAZ)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(QUX + BAZ).invoke(type.newInstance()), is((Object) (FOO + BAR + QUX + BAZ)));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -435,7 +533,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ThrowableAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) (FOO)));
         assertThat(type.getDeclaredField(THROWABLE).get(null), nullValue(Object.class));
@@ -447,7 +545,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ThrowableAdvice.class).on(named(FOO + BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance());
@@ -464,7 +562,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowOnEnter.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -483,7 +581,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowOnExit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -502,7 +600,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowSuppressed.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         type.getDeclaredMethod(FOO).invoke(type.newInstance());
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -516,7 +614,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowNotSuppressedOnEnter.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -535,7 +633,7 @@ public class AdviceTest {
                 .redefine(TracableSample.class)
                 .visit(Advice.to(ThrowNotSuppressedOnExit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         try {
             type.getDeclaredMethod(FOO).invoke(type.newInstance());
@@ -554,7 +652,7 @@ public class AdviceTest {
                 .redefine(Box.class)
                 .visit(Advice.to(ThisSubstitutionAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.getDeclaredConstructor(String.class).newInstance(FOO)), is((Object) BAR));
     }
@@ -573,7 +671,7 @@ public class AdviceTest {
                 .redefine(Box.class)
                 .visit(Advice.to(ParameterSubstitutionAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) BAR));
     }
@@ -592,7 +690,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(ReturnSubstitutionAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), FOO), is((Object) BAR));
     }
@@ -611,7 +709,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(EnterSubstitutionAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -630,7 +728,7 @@ public class AdviceTest {
                 .redefine(FieldSample.class)
                 .visit(Advice.to(FieldAdviceImplicit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -643,7 +741,7 @@ public class AdviceTest {
                 .redefine(FieldSample.class)
                 .visit(Advice.to(FieldAdviceExplicit.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -656,7 +754,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(OriginAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -669,7 +767,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(OriginCustomAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
@@ -682,7 +780,7 @@ public class AdviceTest {
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -694,7 +792,7 @@ public class AdviceTest {
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -706,7 +804,7 @@ public class AdviceTest {
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -718,7 +816,55 @@ public class AdviceTest {
                 .redefine(FrameSample.class)
                 .visit(Advice.to(FrameAdvice.class).on(named(BAR)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceComputedMaxima() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_MAXS))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceStaticMethodComputedMaxima() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_MAXS))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceComputedFrames() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_FRAMES))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
+        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
+    }
+
+    @Test
+    public void testFrameAdviceStaticMethodComputedFrames() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(FrameSample.class)
+                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_FRAMES))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
         assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
@@ -730,7 +876,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -741,7 +887,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -752,7 +898,7 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
@@ -763,9 +909,80 @@ public class AdviceTest {
                 .redefine(Sample.class)
                 .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
                 .make()
-                .load(null, ClassLoadingStrategy.Default.WRAPPER)
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testUserTypeValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return Object.class;
+                    }
+                }).to(CustomAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testUserUnloadedTypeValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return TypeDescription.OBJECT;
+                    }
+                }).to(CustomAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalUserValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return new Object();
+                    }
+                }).to(CustomAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+
+    @Test(expected = IllegalStateException.class)
+    public void testIllegalPrimitiveNullUserValue() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return null;
+                    }
+                }).to(CustomPrimitiveAdvice.class).on(named(FOO)))
+                .make();
     }
 
     @Test(expected = IllegalStateException.class)
@@ -797,9 +1014,9 @@ public class AdviceTest {
         Advice.to(Object.class);
     }
 
-    @Test(expected = IllegalArgumentException.class)
+    @Test(expected = IllegalStateException.class)
     public void testDuplicateAdvice() throws Exception {
-        Advice.to(IllegalStateException.class);
+        Advice.to(DuplicateAdvice.class);
     }
 
     @Test(expected = IllegalStateException.class)
@@ -910,6 +1127,14 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testAdviceNativeMethod() throws Exception {
+        new ByteBuddy()
+                .redefine(Object.class)
+                .visit(Advice.to(TrivialAdvice.class).on(named("getClass")))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testAdviceWithNonAssignableEnterValue() throws Exception {
         Advice.to(NonAssignableEnterAdvice.class);
     }
@@ -994,9 +1219,28 @@ public class AdviceTest {
                 .make();
     }
 
+    @Test(expected = IllegalArgumentException.class)
+    public void testDuplicateRegistration() throws Exception {
+        Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Annotation>() {
+            @Override
+            public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                  ParameterDescription.InDefinedShape target,
+                                  AnnotationDescription.Loadable<Annotation> annotation,
+                                  boolean initialized) {
+                return null;
+            }
+        }).bind(Custom.class, null);
+    }
+
+    @Test(expected = IllegalArgumentException.class)
+    public void testNotAnnotationType() throws Exception {
+        Advice.withCustomMapping().bind(Annotation.class, null);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
+        ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.ForAdvice.class).applyBasic();
@@ -1007,88 +1251,70 @@ public class AdviceTest {
             }
         }).applyBasic();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithStackSizeComputation.ForAdvice.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.AdviceVisitor.CodeCopier.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Context.ForMethodEntry.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Context.ForMethodExit.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForParameter.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForField.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForConstantPoolValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Target.ForDefaultValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
         final int[] value = new int[1];
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
             @Override
             public void apply(Advice.Argument mock) {
                 when(mock.value()).thenReturn(value[0]++);
             }
         }).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForParameter.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThisReference.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithImplicitType.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.WithExplicitType.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForField.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForConstantValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForDescriptor.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForMethodName.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForIgnored.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForReturnValue.Factory.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForThrowable.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForEnterValue.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.ForEnterValue.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForParameter.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThisReference.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThisReference.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithImplicitType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedArguments.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForConstantValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForDescriptor.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForMethodName.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForStringRepresentation.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForTypeName.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForReturnTypeName.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Renderer.ForJavaSignature.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForIgnored.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.class).apply();
+        final Iterator<Class<?>> annotationTypes = Arrays.<Class<?>>asList(Object.class, String.class, int.class, float.class).iterator();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForUserValue.Factory.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+            @Override
+            public Class<?> create() {
+                return annotationTypes.next();
+            }
+        }).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForInstrumentedType.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForReturnValue.Factory.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForThrowable.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForEnterValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForEnterValue.Factory.class).apply();
         final Iterator<Class<?>> types = Arrays.<Class<?>>asList(Object.class, String.class).iterator();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.OffsetMapping.Illegal.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Illegal.class).create(new ObjectPropertyAssertion.Creator<Class<?>>() {
             @Override
             public Class<?> create() {
                 return types.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodEnter.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
-            }
-        }).apply();
-        final Iterator<StackSize> iterator1 = Arrays.asList(StackSize.values()).iterator();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.WithExceptionHandler.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
-                try {
-                    when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
-                } catch (Exception exception) {
-                    throw new AssertionError(exception);
-                }
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getStackSize()).thenReturn(iterator1.next());
-            }
-        }).apply();
-        final Iterator<StackSize> iterator2 = Arrays.asList(StackSize.values()).iterator();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.ForMethodExit.WithoutExceptionHandler.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getParameters()).thenReturn(new ParameterList.Empty<ParameterDescription.InDefinedShape>());
-                try {
-                    when(mock.getDeclaredAnnotations()).thenReturn(new AnnotationList.ForLoadedAnnotations(TrivialAdvice.class.getDeclaredMethod(EXIT).getDeclaredAnnotations()));
-                } catch (Exception exception) {
-                    throw new AssertionError(exception);
-                }
-            }
-        }).refine(new ObjectPropertyAssertion.Refinement<TypeDescription>() {
-            @Override
-            public void apply(TypeDescription mock) {
-                when(mock.getStackSize()).thenReturn(iterator2.next());
-            }
-        }).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTabelSubstitutor.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableCollector.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.SuppressionHandler.Suppressing.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
@@ -1098,6 +1324,7 @@ public class AdviceTest {
                 when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
             }
         }).applyBasic();
+        ObjectPropertyAssertion.of(Advice.DynamicValue.ForFixedValue.class).apply();
     }
 
     @SuppressWarnings("unused")
@@ -1141,6 +1368,14 @@ public class AdviceTest {
         public void barbaz() {
             object.getClass(); // implicit null pointer
         }
+
+        public String foobaz() {
+            try {
+                throw new Exception();
+            } catch (Exception ignored) {
+                return FOO;
+            }
+        }
     }
 
     public abstract static class AbstractMethod {
@@ -1171,6 +1406,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class EmptyMethod {
 
         public void foo() {
@@ -1480,6 +1716,28 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class ExceptionHandlerAdvice {
+
+        @Advice.OnMethodEnter(suppress = Throwable.class)
+        private static void enter() {
+            try {
+                throw new Exception();
+            } catch (Exception ignored) {
+                Sample.enter++;
+            }
+        }
+
+        @Advice.OnMethodExit(suppress = Throwable.class)
+        private static void exit() {
+            try {
+                throw new Exception();
+            } catch (Exception ignored) {
+                Sample.exit++;
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class ObsoleteReturnValueAdvice {
 
         @Advice.OnMethodEnter
@@ -1779,18 +2037,27 @@ public class AdviceTest {
     public static class OriginCustomAdvice {
 
         @Advice.OnMethodEnter
-        private static void enter(@Advice.Origin("#t #m #d") String origin) throws Exception {
-            if (!origin.equals(Sample.class.getName() + " " + FOO + " ()L" + String.class.getName().replace('.', '/') + ";")) {
-                System.out.println(origin);
+        private static void enter(@Advice.Origin("#t #m #d #r #s") String origin, @Advice.Origin Class<?> type) throws Exception {
+            if (!origin.equals(Sample.class.getName() + " "
+                    + FOO
+                    + " ()L" + String.class.getName().replace('.', '/') + "; "
+                    + String.class.getName()
+                    + " ()")) {
+                throw new AssertionError();
+            }
+            if (type != Sample.class) {
                 throw new AssertionError();
             }
             Sample.enter++;
         }
 
         @Advice.OnMethodExit
-        private static void exit(@Advice.Origin("\\#\\#\\\\#m") String origin) throws Exception {
+        private static void exit(@Advice.Origin("\\#\\#\\\\#m") String origin, @Advice.Origin Class<?> type) throws Exception {
             if (!origin.equals("##\\" + FOO)) {
                 System.out.println(origin);
+                throw new AssertionError();
+            }
+            if (type != Sample.class) {
                 throw new AssertionError();
             }
             Sample.exit++;
@@ -2154,6 +2421,35 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Origin String value) {
             value = null;
+        }
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    public @interface Custom {
+        /* empty */
+    }
+
+    @SuppressWarnings("unused")
+    public static class CustomAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice(@Custom Object value) {
+            if (value != Object.class) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CustomPrimitiveAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice(@Custom int value) {
+            if (value == 0) {
+                throw new AssertionError();
+            }
         }
     }
 }
