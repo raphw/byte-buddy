@@ -19,18 +19,26 @@ public class DebuggingWrapper implements AsmVisitorWrapper {
 
     private final Printer printer;
 
-    public DebuggingWrapper(Writer writer, Printer printer) {
+    private final boolean check;
+
+    public DebuggingWrapper(Writer writer, Printer printer, boolean check) {
+        this.check = check;
         printWriter = new PrintWriter(writer);
         this.printer = printer;
     }
 
-    public DebuggingWrapper(OutputStream outputStream, Printer printer) {
+    public DebuggingWrapper(OutputStream outputStream, Printer printer, boolean check) {
+        this.check = check;
         printWriter = new PrintWriter(outputStream);
         this.printer = printer;
     }
 
     public static AsmVisitorWrapper makeDefault() {
-        return new DebuggingWrapper(System.out, new Textifier());
+        return makeDefault(true);
+    }
+
+    public static AsmVisitorWrapper makeDefault(boolean check) {
+        return new DebuggingWrapper(System.out, new Textifier(), check);
     }
 
     @Override
@@ -45,7 +53,8 @@ public class DebuggingWrapper implements AsmVisitorWrapper {
 
     @Override
     public ClassVisitor wrap(TypeDescription instrumentedType, ClassVisitor classVisitor, int writerFlags, int readerFlags) {
-        return new CheckClassAdapter(new TraceClassVisitor(classVisitor, printer, printWriter));
-//        return new TraceClassVisitor(classVisitor, printer, printWriter);
+        return check ?
+                new CheckClassAdapter(new TraceClassVisitor(classVisitor, printer, printWriter))
+                : new TraceClassVisitor(classVisitor, printer, printWriter);
     }
 }

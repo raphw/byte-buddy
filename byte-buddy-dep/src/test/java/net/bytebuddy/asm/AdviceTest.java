@@ -9,7 +9,6 @@ import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.implementation.bytecode.StackSize;
-import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -196,7 +195,6 @@ public class AdviceTest {
     public void testTrivialAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(TrivialAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -326,7 +324,6 @@ public class AdviceTest {
     public void testAdviceWithExceptionHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
@@ -340,7 +337,6 @@ public class AdviceTest {
     public void testAdviceWithExceptionHandlerNested() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .make()
@@ -777,7 +773,6 @@ public class AdviceTest {
     public void testFrameAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(FrameSample.class)
-                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
