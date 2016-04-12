@@ -81,12 +81,8 @@ public enum JavaType {
      * @return A loaded type of this Java type.
      * @throws ClassNotFoundException If the represented type cannot be loaded.
      */
-    public Class<?> load() {
-        try {
-            return Class.forName(typeDescription.getName());
-        } catch (ClassNotFoundException exception) {
-            throw new IllegalStateException("Cannot load: " + typeDescription, exception);
-        }
+    public Class<?> load() throws ClassNotFoundException {
+        return Class.forName(typeDescription.getName());
     }
 
     @Override
