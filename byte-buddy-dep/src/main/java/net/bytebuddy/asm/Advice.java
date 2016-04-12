@@ -308,7 +308,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Indicates that a size is not computed but handled directly by ASM.
              */
-            int UNDEFINED_SIZE = -1;
+            int UNDEFINED_SIZE = Short.MAX_VALUE;
 
             /**
              * Binds this meta data handler for the entry advice.
@@ -482,12 +482,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param expandFrames       {@code true} if the meta data handler is expected to expand its frames.
              */
             protected Default(MethodDescription.InDefinedShape instrumentedMethod,
-                              List<? extends TypeDescription> requiredTypes,
-                              List<? extends TypeDescription> yieldedTypes,
+                              TypeList requiredTypes,
+                              TypeList yieldedTypes,
                               boolean expandFrames) {
                 this.instrumentedMethod = instrumentedMethod;
-                this.requiredTypes = new TypeList.Explicit(requiredTypes);
-                this.yieldedTypes = new TypeList.Explicit(yieldedTypes);
+                this.requiredTypes = requiredTypes;
+                this.yieldedTypes = yieldedTypes;
                 this.expandFrames = expandFrames;
             }
 
@@ -510,13 +510,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return NoOp.INSTANCE;
                 } else if ((writerFlags & ClassWriter.COMPUTE_MAXS) != 0) {
                     return new Default.WithoutStackSizeComputation(instrumentedMethod,
-                            requiredTypes,
-                            yieldedTypes,
+                            new TypeList.Explicit(requiredTypes),
+                            new TypeList.Explicit(yieldedTypes),
                             (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 } else {
                     return new Default.WithStackSizeComputation(instrumentedMethod,
-                            requiredTypes,
-                            yieldedTypes,
+                            new TypeList.Explicit(requiredTypes),
+                            new TypeList.Explicit(yieldedTypes),
                             (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
                 }
             }
@@ -546,33 +546,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public ForAdvice bindEntry(MethodDescription.InDefinedShape methodDescription) {
-                return bind(methodDescription, new TypeList.Empty(), methodDescription.getReturnType().represents(void.class)
-                        ? Collections.<TypeDescription>emptyList()
-                        : Collections.singletonList(methodDescription.getReturnType().asErasure()), TranslationMode.ENTRY);
+            public ForAdvice bindEntry(MethodDescription.InDefinedShape adviceMethod) {
+                return bind(adviceMethod, new TypeList.Empty(), requiredTypes, TranslationMode.ENTRY);
             }
 
             @Override
-            public ForAdvice bindExit(MethodDescription.InDefinedShape methodDescription) {
-                return bind(methodDescription, new TypeList.Explicit(
-                        CompoundList.of(this.requiredTypes, instrumentedMethod.getReturnType().represents(void.class)
-                                ? Collections.singletonList(TypeDescription.THROWABLE)
-                                : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE))
-                ), Collections.<TypeDescription>emptyList(), TranslationMode.EXIT);
+            public ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
+                return bind(adviceMethod, new TypeList.Explicit(CompoundList.of(requiredTypes, yieldedTypes)), new TypeList.Empty(), TranslationMode.EXIT);
             }
 
             /**
              * Binds the given advice method to an appropriate meta data handler.
              *
-             * @param methodDescription The advice method.
+             * @param adviceMethod The advice method.
              * @param requiredTypes     The expected types that the advice method requires additionally to the instrumented method's parameters.
              * @param yieldedTypes      The types this advice method yields as additional parameters.
              * @param translationMode   The translation mode to apply for this advice.
              * @return An appropriate meta data handler.
              */
-            protected abstract ForAdvice bind(MethodDescription.InDefinedShape methodDescription,
+            protected abstract ForAdvice bind(MethodDescription.InDefinedShape adviceMethod,
                                               TypeList requiredTypes,
-                                              List<? extends TypeDescription> yieldedTypes,
+                                              TypeList yieldedTypes,
                                               TranslationMode translationMode);
 
             @Override
@@ -692,7 +686,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param exceptionOnStack {@code true} if there is a {@link Throwable} on the operand stack.
              */
             protected void injectFullFrame(MethodVisitor methodVisitor, List<? extends TypeDescription> additionalTypes, boolean exceptionOnStack) {
-                Object[] localVariable = new Object[instrumentedMethod.getParameters().size() + (instrumentedMethod.isStatic() ? 0 : 1) + additionalTypes.size()];
+                Object[] localVariable = new Object[instrumentedMethod.getParameters().size()
+                        + (instrumentedMethod.isStatic() ? 0 : 1)
+                        + additionalTypes.size()];
                 int index = 0;
                 if (!instrumentedMethod.isStatic()) {
                     localVariable[index++] = toFrame(instrumentedMethod.getDeclaringType());
@@ -806,7 +802,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The types that this method yields as a result.
                  */
-                private final List<? extends TypeDescription> yieldedTypes;
+                private final TypeList yieldedTypes;
 
                 /**
                  * The translation mode to apply for this advice method. Should be either {@link TranslationMode#ENTRY} or {@link TranslationMode#EXIT}.
@@ -824,7 +820,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
                                     TypeList requiredTypes,
-                                    List<? extends TypeDescription> yieldedTypes,
+                                    TypeList yieldedTypes,
                                     TranslationMode translationMode) {
                     this.methodDescription = methodDescription;
                     this.requiredTypes = requiredTypes;
@@ -873,7 +869,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
                         }
                     } else {
-                        injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), false);
+                        injectFullFrame(methodVisitor, yieldedTypes, false);
                     }
                 }
             }
@@ -902,8 +898,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param expandFrames       {@code true} if this meta data handler is expected to expand its written frames.
                  */
                 protected WithStackSizeComputation(MethodDescription.InDefinedShape instrumentedMethod,
-                                                   List<? extends TypeDescription> requiredTypes,
-                                                   List<? extends TypeDescription> yieldedTypes,
+                                                   TypeList requiredTypes,
+                                                   TypeList yieldedTypes,
                                                    boolean expandFrames) {
                     super(instrumentedMethod, requiredTypes, yieldedTypes, expandFrames);
                     stackSize = Math.max(instrumentedMethod.getReturnType().getStackSize().getSize(), StackSize.SINGLE.getSize());
@@ -923,14 +919,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected Default.ForAdvice bind(MethodDescription.InDefinedShape methodDescription,
+                protected Default.ForAdvice bind(MethodDescription.InDefinedShape adviceMethod,
                                                  TypeList requiredTypes,
-                                                 List<? extends TypeDescription> yieldedTypes,
+                                                 TypeList yieldedTypes,
                                                  TranslationMode translationMode) {
                     if (translationMode == TranslationMode.ENTRY) {
-                        stackSize = Math.max(methodDescription.getReturnType().getStackSize().getSize(), stackSize);
+                        stackSize = Math.max(adviceMethod.getReturnType().getStackSize().getSize(), stackSize);
                     }
-                    return new ForAdvice(methodDescription, requiredTypes, yieldedTypes, translationMode);
+                    return new ForAdvice(adviceMethod, requiredTypes, yieldedTypes, translationMode);
                 }
 
                 @Override
@@ -962,7 +958,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
                                         TypeList requiredTypes,
-                                        List<? extends TypeDescription> yieldedTypes,
+                                        TypeList yieldedTypes,
                                         TranslationMode translationMode) {
                         super(methodDescription, requiredTypes, yieldedTypes, translationMode);
                     }
@@ -1006,8 +1002,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param expandFrames       {@code true} if this meta data handler is expected to expand its written frames.
                  */
                 protected WithoutStackSizeComputation(MethodDescription.InDefinedShape instrumentedMethod,
-                                                      List<? extends TypeDescription> requiredTypes,
-                                                      List<? extends TypeDescription> yieldedTypes,
+                                                      TypeList requiredTypes,
+                                                      TypeList yieldedTypes,
                                                       boolean expandFrames) {
                     super(instrumentedMethod, requiredTypes, yieldedTypes, expandFrames);
                 }
@@ -1023,11 +1019,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 }
 
                 @Override
-                protected Default.ForAdvice bind(MethodDescription.InDefinedShape methodDescription,
+                protected Default.ForAdvice bind(MethodDescription.InDefinedShape adviceMethod,
                                                  TypeList requiredTypes,
-                                                 List<? extends TypeDescription> yieldedTypes,
+                                                 TypeList yieldedTypes,
                                                  TranslationMode translationMode) {
-                    return new ForAdvice(methodDescription, requiredTypes, yieldedTypes, translationMode);
+                    return new ForAdvice(adviceMethod, requiredTypes, yieldedTypes, translationMode);
                 }
 
                 @Override
@@ -1052,7 +1048,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected ForAdvice(MethodDescription.InDefinedShape methodDescription,
                                         TypeList requiredTypes,
-                                        List<? extends TypeDescription> yieldedTypes,
+                                        TypeList yieldedTypes,
                                         TranslationMode translationMode) {
                         super(methodDescription, requiredTypes, yieldedTypes, translationMode);
                     }
@@ -4716,7 +4712,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         protected StackSize getPadding() {
-                            return StackSize.SINGLE;
+                            return StackSize.ZERO;
                         }
 
                         @Override

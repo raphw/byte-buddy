@@ -10,7 +10,6 @@ import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
-import org.objectweb.asm.ClassWriter;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -34,7 +33,7 @@ public class AdviceTest {
 
     private static final String FOO = "foo", BAR = "bar", QUX = "qux", BAZ = "baz";
 
-    private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable", COUNT = "count";
+    private static final String ENTER = "enter", EXIT = "exit", INSIDE = "inside", THROWABLE = "throwable";
 
     private static final int VALUE = 42;
 
@@ -328,6 +327,28 @@ public class AdviceTest {
         assertThat(type.newInstance(), notNullValue(Object.class));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testFrameAdviceSimpleShift() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test
+    public void testFrameAdviceSimpleShiftExpanded() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
     @Test(expected = IllegalStateException.class)
@@ -864,242 +885,6 @@ public class AdviceTest {
     }
 
     @Test
-    public void testFrameAdvice() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethod() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(BAR)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceExpanded() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethodExpanded() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).readerFlags(ClassReader.EXPAND_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceComputedMaxima() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_MAXS))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethodComputedMaxima() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_MAXS))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceComputedFrames() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethodComputedFrames() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdvice.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethodSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(BAR)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceExpandedSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethodExpandedSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(BAR)).readerFlags(ClassReader.EXPAND_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceComputedMaximaSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_MAXS))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethodComputedMaximaSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_MAXS))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceComputedFramesSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(FOO)).writerFlags(ClassWriter.COMPUTE_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceStaticMethodComputedFramesSuppression() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(FrameSample.class)
-                .visit(Advice.to(FrameAdviceWithSuppression.class).on(named(BAR)).writerFlags(ClassWriter.COMPUTE_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(BAR, String.class).invoke(null, FOO), is((Object) FOO));
-        assertThat(type.getField(COUNT).getInt(null), is((Object) 2));
-    }
-
-    @Test
-    public void testFrameAdviceFrameInjected() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-    }
-
-    @Test
-    public void testFrameAdviceFrameInjectedExpanded() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(FrameExitAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-    }
-
-    @Test
-    public void testFrameAdviceSimpleShift() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-    }
-
-    @Test
-    public void testFrameAdviceSimpleShiftExpanded() throws Exception {
-        Class<?> type = new ByteBuddy()
-                .redefine(Sample.class)
-                .visit(Advice.to(FrameShiftAdvice.class).on(named(FOO)).readerFlags(ClassReader.EXPAND_FRAMES))
-                .make()
-                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
-                .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
-    }
-
-    @Test
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1152,7 +937,6 @@ public class AdviceTest {
                 }).to(CustomAdvice.class).on(named(FOO)))
                 .make();
     }
-
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalPrimitiveNullUserValue() throws Exception {
@@ -2275,160 +2059,6 @@ public class AdviceTest {
                 throw new AssertionError();
             }
             Sample.exit++;
-        }
-    }
-
-    @SuppressWarnings("all")
-    public static class FrameSample {
-
-        public static int count;
-
-        public String foo(String value) {
-            int ignored = 0;
-            {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
-                if (ignored == 1) {
-                    throw new AssertionError();
-                } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError();
-                    }
-                }
-            }
-            long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 7L;
-            if (ignored == 3) {
-                throw new AssertionError();
-            } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError();
-                }
-            }
-            try {
-                long v8 = 8L;
-            } catch (Exception exception) {
-                long v9 = 9L;
-            }
-            return value;
-        }
-
-        public static String bar(String value) {
-            int ignored = 0;
-            {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
-                if (ignored == 1) {
-                    throw new AssertionError();
-                } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError();
-                    }
-                }
-            }
-            long v4 = 4L, v5 = 5L, v6 = 6L, v7 = 4L;
-            if (ignored == 3) {
-                throw new AssertionError();
-            } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError();
-                }
-            }
-            try {
-                long v8 = 1L;
-            } catch (Exception exception) {
-                long v9 = 1L;
-            }
-            return value;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    public static class FrameAdvice {
-
-        @Advice.OnMethodEnter
-        @Advice.OnMethodExit
-        private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
-            {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
-                if (ignored == 1) {
-                    throw new AssertionError();
-                } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError();
-                    }
-                }
-            }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
-            if (ignored == 3) {
-                throw new AssertionError();
-            } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError();
-                }
-            }
-            try {
-                long v8 = 1L;
-            } catch (Exception exception) {
-                long v9 = 1L;
-            }
-            FrameSample.count++;
-            return value;
-        }
-    }
-
-
-    @SuppressWarnings("unused")
-    public static class FrameAdviceWithSuppression {
-
-        @Advice.OnMethodEnter(suppress = Exception.class)
-        @Advice.OnMethodExit(suppress = Exception.class)
-        private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
-            int v0 = 1;
-            {
-                long v1 = 1L, v2 = 2L, v3 = 3L;
-                if (ignored == 1) {
-                    throw new AssertionError();
-                } else if (ignored == 2) {
-                    if (v1 + v2 + v3 == 0L) {
-                        throw new AssertionError();
-                    }
-                }
-            }
-            long v4 = 1L, v5 = 2L, v6 = 3L, v7 = 4L;
-            if (ignored == 3) {
-                throw new AssertionError();
-            } else if (ignored == 4) {
-                if (v4 + v5 + v6 + v7 == 0L) {
-                    throw new AssertionError();
-                }
-            }
-            try {
-                long v8 = 1L;
-            } catch (Exception exception) {
-                long v9 = 1L;
-            }
-            FrameSample.count++;
-            return value;
-        }
-    }
-
-    @SuppressWarnings("all")
-    public static class FrameExitAdvice {
-
-        @Advice.OnMethodEnter(suppress = RuntimeException.class)
-        @Advice.OnMethodExit(suppress = RuntimeException.class)
-        private static String advice() {
-            try {
-                int ignored = 0;
-                if (ignored != 0) {
-                    return BAR;
-                }
-            } catch (Exception e) {
-                int ignored = 0;
-                if (ignored != 0) {
-                    return QUX;
-                }
-            }
-            return FOO;
         }
     }
 
