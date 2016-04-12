@@ -869,7 +869,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             methodVisitor.visitFrame(Opcodes.F_APPEND, local.length, local, 0, EMPTY);
                         }
                     } else {
-                        injectFullFrame(methodVisitor, yieldedTypes, false);
+                        injectFullFrame(methodVisitor, CompoundList.of(requiredTypes, yieldedTypes), false);
                     }
                 }
             }
@@ -1132,7 +1132,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 int readerFlags) {
             super(Opcodes.ASM5, methodVisitor);
             this.instrumentedMethod = instrumentedMethod;
-            padding = methodEnter.getEnterType().getStackSize().getSize();
+            padding = methodEnter.getEnterType().getStackSize().getSize(); // TODO: doubled enter?
             metaDataHandler = MetaDataHandler.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType()), yieldedTypes, writerFlags, readerFlags);
