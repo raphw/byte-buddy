@@ -70,6 +70,26 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * computed by ASM by using the {@link ClassWriter#COMPUTE_FRAMES} option. If the advice methods do not contain any branching instructions, this is
  * not required. No action is required if the advice methods are at least compiled with Java 6 but are used on classes older than Java 6.
  * </p>
+ * <p>
+ * <b>Note</b>: It is not possible to trigger break points in advice methods as the debugging information of the inlined advice is not preserved.
+ * It is not possible in Java to reference more than one source file per class what makes translating such debugging information impossible. It
+ * is however possible to set break points in advice methods when invoking the original advice target. This allows debugging of advice code within
+ * unit tests that invoke the advice method without instrumentation.
+ * </p>
+ *
+ * @see Argument
+ * @see BoxedArguments
+ * @see BoxedReturn
+ * @see DynamicValue
+ * @see Enter
+ * @see FieldValue
+ * @see Ignored
+ * @see OnMethodEnter
+ * @see OnMethodExit
+ * @see Origin
+ * @see Return
+ * @see This
+ * @see Thrown
  */
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
