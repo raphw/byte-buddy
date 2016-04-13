@@ -133,6 +133,11 @@ public class AgentBuilderListenerTest {
     }
 
     @Test
+    public void testStreamWritingStandardError() throws Exception {
+        assertThat(AgentBuilder.Listener.StreamWriting.toSystemError(), is((AgentBuilder.Listener) new AgentBuilder.Listener.StreamWriting(System.err)));
+    }
+
+    @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(AgentBuilder.Listener.NoOp.class).apply();
         ObjectPropertyAssertion.of(AgentBuilder.Listener.StreamWriting.class).apply();

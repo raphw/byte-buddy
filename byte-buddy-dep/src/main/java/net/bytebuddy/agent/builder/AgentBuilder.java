@@ -1086,6 +1086,15 @@ public interface AgentBuilder {
                 return new StreamWriting(System.out);
             }
 
+            /**
+             * Creates a new stream writing listener that writes to {@link System#err}.
+             *
+             * @return A listener writing events to the standad error stream.
+             */
+            public static Listener toSystemError() {
+                return new StreamWriting(System.err);
+            }
+
             @Override
             public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
                 printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName());
