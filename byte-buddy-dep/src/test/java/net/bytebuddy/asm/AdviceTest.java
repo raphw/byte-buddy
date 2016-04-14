@@ -19,7 +19,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Modifier;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
+import java.util.Map;
 
 import static junit.framework.TestCase.fail;
 import static net.bytebuddy.matcher.ElementMatchers.*;
@@ -922,6 +924,41 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
     }
 
+    @Test
+    public void testUserSerializableTypeValue() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return Collections.singletonMap(FOO, BAR);
+                    }
+                }).to(CustomSerializableAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) FOO));
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testUserSerializableTypeValueNonAssignable() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.withCustomMapping().bind(Custom.class, new Advice.DynamicValue<Custom>() {
+                    @Override
+                    public Object resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                          ParameterDescription.InDefinedShape target,
+                                          AnnotationDescription.Loadable<Custom> annotation,
+                                          boolean initialized) {
+                        return Collections.singletonList(FOO);
+                    }
+                }).to(CustomSerializableAdvice.class).on(named(FOO)))
+                .make();
+    }
+
     @Test(expected = IllegalStateException.class)
     public void testIllegalUserValue() throws Exception {
         new ByteBuddy()
@@ -1232,6 +1269,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
         final int[] value = new int[1];
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForParameter.class).refine(new ObjectPropertyAssertion.Refinement<Advice.Argument>() {
@@ -2328,6 +2366,18 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void advice(@Custom int value) {
             if (value == 0) {
+                throw new AssertionError();
+            }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class CustomSerializableAdvice {
+
+        @Advice.OnMethodEnter
+        @Advice.OnMethodExit
+        private static void advice(@Custom Map<String, String> value) {
+            if (value.size() != 1 && !value.get(FOO).equals(BAR)) {
                 throw new AssertionError();
             }
         }

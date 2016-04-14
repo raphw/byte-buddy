@@ -18,7 +18,7 @@ import net.bytebuddy.utility.CompoundList;
 import net.bytebuddy.utility.ExceptionTableSensitiveMethodVisitor;
 import org.objectweb.asm.*;
 
-import java.io.IOException;
+import java.io.*;
 import java.lang.annotation.*;
 import java.util.*;
 
@@ -2221,11 +2221,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             case Opcodes.LLOAD:
                             case Opcodes.DLOAD:
                                 methodVisitor.visitLdcInsn(value);
-                                break;
+                                return NO_PADDING;
                             default:
                                 throw new IllegalArgumentException("Did not expect opcode: " + opcode);
                         }
-                        return NO_PADDING;
                     }
 
                     @Override
@@ -2296,11 +2295,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         switch (opcode) {
                             case Opcodes.ALOAD:
                                 boxingDispatcher.loadBoxed(methodVisitor, offset);
-                                break;
+                                return boxingDispatcher.getStackSize().getSize() - 1;
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
-                        return boxingDispatcher.getStackSize().getSize() - 1;
                     }
 
                     @Override
@@ -2591,11 +2589,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         switch (opcode) {
                             case Opcodes.ALOAD:
                                 methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                                break;
+                                return NO_PADDING;
                             default:
                                 throw new IllegalStateException("Unexpected opcode: " + opcode);
                         }
-                        return NO_PADDING;
                     }
 
                     @Override
@@ -2606,6 +2603,119 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public String toString() {
                         return "Advice.Dispatcher.OffsetMapping.Target.ForNullConstant." + name();
+                    }
+                }
+
+                /**
+                 * Creates a target that represents a value in form of a serialized field.
+                 */
+                class ForSerializedObject implements Target {
+
+                    /**
+                     * A charset that does not change the supplied byte array upon encoding or decoding.
+                     */
+                    private static final String CHARSET = "ISO-8859-1";
+
+                    /**
+                     * The target type.
+                     */
+                    private final TypeDescription target;
+
+                    /**
+                     * The serialized form of the supplied form encoded as a string to be stored in the constant pool.
+                     */
+                    private final String serialized;
+
+                    protected ForSerializedObject(TypeDescription target, String serialized) {
+                        this.target = target;
+                        this.serialized = serialized;
+                    }
+
+                    /**
+                     * Resolves a serializable value to a target that reads a value from reconstructing a serializable string representation.
+                     *
+                     * @param target The target type of the serializable value.
+                     * @param value  The value that the mapped field should represent.
+                     * @return A target for deserializing the supplied value on access.
+                     */
+                    protected static Target of(TypeDescription target, Serializable value) {
+                        try {
+                            ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+                            ObjectOutputStream objectOutputStream = new ObjectOutputStream(byteArrayOutputStream);
+                            try {
+                                objectOutputStream.writeObject(value);
+                            } finally {
+                                objectOutputStream.close();
+                            }
+                            return new ForSerializedObject(target, byteArrayOutputStream.toString(CHARSET));
+                        } catch (IOException exception) {
+                            throw new IllegalStateException("Cannot serialize " + value, exception);
+                        }
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ALOAD:
+                                methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(ObjectInputStream.class));
+                                methodVisitor.visitInsn(Opcodes.DUP);
+                                methodVisitor.visitTypeInsn(Opcodes.NEW, Type.getInternalName(ByteArrayInputStream.class));
+                                methodVisitor.visitInsn(Opcodes.DUP);
+                                methodVisitor.visitLdcInsn(serialized);
+                                methodVisitor.visitLdcInsn(CHARSET);
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                                        Type.getInternalName(String.class),
+                                        "getBytes",
+                                        Type.getMethodType(Type.getType(byte[].class), Type.getType(String.class)).toString(),
+                                        false);
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                                        Type.getInternalName(ByteArrayInputStream.class),
+                                        MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                                        Type.getMethodType(Type.VOID_TYPE, Type.getType(byte[].class)).toString(),
+                                        false);
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKESPECIAL,
+                                        Type.getInternalName(ObjectInputStream.class),
+                                        MethodDescription.CONSTRUCTOR_INTERNAL_NAME,
+                                        Type.getMethodType(Type.VOID_TYPE, Type.getType(InputStream.class)).toString(),
+                                        false);
+                                methodVisitor.visitMethodInsn(Opcodes.INVOKEVIRTUAL,
+                                        Type.getInternalName(ObjectInputStream.class),
+                                        "readObject",
+                                        Type.getMethodType(Type.getType(Object.class)).toString(),
+                                        false);
+                                methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, target.getInternalName());
+                                return 5;
+                            default:
+                                throw new IllegalStateException("Unexpected opcode: " + opcode);
+                        }
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot increment serialized object");
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForSerializedObject that = (ForSerializedObject) object;
+                        return target.equals(that.target) && serialized.equals(that.serialized);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = target.hashCode();
+                        result = 31 * result + serialized.hashCode();
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject{" +
+                                "target=" + target +
+                                ", serialized='" + serialized + '\'' +
+                                '}';
                     }
                 }
             }
@@ -3809,6 +3919,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
                     } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof TypeDescription) {
                         return new Target.ForConstantPoolValue(Type.getType(((TypeDescription) value).getDescriptor()));
+                    } else if (!target.getType().isPrimitive() && !target.getType().isArray() && value instanceof Serializable && target.getType().asErasure().isInstance(value)) {
+                        return Target.ForSerializedObject.of(target.getType().asErasure(), (Serializable) value);
                     } else {
                         throw new IllegalStateException("Cannot map " + value + " as constant value of " + target.getType());
                     }
