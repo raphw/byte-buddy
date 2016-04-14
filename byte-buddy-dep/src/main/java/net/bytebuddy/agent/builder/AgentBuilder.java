@@ -990,31 +990,35 @@ public interface AgentBuilder {
          * Invoked right before a successful transformation is applied.
          *
          * @param typeDescription The type that is being transformed.
+         * @param classLoader     The class loader which is loading this type.
          * @param dynamicType     The dynamic type that was created.
          */
-        void onTransformation(TypeDescription typeDescription, DynamicType dynamicType);
+        void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType);
 
         /**
          * Invoked when a type is not transformed but ignored.
          *
-         * @param typeDescription The type being ignored.
+         * @param typeDescription The type being ignored for transformation.
+         * @param classLoader     The class loader which is loading this type.
          */
-        void onIgnored(TypeDescription typeDescription);
+        void onIgnored(TypeDescription typeDescription, ClassLoader classLoader);
 
         /**
-         * Invoked when an error has occurred.
+         * Invoked when an error has occurred during transformation.
          *
-         * @param typeName  The binary name of the instrumented type.
-         * @param throwable The occurred error.
+         * @param typeName    The binary name of the instrumented type.
+         * @param classLoader The class loader which is loading this type.
+         * @param throwable   The occurred error.
          */
-        void onError(String typeName, Throwable throwable);
+        void onError(String typeName, ClassLoader classLoader, Throwable throwable);
 
         /**
          * Invoked after a class was attempted to be loaded, independently of its treatment.
          *
-         * @param typeName The binary name of the instrumented type.
+         * @param typeName    The binary name of the instrumented type.
+         * @param classLoader The class loader which is loading this type.
          */
-        void onComplete(String typeName);
+        void onComplete(String typeName, ClassLoader classLoader);
 
         /**
          * A no-op implementation of a {@link net.bytebuddy.agent.builder.AgentBuilder.Listener}.
@@ -1027,28 +1031,54 @@ public interface AgentBuilder {
             INSTANCE;
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
                 /* do nothing */
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription) {
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
                 /* do nothing */
             }
 
             @Override
-            public void onError(String typeName, Throwable throwable) {
+            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
                 /* do nothing */
             }
 
             @Override
-            public void onComplete(String typeName) {
+            public void onComplete(String typeName, ClassLoader classLoader) {
                 /* do nothing */
             }
 
             @Override
             public String toString() {
                 return "AgentBuilder.Listener.NoOp." + name();
+            }
+        }
+
+        /**
+         * An adapter for a listener wher all methods are implemented as non-operational.
+         */
+        abstract class Adapter implements Listener {
+
+            @Override
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
+                /* do nothing */
+            }
+
+            @Override
+            public void onComplete(String typeName, ClassLoader classLoader) {
+                /* do nothing */
             }
         }
 
@@ -1096,23 +1126,23 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
                 printStream.println(PREFIX + " TRANSFORM " + typeDescription.getName());
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription) {
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
                 printStream.println(PREFIX + " IGNORE " + typeDescription.getName());
             }
 
             @Override
-            public void onError(String typeName, Throwable throwable) {
+            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
                 printStream.println(PREFIX + " ERROR " + typeName);
                 throwable.printStackTrace(printStream);
             }
 
             @Override
-            public void onComplete(String typeName) {
+            public void onComplete(String typeName, ClassLoader classLoader) {
                 printStream.println(PREFIX + " COMPLETE " + typeName);
             }
 
@@ -1164,30 +1194,30 @@ public interface AgentBuilder {
             }
 
             @Override
-            public void onTransformation(TypeDescription typeDescription, DynamicType dynamicType) {
+            public void onTransformation(TypeDescription typeDescription, ClassLoader classLoader, DynamicType dynamicType) {
                 for (Listener listener : listeners) {
-                    listener.onTransformation(typeDescription, dynamicType);
+                    listener.onTransformation(typeDescription, classLoader, dynamicType);
                 }
             }
 
             @Override
-            public void onIgnored(TypeDescription typeDescription) {
+            public void onIgnored(TypeDescription typeDescription, ClassLoader classLoader) {
                 for (Listener listener : listeners) {
-                    listener.onIgnored(typeDescription);
+                    listener.onIgnored(typeDescription, classLoader);
                 }
             }
 
             @Override
-            public void onError(String typeName, Throwable throwable) {
+            public void onError(String typeName, ClassLoader classLoader, Throwable throwable) {
                 for (Listener listener : listeners) {
-                    listener.onError(typeName, throwable);
+                    listener.onError(typeName, classLoader, throwable);
                 }
             }
 
             @Override
-            public void onComplete(String typeName) {
+            public void onComplete(String typeName, ClassLoader classLoader) {
                 for (Listener listener : listeners) {
-                    listener.onComplete(typeName);
+                    listener.onComplete(typeName, classLoader);
                 }
             }
 
@@ -2091,9 +2121,9 @@ public interface AgentBuilder {
                             classDefinitions.add(entry.resolve(binaryLocator.classFileLocator(entry.getType().getClassLoader())));
                         } catch (Throwable throwable) {
                             try {
-                                listener.onError(typeDescription.getName(), throwable);
+                                listener.onError(typeDescription.getName(), entry.getType().getClassLoader(), throwable);
                             } finally {
-                                listener.onComplete(typeDescription.getName());
+                                listener.onComplete(typeDescription.getName(), entry.getType().getClassLoader());
                             }
                         }
                     }
@@ -3991,9 +4021,9 @@ public interface AgentBuilder {
                         if (!instrumentation.isModifiableClass(type) || !collector.consider(type, ignoredTypeMatcher)) {
                             try {
                                 try {
-                                    listener.onIgnored(typeDescription);
+                                    listener.onIgnored(typeDescription, type.getClassLoader());
                                 } finally {
-                                    listener.onComplete(typeDescription.getName());
+                                    listener.onComplete(typeDescription.getName(), type.getClassLoader());
                                 }
                             } catch (Throwable ignored) {
                                 // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -4002,9 +4032,9 @@ public interface AgentBuilder {
                     } catch (Throwable throwable) {
                         try {
                             try {
-                                listener.onError(typeDescription.getName(), throwable);
+                                listener.onError(typeDescription.getName(), type.getClassLoader(), throwable);
                             } finally {
-                                listener.onComplete(typeDescription.getName());
+                                listener.onComplete(typeDescription.getName(), type.getClassLoader());
                             }
                         } catch (Throwable ignored) {
                             // Ignore exceptions that are thrown by listeners to mimic the behavior of a transformation.
@@ -4378,12 +4408,19 @@ public interface AgentBuilder {
                     private final TypeDescription typeDescription;
 
                     /**
+                     * The unresolved type's class loader.
+                     */
+                    private final ClassLoader classLoader;
+
+                    /**
                      * Creates a new unresolved resolution.
                      *
                      * @param typeDescription The type that is not transformed.
+                     * @param classLoader     The unresolved type's class loader.
                      */
-                    protected Unresolved(TypeDescription typeDescription) {
+                    protected Unresolved(TypeDescription typeDescription, ClassLoader classLoader) {
                         this.typeDescription = typeDescription;
+                        this.classLoader = classLoader;
                     }
 
                     @Override
@@ -4400,25 +4437,31 @@ public interface AgentBuilder {
                                         BootstrapInjectionStrategy bootstrapInjectionStrategy,
                                         AccessControlContext accessControlContext,
                                         Listener listener) {
-                        listener.onIgnored(typeDescription);
+                        listener.onIgnored(typeDescription, classLoader);
                         return NO_TRANSFORMATION;
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && typeDescription.equals(((Unresolved) other).typeDescription);
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        Unresolved that = (Unresolved) object;
+                        if (!typeDescription.equals(that.typeDescription)) return false;
+                        return classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null;
                     }
 
                     @Override
                     public int hashCode() {
-                        return typeDescription.hashCode();
+                        int result = typeDescription.hashCode();
+                        result = 31 * result + (classLoader != null ? classLoader.hashCode() : 0);
+                        return result;
                     }
 
                     @Override
                     public String toString() {
                         return "AgentBuilder.Default.Transformation.Resolution.Unresolved{" +
                                 "typeDescription=" + typeDescription +
+                                ", classLoader=" + classLoader +
                                 '}';
                     }
                 }
@@ -4440,7 +4483,7 @@ public interface AgentBuilder {
                                           Class<?> classBeingRedefined,
                                           ProtectionDomain protectionDomain,
                                           RawMatcher ignoredTypeMatcher) {
-                    return new Resolution.Unresolved(typeDescription);
+                    return new Resolution.Unresolved(typeDescription, classLoader);
                 }
 
                 @Override
@@ -4484,7 +4527,7 @@ public interface AgentBuilder {
                     return !ignoredTypeMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
                             && rawMatcher.matches(typeDescription, classLoader, classBeingRedefined, protectionDomain)
                             ? new Resolution(typeDescription, classLoader, protectionDomain, transformer)
-                            : new Transformation.Resolution.Unresolved(typeDescription);
+                            : new Transformation.Resolution.Unresolved(typeDescription, classLoader);
                 }
 
                 @Override
@@ -4575,7 +4618,7 @@ public interface AgentBuilder {
                                 classLoader,
                                 protectionDomain,
                                 accessControlContext));
-                        listener.onTransformation(typeDescription, dynamicType);
+                        listener.onTransformation(typeDescription, classLoader, dynamicType);
                         return dynamicType.getBytes();
                     }
 
@@ -4736,7 +4779,7 @@ public interface AgentBuilder {
                             return resolution;
                         }
                     }
-                    return new Resolution.Unresolved(typeDescription);
+                    return new Resolution.Unresolved(typeDescription, classLoader);
                 }
 
                 @Override
@@ -4880,10 +4923,10 @@ public interface AgentBuilder {
                             accessControlContext,
                             listener);
                 } catch (Throwable throwable) {
-                    listener.onError(binaryTypeName, throwable);
+                    listener.onError(binaryTypeName, classLoader, throwable);
                     return NO_TRANSFORMATION;
                 } finally {
-                    listener.onComplete(binaryTypeName);
+                    listener.onComplete(binaryTypeName, classLoader);
                 }
             }
 

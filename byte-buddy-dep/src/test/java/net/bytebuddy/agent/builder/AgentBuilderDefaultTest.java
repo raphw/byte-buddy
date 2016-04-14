@@ -131,8 +131,8 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -165,8 +165,8 @@ public class AgentBuilderDefaultTest {
                 .type(ElementMatchers.any()).and(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -199,8 +199,8 @@ public class AgentBuilderDefaultTest {
                 .type(none()).or(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -232,8 +232,8 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -267,8 +267,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -297,8 +297,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -318,7 +318,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        doThrow(new RuntimeException()).when(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
+        doThrow(new RuntimeException()).when(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
@@ -329,8 +329,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -350,7 +350,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRetransformClassesSupported()).thenReturn(true);
-        doThrow(new RuntimeException()).when(listener).onComplete(REDEFINED.getName());
+        doThrow(new RuntimeException()).when(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
@@ -361,8 +361,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, true);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -433,8 +433,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -463,8 +463,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -496,8 +496,8 @@ public class AgentBuilderDefaultTest {
                 .ignore(ignoredTypes)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -533,8 +533,8 @@ public class AgentBuilderDefaultTest {
                 .ignore(ignoredTypes, ignoredClassLoaders)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -569,8 +569,8 @@ public class AgentBuilderDefaultTest {
                 .ignore(ElementMatchers.any()).and(ignoredTypes)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -603,8 +603,8 @@ public class AgentBuilderDefaultTest {
                 .ignore(none()).or(ignoredTypes)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -625,7 +625,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
-        doThrow(new RuntimeException()).when(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
+        doThrow(new RuntimeException()).when(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
@@ -636,8 +636,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -657,7 +657,7 @@ public class AgentBuilderDefaultTest {
                 .thenReturn(false);
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(instrumentation.isRedefineClassesSupported()).thenReturn(true);
-        doThrow(new RuntimeException()).when(listener).onComplete(REDEFINED.getName());
+        doThrow(new RuntimeException()).when(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
@@ -668,8 +668,8 @@ public class AgentBuilderDefaultTest {
                 .with(accessControlContext)
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verify(instrumentation).isModifiableClass(REDEFINED);
@@ -747,8 +747,8 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX),
                 nullValue(byte[].class));
-        verify(listener).onError(REDEFINED.getName(), exception);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -772,8 +772,8 @@ public class AgentBuilderDefaultTest {
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), REDEFINED, REDEFINED.getProtectionDomain(), QUX),
                 nullValue(byte[].class));
-        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED));
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onIgnored(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader());
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -807,8 +807,8 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         assertThat(classFileTransformer.transform(REDEFINED.getClassLoader(), REDEFINED.getName(), null, REDEFINED.getProtectionDomain(), QUX), is(BAZ));
-        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), dynamicType);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onTransformation(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), dynamicType);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
         verify(instrumentation).addTransformer(classFileTransformer, false);
         verifyNoMoreInteractions(instrumentation);
@@ -844,8 +844,8 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, false);
-        verify(listener).onError(REDEFINED.getName(), exception);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
     }
 
@@ -868,8 +868,8 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, true);
-        verify(listener).onError(REDEFINED.getName(), exception);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
     }
 
@@ -881,7 +881,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(exception);
-        doThrow(new RuntimeException()).when(listener).onError(REDEFINED.getName(), exception);
+        doThrow(new RuntimeException()).when(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
@@ -893,8 +893,8 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, false);
-        verify(listener).onError(REDEFINED.getName(), exception);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
     }
 
@@ -906,7 +906,7 @@ public class AgentBuilderDefaultTest {
         when(instrumentation.isModifiableClass(REDEFINED)).thenReturn(true);
         when(rawMatcher.matches(new TypeDescription.ForLoadedType(REDEFINED), REDEFINED.getClassLoader(), REDEFINED, REDEFINED.getProtectionDomain()))
                 .thenThrow(exception);
-        doThrow(new RuntimeException()).when(listener).onError(REDEFINED.getName(), exception);
+        doThrow(new RuntimeException()).when(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
         ClassFileTransformer classFileTransformer = new AgentBuilder.Default(byteBuddy)
                 .with(initializationStrategy)
                 .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
@@ -918,8 +918,8 @@ public class AgentBuilderDefaultTest {
                 .type(rawMatcher).transform(transformer)
                 .installOn(instrumentation);
         verify(instrumentation).addTransformer(classFileTransformer, true);
-        verify(listener).onError(REDEFINED.getName(), exception);
-        verify(listener).onComplete(REDEFINED.getName());
+        verify(listener).onError(REDEFINED.getName(), REDEFINED.getClassLoader(), exception);
+        verify(listener).onComplete(REDEFINED.getName(), REDEFINED.getClassLoader());
         verifyNoMoreInteractions(listener);
     }
 
