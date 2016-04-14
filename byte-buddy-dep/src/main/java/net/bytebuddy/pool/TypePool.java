@@ -7255,6 +7255,11 @@ public interface TypePool {
         protected class TypeExtractor extends ClassVisitor {
 
             /**
+             * A mask that cuts off pseudo flags beyond the second byte that are inserted by ASM.
+             */
+            private static final int REAL_MODIFIER_MASK = Short.MAX_VALUE;
+
+            /**
              * A mapping of the super types' type annotation tokens by their indices.
              */
             private final Map<Integer, Map<String, List<LazyTypeDescription.AnnotationToken>>> superTypeAnnotationTokens;
@@ -7349,7 +7354,7 @@ public interface TypePool {
                               String genericSignature,
                               String superClassName,
                               String[] interfaceName) {
-                this.modifiers = modifiers;
+                this.modifiers = modifiers & REAL_MODIFIER_MASK;
                 this.internalName = internalName;
                 this.genericSignature = genericSignature;
                 this.superClassName = superClassName;
@@ -7368,7 +7373,7 @@ public interface TypePool {
             @Override
             public void visitInnerClass(String internalName, String outerName, String innerName, int modifiers) {
                 if (internalName.equals(this.internalName)) {
-                    this.modifiers = modifiers;
+                    this.modifiers = modifiers & REAL_MODIFIER_MASK;
                     if (innerName == null) {
                         anonymousType = true;
                     }
@@ -7418,14 +7423,14 @@ public interface TypePool {
 
             @Override
             public FieldVisitor visitField(int modifiers, String internalName, String descriptor, String genericSignature, Object defaultValue) {
-                return new FieldExtractor(modifiers, internalName, descriptor, genericSignature);
+                return new FieldExtractor(modifiers & REAL_MODIFIER_MASK, internalName, descriptor, genericSignature);
             }
 
             @Override
             public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String genericSignature, String[] exceptionName) {
                 return internalName.equals(MethodDescription.TYPE_INITIALIZER_INTERNAL_NAME)
                         ? IGNORE_METHOD
-                        : new MethodExtractor(modifiers, internalName, descriptor, genericSignature, exceptionName);
+                        : new MethodExtractor(modifiers & REAL_MODIFIER_MASK, internalName, descriptor, genericSignature, exceptionName);
             }
 
             /**
