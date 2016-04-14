@@ -51,7 +51,7 @@ public interface MethodDescription extends TypeVariableSource,
     /**
      * The type initializer of any representation of a type initializer.
      */
-    int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_SYNTHETIC;
+    int TYPE_INITIALIZER_MODIFIER = Opcodes.ACC_STATIC;
 
     /**
      * Represents a non-defined default value of an annotation property.

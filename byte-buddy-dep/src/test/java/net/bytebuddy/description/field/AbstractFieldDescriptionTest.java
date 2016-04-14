@@ -1,5 +1,6 @@
 package net.bytebuddy.description.field;
 
+import com.sun.org.apache.bcel.internal.classfile.Synthetic;
 import net.bytebuddy.description.annotation.AnnotationList;
 import net.bytebuddy.description.type.TypeDefinition;
 import net.bytebuddy.description.type.TypeDescription;
@@ -191,6 +192,12 @@ public abstract class AbstractFieldDescriptionTest {
         assertThat(describe(DeprecationSample.class.getDeclaredField("foo")).getActualModifiers(), is(Opcodes.ACC_DEPRECATED | Opcodes.ACC_PRIVATE));
     }
 
+    @Test
+    public void testSyntheticField() throws Exception {
+        assertThat(describe(SyntheticField.class.getDeclaredFields()[0]).getModifiers(), is(SyntheticField.class.getDeclaredFields()[0].getModifiers()));
+        assertThat(describe(SyntheticField.class.getDeclaredFields()[0]).isSynthetic(), is(SyntheticField.class.getDeclaredFields()[0].isSynthetic()));
+    }
+
     @Retention(RetentionPolicy.RUNTIME)
     private @interface SampleAnnotation {
 
@@ -248,5 +255,9 @@ public abstract class AbstractFieldDescriptionTest {
 
         @Deprecated
         private Void foo;
+    }
+
+    private class SyntheticField {
+        /* empty */
     }
 }
