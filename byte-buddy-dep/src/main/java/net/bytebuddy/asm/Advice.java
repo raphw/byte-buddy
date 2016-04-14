@@ -2626,6 +2626,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final String serialized;
 
+                    /**
+                     * Creates a target for an offset mapping that references a serialized value.
+                     *
+                     * @param target     The target type.
+                     * @param serialized The serialized form of the supplied form encoded as a string to be stored in the constant pool.
+                     */
                     protected ForSerializedObject(TypeDescription target, String serialized) {
                         this.target = target;
                         this.serialized = serialized;
