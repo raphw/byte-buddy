@@ -4399,9 +4399,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                    /* do nothing */
+                    metaDataHandler.injectCompletionFrame(methodVisitor, false);
                 }
-
 
                 @Override
                 public String toString() {

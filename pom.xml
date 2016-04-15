@@ -46,7 +46,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <code.level>1.8</code.level>
+        <code.level>1.6</code.level>
         <pitest.target>net.bytebuddy</pitest.target>
         <asm.javadoc>http://asm.ow2.org/asm50/javadoc/user/</asm.javadoc>
         <version.asm>5.1</version.asm>
