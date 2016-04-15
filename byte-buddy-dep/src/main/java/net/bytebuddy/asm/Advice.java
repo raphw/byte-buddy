@@ -5859,13 +5859,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 suppressionHandler.bind());
                     }
 
-                    /**
-                     * Returns the additional padding this exit advice implies.
-                     *
-                     * @return The additional padding this exit advice implies.
-                     */
-                    protected abstract StackSize getPadding();
-
                     @Override
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
@@ -5900,11 +5893,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected StackSize getPadding() {
-                            return StackSize.SINGLE;
-                        }
-
-                        @Override
                         public boolean isSkipThrowable() {
                             return false;
                         }
@@ -5935,11 +5923,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                           List<? extends OffsetMapping.Factory> userFactories,
                                                           TypeDescription enterType) {
                             super(adviceMethod, userFactories, enterType);
-                        }
-
-                        @Override
-                        protected StackSize getPadding() {
-                            return StackSize.ZERO;
                         }
 
                         @Override
