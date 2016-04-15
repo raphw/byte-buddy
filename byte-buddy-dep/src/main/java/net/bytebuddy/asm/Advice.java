@@ -4496,14 +4496,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                        onEnd(methodVisitor, metaDataHandler, returnValueProducer, new Label());
+                        writeHandler(methodVisitor, metaDataHandler, returnValueProducer);
                     }
 
                     @Override
                     public void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
                         Label endOfHandler = new Label();
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
-                        onEnd(methodVisitor, metaDataHandler, returnValueProducer, endOfHandler);
+                        writeHandler(methodVisitor, metaDataHandler, returnValueProducer);
+                        methodVisitor.visitLabel(endOfHandler);
                         metaDataHandler.injectCompletionFrame(methodVisitor, false);
                     }
 
@@ -4513,17 +4514,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param methodVisitor       The method visitor to which to write the suppression handler to.
                      * @param metaDataHandler     The meta data handler to apply.
                      * @param returnValueProducer The return value producer to use.
-                     * @param endOfHandler        A label indicating the end of the handler.
                      */
-                    private void onEnd(MethodVisitor methodVisitor,
-                                       MetaDataHandler.ForAdvice metaDataHandler,
-                                       ReturnValueProducer returnValueProducer,
-                                       Label endOfHandler) {
+                    private void writeHandler(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
                         methodVisitor.visitLabel(endOfMethod);
                         metaDataHandler.injectHandlerFrame(methodVisitor);
                         methodVisitor.visitInsn(Opcodes.POP);
                         returnValueProducer.storeDefaultValue(methodVisitor);
-                        methodVisitor.visitLabel(endOfHandler);
                     }
 
                     @Override

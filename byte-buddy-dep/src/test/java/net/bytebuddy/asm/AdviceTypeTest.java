@@ -2,6 +2,7 @@ package net.bytebuddy.asm;
 
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
@@ -75,6 +76,7 @@ public class AdviceTypeTest {
     public void testAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping()
                         .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue(value))
                         .to(advice)
@@ -91,6 +93,7 @@ public class AdviceTypeTest {
     public void testAdviceWithException() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(advice)
+                .visit(DebuggingWrapper.makeDefault())
                 .visit(Advice.withCustomMapping()
                         .bind(CustomAnnotation.class, new Advice.DynamicValue.ForFixedValue(value))
                         .to(advice)
