@@ -1254,6 +1254,31 @@ public class AdviceTest {
         Advice.withCustomMapping().bind(Annotation.class, null);
     }
 
+    @Test(expected = IllegalStateException.class)
+    public void testInlineAdviceCannotWriteParameter() throws Exception {
+        Advice.to(IllegalArgumentWritableInlineAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInlineAdviceCannotWriteThis() throws Exception {
+        Advice.to(IllegalThisWritableInlineAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInlineAdviceCannotWriteField() throws Exception {
+        Advice.to(IllegalFieldWritableInlineAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInlineAdviceCannotWriteThrow() throws Exception {
+        Advice.to(IllegalThrowWritableInlineAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInlineAdviceCannotWriteReturn() throws Exception {
+        Advice.to(IllegalThrowWritableInlineAdvice.class);
+    }
+
     @Test
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
@@ -2362,6 +2387,51 @@ public class AdviceTest {
         @Advice.OnMethodExit
         private static void exit(@Advice.Origin String value) {
             value = null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalArgumentWritableInlineAdvice {
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Argument(value = 0, readOnly = false) Object argument) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalThisWritableInlineAdvice {
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.This(readOnly = false) Object argument) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalThrowWritableInlineAdvice {
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Thrown(readOnly = false) Object argument) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalReturnWritableInlineAdvice {
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Return(readOnly = false) Object argument) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class IllegalFieldWritableInlineAdvice {
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(@Advice.Argument(value = 0, readOnly = false) Object argument) {
+            throw new AssertionError();
         }
     }
 
