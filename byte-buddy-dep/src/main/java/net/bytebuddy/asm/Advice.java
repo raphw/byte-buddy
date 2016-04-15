@@ -93,23 +93,41 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  */
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
-    private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
-
-    private static final MethodDescription.InDefinedShape SUPPRESS_EXIT;
-
+    /**
+     * A reference to the {@link OnMethodEnter#inline()} method.
+     */
     private static final MethodDescription.InDefinedShape INLINE_ENTER;
 
+    /**
+     * A reference to the {@link OnMethodEnter#suppress()} method.
+     */
+    private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
+
+    /**
+     * A reference to the {@link OnMethodExit#inline()} method.
+     */
     private static final MethodDescription.InDefinedShape INLINE_EXIT;
 
+    /**
+     * A reference to the {@link OnMethodExit#suppress()} method.
+     */
+    private static final MethodDescription.InDefinedShape SUPPRESS_EXIT;
+
+    /**
+     * A reference to the {@link OnMethodExit#onThrowable()} method.
+     */
     private static final MethodDescription.InDefinedShape ON_THROWABLE;
 
+    /*
+     * Extracts the annotation values for the enter and exit advice annotations.
+     */
     static {
         MethodList<MethodDescription.InDefinedShape> enter = new TypeDescription.ForLoadedType(OnMethodEnter.class).getDeclaredMethods();
-        SUPPRESS_ENTER = enter.filter(named("suppress")).getOnly();
         INLINE_ENTER = enter.filter(named("inline")).getOnly();
+        SUPPRESS_ENTER = enter.filter(named("suppress")).getOnly();
         MethodList<MethodDescription.InDefinedShape> exit = new TypeDescription.ForLoadedType(OnMethodExit.class).getDeclaredMethods();
-        SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
         INLINE_EXIT = exit.filter(named("inline")).getOnly();
+        SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
         ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
     }
 
@@ -5929,14 +5947,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodEnter {
 
+        boolean inline() default true;
+
         /**
          * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
          *
          * @return The type of {@link Throwable} to suppress.
          */
         Class<? extends Throwable> suppress() default NoSuppression.class;
-
-        boolean inline() default true;
     }
 
     /**
@@ -5961,14 +5979,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodExit {
 
+        boolean inline() default true;
+
         /**
          * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
          *
          * @return The type of {@link Throwable} to suppress.
          */
         Class<? extends Throwable> suppress() default NoSuppression.class;
-
-        boolean inline() default true;
 
         /**
          * Indicates that the advice method should also be called when a method terminates exceptionally. This property must
