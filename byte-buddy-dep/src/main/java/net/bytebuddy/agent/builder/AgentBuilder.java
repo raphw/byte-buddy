@@ -390,7 +390,7 @@ public interface AgentBuilder {
     interface Matchable<T extends Matchable<T>> {
 
         /**
-         * Defines a matching that is positive if the previous matcher and the supplied matcher are matched. When matching a
+         * Defines a matching that is positive if both the previous matcher and the supplied matcher are matched. When matching a
          * type, class loaders are not considered.
          *
          * @param typeMatcher A matcher for the type being matched.
@@ -399,7 +399,7 @@ public interface AgentBuilder {
         T and(ElementMatcher<? super TypeDescription> typeMatcher);
 
         /**
-         * Defines a matching that is positive if the previous matcher and the supplied matcher are matched.
+         * Defines a matching that is positive if both the previous matcher and the supplied matcher are matched.
          *
          * @param typeMatcher        A matcher for the type being matched.
          * @param classLoaderMatcher A matcher for the type's class loader.
@@ -408,7 +408,7 @@ public interface AgentBuilder {
         T and(ElementMatcher<? super TypeDescription> typeMatcher, ElementMatcher<? super ClassLoader> classLoaderMatcher);
 
         /**
-         * Defines a matching that is positive if the previous matcher and the supplied matcher are matched.
+         * Defines a matching that is positive if both the previous matcher and the supplied matcher are matched.
          *
          * @param rawMatcher A raw matcher for the type being matched.
          * @return A chained matcher.
