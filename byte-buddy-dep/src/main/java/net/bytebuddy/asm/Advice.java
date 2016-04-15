@@ -5519,7 +5519,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A bound advice method that copies the code by first extracting the exception table and later appending the
                  * code of the method without copying any meta data.
                  */
-                protected abstract static class AdviceMethodWriter implements Bound {
+                protected abstract static class AdviceMethodWriter implements Bound, SuppressionHandler.ReturnValueProducer {
 
                     private static final int EMPTY = 0;
 
@@ -5528,7 +5528,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * The instrumented method.
                      */
-                    private final MethodDescription.InDefinedShape instrumentedMethod;
+                    protected final MethodDescription.InDefinedShape instrumentedMethod;
 
                     private final List<OffsetMapping.Target> offsetMappings;
 
@@ -5547,22 +5547,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final SuppressionHandler.Bound suppressionHandler;
 
-                    private final SuppressionHandler.ReturnValueProducer returnValueProducer; // TODO!
-
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  MetaDataHandler.ForAdvice metaDataHandler,
-                                                 SuppressionHandler.Bound suppressionHandler,
-                                                 SuppressionHandler.ReturnValueProducer returnValueProducer) {
+                                                 SuppressionHandler.Bound suppressionHandler) {
                         this.adviceMethod = adviceMethod;
                         this.instrumentedMethod = instrumentedMethod;
                         this.offsetMappings = offsetMappings;
                         this.methodVisitor = methodVisitor;
                         this.metaDataHandler = metaDataHandler;
                         this.suppressionHandler = suppressionHandler;
-                        this.returnValueProducer = returnValueProducer;
                     }
 
                     @Override
@@ -5584,7 +5580,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
                                 false);
-                        suppressionHandler.onEnd(methodVisitor, metaDataHandler, returnValueProducer);
+                        suppressionHandler.onEnd(methodVisitor, metaDataHandler, this);
                         onReturn();
                         metaDataHandler.recordMaxima(currentStackSize, EMPTY);
                     }
@@ -5608,9 +5604,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                  List<OffsetMapping.Target> offsetMappings,
                                                  MethodVisitor methodVisitor,
                                                  MetaDataHandler.ForAdvice metaDataHandler,
-                                                 SuppressionHandler.Bound suppressionHandler,
-                                                 SuppressionHandler.ReturnValueProducer returnValueProducer) {
-                            super(adviceMethod, instrumentedMethod, offsetMappings, methodVisitor, metaDataHandler, suppressionHandler, returnValueProducer);
+                                                 SuppressionHandler.Bound suppressionHandler) {
+                            super(adviceMethod, instrumentedMethod, offsetMappings, methodVisitor, metaDataHandler, suppressionHandler);
                         }
 
                         @Override
@@ -5631,6 +5626,30 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor.visitIntInsn(Opcodes.ASTORE, adviceMethod.getStackSize());
                             }
                         }
+
+                        @Override
+                        public void makeDefault(MethodVisitor methodVisitor) {
+                            if (adviceMethod.getReturnType().represents(boolean.class)
+                                    || adviceMethod.getReturnType().represents(byte.class)
+                                    || adviceMethod.getReturnType().represents(short.class)
+                                    || adviceMethod.getReturnType().represents(char.class)
+                                    || adviceMethod.getReturnType().represents(int.class)) {
+                                methodVisitor.visitInsn(Opcodes.ICONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
+                            } else if (adviceMethod.getReturnType().represents(long.class)) {
+                                methodVisitor.visitInsn(Opcodes.LCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
+                            } else if (adviceMethod.getReturnType().represents(float.class)) {
+                                methodVisitor.visitInsn(Opcodes.FCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
+                            } else if (adviceMethod.getReturnType().represents(double.class)) {
+                                methodVisitor.visitInsn(Opcodes.DCONST_0);
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
+                            } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                                methodVisitor.visitInsn(Opcodes.ACONST_NULL);
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
+                            }
+                        }
                     }
 
                     protected static class ForMethodExit extends AdviceMethodWriter {
@@ -5640,13 +5659,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                 List<OffsetMapping.Target> offsetMappings,
                                                 MethodVisitor methodVisitor,
                                                 MetaDataHandler.ForAdvice metaDataHandler,
-                                                SuppressionHandler.Bound suppressionHandler,
-                                                SuppressionHandler.ReturnValueProducer returnValueProducer) {
-                            super(adviceMethod, instrumentedMethod, offsetMappings, methodVisitor, metaDataHandler, suppressionHandler, returnValueProducer);
+                                                SuppressionHandler.Bound suppressionHandler) {
+                            super(adviceMethod, instrumentedMethod, offsetMappings, methodVisitor, metaDataHandler, suppressionHandler);
                         }
 
                         @Override
                         protected void onReturn() {
+                            /* do nothing */
+                        }
+
+                        @Override
+                        public void makeDefault(MethodVisitor methodVisitor) {
                             /* do nothing */
                         }
                     }
@@ -5706,8 +5729,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 offsetMappings,
                                 methodVisitor,
                                 metaDataHandler.bindEntry(adviceMethod),
-                                suppressionHandler.bind(),
-                                null); // TODO
+                                suppressionHandler.bind());
                     }
 
                     @Override
@@ -5800,8 +5822,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 offsetMappings,
                                 methodVisitor,
                                 metaDataHandler.bindExit(adviceMethod),
-                                suppressionHandler.bind(),
-                                null); // TODO
+                                suppressionHandler.bind());
                     }
 
                     /**
