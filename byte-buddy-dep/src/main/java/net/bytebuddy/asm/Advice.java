@@ -4111,11 +4111,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             interface ReturnValueProducer {
 
                 /**
-                 * Sets a default return value for an advised method.
+                 * Stores a default return value for the advised method.
                  *
                  * @param methodVisitor The instrumented method's method visitor.
                  */
-                void makeDefault(MethodVisitor methodVisitor);
+                void storeDefaultValue(MethodVisitor methodVisitor);
             }
 
             /**
@@ -4298,7 +4298,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitLabel(endOfMethod);
                         metaDataHandler.injectHandlerFrame(methodVisitor);
                         methodVisitor.visitInsn(Opcodes.POP);
-                        returnValueProducer.makeDefault(methodVisitor);
+                        returnValueProducer.storeDefaultValue(methodVisitor);
                         methodVisitor.visitLabel(endOfHandler);
                     }
 
@@ -5294,7 +5294,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void makeDefault(MethodVisitor methodVisitor) {
+                    public void storeDefaultValue(MethodVisitor methodVisitor) {
                         if (adviceMethod.getReturnType().represents(boolean.class)
                                 || adviceMethod.getReturnType().represents(byte.class)
                                 || adviceMethod.getReturnType().represents(short.class)
@@ -5390,7 +5390,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public void makeDefault(MethodVisitor methodVisitor) {
+                    public void storeDefaultValue(MethodVisitor methodVisitor) {
                         /* do nothing */
                     }
 
@@ -5651,7 +5651,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void makeDefault(MethodVisitor methodVisitor) {
+                        public void storeDefaultValue(MethodVisitor methodVisitor) {
                             if (adviceMethod.getReturnType().represents(boolean.class)
                                     || adviceMethod.getReturnType().represents(byte.class)
                                     || adviceMethod.getReturnType().represents(short.class)
@@ -5703,7 +5703,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        public void makeDefault(MethodVisitor methodVisitor) {
+                        public void storeDefaultValue(MethodVisitor methodVisitor) {
                             /* do nothing */
                         }
                     }
