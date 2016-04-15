@@ -5493,7 +5493,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   MethodVisitor methodVisitor,
                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
                                   ClassReader classReader) { // TODO: make reader lazy.
-                    // TODO: meta data handler needs to be resolved too
                     return resolve(instrumentedMethod, methodVisitor, metaDataHandler);
                 }
 
@@ -5521,6 +5520,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * code of the method without copying any meta data.
                  */
                 protected abstract static class AdviceMethodWriter implements Bound {
+
+                    private static final int EMPTY = 0;
 
                     protected final MethodDescription.InDefinedShape adviceMethod;
 
@@ -5574,8 +5575,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         suppressionHandler.onStart(methodVisitor, metaDataHandler);
                         int index = 0, currentStackSize = 0, padding = 0;
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
-                            currentStackSize += adviceMethod.getParameters().get(index++).getType().getStackSize().getSize();
-                            padding = Math.max(padding, currentStackSize + offsetMapping.resolveAccess(methodVisitor, -1)); // TODO
+                            TypeDescription typeDescription = adviceMethod.getParameters().get(index++).getType().asErasure();
+                            currentStackSize += typeDescription.getStackSize().getSize(); // TODO
+                            padding = Math.max(padding, currentStackSize + offsetMapping.resolveAccess(methodVisitor, Type.getType(typeDescription.getDescriptor()).getOpcode(Opcodes.ILOAD)));
                         }
                         methodVisitor.visitMethodInsn(Opcodes.ACC_STATIC,
                                 adviceMethod.getDeclaringType().getInternalName(),
@@ -5584,7 +5586,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 false);
                         suppressionHandler.onEnd(methodVisitor, metaDataHandler, returnValueProducer);
                         onReturn();
-                        metaDataHandler.recordMaxima(currentStackSize, 0); // TODO
+                        metaDataHandler.recordMaxima(currentStackSize, EMPTY);
                     }
 
                     protected abstract void onReturn();
@@ -5634,12 +5636,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static class ForMethodExit extends AdviceMethodWriter {
 
                         protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
-                                                 MethodDescription.InDefinedShape instrumentedMethod,
-                                                 List<OffsetMapping.Target> offsetMappings,
-                                                 MethodVisitor methodVisitor,
-                                                 MetaDataHandler.ForAdvice metaDataHandler,
-                                                 SuppressionHandler.Bound suppressionHandler,
-                                                 SuppressionHandler.ReturnValueProducer returnValueProducer) {
+                                                MethodDescription.InDefinedShape instrumentedMethod,
+                                                List<OffsetMapping.Target> offsetMappings,
+                                                MethodVisitor methodVisitor,
+                                                MetaDataHandler.ForAdvice metaDataHandler,
+                                                SuppressionHandler.Bound suppressionHandler,
+                                                SuppressionHandler.ReturnValueProducer returnValueProducer) {
                             super(adviceMethod, instrumentedMethod, offsetMappings, methodVisitor, metaDataHandler, suppressionHandler, returnValueProducer);
                         }
 
