@@ -209,14 +209,16 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Matches a type being loaded in order to apply the supplied
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
-     * </p>
+     * Matches a type being loaded in order to apply the supplied {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * If several matchers positively match a type only the latest registered matcher is considered for transformation.
      * <p>
-     * <b>Note</b>: When applying a matcher, regard the performance implications by
-     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
-     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to exclude
-     * class loaders such as for example the bootstrap class loader by using
+     * <p>
+     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
+     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * </p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
+     * matcher is applied first such that it makes sense to ignore name spaces that are irrelevant to instrumentation. If possible, it is
+     * also recommended, to exclude class loaders such as for example the bootstrap class loader by using
      * {@link AgentBuilder#type(ElementMatcher, ElementMatcher)} instead.
      * </p>
      *
@@ -231,13 +233,17 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Matches a type being loaded in order to apply the supplied
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * Matches a type being loaded in order to apply the supplied {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * If several matchers positively match a type only the latest registered matcher is considered for transformation.
      * </p>
      * <p>
-     * <b>Note</b>: When applying a matcher, regard the performance implications by
-     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
-     * to ignore name spaces that are irrelevant to instrumentation.
+     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
+     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
+     * matcher is applied first such that it makes sense to ignore name spaces that are irrelevant to instrumentation. If possible, it
+     * is also recommended, to exclude class loaders such as for example the bootstrap class loader.
      * </p>
      *
      * @param typeMatcher        An {@link net.bytebuddy.matcher.ElementMatcher} that is applied on the type being
@@ -256,19 +262,21 @@ public interface AgentBuilder {
 
     /**
      * <p>
-     * Matches a type being loaded in order to apply the supplied
-     * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * Matches a type being loaded in order to apply the supplied {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s before loading this type.
+     * If several matchers positively match a type only the latest registered matcher is considered for transformation.
      * </p>
      * <p>
-     * <b>Note</b>: When applying a matcher, regard the performance implications by
-     * {@link AgentBuilder#ignore(ElementMatcher)}. The former matcher is applied first such that it makes sense
-     * to ignore name spaces that are irrelevant to instrumentation. If possible, it is also recommended, to
-     * exclude class loaders such as for example the bootstrap class loader.
+     * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
+     * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
+     * </p>
+     * <p>
+     * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
+     * matcher is applied first such that it makes sense to ignore name spaces that are irrelevant to instrumentation. If possible, it
+     * is also recommended, to exclude class loaders such as for example the bootstrap class loader.
      * </p>
      *
-     * @param matcher A matcher that decides if the entailed
-     *                {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be applied for a type that
-     *                is being loaded.
+     * @param matcher A matcher that decides if the entailed {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s should be
+     *                applied for a type that is being loaded.
      * @return A definable that represents this agent builder which allows for the definition of one or several
      * {@link net.bytebuddy.agent.builder.AgentBuilder.Transformer}s to be applied when the given {@code matcher}
      * indicates a match.
@@ -279,6 +287,10 @@ public interface AgentBuilder {
      * <p>
      * Excludes any type that is matched by the provided matcher from instrumentation and considers types by all {@link ClassLoader}s.
      * By default, Byte Buddy does not instrument synthetic types and accepts all class loaders.
+     * </p>
+     * <p>
+     * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
+     * any matcher indicates that a type is to be ignored, none of the following chained matchers is executed.
      * </p>
      * <p>
      * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
@@ -301,6 +313,10 @@ public interface AgentBuilder {
      * By default, Byte Buddy does not instrument synthetic types and accepts all class loaders.
      * </p>
      * <p>
+     * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
+     * any matcher indicates that a type is to be ignored, none of the following chained matchers is executed.
+     * </p>
+     * <p>
      * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
      * as possible. Byte Buddy can determine a type's name without parsing its class file and can therefore discard such
      * types with minimal overhead. When a different property of a type - such as for example its modifiers or its annotations
@@ -320,6 +336,10 @@ public interface AgentBuilder {
      * <p>
      * Excludes any type that is matched by the raw matcher provided to this method. By default, Byte Buddy does not
      * instrument synthetic types and accepts all class loaders.
+     * </p>
+     * <p>
+     * When ignoring a type, any subsequently chained matcher is applied after this matcher in the order of their registration. Also, if
+     * any matcher indicates that a type is to be ignored, none of the following chained matchers is executed.
      * </p>
      * <p>
      * <b>Note</b>: For performance reasons, it is recommended to always include a matcher that excludes as many namespaces
@@ -371,7 +391,7 @@ public interface AgentBuilder {
 
         /**
          * Defines a matching that is positive if the previous matcher and the supplied matcher are matched. When matching a
-         * type, all class loaders are accepted.
+         * type, class loaders are not considered.
          *
          * @param typeMatcher A matcher for the type being matched.
          * @return A chained matcher.
@@ -397,7 +417,7 @@ public interface AgentBuilder {
 
         /**
          * Defines a matching that is positive if the previous matcher or the supplied matcher are matched. When matching a
-         * type, all class loaders are accepted.
+         * type, the class loader is not considered.
          *
          * @param typeMatcher A matcher for the type being matched.
          * @return A chained matcher.

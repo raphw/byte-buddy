@@ -7257,7 +7257,7 @@ public interface TypePool {
             /**
              * A mask that cuts off pseudo flags beyond the second byte that are inserted by ASM.
              */
-            private static final int REAL_MODIFIER_MASK = Short.MAX_VALUE;
+            private static final int REAL_MODIFIER_MASK = 0xFFFF;
 
             /**
              * A mapping of the super types' type annotation tokens by their indices.

@@ -542,8 +542,14 @@ public interface DynamicType {
         FieldDefinition.Valuable<T> field(LatentMatcher<? super FieldDescription> matcher);
 
         /**
+         * <p>
          * Specifies to exclude any method that is matched by the supplied matcher from instrumentation. Previously supplied matchers
          * remain valid after supplying a new matcher, i.e. any method that is matched by a previously supplied matcher is always ignored.
+         * </p>
+         * <p>
+         * When ignoring a type, previously registered matchers are applied before this matcher. If a previous matcher indicates that a type
+         * is to be ignored, this matcher is no longer executed.
+         * </p>
          *
          * @param ignoredMethods The matcher for determining what methods to exclude from instrumentation.
          * @return A new builder that is equal to this builder but that is excluding any method that is matched by the supplied matcher from
@@ -552,10 +558,16 @@ public interface DynamicType {
         Builder<T> ignoreAlso(ElementMatcher<? super MethodDescription> ignoredMethods);
 
         /**
+         * <p>
          * Specifies to exclude any method that is matched by the supplied matcher from instrumentation. Previously supplied matchers
          * remain valid after supplying a new matcher, i.e. any method that is matched by a previously supplied matcher is always ignored.
          * Using a latent matcher gives opportunity to resolve an {@link ElementMatcher} based on the instrumented type before applying the
          * matcher.
+         * </p>
+         * <p>
+         * When ignoring a type, previously registered matchers are applied before this matcher. If a previous matcher indicates that a type
+         * is to be ignored, this matcher is no longer executed.
+         * </p>
          *
          * @param ignoredMethods The matcher for determining what methods to exclude from instrumentation.
          * @return A new builder that is equal to this builder but that is excluding any method that is matched by the supplied matcher from
