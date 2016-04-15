@@ -5572,7 +5572,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         int index = 0, currentStackSize = 0, padding = 0;
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
                             TypeDescription typeDescription = adviceMethod.getParameters().get(index++).getType().asErasure();
-                            currentStackSize += typeDescription.getStackSize().getSize(); // TODO
+                            currentStackSize += typeDescription.getStackSize().getSize(); // TODO: rather refactor handlers to only allow for given type?
                             padding = Math.max(padding, currentStackSize + offsetMapping.resolveAccess(methodVisitor, Type.getType(typeDescription.getDescriptor()).getOpcode(Opcodes.ILOAD)));
                         }
                         methodVisitor.visitMethodInsn(Opcodes.ACC_STATIC,
@@ -5580,13 +5580,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
                                 false);
-                        // TODO: jump over handler; does handler exist?
+                        onAfterCall();
+                        // TODO: Avoid handler if no handler is present?
+                        Label endOfMethod = new Label();
+                        methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfMethod);
                         suppressionHandler.onEnd(methodVisitor, metaDataHandler, this);
-                        onReturn();
+                        methodVisitor.visitLabel(endOfMethod);
+                        metaDataHandler.injectCompletionFrame(methodVisitor, false);
                         metaDataHandler.recordMaxima(currentStackSize, EMPTY);
                     }
 
-                    protected abstract void onReturn();
+                    protected abstract void onAfterCall();
 
                     @Override
                     public String toString() {
@@ -5610,7 +5614,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected void onReturn() {
+                        protected void onAfterCall() {
                             if (adviceMethod.getReturnType().represents(boolean.class)
                                     || adviceMethod.getReturnType().represents(byte.class)
                                     || adviceMethod.getReturnType().represents(short.class)
@@ -5665,8 +5669,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         }
 
                         @Override
-                        protected void onReturn() {
-                            /* do nothing */
+                        protected void onAfterCall() {
+                            switch (adviceMethod.getReturnType().getStackSize()) {
+                                case ZERO:
+                                    return;
+                                case SINGLE:
+                                    methodVisitor.visitInsn(Opcodes.POP);
+                                    return;
+                                case DOUBLE:
+                                    methodVisitor.visitInsn(Opcodes.POP2);
+                                    return;
+                                default:
+                                    throw new IllegalStateException(); // TODO
+                            }
                         }
 
                         @Override
