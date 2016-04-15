@@ -174,6 +174,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return to(new TypeDescription.ForLoadedType(type), classFileLocator);
     }
 
+    /**
+     * Implements advice where every matched method is advised by the given type's advisory methods. Using this method, a non-operational
+     * class file locator is specified for the advice target. This implies that only advice targets with the <i>inline</i> target set
+     * to {@code false} are resolvable by the returned instance.
+     *
+     * @param typeDescription The type declaring the advice.
+     * @return A method visitor wrapper representing the supplied advice.
+     */
     public static Advice to(TypeDescription typeDescription) {
         return to(typeDescription, ClassFileLocator.NoOp.INSTANCE);
     }
@@ -219,8 +227,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
     }
 
+    /**
+     * Locates a dispatcher for the method if available.
+     *
+     * @param type              The annotation type that indicates a given form of advice that is currently resolved.
+     * @param property          An annotation property that indicates if the advice method should be inlined.
+     * @param dispatcher        Any previous dispatcher that was discovered or {@code null} if no such dispatcher was yet found.
+     * @param methodDescription The method description that is considered as an advice method.
+     * @return A resolved dispatcher or {@code null} if no dispatcher was resolved.
+     */
     private static Dispatcher.Unresolved locate(Class<? extends Annotation> type,
-                                                MethodDescription.InDefinedShape receiver,
+                                                MethodDescription.InDefinedShape property,
                                                 Dispatcher.Unresolved dispatcher,
                                                 MethodDescription.InDefinedShape methodDescription) {
         AnnotationDescription annotation = methodDescription.getDeclaredAnnotations().ofType(type);
@@ -231,7 +248,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         } else if (!methodDescription.isStatic()) {
             throw new IllegalStateException("Advice for " + methodDescription + " is not static");
         } else {
-            return annotation.getValue(receiver, Boolean.class)
+            return annotation.getValue(property, Boolean.class)
                     ? new Dispatcher.Inlining(methodDescription)
                     : new Dispatcher.Delegating(methodDescription);
         }
@@ -1628,12 +1645,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface Unresolved extends Dispatcher {
 
+            /**
+             * Indicates that this dispatcher requires access to the class file declaring the advice method.
+             *
+             * @return {@code true} if this dispatcher requires access to the advice method's class file.
+             */
             boolean isBinary();
 
             /**
              * Resolves this dispatcher as a dispatcher for entering a method.
              *
-             * @param userFactories A list of custom factories for binding parameters of an advice method.
+             * @param userFactories        A list of custom factories for binding parameters of an advice method.
+             * @param binaryRepresentation An unresolved binary representation of the type containing the advice method.
              * @return This dispatcher as a dispatcher for entering a method.
              */
             Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
@@ -1642,8 +1665,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Resolves this dispatcher as a dispatcher for exiting a method.
              *
-             * @param userFactories A list of custom factories for binding parameters of an advice method.
-             * @param dispatcher    The dispatcher for entering a method.
+             * @param userFactories        A list of custom factories for binding parameters of an advice method.
+             * @param binaryRepresentation An unresolved binary representation of the type containing the advice method.
+             * @param dispatcher           The dispatcher for entering a method.
              * @return This dispatcher as a dispatcher for exiting a method.
              */
             Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
@@ -2851,12 +2875,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected enum Factory implements OffsetMapping.Factory {
 
+                    /**
+                     * A factory that does not allow writing to the mapped parameter.
+                     */
                     READ_ONLY(true),
 
+                    /**
+                     * A factory that allows writing to the mapped parameter.
+                     */
                     READ_WRITE(false);
 
+                    /**
+                     * {@code true} if the parameter is read-only.
+                     */
                     private final boolean readOnly;
 
+                    /**
+                     * Creates a new factory.
+                     *
+                     * @param readOnly {@code true} if the parameter is read-only.
+                     */
                     Factory(boolean readOnly) {
                         this.readOnly = readOnly;
                     }
@@ -2956,12 +2994,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected enum Factory implements OffsetMapping.Factory {
 
+                    /**
+                     * A factory that does not allow writing to the mapped parameter.
+                     */
                     READ_ONLY(true),
 
+                    /**
+                     * A factory that allows writing to the mapped parameter.
+                     */
                     READ_WRITE(false);
 
+                    /**
+                     * {@code true} if the parameter is read-only.
+                     */
                     private final boolean readOnly;
 
+                    /**
+                     * Creates a new factory.
+                     *
+                     * @param readOnly {@code true} if the parameter is read-only.
+                     */
                     Factory(boolean readOnly) {
                         this.readOnly = readOnly;
                     }
@@ -3010,6 +3062,28 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * An offset mapping for a field.
              */
             abstract class ForField implements OffsetMapping {
+
+                /**
+                 * The {@link FieldValue#value()} method.
+                 */
+                private static final MethodDescription.InDefinedShape VALUE;
+
+                /**
+                 * The {@link FieldValue#declaringType()}} method.
+                 */
+                private static final MethodDescription.InDefinedShape DECLARING_TYPE;
+
+                /**
+                 * The {@link FieldValue#readOnly()}} method.
+                 */
+                private static final MethodDescription.InDefinedShape READ_ONLY;
+
+                static {
+                    MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
+                    VALUE = methods.filter(named("value")).getOnly();
+                    DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
+                    READ_ONLY = methods.filter(named("readOnly")).getOnly();
+                }
 
                 /**
                  * The name of the field.
@@ -3174,34 +3248,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected enum Factory implements OffsetMapping.Factory {
 
+                    /**
+                     * A factory that does not allow writing to the mapped parameter.
+                     */
                     READ_ONLY(true),
 
+                    /**
+                     * A factory that allows writing to the mapped parameter.
+                     */
                     READ_WRITE(false);
 
                     /**
-                     * The {@link FieldValue#value()} method.
+                     * {@code true} if the parameter is read-only.
                      */
-                    private static final MethodDescription.InDefinedShape VALUE;
-
-                    /**
-                     * The {@link FieldValue#declaringType()}} method.
-                     */
-                    private static final MethodDescription.InDefinedShape DECLARING_TYPE;
-
-                    /**
-                     * The {@link FieldValue#readOnly()}} method.
-                     */
-                    private static final MethodDescription.InDefinedShape READ_ONLY_FIELD;
-
-                    static {
-                        MethodList<MethodDescription.InDefinedShape> methods = new TypeDescription.ForLoadedType(FieldValue.class).getDeclaredMethods();
-                        VALUE = methods.filter(named("value")).getOnly();
-                        DECLARING_TYPE = methods.filter(named("declaringType")).getOnly();
-                        READ_ONLY_FIELD = methods.filter(named("readOnly")).getOnly();
-                    }
-
                     private final boolean readOnly;
 
+                    /**
+                     * Creates a new factory.
+                     *
+                     * @param readOnly {@code true} if the parameter is read-only.
+                     */
                     Factory(boolean readOnly) {
                         this.readOnly = readOnly;
                     }
@@ -3211,15 +3277,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         AnnotationDescription annotation = parameterDescription.getDeclaredAnnotations().ofType(FieldValue.class);
                         if (annotation == null) {
                             return UNDEFINED;
-                        } else if (readOnly && !annotation.getValue(READ_ONLY_FIELD, Boolean.class)) {
+                        } else if (readOnly && !annotation.getValue(ForField.READ_ONLY, Boolean.class)) {
                             throw new IllegalStateException("Cannot write to field for " + parameterDescription + " in read-only context");
                         } else {
                             TypeDescription declaringType = annotation.getValue(DECLARING_TYPE, TypeDescription.class);
                             String name = annotation.getValue(VALUE, String.class);
                             TypeDescription targetType = parameterDescription.getType().asErasure();
                             return declaringType.represents(void.class)
-                                    ? new WithImplicitType(name, targetType, annotation.getValue(READ_ONLY_FIELD, Boolean.class))
-                                    : new WithExplicitType(name, targetType, declaringType, annotation.getValue(READ_ONLY_FIELD, Boolean.class));
+                                    ? new WithImplicitType(name, targetType, annotation.getValue(ForField.READ_ONLY, Boolean.class))
+                                    : new WithExplicitType(name, targetType, declaringType, annotation.getValue(ForField.READ_ONLY, Boolean.class));
                         }
                     }
 
@@ -3677,12 +3743,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDescription enterType;
 
+                    /**
+                     * Indicates that the mapped parameter is read-only.
+                     */
                     private final boolean readOnly;
 
                     /**
                      * Creates a new factory for creating a {@link ForEnterValue} offset mapping.
                      *
                      * @param enterType The supplied type of the enter method.
+                     * @param readOnly  Indicates that the mapped parameter is read-only.
                      */
                     protected Factory(TypeDescription enterType, boolean readOnly) {
                         this.enterType = enterType;
@@ -3708,14 +3778,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    public boolean equals(Object other) {
-                        return this == other || !(other == null || getClass() != other.getClass())
-                                && enterType.equals(((Factory) other).enterType);
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        Factory factory = (Factory) object;
+                        if (readOnly != factory.readOnly) return false;
+                        return enterType.equals(factory.enterType);
                     }
 
                     @Override
                     public int hashCode() {
-                        return enterType.hashCode();
+                        int result = enterType.hashCode();
+                        result = 31 * result + (readOnly ? 1 : 0);
+                        return result;
                     }
 
                     @Override
@@ -3792,12 +3867,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected enum Factory implements OffsetMapping.Factory {
 
+                    /**
+                     * A factory that does not allow writing to the mapped parameter.
+                     */
                     READ_ONLY(true),
 
+                    /**
+                     * A factory that allows writing to the mapped parameter.
+                     */
                     READ_WRITE(false);
 
+                    /**
+                     * {@code true} if the parameter is read-only.
+                     */
                     private final boolean readOnly;
 
+                    /**
+                     * Creates a new factory.
+                     *
+                     * @param readOnly {@code true} if the parameter is read-only.
+                     */
                     Factory(boolean readOnly) {
                         this.readOnly = readOnly;
                     }
@@ -3896,12 +3985,26 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             enum ForThrowable implements OffsetMapping {
 
+                /**
+                 * A mapping that does not allow writing to the mapped parameter.
+                 */
                 READ_ONLY(true),
 
+                /**
+                 * A mapping that allows writing to the mapped parameter.
+                 */
                 READ_WRITE(false);
 
+                /**
+                 * {@code true} if the parameter is read-only.
+                 */
                 private final boolean readOnly;
 
+                /**
+                 * Creates a new offset mapping.
+                 *
+                 * @param readOnly {@code true} if the parameter is read-only.
+                 */
                 ForThrowable(boolean readOnly) {
                     this.readOnly = readOnly;
                 }
@@ -3914,14 +4017,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             : new Target.ForParameter(offset);
                 }
 
+                /**
+                 * A factory for accessing an exception that was thrown by the instrumented method.
+                 */
                 protected enum Factory implements OffsetMapping.Factory {
 
+                    /**
+                     * A factory that does not allow writing to the mapped parameter.
+                     */
                     READ_ONLY(true),
 
+                    /**
+                     * A factory that allows writing to the mapped parameter.
+                     */
                     READ_WRITE(false);
 
+                    /**
+                     * {@code true} if the parameter is read-only.
+                     */
                     private final boolean readOnly;
 
+                    /**
+                     * Creates a new factory.
+                     *
+                     * @param readOnly {@code true} if the parameter is read-only.
+                     */
                     Factory(boolean readOnly) {
                         this.readOnly = readOnly;
                     }
@@ -3940,6 +4060,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     ? ForThrowable.READ_ONLY
                                     : ForThrowable.READ_WRITE;
                         }
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForThrowable.Factory." + name();
                     }
                 }
 
@@ -4232,6 +4357,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
 
+                /**
+                 * Invoked at the end of a method. Additionally indicates that the handler block should be surrounding by a skipping instruction.
+                 *
+                 * @param methodVisitor       The method visitor of the instrumented method.
+                 * @param metaDataHandler     The meta data handler to use for translating meta data.
+                 * @param returnValueProducer A producer for defining a default return value of the advised method.
+                 */
                 void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
             }
 
@@ -4375,6 +4507,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         metaDataHandler.injectCompletionFrame(methodVisitor, false);
                     }
 
+                    /**
+                     * Invoked for writing the ending segment of this suppression handler.
+                     *
+                     * @param methodVisitor       The method visitor to which to write the suppression handler to.
+                     * @param metaDataHandler     The meta data handler to apply.
+                     * @param returnValueProducer The return value producer to use.
+                     * @param endOfHandler        A label indicating the end of the handler.
+                     */
                     private void onEnd(MethodVisitor methodVisitor,
                                        MetaDataHandler.ForAdvice metaDataHandler,
                                        ReturnValueProducer returnValueProducer,
@@ -4525,7 +4665,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
-         * A dispatcher for active advice.
+         * A dispatcher for an advice method that is being inlined into the instrumented method.
          */
         class Inlining implements Unresolved {
 
@@ -4535,7 +4675,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected final MethodDescription.InDefinedShape adviceMethod;
 
             /**
-             * Creates a dispatcher for active advice.
+             * Creates a dispatcher for inlined advice method.
              *
              * @param adviceMethod The advice method.
              */
@@ -4598,6 +4738,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final MethodDescription.InDefinedShape adviceMethod;
 
+                /**
+                 * The binary representation of the advice method.
+                 */
                 private final byte[] binaryRepresentation;
 
                 /**
@@ -4613,9 +4756,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new resolved version of a dispatcher.
                  *
-                 * @param adviceMethod  The represented advice method.
-                 * @param factories     A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType The type to handle by a suppression handler or {@link NoSuppression} to not handle any exceptions.
+                 * @param adviceMethod         The represented advice method.
+                 * @param factories            A list of factories to resolve for the parameters of the advice method.
+                 * @param binaryRepresentation The binary representation of the advice method.
+                 * @param throwableType        The type to handle by a suppression handler or {@link NoSuppression} to not handle any exceptions.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod,
                                    List<OffsetMapping.Factory> factories,
@@ -4952,8 +5096,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
-                     * @param adviceMethod  The represented advice method.
-                     * @param userFactories A list of user-defined factories for offset mappings.
+                     * @param adviceMethod         The represented advice method.
+                     * @param userFactories        A list of user-defined factories for offset mappings.
+                     * @param binaryRepresentation The binary representation of the advice method.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
@@ -5015,10 +5160,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new resolved dispatcher for implementing method exit advice.
                      *
-                     * @param adviceMethod  The represented advice method.
-                     * @param userFactories A list of user-defined factories for offset mappings.
-                     * @param enterType     The type of the value supplied by the enter advice method or
-                     *                      a description of {@code void} if no such value exists.
+                     * @param adviceMethod         The represented advice method.
+                     * @param userFactories        A list of user-defined factories for offset mappings.
+                     * @param binaryRepresentation The binary representation of the advice method.
+                     * @param enterType            The type of the value supplied by the enter advice method or
+                     *                             a description of {@code void} if no such value exists.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
@@ -5046,10 +5192,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Resolves exit advice that handles exceptions depending on the specification of the exit advice.
                      *
-                     * @param adviceMethod  The advice method.
-                     * @param userFactories A list of user-defined factories for offset mappings.
-                     * @param enterType     The type of the value supplied by the enter advice method or
-                     *                      a description of {@code void} if no such value exists.
+                     * @param adviceMethod         The advice method.
+                     * @param userFactories        A list of user-defined factories for offset mappings.
+                     * @param binaryRepresentation The binary representation of the advice method.
+                     * @param enterType            The type of the value supplied by the enter advice method or
+                     *                             a description of {@code void} if no such value exists.
                      * @return An appropriate exit handler.
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
@@ -5108,10 +5255,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
                          *
-                         * @param adviceMethod  The represented advice method.
-                         * @param userFactories A list of user-defined factories for offset mappings.
-                         * @param enterType     The type of the value supplied by the enter advice method or
-                         *                      a description of {@code void} if no such value exists.
+                         * @param adviceMethod         The represented advice method.
+                         * @param userFactories        A list of user-defined factories for offset mappings.
+                         * @param binaryRepresentation The binary representation of the advice method.
+                         * @param enterType            The type of the value supplied by the enter advice method or
+                         *                             a description of {@code void} if no such value exists.
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        List<? extends OffsetMapping.Factory> userFactories,
@@ -5147,10 +5295,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
                          *
-                         * @param adviceMethod  The represented advice method.
-                         * @param userFactories A list of user-defined factories for offset mappings.
-                         * @param enterType     The type of the value supplied by the enter advice method or
-                         *                      a description of {@code void} if no such value exists.
+                         * @param adviceMethod         The represented advice method.
+                         * @param userFactories        A list of user-defined factories for offset mappings.
+                         * @param binaryRepresentation The binary representation of the advice method.
+                         * @param enterType            The type of the value supplied by the enter advice method or
+                         *                             a description of {@code void} if no such value exists.
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                           List<? extends OffsetMapping.Factory> userFactories,
@@ -5493,6 +5642,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
         }
 
+        /**
+         * A dispatcher for an advice method that is being invoked from the instrumented method.
+         */
         class Delegating implements Unresolved {
 
             /**
@@ -5500,6 +5652,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             protected final MethodDescription.InDefinedShape adviceMethod;
 
+            /**
+             * Creates a new delegating advice dispatcher.
+             *
+             * @param adviceMethod The advice method.
+             */
             protected Delegating(MethodDescription.InDefinedShape adviceMethod) {
                 this.adviceMethod = adviceMethod;
             }
@@ -5615,6 +5772,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     return resolve(instrumentedMethod, methodVisitor, metaDataHandler);
                 }
 
+                /**
+                 * Binds this dispatcher for resolution to a specific method.
+                 *
+                 * @param instrumentedMethod The instrumented method that is being bound.
+                 * @param methodVisitor      The method visitor for writing to the instrumented method.
+                 * @param metaDataHandler    The meta data handler to apply.
+                 * @return An appropriate bound advice dispatcher.
+                 */
                 protected abstract Bound resolve(MethodDescription.InDefinedShape instrumentedMethod,
                                                  MethodVisitor methodVisitor,
                                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler);
@@ -5640,8 +5805,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected abstract static class AdviceMethodWriter implements Bound, SuppressionHandler.ReturnValueProducer {
 
+                    /**
+                     * Indicates an empty local variable array which is not required for calling a method.
+                     */
                     private static final int EMPTY = 0;
 
+                    /**
+                     * The advice method.
+                     */
                     protected final MethodDescription.InDefinedShape adviceMethod;
 
                     /**
@@ -5649,6 +5820,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected final MethodDescription.InDefinedShape instrumentedMethod;
 
+                    /**
+                     * The offset mappings available to this advice.
+                     */
                     private final List<OffsetMapping.Target> offsetMappings;
 
                     /**
@@ -5666,6 +5840,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final SuppressionHandler.Bound suppressionHandler;
 
+                    /**
+                     * Creates a new advice method writer.
+                     *
+                     * @param adviceMethod       The advice method.
+                     * @param instrumentedMethod The instrumented method.
+                     * @param offsetMappings     The offset mappings available to this advice.
+                     * @param methodVisitor      The method visitor for writing the instrumented method.
+                     * @param metaDataHandler    A meta data handler for writing to the instrumented method.
+                     * @param suppressionHandler A bound suppression handler that is used for suppressing exceptions of this advice method.
+                     */
                     protected AdviceMethodWriter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  List<OffsetMapping.Target> offsetMappings,
@@ -5704,6 +5888,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         metaDataHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
+                    /**
+                     * Invoked after the advise method was invoked.
+                     */
                     protected abstract void onAfterCall();
 
                     @Override
@@ -5716,8 +5903,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 '}';
                     }
 
+                    /**
+                     * An advice method writer for a method entry.
+                     */
                     protected static class ForMethodEnter extends AdviceMethodWriter {
 
+                        /**
+                         * Creates a new advice method writer.
+                         *
+                         * @param adviceMethod       The advice method.
+                         * @param instrumentedMethod The instrumented method.
+                         * @param offsetMappings     The offset mappings available to this advice.
+                         * @param methodVisitor      The method visitor for writing the instrumented method.
+                         * @param metaDataHandler    A meta data handler for writing to the instrumented method.
+                         * @param suppressionHandler A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         */
                         protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
                                                  MethodDescription.InDefinedShape instrumentedMethod,
                                                  List<OffsetMapping.Target> offsetMappings,
@@ -5769,10 +5969,31 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
                             }
                         }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter.ForMethodEnter{" +
+                                    "instrumentedMethod=" + instrumentedMethod +
+                                    ", adviceMethod=" + adviceMethod +
+                                    "}";
+                        }
                     }
 
+                    /**
+                     * An advice method writer for a method exit.
+                     */
                     protected static class ForMethodExit extends AdviceMethodWriter {
 
+                        /**
+                         * Creates a new advice method writer.
+                         *
+                         * @param adviceMethod       The advice method.
+                         * @param instrumentedMethod The instrumented method.
+                         * @param offsetMappings     The offset mappings available to this advice.
+                         * @param methodVisitor      The method visitor for writing the instrumented method.
+                         * @param metaDataHandler    A meta data handler for writing to the instrumented method.
+                         * @param suppressionHandler A bound suppression handler that is used for suppressing exceptions of this advice method.
+                         */
                         protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                                 MethodDescription.InDefinedShape instrumentedMethod,
                                                 List<OffsetMapping.Target> offsetMappings,
@@ -5801,6 +6022,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         @Override
                         public void storeDefaultValue(MethodVisitor methodVisitor) {
                             /* do nothing */
+                        }
+
+                        @Override
+                        public String toString() {
+                            return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter.ForMethodExit{" +
+                                    "instrumentedMethod=" + instrumentedMethod +
+                                    ", adviceMethod=" + adviceMethod +
+                                    "}";
                         }
                     }
                 }
@@ -6034,6 +6263,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodEnter {
 
+        /**
+         * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method
+         * is inlined, its byte code is copied into the body of the target method. this makes it is possible to execute code
+         * with the visibility privileges of the instrumented method while loosing the privileges of the declared method methods.
+         * When a method is not inlined, it is invoked similarly to a common Java method call. Note that it is not possible to
+         * set breakpoints within a method when it is inlined as no debugging information is copied from the advice method into
+         * the instrumented method.
+         *
+         * @return {@code true} if the annotated method should be inlined into the instrumented method.
+         */
         boolean inline() default true;
 
         /**
@@ -6046,7 +6285,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
     /**
      * <p>
-     * Indicates that this method should be inlined before the matched method is invoked. Any class must declare
+     * Indicates that this method should be executed before calling the instrumented method. Any class must declare
      * at most one method with this annotation. The annotated method must be static.
      * </p>
      * <p>
@@ -6066,6 +6305,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.METHOD)
     public @interface OnMethodExit {
 
+        /**
+         * Determines if the annotated method should be inlined into the instrumented method or invoked from it. When a method
+         * is inlined, its byte code is copied into the body of the target method. this makes it is possible to execute code
+         * with the visibility privileges of the instrumented method while loosing the privileges of the declared method methods.
+         * When a method is not inlined, it is invoked similarly to a common Java method call. Note that it is not possible to
+         * set breakpoints within a method when it is inlined as no debugging information is copied from the advice method into
+         * the instrumented method.
+         *
+         * @return {@code true} if the annotated method should be inlined into the instrumented method.
+         */
         boolean inline() default true;
 
         /**
@@ -6359,6 +6608,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     @Target(ElementType.PARAMETER)
     public @interface Thrown {
 
+        /**
+         * <p>
+         * Indicates if it is possible to write to this parameter. If this property is set to {@code false}, it is illegal to
+         * write to the annotated parameter. If this property is set to {@code true}, the annotated parameter can either be set
+         * to {@code null} to suppress an exception that was thrown by the adviced method or it can be set to any other exception
+         * that will be thrown after the advice method returned.
+         * </p>
+         * <p>
+         * If an exception is suppressed, the default value for the return type is returned from the method, i.e. {@code 0} for any
+         * numeric type and {@code null} for a reference type. The default value can be replaced via the {@link Return} annotation.
+         * </p>
+         *
+         * @return {@code true} if this parameter is read-only.
+         */
         boolean readOnly() default true;
     }
 
