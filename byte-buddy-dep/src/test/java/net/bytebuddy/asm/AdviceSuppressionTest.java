@@ -10,8 +10,8 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import static net.bytebuddy.matcher.ElementMatchers.named;
+import static org.hamcrest.CoreMatchers.nullValue;
 import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.core.Is.is;
 
 @RunWith(Parameterized.class)
 public class AdviceSuppressionTest {
@@ -21,6 +21,7 @@ public class AdviceSuppressionTest {
     @Parameterized.Parameters
     public static Collection<Object[]> data() {
         return Arrays.asList(new Object[][]{
+                {VoidInlineEnterAdvice.class},
                 {BooleanInlineEnterAdvice.class},
                 {ByteInlineEnterAdvice.class},
                 {ShortInlineEnterAdvice.class},
@@ -30,6 +31,7 @@ public class AdviceSuppressionTest {
                 {FloatInlineEnterAdvice.class},
                 {DoubleInlineEnterAdvice.class},
                 {ReferenceInlineEnterAdvice.class},
+                {VoidDelegationEnterAdvice.class},
                 {BooleanDelegationEnterAdvice.class},
                 {ByteDelegationEnterAdvice.class},
                 {ShortDelegationEnterAdvice.class},
@@ -39,6 +41,7 @@ public class AdviceSuppressionTest {
                 {FloatDelegationEnterAdvice.class},
                 {DoubleDelegationEnterAdvice.class},
                 {ReferenceDelegationEnterAdvice.class},
+                {VoidInlineExitAdvice.class},
                 {BooleanInlineExitAdvice.class},
                 {ByteInlineExitAdvice.class},
                 {ShortInlineExitAdvice.class},
@@ -48,6 +51,7 @@ public class AdviceSuppressionTest {
                 {FloatInlineExitAdvice.class},
                 {DoubleInlineExitAdvice.class},
                 {ReferenceInlineExitAdvice.class},
+                {VoidDelegationExitAdvice.class},
                 {BooleanDelegationExitAdvice.class},
                 {ByteDelegationExitAdvice.class},
                 {ShortDelegationExitAdvice.class},
@@ -74,14 +78,27 @@ public class AdviceSuppressionTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), is((Object) FOO));
+        assertThat(dynamicType.getDeclaredMethod(FOO).invoke(dynamicType.newInstance()), nullValue(Object.class));
+    }
+
+    @SuppressWarnings("unused")
+    public static class VoidInlineEnterAdvice {
+
+        public void foo() {
+            /* empty */
+        }
+
+        @Advice.OnMethodExit(suppress = RuntimeException.class)
+        public static void exit() {
+            throw new RuntimeException();
+        }
     }
 
     @SuppressWarnings("unused")
     public static class BooleanInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -93,8 +110,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ByteInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -106,8 +123,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ShortInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -119,8 +136,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class CharacterInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -132,8 +149,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class IntegerInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -145,8 +162,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class LongInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -158,8 +175,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class FloatInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -171,8 +188,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class DoubleInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -184,8 +201,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ReferenceInlineEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class)
@@ -197,8 +214,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class BooleanDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -208,10 +225,23 @@ public class AdviceSuppressionTest {
     }
 
     @SuppressWarnings("unused")
+    public static class VoidDelegationEnterAdvice {
+
+        public void foo() {
+            /* empty */
+        }
+
+        @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
+        public static void exit() {
+            throw new RuntimeException();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class ByteDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -223,8 +253,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ShortDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -236,8 +266,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class CharacterDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -249,8 +279,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class IntegerDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -262,8 +292,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class LongDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -275,8 +305,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class FloatDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -288,8 +318,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class DoubleDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -301,8 +331,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ReferenceDelegationEnterAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodExit(suppress = RuntimeException.class, inline = false)
@@ -312,10 +342,23 @@ public class AdviceSuppressionTest {
     }
 
     @SuppressWarnings("unused")
+    public static class VoidInlineExitAdvice {
+
+        public void foo() {
+            /* empty */
+        }
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class)
+        public static void enter() {
+            throw new RuntimeException();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class BooleanInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -335,8 +378,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ByteInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -355,8 +398,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ShortInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -375,8 +418,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class CharacterInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -395,8 +438,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class IntegerInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -415,8 +458,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class LongInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -435,8 +478,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class FloatInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -455,8 +498,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class DoubleInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -475,8 +518,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ReferenceInlineExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class)
@@ -493,10 +536,23 @@ public class AdviceSuppressionTest {
     }
 
     @SuppressWarnings("unused")
+    public static class VoidDelegationExitAdvice {
+
+        public void foo() {
+            /* empty */
+        }
+
+        @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
+        public static void enter() {
+            throw new RuntimeException();
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class BooleanDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -516,8 +572,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ByteDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -536,8 +592,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ShortDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -556,8 +612,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class CharacterDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -576,8 +632,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class IntegerDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -596,8 +652,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class LongDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -616,8 +672,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class FloatDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -636,8 +692,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class DoubleDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
@@ -656,8 +712,8 @@ public class AdviceSuppressionTest {
     @SuppressWarnings("unused")
     public static class ReferenceDelegationExitAdvice {
 
-        public String foo() {
-            return FOO;
+        public void foo() {
+            /* empty */
         }
 
         @Advice.OnMethodEnter(suppress = RuntimeException.class, inline = false)
