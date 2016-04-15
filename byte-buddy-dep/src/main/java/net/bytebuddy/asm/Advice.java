@@ -2082,7 +2082,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             accessField(methodVisitor, Opcodes.PUTSTATIC);
                             return NO_PADDING;
                         } else {
-                            methodVisitor.visitIntInsn(Opcodes.ALOAD, 0);
+                            methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
                             methodVisitor.visitInsn(Opcodes.DUP);
                             accessField(methodVisitor, Opcodes.GETFIELD);
                             methodVisitor.visitInsn(Opcodes.ICONST_1);
@@ -2516,7 +2516,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     if (parameter.getType().isPrimitive()) {
                                         ForBoxedParameter.BoxingDispatcher.of(parameter.getType()).loadBoxed(methodVisitor, parameter.getOffset());
                                     } else {
-                                        methodVisitor.visitIntInsn(Opcodes.ALOAD, parameter.getOffset());
+                                        methodVisitor.visitVarInsn(Opcodes.ALOAD, parameter.getOffset());
                                     }
                                     methodVisitor.visitInsn(Opcodes.AASTORE);
                                     stackSize = stackSize.maximum(parameter.getType().getStackSize());
@@ -3996,6 +3996,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         return Target.ForNullConstant.INSTANCE;
                     } else if ((target.getType().asErasure().isAssignableFrom(String.class) && value instanceof String)
                             || (target.getType().isPrimitive() && target.getType().asErasure().isInstanceOrWrapper(value))) {
+                        if (value instanceof Boolean) {
+                            value = (Boolean) value ? 1 : 0;
+                        } else if (value instanceof Byte) {
+                            value = ((Byte) value).intValue();
+                        } else if (value instanceof Short) {
+                            value = ((Short) value).intValue();
+                        } else if (value instanceof Character) {
+                            value = (int) ((Character) value).charValue();
+                        }
                         return new Target.ForConstantPoolValue(value);
                     } else if (target.getType().asErasure().isAssignableFrom(Class.class) && value instanceof Class) {
                         return new Target.ForConstantPoolValue(Type.getType((Class<?>) value));
@@ -5600,7 +5609,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                                   MethodVisitor methodVisitor,
-                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler) { // TODO: make reader resolution lazy.
+                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
                     if (!adviceMethod.isVisibleTo(instrumentedMethod.getDeclaringType())) {
                         throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
                     }
@@ -5680,20 +5689,20 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public void apply() {
                         suppressionHandler.onStart(methodVisitor, metaDataHandler);
-                        int index = 0, currentStackSize = 0, padding = 0;
+                        int index = 0, currentStackSize = 0, maximumStackSize = 0;
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
                             Type type = Type.getType(adviceMethod.getParameters().get(index++).getType().asErasure().getDescriptor());
                             currentStackSize += type.getSize();
-                            padding = Math.max(padding, currentStackSize + offsetMapping.resolveAccess(methodVisitor, type.getOpcode(Opcodes.ILOAD)));
+                            maximumStackSize = Math.max(maximumStackSize, currentStackSize + offsetMapping.resolveAccess(methodVisitor, type.getOpcode(Opcodes.ILOAD)));
                         }
-                        methodVisitor.visitMethodInsn(Opcodes.ACC_STATIC,
+                        methodVisitor.visitMethodInsn(Opcodes.INVOKESTATIC,
                                 adviceMethod.getDeclaringType().getInternalName(),
                                 adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
                                 false);
                         onAfterCall();
                         suppressionHandler.onEndSkipped(methodVisitor, metaDataHandler, this);
-                        metaDataHandler.recordMaxima(currentStackSize, EMPTY);
+                        metaDataHandler.recordMaxima(maximumStackSize, EMPTY);
                     }
 
                     protected abstract void onAfterCall();
@@ -5726,15 +5735,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     || adviceMethod.getReturnType().represents(short.class)
                                     || adviceMethod.getReturnType().represents(char.class)
                                     || adviceMethod.getReturnType().represents(int.class)) {
-                                methodVisitor.visitIntInsn(Opcodes.ISTORE, adviceMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
                             } else if (adviceMethod.getReturnType().represents(long.class)) {
-                                methodVisitor.visitIntInsn(Opcodes.LSTORE, adviceMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
                             } else if (adviceMethod.getReturnType().represents(float.class)) {
-                                methodVisitor.visitIntInsn(Opcodes.FSTORE, adviceMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
                             } else if (adviceMethod.getReturnType().represents(double.class)) {
-                                methodVisitor.visitIntInsn(Opcodes.DSTORE, adviceMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
                             } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                                methodVisitor.visitIntInsn(Opcodes.ASTORE, adviceMethod.getStackSize());
+                                methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
                             }
                         }
 
