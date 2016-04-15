@@ -1257,6 +1257,9 @@ public class AdviceTest {
             }
         }).applyBasic();
         ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithStackSizeComputation.ForAdvice.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.Bound.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
@@ -1322,9 +1325,6 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTabelSubstitutor.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableCollector.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableExtractor.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.SuppressionHandler.NoOp.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing.Bound.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
             @Override

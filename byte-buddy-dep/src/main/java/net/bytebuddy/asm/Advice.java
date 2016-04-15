@@ -4094,6 +4094,205 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
 
         /**
+         * A suppression handler for optionally suppressing exceptions.
+         */
+        interface SuppressionHandler {
+
+            /**
+             * Binds the supression handler for instrumenting a specific method.
+             *
+             * @return A bound version of the suppression handler.
+             */
+            Bound bind();
+
+            /**
+             * A producer for a default return value if this is applicable.
+             */
+            interface ReturnValueProducer {
+
+                /**
+                 * Sets a default return value for an advised method.
+                 *
+                 * @param methodVisitor The instrumented method's method visitor.
+                 */
+                void makeDefault(MethodVisitor methodVisitor);
+            }
+
+            /**
+             * A bound version of a suppression handler that must not be reused.
+             */
+            interface Bound {
+
+                /**
+                 * Invoked to prepare the suppression handler, i.e. to write an exception handler entry if appropriate.
+                 *
+                 * @param methodVisitor The method visitor to apply the preparation to.
+                 */
+                void onPrepare(MethodVisitor methodVisitor);
+
+                /**
+                 * Invoked at the start of a method.
+                 *
+                 * @param methodVisitor   The method visitor of the instrumented method.
+                 * @param metaDataHandler The meta data handler to use for translating meta data.
+                 */
+                void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler);
+
+                /**
+                 * Invoked at the end of a method.
+                 *
+                 * @param methodVisitor       The method visitor of the instrumented method.
+                 * @param metaDataHandler     The meta data handler to use for translating meta data.
+                 * @param returnValueProducer A producer for defining a default return value of the advised method.
+                 */
+                void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
+            }
+
+            /**
+             * A non-operational suppression handler that does not suppress any method.
+             */
+            enum NoOp implements SuppressionHandler, Bound {
+
+                /**
+                 * The singleton instance.
+                 */
+                INSTANCE;
+
+                @Override
+                public Bound bind() {
+                    return this;
+                }
+
+                @Override
+                public void onPrepare(MethodVisitor methodVisitor) {
+                            /* do nothing */
+                }
+
+                @Override
+                public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
+                            /* do nothing */
+                }
+
+                @Override
+                public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
+                            /* do nothing */
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.SuppressionHandler.NoOp." + name();
+                }
+            }
+
+            /**
+             * A suppression handler that suppresses a given throwable type.
+             */
+            class Suppressing implements SuppressionHandler {
+
+                /**
+                 * The suppressed throwable type.
+                 */
+                private final TypeDescription throwableType;
+
+                /**
+                 * Creates a new suppressing suppression handler.
+                 *
+                 * @param throwableType The suppressed throwable type.
+                 */
+                protected Suppressing(TypeDescription throwableType) {
+                    this.throwableType = throwableType;
+                }
+
+                @Override
+                public SuppressionHandler.Bound bind() {
+                    return new Bound(throwableType);
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    Suppressing that = (Suppressing) object;
+                    return throwableType.equals(that.throwableType);
+                }
+
+                @Override
+                public int hashCode() {
+                    return throwableType.hashCode();
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.SuppressionHandler.Suppressing{" +
+                            "throwableType=" + throwableType +
+                            '}';
+                }
+
+                /**
+                 * An active, bound suppression handler.
+                 */
+                protected static class Bound implements SuppressionHandler.Bound {
+
+                    /**
+                     * The suppressed throwable type.
+                     */
+                    private final TypeDescription throwableType;
+
+                    /**
+                     * A label indicating the start of the method.
+                     */
+                    private final Label startOfMethod;
+
+                    /**
+                     * A label indicating the end of the method.
+                     */
+                    private final Label endOfMethod;
+
+                    /**
+                     * Creates a new active, bound suppression handler.
+                     *
+                     * @param throwableType The suppressed throwable type.
+                     */
+                    protected Bound(TypeDescription throwableType) {
+                        this.throwableType = throwableType;
+                        startOfMethod = new Label();
+                        endOfMethod = new Label();
+                    }
+
+                    @Override
+                    public void onPrepare(MethodVisitor methodVisitor) {
+                        methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
+                    }
+
+                    @Override
+                    public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
+                        methodVisitor.visitLabel(startOfMethod);
+                    }
+
+                    @Override
+                    public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
+                        Label endOfHandler = new Label();
+                        methodVisitor.visitLabel(endOfMethod);
+                        metaDataHandler.injectHandlerFrame(methodVisitor);
+                        methodVisitor.visitInsn(Opcodes.POP);
+                        returnValueProducer.makeDefault(methodVisitor);
+                        methodVisitor.visitLabel(endOfHandler);
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.SuppressionHandler.Suppressing.Bound{" +
+                                "throwableType=" + throwableType +
+                                ", startOfMethod=" + startOfMethod +
+                                ", endOfMethod=" + endOfMethod +
+                                '}';
+                    }
+
+                }
+            }
+        }
+
+        /**
          * Represents a resolved dispatcher.
          */
         interface Resolved extends Dispatcher {
@@ -4872,208 +5071,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             /**
-             * A producer for a default return value if this is applicable.
-             */
-            interface ReturnValueProducer {
-
-                /**
-                 * Sets a default return value for an advised method.
-                 *
-                 * @param methodVisitor The instrumented method's method visitor.
-                 */
-                void makeDefault(MethodVisitor methodVisitor);
-            }
-
-            /**
-             * A suppression handler for optionally suppressing exceptions.
-             */
-            protected interface SuppressionHandler {
-
-                /**
-                 * Binds the supression handler for instrumenting a specific method.
-                 *
-                 * @return A bound version of the suppression handler.
-                 */
-                Bound bind();
-
-                /**
-                 * A bound version of a suppression handler that must not be reused.
-                 */
-                interface Bound {
-
-                    /**
-                     * Invoked to prepare the suppression handler, i.e. to write an exception handler entry if appropriate.
-                     *
-                     * @param methodVisitor The method visitor to apply the preparation to.
-                     */
-                    void onPrepare(MethodVisitor methodVisitor);
-
-                    /**
-                     * Invoked at the start of a method.
-                     *
-                     * @param methodVisitor   The method visitor of the instrumented method.
-                     * @param metaDataHandler The meta data handler to use for translating meta data.
-                     */
-                    void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler);
-
-                    /**
-                     * Invoked at the end of a method.
-                     *
-                     * @param methodVisitor       The method visitor of the instrumented method.
-                     * @param metaDataHandler     The meta data handler to use for translating meta data.
-                     * @param returnValueProducer A producer for defining a default return value of the advised method.
-                     */
-                    void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
-                }
-
-                /**
-                 * A non-operational suppression handler that does not suppress any method.
-                 */
-                enum NoOp implements SuppressionHandler, Bound {
-
-                    /**
-                     * The singleton instance.
-                     */
-                    INSTANCE;
-
-                    @Override
-                    public Bound bind() {
-                        return this;
-                    }
-
-                    @Override
-                    public void onPrepare(MethodVisitor methodVisitor) {
-                            /* do nothing */
-                    }
-
-                    @Override
-                    public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
-                            /* do nothing */
-                    }
-
-                    @Override
-                    public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                            /* do nothing */
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.SuppressionHandler.NoOp." + name();
-                    }
-                }
-
-                /**
-                 * A suppression handler that suppresses a given throwable type.
-                 */
-                class Suppressing implements SuppressionHandler {
-
-                    /**
-                     * The suppressed throwable type.
-                     */
-                    private final TypeDescription throwableType;
-
-                    /**
-                     * Creates a new suppressing suppression handler.
-                     *
-                     * @param throwableType The suppressed throwable type.
-                     */
-                    protected Suppressing(TypeDescription throwableType) {
-                        this.throwableType = throwableType;
-                    }
-
-                    @Override
-                    public SuppressionHandler.Bound bind() {
-                        return new Bound(throwableType);
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        Suppressing that = (Suppressing) object;
-                        return throwableType.equals(that.throwableType);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return throwableType.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing{" +
-                                "throwableType=" + throwableType +
-                                '}';
-                    }
-
-                    /**
-                     * An active, bound suppression handler.
-                     */
-                    protected static class Bound implements SuppressionHandler.Bound {
-
-                        /**
-                         * The suppressed throwable type.
-                         */
-                        private final TypeDescription throwableType;
-
-                        /**
-                         * A label indicating the start of the method.
-                         */
-                        private final Label startOfMethod;
-
-                        /**
-                         * A label indicating the end of the method.
-                         */
-                        private final Label endOfMethod;
-
-                        /**
-                         * Creates a new active, bound suppression handler.
-                         *
-                         * @param throwableType The suppressed throwable type.
-                         */
-                        protected Bound(TypeDescription throwableType) {
-                            this.throwableType = throwableType;
-                            startOfMethod = new Label();
-                            endOfMethod = new Label();
-                        }
-
-                        @Override
-                        public void onPrepare(MethodVisitor methodVisitor) {
-                            methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
-                        }
-
-                        @Override
-                        public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
-                            methodVisitor.visitLabel(startOfMethod);
-                        }
-
-                        @Override
-                        public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                            Label endOfHandler = new Label();
-                            methodVisitor.visitLabel(endOfMethod);
-                            metaDataHandler.injectHandlerFrame(methodVisitor);
-                            methodVisitor.visitInsn(Opcodes.POP);
-                            returnValueProducer.makeDefault(methodVisitor);
-                            methodVisitor.visitLabel(endOfHandler);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing.Bound{" +
-                                    "throwableType=" + throwableType +
-                                    ", startOfMethod=" + startOfMethod +
-                                    ", endOfMethod=" + endOfMethod +
-                                    '}';
-                        }
-
-                    }
-                }
-            }
-
-            /**
              * A visitor for translating an advice method's byte code for inlining into the instrumented method.
              */
-            protected abstract static class CodeTranslationVisitor extends MethodVisitor implements ReturnValueProducer {
+            protected abstract static class CodeTranslationVisitor extends MethodVisitor implements SuppressionHandler.ReturnValueProducer {
 
                 /**
                  * A handler for translating meta data found in the byte code.
