@@ -57,12 +57,21 @@ public interface ClassFileLocator {
         /**
          * A canonical representation of an illegal binary representation.
          */
-        enum Illegal implements Resolution {
+        class Illegal implements Resolution {
 
             /**
-             * The singleton instance.
+             * The name of the unresolved class file.
              */
-            INSTANCE;
+            private final String typeName;
+
+            /**
+             * Creates an illegal resolution for a class file.
+             *
+             * @param typeName The name of the unresolved class file.
+             */
+            public Illegal(String typeName) {
+                this.typeName = typeName;
+            }
 
             @Override
             public boolean isResolved() {
@@ -71,12 +80,27 @@ public interface ClassFileLocator {
 
             @Override
             public byte[] resolve() {
-                throw new IllegalStateException("Could not locate binary data for class file");
+                throw new IllegalStateException("Could not locate class file for " + typeName);
+            }
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                Illegal illegal = (Illegal) object;
+                return typeName.equals(illegal.typeName);
+            }
+
+            @Override
+            public int hashCode() {
+                return typeName.hashCode();
             }
 
             @Override
             public String toString() {
-                return "ClassFileLocator.Resolution.Illegal." + name();
+                return "ClassFileLocator.Resolution.Illegal{" +
+                        "typeName='" + typeName + '\'' +
+                        '}';
             }
         }
 
@@ -143,7 +167,7 @@ public interface ClassFileLocator {
 
         @Override
         public Resolution locate(String typeName) {
-            return Resolution.Illegal.INSTANCE;
+            return new Resolution.Illegal(typeName);
         }
 
         @Override
@@ -198,7 +222,7 @@ public interface ClassFileLocator {
         public Resolution locate(String typeName) {
             byte[] binaryRepresentation = classFiles.get(typeName);
             return binaryRepresentation == null
-                    ? Resolution.Illegal.INSTANCE
+                    ? new Resolution.Illegal(typeName)
                     : new Resolution.Explicit(binaryRepresentation);
         }
 
@@ -264,7 +288,7 @@ public interface ClassFileLocator {
         }
 
         /**
-         * Attemts to create a binary representation of a loaded type by requesting data from its
+         * Attempts to create a binary representation of a loaded type by requesting data from its
          * {@link java.lang.ClassLoader}.
          *
          * @param type The type of interest.
@@ -288,7 +312,7 @@ public interface ClassFileLocator {
                     inputStream.close();
                 }
             } else {
-                return Resolution.Illegal.INSTANCE;
+                return new Resolution.Illegal(typeName);
             }
         }
 
@@ -334,7 +358,7 @@ public interface ClassFileLocator {
         public Resolution locate(String typeName) throws IOException {
             ZipEntry zipEntry = jarFile.getEntry(typeName.replace('.', '/') + CLASS_FILE_EXTENSION);
             if (zipEntry == null) {
-                return Resolution.Illegal.INSTANCE;
+                return new Resolution.Illegal(typeName);
             } else {
                 InputStream inputStream = jarFile.getInputStream(zipEntry);
                 try {
@@ -401,7 +425,7 @@ public interface ClassFileLocator {
                     inputStream.close();
                 }
             } else {
-                return Resolution.Illegal.INSTANCE;
+                return new Resolution.Illegal(typeName);
             }
         }
 
@@ -519,12 +543,12 @@ public interface ClassFileLocator {
         public Resolution locate(String typeName) {
             try {
                 ExtractionClassFileTransformer classFileTransformer = new ExtractionClassFileTransformer(classLoadingDelegate.getClassLoader(), typeName);
-                    instrumentation.addTransformer(classFileTransformer, true);
+                instrumentation.addTransformer(classFileTransformer, true);
                 try {
                     instrumentation.retransformClasses(classLoadingDelegate.locate(typeName));
                     byte[] binaryRepresentation = classFileTransformer.getBinaryRepresentation();
                     return binaryRepresentation == null
-                            ? Resolution.Illegal.INSTANCE
+                            ? new Resolution.Illegal(typeName)
                             : new Resolution.Explicit(binaryRepresentation);
                 } finally {
                     instrumentation.removeTransformer(classFileTransformer);
@@ -532,7 +556,7 @@ public interface ClassFileLocator {
             } catch (RuntimeException exception) {
                 throw exception;
             } catch (Exception ignored) {
-                return Resolution.Illegal.INSTANCE;
+                return new Resolution.Illegal(typeName);
             }
         }
 
@@ -1115,7 +1139,7 @@ public interface ClassFileLocator {
                     return resolution;
                 }
             }
-            return Resolution.Illegal.INSTANCE;
+            return new Resolution.Illegal(typeName);
         }
 
         @Override

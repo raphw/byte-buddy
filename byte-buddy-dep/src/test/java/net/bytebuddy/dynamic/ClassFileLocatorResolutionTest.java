@@ -9,16 +9,18 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class ClassFileLocatorResolutionTest {
 
+    private static final String FOO = "foo";
+
     private static final byte[] DATA = new byte[]{1, 2, 3};
 
     @Test
     public void testIllegal() throws Exception {
-        MatcherAssert.assertThat(ClassFileLocator.Resolution.Illegal.INSTANCE.isResolved(), is(false));
+        MatcherAssert.assertThat(new ClassFileLocator.Resolution.Illegal(FOO).isResolved(), is(false));
     }
 
     @Test(expected = IllegalStateException.class)
     public void testIllegalThrowsException() throws Exception {
-        ClassFileLocator.Resolution.Illegal.INSTANCE.resolve();
+        new ClassFileLocator.Resolution.Illegal(FOO).resolve();
     }
 
     @Test

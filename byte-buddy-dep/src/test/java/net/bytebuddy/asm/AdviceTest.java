@@ -1213,21 +1213,6 @@ public class AdviceTest {
         Advice.to(IllegalOriginPatternEnd.class);
     }
 
-    @Test
-    public void testCannotInstantiateSuppressionMarker() throws Exception {
-        Class<?> type = Class.forName(Advice.class.getName() + "$NoSuppression");
-        assertThat(Modifier.isPrivate(type.getModifiers()), is(true));
-        try {
-            Constructor<?> constructor = type.getDeclaredConstructor();
-            assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
-            constructor.setAccessible(true);
-            constructor.newInstance();
-            fail();
-        } catch (InvocationTargetException exception) {
-            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
-        }
-    }
-
     @Test(expected = IllegalStateException.class)
     public void testCannotWriteOrigin() throws Exception {
         new ByteBuddy()
@@ -1277,6 +1262,34 @@ public class AdviceTest {
     @Test(expected = IllegalStateException.class)
     public void testInlineAdviceCannotWriteReturn() throws Exception {
         Advice.to(IllegalThrowWritableInlineAdvice.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testInvisibleDelegationAdvice() throws Exception {
+        new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(NonVisibleAdvice.class).on(named(FOO)))
+                .make();
+    }
+
+    @Test(expected = IllegalStateException.class)
+    public void testNonResolvedAdvice() throws Exception {
+        Advice.to(new TypeDescription.ForLoadedType(TrivialAdvice.class));
+    }
+
+    @Test
+    public void testCannotInstantiateSuppressionMarker() throws Exception {
+        Class<?> type = Class.forName(Advice.class.getName() + "$NoSuppression");
+        assertThat(Modifier.isPrivate(type.getModifiers()), is(true));
+        try {
+            Constructor<?> constructor = type.getDeclaredConstructor();
+            assertThat(Modifier.isPrivate(constructor.getModifiers()), is(true));
+            constructor.setAccessible(true);
+            constructor.newInstance();
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(UnsupportedOperationException.class));
+        }
     }
 
     @Test
@@ -2473,6 +2486,15 @@ public class AdviceTest {
             if (value.size() != 1 && !value.get(FOO).equals(BAR)) {
                 throw new AssertionError();
             }
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class NonVisibleAdvice {
+
+        @Advice.OnMethodEnter(inline = false)
+        private static void enter() {
+            /* empty */
         }
     }
 }

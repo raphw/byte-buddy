@@ -60,21 +60,22 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * is set to {@code false}, the {@link Thrown} annotation must not be used on any parameter.
  * </p>
  * <p>
- * Byte Buddy does not assert the visibility of any types that are referenced within the advice methods. It is the responsibility of the user of this
- * class to assure that all types referenced within the advice methods are visible to the instrumented class. Failing to do so results in a
- * {@link IllegalAccessError} at the instrumented class's runtime.
+ * Byte Buddy does not assert the visibility of any types that are referenced within an inlined advice method. It is the responsibility of
+ * the user of this class to assure that all types referenced within the advice methods are visible to the instrumented class. Failing to
+ * do so results in a {@link IllegalAccessError} at the instrumented class's runtime.
  * </p>
  * <p>
  * <b>Important</b>: Since Java 6, class files contain <i>stack map frames</i> embedded into a method's byte code. When advice methods are compiled
  * with a class file version less then Java 6 but are used for a class file that was compiled to Java 6 or newer, these stack map frames must be
  * computed by ASM by using the {@link ClassWriter#COMPUTE_FRAMES} option. If the advice methods do not contain any branching instructions, this is
- * not required. No action is required if the advice methods are at least compiled with Java 6 but are used on classes older than Java 6.
+ * not required. No action is required if the advice methods are at least compiled with Java 6 but are used on classes older than Java 6. This
+ * limitation only applies to advice methods that are inlined.
  * </p>
  * <p>
- * <b>Note</b>: It is not possible to trigger break points in advice methods as the debugging information of the inlined advice is not preserved.
- * It is not possible in Java to reference more than one source file per class what makes translating such debugging information impossible. It
- * is however possible to set break points in advice methods when invoking the original advice target. This allows debugging of advice code within
- * unit tests that invoke the advice method without instrumentation.
+ * <b>Note</b>: It is not possible to trigger break points in inlined advice methods as the debugging information of the inlined advice is not
+ * preserved. It is not possible in Java to reference more than one source file per class what makes translating such debugging information
+ * impossible. It is however possible to set break points in advice methods when invoking the original advice target. This allows debugging
+ * of advice code within unit tests that invoke the advice method without instrumentation.
  * </p>
  *
  * @see Argument
@@ -219,7 +220,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
             ClassFileLocator.Resolution binaryRepresentation = methodEnter.isBinary() || methodExit.isBinary()
                     ? classFileLocator.locate(typeDescription.getName())
-                    : ClassFileLocator.Resolution.Illegal.INSTANCE;
+                    : new ClassFileLocator.Resolution.Illegal(typeDescription.getName());
             Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories, binaryRepresentation);
             return new Advice(resolved, methodExit.asMethodExitTo(userFactories, binaryRepresentation, resolved));
         } catch (IOException exception) {
