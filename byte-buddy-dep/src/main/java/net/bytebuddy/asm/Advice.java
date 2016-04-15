@@ -5492,7 +5492,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                                   MethodVisitor methodVisitor,
                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                  ClassReader classReader) { // TODO: make reader lazy.
+                                  ClassReader classReader) { // TODO: make reader resolution lazy.
                     return resolve(instrumentedMethod, methodVisitor, metaDataHandler);
                 }
 
@@ -5580,6 +5580,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
                                 false);
+                        // TODO: jump over handler; does handler exist?
                         suppressionHandler.onEnd(methodVisitor, metaDataHandler, this);
                         onReturn();
                         metaDataHandler.recordMaxima(currentStackSize, EMPTY);
