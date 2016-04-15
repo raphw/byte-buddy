@@ -1322,7 +1322,7 @@ public class AdviceTest {
         }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTabelSubstitutor.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableSubstitutor.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableCollector.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();

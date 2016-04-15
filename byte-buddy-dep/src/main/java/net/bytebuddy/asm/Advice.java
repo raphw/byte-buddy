@@ -2545,7 +2545,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     /**
-                     * Londs an integer onto the operand stack.
+                     * Loads an integer onto the operand stack.
                      *
                      * @param methodVisitor The method visitor for which the integer is loaded.
                      * @param value         The integer value to load onto the stack.
@@ -2583,7 +2583,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot incremement a boxed argument");
+                        throw new IllegalStateException("Cannot increment a boxed argument");
                     }
 
                     @Override
@@ -3694,13 +3694,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final TypeDescription enterType;
 
+                    private final boolean readOnly;
+
                     /**
                      * Creates a new factory for creating a {@link ForEnterValue} offset mapping.
                      *
                      * @param enterType The supplied type of the enter method.
                      */
-                    protected Factory(TypeDescription enterType) {
+                    protected Factory(TypeDescription enterType, boolean readOnly) {
                         this.enterType = enterType;
+                        this.readOnly = readOnly;
                     }
 
                     @Override
@@ -3712,6 +3715,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 throw new IllegalStateException("read-only type of " + parameterDescription + " does not equal " + enterType);
                             } else if (readOnly && !enterType.isAssignableTo(parameterDescription.getType().asErasure())) {
                                 throw new IllegalStateException("Cannot assign the type of " + parameterDescription + " to supplied type " + enterType);
+                            } else if (this.readOnly && !readOnly) {
+                                throw new IllegalStateException("Cannot write to enter value field for " + parameterDescription + " in read only context");
                             }
                             return ForEnterValue.of(readOnly);
                         } else {
@@ -4186,7 +4191,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         interface SuppressionHandler {
 
             /**
-             * Binds the supression handler for instrumenting a specific method.
+             * Binds the suppression handler for instrumenting a specific method.
              *
              * @return A bound version of the suppression handler.
              */
@@ -4606,7 +4611,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param adviceMethod  The represented advice method.
                  * @param factories     A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType The type to handle by a suppession handler or {@link NoSuppression} to not handle any exceptions.
+                 * @param throwableType The type to handle by a suppression handler or {@link NoSuppression} to not handle any exceptions.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
@@ -4747,7 +4752,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? new ExceptionTabelSubstitutor(Inlining.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod, suppressionHandler))
+                                ? new ExceptionTableSubstitutor(Inlining.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod, suppressionHandler))
                                 : IGNORE_METHOD;
                     }
 
@@ -4835,7 +4840,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Doing so, this visitor substitutes all labels that were already created during the first visit to keep the mapping
                      * consistent.
                      */
-                    protected class ExceptionTabelSubstitutor extends MethodVisitor {
+                    protected class ExceptionTableSubstitutor extends MethodVisitor {
 
                         /**
                          * A map containing resolved substitutions.
@@ -4852,7 +4857,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          *
                          * @param methodVisitor The method visitor for which to substitute labels.
                          */
-                        protected ExceptionTabelSubstitutor(MethodVisitor methodVisitor) {
+                        protected ExceptionTableSubstitutor(MethodVisitor methodVisitor) {
                             super(Opcodes.ASM5, methodVisitor);
                             substitutions = new IdentityHashMap<Label, Label>();
                         }
@@ -4919,7 +4924,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTabelSubstitutor{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableSubstitutor{" +
                                     "methodVisitor=" + methodVisitor +
                                     ", substitutions=" + substitutions +
                                     ", index=" + index +
@@ -5012,7 +5017,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForField.Factory.READ_WRITE,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
-                                        new OffsetMapping.ForEnterValue.Factory(enterType),
+                                        new OffsetMapping.ForEnterValue.Factory(enterType, false),
                                         OffsetMapping.ForReturnValue.Factory.READ_WRITE,
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
                                         adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
@@ -5543,7 +5548,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  *
                  * @param adviceMethod  The represented advice method.
                  * @param factories     A list of factories to resolve for the parameters of the advice method.
-                 * @param throwableType The type to handle by a suppession handler or {@link NoSuppression} to not handle any exceptions.
+                 * @param throwableType The type to handle by a suppression handler or {@link NoSuppression} to not handle any exceptions.
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
@@ -5855,7 +5860,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForField.Factory.READ_ONLY,
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
-                                        new OffsetMapping.ForEnterValue.Factory(enterType),
+                                        new OffsetMapping.ForEnterValue.Factory(enterType, true),
                                         OffsetMapping.ForReturnValue.Factory.READ_ONLY,
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
                                         adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
