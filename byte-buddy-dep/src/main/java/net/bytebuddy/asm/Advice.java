@@ -142,23 +142,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     private final Dispatcher.Resolved.ForMethodExit methodExit;
 
     /**
-     * The binary representation of the class containing the advice methods.
-     */
-    private final byte[] binaryRepresentation;
-
-    /**
      * Creates a new advice.
      *
-     * @param methodEnter          The dispatcher for instrumenting the instrumented method upon entering.
-     * @param methodExit           The dispatcher for instrumenting the instrumented method upon exiting.
-     * @param binaryRepresentation The binary representation of the class containing the advice methods.
+     * @param methodEnter The dispatcher for instrumenting the instrumented method upon entering.
+     * @param methodExit  The dispatcher for instrumenting the instrumented method upon exiting.
      */
-    protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter,
-                     Dispatcher.Resolved.ForMethodExit methodExit,
-                     byte[] binaryRepresentation) {
+    protected Advice(Dispatcher.Resolved.ForMethodEnter methodEnter, Dispatcher.Resolved.ForMethodExit methodExit) {
         this.methodEnter = methodEnter;
         this.methodExit = methodExit;
-        this.binaryRepresentation = binaryRepresentation;
     }
 
     /**
@@ -181,6 +172,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
      */
     public static Advice to(Class<?> type, ClassFileLocator classFileLocator) {
         return to(new TypeDescription.ForLoadedType(type), classFileLocator);
+    }
+
+    public static Advice to(TypeDescription typeDescription) {
+        return to(typeDescription, ClassFileLocator.NoOp.INSTANCE);
     }
 
     /**
@@ -214,8 +209,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             if (!methodEnter.isAlive() && !methodExit.isAlive()) {
                 throw new IllegalArgumentException("No advice defined by " + typeDescription);
             }
-            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories);
-            return new Advice(resolved, methodExit.asMethodExitTo(userFactories, resolved), classFileLocator.locate(typeDescription.getName()).resolve());
+            ClassFileLocator.Resolution binaryRepresentation = methodEnter.isBinary() || methodExit.isBinary()
+                    ? classFileLocator.locate(typeDescription.getName())
+                    : ClassFileLocator.Resolution.Illegal.INSTANCE;
+            Dispatcher.Resolved.ForMethodEnter resolved = methodEnter.asMethodEnter(userFactories, binaryRepresentation);
+            return new Advice(resolved, methodExit.asMethodExitTo(userFactories, binaryRepresentation, resolved));
         } catch (IOException exception) {
             throw new IllegalStateException("Error reading class file of " + typeDescription, exception);
         }
@@ -272,7 +270,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             return new AdviceVisitor.WithoutExitAdvice(methodVisitor,
                     methodDescription,
                     methodEnter,
-                    binaryRepresentation,
                     writerFlags,
                     readerFlags);
         } else if (methodExit.isSkipThrowable()) {
@@ -280,7 +277,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodDescription,
                     methodEnter,
                     methodExit,
-                    binaryRepresentation,
                     writerFlags,
                     readerFlags);
         } else if (methodDescription.isConstructor()) {
@@ -290,7 +286,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     methodDescription,
                     methodEnter,
                     methodExit,
-                    binaryRepresentation,
                     writerFlags,
                     readerFlags);
         }
@@ -302,15 +297,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         if (other == null || getClass() != other.getClass()) return false;
         Advice advice = (Advice) other;
         return methodEnter.equals(advice.methodEnter)
-                && methodExit.equals(advice.methodExit)
-                && Arrays.equals(binaryRepresentation, advice.binaryRepresentation);
+                && methodExit.equals(advice.methodExit);
     }
 
     @Override
     public int hashCode() {
         int result = methodEnter.hashCode();
         result = 31 * result + methodExit.hashCode();
-        result = 31 * result + Arrays.hashCode(binaryRepresentation);
         return result;
     }
 
@@ -319,7 +312,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         return "Advice{" +
                 "methodEnter=" + methodEnter +
                 ", methodExit=" + methodExit +
-                ", binaryRepresentation=<" + binaryRepresentation.length + " bytes>" +
                 '}';
     }
 
@@ -1168,21 +1160,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * Creates a new advice visitor.
          *
-         * @param methodVisitor        The method visitor to which all instructions are written.
-         * @param instrumentedMethod   The instrumented method.
-         * @param methodEnter          The method enter advice.
-         * @param methodExit           The method exit advice.
-         * @param yieldedTypes         The types that are expected to be added after the instrumented method returns.
-         * @param binaryRepresentation The binary representation of the advice class.
-         * @param writerFlags          The ASM writer flags that were set.
-         * @param readerFlags          The ASM reader flags that were set.
+         * @param methodVisitor      The method visitor to which all instructions are written.
+         * @param instrumentedMethod The instrumented method.
+         * @param methodEnter        The method enter advice.
+         * @param methodExit         The method exit advice.
+         * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
+         * @param writerFlags        The ASM writer flags that were set.
+         * @param readerFlags        The ASM reader flags that were set.
          */
         protected AdviceVisitor(MethodVisitor methodVisitor,
                                 MethodDescription.InDefinedShape instrumentedMethod,
                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
                                 Dispatcher.Resolved.ForMethodExit methodExit,
                                 List<? extends TypeDescription> yieldedTypes,
-                                byte[] binaryRepresentation,
                                 int writerFlags,
                                 int readerFlags) {
             super(Opcodes.ASM5, methodVisitor);
@@ -1191,9 +1181,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             metaDataHandler = MetaDataHandler.Default.of(instrumentedMethod, methodEnter.getEnterType().represents(void.class)
                     ? Collections.<TypeDescription>emptyList()
                     : Collections.singletonList(methodEnter.getEnterType()), yieldedTypes, writerFlags, readerFlags);
-            ClassReader classReader = new ClassReader(binaryRepresentation);
-            this.methodEnter = methodEnter.bind(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
-            this.methodExit = methodExit.bind(instrumentedMethod, methodVisitor, metaDataHandler, classReader);
+            this.methodEnter = methodEnter.bind(instrumentedMethod, methodVisitor, metaDataHandler);
+            this.methodExit = methodExit.bind(instrumentedMethod, methodVisitor, metaDataHandler);
         }
 
         @Override
@@ -1272,25 +1261,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates an advice visitor that does not apply exit advice.
              *
-             * @param methodVisitor        The method visitor for the instrumented method.
-             * @param instrumentedMethod   A description of the instrumented method.
-             * @param methodEnter          The dispatcher to be used for method entry.
-             * @param binaryRepresentation The binary representation of the advice methods' class file.
-             * @param writerFlags          The ASM writer flags that were set.
-             * @param readerFlags          The ASM reader flags that were set.
+             * @param methodVisitor      The method visitor for the instrumented method.
+             * @param instrumentedMethod A description of the instrumented method.
+             * @param methodEnter        The dispatcher to be used for method entry.
+             * @param writerFlags        The ASM writer flags that were set.
+             * @param readerFlags        The ASM reader flags that were set.
              */
-            public WithoutExitAdvice(MethodVisitor methodVisitor,
-                                     MethodDescription.InDefinedShape instrumentedMethod,
-                                     Dispatcher.Resolved.ForMethodEnter methodEnter,
-                                     byte[] binaryRepresentation,
-                                     int writerFlags,
-                                     int readerFlags) {
+            protected WithoutExitAdvice(MethodVisitor methodVisitor,
+                                        MethodDescription.InDefinedShape instrumentedMethod,
+                                        Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                        int writerFlags,
+                                        int readerFlags) {
                 super(methodVisitor,
                         instrumentedMethod,
                         methodEnter,
                         Dispatcher.Inactive.INSTANCE,
                         Collections.<TypeDescription>emptyList(),
-                        binaryRepresentation,
                         writerFlags,
                         readerFlags);
             }
@@ -1331,24 +1317,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             /**
              * Creates an advice visitor that applies exit advice.
              *
-             * @param methodVisitor        The method visitor for the instrumented method.
-             * @param instrumentedMethod   A description of the instrumented method.
-             * @param methodEnter          The dispatcher to be used for method entry.
-             * @param methodExit           The dispatcher to be used for method exit.
-             * @param yieldedTypes         The types that are expected to be added after the instrumented method returns.
-             * @param binaryRepresentation The binary representation of the advice methods' class file.
-             * @param writerFlags          The ASM writer flags that were set.
-             * @param readerFlags          The ASM reader flags that were set.
+             * @param methodVisitor      The method visitor for the instrumented method.
+             * @param instrumentedMethod A description of the instrumented method.
+             * @param methodEnter        The dispatcher to be used for method entry.
+             * @param methodExit         The dispatcher to be used for method exit.
+             * @param yieldedTypes       The types that are expected to be added after the instrumented method returns.
+             * @param writerFlags        The ASM writer flags that were set.
+             * @param readerFlags        The ASM reader flags that were set.
              */
-            public WithExitAdvice(MethodVisitor methodVisitor,
-                                  MethodDescription.InDefinedShape instrumentedMethod,
-                                  Dispatcher.Resolved.ForMethodEnter methodEnter,
-                                  Dispatcher.Resolved.ForMethodExit methodExit,
-                                  List<? extends TypeDescription> yieldedTypes,
-                                  byte[] binaryRepresentation,
-                                  int writerFlags,
-                                  int readerFlags) {
-                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, yieldedTypes, binaryRepresentation, writerFlags, readerFlags);
+            protected WithExitAdvice(MethodVisitor methodVisitor,
+                                     MethodDescription.InDefinedShape instrumentedMethod,
+                                     Dispatcher.Resolved.ForMethodEnter methodEnter,
+                                     Dispatcher.Resolved.ForMethodExit methodExit,
+                                     List<? extends TypeDescription> yieldedTypes,
+                                     int writerFlags,
+                                     int readerFlags) {
+                super(methodVisitor, instrumentedMethod, methodEnter, methodExit, yieldedTypes, writerFlags, readerFlags);
                 endOfMethod = new Label();
             }
 
@@ -1445,19 +1429,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new advice visitor that captures exception by weaving try-catch blocks around user code.
                  *
-                 * @param methodVisitor        The method visitor for the instrumented method.
-                 * @param instrumentedMethod   A description of the instrumented method.
-                 * @param methodEnter          The dispatcher to be used for method entry.
-                 * @param methodExit           The dispatcher to be used for method exit.
-                 * @param binaryRepresentation The binary representation of the advice methods' class file.
-                 * @param writerFlags          The ASM writer flags that were set.
-                 * @param readerFlags          The ASM reader flags that were set.
+                 * @param methodVisitor      The method visitor for the instrumented method.
+                 * @param instrumentedMethod A description of the instrumented method.
+                 * @param methodEnter        The dispatcher to be used for method entry.
+                 * @param methodExit         The dispatcher to be used for method exit.
+                 * @param writerFlags        The ASM writer flags that were set.
+                 * @param readerFlags        The ASM reader flags that were set.
                  */
                 protected WithExceptionHandling(MethodVisitor methodVisitor,
                                                 MethodDescription.InDefinedShape instrumentedMethod,
                                                 Dispatcher.Resolved.ForMethodEnter methodEnter,
                                                 Dispatcher.Resolved.ForMethodExit methodExit,
-                                                byte[] binaryRepresentation,
                                                 int writerFlags,
                                                 int readerFlags) {
                     super(methodVisitor,
@@ -1467,7 +1449,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             instrumentedMethod.getReturnType().represents(void.class)
                                     ? Collections.singletonList(TypeDescription.THROWABLE)
                                     : Arrays.asList(instrumentedMethod.getReturnType().asErasure(), TypeDescription.THROWABLE),
-                            binaryRepresentation,
                             writerFlags,
                             readerFlags);
                     userStart = new Label();
@@ -1556,19 +1537,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * Creates a new advice visitor that does not capture exceptions.
                  *
-                 * @param methodVisitor        The method visitor for the instrumented method.
-                 * @param instrumentedMethod   A description of the instrumented method.
-                 * @param methodEnter          The dispatcher to be used for method entry.
-                 * @param methodExit           The dispatcher to be used for method exit.
-                 * @param binaryRepresentation The binary representation of the advice methods' class file.
-                 * @param writerFlags          The ASM writer flags that were set.
-                 * @param readerFlags          The ASM reader flags that were set.
+                 * @param methodVisitor      The method visitor for the instrumented method.
+                 * @param instrumentedMethod A description of the instrumented method.
+                 * @param methodEnter        The dispatcher to be used for method entry.
+                 * @param methodExit         The dispatcher to be used for method exit.
+                 * @param writerFlags        The ASM writer flags that were set.
+                 * @param readerFlags        The ASM reader flags that were set.
                  */
                 protected WithoutExceptionHandling(MethodVisitor methodVisitor,
                                                    MethodDescription.InDefinedShape instrumentedMethod,
                                                    Dispatcher.Resolved.ForMethodEnter methodEnter,
                                                    Dispatcher.Resolved.ForMethodExit methodExit,
-                                                   byte[] binaryRepresentation,
                                                    int writerFlags,
                                                    int readerFlags) {
                     super(methodVisitor,
@@ -1578,7 +1557,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             instrumentedMethod.getReturnType().represents(void.class)
                                     ? Collections.<TypeDescription>emptyList()
                                     : Collections.singletonList(instrumentedMethod.getReturnType().asErasure()),
-                            binaryRepresentation,
                             writerFlags,
                             readerFlags);
                 }
@@ -1650,13 +1628,16 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          */
         interface Unresolved extends Dispatcher {
 
+            boolean isBinary();
+
             /**
              * Resolves this dispatcher as a dispatcher for entering a method.
              *
              * @param userFactories A list of custom factories for binding parameters of an advice method.
              * @return This dispatcher as a dispatcher for entering a method.
              */
-            Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories);
+            Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+                                                  ClassFileLocator.Resolution binaryRepresentation);
 
             /**
              * Resolves this dispatcher as a dispatcher for exiting a method.
@@ -1665,7 +1646,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param dispatcher    The dispatcher for entering a method.
              * @return This dispatcher as a dispatcher for exiting a method.
              */
-            Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories, Resolved.ForMethodEnter dispatcher);
+            Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+                                                  ClassFileLocator.Resolution binaryRepresentation,
+                                                  Resolved.ForMethodEnter dispatcher);
         }
 
         /**
@@ -4419,13 +4402,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              * @param instrumentedMethod The instrumented method.
              * @param methodVisitor      The method visitor for writing the instrumented method.
              * @param metaDataHandler    A meta data handler for writing to the instrumented method.
-             * @param classReader        A class reader for parsing the class file containing the represented advice method.
              * @return A dispatcher that is bound to the instrumented method.
              */
-            Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
-                       MethodVisitor methodVisitor,
-                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                       ClassReader classReader);
+            Bound bind(MethodDescription.InDefinedShape instrumentedMethod, MethodVisitor methodVisitor, MetaDataHandler.ForInstrumentedMethod metaDataHandler);
 
             /**
              * Represents a resolved dispatcher for entering a method.
@@ -4487,6 +4466,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
+            public boolean isBinary() {
+                return false;
+            }
+
+            @Override
             public boolean isSkipThrowable() {
                 return true;
             }
@@ -4497,12 +4481,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories) {
+            public Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+                                                         ClassFileLocator.Resolution binaryRepresentation) {
                 return this;
             }
 
             @Override
-            public Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories, ForMethodEnter dispatcher) {
+            public Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+                                                         ClassFileLocator.Resolution binaryRepresentation,
+                                                         ForMethodEnter dispatcher) {
                 return this;
             }
 
@@ -4519,8 +4506,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                               MethodVisitor methodVisitor,
-                              MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                              ClassReader classReader) {
+                              MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
                 return this;
             }
 
@@ -4555,14 +4541,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories) {
-                return new Resolved.ForMethodEnter(adviceMethod, userFactories);
+            public boolean isBinary() {
+                return true;
+            }
+
+            @Override
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+                                                                    ClassFileLocator.Resolution binaryRepresentation) {
+                return new Resolved.ForMethodEnter(adviceMethod, userFactories, binaryRepresentation.resolve());
             }
 
             @Override
             public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+                                                                    ClassFileLocator.Resolution binaryRepresentation,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
-                return Resolved.ForMethodExit.of(adviceMethod, userFactories, dispatcher.getEnterType());
+                return Resolved.ForMethodExit.of(adviceMethod, userFactories, binaryRepresentation.resolve(), dispatcher.getEnterType());
             }
 
             @Override
@@ -4597,6 +4590,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected final MethodDescription.InDefinedShape adviceMethod;
 
+                private final byte[] binaryRepresentation;
+
                 /**
                  * An unresolved mapping of offsets of the advice method based on the annotations discovered on each method parameter.
                  */
@@ -4614,7 +4609,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param factories     A list of factories to resolve for the parameters of the advice method.
                  * @param throwableType The type to handle by a suppression handler or {@link NoSuppression} to not handle any exceptions.
                  */
-                protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
+                protected Resolved(MethodDescription.InDefinedShape adviceMethod,
+                                   List<OffsetMapping.Factory> factories,
+                                   byte[] binaryRepresentation,
+                                   TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
                     offsetMappings = new HashMap<Integer, OffsetMapping>();
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
@@ -4633,6 +4631,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ? new OffsetMapping.ForParameter(parameterDescription.getIndex(), READ_ONLY, parameterDescription.getType().asErasure())
                                 : offsetMapping);
                     }
+                    this.binaryRepresentation = binaryRepresentation;
                     suppressionHandler = throwableType.represents(NoSuppression.class)
                             ? SuppressionHandler.NoOp.INSTANCE
                             : new SuppressionHandler.Suppressing(throwableType);
@@ -4646,9 +4645,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                                   MethodVisitor methodVisitor,
-                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                  ClassReader classReader) {
-                    return new AdviceMethodInliner(instrumentedMethod, methodVisitor, metaDataHandler, suppressionHandler.bind(), classReader);
+                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                    return new AdviceMethodInliner(instrumentedMethod,
+                            methodVisitor,
+                            metaDataHandler,
+                            suppressionHandler.bind(),
+                            new ClassReader(binaryRepresentation));
                 }
 
                 /**
@@ -4946,7 +4948,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param userFactories A list of user-defined factories for offset mappings.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
-                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod, List<? extends OffsetMapping.Factory> userFactories) {
+                    protected ForMethodEnter(MethodDescription.InDefinedShape adviceMethod,
+                                             List<? extends OffsetMapping.Factory> userFactories,
+                                             byte[] binaryRepresentation) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_WRITE,
                                         OffsetMapping.ForBoxedArguments.INSTANCE,
@@ -4955,6 +4959,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
+                                binaryRepresentation,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
                     }
 
@@ -5010,6 +5015,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             List<? extends OffsetMapping.Factory> userFactories,
+                                            byte[] binaryRepresentation,
                                             TypeDescription enterType) {
                         super(adviceMethod,
                                 CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_WRITE,
@@ -5024,6 +5030,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
                                                 ? OffsetMapping.ForThrowable.Factory.READ_WRITE
                                                 : new OffsetMapping.Illegal(Thrown.class)), userFactories),
+                                binaryRepresentation,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
                         this.enterType = enterType;
                     }
@@ -5039,10 +5046,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                List<? extends OffsetMapping.Factory> userFactories,
+                                                               byte[] binaryRepresentation,
                                                                TypeDescription enterType) {
                         return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
-                                ? new WithExceptionHandler(adviceMethod, userFactories, enterType)
-                                : new WithoutExceptionHandler(adviceMethod, userFactories, enterType);
+                                ? new WithExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType)
+                                : new WithoutExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType);
                     }
 
                     @Override
@@ -5099,8 +5107,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         protected WithExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                        List<? extends OffsetMapping.Factory> userFactories,
+                                                       byte[] binaryRepresentation,
                                                        TypeDescription enterType) {
-                            super(adviceMethod, userFactories, enterType);
+                            super(adviceMethod, userFactories, binaryRepresentation, enterType);
                         }
 
                         @Override
@@ -5137,8 +5146,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                          */
                         protected WithoutExceptionHandler(MethodDescription.InDefinedShape adviceMethod,
                                                           List<? extends OffsetMapping.Factory> userFactories,
+                                                          byte[] binaryRepresentation,
                                                           TypeDescription enterType) {
-                            super(adviceMethod, userFactories, enterType);
+                            super(adviceMethod, userFactories, binaryRepresentation, enterType);
                         }
 
                         @Override
@@ -5492,12 +5502,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories) {
+            public boolean isBinary() {
+                return false;
+            }
+
+            @Override
+            public Dispatcher.Resolved.ForMethodEnter asMethodEnter(List<? extends OffsetMapping.Factory> userFactories,
+                                                                    ClassFileLocator.Resolution binaryRepresentation) {
                 return new Resolved.ForMethodEnter(adviceMethod, userFactories);
             }
 
             @Override
             public Dispatcher.Resolved.ForMethodExit asMethodExitTo(List<? extends OffsetMapping.Factory> userFactories,
+                                                                    ClassFileLocator.Resolution binaryRepresentation,
                                                                     Dispatcher.Resolved.ForMethodEnter dispatcher) {
                 return Resolved.ForMethodExit.of(adviceMethod, userFactories, dispatcher.getEnterType());
             }
@@ -5583,8 +5600,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 @Override
                 public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                                   MethodVisitor methodVisitor,
-                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                  ClassReader classReader) { // TODO: make reader resolution lazy.
+                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler) { // TODO: make reader resolution lazy.
                     if (!adviceMethod.isVisibleTo(instrumentedMethod.getDeclaringType())) {
                         throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
                     }

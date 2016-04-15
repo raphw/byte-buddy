@@ -71,7 +71,7 @@ public interface ClassFileLocator {
 
             @Override
             public byte[] resolve() {
-                throw new IllegalStateException("Could not read binary data");
+                throw new IllegalStateException("Could not locate binary data for class file");
             }
 
             @Override
