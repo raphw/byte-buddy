@@ -2000,83 +2000,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An offset mapping for a field.
                  */
-                class ForReadOnlyField implements Target {
-
-                    /**
-                     * The field being read.
-                     */
-                    private final FieldDescription fieldDescription;
-
-                    /**
-                     * Creates a new offset mapping for a field.
-                     *
-                     * @param fieldDescription The field being read.
-                     */
-                    protected ForReadOnlyField(FieldDescription fieldDescription) {
-                        this.fieldDescription = fieldDescription;
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        switch (opcode) {
-                            case Opcodes.ISTORE:
-                            case Opcodes.ASTORE:
-                            case Opcodes.FSTORE:
-                            case Opcodes.LSTORE:
-                            case Opcodes.DSTORE:
-                                throw new IllegalStateException("Cannot write to field: " + fieldDescription);
-                            case Opcodes.ILOAD:
-                            case Opcodes.FLOAD:
-                            case Opcodes.ALOAD:
-                            case Opcodes.LLOAD:
-                            case Opcodes.DLOAD:
-                                int accessOpcode;
-                                if (fieldDescription.isStatic()) {
-                                    accessOpcode = Opcodes.GETSTATIC;
-                                } else {
-                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
-                                    accessOpcode = Opcodes.GETFIELD;
-                                }
-                                methodVisitor.visitFieldInsn(accessOpcode,
-                                        fieldDescription.getDeclaringType().asErasure().getInternalName(),
-                                        fieldDescription.getInternalName(),
-                                        fieldDescription.getDescriptor());
-                                break;
-                            default:
-                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
-                        }
-                        return NO_PADDING;
-                    }
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot write to field: " + fieldDescription);
-                    }
-
-                    @Override
-                    public boolean equals(Object object) {
-                        if (this == object) return true;
-                        if (object == null || getClass() != object.getClass()) return false;
-                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
-                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
-                    }
-
-                    @Override
-                    public int hashCode() {
-                        return fieldDescription.hashCode();
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField{" +
-                                "fieldDescription=" + fieldDescription +
-                                '}';
-                    }
-                }
-
-                /**
-                 * An offset mapping for a field.
-                 */
                 class ForField implements Target {
 
                     /**
@@ -2182,6 +2105,83 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public String toString() {
                         return "Advice.Dispatcher.OffsetMapping.Target.ForField{" +
+                                "fieldDescription=" + fieldDescription +
+                                '}';
+                    }
+                }
+
+                /**
+                 * An offset mapping for a field.
+                 */
+                class ForReadOnlyField implements Target {
+
+                    /**
+                     * The field being read.
+                     */
+                    private final FieldDescription fieldDescription;
+
+                    /**
+                     * Creates a new offset mapping for a field.
+                     *
+                     * @param fieldDescription The field being read.
+                     */
+                    protected ForReadOnlyField(FieldDescription fieldDescription) {
+                        this.fieldDescription = fieldDescription;
+                    }
+
+                    @Override
+                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
+                        switch (opcode) {
+                            case Opcodes.ISTORE:
+                            case Opcodes.ASTORE:
+                            case Opcodes.FSTORE:
+                            case Opcodes.LSTORE:
+                            case Opcodes.DSTORE:
+                                throw new IllegalStateException("Cannot write to field: " + fieldDescription);
+                            case Opcodes.ILOAD:
+                            case Opcodes.FLOAD:
+                            case Opcodes.ALOAD:
+                            case Opcodes.LLOAD:
+                            case Opcodes.DLOAD:
+                                int accessOpcode;
+                                if (fieldDescription.isStatic()) {
+                                    accessOpcode = Opcodes.GETSTATIC;
+                                } else {
+                                    methodVisitor.visitVarInsn(Opcodes.ALOAD, 0);
+                                    accessOpcode = Opcodes.GETFIELD;
+                                }
+                                methodVisitor.visitFieldInsn(accessOpcode,
+                                        fieldDescription.getDeclaringType().asErasure().getInternalName(),
+                                        fieldDescription.getInternalName(),
+                                        fieldDescription.getDescriptor());
+                                break;
+                            default:
+                                throw new IllegalArgumentException("Did not expect opcode: " + opcode);
+                        }
+                        return NO_PADDING;
+                    }
+
+                    @Override
+                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
+                        throw new IllegalStateException("Cannot write to field: " + fieldDescription);
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        ForReadOnlyField forReadOnlyField = (ForReadOnlyField) object;
+                        return fieldDescription.equals(forReadOnlyField.fieldDescription);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        return fieldDescription.hashCode();
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField{" +
                                 "fieldDescription=" + fieldDescription +
                                 '}';
                     }
@@ -5594,9 +5594,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         suppressionHandler.onStart(methodVisitor, metaDataHandler);
                         int index = 0, currentStackSize = 0, padding = 0;
                         for (OffsetMapping.Target offsetMapping : offsetMappings) {
-                            TypeDescription typeDescription = adviceMethod.getParameters().get(index++).getType().asErasure();
-                            currentStackSize += typeDescription.getStackSize().getSize(); // TODO: rather refactor handlers to only allow for given type?
-                            padding = Math.max(padding, currentStackSize + offsetMapping.resolveAccess(methodVisitor, Type.getType(typeDescription.getDescriptor()).getOpcode(Opcodes.ILOAD)));
+                            Type type = Type.getType(adviceMethod.getParameters().get(index++).getType().asErasure().getDescriptor());
+                            currentStackSize += type.getSize();
+                            padding = Math.max(padding, currentStackSize + offsetMapping.resolveAccess(methodVisitor, type.getOpcode(Opcodes.ILOAD)));
                         }
                         methodVisitor.visitMethodInsn(Opcodes.ACC_STATIC,
                                 adviceMethod.getDeclaringType().getInternalName(),
@@ -5698,7 +5698,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     methodVisitor.visitInsn(Opcodes.POP2);
                                     return;
                                 default:
-                                    throw new IllegalStateException(); // TODO
+                                    throw new IllegalStateException("Unexpected size: " + adviceMethod.getReturnType().getStackSize());
                             }
                         }
 
