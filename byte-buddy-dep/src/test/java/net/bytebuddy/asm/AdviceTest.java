@@ -887,6 +887,17 @@ public class AdviceTest {
     }
 
     @Test
+    public void testExceptionSuppressionAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(Sample.class)
+                .visit(Advice.to(ExceptionSuppressionAdvice.class).on(named(FOO + BAR)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO + BAR).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1660,6 +1671,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class IncrementSample {
 
         public int foo(int value) {
@@ -1977,6 +1989,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class Box {
 
         public final String value;
@@ -1994,6 +2007,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class FieldSample {
 
         public static int enter, exit;
@@ -2153,6 +2167,15 @@ public class AdviceTest {
         @Advice.OnMethodEnter
         private static void enter(@Advice.FieldValue("foo") String foo) {
             foo = BAR;
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class ExceptionSuppressionAdvice {
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.Thrown(readOnly = false) Throwable throwable) {
+            throwable = null;
         }
     }
 

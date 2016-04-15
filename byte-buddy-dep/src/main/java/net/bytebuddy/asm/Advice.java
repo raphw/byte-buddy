@@ -4372,7 +4372,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         Label endOfHandler = new Label();
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                         onEnd(methodVisitor, metaDataHandler, returnValueProducer, endOfHandler);
-                        methodVisitor.visitLabel(endOfHandler);
                         metaDataHandler.injectCompletionFrame(methodVisitor, false);
                     }
 
@@ -5702,7 +5701,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 false);
                         onAfterCall();
                         suppressionHandler.onEndSkipped(methodVisitor, metaDataHandler, this);
-                        metaDataHandler.recordMaxima(maximumStackSize, EMPTY);
+                        metaDataHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
                     protected abstract void onAfterCall();
