@@ -3739,6 +3739,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public String toString() {
                         return "Advice.Dispatcher.OffsetMapping.ForEnterValue.Factory{" +
                                 "enterType=" + enterType +
+                                "m readOnly=" + readOnly +
                                 '}';
                     }
                 }
@@ -5584,6 +5585,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   MethodVisitor methodVisitor,
                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
                                   ClassReader classReader) { // TODO: make reader resolution lazy.
+                    if (!adviceMethod.isVisibleTo(instrumentedMethod.getDeclaringType())) {
+                        throw new IllegalStateException(adviceMethod + " is not visible to " + instrumentedMethod.getDeclaringType());
+                    }
                     return resolve(instrumentedMethod, methodVisitor, metaDataHandler);
                 }
 
