@@ -1321,10 +1321,10 @@ public class AdviceTest {
             }
         }).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTabelSubstitutor.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableCollector.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableExtractor.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTabelSubstitutor.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableCollector.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableExtractor.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
             @Override

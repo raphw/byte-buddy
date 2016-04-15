@@ -4532,7 +4532,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   MethodVisitor methodVisitor,
                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
                                   ClassReader classReader) {
-                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler, suppressionHandler.bind(), classReader);
+                    return new AdviceMethodInliner(instrumentedMethod, methodVisitor, metaDataHandler, suppressionHandler.bind(), classReader);
                 }
 
                 /**
@@ -4568,7 +4568,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A bound advice method that copies the code by first extracting the exception table and later appending the
                  * code of the method without copying any meta data.
                  */
-                protected class CodeCopier extends ClassVisitor implements Bound {
+                protected class AdviceMethodInliner extends ClassVisitor implements Bound {
 
                     /**
                      * The instrumented method.
@@ -4609,11 +4609,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param suppressionHandler A bound suppression handler that is used for suppressing exceptions of this advice method.
                      * @param classReader        A class reader for parsing the class file containing the represented advice method.
                      */
-                    protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
-                                         MethodVisitor methodVisitor,
-                                         MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                         SuppressionHandler.Bound suppressionHandler,
-                                         ClassReader classReader) {
+                    protected AdviceMethodInliner(MethodDescription.InDefinedShape instrumentedMethod,
+                                                  MethodVisitor methodVisitor,
+                                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
+                                                  SuppressionHandler.Bound suppressionHandler,
+                                                  ClassReader classReader) {
                         super(Opcodes.ASM5);
                         this.instrumentedMethod = instrumentedMethod;
                         this.methodVisitor = methodVisitor;
@@ -4643,7 +4643,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Inlining.Resolved.CodeCopier{" +
+                        return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", methodVisitor=" + methodVisitor +
                                 ", metaDataHandler=" + metaDataHandler +
@@ -4674,7 +4674,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableExtractor{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableExtractor{" +
                                     "methodVisitor=" + methodVisitor +
                                     '}';
                         }
@@ -4714,7 +4714,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableCollector{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTableCollector{" +
                                     "methodVisitor=" + methodVisitor +
                                     '}';
                         }
@@ -4809,7 +4809,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTabelSubstitutor{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.AdviceMethodInliner.ExceptionTabelSubstitutor{" +
                                     "methodVisitor=" + methodVisitor +
                                     ", substitutions=" + substitutions +
                                     ", index=" + index +
@@ -5445,7 +5445,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * An unresolved mapping of offsets of the advice method based on the annotations discovered on each method parameter.
                  */
-                protected final Map<Integer, OffsetMapping> offsetMappings;
+                protected final List<OffsetMapping> offsetMappings;
 
                 /**
                  * The suppression handler to use.
@@ -5461,7 +5461,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected Resolved(MethodDescription.InDefinedShape adviceMethod, List<OffsetMapping.Factory> factories, TypeDescription throwableType) {
                     this.adviceMethod = adviceMethod;
-                    offsetMappings = new HashMap<Integer, OffsetMapping>();
+                    offsetMappings = new ArrayList<OffsetMapping>(adviceMethod.getParameters().size());
                     for (ParameterDescription.InDefinedShape parameterDescription : adviceMethod.getParameters()) {
                         OffsetMapping offsetMapping = OffsetMapping.Factory.UNDEFINED;
                         for (OffsetMapping.Factory factory : factories) {
@@ -5474,7 +5474,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 }
                             }
                         }
-                        offsetMappings.put(parameterDescription.getOffset(), offsetMapping == null
+                        offsetMappings.add(offsetMapping == null
                                 ? new OffsetMapping.ForParameter(parameterDescription.getIndex(), READ_ONLY, parameterDescription.getType().asErasure())
                                 : offsetMapping);
                     }
@@ -5493,22 +5493,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                   MethodVisitor methodVisitor,
                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
                                   ClassReader classReader) { // TODO: make reader lazy.
-                    return new CodeWriter(instrumentedMethod, methodVisitor, metaDataHandler, suppressionHandler.bind());
+                    // TODO: meta data handler needs to be resolved too
+                    return resolve(instrumentedMethod, methodVisitor, metaDataHandler);
                 }
 
-                /**
-                 * Applies a resolution for a given instrumented method.
-                 *
-                 * @param methodVisitor      A method visitor for writing byte code to the instrumented method.
-                 * @param metaDataHandler    A handler for translating meta data that is embedded into the instrumented method's byte code.
-                 * @param instrumentedMethod A description of the instrumented method.
-                 * @param suppressionHandler The bound suppression handler that is used for suppressing exceptions of this advice method.
-                 * @return A method visitor for visiting the advice method's byte code.
-                 */
-                protected abstract MethodVisitor apply(MethodVisitor methodVisitor,
-                                                       MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                                       MethodDescription.InDefinedShape instrumentedMethod,
-                                                       SuppressionHandler.Bound suppressionHandler);
+                protected abstract Bound resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                                 MethodVisitor methodVisitor,
+                                                 MetaDataHandler.ForInstrumentedMethod metaDataHandler);
 
                 @Override
                 public boolean equals(Object other) {
@@ -5529,12 +5520,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A bound advice method that copies the code by first extracting the exception table and later appending the
                  * code of the method without copying any meta data.
                  */
-                protected class CodeWriter implements Bound {
+                protected class AdviceMethodWriter implements Bound {
 
                     /**
                      * The instrumented method.
                      */
                     private final MethodDescription.InDefinedShape instrumentedMethod;
+
+                    private final List<OffsetMapping.Target> offsetMappings;
 
                     /**
                      * The method visitor for writing the instrumented method.
@@ -5544,29 +5537,27 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * A meta data handler for writing to the instrumented method.
                      */
-                    private final MetaDataHandler.ForInstrumentedMethod metaDataHandler;
+                    private final MetaDataHandler.ForAdvice metaDataHandler;
 
                     /**
                      * A bound suppression handler that is used for suppressing exceptions of this advice method.
                      */
                     private final SuppressionHandler.Bound suppressionHandler;
 
-                    /**
-                     * Creates a new code copier.
-                     *
-                     * @param instrumentedMethod The instrumented method.
-                     * @param methodVisitor      The method visitor for writing the instrumented method.
-                     * @param metaDataHandler    A meta data handler for writing to the instrumented method.
-                     * @param suppressionHandler A bound suppression handler that is used for suppressing exceptions of this advice method.
-                     */
-                    protected CodeWriter(MethodDescription.InDefinedShape instrumentedMethod,
-                                         MethodVisitor methodVisitor,
-                                         MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                         SuppressionHandler.Bound suppressionHandler) {
+                    private final SuppressionHandler.ReturnValueProducer returnValueProducer; // TODO!
+
+                    protected AdviceMethodWriter(MethodDescription.InDefinedShape instrumentedMethod,
+                                                 List<OffsetMapping.Target> offsetMappings,
+                                                 MethodVisitor methodVisitor,
+                                                 MetaDataHandler.ForAdvice metaDataHandler,
+                                                 SuppressionHandler.Bound suppressionHandler,
+                                                 SuppressionHandler.ReturnValueProducer returnValueProducer) {
                         this.instrumentedMethod = instrumentedMethod;
+                        this.offsetMappings = offsetMappings;
                         this.methodVisitor = methodVisitor;
                         this.metaDataHandler = metaDataHandler;
                         this.suppressionHandler = suppressionHandler;
+                        this.returnValueProducer = returnValueProducer;
                     }
 
                     @Override
@@ -5576,16 +5567,39 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void apply() {
-                        // TODO: Load parameters
+                        suppressionHandler.onStart(methodVisitor, metaDataHandler);
+                        int index = 0, currentStackSize = 0, padding = 0;
+                        for (OffsetMapping.Target offsetMapping : offsetMappings) {
+                            currentStackSize += adviceMethod.getParameters().get(index++).getType().getStackSize().getSize();
+                            padding = Math.max(padding, currentStackSize + offsetMapping.resolveAccess(methodVisitor, -1)); // TODO
+                        }
                         methodVisitor.visitMethodInsn(Opcodes.ACC_STATIC,
                                 adviceMethod.getDeclaringType().getInternalName(),
                                 adviceMethod.getInternalName(),
                                 adviceMethod.getDescriptor(),
                                 false);
+                        suppressionHandler.onEnd(methodVisitor, metaDataHandler, returnValueProducer);
+                        if (adviceMethod.getReturnType().represents(boolean.class)
+                                || adviceMethod.getReturnType().represents(byte.class)
+                                || adviceMethod.getReturnType().represents(short.class)
+                                || adviceMethod.getReturnType().represents(char.class)
+                                || adviceMethod.getReturnType().represents(int.class)) {
+                            methodVisitor.visitIntInsn(Opcodes.ISTORE, adviceMethod.getStackSize());
+                        } else if (adviceMethod.getReturnType().represents(long.class)) {
+                            methodVisitor.visitIntInsn(Opcodes.LSTORE, adviceMethod.getStackSize());
+                        } else if (adviceMethod.getReturnType().represents(float.class)) {
+                            methodVisitor.visitIntInsn(Opcodes.FSTORE, adviceMethod.getStackSize());
+                        } else if (adviceMethod.getReturnType().represents(double.class)) {
+                            methodVisitor.visitIntInsn(Opcodes.DSTORE, adviceMethod.getStackSize());
+                        } else if (!adviceMethod.getReturnType().represents(void.class)) {
+                            methodVisitor.visitIntInsn(Opcodes.ASTORE, adviceMethod.getStackSize());
+                        }
+                        metaDataHandler.recordMaxima(currentStackSize, 0); // TODO
                     }
+
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Delegating.Resolved.CodeWriter{" +
+                        return "Advice.Dispatcher.Delegating.Resolved.AdviceMethodWriter{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", methodVisitor=" + methodVisitor +
                                 ", metaDataHandler=" + metaDataHandler +
@@ -5636,20 +5650,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected MethodVisitor apply(MethodVisitor methodVisitor,
-                                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                                  MethodDescription.InDefinedShape instrumentedMethod,
-                                                  SuppressionHandler.Bound suppressionHandler) {
-                        Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
-                        for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodEntry.of(instrumentedMethod)));
+                    protected Bound resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                            MethodVisitor methodVisitor,
+                                            MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                        List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
+                        for (OffsetMapping offsetMapping : this.offsetMappings) {
+                            offsetMappings.add(offsetMapping.resolve(instrumentedMethod, OffsetMapping.Context.ForMethodEntry.of(instrumentedMethod)));
                         }
-                        return new CodeTranslationVisitor.ForMethodEnter(methodVisitor,
-                                metaDataHandler.bindEntry(adviceMethod),
-                                instrumentedMethod,
-                                adviceMethod,
+                        return new AdviceMethodWriter(instrumentedMethod,
                                 offsetMappings,
-                                suppressionHandler);
+                                methodVisitor,
+                                metaDataHandler.bindEntry(adviceMethod),
+                                suppressionHandler.bind(),
+                                null); // TODO
                     }
 
                     @Override
@@ -5730,21 +5743,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     }
 
                     @Override
-                    protected MethodVisitor apply(MethodVisitor methodVisitor,
-                                                  MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                                  MethodDescription.InDefinedShape instrumentedMethod,
-                                                  SuppressionHandler.Bound suppressionHandler) {
-                        Map<Integer, OffsetMapping.Target> offsetMappings = new HashMap<Integer, OffsetMapping.Target>();
-                        for (Map.Entry<Integer, OffsetMapping> entry : this.offsetMappings.entrySet()) {
-                            offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodExit.of(enterType)));
+                    protected Bound resolve(MethodDescription.InDefinedShape instrumentedMethod,
+                                            MethodVisitor methodVisitor,
+                                            MetaDataHandler.ForInstrumentedMethod metaDataHandler) {
+                        List<OffsetMapping.Target> offsetMappings = new ArrayList<OffsetMapping.Target>(this.offsetMappings.size());
+                        for (OffsetMapping offsetMapping : this.offsetMappings) {
+                            offsetMappings.add(offsetMapping.resolve(instrumentedMethod, OffsetMapping.Context.ForMethodExit.of(enterType)));
                         }
-                        return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
-                                metaDataHandler.bindExit(adviceMethod),
-                                instrumentedMethod,
-                                adviceMethod,
+                        return new AdviceMethodWriter(instrumentedMethod,
                                 offsetMappings,
-                                suppressionHandler,
-                                enterType.getStackSize().getSize() + getPadding().getSize());
+                                methodVisitor,
+                                metaDataHandler.bindEntry(adviceMethod),
+                                suppressionHandler.bind(),
+                                null); // TODO
                     }
 
                     /**
@@ -5842,318 +5853,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                     ", offsetMappings=" + offsetMappings +
                                     '}';
                         }
-                    }
-                }
-            }
-
-            /**
-             * A visitor for translating an advice method's byte code for inlining into the instrumented method.
-             */
-            protected abstract static class CodeTranslationVisitor extends MethodVisitor implements SuppressionHandler.ReturnValueProducer {
-
-                /**
-                 * A handler for translating meta data found in the byte code.
-                 */
-                protected final MetaDataHandler.ForAdvice metaDataHandler;
-
-                /**
-                 * The instrumented method.
-                 */
-                protected final MethodDescription.InDefinedShape instrumentedMethod;
-
-                /**
-                 * The advice method.
-                 */
-                protected final MethodDescription.InDefinedShape adviceMethod;
-
-                /**
-                 * A mapping of offsets to resolved target offsets in the instrumented method.
-                 */
-                private final Map<Integer, Resolved.OffsetMapping.Target> offsetMappings;
-
-                /**
-                 * A handler for optionally suppressing exceptions.
-                 */
-                private final SuppressionHandler.Bound suppressionHandler;
-
-                /**
-                 * A label indicating the end of the advice byte code.
-                 */
-                protected final Label endOfMethod;
-
-                /**
-                 * Creates a new code translation visitor.
-                 *
-                 * @param methodVisitor      A method visitor for writing the instrumented method's byte code.
-                 * @param metaDataHandler    A handler for translating meta data found in the byte code.
-                 * @param instrumentedMethod The instrumented method.
-                 * @param adviceMethod       The advice method.
-                 * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                 * @param suppressionHandler The suppression handler to use.
-                 */
-                protected CodeTranslationVisitor(MethodVisitor methodVisitor,
-                                                 MetaDataHandler.ForAdvice metaDataHandler,
-                                                 MethodDescription.InDefinedShape instrumentedMethod,
-                                                 MethodDescription.InDefinedShape adviceMethod,
-                                                 Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                                 SuppressionHandler.Bound suppressionHandler) {
-                    super(Opcodes.ASM5, methodVisitor);
-                    this.metaDataHandler = metaDataHandler;
-                    this.instrumentedMethod = instrumentedMethod;
-                    this.adviceMethod = adviceMethod;
-                    this.offsetMappings = offsetMappings;
-                    this.suppressionHandler = suppressionHandler;
-                    endOfMethod = new Label();
-                }
-
-                @Override
-                public void visitParameter(String name, int modifiers) {
-                    /* do nothing */
-                }
-
-                @Override
-                public AnnotationVisitor visitAnnotationDefault() {
-                    return IGNORE_ANNOTATION;
-                }
-
-                @Override
-                public AnnotationVisitor visitAnnotation(String descriptor, boolean visible) {
-                    return IGNORE_ANNOTATION;
-                }
-
-                @Override
-                public AnnotationVisitor visitTypeAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                    return IGNORE_ANNOTATION;
-                }
-
-                @Override
-                public AnnotationVisitor visitParameterAnnotation(int index, String descriptor, boolean visible) {
-                    return IGNORE_ANNOTATION;
-                }
-
-                @Override
-                public void visitAttribute(Attribute attribute) {
-                    /* do nothing */
-                }
-
-                @Override
-                public void visitCode() {
-                    suppressionHandler.onStart(mv, metaDataHandler);
-                }
-
-                @Override
-                public void visitFrame(int frameType, int localVariableLength, Object[] localVariable, int stackSize, Object[] stack) {
-                    metaDataHandler.translateFrame(mv, frameType, localVariableLength, localVariable, stackSize, stack);
-                }
-
-                @Override
-                public void visitEnd() {
-                    suppressionHandler.onEnd(mv, metaDataHandler, this);
-                    mv.visitLabel(endOfMethod);
-                    metaDataHandler.injectCompletionFrame(mv, false);
-                }
-
-                @Override
-                public void visitMaxs(int stackSize, int localVariableLength) {
-                    metaDataHandler.recordMaxima(stackSize, localVariableLength);
-                }
-
-                @Override
-                public void visitVarInsn(int opcode, int offset) {
-                    Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
-                    if (target != null) {
-                        metaDataHandler.recordPadding(target.resolveAccess(mv, opcode));
-                    } else {
-                        mv.visitVarInsn(opcode, adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()));
-                    }
-                }
-
-                @Override
-                public void visitIincInsn(int offset, int increment) {
-                    Resolved.OffsetMapping.Target target = offsetMappings.get(offset);
-                    if (target != null) {
-                        metaDataHandler.recordPadding(target.resolveIncrement(mv, increment));
-                    } else {
-                        mv.visitIincInsn(adjust(offset + instrumentedMethod.getStackSize() - adviceMethod.getStackSize()), increment);
-                    }
-                }
-
-                /**
-                 * Adjusts the offset of a variable instruction within the advice method such that no arguments to
-                 * the instrumented method are overridden.
-                 *
-                 * @param offset The original offset.
-                 * @return The adjusted offset.
-                 */
-                protected abstract int adjust(int offset);
-
-                @Override
-                public abstract void visitInsn(int opcode);
-
-                /**
-                 * A code translation visitor that retains the return value of the represented advice method.
-                 */
-                protected static class ForMethodEnter extends CodeTranslationVisitor {
-
-                    /**
-                     * Creates a code translation visitor for translating exit advice.
-                     *
-                     * @param methodVisitor      A method visitor for writing the instrumented method's byte code.
-                     * @param metaDataHandler    A handler for translating meta data found in the byte code.
-                     * @param instrumentedMethod The instrumented method.
-                     * @param adviceMethod       The advice method.
-                     * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param suppressionHandler The suppression handler to use.
-                     */
-                    protected ForMethodEnter(MethodVisitor methodVisitor,
-                                             MetaDataHandler.ForAdvice metaDataHandler,
-                                             MethodDescription.InDefinedShape instrumentedMethod,
-                                             MethodDescription.InDefinedShape adviceMethod,
-                                             Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                             SuppressionHandler.Bound suppressionHandler) {
-                        super(methodVisitor, metaDataHandler, instrumentedMethod, adviceMethod, offsetMappings, suppressionHandler);
-                    }
-
-                    @Override
-                    public void visitInsn(int opcode) {
-                        switch (opcode) {
-                            case Opcodes.RETURN:
-                                break;
-                            case Opcodes.IRETURN:
-                                mv.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
-                                break;
-                            case Opcodes.LRETURN:
-                                mv.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
-                                break;
-                            case Opcodes.ARETURN:
-                                mv.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
-                                break;
-                            case Opcodes.FRETURN:
-                                mv.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
-                                break;
-                            case Opcodes.DRETURN:
-                                mv.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
-                                break;
-                            default:
-                                mv.visitInsn(opcode);
-                                return;
-                        }
-                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                    }
-
-                    @Override
-                    protected int adjust(int offset) {
-                        return offset;
-                    }
-
-                    @Override
-                    public void makeDefault(MethodVisitor methodVisitor) {
-                        if (adviceMethod.getReturnType().represents(boolean.class)
-                                || adviceMethod.getReturnType().represents(byte.class)
-                                || adviceMethod.getReturnType().represents(short.class)
-                                || adviceMethod.getReturnType().represents(char.class)
-                                || adviceMethod.getReturnType().represents(int.class)) {
-                            methodVisitor.visitInsn(Opcodes.ICONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.ISTORE, instrumentedMethod.getStackSize());
-                        } else if (adviceMethod.getReturnType().represents(long.class)) {
-                            methodVisitor.visitInsn(Opcodes.LCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.LSTORE, instrumentedMethod.getStackSize());
-                        } else if (adviceMethod.getReturnType().represents(float.class)) {
-                            methodVisitor.visitInsn(Opcodes.FCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.FSTORE, instrumentedMethod.getStackSize());
-                        } else if (adviceMethod.getReturnType().represents(double.class)) {
-                            methodVisitor.visitInsn(Opcodes.DCONST_0);
-                            methodVisitor.visitVarInsn(Opcodes.DSTORE, instrumentedMethod.getStackSize());
-                        } else if (!adviceMethod.getReturnType().represents(void.class)) {
-                            methodVisitor.visitInsn(Opcodes.ACONST_NULL);
-                            methodVisitor.visitVarInsn(Opcodes.ASTORE, instrumentedMethod.getStackSize());
-                        }
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Delegating.CodeTranslationVisitor.ForMethodEnter{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", adviceMethod=" + adviceMethod +
-                                '}';
-                    }
-                }
-
-                /**
-                 * A code translation visitor that discards the return value of the represented advice method.
-                 */
-                protected static class ForMethodExit extends CodeTranslationVisitor {
-
-                    /**
-                     * The padding after the instrumented method's arguments in the local variable array.
-                     */
-                    private final int padding;
-
-                    /**
-                     * Creates a code translation visitor for translating exit advice.
-                     *
-                     * @param methodVisitor      A method visitor for writing the instrumented method's byte code.
-                     * @param metaDataHandler    A handler for translating meta data found in the byte code.
-                     * @param instrumentedMethod The instrumented method.
-                     * @param adviceMethod       The advice method.
-                     * @param offsetMappings     A mapping of offsets to resolved target offsets in the instrumented method.
-                     * @param suppressionHandler The suppression handler to use.
-                     * @param padding            The padding after the instrumented method's arguments in the local variable array.
-                     */
-                    protected ForMethodExit(MethodVisitor methodVisitor,
-                                            MetaDataHandler.ForAdvice metaDataHandler,
-                                            MethodDescription.InDefinedShape instrumentedMethod,
-                                            MethodDescription.InDefinedShape adviceMethod,
-                                            Map<Integer, Resolved.OffsetMapping.Target> offsetMappings,
-                                            SuppressionHandler.Bound suppressionHandler,
-                                            int padding) {
-                        super(methodVisitor,
-                                metaDataHandler,
-                                instrumentedMethod,
-                                adviceMethod,
-                                offsetMappings,
-                                suppressionHandler);
-                        this.padding = padding;
-                    }
-
-                    @Override
-                    public void visitInsn(int opcode) {
-                        switch (opcode) {
-                            case Opcodes.RETURN:
-                                break;
-                            case Opcodes.IRETURN:
-                            case Opcodes.ARETURN:
-                            case Opcodes.FRETURN:
-                                mv.visitInsn(Opcodes.POP);
-                                break;
-                            case Opcodes.LRETURN:
-                            case Opcodes.DRETURN:
-                                mv.visitInsn(Opcodes.POP2);
-                                break;
-                            default:
-                                mv.visitInsn(opcode);
-                                return;
-                        }
-                        mv.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                    }
-
-                    @Override
-                    protected int adjust(int offset) {
-                        return instrumentedMethod.getReturnType().getStackSize().getSize() + padding + offset;
-                    }
-
-                    @Override
-                    public void makeDefault(MethodVisitor methodVisitor) {
-                        /* do nothing */
-                    }
-
-                    @Override
-                    public String toString() {
-                        return "Advice.Dispatcher.Delegating.CodeTranslationVisitor.ForMethodExit{" +
-                                "instrumentedMethod=" + instrumentedMethod +
-                                ", adviceMethod=" + adviceMethod +
-                                ", padding=" + padding +
-                                '}';
                     }
                 }
             }
