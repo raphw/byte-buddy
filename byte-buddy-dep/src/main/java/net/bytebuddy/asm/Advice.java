@@ -4146,6 +4146,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * @param returnValueProducer A producer for defining a default return value of the advised method.
                  */
                 void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
+
+                void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer);
             }
 
             /**
@@ -4165,18 +4167,24 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void onPrepare(MethodVisitor methodVisitor) {
-                            /* do nothing */
+                    /* do nothing */
                 }
 
                 @Override
                 public void onStart(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler) {
-                            /* do nothing */
+                    /* do nothing */
                 }
 
                 @Override
                 public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                            /* do nothing */
+                    /* do nothing */
                 }
+
+                @Override
+                public void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
+                    /* do nothing */
+                }
+
 
                 @Override
                 public String toString() {
@@ -4271,7 +4279,22 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
+                        onEnd(methodVisitor, metaDataHandler, returnValueProducer, new Label());
+                    }
+
+                    @Override
+                    public void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
                         Label endOfHandler = new Label();
+                        methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
+                        onEnd(methodVisitor, metaDataHandler, returnValueProducer, endOfHandler);
+                        methodVisitor.visitLabel(endOfHandler);
+                        metaDataHandler.injectCompletionFrame(methodVisitor, false);
+                    }
+
+                    private void onEnd(MethodVisitor methodVisitor,
+                                       MetaDataHandler.ForAdvice metaDataHandler,
+                                       ReturnValueProducer returnValueProducer,
+                                       Label endOfHandler) {
                         methodVisitor.visitLabel(endOfMethod);
                         metaDataHandler.injectHandlerFrame(methodVisitor);
                         methodVisitor.visitInsn(Opcodes.POP);
@@ -5581,12 +5604,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 adviceMethod.getDescriptor(),
                                 false);
                         onAfterCall();
-                        // TODO: Avoid handler if no handler is present?
-                        Label endOfMethod = new Label();
-                        methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfMethod);
-                        suppressionHandler.onEnd(methodVisitor, metaDataHandler, this);
-                        methodVisitor.visitLabel(endOfMethod);
-                        metaDataHandler.injectCompletionFrame(methodVisitor, false);
+                        suppressionHandler.onEndSkipped(methodVisitor, metaDataHandler, this);
                         metaDataHandler.recordMaxima(currentStackSize, EMPTY);
                     }
 
