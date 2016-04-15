@@ -200,7 +200,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             } else if (!methodDescription.isStatic()) {
                 throw new IllegalStateException("Advice for " + methodDescription + " is not static");
             }
-            return new Dispatcher.Active(methodDescription);
+            return new Dispatcher.Inlining(methodDescription);
         } else {
             return dispatcher;
         }
@@ -4218,7 +4218,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         /**
          * A dispatcher for active advice.
          */
-        class Active implements Unresolved {
+        class Inlining implements Unresolved {
 
             /**
              * The advice method.
@@ -4230,7 +4230,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              *
              * @param adviceMethod The advice method.
              */
-            protected Active(MethodDescription.InDefinedShape adviceMethod) {
+            protected Inlining(MethodDescription.InDefinedShape adviceMethod) {
                 this.adviceMethod = adviceMethod;
             }
 
@@ -4252,7 +4252,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass()) && adviceMethod.equals(((Active) other).adviceMethod);
+                return this == other || !(other == null || getClass() != other.getClass()) && adviceMethod.equals(((Inlining) other).adviceMethod);
             }
 
             @Override
@@ -4262,7 +4262,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public String toString() {
-                return "Advice.Dispatcher.Active{" +
+                return "Advice.Dispatcher.Inlining{" +
                         "adviceMethod=" + adviceMethod +
                         '}';
             }
@@ -4354,7 +4354,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public boolean equals(Object other) {
                     if (this == other) return true;
                     if (other == null || getClass() != other.getClass()) return false;
-                    Active.Resolved resolved = (Active.Resolved) other;
+                    Inlining.Resolved resolved = (Inlining.Resolved) other;
                     return adviceMethod.equals(resolved.adviceMethod) && offsetMappings.equals(resolved.offsetMappings);
                 }
 
@@ -4438,13 +4438,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
                         return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? new ExceptionTabelSubstitutor(Active.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod, suppressionHandler))
+                                ? new ExceptionTabelSubstitutor(Inlining.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod, suppressionHandler))
                                 : IGNORE_METHOD;
                     }
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.Resolved.CodeCopier{" +
+                        return "Advice.Dispatcher.Inlining.Resolved.CodeCopier{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", methodVisitor=" + methodVisitor +
                                 ", metaDataHandler=" + metaDataHandler +
@@ -4475,7 +4475,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableExtractor{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableExtractor{" +
                                     "methodVisitor=" + methodVisitor +
                                     '}';
                         }
@@ -4515,7 +4515,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableCollector{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableCollector{" +
                                     "methodVisitor=" + methodVisitor +
                                     '}';
                         }
@@ -4610,7 +4610,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTabelSubstitutor{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTabelSubstitutor{" +
                                     "methodVisitor=" + methodVisitor +
                                     ", substitutions=" + substitutions +
                                     ", index=" + index +
@@ -4622,7 +4622,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method enter advice.
                  */
-                protected static class ForMethodEnter extends Active.Resolved implements Dispatcher.Resolved.ForMethodEnter {
+                protected static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
                      * The {@code suppress} property of the {@link OnMethodEnter} type.
@@ -4679,7 +4679,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.Resolved.ForMethodEnter{" +
+                        return "Advice.Dispatcher.Inlining.Resolved.ForMethodEnter{" +
                                 "adviceMethod=" + adviceMethod +
                                 ", offsetMappings=" + offsetMappings +
                                 '}';
@@ -4689,7 +4689,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * A resolved dispatcher for implementing method exit advice.
                  */
-                protected abstract static class ForMethodExit extends Active.Resolved implements Dispatcher.Resolved.ForMethodExit {
+                protected abstract static class ForMethodExit extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
                      * The {@code suppress} method of the {@link OnMethodExit} annotation.
@@ -4783,7 +4783,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     public boolean equals(Object other) {
                         return this == other || !(other == null || getClass() != other.getClass())
                                 && super.equals(other)
-                                && enterType == ((Active.Resolved.ForMethodExit) other).enterType;
+                                && enterType == ((Inlining.Resolved.ForMethodExit) other).enterType;
                     }
 
                     @Override
@@ -4796,7 +4796,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Implementation of exit advice that handles exceptions.
                      */
-                    protected static class WithExceptionHandler extends Active.Resolved.ForMethodExit {
+                    protected static class WithExceptionHandler extends Inlining.Resolved.ForMethodExit {
 
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that handles exceptions.
@@ -4824,7 +4824,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.ForMethodExit.WithExceptionHandler{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithExceptionHandler{" +
                                     "adviceMethod=" + adviceMethod +
                                     ", offsetMappings=" + offsetMappings +
                                     '}';
@@ -4834,7 +4834,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Implementation of exit advice that ignores exceptions.
                      */
-                    protected static class WithoutExceptionHandler extends Active.Resolved.ForMethodExit {
+                    protected static class WithoutExceptionHandler extends Inlining.Resolved.ForMethodExit {
 
                         /**
                          * Creates a new resolved dispatcher for implementing method exit advice that does not handle exceptions.
@@ -4862,7 +4862,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.Resolved.ForMethodExit.WithoutExceptionHandler{" +
+                            return "Advice.Dispatcher.Inlining.Resolved.ForMethodExit.WithoutExceptionHandler{" +
                                     "adviceMethod=" + adviceMethod +
                                     ", offsetMappings=" + offsetMappings +
                                     '}';
@@ -4958,7 +4958,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.SuppressionHandler.NoOp." + name();
+                        return "Advice.Dispatcher.Inlining.SuppressionHandler.NoOp." + name();
                     }
                 }
 
@@ -5001,7 +5001,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.SuppressionHandler.Suppressing{" +
+                        return "Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing{" +
                                 "throwableType=" + throwableType +
                                 '}';
                     }
@@ -5059,7 +5059,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                         @Override
                         public String toString() {
-                            return "Advice.Dispatcher.Active.SuppressionHandler.Suppressing.Bound{" +
+                            return "Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing.Bound{" +
                                     "throwableType=" + throwableType +
                                     ", startOfMethod=" + startOfMethod +
                                     ", endOfMethod=" + endOfMethod +
@@ -5296,7 +5296,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodEnter{" +
+                        return "Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", adviceMethod=" + adviceMethod +
                                 '}';
@@ -5373,7 +5373,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodExit{" +
+                        return "Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodExit{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", adviceMethod=" + adviceMethod +
                                 ", padding=" + padding +

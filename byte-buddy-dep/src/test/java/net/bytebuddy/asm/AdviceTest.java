@@ -1317,16 +1317,16 @@ public class AdviceTest {
                 return types.next();
             }
         }).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTabelSubstitutor.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableCollector.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.Resolved.CodeCopier.ExceptionTableExtractor.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.SuppressionHandler.NoOp.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.SuppressionHandler.Suppressing.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.SuppressionHandler.Suppressing.Bound.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.Active.CodeTranslationVisitor.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTabelSubstitutor.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableCollector.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.Resolved.CodeCopier.ExceptionTableExtractor.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.SuppressionHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.SuppressionHandler.Suppressing.Bound.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodEnter.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.Inlining.CodeTranslationVisitor.ForMethodExit.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
             @Override
             public void apply(MethodDescription.InDefinedShape mock) {
                 when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
