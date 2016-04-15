@@ -5492,8 +5492,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public Bound bind(MethodDescription.InDefinedShape instrumentedMethod,
                                   MethodVisitor methodVisitor,
                                   MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                  ClassReader classReader) {
-                    return new CodeCopier(instrumentedMethod, methodVisitor, metaDataHandler, suppressionHandler.bind(), classReader);
+                                  ClassReader classReader) { // TODO: make reader lazy.
+                    return new CodeWriter(instrumentedMethod, methodVisitor, metaDataHandler, suppressionHandler.bind());
                 }
 
                 /**
@@ -5529,7 +5529,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  * A bound advice method that copies the code by first extracting the exception table and later appending the
                  * code of the method without copying any meta data.
                  */
-                protected class CodeCopier extends ClassVisitor implements Bound {
+                protected class CodeWriter implements Bound {
 
                     /**
                      * The instrumented method.
@@ -5552,230 +5552,45 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     private final SuppressionHandler.Bound suppressionHandler;
 
                     /**
-                     * A class reader for parsing the class file containing the represented advice method.
-                     */
-                    private final ClassReader classReader;
-
-                    /**
-                     * The labels that were found during parsing the method's exception handler in the order of their discovery.
-                     */
-                    private List<Label> labels;
-
-                    /**
                      * Creates a new code copier.
                      *
                      * @param instrumentedMethod The instrumented method.
                      * @param methodVisitor      The method visitor for writing the instrumented method.
                      * @param metaDataHandler    A meta data handler for writing to the instrumented method.
                      * @param suppressionHandler A bound suppression handler that is used for suppressing exceptions of this advice method.
-                     * @param classReader        A class reader for parsing the class file containing the represented advice method.
                      */
-                    protected CodeCopier(MethodDescription.InDefinedShape instrumentedMethod,
+                    protected CodeWriter(MethodDescription.InDefinedShape instrumentedMethod,
                                          MethodVisitor methodVisitor,
                                          MetaDataHandler.ForInstrumentedMethod metaDataHandler,
-                                         SuppressionHandler.Bound suppressionHandler,
-                                         ClassReader classReader) {
-                        super(Opcodes.ASM5);
+                                         SuppressionHandler.Bound suppressionHandler) {
                         this.instrumentedMethod = instrumentedMethod;
                         this.methodVisitor = methodVisitor;
                         this.metaDataHandler = metaDataHandler;
                         this.suppressionHandler = suppressionHandler;
-                        this.classReader = classReader;
-                        labels = new ArrayList<Label>();
                     }
 
                     @Override
                     public void prepare() {
-                        classReader.accept(new ExceptionTableExtractor(), ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
                         suppressionHandler.onPrepare(methodVisitor);
                     }
 
                     @Override
                     public void apply() {
-                        classReader.accept(this, ClassReader.SKIP_DEBUG | metaDataHandler.getReaderHint());
+                        // TODO: Load parameters
+                        methodVisitor.visitMethodInsn(Opcodes.ACC_STATIC,
+                                adviceMethod.getDeclaringType().getInternalName(),
+                                adviceMethod.getInternalName(),
+                                adviceMethod.getDescriptor(),
+                                false);
                     }
-
-                    @Override
-                    public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                        return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                ? new ExceptionTabelSubstitutor(Delegating.Resolved.this.apply(methodVisitor, metaDataHandler, instrumentedMethod, suppressionHandler))
-                                : IGNORE_METHOD;
-                    }
-
                     @Override
                     public String toString() {
-                        return "Advice.Dispatcher.Delegating.Resolved.CodeCopier{" +
+                        return "Advice.Dispatcher.Delegating.Resolved.CodeWriter{" +
                                 "instrumentedMethod=" + instrumentedMethod +
                                 ", methodVisitor=" + methodVisitor +
                                 ", metaDataHandler=" + metaDataHandler +
                                 ", suppressionHandler=" + suppressionHandler +
-                                ", classReader=" + classReader +
-                                ", labels=" + labels +
                                 '}';
-                    }
-
-                    /**
-                     * A class visitor that extracts the exception tables of the advice method.
-                     */
-                    protected class ExceptionTableExtractor extends ClassVisitor {
-
-                        /**
-                         * Creates a new exception table extractor.
-                         */
-                        protected ExceptionTableExtractor() {
-                            super(Opcodes.ASM5);
-                        }
-
-                        @Override
-                        public MethodVisitor visitMethod(int modifiers, String internalName, String descriptor, String signature, String[] exception) {
-                            return adviceMethod.getInternalName().equals(internalName) && adviceMethod.getDescriptor().equals(descriptor)
-                                    ? new ExceptionTableCollector(methodVisitor)
-                                    : IGNORE_METHOD;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.CodeCopier.ExceptionTableExtractor{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A visitor that only writes try-catch-finally blocks to the supplied method visitor. All labels of these tables are collected
-                     * for substitution when revisiting the reminder of the method.
-                     */
-                    protected class ExceptionTableCollector extends MethodVisitor {
-
-                        /**
-                         * The method visitor for which the try-catch-finally blocks should be written.
-                         */
-                        private final MethodVisitor methodVisitor;
-
-                        /**
-                         * Creates a new exception table collector.
-                         *
-                         * @param methodVisitor The method visitor for which the try-catch-finally blocks should be written.
-                         */
-                        protected ExceptionTableCollector(MethodVisitor methodVisitor) {
-                            super(Opcodes.ASM5);
-                            this.methodVisitor = methodVisitor;
-                        }
-
-                        @Override
-                        public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-                            methodVisitor.visitTryCatchBlock(start, end, handler, type);
-                            labels.addAll(Arrays.asList(start, end, handler));
-                        }
-
-                        @Override
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeReference, TypePath typePath, String descriptor, boolean visible) {
-                            return methodVisitor.visitTryCatchAnnotation(typeReference, typePath, descriptor, visible);
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.CodeCopier.ExceptionTableCollector{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    '}';
-                        }
-                    }
-
-                    /**
-                     * A label substitutor allows to visit an advice method a second time after the exception handlers were already written.
-                     * Doing so, this visitor substitutes all labels that were already created during the first visit to keep the mapping
-                     * consistent.
-                     */
-                    protected class ExceptionTabelSubstitutor extends MethodVisitor {
-
-                        /**
-                         * A map containing resolved substitutions.
-                         */
-                        private final Map<Label, Label> substitutions;
-
-                        /**
-                         * The current index of the visited labels that are used for try-catch-finally blocks.
-                         */
-                        private int index;
-
-                        /**
-                         * Creates a label substitor.
-                         *
-                         * @param methodVisitor The method visitor for which to substitute labels.
-                         */
-                        protected ExceptionTabelSubstitutor(MethodVisitor methodVisitor) {
-                            super(Opcodes.ASM5, methodVisitor);
-                            substitutions = new IdentityHashMap<Label, Label>();
-                        }
-
-                        @Override
-                        public void visitTryCatchBlock(Label start, Label end, Label handler, String type) {
-                            substitutions.put(start, labels.get(index++));
-                            substitutions.put(end, labels.get(index++));
-                            substitutions.put(handler, labels.get(index++));
-                        }
-
-                        @Override
-                        public AnnotationVisitor visitTryCatchAnnotation(int typeRef, TypePath typePath, String desc, boolean visible) {
-                            return IGNORE_ANNOTATION;
-                        }
-
-                        @Override
-                        public void visitLabel(Label label) {
-                            super.visitLabel(resolve(label));
-                        }
-
-                        @Override
-                        public void visitJumpInsn(int opcode, Label label) {
-                            super.visitJumpInsn(opcode, resolve(label));
-                        }
-
-                        @Override
-                        public void visitTableSwitchInsn(int min, int max, Label dflt, Label... labels) {
-                            super.visitTableSwitchInsn(min, max, dflt, resolve(labels));
-                        }
-
-                        @Override
-                        public void visitLookupSwitchInsn(Label dflt, int[] keys, Label[] labels) {
-                            super.visitLookupSwitchInsn(resolve(dflt), keys, resolve(labels));
-                        }
-
-                        /**
-                         * Resolves an array of labels.
-                         *
-                         * @param label The labels to resolved.
-                         * @return An array containing the resolved arrays.
-                         */
-                        private Label[] resolve(Label[] label) {
-                            Label[] resolved = new Label[label.length];
-                            int index = 0;
-                            for (Label aLabel : label) {
-                                resolved[index++] = resolve(aLabel);
-                            }
-                            return resolved;
-                        }
-
-                        /**
-                         * Resolves a single label if mapped or returns the original label.
-                         *
-                         * @param label The label to resolve.
-                         * @return The resolved label.
-                         */
-                        private Label resolve(Label label) {
-                            Label substitution = substitutions.get(label);
-                            return substitution == null
-                                    ? label
-                                    : substitution;
-                        }
-
-                        @Override
-                        public String toString() {
-                            return "Advice.Dispatcher.Delegating.Resolved.CodeCopier.ExceptionTabelSubstitutor{" +
-                                    "methodVisitor=" + methodVisitor +
-                                    ", substitutions=" + substitutions +
-                                    ", index=" + index +
-                                    '}';
-                        }
                     }
                 }
 
