@@ -93,6 +93,26 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  */
 public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisitorWrapper {
 
+    private static final MethodDescription.InDefinedShape SUPPRESS_ENTER;
+
+    private static final MethodDescription.InDefinedShape SUPPRESS_EXIT;
+
+    private static final MethodDescription.InDefinedShape INLINE_ENTER;
+
+    private static final MethodDescription.InDefinedShape INLINE_EXIT;
+
+    private static final MethodDescription.InDefinedShape ON_THROWABLE;
+
+    static {
+        MethodList<MethodDescription.InDefinedShape> enter = new TypeDescription.ForLoadedType(OnMethodEnter.class).getDeclaredMethods();
+        SUPPRESS_ENTER = enter.filter(named("suppress")).getOnly();
+        INLINE_ENTER = enter.filter(named("inline")).getOnly();
+        MethodList<MethodDescription.InDefinedShape> exit = new TypeDescription.ForLoadedType(OnMethodExit.class).getDeclaredMethods();
+        SUPPRESS_EXIT = exit.filter(named("suppress")).getOnly();
+        INLINE_EXIT = exit.filter(named("inline")).getOnly();
+        ON_THROWABLE = exit.filter(named("onThrowable")).getOnly();
+    }
+
     /**
      * The dispatcher for instrumenting the instrumented method upon entering.
      */
@@ -170,8 +190,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         try {
             Dispatcher.Unresolved methodEnter = Dispatcher.Inactive.INSTANCE, methodExit = Dispatcher.Inactive.INSTANCE;
             for (MethodDescription.InDefinedShape methodDescription : typeDescription.getDeclaredMethods()) {
-                methodEnter = locate(OnMethodEnter.class, methodEnter, methodDescription);
-                methodExit = locate(OnMethodExit.class, methodExit, methodDescription);
+                methodEnter = locate(OnMethodEnter.class, INLINE_ENTER, methodEnter, methodDescription);
+                methodExit = locate(OnMethodExit.class, INLINE_EXIT, methodExit, methodDescription);
             }
             if (!methodEnter.isAlive() && !methodExit.isAlive()) {
                 throw new IllegalArgumentException("No advice defined by " + typeDescription);
@@ -183,26 +203,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         }
     }
 
-    /**
-     * Checks if a given method represents advice and does some basic validation.
-     *
-     * @param annotation        The annotation that indicates a given type of advice.
-     * @param dispatcher        Any previous dispatcher.
-     * @param methodDescription A description of the method considered as advice.
-     * @return A dispatcher for the given method or the supplied dispatcher if the given method is not intended to be used as advice.
-     */
-    private static Dispatcher.Unresolved locate(Class<? extends Annotation> annotation,
+    private static Dispatcher.Unresolved locate(Class<? extends Annotation> type,
+                                                MethodDescription.InDefinedShape receiver,
                                                 Dispatcher.Unresolved dispatcher,
                                                 MethodDescription.InDefinedShape methodDescription) {
-        if (methodDescription.getDeclaredAnnotations().isAnnotationPresent(annotation)) {
-            if (dispatcher.isAlive()) {
-                throw new IllegalStateException("Duplicate advice for " + dispatcher + " and " + methodDescription);
-            } else if (!methodDescription.isStatic()) {
-                throw new IllegalStateException("Advice for " + methodDescription + " is not static");
-            }
-            return new Dispatcher.Inlining(methodDescription);
-        } else {
+        AnnotationDescription annotation = methodDescription.getDeclaredAnnotations().ofType(type);
+        if (annotation == null) {
             return dispatcher;
+        } else if (dispatcher.isAlive()) {
+            throw new IllegalStateException("Duplicate advice for " + dispatcher + " and " + methodDescription);
+        } else if (!methodDescription.isStatic()) {
+            throw new IllegalStateException("Advice for " + methodDescription + " is not static");
+        } else {
+            return annotation.getValue(receiver, Boolean.class)
+                    ? new Dispatcher.Inlining(methodDescription)
+                    : new Dispatcher.Delegating(methodDescription);
         }
     }
 
@@ -4847,18 +4862,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class ForMethodEnter extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
-                     * The {@code suppress} property of the {@link OnMethodEnter} type.
-                     */
-                    private static final MethodDescription.InDefinedShape SUPPRESS;
-
-                    /*
-                     * Extracts the suppress property.
-                     */
-                    static {
-                        SUPPRESS = new TypeDescription.ForLoadedType(OnMethodEnter.class).getDeclaredMethods().filter(named("suppress")).getOnly();
-                    }
-
-                    /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
                      * @param adviceMethod  The represented advice method.
@@ -4874,7 +4877,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
                     }
 
                     @Override
@@ -4914,18 +4917,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodExit extends Inlining.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
-                     * The {@code suppress} method of the {@link OnMethodExit} annotation.
-                     */
-                    private static final MethodDescription.InDefinedShape SUPPRESS;
-
-                    /*
-                     * Extracts the suppress method.
-                     */
-                    static {
-                        SUPPRESS = new TypeDescription.ForLoadedType(OnMethodExit.class).getDeclaredMethods().filter(named("suppress")).getOnly();
-                    }
-
-                    /**
                      * The additional stack size to consider when accessing the local variable array.
                      */
                     private final TypeDescription enterType;
@@ -4952,10 +4943,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.ForEnterValue.Factory(enterType),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
-                                        adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
+                                        adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
                                                 ? OffsetMapping.ForThrowable.INSTANCE
                                                 : new OffsetMapping.Illegal(Thrown.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
                         this.enterType = enterType;
                     }
 
@@ -5715,18 +5706,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected static class ForMethodEnter extends Delegating.Resolved implements Dispatcher.Resolved.ForMethodEnter {
 
                     /**
-                     * The {@code suppress} property of the {@link OnMethodEnter} type.
-                     */
-                    private static final MethodDescription.InDefinedShape SUPPRESS;
-
-                    /*
-                     * Extracts the suppress property.
-                     */
-                    static {
-                        SUPPRESS = new TypeDescription.ForLoadedType(OnMethodEnter.class).getDeclaredMethods().filter(named("suppress")).getOnly();
-                    }
-
-                    /**
                      * Creates a new resolved dispatcher for implementing method enter advice.
                      *
                      * @param adviceMethod  The represented advice method.
@@ -5742,7 +5721,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         OffsetMapping.ForOrigin.Factory.INSTANCE,
                                         OffsetMapping.ForIgnored.INSTANCE,
                                         new OffsetMapping.Illegal(Thrown.class, Enter.class, Return.class, BoxedReturn.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodEnter.class).getValue(SUPPRESS_ENTER, TypeDescription.class));
                     }
 
                     @Override
@@ -5781,18 +5760,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 protected abstract static class ForMethodExit extends Delegating.Resolved implements Dispatcher.Resolved.ForMethodExit {
 
                     /**
-                     * The {@code suppress} method of the {@link OnMethodExit} annotation.
-                     */
-                    private static final MethodDescription.InDefinedShape SUPPRESS;
-
-                    /*
-                     * Extracts the suppress method.
-                     */
-                    static {
-                        SUPPRESS = new TypeDescription.ForLoadedType(OnMethodExit.class).getDeclaredMethods().filter(named("suppress")).getOnly();
-                    }
-
-                    /**
                      * The additional stack size to consider when accessing the local variable array.
                      */
                     private final TypeDescription enterType;
@@ -5819,10 +5786,10 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.ForEnterValue.Factory(enterType),
                                         OffsetMapping.ForReturnValue.Factory.INSTANCE,
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
-                                        adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
+                                        adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
                                                 ? OffsetMapping.ForThrowable.INSTANCE
                                                 : new OffsetMapping.Illegal(Thrown.class)), userFactories),
-                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS, TypeDescription.class));
+                                adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
                         this.enterType = enterType;
                     }
 
@@ -5968,6 +5935,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          * @return The type of {@link Throwable} to suppress.
          */
         Class<? extends Throwable> suppress() default NoSuppression.class;
+
+        boolean inline() default true;
     }
 
     /**
@@ -5993,19 +5962,21 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
     public @interface OnMethodExit {
 
         /**
+         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
+         *
+         * @return The type of {@link Throwable} to suppress.
+         */
+        Class<? extends Throwable> suppress() default NoSuppression.class;
+
+        boolean inline() default true;
+
+        /**
          * Indicates that the advice method should also be called when a method terminates exceptionally. This property must
          * not be set to {@code true} when defining advice for a constructor.
          *
          * @return {@code true} if the advice method should be invoked when a method terminates exceptionally.
          */
         boolean onThrowable() default true;
-
-        /**
-         * Indicates that this advice should suppress any {@link Throwable} type being thrown during the advice's execution.
-         *
-         * @return The type of {@link Throwable} to suppress.
-         */
-        Class<? extends Throwable> suppress() default NoSuppression.class;
     }
 
     /**
