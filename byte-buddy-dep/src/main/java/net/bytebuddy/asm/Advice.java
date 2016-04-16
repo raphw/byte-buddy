@@ -5682,7 +5682,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public boolean equals(Object other) {
-                return this == other || !(other == null || getClass() != other.getClass()) && adviceMethod.equals(((Inlining) other).adviceMethod);
+                return this == other || !(other == null || getClass() != other.getClass()) && adviceMethod.equals(((Delegating) other).adviceMethod);
             }
 
             @Override
