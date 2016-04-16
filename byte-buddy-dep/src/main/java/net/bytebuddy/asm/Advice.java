@@ -333,6 +333,137 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 '}';
     }
 
+    protected interface StackSizeHandler {
+
+        /**
+         * Indicates that a size is not computed but handled directly by ASM.
+         */
+        int UNDEFINED_SIZE = Short.MAX_VALUE;
+
+        /**
+         * Computes a compound stack size for the advice and the translated instrumented method.
+         *
+         * @param stackSize The required stack size of the instrumented method before translation.
+         * @return The stack size required by the instrumented method and its advice methods.
+         */
+        int compoundStackSize(int stackSize);
+
+        /**
+         * Computes a compound local variable array length for the advice and the translated instrumented method.
+         *
+         * @param localVariableLength The required local variable array length of the instrumented method before translation.
+         * @return The local variable length required by the instrumented method and its advice methods.
+         */
+        int compoundLocalVariableLength(int localVariableLength);
+
+        interface ForAdvice {
+
+            /**
+             * Records the maximum values for stack size and local variable array which are required by the advice method
+             * for its individual execution without translation.
+             *
+             * @param stackSize           The minimum required stack size.
+             * @param localVariableLength The minimum required length of the local variable array.
+             */
+            void recordMaxima(int stackSize, int localVariableLength);
+
+            /**
+             * Records a minimum padding additionally to the computed stack size that is required for implementing this advice method.
+             *
+             * @param padding The minimum required padding.
+             */
+            void recordPadding(int padding);
+        }
+
+        enum NoOp implements StackSizeHandler, ForAdvice {
+
+            INSTANCE;
+
+            @Override
+            public void recordMaxima(int stackSize, int localVariableLength) {
+                /* do nothing */
+            }
+
+            @Override
+            public void recordPadding(int padding) {
+                /* do nothing */
+            }
+
+            @Override
+            public int compoundStackSize(int stackSize) {
+                return UNDEFINED_SIZE;
+            }
+
+            @Override
+            public int compoundLocalVariableLength(int localVariableLength) {
+                return UNDEFINED_SIZE;
+            }
+        }
+
+        class Default implements StackSizeHandler {
+
+            private final MethodDescription.InDefinedShape instrumentedMethod;
+
+            private final TypeList requiredTypes;
+
+            /**
+             * The maximum stack size required by a visited advice method.
+             */
+            private int stackSize;
+
+            /**
+             * The maximum length of the local variable array required by a visited advice method.
+             */
+            private int localVariableLength;
+
+            protected Default(MethodDescription.InDefinedShape instrumentedMethod, TypeList requiredTypes) {
+                this.instrumentedMethod = instrumentedMethod;
+                this.requiredTypes = requiredTypes;
+                stackSize = Math.max(instrumentedMethod.getReturnType().getStackSize().getSize(), StackSize.SINGLE.getSize()); // TODO: why +1?
+            }
+
+            @Override
+            public int compoundStackSize(int stackSize) {
+                return Math.max(this.stackSize, stackSize);
+            }
+
+            @Override
+            public int compoundLocalVariableLength(int localVariableLength) {
+                return Math.max(this.localVariableLength, localVariableLength
+                        + instrumentedMethod.getReturnType().getStackSize().getSize() // TODO: where does the +1 come from?
+                        + requiredTypes.getStackSize());
+            }
+
+            protected class ForAdvice implements StackSizeHandler.ForAdvice {
+
+                private final MethodDescription.InDefinedShape adviceMethod;
+
+                /**
+                 * The padding that this advice method requires additionally to its computed size.
+                 */
+                private int padding;
+
+                protected ForAdvice(MethodDescription.InDefinedShape adviceMethod) {
+                    this.adviceMethod = adviceMethod;
+                }
+
+                @Override
+                public void recordMaxima(int stackSize, int localVariableLength) {
+                    Default.this.stackSize = Math.max(Default.this.stackSize, stackSize) + padding;
+                    Default.this.localVariableLength = Math.max(Default.this.localVariableLength, localVariableLength
+                            - adviceMethod.getStackSize()
+                            + instrumentedMethod.getStackSize()
+                            + requiredTypes.getStackSize());
+                }
+
+                @Override
+                public void recordPadding(int padding) {
+                    this.padding = Math.max(this.padding, padding);
+                }
+            }
+        }
+    }
+
     /**
      * A meta data handler that is responsible for translating stack map frames and adjusting size requirements.
      */
