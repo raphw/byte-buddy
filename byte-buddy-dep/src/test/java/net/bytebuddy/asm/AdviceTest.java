@@ -194,6 +194,17 @@ public class AdviceTest {
     }
 
     @Test
+    public void testTrivialDelegation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(EmptyDelegationAdvice.class)
+                .visit(Advice.to(EmptyDelegationAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), nullValue(Object.class));
+    }
+
+    @Test
     public void testTrivialAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -372,6 +383,16 @@ public class AdviceTest {
         assertThat(type.getDeclaredMethod(BAR, String.class).invoke(type.newInstance(), BAR), is((Object) BAR));
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+    @Test
+    public void testAdviceWithImplicitArgumentDelegation() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ArgumentAdviceDelegationImplicit.class)
+                .visit(Advice.to(ArgumentAdviceDelegationImplicit.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(),BAR), is((Object) BAR));
     }
 
     @Test
@@ -1054,6 +1075,11 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
+    public void testAmbiguousAdviceDelegation() throws Exception {
+        Advice.to(AmbiguousAdviceDelegation.class);
+    }
+
+    @Test(expected = IllegalStateException.class)
     public void testCannotBindEnterToEnter() throws Exception {
         Advice.to(EnterToEnterAdvice.class);
     }
@@ -1450,6 +1476,24 @@ public class AdviceTest {
     }
 
     @SuppressWarnings("unused")
+    public static class EmptyDelegationAdvice {
+
+        public void foo() {
+            /* empty */
+        }
+
+        @Advice.OnMethodEnter
+        private static void enter() {
+            /* empty */
+        }
+
+        @Advice.OnMethodExit(onThrowable = false)
+        private static void exit() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
     public static class TrivialAdvice {
 
         @Advice.OnMethodEnter
@@ -1490,6 +1534,20 @@ public class AdviceTest {
 
         @Advice.OnMethodEnter
         @Advice.OnMethodExit(onThrowable = false)
+        private static void advice() {
+            /* empty */
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class EmptyAdviceDelegation {
+
+        public void foo() {
+            /* do nothing */
+        }
+
+        @Advice.OnMethodEnter(inline = false)
+        @Advice.OnMethodExit(onThrowable = false, inline = false)
         private static void advice() {
             /* empty */
         }
@@ -1708,6 +1766,27 @@ public class AdviceTest {
             Sample.exit++;
         }
     }
+    @SuppressWarnings("unused")
+    public static class ArgumentAdviceDelegationImplicit {
+
+        public String foo(String value) {
+            return value;
+        }
+
+        @Advice.OnMethodEnter(inline = false)
+        private static void enter(String argument) {
+            if (!argument.equals(BAR)) {
+                throw new AssertionError();
+            }
+        }
+
+        @Advice.OnMethodExit(inline = false)
+        private static void exit(String argument) {
+            if (!argument.equals(BAR)) {
+                throw new AssertionError();
+            }
+        }
+    }
 
     @SuppressWarnings("unused")
     public static class IncrementSample {
@@ -1762,7 +1841,7 @@ public class AdviceTest {
             Sample.enter++;
         }
 
-        @Advice.OnMethodExit
+        @Advice.OnMethodExit(onThrowable = false)
         private static void exit(@Advice.This Sample thiz) {
             if (thiz == null) {
                 throw new AssertionError();
@@ -2199,7 +2278,7 @@ public class AdviceTest {
         }
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("all")
     public static class FieldAdviceWrite {
 
         @Advice.OnMethodEnter
@@ -2290,6 +2369,15 @@ public class AdviceTest {
     public static class AmbiguousAdvice {
 
         @Advice.OnMethodEnter
+        private static void enter(@Advice.Argument(0) @Advice.This Object thiz) {
+            throw new AssertionError();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class AmbiguousAdviceDelegation {
+
+        @Advice.OnMethodEnter(inline = false)
         private static void enter(@Advice.Argument(0) @Advice.This Object thiz) {
             throw new AssertionError();
         }
