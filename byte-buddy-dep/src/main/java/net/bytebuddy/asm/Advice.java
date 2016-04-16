@@ -442,7 +442,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             protected static StackSizeHandler of(MethodDescription.InDefinedShape instrumentedMethod,
                                                  List<? extends TypeDescription> requiredTypes,
                                                  int writerFlags) {
-                return (writerFlags & ClassWriter.COMPUTE_MAXS) != 0
+                return (writerFlags & ClassWriter.COMPUTE_MAXS) != 0 // TODO: check COMPUTE_FRAMES implied?
                         ? NoOp.INSTANCE
                         : new Default(instrumentedMethod, new TypeList.Explicit(requiredTypes));
             }
@@ -636,6 +636,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this.expandFrames = expandFrames;
             }
 
+            public static ForInstrumentedMethod of(MethodDescription.InDefinedShape instrumentedMethod,
+                                                   List<? extends TypeDescription> requiredTypes,
+                                                   List<? extends TypeDescription> yieldedTypes,
+                                                   ClassFileVersion classFileVersion,
+                                                   int writerFlags,
+                                                   int readerFlags) {
+                return (writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)
+                        ? NoOp.INSTANCE
+                        : new Default(instrumentedMethod, new TypeList.Explicit(requiredTypes), new TypeList.Explicit(yieldedTypes), (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
+            }
+
             /**
              * Translates a type into a representation of its form inside a stack map frame.
              *
@@ -807,17 +818,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public StackFrameHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
                 return new ForAdvice(adviceMethod, new TypeList.Explicit(CompoundList.of(requiredTypes, yieldedTypes)), new TypeList.Empty(), TranslationMode.EXIT);
-            }
-
-            public static ForInstrumentedMethod of(MethodDescription.InDefinedShape instrumentedMethod,
-                                                   List<? extends TypeDescription> requiredTypes,
-                                                   List<? extends TypeDescription> yieldedTypes,
-                                                   ClassFileVersion classFileVersion,
-                                                   int writerFlags,
-                                                   int readerFlags) {
-                return (writerFlags & ClassWriter.COMPUTE_FRAMES) != 0 || classFileVersion.isLessThan(ClassFileVersion.JAVA_V6)
-                        ? NoOp.INSTANCE
-                        : new Default(instrumentedMethod, new TypeList.Explicit(requiredTypes), new TypeList.Explicit(yieldedTypes), (readerFlags & ClassReader.EXPAND_FRAMES) != 0);
             }
 
             /**

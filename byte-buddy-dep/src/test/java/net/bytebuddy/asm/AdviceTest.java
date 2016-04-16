@@ -1322,16 +1322,7 @@ public class AdviceTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.NoOp.class).apply();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithoutStackSizeComputation.ForAdvice.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithStackSizeComputation.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription.InDefinedShape>() {
-            @Override
-            public void apply(MethodDescription.InDefinedShape mock) {
-                when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
-            }
-        }).applyBasic();
-        ObjectPropertyAssertion.of(Advice.MetaDataHandler.Default.WithStackSizeComputation.ForAdvice.class).applyBasic();
+        // TODO: properties
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.Bound.class).applyBasic();
