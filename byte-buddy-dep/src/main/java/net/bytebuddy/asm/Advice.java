@@ -451,7 +451,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                           List<? extends TypeDescription> requiredTypes,
                                           List<? extends TypeDescription> yieldedTypes,
                                           int writerFlags) {
-                return (writerFlags & ClassWriter.COMPUTE_MAXS) != 0 // TODO: Compute frames?
+                return (writerFlags & (ClassWriter.COMPUTE_MAXS | ClassWriter.COMPUTE_FRAMES)) != 0
                         ? NoOp.INSTANCE
                         : new Default(instrumentedMethod, new TypeList.Explicit(requiredTypes), new TypeList.Explicit(yieldedTypes));
             }
