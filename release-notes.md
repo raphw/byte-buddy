@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 16. April 2016: version 1.3.13
+
+- Extended the `Advice` component storing serializable values that cannot be represented in the constant pool as encodings in the constant pool.
+- Added support for non-inlined `Advice` method.
+- Mask modifiers of ASM to not longer leak internal flags beyond the second byte.
+
 ### 13. April 2016: version 1.3.12
 
 - Fixed error during computation of frames for the `Advice` computation.
