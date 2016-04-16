@@ -216,6 +216,7 @@ public interface AgentBuilder {
      * If this matcher is chained with additional subsequent matchers, this matcher is always executed first whereas the following matchers are
      * executed in the order of their execution. If any matcher indicates that a type is to be matched, none of the following matchers is still queried.
      * </p>
+     * <p>
      * <b>Note</b>: When applying a matcher, regard the performance implications by {@link AgentBuilder#ignore(ElementMatcher)}. The former
      * matcher is applied first such that it makes sense to ignore name spaces that are irrelevant to instrumentation. If possible, it is
      * also recommended, to exclude class loaders such as for example the bootstrap class loader by using
