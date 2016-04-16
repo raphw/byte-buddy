@@ -4400,7 +4400,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                    metaDataHandler.injectCompletionFrame(methodVisitor, false);
+                    /* do nothing */
                 }
 
                 @Override
@@ -4508,7 +4508,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
                         onEnd(methodVisitor, metaDataHandler, returnValueProducer);
                         methodVisitor.visitLabel(endOfHandler);
-                        metaDataHandler.injectCompletionFrame(methodVisitor, false);
                     }
 
                     @Override
@@ -5869,6 +5868,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 false);
                         onAfterCall();
                         suppressionHandler.onEndSkipped(methodVisitor, metaDataHandler, this);
+                        metaDataHandler.injectCompletionFrame(methodVisitor, false);
                         metaDataHandler.recordMaxima(Math.max(maximumStackSize, adviceMethod.getReturnType().getStackSize().getSize()), EMPTY);
                     }
 
