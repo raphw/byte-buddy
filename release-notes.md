@@ -6,6 +6,7 @@ Byte Buddy release notes
 - Extended the `Advice` component storing serializable values that cannot be represented in the constant pool as encodings in the constant pool.
 - Added support for non-inlined `Advice` method.
 - Mask modifiers of ASM to not longer leak internal flags beyond the second byte.
+- Added support for suppressing an exception of the instrumented method from within exit advice.
 
 ### 13. April 2016: version 1.3.12
 
