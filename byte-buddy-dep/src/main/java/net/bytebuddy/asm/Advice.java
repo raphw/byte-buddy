@@ -4496,30 +4496,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                     @Override
                     public void onEnd(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                        writeHandler(methodVisitor, metaDataHandler, returnValueProducer);
+                        methodVisitor.visitLabel(endOfMethod);
+                        metaDataHandler.injectHandlerFrame(methodVisitor);
+                        methodVisitor.visitInsn(Opcodes.POP);
+                        returnValueProducer.storeDefaultValue(methodVisitor);
                     }
 
                     @Override
                     public void onEndSkipped(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
                         Label endOfHandler = new Label();
                         methodVisitor.visitJumpInsn(Opcodes.GOTO, endOfHandler);
-                        writeHandler(methodVisitor, metaDataHandler, returnValueProducer);
+                        onEnd(methodVisitor, metaDataHandler, returnValueProducer);
                         methodVisitor.visitLabel(endOfHandler);
                         metaDataHandler.injectCompletionFrame(methodVisitor, false);
-                    }
-
-                    /**
-                     * Invoked for writing the ending segment of this suppression handler.
-                     *
-                     * @param methodVisitor       The method visitor to which to write the suppression handler to.
-                     * @param metaDataHandler     The meta data handler to apply.
-                     * @param returnValueProducer The return value producer to use.
-                     */
-                    private void writeHandler(MethodVisitor methodVisitor, MetaDataHandler.ForAdvice metaDataHandler, ReturnValueProducer returnValueProducer) {
-                        methodVisitor.visitLabel(endOfMethod);
-                        metaDataHandler.injectHandlerFrame(methodVisitor);
-                        methodVisitor.visitInsn(Opcodes.POP);
-                        returnValueProducer.storeDefaultValue(methodVisitor);
                     }
 
                     @Override
@@ -4530,7 +4519,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ", endOfMethod=" + endOfMethod +
                                 '}';
                     }
-
                 }
             }
         }
