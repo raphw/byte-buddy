@@ -1322,7 +1322,13 @@ public class AdviceTest {
     public void testObjectProperties() throws Exception {
         ObjectPropertyAssertion.of(Advice.class).apply();
         ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();
-        // TODO: properties
+        ObjectPropertyAssertion.of(Advice.MethodSizeHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(Advice.MethodSizeHandler.Default.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MethodSizeHandler.Default.ForAdvice.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.NoOp.class).apply();
+        ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.ForAdvice.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.TranslationMode.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.SuppressionHandler.Suppressing.Bound.class).applyBasic();
