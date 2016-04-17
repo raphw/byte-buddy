@@ -69,13 +69,19 @@ import static net.bytebuddy.matcher.ElementMatchers.named;
  * with a class file version less then Java 6 but are used for a class file that was compiled to Java 6 or newer, these stack map frames must be
  * computed by ASM by using the {@link ClassWriter#COMPUTE_FRAMES} option. If the advice methods do not contain any branching instructions, this is
  * not required. No action is required if the advice methods are at least compiled with Java 6 but are used on classes older than Java 6. This
- * limitation only applies to advice methods that are inlined.
+ * limitation only applies to advice methods that are inlined. Also, it is the responsibility of this class's user to assure that the advice method
+ * does not contain byte code constructs that are not supported by the class containing the instrumented method. In particular, pre Java-5
+ * try-finally blocks cannot be inlined into classes with newer byte code levels as the <i>jsr</i> instruction was deprecated. Also, classes prior
+ * to Java 7 do not support the <i>invokedynamic</i> command which must not be contained by an advice method if the instrumented method targets an
+ * older class file format version.
  * </p>
  * <p>
  * <b>Note</b>: It is not possible to trigger break points in inlined advice methods as the debugging information of the inlined advice is not
  * preserved. It is not possible in Java to reference more than one source file per class what makes translating such debugging information
  * impossible. It is however possible to set break points in advice methods when invoking the original advice target. This allows debugging
- * of advice code within unit tests that invoke the advice method without instrumentation.
+ * of advice code within unit tests that invoke the advice method without instrumentation. As a conequence of not transferring debugging information,
+ * the names of the parameters of an advice method do not matter when inlining, neither does any meta information on the advice method's body
+ * such as annotations or parameter modifiers.
  * </p>
  *
  * @see Argument
