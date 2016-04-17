@@ -345,7 +345,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
         ForAdvice bindEntry(MethodDescription.InDefinedShape adviceMethod);
 
-        ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod);
+        ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod, boolean onThrowable);
 
         /**
          * Computes a compound stack size for the advice and the translated instrumented method.
@@ -364,6 +364,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
         int compoundLocalVariableLength(int localVariableLength);
 
         interface ForAdvice {
+
+            void recordMinimum(int stackSize);
 
             /**
              * Records the maximum values for stack size and local variable array which are required by the advice method
@@ -392,7 +394,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             }
 
             @Override
-            public ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
+            public ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod, boolean onThrowable) {
                 return this;
             }
 
@@ -404,6 +406,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
             @Override
             public int compoundLocalVariableLength(int localVariableLength) {
                 return UNDEFINED_SIZE;
+            }
+
+
+            @Override
+            public void recordMinimum(int stackSize) {
+                /* do nothing */
             }
 
             @Override
@@ -446,7 +454,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 this.instrumentedMethod = instrumentedMethod;
                 this.requiredTypes = requiredTypes;
                 this.yieldedTypes = yieldedTypes;
-                stackSize = Math.max(yieldedTypes.getStackSize(), StackSize.SINGLE.getSize()); // TODO: replace with suppression handler responsibility
             }
 
             protected static StackSizeHandler of(MethodDescription.InDefinedShape instrumentedMethod,
@@ -460,11 +467,15 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
             @Override
             public StackSizeHandler.ForAdvice bindEntry(MethodDescription.InDefinedShape adviceMethod) {
+                stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
                 return new ForAdvice(adviceMethod, new TypeList.Empty(), new TypeList.Explicit(requiredTypes));
             }
 
             @Override
-            public StackSizeHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod) {
+            public StackSizeHandler.ForAdvice bindExit(MethodDescription.InDefinedShape adviceMethod, boolean onThrowable) {
+                stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().maximum(onThrowable
+                        ? StackSize.ZERO
+                        : StackSize.SINGLE).getSize());
                 return new ForAdvice(adviceMethod, new TypeList.Explicit(CompoundList.of(requiredTypes, yieldedTypes)), new TypeList.Empty());
             }
 
@@ -498,6 +509,11 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     this.requiredTypes = requiredTypes;
                     this.yieldedTypes = yieldedTypes;
                     stackSize = Math.max(stackSize, adviceMethod.getReturnType().getStackSize().getSize());
+                }
+
+                @Override
+                public void recordMinimum(int stackSize) {
+                    Default.this.stackSize = Math.max(Default.this.stackSize, stackSize);
                 }
 
                 @Override
@@ -4371,7 +4387,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public void onStart(MethodVisitor methodVisitor, StackSizeHandler.ForAdvice stackSizeHandler) {
                         methodVisitor.visitLabel(startOfMethod);
-                        //  TODO: Register minimum
+                        stackSizeHandler.recordMinimum(StackSize.SINGLE.getSize());
                     }
 
                     @Override
@@ -5090,7 +5106,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                             offsetMappings.put(entry.getKey(), entry.getValue().resolve(instrumentedMethod, OffsetMapping.Context.ForMethodExit.of(enterType)));
                         }
                         return new CodeTranslationVisitor.ForMethodExit(methodVisitor,
-                                stackSizeHandler.bindExit(adviceMethod),
+                                stackSizeHandler.bindExit(adviceMethod, isSkipThrowable()),
                                 stackFrameHandler.bindExit(adviceMethod),
                                 instrumentedMethod,
                                 adviceMethod,
@@ -6036,7 +6052,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 instrumentedMethod,
                                 offsetMappings,
                                 methodVisitor,
-                                stackSizeHandler.bindExit(adviceMethod),
+                                stackSizeHandler.bindExit(adviceMethod, isSkipThrowable()),
                                 stackFrameHandler.bindExit(adviceMethod),
                                 suppressionHandler.bind());
                     }
