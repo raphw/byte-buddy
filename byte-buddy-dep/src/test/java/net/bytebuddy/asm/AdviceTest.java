@@ -7,6 +7,7 @@ import net.bytebuddy.description.method.ParameterDescription;
 import net.bytebuddy.description.type.TypeDescription;
 import net.bytebuddy.dynamic.ClassFileLocator;
 import net.bytebuddy.dynamic.loading.ClassLoadingStrategy;
+import net.bytebuddy.test.utility.DebuggingWrapper;
 import net.bytebuddy.test.utility.ObjectPropertyAssertion;
 import org.junit.Test;
 import org.objectweb.asm.ClassReader;
@@ -462,6 +463,7 @@ public class AdviceTest {
     public void testAdviceWithExceptionHandler() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
+                .visit(DebuggingWrapper.makeDefault(false))
                 .visit(Advice.to(ExceptionHandlerAdvice.class).on(named(FOO)))
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
