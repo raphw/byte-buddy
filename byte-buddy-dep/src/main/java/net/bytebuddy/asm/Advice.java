@@ -5286,7 +5286,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                                                List<? extends OffsetMapping.Factory> userFactories,
                                                                byte[] binaryRepresentation,
                                                                TypeDescription enterType) {
-                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
+                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
                                 ? new WithExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType)
                                 : new WithoutExceptionHandler(adviceMethod, userFactories, binaryRepresentation, enterType);
                     }
@@ -6256,7 +6256,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     protected static Resolved.ForMethodExit of(MethodDescription.InDefinedShape adviceMethod,
                                                                List<? extends OffsetMapping.Factory> userFactories,
                                                                TypeDescription enterType) {
-                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).loadSilent().onThrowable()
+                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
                                 ? new WithExceptionHandler(adviceMethod, userFactories, enterType)
                                 : new WithoutExceptionHandler(adviceMethod, userFactories, enterType);
                     }
