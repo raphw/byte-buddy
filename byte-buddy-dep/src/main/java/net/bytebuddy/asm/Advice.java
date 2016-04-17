@@ -1182,7 +1182,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
 
                 @Override
                 public String toString() {
-                    return "Advice.StackMapFrameHandler.Default.TranslationMode.ForAdvice{" +
+                    return "Advice.StackMapFrameHandler.Default.ForAdvice{" +
                             "methodDescription=" + methodDescription +
                             ", requiredTypes=" + requiredTypes +
                             ", yieldedTypes=" + yieldedTypes +

@@ -1324,7 +1324,12 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.WithCustomMapping.class).apply();
         ObjectPropertyAssertion.of(Advice.MethodSizeHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.MethodSizeHandler.Default.class).applyBasic();
-        ObjectPropertyAssertion.of(Advice.MethodSizeHandler.Default.ForAdvice.class).applyBasic();
+        ObjectPropertyAssertion.of(Advice.MethodSizeHandler.Default.ForAdvice.class).refine(new ObjectPropertyAssertion.Refinement<MethodDescription>() {
+            @Override
+            public void apply(MethodDescription mock) {
+                when(mock.getReturnType()).thenReturn(TypeDescription.Generic.VOID);
+            }
+        }).applyBasic();
         ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.NoOp.class).apply();
         ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.class).applyBasic();
         ObjectPropertyAssertion.of(Advice.StackMapFrameHandler.Default.ForAdvice.class).applyBasic();
