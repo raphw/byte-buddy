@@ -30,7 +30,7 @@ public class AdviceFrameTest {
                 {FrameAdviceEntryOnlyWithSuppression.class, 1},
                 {FrameAdviceExitOnly.class, 1},
                 {FrameAdviceExitOnlyWithSuppression.class, 1},
-                {FrameAdviceExitOnlyWithSuppressionAndNotException.class, 1},
+                {FrameAdviceExitOnlyWithSuppressionAndNonExceptionHandling.class, 1},
                 {FrameReturnAdvice.class, 2}
         });
     }
@@ -206,7 +206,7 @@ public class AdviceFrameTest {
     public static class FrameAdvice {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit
+        @Advice.OnMethodExit(onThrowable = true)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -241,7 +241,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceWithoutThrowable {
 
         @Advice.OnMethodEnter
-        @Advice.OnMethodExit(onThrowable = false)
+        @Advice.OnMethodExit
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -276,7 +276,7 @@ public class AdviceFrameTest {
     public static class FrameAdviceWithSuppression {
 
         @Advice.OnMethodEnter(suppress = Exception.class)
-        @Advice.OnMethodExit(suppress = Exception.class)
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = true)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -378,7 +378,7 @@ public class AdviceFrameTest {
     @SuppressWarnings("unused")
     public static class FrameAdviceExitOnly {
 
-        @Advice.OnMethodEnter
+        @Advice.OnMethodExit(onThrowable = true)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -412,7 +412,7 @@ public class AdviceFrameTest {
     @SuppressWarnings("unused")
     public static class FrameAdviceExitOnlyWithSuppression {
 
-        @Advice.OnMethodExit(suppress = Exception.class)
+        @Advice.OnMethodExit(suppress = Exception.class, onThrowable = true)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {
             int v0 = 1;
             {
@@ -444,7 +444,7 @@ public class AdviceFrameTest {
     }
 
     @SuppressWarnings("unused")
-    public static class FrameAdviceExitOnlyWithSuppressionAndNotException {
+    public static class FrameAdviceExitOnlyWithSuppressionAndNonExceptionHandling {
 
         @Advice.OnMethodExit(suppress = Exception.class, onThrowable = false)
         private static String advice(@Advice.Ignored int ignored, @Advice.Argument(0) String value) {

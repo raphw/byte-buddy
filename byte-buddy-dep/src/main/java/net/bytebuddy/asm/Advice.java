@@ -6456,7 +6456,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
          *
          * @return {@code true} if the advice method should be invoked when a method terminates exceptionally.
          */
-        boolean onThrowable() default true;
+        boolean onThrowable() default false;
     }
 
     /**
