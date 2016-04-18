@@ -1,5 +1,6 @@
 package net.bytebuddy.implementation.bind.annotation;
 
+import edu.umd.cs.findbugs.annotations.SuppressFBWarnings;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.ClassFileVersion;
 import net.bytebuddy.description.annotation.AnnotationDescription;
@@ -357,6 +358,7 @@ public @interface Pipe {
              * {@link net.bytebuddy.implementation.bind.annotation.Pipe.Binder.Redirection}'s
              * constructor.
              */
+            @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "Enumerations are not serialized by field")
             protected enum ConstructorCall implements Implementation {
 
                 /**
@@ -367,15 +369,13 @@ public @interface Pipe {
                 /**
                  * A reference of the {@link Object} type default constructor.
                  */
-                private final MethodDescription objectTypeDefaultConstructor;
+                private final MethodDescription.InDefinedShape objectTypeDefaultConstructor;
 
                 /**
                  * Creates the constructor call singleton.
                  */
                 ConstructorCall() {
-                    this.objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods()
-                            .filter(isConstructor())
-                            .getOnly();
+                    objectTypeDefaultConstructor = TypeDescription.OBJECT.getDeclaredMethods().filter(isConstructor()).getOnly();
                 }
 
                 @Override
