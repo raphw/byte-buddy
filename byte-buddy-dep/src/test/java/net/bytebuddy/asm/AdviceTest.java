@@ -919,7 +919,7 @@ public class AdviceTest {
     }
 
     @Test
-    public void testExceptionTypeTest() throws Exception {
+    public void testExceptionTypeAdvice() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(ExceptionTypeAdvice.class)
                 .visit(Advice.to(ExceptionTypeAdvice.class).on(named(FOO)))
@@ -931,6 +931,60 @@ public class AdviceTest {
             fail();
         } catch (InvocationTargetException exception) {
             assertThat(exception.getCause(), instanceOf(IllegalStateException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testExceptionNotCatchedAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ExceptionNotCatchedAdvice.class)
+                .visit(Advice.to(ExceptionNotCatchedAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(Exception.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 0));
+    }
+
+    @Test
+    public void testExceptionCatchedAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ExceptionCatchedAdvice.class)
+                .visit(Advice.to(ExceptionCatchedAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(RuntimeException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
+    public void testExceptionCatchedWithExchangeAdvice() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ExceptionCatchedWithExchangeAdvice.class)
+                .visit(Advice.to(ExceptionCatchedWithExchangeAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(IOException.class));
         }
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
@@ -2271,6 +2325,7 @@ public class AdviceTest {
         }
     }
 
+    @SuppressWarnings("unused")
     public static class ExceptionTypeAdvice {
 
         public static int enter, exit;
@@ -2289,6 +2344,67 @@ public class AdviceTest {
         private static void exit() {
             exit++;
             throw new ArrayIndexOutOfBoundsException();
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ExceptionNotCatchedAdvice {
+
+        public static int enter, exit;
+
+        public void foo() throws Exception {
+            throw new Exception();
+        }
+
+        @Advice.OnMethodEnter
+        private static void enter() {
+            enter++;
+        }
+
+        @Advice.OnMethodExit(onThrowable = RuntimeException.class)
+        private static void exit() {
+            exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ExceptionCatchedAdvice {
+
+        public static int enter, exit;
+
+        public void foo() {
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodEnter
+        private static void enter() {
+            enter++;
+        }
+
+        @Advice.OnMethodExit(onThrowable = Exception.class)
+        private static void exit() {
+            exit++;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    public static class ExceptionCatchedWithExchangeAdvice {
+
+        public static int enter, exit;
+
+        public void foo() {
+            throw new RuntimeException();
+        }
+
+        @Advice.OnMethodEnter
+        private static void enter() {
+            enter++;
+        }
+
+        @Advice.OnMethodExit(onThrowable = RuntimeException.class)
+        private static void exit(@Advice.Thrown(readOnly = false) Throwable throwable) {
+            exit++;
+            throwable = new IOException();
         }
     }
 
