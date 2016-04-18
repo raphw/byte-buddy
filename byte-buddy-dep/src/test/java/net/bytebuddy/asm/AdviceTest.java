@@ -384,6 +384,7 @@ public class AdviceTest {
         assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
         assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
     }
+
     @Test
     public void testAdviceWithImplicitArgumentDelegation() throws Exception {
         Class<?> type = new ByteBuddy()
@@ -392,7 +393,7 @@ public class AdviceTest {
                 .make()
                 .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
                 .getLoaded();
-        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(),BAR), is((Object) BAR));
+        assertThat(type.getDeclaredMethod(FOO, String.class).invoke(type.newInstance(), BAR), is((Object) BAR));
     }
 
     @Test
@@ -991,6 +992,49 @@ public class AdviceTest {
     }
 
     @Test
+    public void testNonAssignableCasting() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(NonAssignableReturnTypeAdvice.class)
+                .visit(Advice.to(NonAssignableReturnTypeAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(ClassCastException.class));
+        }
+    }
+
+    @Test
+    public void testTrivialAssignableCasting() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(TrivialReturnTypeAdvice.class)
+                .visit(Advice.to(TrivialReturnTypeAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        assertThat(type.getDeclaredMethod(FOO).invoke(type.newInstance()), is((Object) BAR));
+    }
+
+    @Test
+    public void testPrimitiveNonAssignableCasting() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(NonAssignablePrimitiveReturnTypeAdvice.class)
+                .visit(Advice.to(NonAssignablePrimitiveReturnTypeAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(ClassCastException.class));
+        }
+    }
+
+    @Test
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1412,14 +1456,16 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.Inactive.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodEntry.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Context.ForMethodExit.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyParameter.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForReadOnlyField.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadOnly.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForParameter.ReadWrite.WithCasting.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadOnly.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForField.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForConstantPoolValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForDefaultValue.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedArguments.class).apply();
-        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.ReadOnly.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.ReadWrite.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForBoxedParameter.BoxingDispatcher.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForSerializedObject.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.Target.ForNullConstant.class).apply();
@@ -1437,6 +1483,7 @@ public class AdviceTest {
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.WithExplicitType.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForField.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue.class).apply();
+        ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedReturnValue.Factory.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForBoxedArguments.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.class).apply();
         ObjectPropertyAssertion.of(Advice.Dispatcher.OffsetMapping.ForOrigin.Factory.class).apply();
@@ -1840,6 +1887,7 @@ public class AdviceTest {
             Sample.exit++;
         }
     }
+
     @SuppressWarnings("unused")
     public static class ArgumentAdviceDelegationImplicit {
 
@@ -2387,7 +2435,7 @@ public class AdviceTest {
         }
     }
 
-    @SuppressWarnings("unused")
+    @SuppressWarnings("all")
     public static class ExceptionCatchedWithExchangeAdvice {
 
         public static int enter, exit;
@@ -2405,6 +2453,45 @@ public class AdviceTest {
         private static void exit(@Advice.Thrown(readOnly = false) Throwable throwable) {
             exit++;
             throwable = new IOException();
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class NonAssignableReturnTypeAdvice {
+
+        public String foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+            value = new Object();
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class TrivialReturnTypeAdvice {
+
+        public Object foo() {
+            return FOO;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+            value = BAR;
+        }
+    }
+
+    @SuppressWarnings("all")
+    public static class NonAssignablePrimitiveReturnTypeAdvice {
+
+        public int foo() {
+            return 0;
+        }
+
+        @Advice.OnMethodExit
+        private static void exit(@Advice.BoxedReturn(readOnly = false) Object value) {
+            value = new Object();
         }
     }
 
