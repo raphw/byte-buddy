@@ -4467,8 +4467,8 @@ public interface AgentBuilder {
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         Unresolved that = (Unresolved) object;
-                        if (!typeDescription.equals(that.typeDescription)) return false;
-                        return classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null;
+                        return typeDescription.equals(that.typeDescription)
+                                && (classLoader != null ? classLoader.equals(that.classLoader) : that.classLoader == null);
                     }
 
                     @Override
