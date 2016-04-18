@@ -1000,6 +1000,60 @@ public interface AgentBuilder {
                 return "AgentBuilder.BinaryLocator.ClassLoading." + name();
             }
         }
+
+        /**
+         * A binary locator that uses type pools but allows for the configuration of a custom cache provider by class loader. Note that a
+         * {@link TypePool} can grow in size and that a static reference is kept to this pool by Byte Buddy's registration of a
+         * {@link ClassFileTransformer} what can cause a memory leak if the supplied caches are not cleared on a regular basis. Also note
+         * that a cache provider can be accessed concurrently by multiple {@link ClassLoader}s.
+         */
+        abstract class WithTypePoolCache implements BinaryLocator {
+
+            /**
+             * The reader mode to use for parsing a class file.
+             */
+            protected final TypePool.Default.ReaderMode readerMode;
+
+            /**
+             * Creates a new binary locator that creates {@link TypePool}s but provides a custom {@link net.bytebuddy.pool.TypePool.CacheProvider}.
+             *
+             * @param readerMode The reader mode to use for parsing a class file.
+             */
+            protected WithTypePoolCache(TypePool.Default.ReaderMode readerMode) {
+                this.readerMode = readerMode;
+            }
+
+            @Override
+            public ClassFileLocator classFileLocator(ClassLoader classLoader) {
+                return ClassFileLocator.ForClassLoader.of(classLoader);
+            }
+
+            @Override
+            public TypePool typePool(ClassFileLocator classFileLocator, ClassLoader classLoader) {
+                return new TypePool.LazyFacade(TypePool.Default.Precomputed.withObjectType(locate(classLoader), classFileLocator, readerMode));
+            }
+
+            /**
+             * Locates a cache provider for a given class loader.
+             *
+             * @param classLoader The class loader for which to locate a cache.
+             * @return The cache provider to use.
+             */
+            protected abstract TypePool.CacheProvider locate(ClassLoader classLoader);
+
+            @Override
+            public boolean equals(Object object) {
+                if (this == object) return true;
+                if (object == null || getClass() != object.getClass()) return false;
+                WithTypePoolCache that = (WithTypePoolCache) object;
+                return readerMode == that.readerMode;
+            }
+
+            @Override
+            public int hashCode() {
+                return readerMode.hashCode();
+            }
+        }
     }
 
     /**
