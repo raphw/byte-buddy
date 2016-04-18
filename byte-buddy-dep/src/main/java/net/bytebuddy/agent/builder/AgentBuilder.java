@@ -2610,6 +2610,7 @@ public interface AgentBuilder {
             /**
              * Implements a lambda class's constructor.
              */
+            @SuppressFBWarnings(value = "SE_BAD_FIELD", justification = "An enumeration does not serialize fields")
             protected enum ConstructorImplementation implements Implementation {
 
                 /**
