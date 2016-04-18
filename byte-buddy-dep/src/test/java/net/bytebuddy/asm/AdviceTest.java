@@ -1305,7 +1305,7 @@ public class AdviceTest {
 
     @Test
     public void testCannotInstantiateSuppressionMarker() throws Exception {
-        Class<?> type = Class.forName(Advice.class.getName() + "$NoSuppression");
+        Class<?> type = Class.forName(Advice.class.getName() + "$NoExceptionHandler");
         assertThat(Modifier.isPrivate(type.getModifiers()), is(true));
         try {
             Constructor<?> constructor = type.getDeclaredConstructor();
