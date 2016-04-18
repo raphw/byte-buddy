@@ -1,6 +1,12 @@
 Byte Buddy release notes
 ------------------------
 
+### 19. April 2016: version 1.3.14
+
+- Only add frames in `Advice` components if class file version is above 1.5.
+- Allow to specify exception type for exit advice to be named. **This implies a default change** where exit advice is no longer invoked by default when an exception is thrown from the instrumented method.
+- Added possibility to assign a value to a `@BoxedReturn` value to change the returned value.
+
 ### 16. April 2016: version 1.3.13
 
 - Extended the `Advice` component storing serializable values that cannot be represented in the constant pool as encodings in the constant pool.
