@@ -3862,8 +3862,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         if (this == object) return true;
                         if (object == null || getClass() != object.getClass()) return false;
                         Factory factory = (Factory) object;
-                        if (readOnly != factory.readOnly) return false;
-                        return enterType.equals(factory.enterType);
+                        return readOnly == factory.readOnly && enterType.equals(factory.enterType);
                     }
 
                     @Override
@@ -4496,20 +4495,32 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 /**
                  * The suppressed throwable type.
                  */
-                private final TypeDescription throwableType;
+                private final TypeDescription suppressedType;
 
                 /**
                  * Creates a new suppressing suppression handler.
                  *
-                 * @param throwableType The suppressed throwable type.
+                 * @param suppressedType The suppressed throwable type.
                  */
-                protected Suppressing(TypeDescription throwableType) {
-                    this.throwableType = throwableType;
+                protected Suppressing(TypeDescription suppressedType) {
+                    this.suppressedType = suppressedType;
+                }
+
+                /**
+                 * Resolves an appropriate suppression handler.
+                 *
+                 * @param suppressedType The suppressed type or {@link NoSuppression} if no type should be suppressed.
+                 * @return An appropriate suppression handler.
+                 */
+                protected static SuppressionHandler of(TypeDescription suppressedType) {
+                    return suppressedType.represents(NoSuppression.class)
+                            ? NoOp.INSTANCE
+                            : new Suppressing(suppressedType);
                 }
 
                 @Override
                 public SuppressionHandler.Bound bind() {
-                    return new Bound(throwableType);
+                    return new Bound(suppressedType);
                 }
 
                 @Override
@@ -4517,18 +4528,18 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     if (this == object) return true;
                     if (object == null || getClass() != object.getClass()) return false;
                     Suppressing that = (Suppressing) object;
-                    return throwableType.equals(that.throwableType);
+                    return suppressedType.equals(that.suppressedType);
                 }
 
                 @Override
                 public int hashCode() {
-                    return throwableType.hashCode();
+                    return suppressedType.hashCode();
                 }
 
                 @Override
                 public String toString() {
                     return "Advice.Dispatcher.SuppressionHandler.Suppressing{" +
-                            "throwableType=" + throwableType +
+                            "suppressedType=" + suppressedType +
                             '}';
                 }
 
@@ -4540,7 +4551,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * The suppressed throwable type.
                      */
-                    private final TypeDescription throwableType;
+                    private final TypeDescription suppressedType;
 
                     /**
                      * A label indicating the start of the method.
@@ -4555,17 +4566,17 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     /**
                      * Creates a new active, bound suppression handler.
                      *
-                     * @param throwableType The suppressed throwable type.
+                     * @param suppressedType The suppressed throwable type.
                      */
-                    protected Bound(TypeDescription throwableType) {
-                        this.throwableType = throwableType;
+                    protected Bound(TypeDescription suppressedType) {
+                        this.suppressedType = suppressedType;
                         startOfMethod = new Label();
                         endOfMethod = new Label();
                     }
 
                     @Override
                     public void onPrepare(MethodVisitor methodVisitor) {
-                        methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, throwableType.getInternalName());
+                        methodVisitor.visitTryCatchBlock(startOfMethod, endOfMethod, endOfMethod, suppressedType.getInternalName());
                     }
 
                     @Override
@@ -4593,7 +4604,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                     @Override
                     public String toString() {
                         return "Advice.Dispatcher.SuppressionHandler.Suppressing.Bound{" +
-                                "throwableType=" + throwableType +
+                                "suppressedType=" + suppressedType +
                                 ", startOfMethod=" + startOfMethod +
                                 ", endOfMethod=" + endOfMethod +
                                 '}';
@@ -4852,9 +4863,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 : offsetMapping);
                     }
                     this.binaryRepresentation = binaryRepresentation;
-                    suppressionHandler = throwableType.represents(NoSuppression.class)
-                            ? SuppressionHandler.NoOp.INSTANCE
-                            : new SuppressionHandler.Suppressing(throwableType);
+                    suppressionHandler = SuppressionHandler.Suppressing.of(throwableType);
                 }
 
                 @Override
@@ -5850,9 +5859,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 ? new OffsetMapping.ForParameter(parameterDescription.getIndex(), READ_ONLY, parameterDescription.getType().asErasure())
                                 : offsetMapping);
                     }
-                    suppressionHandler = throwableType.represents(NoSuppression.class)
-                            ? SuppressionHandler.NoOp.INSTANCE
-                            : new SuppressionHandler.Suppressing(throwableType);
+                    suppressionHandler = SuppressionHandler.Suppressing.of(throwableType);
                 }
 
                 @Override
