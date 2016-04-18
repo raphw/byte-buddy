@@ -4125,6 +4125,19 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         this.readOnly = readOnly;
                     }
 
+                    /**
+                     * Resolves an appropriate offset mapping factory for the {@link Thrown} parameter annotation.
+                     *
+                     * @param adviceMethod The exit advice method, annotated with {@link OnMethodExit}.
+                     * @return An appropriate offset mapping factory.
+                     */
+                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
+                    protected OffsetMapping.Factory resolve(MethodDescription.InDefinedShape adviceMethod) {
+                        return adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
+                                ? this
+                                : new OffsetMapping.Illegal(Thrown.class);
+                    }
+
                     @Override
                     public OffsetMapping make(ParameterDescription.InDefinedShape parameterDescription) {
                         AnnotationDescription.Loadable<Thrown> annotation = parameterDescription.getDeclaredAnnotations().ofType(Thrown.class);
@@ -5258,13 +5271,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType            The type of the value supplied by the enter advice method or
                      *                             a description of {@code void} if no such value exists.
                      */
-                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             List<? extends OffsetMapping.Factory> userFactories,
                                             byte[] binaryRepresentation,
                                             TypeDescription enterType) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_WRITE,
+                                CompoundList.of(Arrays.asList(
+                                        OffsetMapping.ForParameter.Factory.READ_WRITE,
                                         OffsetMapping.ForBoxedArguments.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.READ_WRITE,
                                         OffsetMapping.ForField.Factory.READ_WRITE,
@@ -5273,9 +5286,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.ForEnterValue.Factory(enterType, false),
                                         OffsetMapping.ForReturnValue.Factory.READ_WRITE,
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
-                                        adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
-                                                ? OffsetMapping.ForThrowable.Factory.READ_WRITE
-                                                : new OffsetMapping.Illegal(Thrown.class)), userFactories),
+                                        OffsetMapping.ForThrowable.Factory.READ_WRITE.resolve(adviceMethod)
+                                ), userFactories),
                                 binaryRepresentation,
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
                         this.enterType = enterType;
@@ -6230,12 +6242,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * @param enterType     The type of the value supplied by the enter advice method or
                      *                      a description of {@code void} if no such value exists.
                      */
-                    @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
                     protected ForMethodExit(MethodDescription.InDefinedShape adviceMethod,
                                             List<? extends OffsetMapping.Factory> userFactories,
                                             TypeDescription enterType) {
                         super(adviceMethod,
-                                CompoundList.of(Arrays.asList(OffsetMapping.ForParameter.Factory.READ_ONLY,
+                                CompoundList.of(Arrays.asList(
+                                        OffsetMapping.ForParameter.Factory.READ_ONLY,
                                         OffsetMapping.ForBoxedArguments.INSTANCE,
                                         OffsetMapping.ForThisReference.Factory.READ_ONLY,
                                         OffsetMapping.ForField.Factory.READ_ONLY,
@@ -6244,9 +6256,8 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                         new OffsetMapping.ForEnterValue.Factory(enterType, true),
                                         OffsetMapping.ForReturnValue.Factory.READ_ONLY,
                                         OffsetMapping.ForBoxedReturnValue.INSTANCE,
-                                        adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(ON_THROWABLE, Boolean.class)
-                                                ? OffsetMapping.ForThrowable.Factory.READ_ONLY
-                                                : new OffsetMapping.Illegal(Thrown.class)), userFactories),
+                                        OffsetMapping.ForThrowable.Factory.READ_ONLY.resolve(adviceMethod)
+                                ),userFactories),
                                 adviceMethod.getDeclaredAnnotations().ofType(OnMethodExit.class).getValue(SUPPRESS_EXIT, TypeDescription.class));
                         this.enterType = enterType;
                     }
