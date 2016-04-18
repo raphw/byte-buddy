@@ -2849,38 +2849,6 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                                 '}';
                     }
                 }
-
-                class TypeCasting implements Target {
-
-                    private final Target delegate;
-
-                    private final TypeDescription target;
-
-                    protected TypeCasting(Target delegate, TypeDescription target) {
-                        this.delegate = delegate;
-                        this.target = target;
-                    }
-
-                    protected static Target of(Target delegate, TypeDescription source, TypeDescription target) {
-                        return target.isAssignableTo(source)
-                                ? delegate
-                                : new TypeCasting(delegate, target);
-                    }
-
-                    @Override
-                    public int resolveAccess(MethodVisitor methodVisitor, int opcode) {
-                        try {
-                            return delegate.resolveAccess(methodVisitor, opcode);
-                        } finally {
-                            methodVisitor.visitTypeInsn(Opcodes.CHECKCAST, target.getInternalName());
-                        }
-                    }
-
-                    @Override
-                    public int resolveIncrement(MethodVisitor methodVisitor, int increment) {
-                        throw new IllegalStateException("Cannot cast reference type");
-                    }
-                }
             }
 
             /**
@@ -4101,8 +4069,14 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
              */
             class ForThrowable implements OffsetMapping {
 
+                /**
+                 * The type of parameter that is being accessed.
+                 */
                 private final TypeDescription targetType;
 
+                /**
+                 * The type of the {@link Throwable} being catched if thrown from the instrumented method.
+                 */
                 private final TypeDescription triggeringThrowable;
 
                 /**
@@ -4110,6 +4084,13 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 private final boolean readOnly;
 
+                /**
+                 * Creates a new offset mapping for access of the exception that is thrown by the instrumented method..
+                 *
+                 * @param targetType          The type of parameter that is being accessed.
+                 * @param triggeringThrowable The type of the {@link Throwable} being catched if thrown from the instrumented method.
+                 * @param readOnly            {@code true} if the parameter is read-only.
+                 */
                 protected ForThrowable(TypeDescription targetType, TypeDescription triggeringThrowable, boolean readOnly) {
                     this.targetType = targetType;
                     this.triggeringThrowable = triggeringThrowable;
@@ -4120,8 +4101,35 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                 public Target resolve(MethodDescription.InDefinedShape instrumentedMethod, Context context) {
                     int offset = instrumentedMethod.getStackSize() + context.getPadding() + instrumentedMethod.getReturnType().getStackSize().getSize();
                     return readOnly
-                            ? Target.TypeCasting.of(new Target.ForReadOnlyParameter(offset), triggeringThrowable, targetType)
+                            ? new Target.ForReadOnlyParameter(offset)
                             : new Target.ForParameter(offset);
+                }
+
+                @Override
+                public boolean equals(Object object) {
+                    if (this == object) return true;
+                    if (object == null || getClass() != object.getClass()) return false;
+                    ForThrowable forThrowable = (ForThrowable) object;
+                    return readOnly == forThrowable.readOnly
+                            && targetType.equals(forThrowable.targetType)
+                            && triggeringThrowable.equals(forThrowable.triggeringThrowable);
+                }
+
+                @Override
+                public int hashCode() {
+                    int result = triggeringThrowable.hashCode();
+                    result = 31 * result + targetType.hashCode();
+                    result = 31 * result + (readOnly ? 1 : 0);
+                    return result;
+                }
+
+                @Override
+                public String toString() {
+                    return "Advice.Dispatcher.OffsetMapping.ForThrowable{" +
+                            "targetType=" + targetType +
+                            ", triggeringThrowable=" + triggeringThrowable +
+                            ", readOnly=" + readOnly +
+                            '}';
                 }
 
                 /**
@@ -4129,6 +4137,9 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                  */
                 protected static class Factory implements OffsetMapping.Factory {
 
+                    /**
+                     * The type of the {@link Throwable} being catched if thrown from the instrumented method.
+                     */
                     private final TypeDescription triggeringThrowable;
 
                     /**
@@ -4136,6 +4147,12 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      */
                     private final boolean readOnly;
 
+                    /**
+                     * Creates a new factory for access of the exception that is thrown by the instrumented method..
+                     *
+                     * @param triggeringThrowable The type of the {@link Throwable} being catched if thrown from the instrumented method.
+                     * @param readOnly            {@code true} if the parameter is read-only.
+                     */
                     protected Factory(TypeDescription triggeringThrowable, boolean readOnly) {
                         this.triggeringThrowable = triggeringThrowable;
                         this.readOnly = readOnly;
@@ -4145,6 +4162,7 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                      * Resolves an appropriate offset mapping factory for the {@link Thrown} parameter annotation.
                      *
                      * @param adviceMethod The exit advice method, annotated with {@link OnMethodExit}.
+                     * @param readOnly     {@code true} if the parameter is read-only.
                      * @return An appropriate offset mapping factory.
                      */
                     @SuppressWarnings("all") // In absence of @SafeVarargs for Java 6
@@ -4162,17 +4180,36 @@ public class Advice implements AsmVisitorWrapper.ForDeclaredMethods.MethodVisito
                         AnnotationDescription.Loadable<Thrown> annotation = parameterDescription.getDeclaredAnnotations().ofType(Thrown.class);
                         if (annotation == null) {
                             return UNDEFINED;
-                        } else if (!parameterDescription.getType().asErasure().isAssignableTo(Throwable.class)) {
+                        } else if (!parameterDescription.getType().represents(Throwable.class)) {
                             throw new IllegalStateException("Parameter must be a throwable type for " + parameterDescription);
-                        } else if (readOnly && !parameterDescription.getType().asErasure().isAssignableFrom(triggeringThrowable)) {
-                            throw new IllegalStateException("Parameter must be a super type of " + triggeringThrowable);
-                        } else if (!readOnly && !parameterDescription.getType().represents(Throwable.class)) {
-                            throw new IllegalStateException("Writable parameter must be exactly type of type Throwable");
                         } else if (readOnly && !annotation.loadSilent().readOnly()) {
                             throw new IllegalStateException("Cannot write exception value for " + parameterDescription + " in read-only context");
                         } else {
                             return new ForThrowable(parameterDescription.getType().asErasure(), triggeringThrowable, annotation.loadSilent().readOnly());
                         }
+                    }
+
+                    @Override
+                    public boolean equals(Object object) {
+                        if (this == object) return true;
+                        if (object == null || getClass() != object.getClass()) return false;
+                        Factory factory = (Factory) object;
+                        return readOnly == factory.readOnly && triggeringThrowable.equals(factory.triggeringThrowable);
+                    }
+
+                    @Override
+                    public int hashCode() {
+                        int result = triggeringThrowable.hashCode();
+                        result = 31 * result + (readOnly ? 1 : 0);
+                        return result;
+                    }
+
+                    @Override
+                    public String toString() {
+                        return "Advice.Dispatcher.OffsetMapping.ForThrowable.Factory{" +
+                                "triggeringThrowable=" + triggeringThrowable +
+                                ", readOnly=" + readOnly +
+                                '}';
                     }
                 }
             }
