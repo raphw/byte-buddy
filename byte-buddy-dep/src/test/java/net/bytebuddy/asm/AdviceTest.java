@@ -919,6 +919,24 @@ public class AdviceTest {
     }
 
     @Test
+    public void testExceptionTypeTest() throws Exception {
+        Class<?> type = new ByteBuddy()
+                .redefine(ExceptionTypeAdvice.class)
+                .visit(Advice.to(ExceptionTypeAdvice.class).on(named(FOO)))
+                .make()
+                .load(ClassLoadingStrategy.BOOTSTRAP_LOADER, ClassLoadingStrategy.Default.WRAPPER)
+                .getLoaded();
+        try {
+            type.getDeclaredMethod(FOO).invoke(type.newInstance());
+            fail();
+        } catch (InvocationTargetException exception) {
+            assertThat(exception.getCause(), instanceOf(IllegalStateException.class));
+        }
+        assertThat(type.getDeclaredField(ENTER).get(null), is((Object) 1));
+        assertThat(type.getDeclaredField(EXIT).get(null), is((Object) 1));
+    }
+
+    @Test
     public void testUserTypeValue() throws Exception {
         Class<?> type = new ByteBuddy()
                 .redefine(Sample.class)
@@ -1183,7 +1201,7 @@ public class AdviceTest {
     }
 
     @Test(expected = IllegalStateException.class)
-    public void test() throws Exception {
+    public void testIllegalThrowableRequest() throws Exception {
         Advice.to(IllegalThrowableRequestAdvice.class);
     }
 
@@ -2250,6 +2268,27 @@ public class AdviceTest {
             if (!value.equals(BAR)) {
                 throw new AssertionError();
             }
+        }
+    }
+
+    public static class ExceptionTypeAdvice {
+
+        public static int enter, exit;
+
+        public void foo() {
+            throw new IllegalStateException();
+        }
+
+        @Advice.OnMethodEnter(suppress = UnsupportedOperationException.class)
+        private static void enter() {
+            enter++;
+            throw new UnsupportedOperationException();
+        }
+
+        @Advice.OnMethodExit(suppress = ArrayIndexOutOfBoundsException.class, onThrowable = IllegalStateException.class)
+        private static void exit() {
+            exit++;
+            throw new ArrayIndexOutOfBoundsException();
         }
     }
 
